@@ -32,7 +32,6 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Protocol, TypeVar
 
 if TYPE_CHECKING:
-    from ..core.errors import ErrorCode
     from ..middleware.response_sanitizer import ResponseSanitizer
     from ..middleware.sanitization import SanitizationMiddleware
 
