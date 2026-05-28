@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -217,9 +218,11 @@ def test_path_safety_fallback_branch_without_is_relative_to(
         def resolve(self):
             return _ResolvedPath(self.value)
 
+    # Use platform-native separator so the os.sep fallback works on Linux and Windows.
+    sep = os.sep
     monkeypatch.setattr(path_safety, "Path", _FakePath)
-    assert path_safety.is_within_base("C:\\repo\\child", "C:\\repo") is True
-    assert path_safety.is_within_base("C:\\elsewhere", "C:\\repo") is False
+    assert path_safety.is_within_base(f"{sep}repo{sep}child", f"{sep}repo") is True
+    assert path_safety.is_within_base(f"{sep}elsewhere", f"{sep}repo") is False
 
 
 def test_langchain_module_getattr_paths(monkeypatch: pytest.MonkeyPatch) -> None:
