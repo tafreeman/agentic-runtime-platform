@@ -177,14 +177,13 @@ jobs:
     # Runs the streaming spec 5× to catch flakes early. The rolling nightly
     # 50× job (Story 2.4) measures the long-term flake rate.
     #
-    # LLM credentials: GITHUB_TOKEN + `models: read` permission let the
-    # runtime reach GitHub Models for a zero-config LLM backend in CI. When
-    # placeholder-mode support is implemented (tracked separately), this
-    # dependency can be dropped.
+    # Uses AGENTIC_NO_LLM=1 so the backend spawns PlaceholderChatModel for
+    # all tier-1/tier-2 agents. This eliminates GitHub Models rate-limit
+    # failures on back-to-back runs (429 → 41 s retry > 30 s Playwright
+    # timeout) while still exercising the full streaming + reconnect path.
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      models: read
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -209,7 +208,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run streaming E2E 5×
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AGENTIC_NO_LLM: "1"
         run: |
           cd agentic-workflows-v2/ui
           npm run test:e2e:5x
