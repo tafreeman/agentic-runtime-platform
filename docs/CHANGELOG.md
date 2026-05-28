@@ -3,7 +3,7 @@
 > **This file is a forwarding stub.**
 >
 > The canonical changelog is maintained at the **repository root**:
-> **[`../CHANGELOG.md`](../CHANGELOG.md)**
+> **[`CHANGELOG.md` on GitHub](https://github.com/tafreeman/agentic-runtime-platform/blob/main/CHANGELOG.md)**
 >
 > All releases, epics, sprints, and security entries are documented there.
 > Links from `docs/ROADMAP.md` that point here will land on this stub and

@@ -520,7 +520,7 @@ Full definitions: [docs/GLOSSARY.md](GLOSSARY.md)
 
 Architecture deep dive: [docs/ARCHITECTURE.md](ARCHITECTURE.md)
 
-Project overview and commands: [README.md](../README.md)
+Project overview and commands: [README.md on GitHub](https://github.com/tafreeman/agentic-runtime-platform/blob/main/README.md)
 
 ---
 
@@ -530,8 +530,7 @@ Project overview and commands: [README.md](../README.md)
 
 | Document | What it covers |
 |----------|---------------|
-| [README.md](../README.md) | Project overview, quick start, and common commands |
-| [AGENTS.md](../AGENTS.md) | Contributor workflow guidelines for coding agents |
+| [README.md on GitHub](https://github.com/tafreeman/agentic-runtime-platform/blob/main/README.md) | Project overview, quick start, and common commands |
 | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | System architecture and design decisions |
 | [docs/GLOSSARY.md](GLOSSARY.md) | Domain-specific term definitions |
 | [docs/CODING_STANDARDS.md](CODING_STANDARDS.md) | Code style, testing, and review standards |
