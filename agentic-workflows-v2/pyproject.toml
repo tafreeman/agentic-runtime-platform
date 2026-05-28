@@ -58,7 +58,7 @@ langchain = [
     "langchain-anthropic>=0.2,<0.3",
     "langchain-google-genai>=2.0,<3",
     "langchain-ollama>=0.2,<0.3",
-    "langgraph-checkpoint-sqlite>=2.0,<3",
+    "langgraph-checkpoint-sqlite>=2.0,<4",
     "langsmith>=0.3,<0.4",
 ]
 tracing = [
