@@ -2,7 +2,7 @@
 
 The `agentic-workflows-v2` server reads all configuration from environment variables, which may be supplied directly in the shell environment or via a `.env` file at the repository root. A fully annotated template with copy-pasteable defaults is available at [`.env.example`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example) in the repository root.
 
-All variables are read **once at server startup** unless noted otherwise in this document. Changes to any variable require a server restart to take effect — the only exception is `AGENTIC_API_KEY`, which is re-read on every request to support key rotation without downtime (see [Runtime and Local Development](#runtime--local-development) for details).
+All variables are read **once at server startup** unless noted otherwise in this document. Changes to any variable require a server restart to take effect — the only exception is `AGENTIC_API_KEY`, which is re-read on every request to support key rotation without downtime (see [Runtime and Local Development](#runtime-and-local-development) for details).
 
 ---
 
@@ -493,14 +493,14 @@ The following table lists every variable in `.env.example` in one place for quic
 | `AGENTIC_TRACE_SENSITIVE` | [Tracing and Observability](#tracing-and-observability) | `0` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | [Tracing and Observability](#tracing-and-observability) | `http://localhost:4317` |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | [Tracing and Observability](#tracing-and-observability) | `grpc` |
-| `AGENTIC_API_KEY` | [Runtime and Local Development](#runtime--local-development) | — |
-| `AGENTIC_CORS_ORIGINS` | [Runtime and Local Development](#runtime--local-development) | Local dev defaults |
-| `AGENTIC_NO_LLM` | [Runtime and Local Development](#runtime--local-development) | `0` |
-| `AGENTIC_EXTERNAL_AGENTS_DIR` | [Runtime and Local Development](#runtime--local-development) | — |
-| `SHELL` | [Runtime and Local Development](#runtime--local-development) | `/bin/bash` |
-| `AGENTIC_BLOCK_PRIVATE_IPS` | [Runtime and Local Development](#runtime--local-development) | `0` |
-| `AGENTIC_MEMORY_PATH` | [Runtime and Local Development](#runtime--local-development) | — |
-| `AGENTIC_DEFAULT_ADAPTER` | [Runtime and Local Development](#runtime--local-development) | `langchain` |
+| `AGENTIC_API_KEY` | [Runtime and Local Development](#runtime-and-local-development) | — |
+| `AGENTIC_CORS_ORIGINS` | [Runtime and Local Development](#runtime-and-local-development) | Local dev defaults |
+| `AGENTIC_NO_LLM` | [Runtime and Local Development](#runtime-and-local-development) | `0` |
+| `AGENTIC_EXTERNAL_AGENTS_DIR` | [Runtime and Local Development](#runtime-and-local-development) | — |
+| `SHELL` | [Runtime and Local Development](#runtime-and-local-development) | `/bin/bash` |
+| `AGENTIC_BLOCK_PRIVATE_IPS` | [Runtime and Local Development](#runtime-and-local-development) | `0` |
+| `AGENTIC_MEMORY_PATH` | [Runtime and Local Development](#runtime-and-local-development) | — |
+| `AGENTIC_DEFAULT_ADAPTER` | [Runtime and Local Development](#runtime-and-local-development) | `langchain` |
 | `AGENTIC_METRICS` | [Operational Settings](#operational-settings) | `0` |
 | `LOG_FORMAT` | [Operational Settings](#operational-settings) | `text` |
 | `REDIS_URL` | [Operational Settings](#operational-settings) | — |
