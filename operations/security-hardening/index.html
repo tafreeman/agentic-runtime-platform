@@ -1,0 +1,4726 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/operations/security-hardening/">
+      
+      
+        <link rel="prev" href="../../deployment-guide/">
+      
+      
+        <link rel="next" href="../troubleshooting/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Security Hardening - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Security Hardening - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/security-hardening.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/operations/security-hardening/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="Security Hardening - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/security-hardening.png" />
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#security-hardening" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Security Hardening
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        At a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-api-key-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. API key authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. API key authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-path-exemptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public path exemptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-origin-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket origin validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-rotate-the-key-without-a-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: rotate the key without a restart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-global-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Global rate limiting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Global rate limiting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disabling-for-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disabling for tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#middleware-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Middleware order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning recipes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-401-brute-force-throttle-auththrottle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 401 brute-force throttle (AuthThrottle)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 401 brute-force throttle (AuthThrottle)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lockout-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lockout semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eviction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eviction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-process-limitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-process limitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-investigate-a-locked-out-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: investigate a locked-out client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-lowering-thresholds-for-high-value-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: lowering thresholds for high-value endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-dag-workflow-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. DAG workflow timeout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. DAG workflow timeout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-to-per-step-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to per-step timeouts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning guidance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-adapter-eager-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Adapter eager validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Adapter eager validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-deploy-with-native-engine-only-no-langchain-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: deploy with native engine only (no LangChain extras)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-filesystem-sandboxing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Filesystem sandboxing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Filesystem sandboxing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_file_base_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_FILE_BASE_DIR
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-shell-tool-allowlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Shell tool allowlist
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Shell tool allowlist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_shell_allowed_commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_SHELL_ALLOWED_COMMANDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-sanitization-middleware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Sanitization middleware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Sanitization middleware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fail-closed-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentic_sanitizer_fail_open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_SANITIZER_FAIL_OPEN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-legacy-debugging-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: legacy debugging mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-cors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. CORS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. CORS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_cors_origins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_CORS_ORIGINS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-origin-validation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket origin validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-http-tool-private-ip-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. HTTP tool private-IP block
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. HTTP tool private-IP block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_block_private_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_BLOCK_PRIVATE_IPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-deployment-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference deployment posture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        At a glance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-api-key-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. API key authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. API key authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#public-path-exemptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public path exemptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-origin-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket origin validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-rotate-the-key-without-a-restart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: rotate the key without a restart
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-global-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Global rate limiting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Global rate limiting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#disabling-for-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disabling for tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#middleware-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Middleware order
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning recipes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-401-brute-force-throttle-auththrottle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 401 brute-force throttle (AuthThrottle)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 401 brute-force throttle (AuthThrottle)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lockout-semantics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lockout semantics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eviction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eviction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#in-process-limitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        In-process limitation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-investigate-a-locked-out-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: investigate a locked-out client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-lowering-thresholds-for-high-value-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: lowering thresholds for high-value endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-dag-workflow-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. DAG workflow timeout
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. DAG workflow timeout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#where-it-applies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where it applies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-on-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens on timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relationship-to-per-step-timeouts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationship to per-step timeouts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tuning-guidance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tuning guidance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-adapter-eager-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Adapter eager validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Adapter eager validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-deploy-with-native-engine-only-no-langchain-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: deploy with native engine only (no LangChain extras)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-filesystem-sandboxing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Filesystem sandboxing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Filesystem sandboxing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_file_base_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_FILE_BASE_DIR
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-shell-tool-allowlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Shell tool allowlist
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Shell tool allowlist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_shell_allowed_commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_SHELL_ALLOWED_COMMANDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-sanitization-middleware" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Sanitization middleware
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Sanitization middleware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-it-works_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fail-closed-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#agentic_sanitizer_fail_open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_SANITIZER_FAIL_OPEN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recipe-legacy-debugging-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipe: legacy debugging mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-cors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. CORS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. CORS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_cors_origins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_CORS_ORIGINS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-origin-validation_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket origin validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-http-tool-private-ip-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. HTTP tool private-IP block
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. HTTP tool private-IP block">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agentic_block_private_ips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AGENTIC_BLOCK_PRIVATE_IPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference-deployment-posture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference deployment posture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See also
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/operations/security-hardening.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/operations/security-hardening.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="security-hardening">Security Hardening<a class="headerlink" href="#security-hardening" title="Permanent link">&para;</a></h1>
+<p>This page is for <strong>production operators</strong> deploying the Agentic Workflows V2 FastAPI server.
+It describes every in-process security control, its environment-variable knobs, its default
+behavior, and practical recipes for tuning it to your environment.</p>
+<p><strong>This page is NOT</strong> an ADR, a code specification, or a threat model. For decision rationale
+see the linked ADRs; for the formal threat model see
+<a href="../../OWASP_LLM_THREAT_MODEL/"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a>. For the complete env-var
+index see the <a href="../../configuration/">Configuration Reference</a>.</p>
+<hr />
+<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Environment variable(s)</th>
+<th>Default</th>
+<th>Sprint 1 reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API key authentication</td>
+<td><code>AGENTIC_API_KEY</code></td>
+<td>Not set — all routes open</td>
+<td>ADR-018</td>
+</tr>
+<tr>
+<td>Global rate limiting</td>
+<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code>, <code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
+<td><code>60/minute</code> per IP</td>
+<td>ADR-018</td>
+</tr>
+<tr>
+<td>401 brute-force throttle — window</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
+<td><code>60</code> seconds</td>
+<td>ADR-018</td>
+</tr>
+<tr>
+<td>401 brute-force throttle — threshold</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
+<td><code>5</code> failures</td>
+<td>ADR-018</td>
+</tr>
+<tr>
+<td>401 brute-force throttle — lockout</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
+<td><code>300</code> seconds</td>
+<td>ADR-018</td>
+</tr>
+<tr>
+<td>DAG workflow timeout</td>
+<td>No env var — set per call via <code>timeout</code> kwarg</td>
+<td>None (unlimited)</td>
+<td>ADR-019</td>
+</tr>
+<tr>
+<td>Adapter eager validation</td>
+<td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
+<td><code>langchain</code></td>
+<td>ADR-020</td>
+</tr>
+<tr>
+<td>Filesystem sandbox</td>
+<td><code>AGENTIC_FILE_BASE_DIR</code></td>
+<td>Not set — file tools refuse all operations</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Shell tool allowlist</td>
+<td><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code></td>
+<td>Not set — all shell commands disabled</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Sanitization fail-closed</td>
+<td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
+<td>Not set — 503 returned when layer unavailable</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CORS origins</td>
+<td><code>AGENTIC_CORS_ORIGINS</code></td>
+<td>localhost dev ports (5173, 8000, 8010)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Block private IPs in HTTP tool</td>
+<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
+<td>Not set — private IPs allowed</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-api-key-authentication">1. API key authentication<a class="headerlink" href="#1-api-key-authentication" title="Permanent link">&para;</a></h2>
+<h3 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
+<p>When <code>AGENTIC_API_KEY</code> is set in the environment, the <code>APIKeyMiddleware</code> (layer 3 in the
+middleware stack, see §Middleware order below) gates every request whose path starts with
+<code>/api/</code>. The key must be supplied via one of two headers:</p>
+<p><div class="language-http highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="err">Authorization: Bearer &lt;key&gt;</span>
+</span></code></pre></div>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">X-API-Key: &lt;key&gt;</span>
+</span></code></pre></div></p>
+<p>Token comparison uses <code>secrets.compare_digest()</code> to prevent timing side-channel attacks.
+The key is <strong>re-read from the environment on every request</strong> (via <code>_get_api_key()</code> →
+<code>get_secret("AGENTIC_API_KEY")</code>). This means you can rotate the key without restarting the
+server — new requests will immediately use the updated value.</p>
+<p>When <code>AGENTIC_API_KEY</code> is <strong>not set</strong>, the middleware is a no-op and all routes are publicly
+accessible. The server logs a warning at startup:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>WARNING: AGENTIC_API_KEY is not set — all API routes are publicly accessible.
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Never run without a key in internet-exposed environments</p>
+<p>A server without <code>AGENTIC_API_KEY</code> accepts unauthenticated workflow runs, which may
+execute arbitrary LLM calls against your provider quotas.</p>
+</div>
+<h3 id="public-path-exemptions">Public path exemptions<a class="headerlink" href="#public-path-exemptions" title="Permanent link">&para;</a></h3>
+<p>The following paths bypass authentication regardless of whether a key is set:</p>
+<ul>
+<li><code>/api/health</code></li>
+<li><code>/docs</code></li>
+<li><code>/openapi.json</code></li>
+<li><code>/redoc</code></li>
+</ul>
+<p>All other paths under <code>/api/</code> require a valid key. Non-API routes (UI static files, WebSocket
+upgrade) also bypass authentication so the React frontend can load without credentials.</p>
+<h3 id="websocket-origin-validation">WebSocket origin validation<a class="headerlink" href="#websocket-origin-validation" title="Permanent link">&para;</a></h3>
+<p>WebSocket connections go through a separate origin check (<code>is_websocket_origin_allowed()</code>).
+A connection is allowed when any of the following is true:</p>
+<ul>
+<li>The <code>Origin</code> header is absent (non-browser clients such as curl or SDK calls).</li>
+<li>The origin matches the HTTP <code>Host</code> header of the request exactly.</li>
+<li>The origin hostname is <code>localhost</code>, <code>127.0.0.1</code>, or <code>::1</code> (any port — Vite dev server uses
+  dynamic ports).</li>
+<li>The origin appears in the <code>AGENTIC_CORS_ORIGINS</code> allowlist (see §9).</li>
+</ul>
+<h3 id="recipe-rotate-the-key-without-a-restart">Recipe: rotate the key without a restart<a class="headerlink" href="#recipe-rotate-the-key-without-a-restart" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Update the secret in your environment manager (e.g., Kubernetes secret, AWS Secrets Manager)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># then export in the server&#39;s process environment.  No restart needed — auth.py reads the</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># env var on every request.</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span><span class="k">)</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>Because the key is re-read per request, the old key stops working the moment the environment
+variable changes. Brief request-level races (in-flight requests that already read the old key
+at header extraction) complete normally; the new key is enforced on the next request.</p>
+<hr />
+<h2 id="2-global-rate-limiting">2. Global rate limiting<a class="headerlink" href="#2-global-rate-limiting" title="Permanent link">&para;</a></h2>
+<h3 id="how-it-works_1">How it works<a class="headerlink" href="#how-it-works_1" title="Permanent link">&para;</a></h3>
+<p>The server uses <a href="https://github.com/laurentS/slowapi">slowapi</a> for per-IP global rate limiting.
+<code>slowapi</code> is built on the <code>limits</code> library and is applied at the <strong>outermost middleware layer</strong>
+(layer 1), before auth and sanitization, so abusive clients are rejected before any auth work
+is done.</p>
+<p>The key function is <code>remote_address</code> — the client's IP as seen by the server process. Every
+unique IP is tracked independently in an in-process memory store.</p>
+<p><strong>Default limit:</strong> <code>60/minute</code> per IP. Configurable via <code>AGENTIC_RATE_LIMIT_DEFAULT</code>.</p>
+<p><strong>Response on breach:</strong></p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">&lt;seconds-to-next-window&gt;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">{</span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rate limit exceeded: &lt;detail&gt;&quot;</span><span class="p">}</span>
+</span></code></pre></div>
+<p><strong>Public paths are exempt.</strong> <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, and <code>/redoc</code> return
+<code>None</code> from the key function, which instructs slowapi to skip enforcement.</p>
+<h3 id="disabling-for-tests">Disabling for tests<a class="headerlink" href="#disabling-for-tests" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DISABLED</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>...
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Do not disable in production</p>
+<p><code>AGENTIC_RATE_LIMIT_DISABLED=1</code> removes all per-IP rate gating. Use only in isolated
+test environments.</p>
+</div>
+<h3 id="middleware-order">Middleware order<a class="headerlink" href="#middleware-order" title="Permanent link">&para;</a></h3>
+<p>The server middleware stack (outermost to innermost, i.e., the order in which an inbound
+request passes through each layer) is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. SlowAPIMiddleware        — global per-IP rate limit
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2. SanitizationASGIMiddleware — prompt-injection / secret redaction
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>3. APIKeyMiddleware         — bearer-token auth + per-IP 401 throttle
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>4. CORSMiddleware           — CORS preflight / header injection
+</span></code></pre></div>
+<p><code>app.add_middleware</code> prepends each layer, so the first <code>add_middleware</code> call (CORS) becomes
+the innermost layer and the last call (SlowAPI) becomes the outermost.</p>
+<h3 id="tuning-recipes">Tuning recipes<a class="headerlink" href="#tuning-recipes" title="Permanent link">&para;</a></h3>
+<p><strong>Low-traffic development environment:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">200</span>/minute
+</span></code></pre></div>
+<p>Relaxes the cap to avoid friction during development while still exercising the rate-limit
+code path.</p>
+<p><strong>High-traffic production behind a load balancer:</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">120</span>/minute
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Multi-replica caveat</p>
+<p>The rate-limit counter is in-process. In a multi-replica deployment behind a load
+balancer, each replica tracks only the requests it receives. The effective per-IP rate
+cap is <code>N × configured_limit</code> where <code>N</code> is the number of replicas. A caller can bypass
+the limit by distributing requests across replicas.</p>
+<p>The planned Sprint 2 Redis migration will replace the in-process store with a shared
+counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
+/ API-gateway layer for multi-replica deployments.</p>
+<p>See <a href="../../KNOWN_LIMITATIONS/#41-rate-limiting-is-in-process-only">KNOWN_LIMITATIONS.md §4.3</a>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Reference</p>
+<p>See <a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a> for the design
+rationale and the Sprint 2 Redis migration plan.</p>
+</div>
+<hr />
+<h2 id="3-401-brute-force-throttle-auththrottle">3. 401 brute-force throttle (AuthThrottle)<a class="headerlink" href="#3-401-brute-force-throttle-auththrottle" title="Permanent link">&para;</a></h2>
+<h3 id="how-it-works_2">How it works<a class="headerlink" href="#how-it-works_2" title="Permanent link">&para;</a></h3>
+<p><code>AuthThrottle</code> (in <code>server/auth.py</code>) tracks failed authentication attempts per client IP
+using monotonic timestamps. It is integrated into <code>APIKeyMiddleware</code> and runs at layer 3.</p>
+<p><strong>Sliding window:</strong> Only failures within the last <code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code>
+seconds count toward the threshold. Failures older than the window are evicted on the next
+request from that IP.</p>
+<p><strong>Defaults (verified against <code>server/auth.py</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Override</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sliding window</td>
+<td><code>60</code> seconds</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
+</tr>
+<tr>
+<td>Failure threshold</td>
+<td><code>5</code> failures</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
+</tr>
+<tr>
+<td>Lockout duration</td>
+<td><code>300</code> seconds</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="lockout-semantics">Lockout semantics<a class="headerlink" href="#lockout-semantics" title="Permanent link">&para;</a></h3>
+<p>When an IP reaches the threshold, the <code>AuthThrottle</code> sets a <code>locked_until</code> timestamp. Every
+subsequent request from that IP — including the threshold-triggering request — receives:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">&lt;remaining-lockout-seconds&gt;</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">{</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Too many failed authentication attempts. Please retry later.&quot;</span><span class="p">,</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="nt">&quot;retry_after&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">&lt;remai</span><span class="kc">n</span><span class="err">i</span><span class="kc">n</span><span class="err">g</span><span class="mi">-</span><span class="err">lockou</span><span class="kc">t</span><span class="mi">-</span><span class="err">seco</span><span class="kc">n</span><span class="err">ds&gt;</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The lockout is checked <strong>before</strong> credential verification. Locked IPs are rejected before
+the server even reads the <code>Authorization</code> or <code>X-API-Key</code> header, so lockout cannot be
+cleared by supplying a correct key during the lockout period.</p>
+<p><strong>Successful authentication clears the failure counter.</strong> A valid key from a previously
+failing IP resets its failure history entirely.</p>
+<h3 id="eviction">Eviction<a class="headerlink" href="#eviction" title="Permanent link">&para;</a></h3>
+<p>The <code>_evict_expired()</code> method cleans up state entries lazily on each request — no background
+task is needed. An IP's entry is removed when its lockout has expired <strong>and</strong> its failure
+window has also expired.</p>
+<h3 id="in-process-limitation">In-process limitation<a class="headerlink" href="#in-process-limitation" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Multi-replica caveat</p>
+<p><code>AuthThrottle</code> state is per-process. In a multi-replica deployment, a distributed
+attacker who spreads probes across replicas can stay under each replica's threshold while
+collectively exceeding the intended lockout threshold.</p>
+<p>See <a href="../../KNOWN_LIMITATIONS/#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat">KNOWN_LIMITATIONS.md §4.4</a>.
+Sprint 2 will migrate to a Redis-backed shared store.</p>
+</div>
+<h3 id="recipe-investigate-a-locked-out-client">Recipe: investigate a locked-out client<a class="headerlink" href="#recipe-investigate-a-locked-out-client" title="Permanent link">&para;</a></h3>
+<p>The server logs a warning for every lockout event and every rejected locked-IP request:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>WARNING: Auth throttle: IP 203.0.113.42 locked out for 300 seconds after 5 failures
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>WARNING: Auth throttle: rejecting locked IP 203.0.113.42 (retry after 287s)
+</span></code></pre></div>
+<p>To find lockout events for a specific IP:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># journalctl / docker logs / file log depending on your deployment</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>grep<span class="w"> </span><span class="s2">&quot;locked out\|locked IP&quot;</span><span class="w"> </span>server.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;203.0.113.42&quot;</span>
+</span></code></pre></div>
+<p>Authentication failures (before lockout) are also logged:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>WARNING: Authentication failed for /api/workflows/run from 203.0.113.42
+</span></code></pre></div>
+<h3 id="recipe-lowering-thresholds-for-high-value-endpoints">Recipe: lowering thresholds for high-value endpoints<a class="headerlink" href="#recipe-lowering-thresholds-for-high-value-endpoints" title="Permanent link">&para;</a></h3>
+<p>The threshold and lockout duration currently apply globally across all endpoints. If you
+need tighter thresholds, lower the environment variables:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">30</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">3</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">900</span>
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Per-endpoint throttle granularity is listed as future work in
+<a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>. Today the
+configuration is global.</p>
+</div>
+<hr />
+<h2 id="4-dag-workflow-timeout">4. DAG workflow timeout<a class="headerlink" href="#4-dag-workflow-timeout" title="Permanent link">&para;</a></h2>
+<h3 id="where-it-applies">Where it applies<a class="headerlink" href="#where-it-applies" title="Permanent link">&para;</a></h3>
+<p><code>DAGExecutor.execute(workflow, ..., timeout=N)</code> accepts an optional <code>timeout</code> parameter
+(seconds, float). When set, the entire scheduling loop is wrapped with
+<code>asyncio.wait_for(scheduling_loop(), timeout=N)</code>.</p>
+<p>There is <strong>no environment variable</strong> for the default timeout. The value is set per call by
+the server route layer. Today this means you configure it by adjusting the route-level
+call site — it is not a startup configuration knob.</p>
+<h3 id="what-happens-on-timeout">What happens on timeout<a class="headerlink" href="#what-happens-on-timeout" title="Permanent link">&para;</a></h3>
+<p>When the timeout elapses:</p>
+<ol>
+<li>All in-flight <code>asyncio.Task</code> objects for running steps are cancelled
+   (<code>task.cancel()</code>) and awaited to prevent "Task was destroyed but it is pending" warnings.</li>
+<li>Every step still in <code>RUNNING</code> state is transitioned to <code>FAILED</code> with <code>error_type:
+   "TimeoutError"</code> and a descriptive message.</li>
+<li>All transitive dependents of those failed steps are cascade-skipped via BFS (the same
+   propagation used for step-level failures).</li>
+<li>Steps that never started are also skipped.</li>
+<li>The returned <code>WorkflowResult</code> has <code>overall_status=FAILED</code>.</li>
+<li><code>result.metadata</code> contains:
+   <div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">{</span><span class="s2">&quot;timeout_exceeded&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;timeout_seconds&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">N</span><span class="o">&gt;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;message&gt;&quot;</span><span class="p">}</span>
+</span></code></pre></div></li>
+</ol>
+<p><strong>OTEL attributes</strong> emitted on the active span:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>workflow.timeout_exceeded = True
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>workflow.timeout_seconds = &lt;N&gt;   # on the span event &quot;workflow.timeout&quot;
+</span></code></pre></div>
+<p>These attributes are queryable in Jaeger/Tempo dashboards to identify timed-out runs.</p>
+<h3 id="relationship-to-per-step-timeouts">Relationship to per-step timeouts<a class="headerlink" href="#relationship-to-per-step-timeouts" title="Permanent link">&para;</a></h3>
+<p>The workflow-level timeout and per-step timeouts in <code>StepExecutor</code> are <strong>additive, not
+mutually exclusive</strong>. Both can be active simultaneously:</p>
+<ul>
+<li>A step's individual timeout fires if that step alone runs too long.</li>
+<li>The workflow timeout fires if the cumulative execution across all steps (including
+  dependencies and waiting time) exceeds the ceiling.</li>
+</ul>
+<p>Set a tight per-step budget for individual agent calls and a looser workflow ceiling as a
+backstop.</p>
+<h3 id="tuning-guidance">Tuning guidance<a class="headerlink" href="#tuning-guidance" title="Permanent link">&para;</a></h3>
+<p>A reasonable starting point:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>workflow_timeout = longest_legitimate_single_workflow_duration × 1.5
+</span></code></pre></div>
+<p>For example, if your most complex workflow takes about 4 minutes under normal conditions,
+set a 6-minute (360 second) timeout. This gives headroom for provider latency spikes while
+still bounding runaway workflows.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Cooperative cancellation via <code>asyncio.wait_for</code> depends on <code>await</code> points in step
+bodies. A tightly-looping synchronous step may not cancel promptly. If you have steps
+with synchronous-heavy bodies, consider adding explicit cancellation checkpoints.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Reference</p>
+<p>See <a href="../../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a> for the design rationale
+and the follow-on task to expose <code>timeout</code> as a first-class <code>execution_profile</code> HTTP field.</p>
+</div>
+<hr />
+<h2 id="5-adapter-eager-validation">5. Adapter eager validation<a class="headerlink" href="#5-adapter-eager-validation" title="Permanent link">&para;</a></h2>
+<h3 id="how-it-works_3">How it works<a class="headerlink" href="#how-it-works_3" title="Permanent link">&para;</a></h3>
+<p><code>AGENTIC_DEFAULT_ADAPTER</code> selects which execution engine the server validates at startup.
+The default is <code>langchain</code>.</p>
+<p>During the FastAPI lifespan startup sequence, <code>AdapterRegistry.validate_selected(name)</code> is
+called. For the <code>langchain</code> adapter, this immediately attempts to import <code>langchain</code> and
+<code>langgraph</code>. If either import fails (the optional extras are not installed), a
+<code>ConfigurationError</code> is raised:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>ConfigurationError: LangChain engine selected but extras not installed.
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Install with: pip install -e &#39;.[langchain]&#39;
+</span></code></pre></div>
+<p>uvicorn logs the error and <strong>exits with a non-zero code</strong>. The server does not start, and
+no requests are served. This fail-fast behavior is intentional — a misconfigured deployment
+fails at boot rather than mid-workflow.</p>
+<p>For <code>AGENTIC_DEFAULT_ADAPTER=native</code> (and any other adapter value that is not <code>langchain</code>),
+<code>validate_selected()</code> is a no-op.</p>
+<h3 id="recipe-deploy-with-native-engine-only-no-langchain-extras">Recipe: deploy with native engine only (no LangChain extras)<a class="headerlink" href="#recipe-deploy-with-native-engine-only-no-langchain-extras" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
+</span></code></pre></div>
+<p>Set this when:</p>
+<ul>
+<li>You have not installed the <code>[langchain]</code> extras.</li>
+<li>You want to minimize the dependency footprint.</li>
+<li>All workflows in your deployment explicitly specify <code>adapter: native</code>.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Setting <code>AGENTIC_DEFAULT_ADAPTER=native</code> bypasses the LangChain check but does not
+prevent workflows from requesting the <code>langchain</code> adapter at run time. If a workflow
+request specifies <code>adapter: langchain</code> and the extras are absent, the error surfaces at
+request time rather than boot time.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Reference</p>
+<p>See <a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> for the rationale
+and the CLI pre-flight check planned as a follow-on.</p>
+</div>
+<hr />
+<h2 id="6-filesystem-sandboxing">6. Filesystem sandboxing<a class="headerlink" href="#6-filesystem-sandboxing" title="Permanent link">&para;</a></h2>
+<h3 id="agentic_file_base_dir">AGENTIC_FILE_BASE_DIR<a class="headerlink" href="#agentic_file_base_dir" title="Permanent link">&para;</a></h3>
+<p>The <code>file_ops</code> built-in tool uses this variable to establish a sandbox root. All file
+operations are resolved relative to this directory, and any attempt to traverse outside it
+(e.g., via <code>../</code>) is rejected at the validator boundary.</p>
+<div class="admonition warning">
+<p class="admonition-title">Fail-closed</p>
+<p>When <code>AGENTIC_FILE_BASE_DIR</code> is <strong>not set</strong>, all file tool operations are refused. File
+tools will return an error on every call until this variable is configured.</p>
+<p>Operators who need file operations <strong>must</strong> set this variable. Leaving it unset is the
+safe default — no accidental file access can occur.</p>
+</div>
+<p><strong>Recommended value:</strong> a dedicated, isolated directory that the server process can write to
+and that does not contain sensitive system files or application secrets.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Container deployments</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Bare-metal / VM deployments</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/var/lib/agentic/data
+</span></code></pre></div>
+<p>Ensure the directory:</p>
+<ul>
+<li>Exists and is writable by the server process user.</li>
+<li>Does not overlap with application code, secrets, or system directories.</li>
+<li>Has appropriate filesystem-level permissions (mode <code>700</code> or <code>750</code> for the server user).</li>
+</ul>
+<hr />
+<h2 id="7-shell-tool-allowlist">7. Shell tool allowlist<a class="headerlink" href="#7-shell-tool-allowlist" title="Permanent link">&para;</a></h2>
+<h3 id="agentic_shell_allowed_commands">AGENTIC_SHELL_ALLOWED_COMMANDS<a class="headerlink" href="#agentic_shell_allowed_commands" title="Permanent link">&para;</a></h3>
+<p>The <code>shell_ops</code> built-in tool executes shell commands inside the server process. By default
+(when the variable is not set or is empty), <strong>all shell commands are disabled</strong>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Fail-closed</p>
+<p>An empty or missing <code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> means no shell commands can run.
+This is the safe default.</p>
+</div>
+<p>When set, the value is a comma-separated list of command <strong>basenames</strong> (the executable name
+without path). Only commands whose basename appears in this list are allowed to execute.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Disable entirely (default — omit the variable or set it to empty)</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Allow only specific commands</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>ls,cat,python,git
+</span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Minimum set for code-execution workflows</p>
+<p>The following covers most code-execution workflow patterns while keeping the attack
+surface narrow:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>ls,cat,python,git
+</span></code></pre></div>
+Add additional commands only when a specific workflow requires them. Never include
+interpreters (<code>bash</code>, <code>sh</code>, <code>zsh</code>) unless the workflow explicitly requires a shell
+runner and you have reviewed the associated risk.</p>
+</div>
+<hr />
+<h2 id="8-sanitization-middleware">8. Sanitization middleware<a class="headerlink" href="#8-sanitization-middleware" title="Permanent link">&para;</a></h2>
+<h3 id="how-it-works_4">How it works<a class="headerlink" href="#how-it-works_4" title="Permanent link">&para;</a></h3>
+<p><code>SanitizationASGIMiddleware</code> (layer 2 in the middleware stack) inspects the JSON body of
+every inbound request. It applies the <code>SanitizationMiddleware</code> instance stored in
+<code>app.state.sanitization</code> (initialized in the FastAPI lifespan with <code>dry_run=False</code>).</p>
+<p>Classification outcomes:</p>
+<table>
+<thead>
+<tr>
+<th>Classification</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>clean</code></td>
+<td>Request passes through unmodified.</td>
+</tr>
+<tr>
+<td><code>requires_approval</code></td>
+<td>Request passes through unmodified (advisory only in current release).</td>
+</tr>
+<tr>
+<td><code>redacted</code></td>
+<td>Request body replaced with sanitized text before passing downstream.</td>
+</tr>
+<tr>
+<td><code>blocked</code></td>
+<td><code>422 Unprocessable Entity</code> returned immediately.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fail-closed-behavior">Fail-closed behavior<a class="headerlink" href="#fail-closed-behavior" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Fail-closed by default</p>
+<p>When the sanitization layer fails to initialize (or is explicitly <code>None</code>), the middleware
+returns <code>503 Service Unavailable</code> unless <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> is set.</p>
+<p>On any unexpected exception during sanitization processing, the middleware returns
+<code>500 Internal Server Error</code> rather than passing the request through unsanitized.</p>
+<p>Only JSON bodies (<code>Content-Type: application/json</code>) are inspected. All other content
+types pass through unchanged.</p>
+</div>
+<h3 id="agentic_sanitizer_fail_open">AGENTIC_SANITIZER_FAIL_OPEN<a class="headerlink" href="#agentic_sanitizer_fail_open" title="Permanent link">&para;</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">BREAKING CHANGE (2026-05-09)</p>
+<p>Only the string <code>"1"</code> is recognized as enabling fail-open. Previous versions accepted
+<code>"true"</code>, <code>"yes"</code>, and other truthy strings. If your deployment scripts set
+<code>AGENTIC_SANITIZER_FAIL_OPEN=true</code>, update them to <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code>.</p>
+</div>
+<p>Setting <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> causes the middleware to pass requests through
+when the sanitization layer is unavailable or encounters an error, rather than returning
+<code>503</code>/<code>500</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Not for production</p>
+<p><code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> disables the prompt-injection and secret-redaction
+safety net when the sanitization layer is unavailable. Use only for debugging in
+isolated environments. <strong>Do not set this in production.</strong></p>
+</div>
+<h3 id="recipe-legacy-debugging-mode">Recipe: legacy debugging mode<a class="headerlink" href="#recipe-legacy-debugging-mode" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Temporarily enable fail-open to diagnose sanitization startup failures</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nv">AGENTIC_SANITIZER_FAIL_OPEN</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>...
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># After diagnosing, remove the variable and fix the root cause.</span>
+</span></code></pre></div>
+<hr />
+<h2 id="9-cors">9. CORS<a class="headerlink" href="#9-cors" title="Permanent link">&para;</a></h2>
+<h3 id="agentic_cors_origins">AGENTIC_CORS_ORIGINS<a class="headerlink" href="#agentic_cors_origins" title="Permanent link">&para;</a></h3>
+<p>Controls which browser origins the server includes in <code>Access-Control-Allow-Origin</code> response
+headers (via FastAPI's <code>CORSMiddleware</code>, the innermost middleware layer).</p>
+<p><strong>Default origins (when <code>AGENTIC_CORS_ORIGINS</code> is not set):</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>http://localhost:5173
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>http://127.0.0.1:5173
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>http://localhost:8000
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>http://127.0.0.1:8000
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>http://localhost:8010
+</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>http://127.0.0.1:8010
+</span></code></pre></div>
+<p>These defaults cover the local Vite dev server and common local API ports. They are not
+appropriate for production.</p>
+<div class="admonition warning">
+<p class="admonition-title">Production deployments must restrict CORS origins</p>
+<p>Set <code>AGENTIC_CORS_ORIGINS</code> to the actual frontend origin(s) in every production
+deployment. Leaving the default allows any localhost browser session to make
+credentialed cross-origin requests.</p>
+</div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Single frontend origin</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Multiple origins (comma-separated, no spaces)</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com,https://admin.example.com
+</span></code></pre></div>
+<h3 id="websocket-origin-validation_1">WebSocket origin validation<a class="headerlink" href="#websocket-origin-validation_1" title="Permanent link">&para;</a></h3>
+<p>WebSocket origin validation reuses the same <code>AGENTIC_CORS_ORIGINS</code> allowlist via
+<code>get_allowed_origins()</code>. Additionally, any <code>localhost</code> or <code>127.0.0.1</code> origin (any port) is
+always allowed for WebSocket connections — the Vite dev server starts on dynamic ports
+(5173, 5174, …) so they cannot be enumerated statically.</p>
+<p>Non-browser clients that omit the <code>Origin</code> header are always allowed for WebSocket
+connections.</p>
+<hr />
+<h2 id="10-http-tool-private-ip-block">10. HTTP tool private-IP block<a class="headerlink" href="#10-http-tool-private-ip-block" title="Permanent link">&para;</a></h2>
+<h3 id="agentic_block_private_ips">AGENTIC_BLOCK_PRIVATE_IPS<a class="headerlink" href="#agentic_block_private_ips" title="Permanent link">&para;</a></h3>
+<p>The <code>http_ops</code> built-in tool makes outbound HTTP requests during workflow execution.
+Setting <code>AGENTIC_BLOCK_PRIVATE_IPS=1</code> prevents the tool from targeting private IP ranges
+(RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and link-local addresses
+(169.254.0.0/16).</p>
+<div class="admonition warning">
+<p class="admonition-title">SSRF defense</p>
+<p>In environments where the server process has network access to internal services
+(databases, metadata APIs, internal dashboards), an unauthenticated or malicious
+workflow could exploit the HTTP tool to make requests to those services. Enabling
+<code>AGENTIC_BLOCK_PRIVATE_IPS=1</code> closes this Server-Side Request Forgery (SSRF) vector.</p>
+</div>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Strongly recommended for production</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
+</span></code></pre></div>
+<p>Leave unset only when workflows legitimately need to reach internal network endpoints and
+you have applied other controls (network policy, service mesh authorization) to restrict
+which internal addresses the server can reach.</p>
+<hr />
+<h2 id="reference-deployment-posture">Reference deployment posture<a class="headerlink" href="#reference-deployment-posture" title="Permanent link">&para;</a></h2>
+<p>The following block represents the minimum recommended configuration for a hardened,
+internet-exposed production instance. Copy and adapt it to your environment.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># ── Authentication ────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># Generate with: openssl rand -hex 32</span>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;<span class="m">32</span>-byte-random-hex&gt;
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># ── CORS ─────────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="c1"># ── Filesystem sandbox ────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="c1"># ── Shell tool ────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Empty = all shell commands disabled (recommended unless workflows require shell)</span>
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
+</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="c1"># ── Engine ───────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="c1"># Use native engine to avoid LangChain extras requirement.</span>
+</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="c1"># Remove or set to langchain if LangChain extras are installed.</span>
+</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
+</span><span id="__span-26-19"><a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>
+</span><span id="__span-26-20"><a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a><span class="c1"># ── SSRF defense ─────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-21"><a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-26-22"><a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>
+</span><span id="__span-26-23"><a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a><span class="c1"># ── Rate limiting ─────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-24"><a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a><span class="c1"># Tune based on expected traffic. Lower for higher-security, lower-traffic</span>
+</span><span id="__span-26-25"><a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a><span class="c1"># environments. Raise with caution — in-process only, see §2.</span>
+</span><span id="__span-26-26"><a id="__codelineno-26-26" name="__codelineno-26-26" href="#__codelineno-26-26"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">30</span>/minute
+</span><span id="__span-26-27"><a id="__codelineno-26-27" name="__codelineno-26-27" href="#__codelineno-26-27"></a>
+</span><span id="__span-26-28"><a id="__codelineno-26-28" name="__codelineno-26-28" href="#__codelineno-26-28"></a><span class="c1"># ── Auth brute-force throttle ─────────────────────────────────────────────────</span>
+</span><span id="__span-26-29"><a id="__codelineno-26-29" name="__codelineno-26-29" href="#__codelineno-26-29"></a><span class="c1"># Window (seconds), threshold (failures), lockout (seconds)</span>
+</span><span id="__span-26-30"><a id="__codelineno-26-30" name="__codelineno-26-30" href="#__codelineno-26-30"></a><span class="c1"># Defaults are 60 / 5 / 300; values below are more aggressive for production.</span>
+</span><span id="__span-26-31"><a id="__codelineno-26-31" name="__codelineno-26-31" href="#__codelineno-26-31"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">60</span>
+</span><span id="__span-26-32"><a id="__codelineno-26-32" name="__codelineno-26-32" href="#__codelineno-26-32"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">5</span>
+</span><span id="__span-26-33"><a id="__codelineno-26-33" name="__codelineno-26-33" href="#__codelineno-26-33"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">600</span>
+</span><span id="__span-26-34"><a id="__codelineno-26-34" name="__codelineno-26-34" href="#__codelineno-26-34"></a>
+</span><span id="__span-26-35"><a id="__codelineno-26-35" name="__codelineno-26-35" href="#__codelineno-26-35"></a><span class="c1"># ── Sanitization ──────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-36"><a id="__codelineno-26-36" name="__codelineno-26-36" href="#__codelineno-26-36"></a><span class="c1"># Leave AGENTIC_SANITIZER_FAIL_OPEN unset (fail-closed is the safe default).</span>
+</span><span id="__span-26-37"><a id="__codelineno-26-37" name="__codelineno-26-37" href="#__codelineno-26-37"></a><span class="c1"># AGENTIC_SANITIZER_FAIL_OPEN=   # do not set</span>
+</span><span id="__span-26-38"><a id="__codelineno-26-38" name="__codelineno-26-38" href="#__codelineno-26-38"></a>
+</span><span id="__span-26-39"><a id="__codelineno-26-39" name="__codelineno-26-39" href="#__codelineno-26-39"></a><span class="c1"># ── Observability ─────────────────────────────────────────────────────────────</span>
+</span><span id="__span-26-40"><a id="__codelineno-26-40" name="__codelineno-26-40" href="#__codelineno-26-40"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-26-41"><a id="__codelineno-26-41" name="__codelineno-26-41" href="#__codelineno-26-41"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://otel-collector:4317
+</span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Secret generation</p>
+<p>Use a cryptographically strong random value for <code>AGENTIC_API_KEY</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
+</span></code></pre></div>
+Store it in your secret manager (AWS Secrets Manager, Vault, Kubernetes Secret) and
+inject it at runtime — never commit it to the repository.</p>
+</div>
+<hr />
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../../configuration/">Configuration Reference</a> — full environment variable index with types,
+  defaults, and accepted values</li>
+<li><a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a> — rate limiting and auth
+  throttle design rationale, Sprint 2 Redis migration plan</li>
+<li><a href="../../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a> — DAG executor top-level timeout
+  watchdog design</li>
+<li><a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> — LangChain adapter eager
+  validation at startup</li>
+<li><a href="../../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> — in-process caveats, multi-replica
+  behavior (§4.3, §4.4), and deferred Sprint 2 work</li>
+<li><a href="../troubleshooting/">Troubleshooting</a> — common failure modes and diagnostic recipes</li>
+<li><a href="../../deployment-guide/">Deployment Guide</a> — CI/CD pipeline, Docker, environment setup,
+  and production observability checklist</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 12:30:55 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../deployment-guide/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deployment Guide">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Deployment Guide
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../troubleshooting/" class="md-footer__link md-footer__link--next" aria-label="Next: Troubleshooting">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Troubleshooting
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

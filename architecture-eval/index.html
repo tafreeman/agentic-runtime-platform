@@ -1,0 +1,2818 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Complete architectural reference for the agentic-v2-eval evaluation framework — components, data flow, design decisions, and integration points." name="description"/>
+<link href="https://tafreeman.github.io/agentic-runtime-platform/architecture-eval/" rel="canonical"/>
+<link href="../workflows/" rel="prev"/>
+<link href="../evaluation/rubrics/" rel="next"/>
+<link href="../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Architecture — agentic-v2-eval - Agentic Runtime Platform</title>
+<link href="../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+<link href="../stylesheets/extra.css" rel="stylesheet"/>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+<meta content="website" property="og:type">
+<meta content="Architecture — agentic-v2-eval - Agentic Runtime Platform" property="og:title">
+<meta content="Complete architectural reference for the agentic-v2-eval evaluation framework — components, data flow, design decisions, and integration points." property="og:description">
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-eval.png" property="og:image">
+<meta content="image/png" property="og:image:type"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/architecture-eval/" property="og:url"/>
+<meta content="summary_large_image" property="twitter:card"/>
+<meta content="Architecture — agentic-v2-eval - Agentic Runtime Platform" property="twitter:title"/>
+<meta content="Complete architectural reference for the agentic-v2-eval evaluation framework — components, data flow, design decisions, and integration points." property="twitter:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-eval.png" property="twitter:image"/>
+</meta></meta></meta></meta></head>
+<body data-md-color-accent="amber" data-md-color-primary="amber" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#architecture-agentic-v2-eval">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Agentic Runtime Platform" class="md-header__button md-logo" data-md-component="logo" href=".." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Architecture — agentic-v2-eval
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="..">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../getting-started/">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../ARCHITECTURE/">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../deep-dive-server/">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../api-contracts-runtime/">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../WORKFLOW_AUTHORING/">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+</li>
+<li class="md-tabs__item md-tabs__item--active">
+<a class="md-tabs__link" href="./">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../tools/">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../operations/">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../configuration/">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../project-overview/">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Agentic Runtime Platform" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Agentic Runtime Platform
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../getting-started/installation/">
+<span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../getting-started/quickstart/">
+<span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../getting-started/first-workflow/">
+<span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../development-guide/">
+<span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../NO_LLM_MODE/">
+<span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ONBOARDING/">
+<span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ARCHITECTURE/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../architecture-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../architecture-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executive-summary">
+<span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technology-stack">
+<span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-architecture">
+<span class="md-ellipsis">
+      
+        System Architecture
+      
+    </span>
+</a>
+<nav aria-label="System Architecture" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pipeline-overview">
+<span class="md-ellipsis">
+      
+        Pipeline Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#key-design-decisions">
+<span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#package-structure">
+<span class="md-ellipsis">
+      
+        Package Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#evaluator-system">
+<span class="md-ellipsis">
+      
+        Evaluator System
+      
+    </span>
+</a>
+<nav aria-label="Evaluator System" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#class-hierarchy">
+<span class="md-ellipsis">
+      
+        Class Hierarchy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#llmevaluator">
+<span class="md-ellipsis">
+      
+        LLMEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#patternevaluator">
+<span class="md-ellipsis">
+      
+        PatternEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualityevaluator">
+<span class="md-ellipsis">
+      
+        QualityEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#standardevaluator">
+<span class="md-ellipsis">
+      
+        StandardEvaluator
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#scoring-engine">
+<span class="md-ellipsis">
+      
+        Scoring Engine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#runner-architecture">
+<span class="md-ellipsis">
+      
+        Runner Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#reporter-architecture">
+<span class="md-ellipsis">
+      
+        Reporter Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#metrics-modules">
+<span class="md-ellipsis">
+      
+        Metrics Modules
+      
+    </span>
+</a>
+<nav aria-label="Metrics Modules" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#accuracypy">
+<span class="md-ellipsis">
+      
+        accuracy.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#performancepy">
+<span class="md-ellipsis">
+      
+        performance.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualitypy-metrics">
+<span class="md-ellipsis">
+      
+        quality.py (metrics)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sandbox">
+<span class="md-ellipsis">
+      
+        Sandbox
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dataset-bridge">
+<span class="md-ellipsis">
+      
+        Dataset Bridge
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-side-integration">
+<span class="md-ellipsis">
+      
+        Server-Side Integration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-reference">
+<span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#public-api">
+<span class="md-ellipsis">
+      
+        Public API
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#testing">
+<span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sprint-b-changelog-eval-package">
+<span class="md-ellipsis">
+      
+        Sprint B Changelog (Eval Package)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; Providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../integration-architecture/">
+<span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../rag/">
+<span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../deep-dive-server/">
+<span class="md-ellipsis">
+    
+  
+    Server &amp; API
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../deep-dive-agents/">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../deep-dive-agentic-v2-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../api-contracts-runtime/">
+<span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../data-models-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../component-inventory-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ui/pages/">
+<span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ui/api-integration/">
+<span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../workflows/">
+<span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../WORKFLOW_AUTHORING/">
+<span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../PATTERN_CATALOG/">
+<span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executive-summary">
+<span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technology-stack">
+<span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-architecture">
+<span class="md-ellipsis">
+      
+        System Architecture
+      
+    </span>
+</a>
+<nav aria-label="System Architecture" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pipeline-overview">
+<span class="md-ellipsis">
+      
+        Pipeline Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#key-design-decisions">
+<span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#package-structure">
+<span class="md-ellipsis">
+      
+        Package Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#evaluator-system">
+<span class="md-ellipsis">
+      
+        Evaluator System
+      
+    </span>
+</a>
+<nav aria-label="Evaluator System" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#class-hierarchy">
+<span class="md-ellipsis">
+      
+        Class Hierarchy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#llmevaluator">
+<span class="md-ellipsis">
+      
+        LLMEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#patternevaluator">
+<span class="md-ellipsis">
+      
+        PatternEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualityevaluator">
+<span class="md-ellipsis">
+      
+        QualityEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#standardevaluator">
+<span class="md-ellipsis">
+      
+        StandardEvaluator
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#scoring-engine">
+<span class="md-ellipsis">
+      
+        Scoring Engine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#runner-architecture">
+<span class="md-ellipsis">
+      
+        Runner Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#reporter-architecture">
+<span class="md-ellipsis">
+      
+        Reporter Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#metrics-modules">
+<span class="md-ellipsis">
+      
+        Metrics Modules
+      
+    </span>
+</a>
+<nav aria-label="Metrics Modules" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#accuracypy">
+<span class="md-ellipsis">
+      
+        accuracy.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#performancepy">
+<span class="md-ellipsis">
+      
+        performance.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualitypy-metrics">
+<span class="md-ellipsis">
+      
+        quality.py (metrics)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sandbox">
+<span class="md-ellipsis">
+      
+        Sandbox
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dataset-bridge">
+<span class="md-ellipsis">
+      
+        Dataset Bridge
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-side-integration">
+<span class="md-ellipsis">
+      
+        Server-Side Integration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-reference">
+<span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#public-api">
+<span class="md-ellipsis">
+      
+        Public API
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#testing">
+<span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sprint-b-changelog-eval-package">
+<span class="md-ellipsis">
+      
+        Sprint B Changelog (Eval Package)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../evaluation/rubrics/">
+<span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../evaluation/judge/">
+<span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../evaluation/gating/">
+<span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../evaluation/runners/">
+<span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../evaluation/datasets/">
+<span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_8" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_8_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; Providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/llm-client/">
+<span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/local-models/">
+<span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/windows-ai/">
+<span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/model-probing/">
+<span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/provider-limits/">
+<span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../tools/benchmarks/">
+<span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../operations/">
+<span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../deployment-guide/">
+<span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../operations/security-hardening/">
+<span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../operations/troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../configuration/">
+<span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../GLOSSARY/">
+<span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CODING_STANDARDS/">
+<span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../KNOWN_LIMITATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../AI_RISK_MANAGEMENT/">
+<span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../MIGRATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../project-overview/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ROADMAP/">
+<span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CHANGELOG/">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../adr/ADR-INDEX/">
+<span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../CONTRIBUTING/">
+<span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../DEMO/">
+<span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#executive-summary">
+<span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technology-stack">
+<span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-architecture">
+<span class="md-ellipsis">
+      
+        System Architecture
+      
+    </span>
+</a>
+<nav aria-label="System Architecture" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pipeline-overview">
+<span class="md-ellipsis">
+      
+        Pipeline Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#key-design-decisions">
+<span class="md-ellipsis">
+      
+        Key Design Decisions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#package-structure">
+<span class="md-ellipsis">
+      
+        Package Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#evaluator-system">
+<span class="md-ellipsis">
+      
+        Evaluator System
+      
+    </span>
+</a>
+<nav aria-label="Evaluator System" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#class-hierarchy">
+<span class="md-ellipsis">
+      
+        Class Hierarchy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#llmevaluator">
+<span class="md-ellipsis">
+      
+        LLMEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#patternevaluator">
+<span class="md-ellipsis">
+      
+        PatternEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualityevaluator">
+<span class="md-ellipsis">
+      
+        QualityEvaluator
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#standardevaluator">
+<span class="md-ellipsis">
+      
+        StandardEvaluator
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#scoring-engine">
+<span class="md-ellipsis">
+      
+        Scoring Engine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#runner-architecture">
+<span class="md-ellipsis">
+      
+        Runner Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#reporter-architecture">
+<span class="md-ellipsis">
+      
+        Reporter Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#metrics-modules">
+<span class="md-ellipsis">
+      
+        Metrics Modules
+      
+    </span>
+</a>
+<nav aria-label="Metrics Modules" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#accuracypy">
+<span class="md-ellipsis">
+      
+        accuracy.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#performancepy">
+<span class="md-ellipsis">
+      
+        performance.py
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#qualitypy-metrics">
+<span class="md-ellipsis">
+      
+        quality.py (metrics)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sandbox">
+<span class="md-ellipsis">
+      
+        Sandbox
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dataset-bridge">
+<span class="md-ellipsis">
+      
+        Dataset Bridge
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#server-side-integration">
+<span class="md-ellipsis">
+      
+        Server-Side Integration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cli-reference">
+<span class="md-ellipsis">
+      
+        CLI Reference
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#public-api">
+<span class="md-ellipsis">
+      
+        Public API
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#testing">
+<span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#sprint-b-changelog-eval-package">
+<span class="md-ellipsis">
+      
+        Sprint B Changelog (Eval Package)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<nav class="md-tags">
+<span class="md-tag md-tag-icon">architecture</span>
+<span class="md-tag md-tag-icon">evaluation</span>
+</nav>
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/architecture-eval.md" rel="edit" title="Edit this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+</a>
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/architecture-eval.md" title="View source of this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+</a>
+<h1 id="architecture-agentic-v2-eval">Architecture: agentic-v2-eval<a class="headerlink" href="#architecture-agentic-v2-eval" title="Permanent link">¶</a></h1>
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">¶</a></h2>
+<p><code>agentic-v2-eval</code> (v0.3.0) is the rubric-driven evaluation framework for the <code>agentic-runtime-platform</code> monorepo. It turns LLM outputs — prose responses, agent workflow results, code artifacts, prompt templates — into reproducible, weighted scores and human-readable reports.</p>
+<p>The framework provides four complementary scoring paths:</p>
+<ol>
+<li><strong>Rubric scoring</strong> — YAML-defined criteria with explicit weights, applied by the <code>Scorer</code> engine.</li>
+<li><strong>LLM-as-judge</strong> — Choice-anchored prompts sent to an LLM; the judge returns a normalized 0–1 score per criterion.</li>
+<li><strong>Structural pattern evaluation</strong> — Conformance testing for agentic prompt patterns (ReAct, CoVe, Reflexion, RAG) with hard-gate pass/fail conditions.</li>
+<li><strong>Static quality metrics</strong> — AST-based code quality, cyclomatic complexity, lint scores, and classification accuracy computed without any LLM call.</li>
+</ol>
+<p>All evaluator implementations depend only on <code>LLMClientProtocol</code> — a structural (duck-typed) protocol. Tests inject mocks that satisfy the protocol; no live API calls are made in the test suite.</p>
+<p>The package is a <code>uv</code> workspace member. <code>agentic-tools</code> supplies the concrete <code>LLMClient</code> and is lazy-loaded at evaluation time. The <code>agentic-workflows-v2</code> runtime imports only <code>LLMClientProtocol</code> from this package, keeping the dependency graph acyclic.</p>
+<hr/>
+<h2 id="technology-stack">Technology Stack<a class="headerlink" href="#technology-stack" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Technology</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Language</td>
+<td>Python 3.11+</td>
+<td><code>match</code> statements and <code>tomllib</code> used</td>
+</tr>
+<tr>
+<td>Build backend</td>
+<td>hatchling</td>
+<td><code>pyproject.toml</code> as single config source</td>
+</tr>
+<tr>
+<td>Rubric format</td>
+<td>YAML (PyYAML 6.0+)</td>
+<td>Loaded at call time, not import time</td>
+</tr>
+<tr>
+<td>LLM access</td>
+<td><code>agentic-tools</code> workspace dep</td>
+<td>Lazy-loaded; optional at import</td>
+</tr>
+<tr>
+<td>Test runner</td>
+<td>pytest + pytest-asyncio</td>
+<td><code>asyncio_mode = "auto"</code></td>
+</tr>
+<tr>
+<td>Coverage gate</td>
+<td>pytest-cov</td>
+<td><code>fail_under = 80</code>, branch coverage on</td>
+</tr>
+<tr>
+<td>Static analysis</td>
+<td>mypy <code>--strict</code></td>
+<td>All findings cleared as of Sprint B</td>
+</tr>
+<tr>
+<td>Linting</td>
+<td>ruff</td>
+<td>Rules: E, F, W, I, N, UP, S, B, A, C4, SIM, TCH, RUF</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="system-architecture">System Architecture<a class="headerlink" href="#system-architecture" title="Permanent link">¶</a></h2>
+<h3 id="pipeline-overview">Pipeline Overview<a class="headerlink" href="#pipeline-overview" title="Permanent link">¶</a></h3>
+<pre class="mermaid"><code>C4Container
+title Container diagram for Agentic Workflows Platform
+
+Person(engineer, "Engineer / Operator", "Uses the dashboard and CLI to run workflows, inspect runs, and review evaluations")
+Person(api_consumer, "External API Caller", "Integrates with the runtime over REST, WebSocket, and SSE")
+Person(ci_user, "Engineer / CI Pipeline", "Runs offline and batch evaluations against saved run artifacts")
+
+System_Ext(llm_providers, "LLM Providers", "OpenAI, Anthropic, Gemini, GitHub Models, Azure, Ollama, ONNX, Windows AI")
+System_Ext(otel, "OTEL Collector", "Receives OTLP traces from runtime and RAG spans")
+
+Container_Boundary(agentic, "Agentic Workflows Platform") {
+    Container(ui, "Dashboard UI", "React 19 · Vite 6 · TypeScript · TanStack Query · @xyflow/react", "Web dashboard for live execution, workflows, datasets, runs, and evaluations")
+    Container(cli, "agentic CLI", "Python · Typer", "Command-line client for launching workflows and selecting execution adapters")
+    Container(api, "Runtime API Server", "FastAPI · REST · WebSocket · SSE", "Primary HTTP entry point for workflow execution, metadata, and run retrieval")
+    Container(event_hub, "Execution Event Hub", "Python · WebSocket · SSE", "Broadcasts validated workflow and step events with replay for reconnecting clients")
+    Container(registry, "AdapterRegistry", "Python singleton", "Resolves the configured execution engine at runtime")
+    Container(native_engine, "Native DAG Engine", "Python asyncio", "Kahn-based DAG executor with parallel fan-out and cascade skip")
+    Container(langgraph_engine, "LangGraph Engine", "LangGraph · LangChain", "StateGraph-based execution engine with checkpointing support")
+    Container(agent_layer, "Agent Layer", "Python typed agents", "BaseAgent, Coder, Reviewer, Architect, and Orchestrator workflow steps")
+    Container(rag_pipeline, "RAG Pipeline", "Python", "Loads, chunks, embeds, retrieves, reranks, and assembles context")
+    Container(model_router, "SmartModelRouter", "Python", "Capability-tier routing, health weighting, cooldowns, and circuit breakers")
+    Container(llm_client, "LLMClient", "Python · agentic-tools", "Shared multi-provider facade and provider adapter layer")
+    Container(dataset_loader, "Benchmark Dataset Loader", "Python · agentic-tools", "Loads shared benchmark definitions and dataset samples for runtime and evaluation")
+    Container(server_eval, "In-Server Evaluation Service", "Python", "Runtime-side scoring, hard gates, LLM judge calls, and evaluation endpoints")
+    Container(eval_runners, "Evaluation Runners", "Python", "BatchRunner, StreamingRunner, and AsyncStreamingRunner for offline or CI evaluation")
+    Container(eval_scorer, "Evaluation Scorer", "Python", "Rubric loader, evaluator registry, and rubric, pattern, quality, and LLM-based scoring")
+    Container(eval_reporters, "Evaluation Reporters", "Python", "Generates JSON, Markdown, and HTML evaluation outputs")
+    ContainerDb(run_store, "Run Artifact Store", "JSON files", "Persists workflow runs, step results, and execution records")
+    ContainerDb(report_store, "Evaluation Report Store", "JSON · Markdown · HTML files", "Persists generated evaluation reports")
+    ContainerDb(cache_store, "Response Cache", "Disk-backed SHA-256 cache", "Caches provider responses and probe results")
+    ContainerDb(dataset_store, "Benchmark Dataset Store", "JSONL · YAML", "Shared benchmark definitions and evaluation dataset samples")
+    ContainerDb(rubric_store, "Rubric Store", "YAML files", "Rubrics and scoring profile definitions")
+}
+
+Rel(engineer, ui, "Uses for workflow control, live monitoring, datasets, and evaluations", "HTTPS")
+Rel(engineer, cli, "Runs workflows and selects adapters", "CLI")
+Rel(api_consumer, api, "Starts workflows and retrieves run data", "REST / WebSocket / SSE")
+Rel(ci_user, eval_runners, "Starts offline and batch evaluations", "CLI / Python API")
+
+Rel(ui, api, "Reads metadata, launches runs, and fetches history", "REST/JSON")
+Rel(ui, event_hub, "Subscribes to live workflow and step events", "WebSocket / SSE")
+
+Rel(cli, registry, "Selects execution adapter by name", "Python API")
+Rel(api, registry, "Resolves selected engine for a run", "Python API")
+Rel(api, event_hub, "Publishes validated execution events", "Python callbacks")
+Rel(api, dataset_loader, "Lists datasets and previews workflow inputs", "Python API")
+Rel(api, server_eval, "Requests scoring for evaluation endpoints", "Python API")
+Rel(api, run_store, "Writes run results and reads run history", "File I/O")
+
+Rel(registry, native_engine, "Returns native engine instance", "Python API")
+Rel(registry, langgraph_engine, "Returns langgraph engine instance", "Python API")
+
+Rel(native_engine, agent_layer, "Executes workflow steps", "asyncio")
+Rel(langgraph_engine, agent_layer, "Executes graph nodes", "LangGraph")
+Rel(native_engine, event_hub, "Emits step lifecycle events", "callbacks")
+Rel(langgraph_engine, event_hub, "Emits step lifecycle events", "callbacks")
+
+Rel(agent_layer, rag_pipeline, "Requests retrieval context when configured", "Python API")
+Rel(agent_layer, model_router, "Requests model selection and inference", "Python API")
+Rel(rag_pipeline, llm_client, "Requests embeddings and reranking when enabled", "Python API")
+Rel(model_router, llm_client, "Dispatches provider calls with fallback and circuit breaking", "Python API")
+
+Rel(llm_client, cache_store, "Reads and writes cached completions", "Disk I/O")
+Rel(llm_client, llm_providers, "Invokes completions, embeddings, and model probes", "HTTPS / SDK / subprocess")
+
+Rel(dataset_loader, dataset_store, "Loads benchmark metadata and samples", "File I/O")
+
+Rel(server_eval, run_store, "Reads completed runs for runtime scoring", "File I/O")
+Rel(server_eval, rubric_store, "Loads scoring profiles and rubrics", "File I/O")
+Rel(server_eval, llm_client, "Calls LLM judge when enabled", "Python API")
+
+Rel(eval_runners, run_store, "Reads completed run artifacts", "File I/O")
+Rel(eval_runners, dataset_loader, "Loads benchmark datasets", "Python API")
+Rel(eval_runners, eval_scorer, "Submits results for scoring", "Python API")
+Rel(eval_scorer, rubric_store, "Loads rubric definitions", "File I/O")
+Rel(eval_scorer, llm_client, "Uses LLM-as-judge when configured", "Python API")
+Rel(eval_scorer, eval_reporters, "Passes scored results", "In-memory objects")
+Rel(eval_reporters, report_store, "Writes evaluation reports", "File I/O")
+
+Rel(api, otel, "Exports server request and execution spans", "OTLP")
+Rel(rag_pipeline, otel, "Exports retrieval and context assembly spans", "OTLP")
+Rel(native_engine, otel, "Exports workflow execution spans", "OTLP")
+
+UpdateLayoutConfig($c4ShapeInRow="4", $c4BoundaryInRow="1")
+</code></pre>
+<h3 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">¶</a></h3>
+<p><strong>Structural protocols instead of abstract base classes for the LLM boundary.</strong> <code>LLMClientProtocol</code> uses <code>typing.Protocol</code> with <code>@runtime_checkable</code>. Any object whose <code>generate_text</code> method matches the signature satisfies the protocol — no import-time coupling between the eval package and <code>agentic-tools</code>. This means the eval package can be imported in environments where <code>agentic-tools</code> is not installed, reducing test setup friction.</p>
+<p><strong>Rubric YAML loaded at call time, not import time.</strong> Rubric YAML files are opened when a <code>Scorer</code> is constructed or an evaluator method is first called. The module-level <code>__init__.py</code> exports are pure class symbols with no file I/O. This keeps import overhead negligible and allows test code to override the rubric path trivially.</p>
+<p><strong>EvaluatorRegistry as a classvar singleton.</strong> The registry is a class-level dict rather than a module-level global. Evaluators register themselves at class-definition time via the <code>@EvaluatorRegistry.register("name")</code> decorator. Discovery is automatic: importing any evaluator module is sufficient for it to appear in the registry.</p>
+<p><strong>Median aggregation over multiple judge runs.</strong> Both <code>PatternEvaluator</code> and <code>StandardEvaluator</code> optionally run the judge prompt <code>N</code> times (default 20 for pattern, 1 for standard) and report the median across runs. This reduces the impact of stochastic LLM output on the final score. The <code>runs</code> parameter is the primary handle for trading cost against variance.</p>
+<p><strong>Discriminated union return type for async evaluation.</strong> <code>AsyncStreamingRunner._eval_one</code> returns <code>tuple[Literal[True], R] | tuple[Literal[False], Exception]</code> — a discriminated union that avoids raising exceptions across <code>asyncio.Task</code> boundaries. This was the design pattern introduced in Sprint B #1 to clear the 35 mypy findings.</p>
+<hr/>
+<h2 id="package-structure">Package Structure<a class="headerlink" href="#package-structure" title="Permanent link">¶</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>agentic-v2-eval/
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>├── src/agentic_v2_eval/
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>│   ├── __init__.py          # 16 public exports; version 0.3.0
+</span><span id="__span-0-4"><a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>│   ├── __main__.py          # CLI: evaluate + report subcommands
+</span><span id="__span-0-5"><a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>│   ├── interfaces.py        # LLMClientProtocol + Evaluator protocols
+</span><span id="__span-0-6"><a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>│   ├── scorer.py            # YAML-rubric weighted scoring engine
+</span><span id="__span-0-7"><a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>│   ├── datasets.py          # Lazy bridge to tools.agents.benchmarks
+</span><span id="__span-0-8"><a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>│   ├── adapters/
+</span><span id="__span-0-9"><a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>│   │   └── llm_client.py    # Lazy-loading bridge to agentic-tools LLMClient
+</span><span id="__span-0-10"><a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a>│   ├── evaluators/
+</span><span id="__span-0-11"><a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>│   │   ├── base.py          # Abstract Evaluator + EvaluatorRegistry
+</span><span id="__span-0-12"><a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>│   │   ├── llm.py           # LLMEvaluator — choice-anchored 5-point judge
+</span><span id="__span-0-13"><a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>│   │   ├── pattern.py       # PatternEvaluator — agentic pattern conformance
+</span><span id="__span-0-14"><a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a>│   │   ├── quality.py       # QualityEvaluator — 5 output quality dimensions
+</span><span id="__span-0-15"><a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a>│   │   └── standard.py      # StandardEvaluator — prompt quality 0-10 grading
+</span><span id="__span-0-16"><a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a>│   ├── metrics/
+</span><span id="__span-0-17"><a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a>│   │   ├── accuracy.py      # accuracy, precision/recall, F1, confusion matrix
+</span><span id="__span-0-18"><a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a>│   │   ├── performance.py   # execution time, memory, throughput, latency percentiles
+</span><span id="__span-0-19"><a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a>│   │   └── quality.py       # code_quality (AST), lint_score, complexity_score
+</span><span id="__span-0-20"><a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a>│   ├── reporters/
+</span><span id="__span-0-21"><a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a>│   │   ├── _summary.py      # Shared calculate_summary() utility
+</span><span id="__span-0-22"><a href="#__codelineno-0-22" id="__codelineno-0-22" name="__codelineno-0-22"></a>│   │   ├── json.py          # JsonReporter + generate_json_report()
+</span><span id="__span-0-23"><a href="#__codelineno-0-23" id="__codelineno-0-23" name="__codelineno-0-23"></a>│   │   ├── markdown.py      # MarkdownReporter + generate_markdown_report()
+</span><span id="__span-0-24"><a href="#__codelineno-0-24" id="__codelineno-0-24" name="__codelineno-0-24"></a>│   │   └── html.py          # HtmlReporter (self-contained CSS) + generate_html_report()
+</span><span id="__span-0-25"><a href="#__codelineno-0-25" id="__codelineno-0-25" name="__codelineno-0-25"></a>│   ├── rubrics/
+</span><span id="__span-0-26"><a href="#__codelineno-0-26" id="__codelineno-0-26" name="__codelineno-0-26"></a>│   │   ├── __init__.py      # load_rubric(), list_rubrics(), get_rubric_path()
+</span><span id="__span-0-27"><a href="#__codelineno-0-27" id="__codelineno-0-27" name="__codelineno-0-27"></a>│   │   ├── default.yaml     # 3 criteria: Accuracy/Completeness/Efficiency
+</span><span id="__span-0-28"><a href="#__codelineno-0-28" id="__codelineno-0-28" name="__codelineno-0-28"></a>│   │   ├── agent.yaml       # 6 criteria: general agent output scoring
+</span><span id="__span-0-29"><a href="#__codelineno-0-29" id="__codelineno-0-29" name="__codelineno-0-29"></a>│   │   ├── code.yaml        # 5 criteria: code generation quality
+</span><span id="__span-0-30"><a href="#__codelineno-0-30" id="__codelineno-0-30" name="__codelineno-0-30"></a>│   │   ├── coding_standards.yaml  # 8 criteria: Python/ML coding standards
+</span><span id="__span-0-31"><a href="#__codelineno-0-31" id="__codelineno-0-31" name="__codelineno-0-31"></a>│   │   ├── pattern.yaml     # 6 criteria + hard gates: pattern adherence
+</span><span id="__span-0-32"><a href="#__codelineno-0-32" id="__codelineno-0-32" name="__codelineno-0-32"></a>│   │   ├── quality.yaml     # 5 LLM judge definitions for QualityEvaluator
+</span><span id="__span-0-33"><a href="#__codelineno-0-33" id="__codelineno-0-33" name="__codelineno-0-33"></a>│   │   ├── prompt_standard.yaml   # Judge prompt for StandardEvaluator
+</span><span id="__span-0-34"><a href="#__codelineno-0-34" id="__codelineno-0-34" name="__codelineno-0-34"></a>│   │   └── prompt_pattern.yaml    # Judge prompts + pattern data (ReAct/CoVe/Reflexion/RAG)
+</span><span id="__span-0-35"><a href="#__codelineno-0-35" id="__codelineno-0-35" name="__codelineno-0-35"></a>│   ├── runners/
+</span><span id="__span-0-36"><a href="#__codelineno-0-36" id="__codelineno-0-36" name="__codelineno-0-36"></a>│   │   ├── batch.py         # BatchRunner[T,R] + run_batch_evaluation()
+</span><span id="__span-0-37"><a href="#__codelineno-0-37" id="__codelineno-0-37" name="__codelineno-0-37"></a>│   │   └── streaming.py     # StreamingRunner + AsyncStreamingRunner + run_streaming_evaluation()
+</span><span id="__span-0-38"><a href="#__codelineno-0-38" id="__codelineno-0-38" name="__codelineno-0-38"></a>│   └── sandbox/
+</span><span id="__span-0-39"><a href="#__codelineno-0-39" id="__codelineno-0-39" name="__codelineno-0-39"></a>│       ├── base.py          # BaseSandbox abstract class
+</span><span id="__span-0-40"><a href="#__codelineno-0-40" id="__codelineno-0-40" name="__codelineno-0-40"></a>│       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
+</span><span id="__span-0-41"><a href="#__codelineno-0-41" id="__codelineno-0-41" name="__codelineno-0-41"></a>└── tests/
+</span><span id="__span-0-42"><a href="#__codelineno-0-42" id="__codelineno-0-42" name="__codelineno-0-42"></a>    ├── conftest.py
+</span><span id="__span-0-43"><a href="#__codelineno-0-43" id="__codelineno-0-43" name="__codelineno-0-43"></a>    ├── test_adapters.py
+</span><span id="__span-0-44"><a href="#__codelineno-0-44" id="__codelineno-0-44" name="__codelineno-0-44"></a>    ├── test_benchmarks.py
+</span><span id="__span-0-45"><a href="#__codelineno-0-45" id="__codelineno-0-45" name="__codelineno-0-45"></a>    ├── test_datasets_bridge.py
+</span><span id="__span-0-46"><a href="#__codelineno-0-46" id="__codelineno-0-46" name="__codelineno-0-46"></a>    ├── test_eval.py
+</span><span id="__span-0-47"><a href="#__codelineno-0-47" id="__codelineno-0-47" name="__codelineno-0-47"></a>    ├── test_metrics.py
+</span><span id="__span-0-48"><a href="#__codelineno-0-48" id="__codelineno-0-48" name="__codelineno-0-48"></a>    ├── test_pattern_evaluator.py
+</span><span id="__span-0-49"><a href="#__codelineno-0-49" id="__codelineno-0-49" name="__codelineno-0-49"></a>    ├── test_quality_evaluator.py
+</span><span id="__span-0-50"><a href="#__codelineno-0-50" id="__codelineno-0-50" name="__codelineno-0-50"></a>    ├── test_reporters.py
+</span><span id="__span-0-51"><a href="#__codelineno-0-51" id="__codelineno-0-51" name="__codelineno-0-51"></a>    ├── test_rubrics.py
+</span><span id="__span-0-52"><a href="#__codelineno-0-52" id="__codelineno-0-52" name="__codelineno-0-52"></a>    ├── test_sandbox.py
+</span><span id="__span-0-53"><a href="#__codelineno-0-53" id="__codelineno-0-53" name="__codelineno-0-53"></a>    └── verify_p2.py
+</span></code></pre></div>
+<hr/>
+<h2 id="evaluator-system">Evaluator System<a class="headerlink" href="#evaluator-system" title="Permanent link">¶</a></h2>
+<h3 id="class-hierarchy">Class Hierarchy<a class="headerlink" href="#class-hierarchy" title="Permanent link">¶</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>abc.ABC
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>└── Evaluator (base.py)
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    └── LLMEvaluator (llm.py)  @dataclass, registered as "llm"
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>EvaluatorRegistry.register("pattern") → PatternEvaluator (pattern.py)
+</span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>EvaluatorRegistry.register("quality") → QualityEvaluator (quality.py)
+</span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>EvaluatorRegistry.register("standard") → StandardEvaluator (standard.py)
+</span></code></pre></div>
+<p>Note: <code>PatternEvaluator</code>, <code>QualityEvaluator</code>, and <code>StandardEvaluator</code> do not extend the abstract <code>Evaluator</code> base class directly — they satisfy the duck-typed <code>Evaluator</code> protocol from <code>interfaces.py</code> while being accepted by the registry's wider <code>type[Any]</code> parameter.</p>
+<h3 id="llmevaluator">LLMEvaluator<a class="headerlink" href="#llmevaluator" title="Permanent link">¶</a></h3>
+<p>The general-purpose choice-anchored judge. Constructs a prompt from <code>prompt_template</code> and <code>system_prompt</code>, sends it to the LLM, then maps the response to a score using <code>STANDARD_CHOICES = [(1, 0.0), (2, 0.25), (3, 0.5), (4, 0.75), (5, 1.0)]</code>.</p>
+<p>Score extraction reads the <strong>last line</strong> of the response first (exact match), then falls back to scanning the last three lines (containment match). If no choice is matched, the score is 0.0 and <code>passed = False</code>.</p>
+<p>Temperature is set to 0.0 for deterministic output.</p>
+<h3 id="patternevaluator">PatternEvaluator<a class="headerlink" href="#patternevaluator" title="Permanent link">¶</a></h3>
+<p>Evaluates whether a prompt or output correctly follows an agentic reasoning pattern. The evaluation sends a structured judge prompt loaded from <code>rubrics/prompt_pattern.yaml</code> that defines two layers of scoring:</p>
+<p><strong>Universal dimensions (7 total, 0–5 scale each):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Dimension</th>
+<th>Hard Gate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIF</td>
+<td>Pattern Invocation Fidelity</td>
+<td>No</td>
+</tr>
+<tr>
+<td>POI</td>
+<td>Phase Ordering Integrity</td>
+<td>Yes (min 4)</td>
+</tr>
+<tr>
+<td>PC</td>
+<td>Phase Completeness</td>
+<td>Yes (min 4)</td>
+</tr>
+<tr>
+<td>CA</td>
+<td>Constraint Adherence</td>
+<td>Yes (min 4)</td>
+</tr>
+<tr>
+<td>SRC</td>
+<td>Self-Reference Correctness</td>
+<td>No</td>
+</tr>
+<tr>
+<td>PR</td>
+<td>Pattern Robustness</td>
+<td>Yes (min 0.75)</td>
+</tr>
+<tr>
+<td>IR</td>
+<td>Interference Resistance</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pattern-specific dimensions (3 per pattern, 0–5 scale):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Dimensions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>R1 (Thought/Action Separation), R2 (Observation Binding), R3 (Termination Discipline)</td>
+</tr>
+<tr>
+<td>CoVe</td>
+<td>C1 (Verification Question Quality), C2 (Evidence Independence), C3 (Revision Delta)</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>F1 (Critique Specificity), F2 (Memory Utilization), F3 (Improvement Signal)</td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>G1 (Retrieval Trigger Accuracy), G2 (Evidence Grounding), G3 (Citation Discipline)</td>
+</tr>
+</tbody>
+</table>
+<p>Scores are aggregated using <strong>median</strong> across <code>runs</code> invocations. Hard gates are evaluated on the aggregated medians, not per-run.</p>
+<h3 id="qualityevaluator">QualityEvaluator<a class="headerlink" href="#qualityevaluator" title="Permanent link">¶</a></h3>
+<p>Scores output quality across five independent LLM judge calls. Each call uses an <code>LLMEvaluatorDefinition</code> loaded from <code>rubrics/quality.yaml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Dimension</th>
+<th>Key Input Variable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>COHERENCE</code></td>
+<td>Logical flow and consistency</td>
+<td><code>{{input}}</code>, <code>{{completion}}</code></td>
+</tr>
+<tr>
+<td><code>FLUENCY</code></td>
+<td>Grammar, spelling, natural language</td>
+<td><code>{{completion}}</code></td>
+</tr>
+<tr>
+<td><code>RELEVANCE</code></td>
+<td>On-topic alignment with query</td>
+<td><code>{{input}}</code>, <code>{{completion}}</code></td>
+</tr>
+<tr>
+<td><code>GROUNDEDNESS</code></td>
+<td>Claims supported by provided context</td>
+<td><code>{{context}}</code>, <code>{{completion}}</code></td>
+</tr>
+<tr>
+<td><code>SIMILARITY</code></td>
+<td>Semantic overlap with reference</td>
+<td><code>{{expected}}</code>, <code>{{completion}}</code></td>
+</tr>
+</tbody>
+</table>
+<p>All five use <code>STANDARD_CHOICES</code> (1–5 → 0.0–1.0). The caller selects which dimensions to evaluate and accumulates scores.</p>
+<h3 id="standardevaluator">StandardEvaluator<a class="headerlink" href="#standardevaluator" title="Permanent link">¶</a></h3>
+<p>Evaluates prompt templates on five 0–10 dimensions using a judge prompt from <code>rubrics/prompt_standard.yaml</code>. The judge returns JSON:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="p">{</span>
+</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="w">  </span><span class="nt">"scores"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-3"><a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="w">    </span><span class="nt">"clarity"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
+</span><span id="__span-2-4"><a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="w">    </span><span class="nt">"effectiveness"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
+</span><span id="__span-2-5"><a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="w">    </span><span class="nt">"structure"</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span>
+</span><span id="__span-2-6"><a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="w">    </span><span class="nt">"specificity"</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
+</span><span id="__span-2-7"><a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="w">    </span><span class="nt">"completeness"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
+</span><span id="__span-2-8"><a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a><span class="w">  </span><span class="p">},</span>
+</span><span id="__span-2-9"><a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="w">  </span><span class="nt">"improvements"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"Add output format section"</span><span class="p">,</span><span class="w"> </span><span class="s2">"Include examples"</span><span class="p">],</span>
+</span><span id="__span-2-10"><a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="w">  </span><span class="nt">"confidence"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span>
+</span><span id="__span-2-11"><a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Grade mapping: A (≥ 90%), B (≥ 80%), C (≥ 70%), D (≥ 60%), F (&lt; 60%). Pass threshold: <code>overall_score &gt;= 7.0</code>.</p>
+<p>Input content longer than 18,000 characters is truncated: the first 16,000 characters are preserved along with the last 1,000 characters, separated by a truncation marker.</p>
+<hr/>
+<h2 id="scoring-engine">Scoring Engine<a class="headerlink" href="#scoring-engine" title="Permanent link">¶</a></h2>
+<p><code>scorer.py</code> implements <code>Scorer</code> and <code>ScoringResult</code>. The scorer:</p>
+<ol>
+<li>Loads a rubric from a YAML file path or an in-memory dict.</li>
+<li>Parses <code>criteria</code> entries into <code>Criterion</code> dataclasses (name, weight, description, min_value, max_value).</li>
+<li>On <code>score(results: dict[str, float])</code>: clamps each input value to <code>[min_value, max_value]</code>, normalizes to <code>[0, 1]</code>, multiplies by weight, sums, and divides by total weight.</li>
+<li>Returns <code>ScoringResult(total_score, weighted_score, criterion_scores, missing_criteria)</code>.</li>
+</ol>
+<p><code>total_score</code> is the unweighted mean. <code>weighted_score</code> is the weight-adjusted aggregate in <code>[0.0, 1.0]</code>. Criteria absent from the input are recorded in <code>missing_criteria</code> without failing the call.</p>
+<hr/>
+<h2 id="runner-architecture">Runner Architecture<a class="headerlink" href="#runner-architecture" title="Permanent link">¶</a></h2>
+<p>All runners are generic over <code>T</code> (test case type) and <code>R</code> (result type), accepting any callable <code>evaluator: Callable[[T], R]</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Runner</th>
+<th>Execution Model</th>
+<th>Result Order</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BatchRunner[T,R]</code></td>
+<td>Sync, sequential</td>
+<td>Submission order</td>
+<td>CI pipelines, finite datasets, all results required before reporting</td>
+</tr>
+<tr>
+<td><code>StreamingRunner[T,R]</code></td>
+<td>Sync iterator</td>
+<td>Submission order</td>
+<td>Terminal progress display without async complexity</td>
+</tr>
+<tr>
+<td><code>AsyncStreamingRunner[T,R]</code></td>
+<td>Async, <code>asyncio.Semaphore(max_concurrency)</code></td>
+<td>Completion order (FIRST_COMPLETED)</td>
+<td>I/O-bound LLM scoring, up to N concurrent calls</td>
+</tr>
+</tbody>
+</table>
+<p><code>BatchRunner.run()</code> returns <code>BatchResult[R]</code> with <code>.results</code>, <code>.errors</code>, <code>.total</code>, <code>.successful</code>, <code>.failed</code>, and <code>.success_rate</code>.</p>
+<p><code>StreamingRunner.run()</code> returns <code>StreamingStats</code>. <code>StreamingRunner.iter_results()</code> is a generator that yields each result as it completes.</p>
+<p><code>AsyncStreamingRunner.iter_results()</code> is an <code>AsyncIterator[R]</code>. It accepts both sync and async evaluator functions (detected via <code>inspect.isawaitable</code>). Concurrency is bounded by a semaphore; results are drained as tasks complete.</p>
+<hr/>
+<h2 id="reporter-architecture">Reporter Architecture<a class="headerlink" href="#reporter-architecture" title="Permanent link">¶</a></h2>
+<p>All reporters share <code>calculate_summary()</code> from <code>reporters/_summary.py</code>, which computes mean/min/max for numeric fields plus a total count.</p>
+<table>
+<thead>
+<tr>
+<th>Reporter</th>
+<th>Function API</th>
+<th>Class API</th>
+<th>Output Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JsonReporter</code></td>
+<td><code>generate_json_report(results, path)</code></td>
+<td><code>JsonReporter(config).generate(results, path)</code></td>
+<td><code>{metadata, results, summary}</code></td>
+</tr>
+<tr>
+<td><code>MarkdownReporter</code></td>
+<td><code>generate_markdown_report(results, path)</code></td>
+<td><code>MarkdownReporter(config).generate(results, path)</code></td>
+<td>Heading + ToC + summary stats + pipe table</td>
+</tr>
+<tr>
+<td><code>HtmlReporter</code></td>
+<td><code>generate_html_report(results, path)</code></td>
+<td><code>HtmlReporter(config).generate(results, path)</code></td>
+<td>Self-contained HTML with embedded CSS</td>
+</tr>
+</tbody>
+</table>
+<p><code>HtmlReporter</code> applies score color coding: cells are styled <code>score-high</code> (green, ≥ 0.8), <code>score-medium</code> (amber, ≥ 0.5), or <code>score-low</code> (red, &lt; 0.5) based on configurable <code>score_thresholds</code>.</p>
+<hr/>
+<h2 id="metrics-modules">Metrics Modules<a class="headerlink" href="#metrics-modules" title="Permanent link">¶</a></h2>
+<h3 id="accuracypy">accuracy.py<a class="headerlink" href="#accuracypy" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>calculate_accuracy(predictions, ground_truth)</code> — element-wise equality, returns float in [0, 1].</li>
+<li><code>calculate_precision_recall(predictions, ground_truth, positive_label)</code> — binary classification precision and recall.</li>
+<li><code>calculate_f1_score(predictions, ground_truth, positive_label)</code> — harmonic mean of precision and recall.</li>
+<li><code>calculate_confusion_matrix(predictions, ground_truth, labels)</code> — nested dict <code>matrix[actual][predicted]</code>.</li>
+</ul>
+<h3 id="performancepy">performance.py<a class="headerlink" href="#performancepy" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>execution_time_score(time_seconds, threshold, penalty_factor)</code> — score 1.0 at or below threshold; exponential decay above.</li>
+<li><code>memory_usage_score(memory_bytes, threshold_mb)</code> — score 1.0 at or below threshold; linear decay above.</li>
+<li><code>throughput_score(items_per_second, target_throughput)</code> — <code>min(1.0, rate/target)</code>.</li>
+<li><code>measure_time()</code> — context manager; populates <code>result["elapsed"]</code> on exit.</li>
+<li><code>benchmark(func, *args, iterations, warmup)</code> — multi-iteration timing returning <code>(last_result, stats_dict)</code>.</li>
+<li><code>latency_percentiles(latencies, percentiles)</code> — P50/P90/P95/P99 from a latency sample list.</li>
+</ul>
+<h3 id="qualitypy-metrics">quality.py (metrics)<a class="headerlink" href="#qualitypy-metrics" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>code_quality_score(code, language)</code> — combines structure, common issues, and Python AST validity checks into a single [0, 1] score.</li>
+<li><code>lint_score(code, language)</code> — heuristic checks (spacing, line length, trailing whitespace, TODO comments, print statements) with per-issue deductions from 1.0.</li>
+<li><code>complexity_score(code, language, max_complexity)</code> — cyclomatic complexity via <code>ast.walk</code>; score 1.0 at or below <code>max_complexity</code>, linear decay above.</li>
+</ul>
+<hr/>
+<h2 id="sandbox">Sandbox<a class="headerlink" href="#sandbox" title="Permanent link">¶</a></h2>
+<p><code>LocalSubprocessSandbox</code> (in <code>sandbox/local.py</code>) runs evaluated code in a subprocess with a configurable timeout (default 30 s) and an optional blocked-command list (<code>safe_mode=True</code>).</p>
+<p>Blocked commands in safe mode include: <code>rm</code>, <code>wget</code>, <code>curl</code>, <code>nc</code>, <code>kill</code>, <code>chmod</code>, <code>chown</code>, <code>dd</code>, <code>mkfs</code>, and other destructive or network-accessing commands.</p>
+<p>The sandbox prevents path-escape by rejecting absolute paths outside the configured sandbox root before execution. It does not provide container-level isolation; for higher assurance, wrap the evaluator in a Docker image.</p>
+<hr/>
+<h2 id="dataset-bridge">Dataset Bridge<a class="headerlink" href="#dataset-bridge" title="Permanent link">¶</a></h2>
+<p><code>datasets.py</code> provides a lazy facade over <code>tools.agents.benchmarks</code>. The benchmark modules are imported only on first access, not at package import time.</p>
+<p>Available benchmarks:</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Tasks</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>swe-bench</code></td>
+<td>SWE-bench</td>
+<td>Full</td>
+<td>Real GitHub issues</td>
+</tr>
+<tr>
+<td><code>swe-bench-lite</code></td>
+<td>SWE-bench Lite</td>
+<td>300</td>
+<td>Quick evaluation subset</td>
+</tr>
+<tr>
+<td><code>swe-bench-verified</code></td>
+<td>SWE-bench Verified</td>
+<td>Subset</td>
+<td>Human-validated</td>
+</tr>
+<tr>
+<td><code>humaneval</code></td>
+<td>HumanEval</td>
+<td>164</td>
+<td>Python function-level tasks</td>
+</tr>
+<tr>
+<td><code>mbpp</code></td>
+<td>MBPP</td>
+<td>974</td>
+<td>Basic Python programming</td>
+</tr>
+<tr>
+<td><code>codeclash</code></td>
+<td>CodeClash</td>
+<td>Variable</td>
+<td>Competitive programming</td>
+</tr>
+<tr>
+<td><code>custom-local</code></td>
+<td>Custom Local</td>
+<td>Variable</td>
+<td>User-defined tasks</td>
+</tr>
+</tbody>
+</table>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_benchmark</span><span class="p">,</span> <span class="n">list_benchmarks</span>
+</span><span id="__span-3-2"><a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">load_benchmark</span><span class="p">(</span><span class="s2">"humaneval"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-3-4"><a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+</span><span id="__span-3-5"><a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">prompt</span><span class="p">[:</span><span class="mi">60</span><span class="p">])</span>
+</span></code></pre></div>
+<hr/>
+<h2 id="server-side-integration">Server-Side Integration<a class="headerlink" href="#server-side-integration" title="Permanent link">¶</a></h2>
+<p>The <code>agentic-workflows-v2</code> server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone <code>agentic-v2-eval</code> package. The integration point is the <code>GET /runs/{filename}/evaluation</code> API endpoint.</p>
+<p>See <code>docs/evaluation/gating.md</code> for the full server-side scoring pipeline, scoring profiles, and hard gate specification.</p>
+<hr/>
+<h2 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">¶</a></h2>
+<p>The CLI is the <code>__main__.py</code> entry point, available as <code>python -m agentic_v2_eval</code> or via the <code>agentic-v2-eval</code> console script registered in <code>pyproject.toml</code>.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="c1"># Score results.json against the built-in default rubric</span>
+</span><span id="__span-4-2"><a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json
+</span><span id="__span-4-3"><a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="c1"># Score against a custom rubric and save scored output</span>
+</span><span id="__span-4-5"><a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-6"><a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="w">  </span>--rubric<span class="w"> </span>rubrics/code.yaml<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-7"><a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a><span class="w">  </span>--output<span class="w"> </span>scored.json
+</span><span id="__span-4-8"><a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a>
+</span><span id="__span-4-9"><a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="c1"># Generate an HTML report</span>
+</span><span id="__span-4-10"><a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>results.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-11"><a href="#__codelineno-4-11" id="__codelineno-4-11" name="__codelineno-4-11"></a><span class="w">  </span>--format<span class="w"> </span>html<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-12"><a href="#__codelineno-4-12" id="__codelineno-4-12" name="__codelineno-4-12"></a><span class="w">  </span>--output<span class="w"> </span>report.html
+</span><span id="__span-4-13"><a href="#__codelineno-4-13" id="__codelineno-4-13" name="__codelineno-4-13"></a>
+</span><span id="__span-4-14"><a href="#__codelineno-4-14" id="__codelineno-4-14" name="__codelineno-4-14"></a><span class="c1"># Generate a Markdown report (default format)</span>
+</span><span id="__span-4-15"><a href="#__codelineno-4-15" id="__codelineno-4-15" name="__codelineno-4-15"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>results.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-16"><a href="#__codelineno-4-16" id="__codelineno-4-16" name="__codelineno-4-16"></a><span class="w">  </span>--format<span class="w"> </span>markdown<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-17"><a href="#__codelineno-4-17" id="__codelineno-4-17" name="__codelineno-4-17"></a><span class="w">  </span>--output<span class="w"> </span>report.md
+</span></code></pre></div>
+<p>The <code>evaluate</code> command accepts a JSON file containing either a list of result dicts or a dict with a <code>"results"</code> key containing a list. Each dict is scored against the rubric; the average weighted score is printed to stdout.</p>
+<hr/>
+<h2 id="public-api">Public API<a class="headerlink" href="#public-api" title="Permanent link">¶</a></h2>
+<p>The package exports 16 symbols from its top-level <code>__init__.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>COHERENCE</code></td>
+<td><code>LLMEvaluatorDefinition \| None</code></td>
+<td>Built-in coherence quality dimension definition</td>
+</tr>
+<tr>
+<td><code>FLUENCY</code></td>
+<td><code>LLMEvaluatorDefinition \| None</code></td>
+<td>Built-in fluency quality dimension definition</td>
+</tr>
+<tr>
+<td><code>GROUNDEDNESS</code></td>
+<td><code>LLMEvaluatorDefinition \| None</code></td>
+<td>Built-in groundedness quality dimension definition</td>
+</tr>
+<tr>
+<td><code>RELEVANCE</code></td>
+<td><code>LLMEvaluatorDefinition \| None</code></td>
+<td>Built-in relevance quality dimension definition</td>
+</tr>
+<tr>
+<td><code>SIMILARITY</code></td>
+<td><code>LLMEvaluatorDefinition \| None</code></td>
+<td>Built-in similarity quality dimension definition</td>
+</tr>
+<tr>
+<td><code>Evaluator</code></td>
+<td>Protocol</td>
+<td>Structural protocol: <code>evaluate(output, expected, **kwargs) -&gt; dict</code></td>
+</tr>
+<tr>
+<td><code>EvaluatorRegistry</code></td>
+<td>Class</td>
+<td>Singleton registry; evaluators register via <code>@EvaluatorRegistry.register("name")</code></td>
+</tr>
+<tr>
+<td><code>LLMClientProtocol</code></td>
+<td>Protocol</td>
+<td>Structural protocol: <code>generate_text(model_name, prompt, temperature, max_tokens) -&gt; str</code></td>
+</tr>
+<tr>
+<td><code>LLMEvaluatorDefinition</code></td>
+<td>Dataclass</td>
+<td>Configuration for a quality evaluator: prompts, choices, model</td>
+</tr>
+<tr>
+<td><code>PatternEvaluator</code></td>
+<td>Class</td>
+<td>Structural conformance for ReAct/CoVe/Reflexion/RAG</td>
+</tr>
+<tr>
+<td><code>PatternScore</code></td>
+<td>Dataclass</td>
+<td>17-field result from pattern evaluation</td>
+</tr>
+<tr>
+<td><code>QualityEvaluator</code></td>
+<td>Class</td>
+<td>Five-dimension output quality evaluator</td>
+</tr>
+<tr>
+<td><code>Scorer</code></td>
+<td>Class</td>
+<td>YAML-rubric weighted scoring engine</td>
+</tr>
+<tr>
+<td><code>ScoringResult</code></td>
+<td>Dataclass</td>
+<td><code>(total_score, weighted_score, criterion_scores, missing_criteria)</code></td>
+</tr>
+<tr>
+<td><code>StandardEvaluator</code></td>
+<td>Class</td>
+<td>Five-dimension prompt quality evaluator with letter grade</td>
+</tr>
+<tr>
+<td><code>StandardScore</code></td>
+<td>Dataclass</td>
+<td><code>(prompt_file, scores, overall_score, grade, passed, improvements, ...)</code></td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">¶</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
+</span><span id="__span-5-2"><a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
+</span><span id="__span-5-3"><a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="c1"># Run full test suite</span>
+</span><span id="__span-5-5"><a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+</span><span id="__span-5-6"><a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a><span class="c1"># Run with coverage</span>
+</span><span id="__span-5-8"><a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>agentic_v2_eval<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+</span><span id="__span-5-9"><a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a href="#__codelineno-5-10" id="__codelineno-5-10" name="__codelineno-5-10"></a><span class="c1"># Skip integration tests (no LLM required)</span>
+</span><span id="__span-5-11"><a href="#__codelineno-5-11" id="__codelineno-5-11" name="__codelineno-5-11"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-m<span class="w"> </span><span class="s2">"not integration"</span>
+</span><span id="__span-5-12"><a href="#__codelineno-5-12" id="__codelineno-5-12" name="__codelineno-5-12"></a>
+</span><span id="__span-5-13"><a href="#__codelineno-5-13" id="__codelineno-5-13" name="__codelineno-5-13"></a><span class="c1"># Static analysis</span>
+</span><span id="__span-5-14"><a href="#__codelineno-5-14" id="__codelineno-5-14" name="__codelineno-5-14"></a>mypy<span class="w"> </span>--strict<span class="w"> </span>src/agentic_v2_eval/
+</span><span id="__span-5-15"><a href="#__codelineno-5-15" id="__codelineno-5-15" name="__codelineno-5-15"></a>ruff<span class="w"> </span>check<span class="w"> </span>src/agentic_v2_eval/
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test files</td>
+<td>11</td>
+</tr>
+<tr>
+<td>Approximate test count</td>
+<td>~215</td>
+</tr>
+<tr>
+<td>asyncio mode</td>
+<td>auto</td>
+</tr>
+<tr>
+<td>Coverage gate</td>
+<td>80%, branch coverage on</td>
+</tr>
+<tr>
+<td>Live API calls in tests</td>
+<td>None — all mock <code>LLMClientProtocol</code></td>
+</tr>
+<tr>
+<td>mypy findings</td>
+<td>0 (cleared Sprint B #1)</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="sprint-b-changelog-eval-package">Sprint B Changelog (Eval Package)<a class="headerlink" href="#sprint-b-changelog-eval-package" title="Permanent link">¶</a></h2>
+<p><strong>Sprint B #1 — All 35 mypy findings cleared</strong> (<code>ed78ee2</code>). Key changes:</p>
+<ul>
+<li><code>types-PyYAML</code> stub package added (2 errors resolved).</li>
+<li><code>runners/streaming.py</code> refactored to use discriminated union <code>tuple[Literal[True], R] | tuple[Literal[False], Exception]</code> for <code>_eval_one</code> return type (6 errors).</li>
+<li><code>datasets.py</code> optional-import guards added via <code>_require_*_module()</code> helpers (6 union-attr + 1 no-any-return error).</li>
+<li>10 missing annotations added throughout.</li>
+<li>10 <code>no-any-return</code> violations fixed via typed locals.</li>
+<li>One <code># type: ignore[return-value]</code> at <code>runners/streaming.py:199</code> retained with justification (mypy cannot narrow <code>inspect.isawaitable</code>).</li>
+<li>CI <code>continue-on-error: true</code> dropped from <code>eval-package-ci.yml</code> simultaneously.</li>
+</ul>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Last update">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+</span>
+<span class="md-source-file__fact">
+<span class="md-icon" title="Created">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+</span>
+</aside>
+<form class="md-feedback" hidden="" name="feedback">
+<fieldset>
+<legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+<div class="md-feedback__inner">
+<div class="md-feedback__list">
+<button class="md-feedback__icon md-icon" data-md-value="1" title="Helpful" type="submit">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"></path></svg>
+</button>
+<button class="md-feedback__icon md-icon" data-md-value="0" title="Could be improved" type="submit">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"></path></svg>
+</button>
+</div>
+<div class="md-feedback__note">
+<div data-md-value="1" hidden="">
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+<div data-md-value="0" hidden="">
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" rel="noopener" target="_blank">issue</a>.
+            </div>
+</div>
+</div>
+</fieldset>
+</form>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<nav aria-label="Footer" class="md-footer__inner md-grid">
+<a aria-label="Previous: Reference" class="md-footer__link md-footer__link--prev" href="../workflows/">
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</div>
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Previous
+              </span>
+<div class="md-ellipsis">
+                Reference
+              </div>
+</div>
+</a>
+<a aria-label="Next: Rubrics" class="md-footer__link md-footer__link--next" href="../evaluation/rubrics/">
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Next
+              </span>
+<div class="md-ellipsis">
+                Rubrics
+              </div>
+</div>
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+</div>
+</a>
+</nav>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/tafreeman/agentic-runtime-platform" rel="noopener" target="_blank" title="GitHub">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+window.mermaidConfig = {default: {
+    startOnLoad: false
+}};</script></body>
+</html>

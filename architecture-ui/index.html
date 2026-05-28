@@ -1,0 +1,4996 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/architecture-ui/">
+      
+      
+        <link rel="prev" href="../architecture-runtime/">
+      
+      
+        <link rel="next" href="../architecture-eval/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>UI Dashboard - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="UI Dashboard - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-ui.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/architecture-ui/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="UI Dashboard - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-ui.png" />
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ui-architecture-agentic-workflows-dashboard" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              UI Dashboard
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technology-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technology Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notable-version-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notable Version Choices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application Bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layout-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layout System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sidebar-componentslayoutsidebartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sidebar (components/layout/Sidebar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btopbar-componentslayoutbtopbartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BTopBar (components/layout/BTopBar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-layout-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page Layout Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bbox-componentscommonbboxtsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BBox (components/common/BBox.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bpill-componentscommonbpilltsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BPill (components/common/BPill.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basciibar-componentscommonbasciibartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BAsciiBar (components/common/BAsciiBar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bspark-componentscommonbsparktsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BSpark (components/common/BSpark.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statusbadge-componentscommonstatusbadgetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StatusBadge (components/common/StatusBadge.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#durationdisplay-componentscommondurationdisplaytsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DurationDisplay (components/common/DurationDisplay.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonviewer-componentscommonjsonviewertsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonViewer (components/common/JsonViewer.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#theme-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Theme System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dag-rendering-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DAG Rendering Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DAG Rendering Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#component-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layout-algorithm-componentsdagdaglayoutts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout Algorithm (components/dag/dagLayout.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflowdag-component-componentsdagworkflowdagtsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkflowDAG Component (components/dag/WorkflowDAG.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepnode-componentsdagstepnodetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StepNode (components/dag/StepNode.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bdagmini-componentsdagbdagminitsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BDagMini (components/dag/BDagMini.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-time-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-time Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-time Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#websocket-connection-apiwebsocketts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket Connection (api/websocket.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#useworkflowstream-hook-hooksuseworkflowstreamts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        useWorkflowStream Hook (hooks/useWorkflowStream.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usenodeconfigupdate-hook-hooksusenodeconfigupdatets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        useNodeConfigUpdate Hook (hooks/useNodeConfigUpdate.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event-type-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Type Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-api-client-apiclientts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API Client (api/client.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tanstack-query-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TanStack Query Hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#apperrorboundary-componentsstatesapperrorboundarytsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppErrorBoundary (components/states/AppErrorBoundary.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emptystate-componentsstatesemptystatetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmptyState (components/states/EmptyState.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-error-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline Error Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dev-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dev Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screenshots-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technology-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technology Stack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#notable-version-choices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notable Version Choices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#application-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Application Bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#routing-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routing Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#layout-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Layout System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sidebar-componentslayoutsidebartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sidebar (components/layout/Sidebar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#btopbar-componentslayoutbtopbartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BTopBar (components/layout/BTopBar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#page-layout-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Page Layout Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bbox-componentscommonbboxtsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BBox (components/common/BBox.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bpill-componentscommonbpilltsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BPill (components/common/BPill.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basciibar-componentscommonbasciibartsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BAsciiBar (components/common/BAsciiBar.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bspark-componentscommonbsparktsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BSpark (components/common/BSpark.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statusbadge-componentscommonstatusbadgetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StatusBadge (components/common/StatusBadge.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#durationdisplay-componentscommondurationdisplaytsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DurationDisplay (components/common/DurationDisplay.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonviewer-componentscommonjsonviewertsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JsonViewer (components/common/JsonViewer.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#theme-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Theme System
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dag-rendering-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DAG Rendering Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DAG Rendering Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#component-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layout-algorithm-componentsdagdaglayoutts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layout Algorithm (components/dag/dagLayout.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflowdag-component-componentsdagworkflowdagtsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkflowDAG Component (components/dag/WorkflowDAG.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stepnode-componentsdagstepnodetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StepNode (components/dag/StepNode.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bdagmini-componentsdagbdagminitsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BDagMini (components/dag/BDagMini.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#real-time-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real-time Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Real-time Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#websocket-connection-apiwebsocketts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket Connection (api/websocket.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#useworkflowstream-hook-hooksuseworkflowstreamts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        useWorkflowStream Hook (hooks/useWorkflowStream.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usenodeconfigupdate-hook-hooksusenodeconfigupdatets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        useNodeConfigUpdate Hook (hooks/useNodeConfigUpdate.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event-type-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Type Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Layer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data Layer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-api-client-apiclientts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API Client (api/client.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tanstack-query-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TanStack Query Hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#keyboard-shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keyboard Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#apperrorboundary-componentsstatesapperrorboundarytsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AppErrorBoundary (components/states/AppErrorBoundary.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emptystate-componentsstatesemptystatetsx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmptyState (components/states/EmptyState.tsx)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-error-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inline Error Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-and-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Development
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Development">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dev-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dev Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#screenshots-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Screenshots Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/architecture-ui.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/architecture-ui.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="ui-architecture-agentic-workflows-dashboard">UI Architecture — Agentic Workflows Dashboard<a class="headerlink" href="#ui-architecture-agentic-workflows-dashboard" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Scope:</strong> <code>agentic-workflows-v2/ui/</code>
+<strong>Stack:</strong> React 19 · Vite 6 · TanStack Query 5 · @xyflow/react 12 · react-router-dom 7 · Tailwind CSS 3 · TypeScript 6
+<strong>Themes:</strong> dark (default) · paper (warm cream) · bolt (cobalt blue)</p>
+</blockquote>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#executive-summary">Executive Summary</a></li>
+<li><a href="#technology-stack">Technology Stack</a></li>
+<li><a href="#application-bootstrap">Application Bootstrap</a></li>
+<li><a href="#routing-architecture">Routing Architecture</a></li>
+<li><a href="#layout-system">Layout System</a></li>
+<li><a href="#design-system">Design System</a></li>
+<li><a href="#theme-system">Theme System</a></li>
+<li><a href="#dag-rendering-engine">DAG Rendering Engine</a></li>
+<li><a href="#real-time-architecture">Real-time Architecture — WebSocket</a></li>
+<li><a href="#data-layer">Data Layer — TanStack Query</a></li>
+<li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+<li><a href="#accessibility">Accessibility</a></li>
+<li><a href="#feature-flags">Feature Flags</a></li>
+<li><a href="#error-handling">Error Handling</a></li>
+<li><a href="#build-and-development">Build and Development</a></li>
+<li><a href="#screenshots-reference">Screenshots Reference</a></li>
+</ol>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<p>The dashboard is a single-page application that serves as the observability and control plane for the multi-agent workflow runtime. It covers six top-level domains:</p>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dashboard</strong></td>
+<td>Aggregate run metrics, 14-day activity histogram, recent run table</td>
+</tr>
+<tr>
+<td><strong>Workflows</strong></td>
+<td>Searchable registry; per-workflow DAG viewer and run launcher</td>
+</tr>
+<tr>
+<td><strong>Live</strong></td>
+<td>Real-time execution monitor driven by a WebSocket stream</td>
+</tr>
+<tr>
+<td><strong>Runs</strong></td>
+<td>Historical run archive with status filtering and score display</td>
+</tr>
+<tr>
+<td><strong>Datasets</strong></td>
+<td>Three-pane browser for evaluation datasets and sample inspection</td>
+</tr>
+<tr>
+<td><strong>Evaluations</strong></td>
+<td>Score distribution histogram, per-workflow pass rates, rubric accordion</td>
+</tr>
+</tbody>
+</table>
+<p>The application uses a <strong>terminal/ASCII design language</strong> throughout: monospace fonts, bracket-styled status tokens (<code>[OK ]</code>, <code>[ERR]</code>, <code>[RUN]</code>), thin borders, and a muted colour palette. Three themes — dark, paper, and bolt — are applied by toggling the <code>data-theme</code> attribute on <code>&lt;html&gt;</code>.</p>
+<p>All data fetching goes through <strong>TanStack Query</strong> backed by a thin REST API client. Live execution state is streamed over a <strong>WebSocket connection</strong> whose events are reduced by the <code>useWorkflowStream</code> hook. The DAG canvas is rendered by <strong>@xyflow/react</strong> with a custom <code>StepNode</code> that reflects live execution status.</p>
+<hr />
+<h2 id="technology-stack">Technology Stack<a class="headerlink" href="#technology-stack" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>agentic-workflows-v2/ui/
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── React 19.2         — UI rendering, StrictMode, concurrent features
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── react-router-dom 7 — SPA routing (BrowserRouter, declarative routes)
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── TanStack Query 5   — server state, caching, polling
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── @xyflow/react 12   — interactive DAG canvas (ReactFlow provider pattern)
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── Vite 6             — dev server (HMR), production build (Rollup)
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├── Tailwind CSS 3     — utility-first styling, CSS variable token bridge
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>├── TypeScript 6       — strict mode, all function signatures typed
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>├── Vitest 2           — unit and component tests
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>├── Playwright         — E2E tests
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>└── lucide-react 1.8   — icon library (SVG, tree-shakeable)
+</span></code></pre></div>
+<h3 id="notable-version-choices">Notable Version Choices<a class="headerlink" href="#notable-version-choices" title="Permanent link">&para;</a></h3>
+<p><strong>React 19</strong> — Hooks-first throughout; no class components except <code>AppErrorBoundary</code> (required by React's error boundary API).</p>
+<p><strong>react-router-dom v7</strong> — Declarative <code>&lt;Routes&gt;/&lt;Route&gt;</code> only; no data router loaders are used. Navigation is <code>useNavigate()</code> plus <code>&lt;Link&gt;</code>.</p>
+<p><strong>@xyflow/react v12</strong> — The v12 API requires wrapping inner components in <code>ReactFlowProvider</code>. The inner component uses <code>useReactFlow()</code> to access <code>fitView</code>. See <a href="#dag-rendering-engine">DAG Rendering Engine</a>.</p>
+<p><strong>TypeScript 6, strict mode</strong> — The type system is the schema contract boundary. Event types are generated from the Python Pydantic contract and live in <code>api/events.generated.ts</code>. All API types live in <code>api/types.ts</code>.</p>
+<hr />
+<h2 id="application-bootstrap">Application Bootstrap<a class="headerlink" href="#application-bootstrap" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>agentic-workflows-v2/ui/src/main.tsx</code></p>
+<p>The component tree on startup:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>StrictMode
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  └─ QueryClientProvider (queryClient)
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>       └─ BrowserRouter
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>            └─ AppErrorBoundary
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>                 └─ App
+</span></code></pre></div>
+<p>The <code>QueryClient</code> is created once at module scope with global defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Value</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>refetchOnWindowFocus</code></td>
+<td><code>false</code></td>
+<td>Prevents flicker when switching browser tabs during a live run</td>
+</tr>
+<tr>
+<td><code>retry</code></td>
+<td><code>1</code></td>
+<td>One automatic retry on transient failures; avoids infinite retry loops</td>
+</tr>
+<tr>
+<td><code>staleTime</code></td>
+<td><code>10_000 ms</code></td>
+<td>10 s cache window keeps the UI responsive without excessive network traffic</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>AppErrorBoundary</code> wraps the entire tree so any unhandled render-time exception shows the ASCII <code>[!]</code> error layout rather than a blank screen.</p>
+<hr />
+<h2 id="routing-architecture">Routing Architecture<a class="headerlink" href="#routing-architecture" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>agentic-workflows-v2/ui/src/App.tsx</code></p>
+<p>All routes are defined in a flat <code>&lt;Routes&gt;</code> block. The outer shell is a fixed <code>flex h-screen overflow-hidden</code> container: the 192 px <code>Sidebar</code> on the left, and a <code>&lt;main&gt;</code> flex-1 region on the right.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Route                          Component
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>/                              DashboardPage
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>/workflows                     WorkflowsPage
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>/workflows/:name               WorkflowDetailPage
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>/workflows/:name/edit          WorkflowEditorPage   [feature-flagged]
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>/runs                          RunsPage
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>/runs/:filename                RunDetailPage
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>/live/:runId                   LivePage
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>/datasets                      DatasetsPage
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>/evaluations                   EvaluationsPage
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>*                              NotFoundPage
+</span></code></pre></div>
+<p>The <code>/workflows/:name/edit</code> route is guarded by <code>isWorkflowBuilderEnabled()</code>. When the flag is off the route is not registered at all, so a direct URL hit falls through to <code>NotFoundPage</code>.</p>
+<p>The <code>&lt;main&gt;</code> element carries <code>id="main-content"</code> and <code>tabIndex={-1}</code>. The skip-link in <code>App.tsx</code> (<code>href="#main-content"</code>) is visually hidden until keyboard-focused, satisfying WCAG 2.1 SC 2.4.1.</p>
+<hr />
+<h2 id="layout-system">Layout System<a class="headerlink" href="#layout-system" title="Permanent link">&para;</a></h2>
+<h3 id="sidebar-componentslayoutsidebartsx">Sidebar (<code>components/layout/Sidebar.tsx</code>)<a class="headerlink" href="#sidebar-componentslayoutsidebartsx" title="Permanent link">&para;</a></h3>
+<p>A 192 px fixed-width column that owns navigation and theme controls.</p>
+<p><strong>Navigation links</strong> (rendered by <code>NavLink</code> with <code>isActive</code> callback):</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Route</th>
+<th>Icon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dashboard</td>
+<td><code>/</code></td>
+<td>LayoutDashboard</td>
+</tr>
+<tr>
+<td>workflows</td>
+<td><code>/workflows</code></td>
+<td>Workflow</td>
+</tr>
+<tr>
+<td>live</td>
+<td><code>/live/latest</code></td>
+<td>Radio</td>
+</tr>
+<tr>
+<td>runs</td>
+<td><code>/runs</code></td>
+<td>List</td>
+</tr>
+<tr>
+<td>datasets</td>
+<td><code>/datasets</code></td>
+<td>Database</td>
+</tr>
+<tr>
+<td>evals</td>
+<td><code>/evaluations</code></td>
+<td>Trophy</td>
+</tr>
+</tbody>
+</table>
+<p>Active links receive <code>border-l-2 border-b-clay bg-b-clay-soft text-b-clay</code>. All links have <code>focus:ring-1 focus:ring-b-clay/50</code> for keyboard navigation. The footer renders theme toggle buttons: <code>[dark]</code>, <code>[paper]</code>, <code>[bolt]</code>.</p>
+<h3 id="btopbar-componentslayoutbtopbartsx">BTopBar (<code>components/layout/BTopBar.tsx</code>)<a class="headerlink" href="#btopbar-componentslayoutbtopbartsx" title="Permanent link">&para;</a></h3>
+<p>A 36 px breadcrumb bar rendered at the top of each page. Displays <code>PROMPTS : ~/&lt;path&gt;</code> in monospace with a blinking cursor (<code>animate-b-blink</code>). A right-slot <code>children</code> prop receives action buttons.</p>
+<h3 id="page-layout-contract">Page Layout Contract<a class="headerlink" href="#page-layout-contract" title="Permanent link">&para;</a></h3>
+<p>Every page follows a consistent three-zone structure:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>┌─────────────────────────────────────────────┐
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>│  BTopBar (36 px)                            │
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>├─────────────────────────────────────────────┤
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>│  Optional header band (workflow name, etc.) │
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>├─────────────────────────────────────────────┤
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>│  Scrollable or split content area (flex-1)  │
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>└─────────────────────────────────────────────┘
+</span></code></pre></div>
+<p>Two-panel pages (WorkflowDetail, RunDetail, LivePage, WorkflowEditor) split the content area horizontally: a main canvas region on the left and a fixed-width sidebar panel (~430–450 px) on the right.</p>
+<hr />
+<h2 id="design-system">Design System<a class="headerlink" href="#design-system" title="Permanent link">&para;</a></h2>
+<p>The UI implements a custom ASCII-influenced design language called <strong>Direction B</strong>. It lives entirely in CSS custom properties defined in <code>src/styles/tokens.css</code> and is wired into Tailwind through semantic class names prefixed with <code>b-</code>.</p>
+<h3 id="bbox-componentscommonbboxtsx">BBox (<code>components/common/BBox.tsx</code>)<a class="headerlink" href="#bbox-componentscommonbboxtsx" title="Permanent link">&para;</a></h3>
+<p>The primary card/panel primitive. A <code>rounded-[4px] border border-b-line bg-b-bg1</code> container with an optional titled header bar (<code>bg-b-bg2</code>) and optional right slot.</p>
+<div class="language-tsx highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">&lt;</span><span class="nt">BBox</span><span class="w"> </span><span class="na">title</span><span class="o">=</span><span class="s">&quot;recent runs&quot;</span><span class="w"> </span><span class="na">right</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">Link</span><span class="p">&gt;[</span><span class="nx">view</span><span class="w"> </span><span class="nx">all</span><span class="p">]&lt;/</span><span class="nt">Link</span><span class="p">&gt;}&gt;</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p">...</span><span class="nx">content</span><span class="p">...</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="p">&lt;/</span><span class="nt">BBox</span><span class="p">&gt;</span>
+</span></code></pre></div>
+<p>The title bar uses a <code>▊</code> glyph in <code>text-b-green</code> as a visual prefix, followed by monospace uppercase text at 11 px with 0.5 px letter spacing.</p>
+<h3 id="bpill-componentscommonbpilltsx">BPill (<code>components/common/BPill.tsx</code>)<a class="headerlink" href="#bpill-componentscommonbpilltsx" title="Permanent link">&para;</a></h3>
+<p>An inline status badge with six tones:</p>
+<table>
+<thead>
+<tr>
+<th>Tone</th>
+<th>Visual</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ok</code></td>
+<td>green border/bg</td>
+<td>success, pass</td>
+</tr>
+<tr>
+<td><code>err</code></td>
+<td>red border/bg</td>
+<td>failed, fail</td>
+</tr>
+<tr>
+<td><code>warn</code></td>
+<td>amber border/bg</td>
+<td>skipped, C-grade</td>
+</tr>
+<tr>
+<td><code>info</code></td>
+<td>blue border/bg</td>
+<td>informational</td>
+</tr>
+<tr>
+<td><code>dim</code></td>
+<td>text-dim, transparent</td>
+<td>pending, neutral</td>
+</tr>
+<tr>
+<td><code>clay</code></td>
+<td>clay border/bg</td>
+<td>running, active</td>
+</tr>
+</tbody>
+</table>
+<p>Renders as <code>rounded-sm border px-[7px] py-[2px] font-mono text-[10px] uppercase tracking-[0.5px]</code>.</p>
+<h3 id="basciibar-componentscommonbasciibartsx">BAsciiBar (<code>components/common/BAsciiBar.tsx</code>)<a class="headerlink" href="#basciibar-componentscommonbasciibartsx" title="Permanent link">&para;</a></h3>
+<p>A fixed-width ASCII progress bar using <code>█</code> (filled) and <code>░</code> (empty) block characters. Accepts <code>value</code> (0–1), <code>width</code> (character count, default 20), and a <code>color</code> token.</p>
+<p>Example: <code>████████████░░░░░░░░</code> — 60%.</p>
+<p>Used in EvaluationsPage workflow pass rates, RunDetailPage evaluation score, and <code>EvaluationRubricAccordion</code> criterion rows.</p>
+<h3 id="bspark-componentscommonbsparktsx">BSpark (<code>components/common/BSpark.tsx</code>)<a class="headerlink" href="#bspark-componentscommonbsparktsx" title="Permanent link">&para;</a></h3>
+<p>An inline SVG sparkline. Takes an array of numeric values, normalises them to the visible height, and renders a <code>&lt;polyline&gt;</code> with <code>preserveAspectRatio="none"</code> so it fills its container width. Used in the four stat cards on DashboardPage.</p>
+<h3 id="statusbadge-componentscommonstatusbadgetsx">StatusBadge (<code>components/common/StatusBadge.tsx</code>)<a class="headerlink" href="#statusbadge-componentscommonstatusbadgetsx" title="Permanent link">&para;</a></h3>
+<p>A fixed-width ASCII status token used in live step lists:</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Glyph</th>
+<th>Style</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pending</td>
+<td><code>[----]</code></td>
+<td>text-dim</td>
+</tr>
+<tr>
+<td>running</td>
+<td><code>[RUN]</code></td>
+<td>clay + animate-pulse</td>
+</tr>
+<tr>
+<td>success</td>
+<td><code>[OK ]</code></td>
+<td>green</td>
+</tr>
+<tr>
+<td>failed</td>
+<td><code>[ERR]</code></td>
+<td>red</td>
+</tr>
+<tr>
+<td>skipped</td>
+<td><code>[WARN]</code></td>
+<td>amber</td>
+</tr>
+<tr>
+<td>cancelled</td>
+<td><code>[----]</code></td>
+<td>text-dim</td>
+</tr>
+</tbody>
+</table>
+<h3 id="durationdisplay-componentscommondurationdisplaytsx">DurationDisplay (<code>components/common/DurationDisplay.tsx</code>)<a class="headerlink" href="#durationdisplay-componentscommondurationdisplaytsx" title="Permanent link">&para;</a></h3>
+<p>Formats a millisecond integer: <code>&lt; 1 s → "42ms"</code>, <code>&lt; 60 s → "1.4s"</code>, <code>&gt;= 60 s → "2m 03s"</code>. Returns <code>--</code> for null/undefined.</p>
+<h3 id="jsonviewer-componentscommonjsonviewertsx">JsonViewer (<code>components/common/JsonViewer.tsx</code>)<a class="headerlink" href="#jsonviewer-componentscommonjsonviewertsx" title="Permanent link">&para;</a></h3>
+<p>A collapsible tree viewer for arbitrary JSON. Features:
+- Collapsible objects/arrays with chevron toggle buttons
+- Long strings truncated at 200 chars with expand button
+- Type-coloured values: strings green-400, numbers blue-400, booleans amber-400, nulls/undefined grey
+- <code>maxDepth</code> prop (default 4) limits auto-expansion depth</p>
+<hr />
+<h2 id="theme-system">Theme System<a class="headerlink" href="#theme-system" title="Permanent link">&para;</a></h2>
+<p><strong>Files:</strong> <code>src/hooks/useTheme.ts</code>, <code>src/styles/tokens.css</code></p>
+<p>Themes are applied by setting <code>document.documentElement.dataset.theme</code> to <code>"dark"</code>, <code>"paper"</code>, or <code>"bolt"</code>. The value is persisted to <code>localStorage</code> under key <code>ui_theme</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Theme</th>
+<th>Background</th>
+<th>Primary accent</th>
+<th>Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dark</code></td>
+<td><code>rgb(8 8 12)</code></td>
+<td>Clay orange <code>rgb(217 119 87)</code></td>
+<td>Default; low-light</td>
+</tr>
+<tr>
+<td><code>paper</code></td>
+<td><code>rgb(250 247 238)</code></td>
+<td>Rust orange <code>rgb(184 74 28)</code></td>
+<td>Warm light; print-like</td>
+</tr>
+<tr>
+<td><code>bolt</code></td>
+<td><code>rgb(255 255 255)</code></td>
+<td>Cobalt blue <code>rgb(47 93 255)</code></td>
+<td>Corporate / high-contrast</td>
+</tr>
+</tbody>
+</table>
+<p>All colours are defined as <strong>RGB triplets without the <code>rgb()</code> wrapper</strong> so they compose with Tailwind's opacity modifier:</p>
+<div class="language-css highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c">/* tokens.css */</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">--b-clay</span><span class="o">:</span><span class="w"> </span><span class="nt">217</span><span class="w"> </span><span class="nt">119</span><span class="w"> </span><span class="nt">87</span><span class="o">;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c">/* In Tailwind */</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">bg-b-clay</span><span class="o">/</span><span class="nt">10</span><span class="w">   </span><span class="err">→</span><span class="w">   </span><span class="nt">background</span><span class="o">:</span><span class="w"> </span><span class="nt">rgb</span><span class="o">(</span><span class="nt">217</span><span class="w"> </span><span class="nt">119</span><span class="w"> </span><span class="nt">87</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nt">0</span><span class="p">.</span><span class="nc">1</span><span class="o">)</span>
+</span></code></pre></div>
+<p>The <code>useTheme()</code> hook returns <code>[theme, setTheme]</code>. <code>applyTheme(theme)</code> is exported for non-React contexts (tests).</p>
+<p><strong>Scrollbar theming:</strong> <code>--b-scroll-thumb</code> defines the scrollbar color across all three themes via <code>scrollbar-color</code> CSS property (applied globally in <code>tokens.css</code>).</p>
+<p><strong>Shared animations defined in tokens.css:</strong>
+- <code>b-dash-flow</code> — animated SVG stroke-dashoffset for flowing edge lines
+- <code>b-pulse-slow</code> — 0.4 opacity oscillation for running indicators
+- <code>b-blink</code> — 50% duty-cycle blink for the BTopBar cursor</p>
+<p><strong>Contrast compliance:</strong> <code>--b-text-dim</code> is audited against each theme's <code>--b-bg1</code>. Comments in <code>tokens.css</code> record dates and ratios: 5.03:1 (dark, audited 2026-04-22), 7.45:1 (paper, audited 2026-04-21). Both exceed WCAG AA 4.5:1.</p>
+<hr />
+<h2 id="dag-rendering-engine">DAG Rendering Engine<a class="headerlink" href="#dag-rendering-engine" title="Permanent link">&para;</a></h2>
+<h3 id="component-hierarchy">Component Hierarchy<a class="headerlink" href="#component-hierarchy" title="Permanent link">&para;</a></h3>
+<p>The DAG canvas appears on four pages: WorkflowDetailPage, WorkflowEditorPage, RunDetailPage, and LivePage.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>WorkflowDAG (ReactFlowProvider wrapper)
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  └─ WorkflowDAGInner (uses useReactFlow)
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>       ├─ StepNode (custom node — memo-ised)
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>       ├─ dagLayout.ts (pure layout function)
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>       ├─ Background (dot grid)
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>       ├─ Controls
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>       └─ MiniMap
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>BDagMini (static SVG thumbnail — no xyflow dependency)
+</span></code></pre></div>
+<h3 id="layout-algorithm-componentsdagdaglayoutts">Layout Algorithm (<code>components/dag/dagLayout.ts</code>)<a class="headerlink" href="#layout-algorithm-componentsdagdaglayoutts" title="Permanent link">&para;</a></h3>
+<p><code>layoutDAG(nodes, edges)</code> computes positions using <strong>Kahn's topological sort</strong>:</p>
+<ol>
+<li>Build in-degree map and children adjacency list from edges.</li>
+<li>Enqueue zero-in-degree nodes at level 0.</li>
+<li>BFS: <code>childLevel = max(currentLevel + 1, existingChildLevel)</code>.</li>
+<li>Group nodes by level; centre-align each level horizontally.</li>
+</ol>
+<p>Constants: <code>NODE_WIDTH = 240</code>, <code>NODE_HEIGHT = 120</code>, <code>H_GAP = 60</code>, <code>V_GAP = 80</code>.</p>
+<p>These constants are duplicated in <code>BDagMini</code> (<code>NODE_W = 240</code>, <code>NODE_H = 120</code>) to keep thumbnail geometry consistent with the full canvas.</p>
+<h3 id="workflowdag-component-componentsdagworkflowdagtsx">WorkflowDAG Component (<code>components/dag/WorkflowDAG.tsx</code>)<a class="headerlink" href="#workflowdag-component-componentsdagworkflowdagtsx" title="Permanent link">&para;</a></h3>
+<p>Props:</p>
+<table>
+<thead>
+<tr>
+<th>Prop</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dagNodes</code></td>
+<td><code>DAGNode[]</code></td>
+<td>Static DAG structure from the API</td>
+</tr>
+<tr>
+<td><code>dagEdges</code></td>
+<td><code>DAGEdge[]</code></td>
+<td>Dependency edges</td>
+</tr>
+<tr>
+<td><code>stepStates</code></td>
+<td><code>Map&lt;string, StepLiveState&gt;</code></td>
+<td>Optional live or historical step status</td>
+</tr>
+<tr>
+<td><code>edgeCounts</code></td>
+<td><code>Map&lt;string, number&gt;</code></td>
+<td>Edge traversal counts (label on repeated runs)</td>
+</tr>
+<tr>
+<td><code>kickbackEdges</code></td>
+<td><code>Set&lt;string&gt;</code></td>
+<td>Review→rework edges rendered violet</td>
+</tr>
+<tr>
+<td><code>onNodeClick</code></td>
+<td><code>(stepName: string) =&gt; void</code></td>
+<td>Selection callback</td>
+</tr>
+<tr>
+<td><code>disconnected</code></td>
+<td><code>boolean</code></td>
+<td>Pauses live animations when WebSocket is disconnected</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Optimistic running status:</strong> When <code>stepStates</code> is provided but a node shows <code>"pending"</code> and all its dependencies are <code>"success"</code> or <code>"skipped"</code>, the <code>effectiveStepStates</code> computation promotes that node to <code>"running"</code>. This closes the visual gap between the backend starting a step and the <code>step_start</code> WebSocket event arriving.</p>
+<p><strong>Auto-pan behaviour:</strong> While a workflow runs, the camera pans to the currently running node(s) with an 800 ms smooth transition. A <code>userInteractedRef</code> tracks manual pan/zoom gestures. Two or more gestures within a 2 s window sets <code>userInteracted = true</code> and suppresses auto-pan for 5 s. On workflow completion, <code>fitView({ padding: 0.15, duration: 800 })</code> is called.</p>
+<p><strong>Edge colour table:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Stroke colour</th>
+<th>Animated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source success + target running</td>
+<td>Blue <code>#3b82f6</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Source success (target not running)</td>
+<td>Faint green <code>#22c55e40</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Source failed</td>
+<td>Faint red <code>#ef444440</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Kickback edge (traversed)</td>
+<td>Violet <code>#a855f7</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Default/pending</td>
+<td>Gray <code>#374151</code></td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p><strong>MiniMap node colours:</strong> running = blue, success = green, failed = red, skipped = amber, default = gray.</p>
+<h3 id="stepnode-componentsdagstepnodetsx">StepNode (<code>components/dag/StepNode.tsx</code>)<a class="headerlink" href="#stepnode-componentsdagstepnodetsx" title="Permanent link">&para;</a></h3>
+<p>A memo-ised custom xyflow node registered as type <code>"step"</code>. Four visual regions:</p>
+<ol>
+<li><strong>Status + name + tier</strong> — <code>[OK ]</code>/<code>[RUN]</code>/<code>[ERR]</code> glyph with CSS-variable colour, truncated step name, optional tier pill in <code>b-purple</code>.</li>
+<li><strong>Token counts</strong> — <code>in: N</code> / <code>out: N</code> or <code>tokens: N</code> when present; a <code>StepTimer</code> sub-component shows live elapsed time (<code>setInterval</code> 250 ms) while running, then final duration.</li>
+<li><strong>Streaming bar</strong> — an 8-cell ASCII animation (<code>▮▮▮▮▯▯▯▯</code> cycling at 150 ms) shown while <code>status === "running" &amp;&amp; !disconnected</code>.</li>
+<li><strong>Error line</strong> — up to 60 px scrollable error text shown when <code>status === "failed"</code>.</li>
+</ol>
+<h3 id="bdagmini-componentsdagbdagminitsx">BDagMini (<code>components/dag/BDagMini.tsx</code>)<a class="headerlink" href="#bdagmini-componentsdagbdagminitsx" title="Permanent link">&para;</a></h3>
+<p>A static SVG thumbnail. Shares <code>layoutDAG</code> for positions but renders plain <code>&lt;rect&gt;</code> and <code>&lt;line&gt;</code> SVG elements. Colours use <code>rgb(var(--b-*))</code> CSS variables for full theme support. Has no xyflow dependency — suitable for places where the full canvas overhead is unnecessary (e.g., the WorkflowDetailPage right sidebar).</p>
+<hr />
+<h2 id="real-time-architecture">Real-time Architecture<a class="headerlink" href="#real-time-architecture" title="Permanent link">&para;</a></h2>
+<h3 id="websocket-connection-apiwebsocketts">WebSocket Connection (<code>api/websocket.ts</code>)<a class="headerlink" href="#websocket-connection-apiwebsocketts" title="Permanent link">&para;</a></h3>
+<p><code>connectExecutionStream(runId, onEvent, options)</code> opens a WebSocket to <code>ws[s]://&lt;host&gt;/ws/execution/&lt;runId&gt;</code>.</p>
+<p><strong>Dev environment note:</strong> <code>VITE_API_PROXY_TARGET</code> is read to build a direct WebSocket URL to the backend, bypassing the Vite proxy. Vite's HTTP proxy drops WebSocket upgrade headers, so direct connection is required in development.</p>
+<p><strong>Reconnection:</strong> Exponential backoff with configurable parameters (defaults: <code>maxRetries = 5</code>, <code>retryDelayMs = 1000</code>). Retry sequence: 1 s, 2 s, 4 s, 8 s, 16 s (31 s total). Malformed JSON frames are logged (first 200 chars) and dropped; the stream continues.</p>
+<h3 id="useworkflowstream-hook-hooksuseworkflowstreamts">useWorkflowStream Hook (<code>hooks/useWorkflowStream.ts</code>)<a class="headerlink" href="#useworkflowstream-hook-hooksuseworkflowstreamts" title="Permanent link">&para;</a></h3>
+<p>The primary consumer of the WebSocket stream for live execution. Returns <code>WorkflowStreamState</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>WorkflowStreamState
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  stepStates:      Map&lt;string, StepState&gt;
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  events:          ExecutionEvent[]
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>  workflowStatus:  &quot;connecting&quot; | &quot;running&quot; | &quot;evaluating&quot; | &quot;completed&quot; | &quot;failed&quot; | &quot;error&quot;
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>  evaluation:      EvaluationResult | null
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>  error:           string | null
+</span></code></pre></div>
+<p><strong>Event state machine:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>State change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflow_start</code></td>
+<td>status → <code>"running"</code></td>
+</tr>
+<tr>
+<td><code>step_start</code></td>
+<td>stepStates: insert <code>{status:"running", startTime, input}</code></td>
+</tr>
+<tr>
+<td><code>step_end</code></td>
+<td>stepStates: update with final status, duration, model, tokens</td>
+</tr>
+<tr>
+<td><code>step_complete</code></td>
+<td>Same as <code>step_end</code>; merges <code>outputs</code> field alias</td>
+</tr>
+<tr>
+<td><code>step_error</code></td>
+<td>stepStates: force <code>status:"failed"</code></td>
+</tr>
+<tr>
+<td><code>workflow_end</code></td>
+<td>status → normalised terminal (<code>"completed"</code> or <code>"failed"</code>)</td>
+</tr>
+<tr>
+<td><code>evaluation_start</code></td>
+<td>status → <code>"evaluating"</code></td>
+</tr>
+<tr>
+<td><code>evaluation_complete</code></td>
+<td>evaluation → populated; status → <code>"completed"</code> (unless <code>"failed"</code>)</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>error → populated; status → <code>"error"</code></td>
+</tr>
+<tr>
+<td><code>keepalive</code> / <code>connection_established</code></td>
+<td>Ignored</td>
+</tr>
+</tbody>
+</table>
+<p>Terminal status normalisation: <code>"success"</code> / <code>"completed"</code> / <code>"ok"</code> → <code>"completed"</code>, <code>"failed"</code> / <code>"error"</code> → <code>"failed"</code>, anything else → <code>"error"</code>.</p>
+<p>The hook resets all state (new <code>Map()</code>, empty events array, null evaluation) each time <code>runId</code> changes.</p>
+<h3 id="usenodeconfigupdate-hook-hooksusenodeconfigupdatets">useNodeConfigUpdate Hook (<code>hooks/useNodeConfigUpdate.ts</code>)<a class="headerlink" href="#usenodeconfigupdate-hook-hooksusenodeconfigupdatets" title="Permanent link">&para;</a></h3>
+<p>A secondary WebSocket hook used by <code>NodeConfigOverlay</code>. Connects to the same execution endpoint and sends <code>{type: "node_config_update", step_name, config}</code> messages to override LLM parameters for a running step. Parameters supported: <code>model</code>, <code>system_prompt</code>, <code>temperature</code>, <code>max_tokens</code>, <code>top_p</code>, <code>tool_names</code>. Reconnects with a 3 s fixed delay on close.</p>
+<h3 id="event-type-contract">Event Type Contract<a class="headerlink" href="#event-type-contract" title="Permanent link">&para;</a></h3>
+<p>WebSocket event types are <strong>auto-generated</strong> from the Python Pydantic contract:</p>
+<ul>
+<li><strong>Source model:</strong> <code>agentic_v2/contracts/events.py</code></li>
+<li><strong>JSON Schema:</strong> <code>agentic-workflows-v2/tests/schemas/events.schema.json</code></li>
+<li><strong>Generated TS:</strong> <code>agentic-workflows-v2/ui/src/api/events.generated.ts</code></li>
+<li><strong>Regenerate:</strong> <code>npm run generate:types</code></li>
+</ul>
+<p>A CI job (<code>wire-format-drift</code>) blocks any PR that modifies the Python contract without regenerating the TypeScript mirror. Hand-written client-only events (<code>keepalive</code>, <code>connection_established</code>, transport-level <code>error</code>) are defined in <code>api/types.ts</code> as <code>ChannelEvent</code> and excluded from generation.</p>
+<hr />
+<h2 id="data-layer">Data Layer<a class="headerlink" href="#data-layer" title="Permanent link">&para;</a></h2>
+<h3 id="rest-api-client-apiclientts">REST API Client (<code>api/client.ts</code>)<a class="headerlink" href="#rest-api-client-apiclientts" title="Permanent link">&para;</a></h3>
+<p>A minimal typed wrapper around <code>fetch</code>. Base URL is <code>/api</code>; the Vite dev proxy forwards to port 8010.</p>
+<p>Non-2xx responses throw <code>Error("API {status}: {text}")</code> which TanStack Query surfaces through <code>isError</code> / <code>error</code>.</p>
+<p>Full endpoint table — see <a href="../ui/api-integration/">API Integration doc</a>.</p>
+<h3 id="tanstack-query-hooks">TanStack Query Hooks<a class="headerlink" href="#tanstack-query-hooks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>File</th>
+<th>Poll?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>useWorkflows</code></td>
+<td><code>useWorkflows.ts</code></td>
+<td>No</td>
+<td>Query key <code>["workflows"]</code></td>
+</tr>
+<tr>
+<td><code>useWorkflowDAG</code></td>
+<td><code>useWorkflows.ts</code></td>
+<td>No</td>
+<td>Disabled when <code>name</code> is undefined</td>
+</tr>
+<tr>
+<td><code>useWorkflowEditor</code></td>
+<td><code>useWorkflows.ts</code></td>
+<td>No</td>
+<td>Disabled when <code>name</code> is undefined or <code>enabled=false</code></td>
+</tr>
+<tr>
+<td><code>useEvaluationDatasets</code></td>
+<td><code>useWorkflows.ts</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>useRuns</code></td>
+<td><code>useRuns.ts</code></td>
+<td><strong>5 s</strong></td>
+<td><code>refetchIntervalInBackground: false</code></td>
+</tr>
+<tr>
+<td><code>useRunDetail</code></td>
+<td><code>useRuns.ts</code></td>
+<td>No</td>
+<td>Disabled when <code>filename</code> is undefined</td>
+</tr>
+<tr>
+<td><code>useRunsSummary</code></td>
+<td><code>useRuns.ts</code></td>
+<td>No</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>useRunEvaluationDetail</code></td>
+<td><code>useRuns.ts</code></td>
+<td>No</td>
+<td>Lazy; disabled when <code>filename</code> is undefined</td>
+</tr>
+<tr>
+<td><code>useDatasetSamples</code></td>
+<td><code>useDatasets.ts</code></td>
+<td>No</td>
+<td>Disabled when source or ID is null</td>
+</tr>
+<tr>
+<td><code>useDatasetSampleDetail</code></td>
+<td><code>useDatasets.ts</code></td>
+<td>No</td>
+<td>Disabled when any param is null</td>
+</tr>
+</tbody>
+</table>
+<p><code>useRuns</code> is the only polling hook. All others rely on the global 10 s stale time for passive freshness.</p>
+<hr />
+<h2 id="keyboard-shortcuts">Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>src/hooks/useHotkeys.ts</code></p>
+<p>Global bindings are registered via <code>useHotkeys(handlers: HotkeyMap)</code> on <code>window</code>. The hook cleans up on unmount. Modifier-key combos (Ctrl, Alt, Meta) are ignored.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Action</th>
+<th>Input guard?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n</code></td>
+<td>Trigger "new" action</td>
+<td>Yes — suppressed when input focused</td>
+</tr>
+<tr>
+<td><code>f</code> or <code>/</code></td>
+<td>Focus filter input</td>
+<td>Yes — suppressed when input focused</td>
+</tr>
+<tr>
+<td><code>j</code></td>
+<td>Move selection down</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td>Move selection up</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>Escape</code></td>
+<td>Dismiss/clear</td>
+<td>No — always fires</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>isInputFocused()</code> guard checks <code>activeElement.tagName</code> (<code>input</code>, <code>textarea</code>, <code>select</code>) and <code>isContentEditable</code>.</p>
+<p>Page-level hotkey bindings:
+- <strong>DashboardPage:</strong> <code>filter</code> focuses the run filter input; <code>escape</code> clears and blurs it
+- <strong>WorkflowsPage:</strong> <code>/</code> key bound inline with <code>window.addEventListener</code> to focus the workflow search input</p>
+<hr />
+<h2 id="accessibility">Accessibility<a class="headerlink" href="#accessibility" title="Permanent link">&para;</a></h2>
+<p><strong>Skip link:</strong> <code>&lt;a href="#main-content"&gt;</code> is <code>.sr-only</code> until keyboard-focused via <code>Tab</code>. Uses <code>focus:not-sr-only</code> with Tailwind to surface a visible <code>focus:bg-b-bg1 focus:text-b-clay</code> chip.</p>
+<p><strong>Main landmark:</strong> <code>&lt;main id="main-content" tabIndex={-1}&gt;</code> is the skip-link target. <code>tabIndex={-1}</code> allows programmatic focus without entering the natural tab order.</p>
+<p><strong>ARIA on SVGs:</strong> <code>BDagMini</code> applies <code>role="img"</code> and <code>aria-label="Workflow DAG thumbnail"</code> to its root <code>&lt;svg&gt;</code>. The empty-state SVG uses <code>aria-label="Empty workflow"</code>.</p>
+<p><strong>Form labels:</strong> All inputs in <code>RunConfigForm</code> use <code>&lt;label htmlFor&gt;</code> associations. Controls without visible labels (dataset selects) use <code>aria-label</code> attributes.</p>
+<p><strong>Focus rings:</strong> Consistent <code>focus:ring-1 focus:ring-b-clay/50 focus:outline-none</code> on all interactive elements (nav links, buttons, form controls, DAG nodes).</p>
+<p><strong>StepLogPanel:</strong> The collapse toggle uses <code>aria-expanded={expanded}</code> and <code>aria-controls={panelId}</code> (WCAG 4.1.2 Name, Role, Value).</p>
+<p><strong>Contrast:</strong> <code>--b-text-dim</code> against <code>--b-bg1</code>: 5.03:1 dark, 7.45:1 paper — both exceed WCAG AA 4.5:1.</p>
+<hr />
+<h2 id="feature-flags">Feature Flags<a class="headerlink" href="#feature-flags" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>src/config/featureFlags.ts</code></p>
+<p>Feature flags are injected at build time as Vite <code>define</code> globals (<code>__AGENTIC_*__</code>).</p>
+<div class="language-typescript highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">isWorkflowBuilderEnabled</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">parseBooleanFlag</span><span class="p">(</span><span class="nx">__AGENTIC_ENABLE_WORKFLOW_BUILDER__</span><span class="p">);</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p><code>parseBooleanFlag</code> accepts <code>"1"</code>, <code>"true"</code>, <code>"yes"</code>, <code>"on"</code> (case-insensitive). Set via environment variable: <code>AGENTIC_ENABLE_WORKFLOW_BUILDER=1 npm run dev</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Flag constant</th>
+<th>Guard location</th>
+<th>Effect when disabled</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_ENABLE_WORKFLOW_BUILDER</code></td>
+<td><code>App.tsx</code>, <code>WorkflowDetailPage.tsx</code></td>
+<td>Route not registered; edit button hidden</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<h3 id="apperrorboundary-componentsstatesapperrorboundarytsx">AppErrorBoundary (<code>components/states/AppErrorBoundary.tsx</code>)<a class="headerlink" href="#apperrorboundary-componentsstatesapperrorboundarytsx" title="Permanent link">&para;</a></h3>
+<p>A class component wrapping the entire tree. <code>getDerivedStateFromError</code> captures the message; renders <code>ErrorBanner</code> centred on <code>bg-b-bg0</code>.</p>
+<h3 id="emptystate-componentsstatesemptystatetsx">EmptyState (<code>components/states/EmptyState.tsx</code>)<a class="headerlink" href="#emptystate-componentsstatesemptystatetsx" title="Permanent link">&para;</a></h3>
+<p>Terminal-style empty state with Unicode box-drawing art and <code>$ no &lt;entity&gt; yet</code>. <code>EmptyStateWithHome</code> is a convenience wrapper with a <code>[→ dashboard]</code> link.</p>
+<h3 id="inline-error-patterns">Inline Error Patterns<a class="headerlink" href="#inline-error-patterns" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Example location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Red border strip at page bottom</td>
+<td>WorkflowDetailPage mutation error</td>
+</tr>
+<tr>
+<td>Red border strip at page top</td>
+<td>LivePage WebSocket error</td>
+</tr>
+<tr>
+<td>Conditional render with monospace text</td>
+<td>DatasetsPage API error</td>
+</tr>
+<tr>
+<td>Centered <code>$ failed to load dag</code> text</td>
+<td>WorkflowDetailPage DAG loading error</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="build-and-development">Build and Development<a class="headerlink" href="#build-and-development" title="Permanent link">&para;</a></h2>
+<h3 id="dev-server">Dev Server<a class="headerlink" href="#dev-server" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Backend (from agentic-workflows-v2/)</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Frontend (from agentic-workflows-v2/ui/)</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">   </span><span class="c1"># Vite dev server on :5173</span>
+</span></code></pre></div>
+<p>Vite proxies <code>/api</code> → <code>http://localhost:8010/api</code>. WebSocket connections bypass the proxy by using <code>VITE_API_PROXY_TARGET</code> directly.</p>
+<h3 id="production-build">Production Build<a class="headerlink" href="#production-build" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">   </span><span class="c1"># TypeScript typecheck + Vite/Rollup bundle</span>
+</span></code></pre></div>
+<blockquote>
+<p><strong>Rollup <code>.ts</code> resolution caveat:</strong> Vite dev auto-resolves <code>.js</code> imports to <code>.ts</code> files. Rollup (production) does not. Any file renamed <code>.js</code> → <code>.ts</code> requires all import paths to be updated.</p>
+</blockquote>
+<h3 id="type-generation">Type Generation<a class="headerlink" href="#type-generation" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types<span class="w">   </span><span class="c1"># Regenerate events.generated.ts from JSON Schema</span>
+</span></code></pre></div>
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm<span class="w"> </span>run<span class="w"> </span><span class="nb">test</span><span class="w">         </span><span class="c1"># Vitest unit + component tests</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>npm<span class="w"> </span>run<span class="w"> </span>test:e2e<span class="w">     </span><span class="c1"># Playwright E2E</span>
+</span></code></pre></div>
+<hr />
+<h2 id="screenshots-reference">Screenshots Reference<a class="headerlink" href="#screenshots-reference" title="Permanent link">&para;</a></h2>
+<p>Screenshots are in <code>docs/screenshots/b-redesign/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>01-dashboard-dark.png</code></td>
+<td>Dashboard, dark theme, empty state</td>
+</tr>
+<tr>
+<td><code>02-dashboard-paper.png</code></td>
+<td>Dashboard, paper theme</td>
+</tr>
+<tr>
+<td><code>03-dashboard-bolt.png</code></td>
+<td>Dashboard, bolt theme</td>
+</tr>
+<tr>
+<td><code>04-workflows-dark.png</code></td>
+<td>Workflows list</td>
+</tr>
+<tr>
+<td><code>05-datasets-dark.png</code></td>
+<td>Datasets page</td>
+</tr>
+<tr>
+<td><code>06-evaluations-dark.png</code></td>
+<td>Evaluations page, empty</td>
+</tr>
+<tr>
+<td><code>07-live-dark.png</code></td>
+<td>Live execution page</td>
+</tr>
+<tr>
+<td><code>11-dashboard-dark-populated.png</code></td>
+<td>Dashboard with run data</td>
+</tr>
+<tr>
+<td><code>12-workflows-dark-populated.png</code></td>
+<td>Workflows with run status badges</td>
+</tr>
+<tr>
+<td><code>13-datasets-dark-populated.png</code></td>
+<td>Dataset browser with sample selected</td>
+</tr>
+<tr>
+<td><code>14-run-detail-dark-populated.png</code></td>
+<td>Run detail with evaluation score</td>
+</tr>
+<tr>
+<td><code>15-dashboard-paper-populated.png</code></td>
+<td>Dashboard, paper theme, populated</td>
+</tr>
+<tr>
+<td><code>16-evaluations-dark-populated.png</code></td>
+<td>Evaluations histogram</td>
+</tr>
+<tr>
+<td><code>17-dashboard-bolt-populated.png</code></td>
+<td>Dashboard, bolt theme, populated</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../architecture-runtime/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Runtime Engine">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Runtime Engine
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../architecture-eval/" class="md-footer__link md-footer__link--next" aria-label="Next: Evaluation Framework">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Evaluation Framework
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

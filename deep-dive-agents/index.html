@@ -1,0 +1,4799 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/deep-dive-agents/">
+      
+      
+        <link rel="prev" href="../deep-dive-server/">
+      
+      
+        <link rel="next" href="../rag/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Agents - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Agents - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/deep-dive-agents.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/deep-dive-agents/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="Agents - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/deep-dive-agents.png" />
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deep-dive-agents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Agents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-agent-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Agent Taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-baseagenttinput-toutput" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. BaseAgent[TInput, TOutput]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. BaseAgent[TInput, TOutput]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-agent-configuration-agentconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Agent Configuration (AgentConfig)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-agent-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Agent State Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-execution-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Execution Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-abstract-methods-subclass-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Abstract Methods (Subclass Contract)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-tool-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Tool Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-conversation-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Conversation Memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-event-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Event System
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-concrete-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Concrete Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Concrete Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-claudeagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 ClaudeAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-claudesdkagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ClaudeSDKAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-orchestratoragent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. OrchestratorAgent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. OrchestratorAgent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-task-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Task Decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-capability-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Capability Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-execution-via-dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Execution via DAG
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-input-output-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Input / Output Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-persona-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Persona Definitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-integrating-an-agent-with-the-workflow-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Integrating an Agent with the Workflow Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Integrating an Agent with the Workflow Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-agent_to_step-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 agent_to_step() Adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-yaml-workflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 YAML Workflow Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-adding-a-new-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Adding a New Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#__init__py-121-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__.py — 121 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basepy-541-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        base.py — 541 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilitiespy-383-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capabilities.py — 383 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coderpy-367-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        coder.py — 367 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewerpy-370-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reviewer.py — 370 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architectpy-361-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        architect.py — 361 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test_agentpy-544-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_agent.py — 544 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestratorpy-541-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator.py — 541 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memorypy-266-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memory.py — 266 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configpy-139-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config.py — 139 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json_extractionpy-155-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        json_extraction.py — 155 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementations__init__py-36-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/__init__.py — 36 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsagent_loaderpy-130-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/agent_loader.py — 130 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsclaude_agentpy-228-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/claude_agent.py — 228 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsclaude_sdk_agentpy-155-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/claude_sdk_agent.py — 155 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-graph-within-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Graph (within agents/)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capabilities-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capabilities &amp; Config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#json-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Extraction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks-gotchas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks &amp; Gotchas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suggested-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-code-reuse-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Code &amp; Reuse Opportunities
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-agent-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Agent Taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-baseagenttinput-toutput" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. BaseAgent[TInput, TOutput]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. BaseAgent[TInput, TOutput]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-agent-configuration-agentconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Agent Configuration (AgentConfig)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-agent-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Agent State Machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-execution-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Execution Loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-abstract-methods-subclass-contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Abstract Methods (Subclass Contract)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-tool-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Tool Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-conversation-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Conversation Memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#28-event-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.8 Event System
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-concrete-implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Concrete Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Concrete Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-claudeagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 ClaudeAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-claudesdkagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 ClaudeSDKAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-orchestratoragent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. OrchestratorAgent
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. OrchestratorAgent">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-task-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Task Decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-capability-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Capability Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-execution-via-dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Execution via DAG
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-input-output-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Input / Output Types
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-persona-definitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Persona Definitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-integrating-an-agent-with-the-workflow-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Integrating an Agent with the Workflow Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Integrating an Agent with the Workflow Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-agent_to_step-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 agent_to_step() Adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-yaml-workflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 YAML Workflow Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-adding-a-new-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Adding a New Agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-taxonomy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Taxonomy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#agent-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Agent Lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Module Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#__init__py-121-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__.py — 121 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#basepy-541-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        base.py — 541 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capabilitiespy-383-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capabilities.py — 383 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#coderpy-367-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        coder.py — 367 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewerpy-370-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reviewer.py — 370 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#architectpy-361-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        architect.py — 361 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test_agentpy-544-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_agent.py — 544 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestratorpy-541-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator.py — 541 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memorypy-266-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        memory.py — 266 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configpy-139-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        config.py — 139 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json_extractionpy-155-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        json_extraction.py — 155 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementations__init__py-36-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/__init__.py — 36 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsagent_loaderpy-130-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/agent_loader.py — 130 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsclaude_agentpy-228-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/claude_agent.py — 228 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementationsclaude_sdk_agentpy-155-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        implementations/claude_sdk_agent.py — 155 LOC
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependency-graph-within-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency Graph (within agents/)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capabilities-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capabilities &amp; Config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#json-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Extraction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Points
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks-gotchas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks &amp; Gotchas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#suggested-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-code-reuse-opportunities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Code &amp; Reuse Opportunities
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/deep-dive-agents.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/deep-dive-agents.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="deep-dive-agents">Deep-Dive: Agents<a class="headerlink" href="#deep-dive-agents" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Package:</strong> <code>agentic-workflows-v2/agentic_v2/agents/</code>
+<strong>Audience:</strong> Engineers building new agents, workflow authors, and architects reviewing agent integration points.</p>
+</blockquote>
+<p><strong>Updated:</strong> 2026-05-02 (rewritten from source)
+<strong>Key source files:</strong> <code>agents/base.py</code>, <code>agents/config.py</code>, <code>agents/orchestrator.py</code>, <code>agents/implementations/</code></p>
+<hr />
+<h2 id="1-agent-taxonomy">1. Agent Taxonomy<a class="headerlink" href="#1-agent-taxonomy" title="Permanent link">&para;</a></h2>
+<p>The system defines a strict hierarchy of agent types:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>BaseAgent[TInput, TOutput]          ← abstract base
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── CoderAgent                      ← code generation
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── ReviewerAgent                   ← code review
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── ArchitectAgent                  ← system design
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── OrchestratorAgent               ← task decomposition + delegation
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── TestAgent                       ← test generation and execution
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>└── implementations/
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── ClaudeAgent                 ← Anthropic Messages API
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    └── ClaudeSDKAgent              ← Anthropic Claude Code SDK
+</span></code></pre></div>
+<p>All agents share the <code>BaseAgent</code> lifecycle, conversation memory, tool binding, and OTEL tracing infrastructure. Concrete implementations override four abstract methods.</p>
+<hr />
+<h2 id="2-baseagenttinput-toutput">2. <code>BaseAgent[TInput, TOutput]</code><a class="headerlink" href="#2-baseagenttinput-toutput" title="Permanent link">&para;</a></h2>
+<p>Source: <code>agents/base.py</code></p>
+<p><code>BaseAgent</code> is generic over <code>TInput</code> (a <code>TaskInput</code> subclass) and <code>TOutput</code> (a <code>TaskOutput</code> subclass). This provides compile-time type safety through the entire call chain.</p>
+<h3 id="21-agent-configuration-agentconfig">2.1 Agent Configuration (<code>AgentConfig</code>)<a class="headerlink" href="#21-agent-configuration-agentconfig" title="Permanent link">&para;</a></h3>
+<p>Source: <code>agents/config.py</code></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentConfig</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="c1"># Identity</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;agent&quot;</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="c1"># Model selection</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">default_tier</span><span class="p">:</span> <span class="n">ModelTier</span> <span class="o">=</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">TIER_2</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">max_tier</span><span class="p">:</span> <span class="n">ModelTier</span> <span class="o">=</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">TIER_4</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="c1"># Behavior</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">max_tool_calls_per_turn</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="c1"># Memory</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="n">max_memory_messages</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="n">max_memory_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="c1"># Streaming</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="n">enable_streaming</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span></code></pre></div>
+<h3 id="22-agent-state-machine">2.2 Agent State Machine<a class="headerlink" href="#22-agent-state-machine" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>CREATED
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  │
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  ▼
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>INITIALIZING  ←── on first run() or explicit initialize()
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  │
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  ▼
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>READY
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  │
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  ▼
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>RUNNING
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  ├── COMPLETED  (success)
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>  ├── FAILED     (exception)
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>  ├── CANCELLED  (asyncio.CancelledError)
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>  └── PAUSED → RUNNING (resume)
+</span></code></pre></div>
+<p>State transitions fire <code>AgentEvent.STATE_CHANGE</code> to all registered event handlers.</p>
+<h3 id="23-initialization">2.3 Initialization<a class="headerlink" href="#23-initialization" title="Permanent link">&para;</a></h3>
+<p><code>BaseAgent.initialize(ctx)</code> performs:
+1. Transition to <code>INITIALIZING</code>.
+2. Attach execution context.
+3. Add system prompt to conversation memory (if configured).
+4. Bind tools from the registry filtered by <code>config.default_tier.value</code>.
+5. Call <code>_on_initialize()</code> for subclass customization.
+6. Transition to <code>READY</code>.</p>
+<p>Tool binding is tier-filtered: tools with <code>tier &lt;= agent.config.default_tier.value</code> are bound. Higher-tier tools are unavailable to lower-tier agents.</p>
+<h3 id="24-execution-loop">2.4 Execution Loop<a class="headerlink" href="#24-execution-loop" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">TInput</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ExecutionContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TOutput</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="c1"># Auto-initialize on first call</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">AgentState</span><span class="o">.</span><span class="n">CREATED</span><span class="p">:</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">task_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_task_message</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_memory</span><span class="o">.</span><span class="n">add_user</span><span class="p">(</span><span class="n">task_message</span><span class="p">)</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="c1"># Main loop with iteration limit</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">while</span> <span class="n">iteration</span> <span class="o">&lt;</span> <span class="n">max_iterations</span><span class="p">:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_model</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">tools</span><span class="p">)</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool_calls&quot;</span><span class="p">):</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_tool_calls</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;tool_calls&quot;</span><span class="p">])</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>            <span class="k">continue</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_task_complete</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_output</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Max iterations reached&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Every <code>run()</code> call is wrapped in an OTEL span <code>agent.&lt;name&gt;</code>.</p>
+<h3 id="25-abstract-methods-subclass-contract">2.5 Abstract Methods (Subclass Contract)<a class="headerlink" href="#25-abstract-methods-subclass-contract" title="Permanent link">&para;</a></h3>
+<p>All four must be implemented:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Signature</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_call_model</code></td>
+<td><code>(messages, tools) → dict</code></td>
+<td>LLM invocation; returns <code>{"content": str, "tool_calls": list}</code></td>
+</tr>
+<tr>
+<td><code>_format_task_message</code></td>
+<td><code>(task: TInput) → str</code></td>
+<td>Serialize input to user message</td>
+</tr>
+<tr>
+<td><code>_is_task_complete</code></td>
+<td><code>async (task, response) → bool</code></td>
+<td>Check termination condition</td>
+</tr>
+<tr>
+<td><code>_parse_output</code></td>
+<td><code>async (task, response) → TOutput</code></td>
+<td>Deserialize response to output type</td>
+</tr>
+</tbody>
+</table>
+<h3 id="26-tool-handling">2.6 Tool Handling<a class="headerlink" href="#26-tool-handling" title="Permanent link">&para;</a></h3>
+<p>Tools use the OpenAI function-calling format. When the model returns <code>tool_calls</code>, the agent:</p>
+<ol>
+<li>Looks up each tool name in <code>_bound_tools</code>.</li>
+<li>Calls <code>tool.execute(**args)</code>.</li>
+<li>Appends the tool result to conversation memory as a <code>tool_result</code> role message.</li>
+<li>Emits <code>AgentEvent.TOOL_CALLED</code> and <code>AgentEvent.TOOL_RESULT</code> to handlers.</li>
+<li>Loops back to call the model again with the updated conversation.</li>
+</ol>
+<p>Unknown tool names return <code>"Unknown tool: &lt;name&gt;"</code> as the result — the agent continues rather than failing hard.</p>
+<h3 id="27-conversation-memory">2.7 Conversation Memory<a class="headerlink" href="#27-conversation-memory" title="Permanent link">&para;</a></h3>
+<p><code>ConversationMemory</code> is a sliding-window buffer with:
+- <code>max_messages</code> (default 50): hard cap on message count.
+- <code>max_tokens</code> (default 8000): soft cap with automatic summarization of evicted messages.
+- Messages are stored as dicts with <code>role</code> and <code>content</code>.
+- <code>add_system()</code>, <code>add_user()</code>, <code>add_assistant()</code>, <code>add_tool_result()</code> mutate the buffer.
+- <code>get_messages()</code> returns the current sliding window for LLM calls.</p>
+<h3 id="28-event-system">2.8 Event System<a class="headerlink" href="#28-event-system" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">agent</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="k">lambda</span> <span class="n">agent</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Event handlers are synchronous callbacks. Exceptions in handlers are caught and logged at WARNING level — they never propagate to the execution loop.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>When emitted</th>
+<th>Data dict keys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>STATE_CHANGE</code></td>
+<td>Any state transition</td>
+<td><code>old_state</code>, <code>new_state</code></td>
+</tr>
+<tr>
+<td><code>THINKING</code></td>
+<td>Each iteration start</td>
+<td><code>iteration</code></td>
+</tr>
+<tr>
+<td><code>TOOL_CALLED</code></td>
+<td>Before tool execution</td>
+<td><code>tool</code>, <code>args</code>, <code>call_id</code></td>
+</tr>
+<tr>
+<td><code>TOOL_RESULT</code></td>
+<td>After tool execution</td>
+<td><code>tool</code>, <code>result</code>, <code>call_id</code></td>
+</tr>
+<tr>
+<td><code>STREAMING</code></td>
+<td>Each chunk (streaming mode)</td>
+<td><code>chunk</code></td>
+</tr>
+<tr>
+<td><code>ERROR</code></td>
+<td>On exception</td>
+<td>(varies)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-concrete-implementations">3. Concrete Implementations<a class="headerlink" href="#3-concrete-implementations" title="Permanent link">&para;</a></h2>
+<h3 id="31-claudeagent">3.1 <code>ClaudeAgent</code><a class="headerlink" href="#31-claudeagent" title="Permanent link">&para;</a></h3>
+<p>Source: <code>agents/implementations/claude_agent.py</code></p>
+<p>Calls the Anthropic Messages API via the <code>anthropic</code> async client. Handles format translation between the project's OpenAI-style message format and Anthropic's API.</p>
+<p><strong>Translation layers:</strong></p>
+<ul>
+<li><code>_convert_messages()</code> — splits the system prompt out of the message list (Anthropic requires it as a top-level parameter) and converts <code>"tool"</code> role messages to <code>tool_result</code> content blocks.</li>
+<li><code>_convert_tools()</code> — maps OpenAI function schemas to Anthropic tool schemas.</li>
+<li><code>_convert_response()</code> — maps Anthropic content blocks back to <code>{"content", "tool_calls"}</code>.</li>
+</ul>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">ClaudeAgent</span><span class="p">(</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-opus-4-6&quot;</span><span class="p">,</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;You are a senior Python engineer.&quot;</span><span class="p">,</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">api_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>          <span class="c1"># defaults to ANTHROPIC_API_KEY env var</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">SimpleTask</span><span class="p">(</span><span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Review this code: ...&quot;</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Requires: <code>pip install 'agentic-workflows-v2[claude]'</code></p>
+<h3 id="32-claudesdkagent">3.2 <code>ClaudeSDKAgent</code><a class="headerlink" href="#32-claudesdkagent" title="Permanent link">&para;</a></h3>
+<p>Source: <code>agents/implementations/claude_sdk_agent.py</code></p>
+<p>Uses the Anthropic Claude Code SDK (a higher-level abstraction than the raw Messages API). Intended for agents that benefit from Claude's native tool-use orchestration and multi-turn conversation management.</p>
+<hr />
+<h2 id="4-orchestratoragent">4. <code>OrchestratorAgent</code><a class="headerlink" href="#4-orchestratoragent" title="Permanent link">&para;</a></h2>
+<p>Source: <code>agents/orchestrator.py</code></p>
+<p>The <code>OrchestratorAgent</code> is the meta-agent responsible for task decomposition and multi-agent delegation. It does not execute domain tasks itself — it breaks complex tasks into subtasks, matches them to capable agents, and assembles final results.</p>
+<h3 id="41-task-decomposition">4.1 Task Decomposition<a class="headerlink" href="#41-task-decomposition" title="Permanent link">&para;</a></h3>
+<p>The orchestrator calls the LLM with a structured prompt requesting JSON output:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;subtasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t1&quot;</span><span class="p">,</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Generate a Python function&quot;</span><span class="p">,</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">      </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;code_generation&quot;</span><span class="p">],</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="nt">&quot;parallel_group&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>JSON extraction from LLM responses uses <code>agents/json_extraction.py</code> which handles markdown code block wrapping and partial JSON repair.</p>
+<h3 id="42-capability-matching">4.2 Capability Matching<a class="headerlink" href="#42-capability-matching" title="Permanent link">&para;</a></h3>
+<p>Source: <code>agents/capabilities.py</code></p>
+<p>Each agent can declare capabilities via <code>CapabilityMixin</code> subclasses:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">CapabilityType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">CODE_GENERATION</span> <span class="o">=</span> <span class="s2">&quot;code_generation&quot;</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">CODE_REVIEW</span> <span class="o">=</span> <span class="s2">&quot;code_review&quot;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">TEST_GENERATION</span> <span class="o">=</span> <span class="s2">&quot;test_generation&quot;</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">ARCHITECTURE</span> <span class="o">=</span> <span class="s2">&quot;architecture&quot;</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">ORCHESTRATION</span> <span class="o">=</span> <span class="s2">&quot;orchestration&quot;</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="c1"># ...</span>
+</span></code></pre></div>
+<p><code>get_agent_capabilities(agent)</code> introspects the agent's class MRO for <code>CapabilityMixin</code> subclasses and returns a <code>CapabilitySet</code>. The orchestrator uses this for automatic subtask-to-agent matching.</p>
+<h3 id="43-execution-via-dag">4.3 Execution via DAG<a class="headerlink" href="#43-execution-via-dag" title="Permanent link">&para;</a></h3>
+<p>Once subtasks are decomposed and assigned, the orchestrator constructs a <code>DAG</code> where:</p>
+<ul>
+<li>Each subtask becomes a <code>StepDefinition</code>.</li>
+<li><code>SubTask.dependencies</code> become DAG edges.</li>
+<li>The <code>DAGExecutor</code> runs the DAG with <code>max_concurrency=max_parallel</code> (default 3).</li>
+</ul>
+<p>This gives the orchestrator the same parallelism and failure-propagation guarantees as the native engine.</p>
+<h3 id="44-input-output-types">4.4 Input / Output Types<a class="headerlink" href="#44-input-output-types" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorInput</span><span class="p">(</span><span class="n">TaskInput</span><span class="p">):</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span>                          <span class="c1"># Description to orchestrate</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">available_agents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>        <span class="c1"># Agent names to consider</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">max_parallel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>              <span class="c1"># Concurrency limit</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">require_review</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorOutput</span><span class="p">(</span><span class="n">TaskOutput</span><span class="p">):</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">subtasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>               <span class="c1"># All decomposed subtasks</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">agent_assignments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>  <span class="c1"># subtask_id → agent_name</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">final_result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># Aggregated output</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="n">execution_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>        <span class="c1"># Step-by-step trace</span>
+</span></code></pre></div>
+<hr />
+<h2 id="5-persona-definitions">5. Persona Definitions<a class="headerlink" href="#5-persona-definitions" title="Permanent link">&para;</a></h2>
+<p>Source: <code>agentic_v2/prompts/*.md</code></p>
+<p>Each agent has a <code>.md</code> persona definition that is loaded as the system prompt. Personas must define:</p>
+<ol>
+<li><strong>Expertise</strong> — What the agent knows.</li>
+<li><strong>Boundaries</strong> — What the agent should not do.</li>
+<li><strong>Critical rules</strong> — Hard constraints on behavior.</li>
+<li><strong>Output format</strong> — Expected response structure.</li>
+</ol>
+<p>The 7 shipped personas are: <code>coder</code>, <code>reviewer</code>, <code>architect</code>, <code>orchestrator</code>, <code>tester</code>, <code>researcher</code>, and <code>skill-architect</code>.</p>
+<hr />
+<h2 id="6-integrating-an-agent-with-the-workflow-engine">6. Integrating an Agent with the Workflow Engine<a class="headerlink" href="#6-integrating-an-agent-with-the-workflow-engine" title="Permanent link">&para;</a></h2>
+<h3 id="61-agent_to_step-adapter">6.1 <code>agent_to_step()</code> Adapter<a class="headerlink" href="#61-agent_to_step-adapter" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.agents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">agent_to_step</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">coder</span> <span class="o">=</span> <span class="n">CoderAgent</span><span class="p">()</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">step</span> <span class="o">=</span> <span class="n">agent_to_step</span><span class="p">(</span><span class="n">coder</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;generate_code&quot;</span><span class="p">)</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">dag</span> <span class="o">=</span> <span class="n">DAG</span><span class="p">(</span><span class="s2">&quot;my_workflow&quot;</span><span class="p">)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">dag</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+</span></code></pre></div>
+<p><code>agent_to_step</code> wraps any <code>BaseAgent</code> as a <code>StepDefinition</code>. At runtime it:</p>
+<ol>
+<li>Reads <code>"task"</code> from the <code>ExecutionContext</code>.</li>
+<li>Calls <code>agent.run(task, ctx)</code>.</li>
+<li>Returns <code>{"result": output}</code> to the context.</li>
+</ol>
+<h3 id="62-yaml-workflow-integration">6.2 YAML Workflow Integration<a class="headerlink" href="#62-yaml-workflow-integration" title="Permanent link">&para;</a></h3>
+<p>In a YAML workflow definition, specify the agent name as the <code>agent:</code> field of a step:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">steps</span><span class="p">:</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">generate_code</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coder</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate implementation from requirements</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.requirements}</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">explanation</span>
+</span></code></pre></div>
+<p>The <code>agent:</code> field is resolved to an agent instance via <code>AgentLoader.load(agent_name)</code> which reads <code>config/defaults/agents.yaml</code> and instantiates the configured class.</p>
+<hr />
+<h2 id="7-adding-a-new-agent">7. Adding a New Agent<a class="headerlink" href="#7-adding-a-new-agent" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Create a file in <code>agents/implementations/my_agent.py</code>.</li>
+<li>Subclass <code>BaseAgent[MyInput, MyOutput]</code> where <code>MyInput</code> and <code>MyOutput</code> are <code>TaskInput</code>/<code>TaskOutput</code> subclasses defined in <code>contracts/schemas.py</code> or locally.</li>
+<li>Implement the four abstract methods: <code>_call_model</code>, <code>_format_task_message</code>, <code>_is_task_complete</code>, <code>_parse_output</code>.</li>
+<li>Optionally mixin capability types from <code>agents/capabilities.py</code>.</li>
+<li>Add a persona markdown file to <code>agentic_v2/prompts/my_agent.md</code>.</li>
+<li>Register in <code>config/defaults/agents.yaml</code> with <code>name</code>, <code>description</code>, <code>tier</code>, and <code>class</code>.</li>
+<li>Write unit tests in <code>tests/agents/test_my_agent.py</code>. Mock <code>_call_model</code> to avoid LLM calls in tests.
+<strong>Target type:</strong> folder
+<strong>Scan mode:</strong> exhaustive</li>
+</ol>
+<hr />
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The <code>agents/</code> package defines the agent abstraction layer for the <code>agentic-workflows-v2</code> runtime. It provides <code>BaseAgent</code> (a typed lifecycle-driven protocol), concrete specialized agents (Coder, Reviewer, Architect, TestAgent, Orchestrator), supporting utilities (conversation memory, capability matching, robust JSON extraction), and pluggable backend implementations (Anthropic Messages API, <code>claude-agent-sdk</code>).</p>
+<p><strong>Responsibilities:</strong>
+- Typed agent lifecycle (<code>base.py</code>)
+- Conversation memory with auto-summarization (<code>memory.py</code>)
+- Capability-based agent-to-task matching (<code>capabilities.py</code>)
+- Robust structured-output parsing (<code>json_extraction.py</code>)
+- Concrete specialists (Coder, Reviewer, Architect, TestAgent)
+- Meta-agent for task decomposition and delegation (<code>orchestrator.py</code>)
+- Config loading (<code>config.py</code>)
+- Backend implementations (<code>implementations/</code>)</p>
+<hr />
+<h2 id="agent-taxonomy">Agent Taxonomy<a class="headerlink" href="#agent-taxonomy" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>BaseAgent[TInput, TOutput]               (abstract, generic protocol)
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  ├─ CoderAgent         (capabilities: CodeGeneration, SelfReflection)
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  ├─ ReviewerAgent      (capabilities: CodeReview)
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  ├─ ArchitectAgent     (capabilities: SystemsDesign)
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  ├─ TestAgent          (capabilities: TestGeneration)
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  └─ OrchestratorAgent  (capabilities: TaskDecomposition, AgentMatching)
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>implementations/ (backend adapters, not BaseAgent subclasses)
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>  ├─ ClaudeAgent         → Anthropic Messages API (tool_use)
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>  ├─ ClaudeSDKAgent      → claude-agent-sdk (standalone, no BaseAgent)
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>  └─ agent_loader        → factory + registry from YAML persona files
+</span></code></pre></div>
+<p><strong>Design principle:</strong> Composition over inheritance. Capabilities are declared via mixin-like <code>CapabilitySet</code> objects rather than deep hierarchies.</p>
+<hr />
+<h2 id="agent-lifecycle">Agent Lifecycle<a class="headerlink" href="#agent-lifecycle" title="Permanent link">&para;</a></h2>
+<p>State machine (enforced by convention in <code>base.py</code>):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>CREATED → INITIALIZING → READY → RUNNING → COMPLETED
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>                                        ↘ FAILED
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>                                        ↘ CANCELLED
+</span></code></pre></div>
+<p><strong>Per-invocation flow:</strong>
+1. <strong>Construct</strong> — agent instantiated with config, capabilities, LLM client, tool registry.
+2. <strong>Initialize</strong> — load persona prompt (<code>prompts/*.md</code>), bind tools filtered by model tier.
+3. <strong>Prepare context</strong> — merge system prompt + conversation memory + task input; apply token budget.
+4. <strong>LLM call</strong> — via <code>models.SmartModelRouter</code> → backend (Anthropic, OpenAI, etc.).
+5. <strong>Tool invocation loop</strong> — if LLM emits tool_use, dispatch via <code>ToolRegistry</code>, append results, recall LLM.
+6. <strong>Parse output</strong> — <code>json_extraction</code> for structured responses; Pydantic validation against contract.
+7. <strong>Memory update</strong> — append user/assistant turn; auto-summarize if window exceeded.
+8. <strong>Emit events</strong> — lifecycle events for observability.</p>
+<hr />
+<h2 id="module-inventory">Module Inventory<a class="headerlink" href="#module-inventory" title="Permanent link">&para;</a></h2>
+<h3 id="__init__py-121-loc"><code>__init__.py</code> — 121 LOC<a class="headerlink" href="#__init__py-121-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Package exports and agent factory registration. Re-exports public API and registers agent classes with the implementations loader.</li>
+<li><strong>Exports:</strong> <code>BaseAgent</code>, <code>CoderAgent</code>, <code>ReviewerAgent</code>, <code>ArchitectAgent</code>, <code>TestAgent</code>, <code>OrchestratorAgent</code>, <code>ConversationMemory</code>, <code>CapabilitySet</code>.</li>
+<li><strong>Implementation detail:</strong> Late-binding factory registration avoids circular imports with <code>OrchestratorAgent</code>.</li>
+</ul>
+<h3 id="basepy-541-loc"><code>base.py</code> — 541 LOC<a class="headerlink" href="#basepy-541-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Abstract <code>BaseAgent[TInput, TOutput]</code> generic with lifecycle state machine, event emission, tool binding, and default invocation loop.</li>
+<li><strong>Key exports:</strong></li>
+<li><code>BaseAgent[TInput, TOutput]</code> — abstract class with <code>async run(input) -&gt; TOutput</code>, <code>async _invoke_llm()</code>, <code>_bind_tools()</code>, <code>_emit_event()</code>.</li>
+<li><code>AgentState</code> enum (CREATED, INITIALIZING, READY, RUNNING, COMPLETED, FAILED, CANCELLED).</li>
+<li><code>AgentEvent</code> dataclass.</li>
+<li><strong>Imports:</strong> <code>typing.Generic</code>, <code>..contracts</code>, <code>..models.SmartModelRouter</code>, <code>..tools.ToolRegistry</code>.</li>
+<li><strong>Risks:</strong> State transitions not type-enforced — relies on convention + tests.</li>
+<li><strong>Suggested tests:</strong> illegal transitions raise; event ordering; generic type erasure.</li>
+</ul>
+<h3 id="capabilitiespy-383-loc"><code>capabilities.py</code> — 383 LOC<a class="headerlink" href="#capabilitiespy-383-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Capability declaration + scoring for agent-to-task matching. Enables runtime selection of the best-fit agent for a subtask.</li>
+<li><strong>Key exports:</strong> <code>Capability</code> enum (CodeGeneration, CodeReview, SystemsDesign, TestGeneration, TaskDecomposition, AgentMatching, SelfReflection, ...), <code>CapabilitySet</code>, <code>score_match(task_needs, agent_caps) -&gt; float</code>.</li>
+<li><strong>Implementation:</strong> Weighted overlap + proficiency clamp to [0.0, 1.0]; division-by-zero avoided with <code>max(0.01, ...)</code>.</li>
+<li><strong>Suggested tests:</strong> scoring monotonicity, empty sets, ties.</li>
+</ul>
+<h3 id="coderpy-367-loc"><code>coder.py</code> — 367 LOC<a class="headerlink" href="#coderpy-367-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Concrete Coder agent specialized for code generation with optional self-reflection pass.</li>
+<li><strong>Key exports:</strong> <code>CoderAgent(BaseAgent[CodeTaskInput, CodeTaskOutput])</code>, <code>CODER_SYSTEM_PROMPT</code>.</li>
+<li><strong>Capabilities:</strong> CodeGeneration, SelfReflection.</li>
+<li><strong>Implementation:</strong> Two-pass mode — initial generation → critique → revision. Controlled by <code>config.self_reflect</code>.</li>
+</ul>
+<h3 id="reviewerpy-370-loc"><code>reviewer.py</code> — 370 LOC<a class="headerlink" href="#reviewerpy-370-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Code-review agent producing structured findings (severity, file, line, category, recommendation).</li>
+<li><strong>Key exports:</strong> <code>ReviewerAgent(BaseAgent[ReviewInput, ReviewOutput])</code>.</li>
+<li><strong>Implementation:</strong> Uses <code>json_extraction</code> to parse findings list; supports per-category gating.</li>
+</ul>
+<h3 id="architectpy-361-loc"><code>architect.py</code> — 361 LOC<a class="headerlink" href="#architectpy-361-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Architecture-design agent producing component diagrams, data flow, and decision rationale.</li>
+<li><strong>Key exports:</strong> <code>ArchitectAgent(BaseAgent[DesignInput, DesignOutput])</code>.</li>
+</ul>
+<h3 id="test_agentpy-544-loc"><code>test_agent.py</code> — 544 LOC<a class="headerlink" href="#test_agentpy-544-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Test-generation agent producing pytest/Jest test scaffolds with fixtures.</li>
+<li><strong>Key exports:</strong> <code>TestAgent(BaseAgent[TestInput, TestOutput])</code>.</li>
+</ul>
+<h3 id="orchestratorpy-541-loc"><code>orchestrator.py</code> — 541 LOC<a class="headerlink" href="#orchestratorpy-541-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Meta-agent that decomposes a high-level task into subtasks, scores candidate agents via <code>capabilities.score_match</code>, dispatches, and aggregates results. Supports fallback chains and DAG execution.</li>
+<li><strong>Key exports:</strong> <code>OrchestratorAgent(BaseAgent[OrchestratorInput, OrchestratorOutput])</code>, <code>decompose_task()</code>, <code>select_agent()</code>.</li>
+<li><strong>Imports:</strong> <code>..engine.dag</code>, capabilities, all concrete agents (via factory registry).</li>
+<li><strong>Risks:</strong> Silent fallback chain — logs warnings but returns best-effort output if all agents fail.</li>
+<li><strong>Suggested tests:</strong> all-agents-fail scenario surfaces error; DAG cycle detection; capability tie-breaking.</li>
+</ul>
+<h3 id="memorypy-266-loc"><code>memory.py</code> — 266 LOC<a class="headerlink" href="#memorypy-266-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> <code>ConversationMemory</code> with sliding-window summarization. Keeps up to 50 messages and ~8000 tokens; auto-summarizes older turns when window exceeded. First system message always preserved.</li>
+<li><strong>Key exports:</strong> <code>ConversationMemory</code>, <code>Message</code>, <code>summarize_window()</code>.</li>
+<li><strong>Implementation:</strong> 4-char-per-token heuristic; summarization delegates to LLM client if configured, else naive concat.</li>
+<li><strong>Suggested tests:</strong> window overflow triggers summarize; system message never evicted; token-count accuracy.</li>
+</ul>
+<h3 id="configpy-139-loc"><code>config.py</code> — 139 LOC<a class="headerlink" href="#configpy-139-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Agent configuration loader from YAML persona files (<code>prompts/*.md</code>) + runtime overrides.</li>
+<li><strong>Key exports:</strong> <code>AgentConfig</code>, <code>load_agent_config(name)</code>, <code>AgentProfile</code>.</li>
+</ul>
+<h3 id="json_extractionpy-155-loc"><code>json_extraction.py</code> — 155 LOC<a class="headerlink" href="#json_extractionpy-155-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Robust JSON extraction from LLM freeform responses. Three strategies in order: fenced <code>```json</code>, fenced <code>```</code> (any), balanced-brace scan (handles strings with escapes).</li>
+<li><strong>Key exports:</strong> <code>extract_json(text) -&gt; dict | list | None</code>, <code>ExtractionStrategy</code>.</li>
+<li><strong>Implementation:</strong> Balanced-brace scan tracks string state (<code>"</code>, <code>\"</code>) to avoid false matches.</li>
+<li><strong>Strengths:</strong> Avoids greedy regex pitfalls; handles nested objects and embedded strings.</li>
+<li><strong>Suggested tests:</strong> malformed responses, nested braces in strings, truncated JSON, multiple JSON blocks.</li>
+</ul>
+<h3 id="implementations__init__py-36-loc"><code>implementations/__init__.py</code> — 36 LOC<a class="headerlink" href="#implementations__init__py-36-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Exposes backend implementations and the agent loader.</li>
+<li><strong>Exports:</strong> <code>ClaudeAgent</code>, <code>ClaudeSDKAgent</code>, <code>load_agent(name)</code>.</li>
+</ul>
+<h3 id="implementationsagent_loaderpy-130-loc"><code>implementations/agent_loader.py</code> — 130 LOC<a class="headerlink" href="#implementationsagent_loaderpy-130-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Factory registry for agent classes. Maps agent name → factory function. Populated by <code>agents/__init__.py</code> during import.</li>
+<li><strong>Key exports:</strong> <code>register_agent(name, factory)</code>, <code>load_agent(name, config) -&gt; BaseAgent</code>, <code>AGENT_REGISTRY</code>.</li>
+</ul>
+<h3 id="implementationsclaude_agentpy-228-loc"><code>implementations/claude_agent.py</code> — 228 LOC<a class="headerlink" href="#implementationsclaude_agentpy-228-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Backend adapter using Anthropic Messages API directly. Handles tool_use, streaming, and content-block parsing.</li>
+<li><strong>Key exports:</strong> <code>ClaudeAgent</code> (inherits <code>BaseAgent</code>), <code>invoke_claude()</code>.</li>
+<li><strong>Imports:</strong> <code>anthropic</code> SDK.</li>
+</ul>
+<h3 id="implementationsclaude_sdk_agentpy-155-loc"><code>implementations/claude_sdk_agent.py</code> — 155 LOC<a class="headerlink" href="#implementationsclaude_sdk_agentpy-155-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Backend using <code>claude-agent-sdk</code> package. Standalone — does not inherit <code>BaseAgent</code> (uses SDK's own lifecycle).</li>
+<li><strong>Key exports:</strong> <code>ClaudeSDKAgent</code>, <code>run_claude_sdk()</code>.</li>
+<li><strong>Gotcha:</strong> Not part of <code>BaseAgent</code> taxonomy — callers must branch on agent type.</li>
+</ul>
+<hr />
+<h2 id="dependency-graph-within-agents">Dependency Graph (within <code>agents/</code>)<a class="headerlink" href="#dependency-graph-within-agents" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>base.py
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ↑
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  ├─ coder.py         → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  ├─ reviewer.py      → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  ├─ architect.py     → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  ├─ test_agent.py    → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>  └─ orchestrator.py  → capabilities.py, (factory registry from __init__)
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>implementations/
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>  ├─ agent_loader.py  (registry populated by __init__.py)
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>  ├─ claude_agent.py  → base.py
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>  └─ claude_sdk_agent.py  (standalone)
+</span></code></pre></div>
+<p>No circular imports — <code>OrchestratorAgent</code> uses late-binding factory lookup to avoid importing concrete agents at module load.</p>
+<hr />
+<h2 id="capabilities-config">Capabilities &amp; Config<a class="headerlink" href="#capabilities-config" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>capabilities.py</code></strong>: declarative enum of skills an agent provides; <code>CapabilitySet</code> composes them. <code>score_match(task_needs, agent_caps)</code> returns weighted float for runtime routing.</li>
+<li><strong><code>config.py</code></strong>: loads YAML persona (system prompt, expertise, boundaries, output format) and merges with runtime overrides (temperature, model tier, tool allowlist).</li>
+</ul>
+<p><strong>Flow:</strong>
+1. Workflow YAML step declares required capabilities + agent name.
+2. <code>agent_loader.load_agent(name, config)</code> constructs agent with <code>AgentConfig</code>.
+3. <code>OrchestratorAgent</code> uses <code>capabilities.score_match</code> when subtasks need dynamic agent selection.</p>
+<hr />
+<h2 id="memory-integration">Memory Integration<a class="headerlink" href="#memory-integration" title="Permanent link">&para;</a></h2>
+<p><code>memory.ConversationMemory</code> is self-contained and does NOT use <code>core.memory.MemoryStoreProtocol</code> — that protocol is for cross-run persistence (e.g., RAG-backed long-term memory). <code>ConversationMemory</code> is per-invocation context window management only.</p>
+<p>For long-term memory, agents delegate to <code>core.memory.RAGMemoryStore</code> via <code>rag/</code> — retrieved chunks are injected into the prompt by the agent's <code>_prepare_context()</code>.</p>
+<hr />
+<h2 id="json-extraction">JSON Extraction<a class="headerlink" href="#json-extraction" title="Permanent link">&para;</a></h2>
+<p>Three strategies, applied in order until one succeeds:</p>
+<ol>
+<li><strong>Fenced <code>json</code></strong> — <code>```json\n{...}\n```</code></li>
+<li><strong>Fenced any</strong> — <code>```\n{...}\n```</code></li>
+<li><strong>Balanced-brace scan</strong> — walks text tracking <code>{</code> / <code>}</code> depth; respects string literals and escape sequences.</li>
+</ol>
+<p><strong>Why not regex:</strong> greedy regex on nested braces fails silently; the balanced-brace scanner is correct by construction.</p>
+<p><strong>Edge cases handled:</strong> embedded <code>"}"</code>, escaped quotes <code>\"</code>, newlines inside strings, multiple JSON blocks (returns first valid).</p>
+<hr />
+<h2 id="integration-points">Integration Points<a class="headerlink" href="#integration-points" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>..contracts</code></strong>: <code>TaskInput</code>/<code>TaskOutput</code> Pydantic models per agent.</li>
+<li><strong><code>..models</code></strong>: <code>ModelTier</code>, <code>SmartModelRouter</code>, <code>get_client()</code> for LLM dispatch.</li>
+<li><strong><code>..tools</code></strong>: <code>BaseTool</code>, <code>ToolRegistry</code> for function-calling.</li>
+<li><strong><code>..engine</code></strong>: <code>DAG</code>, <code>StepDefinition</code> (orchestrator only).</li>
+<li><strong><code>..prompts/*.md</code></strong>: persona definitions loaded by <code>config.py</code>.</li>
+<li><strong><code>..rag</code></strong>: optional long-term memory via <code>RAGMemoryStore</code>.</li>
+<li><strong>External</strong>: <code>anthropic</code> SDK, <code>claude-agent-sdk</code>.</li>
+</ul>
+<p><strong>Used by:</strong>
+- <code>server/execution.py</code> (workflow runner invokes agents).
+- <code>server/routes/agents.py</code> (enumeration via <code>load_agent_config</code>).
+- <code>langchain/</code> adapter (wraps agents as LangGraph nodes).
+- <code>engine/</code> native executor (invokes agents as DAG step handlers).
+- Tests: <code>tests/test_agents/*.py</code>.</p>
+<hr />
+<h2 id="risks-gotchas">Risks &amp; Gotchas<a class="headerlink" href="#risks-gotchas" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>JSON extraction ambiguity</strong> — if LLM emits multiple JSON blocks, only first is returned.</li>
+<li><strong>Memory summarization loss</strong> — 4-char/token heuristic is approximate; real token count may differ ±15%.</li>
+<li><strong>Capability scoring</strong> — no type-level enforcement that <code>Capability</code> enums align across declarations.</li>
+<li><strong>Tool tier binding</strong> — requires consistent <code>ModelTier</code> numbering in <code>..models</code>; drift breaks filtering silently.</li>
+<li><strong>Orchestrator silent fallback</strong> — logs warnings per failure but may return partial output; callers must check <code>OrchestratorOutput.status</code>.</li>
+<li><strong>Mock backend fallback</strong> — when <code>llm_client.backend is None</code>, agents return mock responses (dev mode). Must not leak to prod.</li>
+<li><strong>State machine by convention</strong> — illegal transitions not raised at type level; only caught by tests.</li>
+<li><strong>Circular deps</strong> — <code>OrchestratorAgent</code> uses late-binding factory registry; direct imports would break.</li>
+<li><strong><code>ClaudeSDKAgent</code> outside taxonomy</strong> — does not inherit <code>BaseAgent</code>; callers need type narrowing.</li>
+<li><strong>Agent config merging</strong> — YAML + runtime overrides; unclear precedence in edge cases (nested dicts).</li>
+</ol>
+<hr />
+<h2 id="verification-steps">Verification Steps<a class="headerlink" href="#verification-steps" title="Permanent link">&para;</a></h2>
+<p>Before shipping agent changes:</p>
+<ol>
+<li><code>pip install -e ".[dev,claude]"</code> from <code>agentic-workflows-v2/</code>.</li>
+<li><code>python -m pytest tests/test_agents -v</code> — full agent suite green.</li>
+<li><code>python -m pytest tests/test_agents/test_json_extraction.py</code> — structured-output robustness.</li>
+<li><code>python -m pytest tests/test_agents/test_memory.py</code> — window overflow + summarization.</li>
+<li><code>agentic list agents</code> — all agents discoverable.</li>
+<li>Run a minimal workflow using each concrete agent via <code>POST /api/run</code>.</li>
+<li><code>pre-commit run --all-files</code> — mypy strict passes with generics.</li>
+</ol>
+<hr />
+<h2 id="suggested-tests">Suggested Tests<a class="headerlink" href="#suggested-tests" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>BaseAgent</strong>: state-machine legal/illegal transitions; event ordering; generic type preservation.</li>
+<li><strong>ConversationMemory</strong>: window overflow triggers summarize; system message eviction prevention; token-count accuracy vs actual tokenizer.</li>
+<li><strong>CapabilitySet</strong>: scoring monotonicity, empty intersections, ties, proficiency clamps.</li>
+<li><strong>JSON extraction</strong>: malformed LLM responses (truncated, multiple blocks, nested braces in strings, escape sequences).</li>
+<li><strong>OrchestratorAgent</strong>: all-agents-fail raises rather than silently returning; DAG cycle detection; capability tie-breaking.</li>
+<li><strong>ClaudeAgent</strong>: tool_use round-trip; streaming content blocks; rate-limit retry.</li>
+<li><strong>ClaudeSDKAgent</strong>: session lifecycle; standalone invocation path.</li>
+<li><strong>agent_loader</strong>: unknown agent raises; registry population after late-binding.</li>
+<li><strong>Config</strong>: YAML parse errors; override precedence; missing persona file.</li>
+<li><strong>Mock backend</strong>: dev-mode path produces deterministic output; never fires in production config.</li>
+</ul>
+<hr />
+<h2 id="related-code-reuse-opportunities">Related Code &amp; Reuse Opportunities<a class="headerlink" href="#related-code-reuse-opportunities" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>json_extraction.py</code></strong> could be extracted as a standalone library — it's generally useful and better than greedy regex approaches.</li>
+<li><strong><code>ConversationMemory</code></strong> could generalize to non-agent contexts (e.g., chat UI) — move to <code>core/memory.py</code>.</li>
+<li><strong><code>CapabilitySet.score_match</code></strong> is a public-utility-caliber function; could be exposed for external orchestrators.</li>
+<li><strong>Agent event system</strong> parallels <code>server/websocket.py</code> hub — consider unifying into <code>core/events.py</code>.</li>
+<li><strong>System prompts</strong> currently in <code>prompts/*.md</code>; consider externalizing into versioned YAML for experimentation.</li>
+<li><strong>Backend adapters</strong> (<code>ClaudeAgent</code>, <code>ClaudeSDKAgent</code>) could use the existing <code>AdapterRegistry</code> pattern from <code>adapters/</code> for symmetry.</li>
+<li><strong>Mock backend</strong> pattern should be promoted to a shared <code>tools.llm.mock_client</code> for cross-package reuse.</li>
+</ul>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../deep-dive-server/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Server &amp; API">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Server & API
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../rag/" class="md-footer__link md-footer__link--next" aria-label="Next: RAG Pipeline">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                RAG Pipeline
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3598 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-001-002-003-architecture-decisions/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Architectural decision records for agentic-workflows-v2 - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Architectural decision records for agentic-workflows-v2 - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-001-002-003-architecture-decisions.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-001-002-003-architecture-decisions/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="Architectural decision records for agentic-workflows-v2 - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-001-002-003-architecture-decisions.png" />
+</head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#architectural-decision-records-for-agentic-workflows-v2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architectural decision records for agentic-workflows-v2
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & Providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adr-001-dual-execution-engine-langgraph-pregel-vs-native-kahns-dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-001: Dual execution engine — LangGraph Pregel vs. native Kahn's DAG
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ADR-001: Dual execution engine — LangGraph Pregel vs. native Kahn&#39;s DAG">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analysis-of-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analysis of options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tradeoff-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tradeoff matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-level-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code-level recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-002-smartmodelrouter-circuit-breaker-hardening-for-multi-backend-llm-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-002: SmartModelRouter circuit-breaker hardening for multi-backend LLM routing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ADR-002: SmartModelRouter circuit-breaker hardening for multi-backend LLM routing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#risk-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risk analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#severity-and-likelihood-risk-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Severity and likelihood risk matrix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decision_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consequences_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-level-recommendations_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code-level recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adr-003-deep-research-supervisor-state-machine-with-composite-ci-gating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR-003: Deep research supervisor state machine with composite CI gating
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ADR-003: Deep research supervisor state machine with composite CI gating">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#context_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formal-state-transition-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formal state transition model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b-partial-ci-pass-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (B) Partial CI pass handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-round-regression-mitigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (C) Round regression mitigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d-metric-independence-vs-composite-gating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (D) Metric independence vs. composite gating
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e-graceful-degradation-when-max_rounds-exhausted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (E) Graceful degradation when max_rounds exhausted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bounded-unrolling-is-the-correct-design-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bounded unrolling is the correct design choice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#decision_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#consequences_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-level-recommendations_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code-level recommendations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-001-002-003-architecture-decisions.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-001-002-003-architecture-decisions.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="architectural-decision-records-for-agentic-workflows-v2">Architectural decision records for agentic-workflows-v2<a class="headerlink" href="#architectural-decision-records-for-agentic-workflows-v2" title="Permanent link">&para;</a></h1>
+<p>Three critical architectural concerns face the <code>agentic-workflows-v2</code> monorepo: a dual execution engine that risks behavioral divergence, a circuit-breaker design exposed to cascade failures across LLM providers, and a supervisor state machine governing multi-round deep research with composite quality gating. Each concern carries production-reliability implications. The analysis below produces a formal ADR for each, grounded in workflow orchestration literature, distributed systems resilience patterns, and formal state machine theory.</p>
+<hr />
+<h2 id="adr-001-dual-execution-engine-langgraph-pregel-vs-native-kahns-dag">ADR-001: Dual execution engine — LangGraph Pregel vs. native Kahn's DAG<a class="headerlink" href="#adr-001-dual-execution-engine-langgraph-pregel-vs-native-kahns-dag" title="Permanent link">&para;</a></h2>
+<h3 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h3>
+<p>The repository maintains two active execution engines serving overlapping purposes. The <strong>LangGraph engine</strong> (<code>agentic_v2/langchain/</code>) uses <code>StateGraph</code> compiled to a <code>CompiledGraph</code> extending <code>Pregel</code> — Google's Bulk Synchronous Parallel model adapted by LangChain. It provides integrated checkpointing at every superstep, channel-based state management with typed reducers, streaming, human-in-the-loop interrupts, and time-travel debugging. The <strong>native DAG executor</strong> (<code>agentic_v2/engine/dag_executor.py</code>) implements Kahn's topological sort algorithm (Kahn, 1962) with dynamic parallel scheduling via <code>asyncio</code>, <code>StepExecutor</code>, <code>ExecutionContext</code>, and <code>StepStateManager</code>. The orchestrator agent's <code>execute_as_dag</code> method explicitly constructs and dispatches workflows through this second engine.</p>
+<p>This dual-engine situation creates three risks: <strong>behavioral divergence</strong> (identical YAML workflows producing different outputs through different engines), <strong>maintenance burden</strong> (two codepaths for execution, error handling, and state management), and <strong>feature asymmetry</strong> (LangGraph provides ~9 integrated capabilities — checkpointing, streaming, human-in-the-loop, time travel, subgraph support — that the native engine would need to reimplement independently).</p>
+<h3 id="analysis-of-options">Analysis of options<a class="headerlink" href="#analysis-of-options" title="Permanent link">&para;</a></h3>
+<p><strong>Option A — Consolidate to LangGraph only.</strong> Temporal.io's architecture offers the strongest precedent here: a single, opinionated execution engine with strict determinism requirements produces the highest reliability. Temporal's production users report "production issues falling from once-a-week to near-zero." LangGraph's Pregel execution model provides automatic checkpointing at every superstep, fault-tolerant resume (pending writes from successful nodes are preserved when others fail), and streaming — all capabilities that would require significant engineering to replicate. However, LangGraph's BSP scheduling is <strong>conservative with parallelism</strong>: even when a node's dependencies are satisfied, it waits until the entire current superstep completes before scheduling the next batch. For pure DAG workflows with deep parallelism, this leaves performance on the table.</p>
+<p><strong>Option B — Consolidate to native DAG only.</strong> Kahn's algorithm delivers <strong>optimal wavefront parallelism</strong> — every node whose in-degree reaches zero is immediately schedulable, without waiting for unrelated nodes to complete. The algorithm runs in Θ(n + m) time. However, this path requires reimplementing checkpointing, state persistence, streaming, human-in-the-loop, time travel, conditional routing, and subgraph support. Prefect's evolution is instructive: they deliberately moved <em>away</em> from DAG-only execution toward richer execution models, finding that "if Python can write it, Orion can run it" was a more powerful abstraction than strict DAG constraints.</p>
+<p><strong>Option C — Keep both with a conformance layer.</strong> Apache Airflow provides direct precedent: since version 2.10.0, Airflow supports <strong>multiple simultaneous executors</strong> via comma-separated configuration, with per-task or per-DAG executor routing. This validates the pattern of maintaining parallel execution backends. However, verifying behavioral equivalence between engines is fundamentally hard — Rice's theorem establishes that proving behavioral equivalence is undecidable in general, and differential testing (running both engines on identical inputs and comparing outputs) is practical but incomplete. The conformance layer itself becomes a maintenance burden and potential failure point.</p>
+<p><strong>Option D — Abstract behind a common <code>ExecutionEngine</code> interface.</strong> This approach creates a facade that dispatches to either backend based on workflow characteristics, following the Strangler Fig migration pattern. Martin Fowler's updated guidance (2024) explicitly endorses transitional architecture: "People often balk at the necessity of building transitional architecture to allow the new and legacy system to coexist, code that will go away once the modernization is complete. While this may appear to be a waste, the reduced risk and earlier value from the gradual approach outweigh its costs." The interface would expose <code>execute(workflow_def) → ExecutionResult</code> with engine selection based on workflow capabilities (cycles → LangGraph, pure DAG with max parallelism → Kahn's).</p>
+<h3 id="tradeoff-matrix">Tradeoff matrix<a class="headerlink" href="#tradeoff-matrix" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>A: LangGraph only</th>
+<th>B: Native DAG only</th>
+<th>C: Both + conformance</th>
+<th>D: Common interface</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Maintenance cost</strong></td>
+<td>Low (single engine)</td>
+<td>Low (single engine)</td>
+<td>High (two engines + test layer)</td>
+<td>Medium (interface + two engines)</td>
+</tr>
+<tr>
+<td><strong>Feature completeness</strong></td>
+<td>High (built-in)</td>
+<td>Low (must reimplement ~9 features)</td>
+<td>High (use each engine's strengths)</td>
+<td>High (delegate to appropriate engine)</td>
+</tr>
+<tr>
+<td><strong>Scheduling optimality</strong></td>
+<td>Moderate (BSP conservatism)</td>
+<td>Optimal (wavefront parallelism)</td>
+<td>Optimal (route by need)</td>
+<td>Optimal (route by need)</td>
+</tr>
+<tr>
+<td><strong>Behavioral consistency</strong></td>
+<td>Guaranteed (one engine)</td>
+<td>Guaranteed (one engine)</td>
+<td>Risk of divergence</td>
+<td>Risk of divergence (mitigated by routing)</td>
+</tr>
+<tr>
+<td><strong>Migration risk</strong></td>
+<td>Medium (must migrate all DAG workflows)</td>
+<td>High (must reimplement LangGraph features)</td>
+<td>Low (no migration needed)</td>
+<td>Low (incremental migration)</td>
+</tr>
+<tr>
+<td><strong>Vendor coupling</strong></td>
+<td>High (LangGraph API)</td>
+<td>None</td>
+<td>Medium</td>
+<td>Low (abstracted)</td>
+</tr>
+<tr>
+<td><strong>Production precedent</strong></td>
+<td>Temporal.io</td>
+<td>—</td>
+<td>Airflow 2.10+</td>
+<td>Strangler Fig pattern</td>
+</tr>
+</tbody>
+</table>
+<h3 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h3>
+<p><strong>Adopt Option D (common interface) as transitional architecture, converging toward Option A (LangGraph) over 2–3 quarters.</strong> The <code>ExecutionEngine</code> protocol should define <code>async execute(workflow: WorkflowDefinition, context: ExecutionContext) → ExecutionResult</code> with implementations <code>LangGraphEngine</code> and <code>KahnDAGEngine</code>. Route workflows containing cycles, human-in-the-loop nodes, or checkpointing requirements to LangGraph; route pure computation DAGs where maximum parallelism matters to the Kahn's engine. As LangGraph matures and parallelism improves, migrate remaining workflows to LangGraph and retire the native engine.</p>
+<h3 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h3>
+<p><strong>Positive:</strong> Immediate risk reduction through interface abstraction. Incremental migration path. Preserves Kahn's algorithm's parallelism advantage for compute-heavy DAGs during transition. Conformance testing becomes scoped to the interface contract rather than full behavioral equivalence.</p>
+<p><strong>Negative:</strong> Transitional architecture has a carrying cost. The interface must be narrow enough to be implementable by both engines but expressive enough to expose each engine's strengths. LangGraph's Pregel API is explicitly documented as "not intended to be instantiated directly by consumers" — the abstraction must work at the <code>StateGraph</code> level, not the Pregel level.</p>
+<h3 id="code-level-recommendations">Code-level recommendations<a class="headerlink" href="#code-level-recommendations" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Create <code>agentic_v2/engine/protocol.py</code></strong> defining <code>ExecutionEngine(Protocol)</code> with <code>execute</code>, <code>checkpoint</code>, and <code>get_status</code> methods.</li>
+<li><strong>Wrap <code>agentic_v2/langchain/</code> in <code>LangGraphEngine</code></strong> implementing the protocol, delegating to <code>StateGraph.compile().ainvoke()</code>.</li>
+<li><strong>Wrap <code>agentic_v2/engine/dag_executor.py</code> in <code>KahnEngine</code></strong> implementing the same protocol.</li>
+<li><strong>Add <code>engine_selector.py</code></strong> that inspects <code>WorkflowDefinition</code> metadata (cycles, HiTL nodes, checkpoint requirements) and dispatches to the appropriate engine.</li>
+<li><strong>Implement shadow execution mode</strong> in CI: run a canonical workflow suite through both engines, compare final state outputs using property-based assertions (dependency ordering, final state field equality). Use <code>hypothesis</code> for property-based test generation.</li>
+<li><strong>Refactor <code>orchestrator.py</code>'s <code>execute_as_dag</code></strong> to call through the protocol interface rather than directly constructing DAGs.</li>
+</ol>
+<hr />
+<h2 id="adr-002-smartmodelrouter-circuit-breaker-hardening-for-multi-backend-llm-routing">ADR-002: SmartModelRouter circuit-breaker hardening for multi-backend LLM routing<a class="headerlink" href="#adr-002-smartmodelrouter-circuit-breaker-hardening-for-multi-backend-llm-routing" title="Permanent link">&para;</a></h2>
+<h3 id="context_1">Context<a class="headerlink" href="#context_1" title="Permanent link">&para;</a></h3>
+<p>The <code>SmartModelRouter</code> (<code>smart_router.py</code>) extends <code>ModelRouter</code> with per-model <code>ModelStats</code> tracking (EMA latency, percentile tracking from p50–p99, sliding window), a three-state circuit breaker (CLOSED → OPEN → HALF_OPEN), adaptive cooldowns via <code>CooldownConfig</code> (base 30s failure / 120s rate-limit / 60s timeout, <strong>1.5× consecutive multiplier</strong>, 600s max), and health-weighted model selection scoring success_rate at 60%, low latency at 20%, and recency at 20%. The fallback chain executes across <strong>5+ providers</strong> (GitHub Models, OpenAI, Azure OpenAI, Gemini, Anthropic, Ollama, local Phi Silica), classifying errors into rate-limit, timeout, and permanent categories.</p>
+<p>Five specific risks threaten production reliability: cascade failures when multiple providers fail simultaneously, incorrect cooldown timing from wall-clock dependence, thundering-herd effects during half-open recovery, flat-rate cooldowns that ignore provider-specific rate-limit signals, and file-based stats persistence that breaks under multi-process deployments.</p>
+<h3 id="risk-analysis">Risk analysis<a class="headerlink" href="#risk-analysis" title="Permanent link">&para;</a></h3>
+<h4 id="a-cascade-failure-prevention">(A) Cascade failure prevention<a class="headerlink" href="#a-cascade-failure-prevention" title="Permanent link">&para;</a></h4>
+<p>When one provider fails, its traffic redistributes to remaining providers. If OpenAI goes down and its load shifts entirely to Anthropic, Anthropic may become overloaded and trip its own circuit breaker — a classic cascade. Google's SRE book (Chapter 22) documents this precisely: "If cluster B fails, requests to cluster A increase to 1,200 QPS...the rate of successfully handled requests in A dips well below 1,000 QPS."</p>
+<p><strong>Recommendation:</strong> Implement <strong>per-provider bulkhead isolation</strong> with concurrent request limits. Each provider gets an independent semaphore (e.g., max 10 concurrent to Ollama, max 50 to OpenAI). When a provider's circuit opens, redistribute traffic proportionally across remaining providers <em>weighted by their remaining capacity</em>, not uniformly. Implement Google's <strong>client-side adaptive throttling</strong>: track <code>requests</code> (attempted) and <code>accepts</code> (succeeded) per provider over a 2-minute window, reject new requests with probability <code>max(0, (requests - K × accepts) / (requests + 1))</code> where K=2. This prevents a failing provider from consuming all retry budget.</p>
+<h4 id="b-partial-failure-handling">(B) Partial failure handling<a class="headerlink" href="#b-partial-failure-handling" title="Permanent link">&para;</a></h4>
+<p>The current <code>get_model_for_tier</code> returns <code>None</code> when all candidates are exhausted. Three of five providers down simultaneously is not a theoretical edge case — correlated failures happen when providers share infrastructure (e.g., Azure outages affecting both Azure OpenAI and GitHub Models).</p>
+<p><strong>Recommendation:</strong> Implement a <strong>tiered degradation strategy</strong>. When primary tier models are exhausted, automatically fall through to lower tiers with reduced capability rather than returning <code>None</code>. Add a <code>degraded_mode</code> flag to responses so callers know they received a lower-tier model. Keep local Ollama or Phi Silica as an <strong>always-available last-resort</strong> bulkhead — local models cannot experience network-level failures. Add a global <code>system_health</code> metric: when &gt;50% of providers are in OPEN state, activate load-shedding (reject low-priority requests, queue medium-priority, serve only high-priority).</p>
+<h4 id="c-cooldown-timer-correctness">(C) Cooldown timer correctness<a class="headerlink" href="#c-cooldown-timer-correctness" title="Permanent link">&para;</a></h4>
+<p>The current implementation uses <code>datetime.now(timezone.utc)</code> for cooldown comparisons. Wall clocks are subject to <strong>NTP step corrections</strong> that can jump forward or backward by seconds or even minutes. A backward jump extends cooldowns unexpectedly; a forward jump ends them prematurely. Python's <code>time.monotonic()</code> uses <code>CLOCK_MONOTONIC</code> on Linux, which is immune to NTP steps and never runs backward.</p>
+<p><strong>Recommendation:</strong> Replace all cooldown/timeout tracking with <code>time.monotonic()</code>. Store wall-clock timestamps separately for logging and debugging only. The pattern:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># BEFORE (dangerous)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">cooldown_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">is_cooled</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">cooldown_end</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># AFTER (correct)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">cooldown_end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="mf">60.0</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">is_cooled</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">cooldown_end</span>
+</span></code></pre></div>
+<p>For JSON persistence, store monotonic offsets relative to a reference point (process start time) and recalculate absolute values on load.</p>
+<h4 id="d-half-open-probe-strategy">(D) Half-open probe strategy<a class="headerlink" href="#d-half-open-probe-strategy" title="Permanent link">&para;</a></h4>
+<p>The current design requires <strong>2 successes</strong> to transition from HALF_OPEN to CLOSED. Research from Bolshakov (2025) identifies a critical coordination issue: "Multiple actors racing to probe, racing to evaluate, racing to transition. Without coordination, your carefully configured recovery threshold becomes a suggestion." In a multi-threaded SmartModelRouter, two threads could simultaneously probe a half-open provider, one succeeding and one failing, leading to inconsistent state transitions.</p>
+<p><strong>Recommendation:</strong> Implement <strong>serialized recovery probes with a lock</strong>. Only one request at a time should probe a HALF_OPEN provider; all others receive immediate fallback. Use an <code>asyncio.Lock</code> per provider for probe coordination. Additionally, implement <strong>exponential backoff on the reset timeout</strong>: if a probe fails in HALF_OPEN, return to OPEN with <code>reset_timeout × 1.5</code> (capped at the max cooldown). Resilience4j's production default of <strong>10 permitted calls in half-open</strong> is appropriate for high-throughput systems, but for LLM routing where each call is expensive, <strong>1 probe request</strong> is more cost-effective. Use a lightweight endpoint (<code>/models</code> for OpenAI, <code>/api/tags</code> for Ollama) as the health check probe rather than a full chat completion.</p>
+<h4 id="e-rate-limit-awareness">(E) Rate-limit awareness<a class="headerlink" href="#e-rate-limit-awareness" title="Permanent link">&para;</a></h4>
+<p>The current flat <strong>120s cooldown</strong> for rate limits ignores that providers communicate exactly when limits reset. OpenAI returns <code>x-ratelimit-reset-requests</code> and <code>x-ratelimit-reset-tokens</code> on every response (not just 429s), plus <code>Retry-After</code> on 429 errors. A 120s cooldown when the actual reset is in 8 seconds wastes provider capacity; a 120s cooldown when the reset is in 300s causes premature retries.</p>
+<p><strong>Recommendation:</strong> Parse provider-specific rate-limit headers and use them to set precise cooldown durations. Implement a <strong>dual token bucket</strong> per provider tracking both RPM (requests per minute) and TPM (tokens per minute). Pre-fill bucket state from <code>x-ratelimit-remaining-*</code> headers received on successful responses. Fall back to exponential backoff with jitter when headers are unreliable — Azure OpenAI's Responses API is known to return incorrect header values (<code>-1</code> and <code>0</code>) as of early 2025. Classify 429 errors separately from 5xx errors: 429 should trigger a rate-limit cooldown honoring <code>Retry-After</code>, while 5xx should trigger the standard failure circuit breaker.</p>
+<h3 id="severity-and-likelihood-risk-matrix">Severity and likelihood risk matrix<a class="headerlink" href="#severity-and-likelihood-risk-matrix" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Likelihood</th>
+<th>Severity</th>
+<th>Current mitigation</th>
+<th>Recommended mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All providers down simultaneously</td>
+<td>Low</td>
+<td>Critical</td>
+<td>Returns None</td>
+<td>Local Ollama last-resort + load shedding</td>
+</tr>
+<tr>
+<td>Cascade failure (overload redistribution)</td>
+<td>Medium</td>
+<td>High</td>
+<td>None</td>
+<td>Bulkhead semaphores + adaptive throttling</td>
+</tr>
+<tr>
+<td>Thundering herd on HALF_OPEN recovery</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>None</td>
+<td>Lock-based serialized probes</td>
+</tr>
+<tr>
+<td>Clock skew corrupts cooldowns</td>
+<td>Low</td>
+<td>Medium</td>
+<td>None</td>
+<td>Switch to <code>time.monotonic()</code></td>
+</tr>
+<tr>
+<td>Flat rate-limit cooldown wastes capacity</td>
+<td>High</td>
+<td>Medium</td>
+<td>120s fixed cooldown</td>
+<td>Parse Retry-After + dual token bucket</td>
+</tr>
+<tr>
+<td>Stats file corruption under multi-process</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Atomic JSON write</td>
+<td>SQLite WAL mode or <code>multiprocessing.Manager()</code></td>
+</tr>
+<tr>
+<td>Correlated provider failures (shared infra)</td>
+<td>Medium</td>
+<td>High</td>
+<td>Independent breakers</td>
+<td>Diversify across cloud regions + infrastructure</td>
+</tr>
+<tr>
+<td>Half-open race conditions</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>None</td>
+<td><code>asyncio.Lock</code> per provider</td>
+</tr>
+</tbody>
+</table>
+<h3 id="decision_1">Decision<a class="headerlink" href="#decision_1" title="Permanent link">&para;</a></h3>
+<p>Implement all five hardening measures (A–E) in priority order: <strong>(C) clock correctness</strong> first (lowest effort, prevents silent bugs), then <strong>(E) rate-limit awareness</strong> (highest capacity recovery), then <strong>(D) half-open serialization</strong> (prevents thundering herd), then <strong>(A) cascade prevention</strong> (bulkheads + adaptive throttling), and finally <strong>(B) partial failure strategy</strong> (most architectural change). Each is independently deployable.</p>
+<h3 id="consequences_1">Consequences<a class="headerlink" href="#consequences_1" title="Permanent link">&para;</a></h3>
+<p><strong>Positive:</strong> Eliminates the five identified reliability risks. Provider-aware rate limiting recovers capacity faster — honoring a 3s <code>Retry-After</code> instead of waiting 120s yields <strong>40× faster recovery</strong> for rate-limited providers. Monotonic clock usage prevents all clock-skew-related timer bugs. Serialized probes eliminate half-open state races.</p>
+<p><strong>Negative:</strong> Increased complexity in <code>smart_router.py</code> and <code>model_stats.py</code>. Per-provider token buckets require parsing provider-specific header formats, creating a maintenance burden as providers change their APIs. Bulkhead semaphore limits must be tuned per-provider and per-deployment.</p>
+<h3 id="code-level-recommendations_1">Code-level recommendations<a class="headerlink" href="#code-level-recommendations_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong><code>model_stats.py</code></strong>: Replace all <code>datetime.now(timezone.utc)</code> comparisons with <code>time.monotonic()</code> for cooldown tracking. Add a <code>_monotonic_reference</code> field for serialization.</li>
+<li><strong><code>smart_router.py</code></strong>: Add <code>_provider_semaphores: dict[str, asyncio.Semaphore]</code> for bulkhead isolation. Add <code>_probe_locks: dict[str, asyncio.Lock]</code> for half-open serialization.</li>
+<li><strong>Create <code>agentic_v2/models/rate_limit_tracker.py</code></strong>: Implement <code>TokenBucket</code> class with <code>consume(tokens: int) → bool</code> and <code>refill_from_headers(headers: dict)</code>. Maintain dual buckets (RPM/TPM) per provider.</li>
+<li><strong><code>smart_router.py</code> <code>_execute_with_fallback</code></strong>: After any successful response, call <code>rate_limit_tracker.update_from_headers(response.headers)</code>. On 429, parse <code>Retry-After</code> and set cooldown to <code>max(retry_after_seconds, base_rate_limit_cooldown)</code>.</li>
+<li><strong><code>smart_router.py</code> <code>get_model_for_tier</code></strong>: When returning <code>None</code>, attempt lower-tier models before giving up. Set <code>response.degraded = True</code> flag when serving from a lower tier.</li>
+<li><strong><code>model_stats.py</code> persistence</strong>: Replace JSON atomic write with SQLite using WAL mode for multi-process safety, or use <code>multiprocessing.Manager().dict()</code> for shared-memory state.</li>
+</ol>
+<hr />
+<h2 id="adr-003-deep-research-supervisor-state-machine-with-composite-ci-gating">ADR-003: Deep research supervisor state machine with composite CI gating<a class="headerlink" href="#adr-003-deep-research-supervisor-state-machine-with-composite-ci-gating" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Superseded-By:</strong> ADR-007 — Classification Matrix and Stop Policy.
+ADR-007 replaces the composite CI gate (weighted arithmetic mean) with a
+DORA-style multidimensional classification matrix where every dimension must
+independently achieve "High" or better. The CI scalar is retained only as a
+tiebreaker for coalesce() best-of-N selection.</p>
+</blockquote>
+<h3 id="context_2">Context<a class="headerlink" href="#context_2" title="Permanent link">&para;</a></h3>
+<p>The <code>deep_research.yaml</code> workflow defines a <strong>10-node pipeline</strong> with bounded unrolled rounds R1–R4: <code>intake_scope → source_policy → [hypothesis_tree_tot → retrieval_react → analyst_ai + analyst_swe → cove_verify → coverage_confidence_audit] × R1-R4 → supervisor_decide → final_synthesis → rag_package</code>. Each round has conditional <code>when</code> expressions gating on the composite Confidence Index: <strong>CI = 0.25×coverage + 0.20×source_quality + 0.20×agreement + 0.20×verification + 0.15×recency</strong>, with a threshold of CI ≥ 0.80 and additional gating on <code>recent_source_count</code> and <code>critical_contradictions &gt; 0</code>. The supervisor uses a <code>coalesce()</code> pattern to select which round's output to forward.</p>
+<p>This design implements techniques from three foundational papers: <strong>ReAct</strong> (Yao et al., ICLR 2023) for interleaved reasoning and action in the retrieval loop, <strong>Tree of Thoughts</strong> (Yao et al., NeurIPS 2023) for the <code>hypothesis_tree_tot</code> node's branching exploration, and <strong>Chain of Verification</strong> (Dhuliawala et al., ACL 2024) for the <code>cove_verify</code> node's independent verification step. The bounded unrolling approach (R1–R4 as explicit YAML steps) trades configuration duplication for deterministic, inspectable execution paths — aligned with bounded model checking's practice of "unrolling the transition relation of a finite state machine for a fixed number of steps k."</p>
+<h3 id="formal-state-transition-model">Formal state transition model<a class="headerlink" href="#formal-state-transition-model" title="Permanent link">&para;</a></h3>
+<p>Applying Harel statechart formalism (Harel, 1987), the supervisor operates as a <strong>hierarchical state machine</strong> with three levels. The top-level superstate <code>DeepResearch</code> contains nested substates for each pipeline phase. Harel's three extensions to conventional state machines map directly: <strong>hierarchy</strong> (rounds as nested substates within an <code>Execution</code> superstate), <strong>orthogonality</strong> (parallel analyst agents <code>analyst_ai + analyst_swe</code> as concurrent regions), and <strong>broadcast events</strong> (CI evaluation results triggering transitions across the graph).</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>SUPERSTATE: DeepResearch
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├─ INIT → Planning
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├─ Planning
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├─ intake_scope (entry: parse query, decompose search space)
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   └─ source_policy (entry: define source constraints)
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│       → [complete] → Execution
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├─ Execution (SUPERSTATE with history H*)
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   ├─ Round[n] for n ∈ {1..4}    [guard: max_rounds &gt;= n]
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   ├─ hypothesis_tree_tot    (ToT branching exploration)
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   ├─ retrieval_react        (ReAct search-fetch loop)
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │   ├─ PARALLEL REGION:
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   │   ├─ analyst_ai         (domain analysis)
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   │   └─ analyst_swe        (technical analysis)
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   ├─ cove_verify            (CoVe independent verification)
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   │   └─ coverage_confidence_audit (compute CI, 6 metrics)
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   │       → [CI &gt;= 0.80 AND all floors pass] → Coalesce
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   │       → [CI &lt; 0.80 AND n &lt; max_rounds] → Round[n+1]
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   │       → [n == max_rounds] → Coalesce
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   └─ H* (deep history: remembers best round state)
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>├─ Coalesce
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   ├─ entry: best_round = argmax(CI(r) for r in completed_rounds)
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   ├─ [best_CI &gt;= 0.80] → Synthesis(full_confidence)
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│   └─ [best_CI &lt; 0.80] → Synthesis(degraded)
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>└─ Synthesis
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>    ├─ final_synthesis (entry: compose report from best_round output)
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>    └─ rag_package (entry: package for RAG indexing)
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>        → FINAL
+</span></code></pre></div>
+<p>Harel's <strong>deep history mechanism</strong> (H*) is critical here: it remembers which substate was active when the <code>Execution</code> superstate was last exited, enabling the <code>coalesce()</code> pattern to return to the best prior round's state if a later round regresses. The guard conditions on round transitions encode the pipeline's bounded iteration logic directly as statechart guards.</p>
+<h3 id="b-partial-ci-pass-handling">(B) Partial CI pass handling<a class="headerlink" href="#b-partial-ci-pass-handling" title="Permanent link">&para;</a></h3>
+<p>The current design gates on composite CI only. This creates a <strong>compensability vulnerability</strong>: a research output with <code>verification_score = 0.10</code> (near-zero factual verification) could still pass if <code>coverage = 0.95</code>, <code>source_quality = 0.90</code>, <code>agreement = 0.95</code>, and <code>recency = 0.90</code>, yielding CI = 0.25(0.95) + 0.20(0.90) + 0.20(0.95) + 0.20(0.10) + 0.15(0.90) = <strong>0.76</strong> — which actually fails, but only barely. More dangerously, <code>verification = 0.35</code> with other scores at 0.90+ yields CI = 0.81 — a passing score despite severely inadequate verification.</p>
+<p>Multi-criteria decision analysis (MCDA) literature identifies this as the <strong>compensability problem</strong> inherent in weighted arithmetic means. Healthcare quality measurement has converged on a hybrid approach: "If even one of the key metrics receives a failing score, the software cannot progress further" (Dynatrace quality gates methodology).</p>
+<p><strong>Recommendation:</strong> Implement <strong>two-tier gating</strong>:</p>
+<ul>
+<li><strong>Tier 1 — Per-metric floors</strong> (non-compensatory): <code>source_quality ≥ 0.40</code>, <code>verification ≥ 0.40</code>, <code>coverage ≥ 0.35</code>, <code>agreement ≥ 0.35</code>, <code>recency ≥ 0.30</code>, <code>recent_source_count ≥ inputs.min_recent_sources</code></li>
+<li><strong>Tier 2 — Composite gate</strong> (compensatory): CI ≥ 0.80</li>
+</ul>
+<p>Both tiers must pass. If Tier 1 fails but Tier 2 passes, the supervisor should trigger a <strong>targeted remediation round</strong> that re-executes only the failing dimension's nodes rather than a full round. For example, if <code>verification &lt; 0.40</code> but all other floors pass and CI ≥ 0.80, re-run only <code>cove_verify → coverage_confidence_audit</code> rather than the entire <code>hypothesis_tree_tot → retrieval_react → analyst → cove_verify → audit</code> pipeline.</p>
+<h3 id="c-round-regression-mitigation">(C) Round regression mitigation<a class="headerlink" href="#c-round-regression-mitigation" title="Permanent link">&para;</a></h3>
+<p>The SELF-REFINE paper (Madaan et al., NeurIPS 2023) explicitly acknowledges that "output quality can vary during iteration with improvement in one aspect but decline in another." In the deep research pipeline, Round 3 might discover sources that introduce contradictions absent in Round 2's output, causing <code>agreement_score</code> to drop even as <code>coverage_score</code> improves.</p>
+<p>The coalesce() pattern already provides the correct architectural response: <strong>best-of-N selection</strong> rather than always-use-latest. This aligns with Tree of Thoughts' backtracking mechanism — selecting the best path through the reasoning tree rather than committing to the most recent one. The Iterative Agent Decoding paper (2025) confirms that "BON improvement ceases after 2 iterations" for certain tasks, suggesting diminishing returns are fundamental to iterative refinement.</p>
+<p><strong>Recommendation:</strong> The supervisor should maintain a <strong>running best</strong> across rounds:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">if</span> <span class="n">CI</span><span class="p">(</span><span class="n">round_n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">CI</span><span class="p">(</span><span class="n">best_round_so_far</span><span class="p">):</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">best_round</span> <span class="o">=</span> <span class="n">round_n</span>        <span class="c1"># improvement</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">elif</span> <span class="n">CI</span><span class="p">(</span><span class="n">round_n</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">CI</span><span class="p">(</span><span class="n">round_n</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">regression_count</span> <span class="o">+=</span> <span class="mi">1</span>       <span class="c1"># track regressions</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">if</span> <span class="n">regression_count</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="k">break</span>  <span class="c1"># early-stop: consecutive regressions signal diminishing returns</span>
+</span></code></pre></div>
+<p>When two consecutive regressions occur, stop executing further rounds even if <code>max_rounds</code> hasn't been reached — additional rounds are unlikely to improve quality and consume resources. The supervisor should log which specific metrics regressed and why (e.g., "R3 introduced 3 contradicting sources, dropping agreement from 0.85 to 0.71").</p>
+<h3 id="d-metric-independence-vs-composite-gating">(D) Metric independence vs. composite gating<a class="headerlink" href="#d-metric-independence-vs-composite-gating" title="Permanent link">&para;</a></h3>
+<p>The CI formula's weights (0.25 + 0.20 + 0.20 + 0.20 + 0.15 = 1.0) are a valid weighted arithmetic mean, the simplest MCDA aggregation. The current weight assignment prioritizes <strong>coverage</strong> (0.25) as the most important dimension — justified because a research report with gaps is fundamentally flawed regardless of other qualities. <strong>Recency</strong> carries the lowest weight (0.15), appropriate since many research topics don't require ultra-recent sources.</p>
+<p>TREC evaluation methodology, established by NIST in 1992, uses <strong>NDCG (Normalized Discounted Cumulative Gain)</strong> as its primary metric because it handles graded relevance with position-based discounting. The pipeline's multi-dimensional CI is more expressive than NDCG but faces the same challenge: sensitivity to weight selection. MCDA literature "strongly recommends testing how different weight assignments affect outcomes" through sensitivity analysis.</p>
+<p><strong>Recommendation:</strong> Conduct <strong>weight sensitivity analysis</strong> by computing CI under ±0.05 perturbations of each weight. If small weight changes cause outcomes to flip between pass/fail, the weights need recalibration. Consider using the <strong>geometric mean</strong> as an alternative aggregation — it is less compensatory than the arithmetic mean and more heavily penalizes low scores on any dimension, which may be desirable for research quality:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Geometric mean alternative (less compensatory)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">CI_geometric</span> <span class="o">=</span> <span class="p">(</span><span class="n">coverage</span><span class="o">**</span><span class="mf">0.25</span> <span class="o">*</span> <span class="n">source_quality</span><span class="o">**</span><span class="mf">0.20</span> <span class="o">*</span> <span class="n">agreement</span><span class="o">**</span><span class="mf">0.20</span> 
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                <span class="o">*</span> <span class="n">verification</span><span class="o">**</span><span class="mf">0.20</span> <span class="o">*</span> <span class="n">recency</span><span class="o">**</span><span class="mf">0.15</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The geometric mean naturally enforces that no single metric can be near-zero without dragging the composite down significantly. With the arithmetic mean, <code>verification = 0.10</code> contributes only -0.16 to CI; with the geometric mean, it contributes a multiplicative factor of <code>0.10^0.20 ≈ 0.63</code>, which is far more punishing.</p>
+<h3 id="e-graceful-degradation-when-max_rounds-exhausted">(E) Graceful degradation when max_rounds exhausted<a class="headerlink" href="#e-graceful-degradation-when-max_rounds-exhausted" title="Permanent link">&para;</a></h3>
+<p>When all R1–R4 rounds complete without achieving CI ≥ 0.80, the system must deliver the best available result rather than failing entirely. Google SRE's principle is direct: "Serve lower-quality, cheaper-to-compute results to the user" when under stress. AWS Well-Architected's reliability pillar states: "Application components should continue to perform their core function even if dependencies become unavailable."</p>
+<p><strong>Recommendation:</strong> Implement <strong>tiered delivery</strong> based on the best CI achieved:</p>
+<table>
+<thead>
+<tr>
+<th>Best CI achieved</th>
+<th>Delivery tier</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≥ 0.80</td>
+<td>Full confidence</td>
+<td>Deliver without qualification</td>
+</tr>
+<tr>
+<td>0.65 – 0.79</td>
+<td>Moderate confidence</td>
+<td>Deliver with warning; highlight weak metrics</td>
+</tr>
+<tr>
+<td>0.50 – 0.64</td>
+<td>Low confidence</td>
+<td>Deliver with prominent disclaimer; mark unverified sections</td>
+</tr>
+<tr>
+<td>&lt; 0.50</td>
+<td>Insufficient</td>
+<td>Flag for human review; deliver only if explicitly requested</td>
+</tr>
+</tbody>
+</table>
+<p>Attach structured <strong>quality metadata</strong> to every output:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">confidence_level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;moderate&quot;</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">best_ci_achieved</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.74</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">target_ci</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.80</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nt">selected_round</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w">       </span><span class="c1"># best-of-4, not necessarily the last</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nt">rounds_completed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nt">failing_metrics</span><span class="p">:</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">verification</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.55</span><span class="w">  </span><span class="c1"># below 0.80 composite target contribution</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">recency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.48</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nt">passing_metrics</span><span class="p">:</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">coverage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.85</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source_quality</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.82</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">agreement</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.78</span>
+</span></code></pre></div>
+<h3 id="bounded-unrolling-is-the-correct-design-choice">Bounded unrolling is the correct design choice<a class="headerlink" href="#bounded-unrolling-is-the-correct-design-choice" title="Permanent link">&para;</a></h3>
+<p>The current approach of explicitly defining R1–R4 as separate YAML steps (static unrolling) rather than using engine-level dynamic looping is the right architectural decision. Bounded model checking literature confirms the pattern: "BMC operates by unrolling the transition relation of a finite state machine for a fixed number of steps k, and then checking whether a property violation can occur." Static unrolling provides <strong>deterministic execution paths</strong> (each round is a known, inspectable node), <strong>no dynamic graph construction overhead</strong>, <strong>independent checkpointability</strong> per round, and <strong>bounded resource consumption</strong> known a priori.</p>
+<p>The tradeoff is configuration duplication — each round repeats similar node definitions — which is mitigable through parameterized node templates in the YAML schema. Dynamic looping would be more compact but introduces runtime graph modification, complicates checkpointing (which iteration state to restore?), and risks unbounded execution without explicit enforcement.</p>
+<h3 id="decision_2">Decision<a class="headerlink" href="#decision_2" title="Permanent link">&para;</a></h3>
+<p>Adopt the <strong>two-tier gating system</strong> (per-metric floors + composite CI), implement <strong>best-of-N selection with consecutive regression early-stopping</strong>, add <strong>targeted remediation rounds</strong> for partial CI failures, and implement <strong>tiered graceful degradation</strong> with structured quality metadata. Retain the bounded unrolled R1–R4 architecture. Evaluate geometric mean aggregation as an alternative to the arithmetic mean through sensitivity analysis.</p>
+<h3 id="consequences_2">Consequences<a class="headerlink" href="#consequences_2" title="Permanent link">&para;</a></h3>
+<p><strong>Positive:</strong> Two-tier gating eliminates the compensability vulnerability where one critical metric near zero passes due to strong performance on others. Best-of-N selection with regression detection prevents wasted computation when iterative refinement has peaked. Tiered degradation ensures users always receive the best available output with transparent quality signaling. Structured metadata enables downstream systems to make informed decisions about output reliability.</p>
+<p><strong>Negative:</strong> Per-metric floors introduce 6 additional thresholds to tune and maintain. Targeted remediation rounds add conditional branching complexity to the YAML workflow. The regression detection heuristic (2 consecutive regressions → stop) may occasionally stop too early if Round 4 would have recovered.</p>
+<h3 id="code-level-recommendations_2">Code-level recommendations<a class="headerlink" href="#code-level-recommendations_2" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong><code>deep_research.yaml</code></strong>: Add <code>floor_thresholds</code> to the workflow inputs: <code>{coverage: 0.35, source_quality: 0.40, agreement: 0.35, verification: 0.40, recency: 0.30}</code>. Add <code>when</code> conditions to each round that check both floor gates and composite CI.</li>
+<li><strong><code>coverage_confidence_audit</code> node</strong>: Return both <code>ci_score</code> (composite) and individual metric scores as separate output fields. Add a <code>floor_violations: list[str]</code> output field listing any metrics below their floor.</li>
+<li><strong><code>supervisor_decide</code> node</strong>: Implement <code>best_round = argmax(ci_scores)</code> rather than always selecting the latest round. Add <code>regression_count</code> tracking and early-stop logic. Add <code>confidence_level</code> classification (full/moderate/low/insufficient).</li>
+<li><strong>Create <code>agentic_v2/workflows/lib/ci_calculator.py</code></strong>: Centralize the CI formula, floor checks, and sensitivity analysis utilities. Support both arithmetic and geometric mean aggregation with a config switch.</li>
+<li><strong><code>final_synthesis</code> node</strong>: Accept <code>confidence_level</code> and <code>quality_metadata</code> from the supervisor. Embed quality disclaimers in the output when <code>confidence_level != "full"</code>.</li>
+<li><strong>Add YAML template macros</strong> for round definitions to reduce duplication across R1–R4. Each round should reference a shared <code>research_round</code> template with <code>round_number</code> as a parameter.</li>
+</ol>
+<hr />
+<h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
+<p>The three ADRs address interconnected reliability concerns in the <code>agentic-workflows-v2</code> architecture. <strong>ADR-001</strong> resolves the dual-engine tension through an interface abstraction with planned LangGraph convergence — the key insight being that Airflow's multi-executor precedent validates parallel backends, but Temporal's single-engine success argues for eventual consolidation. <strong>ADR-002</strong> transforms the SmartModelRouter from a basic circuit breaker into a production-grade resilience layer — the highest-impact change is replacing flat 120s rate-limit cooldowns with provider-aware <code>Retry-After</code> parsing, which alone yields up to <strong>40× faster capacity recovery</strong>. <strong>ADR-003</strong> hardens the supervisor state machine against the compensability vulnerability in composite CI gating — the two-tier system (per-metric floors + composite threshold) is the central recommendation, drawn directly from healthcare quality measurement methodology where individual measure minimums prevent dangerous metric compensation.</p>
+<p>A cross-cutting theme emerges: <strong>the tension between simplicity and correctness</strong>. The current designs chose simple approaches (single composite metric, flat cooldowns, wall clocks, dual engines without conformance testing) that work in development but carry latent production risks. Each ADR provides an incremental hardening path — no recommendation requires a rewrite, and all changes are independently deployable, testable, and reversible.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="Could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

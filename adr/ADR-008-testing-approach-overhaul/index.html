@@ -1,0 +1,2673 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." name="description"/>
+<link href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-008-testing-approach-overhaul/" rel="canonical"/>
+<link href="../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy - Agentic Runtime Platform</title>
+<link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-XXXXXXXXXX"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-XXXXXXXXXX",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+<script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+<meta content="website" property="og:type">
+<meta content="ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy - Agentic Runtime Platform" property="og:title">
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." property="og:description">
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-008-testing-approach-overhaul.png" property="og:image">
+<meta content="image/png" property="og:image:type"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-008-testing-approach-overhaul/" property="og:url"/>
+<meta content="summary_large_image" property="twitter:card"/>
+<meta content="ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy - Agentic Runtime Platform" property="twitter:title"/>
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." property="twitter:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-008-testing-approach-overhaul.png" property="twitter:image"/>
+</meta></meta></meta></meta></head>
+<body data-md-color-accent="amber" data-md-color-primary="amber" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#adr-008-testing-approach-overhaul-value-driven-test-quality-and-coverage-strategy">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Agentic Runtime Platform" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../..">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../getting-started/">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../ARCHITECTURE/">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../deep-dive-server/">
+          
+  
+  
+    
+  
+  Deep Dives
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../api-contracts-runtime/">
+          
+  
+  
+    
+  
+  API Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../WORKFLOW_AUTHORING/">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../architecture-eval/">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../tools/">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../operations/">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../configuration/">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../project-overview/">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Agentic Runtime Platform" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Agentic Runtime Platform
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../getting-started/installation/">
+<span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../getting-started/quickstart/">
+<span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../getting-started/first-workflow/">
+<span class="md-ellipsis">
+    
+  
+    First Workflow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../development-guide/">
+<span class="md-ellipsis">
+    
+  
+    Development Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../NO_LLM_MODE/">
+<span class="md-ellipsis">
+    
+  
+    No-LLM Dev Mode
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../ONBOARDING/">
+<span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../ARCHITECTURE/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Runtime Engine
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI Dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; Providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../integration-architecture/">
+<span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../rag/">
+<span class="md-ellipsis">
+    
+  
+    Deep Dives
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep Dives
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../deep-dive-server/">
+<span class="md-ellipsis">
+    
+  
+    Server &amp; API
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../deep-dive-agents/">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../deep-dive-agentic-v2-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Engine
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api-contracts-runtime/">
+<span class="md-ellipsis">
+    
+  
+    REST Endpoints
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../data-models-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Data Models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../component-inventory-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI Components
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../ui/pages/">
+<span class="md-ellipsis">
+    
+  
+    UI Pages
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../ui/api-integration/">
+<span class="md-ellipsis">
+    
+  
+    UI API Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../workflows/">
+<span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../WORKFLOW_AUTHORING/">
+<span class="md-ellipsis">
+    
+  
+    Authoring Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../PATTERN_CATALOG/">
+<span class="md-ellipsis">
+    
+  
+    Pattern Catalog
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation Framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../evaluation/rubrics/">
+<span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../evaluation/judge/">
+<span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../evaluation/gating/">
+<span class="md-ellipsis">
+    
+  
+    Production Gating
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../evaluation/runners/">
+<span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../evaluation/datasets/">
+<span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_8" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_8_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; Providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/llm-client/">
+<span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/local-models/">
+<span class="md-ellipsis">
+    
+  
+    Local ONNX Models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/windows-ai/">
+<span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/model-probing/">
+<span class="md-ellipsis">
+    
+  
+    Model Probing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/provider-limits/">
+<span class="md-ellipsis">
+    
+  
+    Provider Limits
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../tools/benchmarks/">
+<span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../operations/">
+<span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../deployment-guide/">
+<span class="md-ellipsis">
+    
+  
+    Deployment Guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../operations/security-hardening/">
+<span class="md-ellipsis">
+    
+  
+    Security Hardening
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../operations/troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../configuration/">
+<span class="md-ellipsis">
+    
+  
+    Configuration Reference
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../GLOSSARY/">
+<span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../CODING_STANDARDS/">
+<span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../KNOWN_LIMITATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Known Limitations
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../AI_RISK_MANAGEMENT/">
+<span class="md-ellipsis">
+    
+  
+    AI Risk Management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../MIGRATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../project-overview/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../ROADMAP/">
+<span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../CHANGELOG/">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../ADR-INDEX/">
+<span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../CONTRIBUTING/">
+<span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../DEMO/">
+<span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-tldr">
+<span class="md-ellipsis">
+      
+        1. TL;DR
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-status-history">
+<span class="md-ellipsis">
+      
+        2. Status History
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-context-problem-statement">
+<span class="md-ellipsis">
+      
+        3. Context &amp; Problem Statement
+      
+    </span>
+</a>
+<nav aria-label="3. Context &amp; Problem Statement" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#31-the-bloat-problem-quantitative-evidence">
+<span class="md-ellipsis">
+      
+        3.1 The Bloat Problem — Quantitative Evidence
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#32-the-coverage-void-problem-quantitative-evidence">
+<span class="md-ellipsis">
+      
+        3.2 The Coverage Void Problem — Quantitative Evidence
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#33-root-cause-analysis">
+<span class="md-ellipsis">
+      
+        3.3 Root Cause Analysis
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#34-impact-on-well-tested-areas">
+<span class="md-ellipsis">
+      
+        3.4 Impact on Well-Tested Areas
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-options-considered">
+<span class="md-ellipsis">
+      
+        4. Options Considered
+      
+    </span>
+</a>
+<nav aria-label="4. Options Considered" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#option-a-coverage-only-enforcement">
+<span class="md-ellipsis">
+      
+        Option A — Coverage-Only Enforcement
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#option-b-test-value-classification-targeted-remediation">
+<span class="md-ellipsis">
+      
+        Option B — Test Value Classification + Targeted Remediation
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#option-c-full-tdd-reset">
+<span class="md-ellipsis">
+      
+        Option C — Full TDD Reset
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#option-d-ai-assisted-continuous-audit">
+<span class="md-ellipsis">
+      
+        Option D — AI-Assisted Continuous Audit
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tradeoff-matrix">
+<span class="md-ellipsis">
+      
+        Tradeoff Matrix
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-decision">
+<span class="md-ellipsis">
+      
+        5. Decision
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#6-test-value-taxonomy">
+<span class="md-ellipsis">
+      
+        6. Test Value Taxonomy
+      
+    </span>
+</a>
+<nav aria-label="6. Test Value Taxonomy" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tier-1-high-value-must-have">
+<span class="md-ellipsis">
+      
+        Tier 1 — High Value (MUST HAVE)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tier-2-moderate-value-keep">
+<span class="md-ellipsis">
+      
+        Tier 2 — Moderate Value (KEEP)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tier-3-low-value-consolidate-or-remove">
+<span class="md-ellipsis">
+      
+        Tier 3 — Low Value (CONSOLIDATE OR REMOVE)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tier-4-negative-value-must-remove">
+<span class="md-ellipsis">
+      
+        Tier 4 — Negative Value (MUST REMOVE)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#7-enforceable-rules">
+<span class="md-ellipsis">
+      
+        7. Enforceable Rules
+      
+    </span>
+</a>
+<nav aria-label="7. Enforceable Rules" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-1-one-canonical-test-file-per-source-module">
+<span class="md-ellipsis">
+      
+        Rule 1: One Canonical Test File Per Source Module
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-2-every-test-must-assert-behavior">
+<span class="md-ellipsis">
+      
+        Rule 2: Every Test Must Assert Behavior
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-3-parametrize-dont-duplicate">
+<span class="md-ellipsis">
+      
+        Rule 3: Parametrize, Don't Duplicate
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-4-test-file-hygiene-on-refactor">
+<span class="md-ellipsis">
+      
+        Rule 4: Test File Hygiene on Refactor
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-5-no-facade-re-testing">
+<span class="md-ellipsis">
+      
+        Rule 5: No Facade Re-Testing
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-6-mock-completeness">
+<span class="md-ellipsis">
+      
+        Rule 6: Mock Completeness
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rule-7-coverage-floors-per-package">
+<span class="md-ellipsis">
+      
+        Rule 7: Coverage Floors Per Package
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#8-immediate-remediation-plan">
+<span class="md-ellipsis">
+      
+        8. Immediate Remediation Plan
+      
+    </span>
+</a>
+<nav aria-label="8. Immediate Remediation Plan" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#phase-0-cleanup-95-test-removals">
+<span class="md-ellipsis">
+      
+        Phase 0: Cleanup (~95 test removals)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#phase-1-highest-impact-new-coverage">
+<span class="md-ellipsis">
+      
+        Phase 1: Highest-Impact New Coverage
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#phase-2-server-hardening">
+<span class="md-ellipsis">
+      
+        Phase 2: Server Hardening
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#phase-3-fill-remaining-gaps">
+<span class="md-ellipsis">
+      
+        Phase 3: Fill Remaining Gaps
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#phase-4-frontend-e2e">
+<span class="md-ellipsis">
+      
+        Phase 4: Frontend &amp; E2E
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#projected-impact">
+<span class="md-ellipsis">
+      
+        Projected Impact
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#9-consequences">
+<span class="md-ellipsis">
+      
+        9. Consequences
+      
+    </span>
+</a>
+<nav aria-label="9. Consequences" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#positive">
+<span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#negative">
+<span class="md-ellipsis">
+      
+        Negative
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#10-code-level-recommendations">
+<span class="md-ellipsis">
+      
+        10. Code-Level Recommendations
+      
+    </span>
+</a>
+<nav aria-label="10. Code-Level Recommendations" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#101-immediate-actions-phase-0">
+<span class="md-ellipsis">
+      
+        10.1 Immediate Actions (Phase 0)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#102-ciautomation-opportunities">
+<span class="md-ellipsis">
+      
+        10.2 CI/Automation Opportunities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#103-update-existing-rules">
+<span class="md-ellipsis">
+      
+        10.3 Update Existing Rules
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#11-references">
+<span class="md-ellipsis">
+      
+        11. References
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#12-open-questions">
+<span class="md-ellipsis">
+      
+        12. Open Questions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-008-testing-approach-overhaul.md" rel="edit" title="Edit this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+</a>
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-008-testing-approach-overhaul.md" title="View source of this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+</a>
+<h1 id="adr-008-testing-approach-overhaul-value-driven-test-quality-and-coverage-strategy">ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy<a class="headerlink" href="#adr-008-testing-approach-overhaul-value-driven-test-quality-and-coverage-strategy" title="Permanent link">¶</a></h1>
+<hr/>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>bValue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ID</strong></td>
+<td>ADR-008</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>🟡 Proposed</td>
+</tr>
+<tr>
+<td><strong>Date</strong></td>
+<td>2026-03-02</td>
+</tr>
+<tr>
+<td><strong>System</strong></td>
+<td>All packages — agentic-workflows-v2, tools/, agentic-v2-eval, UI</td>
+</tr>
+<tr>
+<td><strong>Authors</strong></td>
+<td>Platform Engineering</td>
+</tr>
+<tr>
+<td><strong>Reviewers</strong></td>
+<td>Backend Lead, QA</td>
+</tr>
+<tr>
+<td><strong>Supersedes</strong></td>
+<td>Deprecated planned unit-test strategy entry from the retired compiled registry (never authored)</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="1-tldr">1. TL;DR<a class="headerlink" href="#1-tldr" title="Permanent link">¶</a></h2>
+<blockquote>
+<p><strong>The test suite has grown to ~1,100 functions but ~9% are duplicative, low-value, or broken — consuming maintenance effort while providing zero defect-detection capability. Meanwhile, ~14,100 lines of critical production code (including the YAML-to-LLM bridge, model availability detection, and the entire benchmark subsystem) have zero test coverage. We adopt a value-driven testing policy: a formal Test Value Taxonomy that classifies every test into one of four tiers, seven enforceable rules to prevent future degradation, and a phased remediation plan that first removes ~95 problematic tests, then invests in the highest-risk uncovered modules.</strong></p>
+</blockquote>
+<hr/>
+<h2 id="2-status-history">2. Status History<a class="headerlink" href="#2-status-history" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Status</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-03-02</td>
+<td>🟡 Proposed</td>
+<td>Full audit of 60+ test files completed; ADR authored with quantitative findings</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="3-context-problem-statement">3. Context &amp; Problem Statement<a class="headerlink" href="#3-context-problem-statement" title="Permanent link">¶</a></h2>
+<p>The <code>tafreeman/agentic-runtime-platform</code> monorepo targets 80%+ Python test coverage and emphasizes TDD workflows. A comprehensive audit of all test files revealed two systemic problems operating in opposite directions: <strong>test bloat</strong> (redundant tests inflating counts without adding defect detection) and <strong>coverage voids</strong> (critical modules with zero or near-zero coverage).</p>
+<h3 id="31-the-bloat-problem-quantitative-evidence">3.1 The Bloat Problem — Quantitative Evidence<a class="headerlink" href="#31-the-bloat-problem-quantitative-evidence" title="Permanent link">¶</a></h3>
+<p>An audit of all 60+ test files across the monorepo uncovered <strong>~95 tests</strong> that should be removed, consolidated, or rewritten:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>╔══════════════════════════════════════════════════════════════════════════╗
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>║                    TEST QUALITY AUDIT FINDINGS                          ║
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>╠═══════════════════════════════════╦══════╦════════════════════════════════╣
+</span><span id="__span-0-4"><a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>║ Category                          ║ Count║ Impact                        ║
+</span><span id="__span-0-5"><a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>╠═══════════════════════════════════╬══════╬════════════════════════════════╣
+</span><span id="__span-0-6"><a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>║ Duplicate files (entire files)    ║  2   ║ ~35 redundant test functions   ║
+</span><span id="__span-0-7"><a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>║ Cross-file duplications           ║ ~30  ║ Same behavior tested 2-3x     ║
+</span><span id="__span-0-8"><a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>║ Low-value tests                   ║ ~25  ║ Assert constructors/enums only ║
+</span><span id="__span-0-9"><a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>║ Broken / no-op tests              ║  4   ║ Can never fail                 ║
+</span><span id="__span-0-10"><a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a>╠═══════════════════════════════════╬══════╬════════════════════════════════╣
+</span><span id="__span-0-11"><a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>║ TOTAL                             ║ ~95  ║ ~9% of all test functions      ║
+</span><span id="__span-0-12"><a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a>╚═══════════════════════════════════╩══════╩════════════════════════════════╝
+</span></code></pre></div>
+<p>Current coverage findings are tracked through CI coverage gates and this ADR's implementation plan.</p>
+<h4 id="311-duplicate-files">3.1.1 Duplicate Files<a class="headerlink" href="#311-duplicate-files" title="Permanent link">¶</a></h4>
+<p>Two test files are <strong>complete duplicates</strong> of other test files, created when modules were refactored but old tests were never removed:</p>
+<table>
+<thead>
+<tr>
+<th>Duplicate File</th>
+<th>Original File</th>
+<th>Overlap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_server_auth.py</code> (15 tests)</td>
+<td><code>test_auth.py</code> (15 tests)</td>
+<td>14 of 15 tests identical</td>
+</tr>
+<tr>
+<td><code>test_server_websocket.py</code> (20 tests)</td>
+<td><code>test_websocket.py</code> (20 tests)</td>
+<td>19 of 20 tests identical</td>
+</tr>
+</tbody>
+</table>
+<p>The duplicate files use inferior patterns: <code>sys.modules</code> stub hacks, manual setup/teardown instead of <code>monkeypatch</code>, missing <code>@pytest.mark.asyncio</code> decorators on async tests (which can cause silent test skips under strict pytest-asyncio modes).</p>
+<p>A third file, <code>test_agents_integration.py</code> (8 tests), overlaps almost entirely with <code>test_agents.py</code> and <code>test_agents_orchestrator.py</code> — including a misleadingly named test (<code>test_orchestrator_creates_dag_from_subtasks</code>) that only tests agent registration.</p>
+<h4 id="312-monolith-extraction-without-cleanup">3.1.2 Monolith Extraction Without Cleanup<a class="headerlink" href="#312-monolith-extraction-without-cleanup" title="Permanent link">¶</a></h4>
+<p>When <code>test_langchain_engine.py</code> (76 tests, 1,197 lines) was refactored to extract focused unit test files, <strong>the original tests were left in place</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>test_langchain_engine.py (ORIGINAL — 76 tests)
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>    ├── TestExpressions (7 tests)       ──→ DUPLICATED in test_langchain_expressions.py (19 tests)
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    ├── TestCoalesceExpression (4 tests) ──→ DUPLICATED in test_langchain_expressions.py
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    ├── TestCompositeExpressions (3 tests)──→ DUPLICATED in test_langchain_expressions.py
+</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>    ├── TestConfigLoader (2 tests)      ──→ DUPLICATED in test_langchain_config.py (13 tests)
+</span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>    ├── TestModelRegistry (4 tests)     ──→ DUPLICATED in test_langchain_models_unit.py (32 tests)
+</span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>    └── [Unique tests: graph compilation, workflow runner, response parsing, fan-out, tracing]
+</span></code></pre></div>
+<p>The same pattern appears in evaluation tests: <code>test_server_evaluation.py</code> re-tests 7 hard-gate paths already covered by <code>test_evaluation_scoring.py</code>, because the scoring logic was extracted to a dedicated module but the integration-level tests were never pruned.</p>
+<h4 id="313-low-value-test-patterns">3.1.3 Low-Value Test Patterns<a class="headerlink" href="#313-low-value-test-patterns" title="Permanent link">¶</a></h4>
+<p>Across 10+ test files, we found tests that assert only:</p>
+<ul>
+<li><strong>Constructor defaults:</strong> <code>assert config.name == "agent"</code> after <code>AgentConfig()</code> — tests that <code>@dataclass</code> stores default values</li>
+<li><strong>Enum string values:</strong> <code>assert StepState.PENDING.value == "pending"</code> — tests Python's <code>Enum</code> class</li>
+<li><strong>Type identity:</strong> <code>assert isinstance(result, str)</code> on a function with <code>-&gt; str</code> return annotation — tests the type system</li>
+<li><strong>API surface existence:</strong> <code>assert hasattr(obj, "method") and callable(obj.method)</code> — would fail at import time if missing</li>
+<li><strong>Tautologies:</strong> <code>assert isinstance(result, type(result))</code> — always <code>True</code> for any object</li>
+</ul>
+<p>These tests contribute to coverage % but detect zero defects. They also create false confidence ("we have 1,000 tests") while masking that critical modules have none.</p>
+<h4 id="314-broken-tests">3.1.4 Broken Tests<a class="headerlink" href="#314-broken-tests" title="Permanent link">¶</a></h4>
+<p>Four tests can <strong>never fail</strong> due to implementation errors:</p>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Problem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_runner_ui.py::test_returns_empty_dict_when_file_missing_and_probe_unavailable</code></td>
+<td>Body is <code>with patch(...): pass</code> — asserts nothing</td>
+</tr>
+<tr>
+<td><code>test_provider_adapters.py::test_resolves_to_onnx_directory</code></td>
+<td>Asserts <code>result is None or isinstance(result, Path)</code> — vacuously true</td>
+</tr>
+<tr>
+<td><code>test_cli.py::test_no_arguments</code></td>
+<td>Asserts <code>exit_code == 2 or exit_code == 0</code> — accepts all outcomes</td>
+</tr>
+<tr>
+<td><code>test_cli.py::test_orchestrate_shows_note</code></td>
+<td><code>"LLM" in output or "orchestration" in output.lower()</code> — overly permissive</td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-the-coverage-void-problem-quantitative-evidence">3.2 The Coverage Void Problem — Quantitative Evidence<a class="headerlink" href="#32-the-coverage-void-problem-quantitative-evidence" title="Permanent link">¶</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>╔══════════════════════════════════════════════════════════════════════════╗
+</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>║               MODULES WITH ZERO TEST COVERAGE                           ║
+</span><span id="__span-2-3"><a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>╠════════════════════════════════════════════════════╦═══════╦═════════════╣
+</span><span id="__span-2-4"><a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>║ Module                                             ║ Lines ║ Risk        ║
+</span><span id="__span-2-5"><a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>╠════════════════════════════════════════════════════╬═══════╬═════════════╣
+</span><span id="__span-2-6"><a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a>║ engine/agent_resolver.py                           ║   979 ║ CRITICAL    ║
+</span><span id="__span-2-7"><a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>║ tools/llm/model_probe.py                           ║ 2,313 ║ CRITICAL    ║
+</span><span id="__span-2-8"><a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>║ tools/agents/benchmarks/llm_evaluator.py           ║   777 ║ CRITICAL    ║
+</span><span id="__span-2-9"><a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a>║ tools/agents/benchmarks/evaluation_pipeline.py     ║   320 ║ HIGH        ║
+</span><span id="__span-2-10"><a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a>║ tools/agents/benchmarks/workflow_pipeline.py       ║   394 ║ HIGH        ║
+</span><span id="__span-2-11"><a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a>║ tools/agents/benchmarks/datasets.py                ║   310 ║ HIGH        ║
+</span><span id="__span-2-12"><a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a>║ tools/agents/benchmarks/loader.py                  ║   556 ║ HIGH        ║
+</span><span id="__span-2-13"><a href="#__codelineno-2-13" id="__codelineno-2-13" name="__codelineno-2-13"></a>║ tools/agents/benchmarks/registry.py                ║   261 ║ HIGH        ║
+</span><span id="__span-2-14"><a href="#__codelineno-2-14" id="__codelineno-2-14" name="__codelineno-2-14"></a>║ tools/core/tool_init.py                            ║   501 ║ MEDIUM      ║
+</span><span id="__span-2-15"><a href="#__codelineno-2-15" id="__codelineno-2-15" name="__codelineno-2-15"></a>║ tools/core/local_media.py                          ║   464 ║ MEDIUM      ║
+</span><span id="__span-2-16"><a href="#__codelineno-2-16" id="__codelineno-2-16" name="__codelineno-2-16"></a>║ tools/llm/model_inventory.py                       ║   528 ║ MEDIUM      ║
+</span><span id="__span-2-17"><a href="#__codelineno-2-17" id="__codelineno-2-17" name="__codelineno-2-17"></a>║ tools/llm/model_bakeoff.py                         ║   633 ║ MEDIUM      ║
+</span><span id="__span-2-18"><a href="#__codelineno-2-18" id="__codelineno-2-18" name="__codelineno-2-18"></a>║ workflows/artifact_extractor.py                    ║   137 ║ MEDIUM      ║
+</span><span id="__span-2-19"><a href="#__codelineno-2-19" id="__codelineno-2-19" name="__codelineno-2-19"></a>║ integrations/langchain.py                          ║   246 ║ MEDIUM      ║
+</span><span id="__span-2-20"><a href="#__codelineno-2-20" id="__codelineno-2-20" name="__codelineno-2-20"></a>║ integrations/otel.py                               ║   199 ║ MEDIUM      ║
+</span><span id="__span-2-21"><a href="#__codelineno-2-21" id="__codelineno-2-21" name="__codelineno-2-21"></a>╠════════════════════════════════════════════════════╬═══════╬═════════════╣
+</span><span id="__span-2-22"><a href="#__codelineno-2-22" id="__codelineno-2-22" name="__codelineno-2-22"></a>║ TOTAL UNTESTED                                     ║ 8,618 ║             ║
+</span><span id="__span-2-23"><a href="#__codelineno-2-23" id="__codelineno-2-23" name="__codelineno-2-23"></a>╚════════════════════════════════════════════════════╩═══════╩═════════════╝
+</span></code></pre></div>
+<p>Additionally, <strong>6 modules with existing but thin coverage</strong> (under 30%):</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Lines</th>
+<th>Current Tests</th>
+<th>Effective Coverage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>server/routes/workflows.py</code></td>
+<td>1,247</td>
+<td>9 tests</td>
+<td>~15%</td>
+</tr>
+<tr>
+<td><code>server/evaluation_scoring.py</code></td>
+<td>1,141</td>
+<td>18 tests</td>
+<td>~21%</td>
+</tr>
+<tr>
+<td><code>models/backends.py</code></td>
+<td>824</td>
+<td>11 tests</td>
+<td>~24%</td>
+</tr>
+<tr>
+<td><code>server/judge.py</code></td>
+<td>561</td>
+<td>4 tests</td>
+<td>~15%</td>
+</tr>
+<tr>
+<td><code>server/datasets.py</code></td>
+<td>858</td>
+<td>0 dedicated</td>
+<td>~10% (indirect)</td>
+</tr>
+<tr>
+<td><code>langchain/models.py</code></td>
+<td>811</td>
+<td>32 tests</td>
+<td>~25%</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>tools/</code> root package is the worst offender: <strong>only 3 of 35+ source modules have any tests</strong> (test_config.py, test_errors.py, test_llm_client.py).</p>
+<h3 id="33-root-cause-analysis">3.3 Root Cause Analysis<a class="headerlink" href="#33-root-cause-analysis" title="Permanent link">¶</a></h3>
+<pre class="mermaid"><code>flowchart TD
+    RC1["RC1: Refactoring without<br/>test cleanup"] --&gt;|produces| D1["Duplicate files"]
+    RC1 --&gt;|produces| D2["Leftover monolith tests"]
+    RC2["RC2: No test value policy"] --&gt;|produces| D3["Low-value constructor tests"]
+    RC2 --&gt;|produces| D4["Broken/no-op tests persist"]
+    RC3["RC3: Test count as<br/>quality proxy"] --&gt;|produces| D3
+    RC3 --&gt;|encourages| D5["Coverage gaps ignored<br/>because count looks high"]
+    RC4["RC4: No source↔test<br/>ownership model"] --&gt;|produces| D6["New modules added<br/>without tests"]
+    RC4 --&gt;|produces| D1
+    RC5["RC5: CI checks coverage %<br/>not test quality"] --&gt;|permits| D3
+    RC5 --&gt;|permits| D4
+
+    D1 --&gt; EFFECT["~95 wasteful tests +<br/>~14,100 lines uncovered"]
+    D2 --&gt; EFFECT
+    D3 --&gt; EFFECT
+    D4 --&gt; EFFECT
+    D5 --&gt; EFFECT
+    D6 --&gt; EFFECT
+</code></pre>
+<h3 id="34-impact-on-well-tested-areas">3.4 Impact on Well-Tested Areas<a class="headerlink" href="#34-impact-on-well-tested-areas" title="Permanent link">¶</a></h3>
+<p>Not all test files have quality issues. The following serve as <strong>exemplars</strong> of the testing approach we want to codify:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Tests</th>
+<th>Why it's good</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>engine/expressions.py</code> (480 lines → 46 tests)</td>
+<td>Parametrized boundary tests, both happy and error paths</td>
+<td>Tests behavior, not constructors</td>
+</tr>
+<tr>
+<td><code>models/rate_limit_tracker.py</code> (353 lines → 67 tests)</td>
+<td>Exhaustive edge cases, time-dependent behavior mocked correctly</td>
+<td>Tests state transitions under real conditions</td>
+</tr>
+<tr>
+<td><code>server/multidimensional_scoring.py</code> (527 lines → 50 tests)</td>
+<td>Full matrix of scoring dimensions, boundary values</td>
+<td>Tests computation logic, not schemas</td>
+</tr>
+<tr>
+<td><code>agentic-v2-eval/</code> (4,200 lines → 230 tests)</td>
+<td>Best-covered package; evaluators, scorers, reporters all tested</td>
+<td>Consistent quality across entire package</td>
+</tr>
+<tr>
+<td>UI test suite (6 files, 29 tests)</td>
+<td>Behavioral assertions on rendered output, no implementation leaking</td>
+<td>Tests user-visible behavior</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="4-options-considered">4. Options Considered<a class="headerlink" href="#4-options-considered" title="Permanent link">¶</a></h2>
+<h3 id="option-a-coverage-only-enforcement">Option A — Coverage-Only Enforcement<a class="headerlink" href="#option-a-coverage-only-enforcement" title="Permanent link">¶</a></h3>
+<p>Set <code>--cov-fail-under=80</code> globally in CI and let developers add whatever tests reach the threshold.</p>
+<p><strong>Pros:</strong> Simple to implement. Single enforcement point.
+<strong>Cons:</strong> Goodhart's Law — "when a measure becomes a target, it ceases to be a good measure." You can reach 80% coverage with tautological assertions and constructor tests. Does not address existing bloat. Does not distinguish high-risk from low-risk modules.</p>
+<h3 id="option-b-test-value-classification-targeted-remediation">Option B — Test Value Classification + Targeted Remediation<a class="headerlink" href="#option-b-test-value-classification-targeted-remediation" title="Permanent link">¶</a></h3>
+<p>Define a formal <strong>Test Value Taxonomy</strong> (4 tiers), clean up existing debt per the audit findings, add 7 enforceable rules to prevent future degradation, and invest new tests in the highest-risk uncovered modules.</p>
+<p><strong>Pros:</strong> Addresses both quality and coverage simultaneously. Provides clear, actionable criteria for test reviews. Prevents the patterns that caused the current state.
+<strong>Cons:</strong> Requires upfront cleanup effort (~95 test removals). Rules need team buy-in. Test value classification requires human judgment during code review.</p>
+<h3 id="option-c-full-tdd-reset">Option C — Full TDD Reset<a class="headerlink" href="#option-c-full-tdd-reset" title="Permanent link">¶</a></h3>
+<p>Delete all existing tests and re-derive from scratch using strict RED-GREEN-REFACTOR methodology.</p>
+<p><strong>Pros:</strong> Theoretically produces the cleanest test suite.
+<strong>Cons:</strong> Destroys ~1,005 good tests to fix ~95 bad ones. The eval package (230 tests), rate_limit_tracker (67 tests), and expressions (46 tests) are already excellent. Impractical time investment. Would pause all feature development.</p>
+<h3 id="option-d-ai-assisted-continuous-audit">Option D — AI-Assisted Continuous Audit<a class="headerlink" href="#option-d-ai-assisted-continuous-audit" title="Permanent link">¶</a></h3>
+<p>Use the existing <code>/test-coverage</code> command to periodically re-audit tests. No policy changes — rely on ongoing audits to flag issues.</p>
+<p><strong>Pros:</strong> Low implementation cost. Leverages existing tooling.
+<strong>Cons:</strong> Reactive, not preventive. Does not address the ~95 existing problematic tests. Does not establish criteria for what "good" looks like.</p>
+<h3 id="tradeoff-matrix">Tradeoff Matrix<a class="headerlink" href="#tradeoff-matrix" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>A: Coverage-Only</th>
+<th>B: Value Taxonomy</th>
+<th>C: Full Reset</th>
+<th>D: Continuous Audit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Addresses existing bloat</td>
+<td>No</td>
+<td><strong>Yes</strong></td>
+<td>Yes (nuclear)</td>
+<td>Partially</td>
+</tr>
+<tr>
+<td>Addresses coverage voids</td>
+<td>Indirectly</td>
+<td><strong>Yes (prioritized)</strong></td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Prevents future degradation</td>
+<td>Weakly</td>
+<td><strong>Strongly (7 rules)</strong></td>
+<td>Initially</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Implementation cost</td>
+<td>Low</td>
+<td><strong>Medium</strong></td>
+<td>Very High</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Team disruption</td>
+<td>None</td>
+<td><strong>Low-Medium</strong></td>
+<td>Extreme</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Quality signal</td>
+<td>Weak (% only)</td>
+<td><strong>Strong (taxonomy)</strong></td>
+<td>Strong</td>
+<td>Weak</td>
+</tr>
+<tr>
+<td>Production precedent</td>
+<td>Common but insufficient</td>
+<td>Google (Test Sizes), Stripe</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="5-decision">5. Decision<a class="headerlink" href="#5-decision" title="Permanent link">¶</a></h2>
+<blockquote>
+<p><strong>Adopt Option B (Test Value Classification + Targeted Remediation), supplemented by Option D (periodic AI-assisted audits) for ongoing maintenance.</strong></p>
+</blockquote>
+<p>The decision is grounded in three principles:</p>
+<ol>
+<li>
+<p><strong>Value over volume</strong> — A test suite's strength is measured by defects caught, not functions counted. Removing 95 wasteful tests and adding 50 targeted tests for <code>agent_resolver.py</code> produces a net improvement despite lower absolute count.</p>
+</li>
+<li>
+<p><strong>Risk-proportional investment</strong> — Coverage investment should be proportional to module complexity and blast radius. A 979-line module that bridges YAML to LLM execution deserves 50+ tests; a 37-line enum module does not need 7 individual transition tests when one parametrized test suffices.</p>
+</li>
+<li>
+<p><strong>Prevention over cure</strong> — The 7 enforceable rules (Section 6) address the root causes identified in Section 3.3, preventing future accumulation of the patterns that caused the current state.</p>
+</li>
+</ol>
+<hr/>
+<h2 id="6-test-value-taxonomy">6. Test Value Taxonomy<a class="headerlink" href="#6-test-value-taxonomy" title="Permanent link">¶</a></h2>
+<p>Every test function in the repository can be classified into one of four value tiers:</p>
+<h3 id="tier-1-high-value-must-have">Tier 1 — High Value (MUST HAVE)<a class="headerlink" href="#tier-1-high-value-must-have" title="Permanent link">¶</a></h3>
+<p>Tests that exercise <strong>branching logic, error handling, state transitions, or integration boundaries</strong>. These are the tests that actually catch bugs.</p>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Tests a code path that involves at least one conditional branch (<code>if</code>, <code>match</code>, loop, exception handler)</li>
+<li>Asserts on output values that depend on the code's logic, not just its type</li>
+<li>Covers both the happy path AND at least one error/edge case</li>
+<li>Would fail if the implementation were changed in a semantically meaningful way</li>
+</ul>
+<p><strong>Examples from this codebase:</strong></p>
+<ul>
+<li><code>test_dag_executor.py::test_step_failure_cascades_to_dependents</code> — Tests three-level failure cascade with grandchild skip</li>
+<li><code>test_rate_limit_tracker.py::test_cooldown_exponential_backoff</code> — Tests time-dependent state machine behavior</li>
+<li><code>test_expressions.py::test_evaluate_comparison_operators</code> — Parametrized across 6 operators with boundary values</li>
+</ul>
+<h3 id="tier-2-moderate-value-keep">Tier 2 — Moderate Value (KEEP)<a class="headerlink" href="#tier-2-moderate-value-keep" title="Permanent link">¶</a></h3>
+<p>Tests that validate <strong>contracts, schemas, or boundary conditions</strong> without exercising complex logic.</p>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>Validates Pydantic model serialization/deserialization with non-trivial schemas (nested objects, optional fields, validators)</li>
+<li>Tests boundary values of numeric parameters</li>
+<li>Validates that error messages contain expected context</li>
+<li>Tests configuration loading from YAML/env with real file I/O</li>
+</ul>
+<p><strong>Examples from this codebase:</strong></p>
+<ul>
+<li><code>test_contracts.py::test_workflow_result_serialization</code> — Validates round-trip serialization of complex nested model</li>
+<li><code>test_workflow_loader.py::test_load_invalid_yaml_raises</code> — Validates error handling on malformed input</li>
+</ul>
+<h3 id="tier-3-low-value-consolidate-or-remove">Tier 3 — Low Value (CONSOLIDATE OR REMOVE)<a class="headerlink" href="#tier-3-low-value-consolidate-or-remove" title="Permanent link">¶</a></h3>
+<p>Tests that assert <strong>constructor defaults, enum values, type identity, or Python language guarantees</strong>. These test the framework, not the application.</p>
+<p><strong>Red flags that indicate Tier 3:</strong></p>
+<ul>
+<li><code>assert config.name == "agent"</code> after <code>AgentConfig()</code> — tests dataclass default</li>
+<li><code>assert isinstance(result, str)</code> on a function with <code>-&gt; str</code> — tests type system</li>
+<li><code>assert StepState.PENDING.value == "pending"</code> — tests Python Enum</li>
+<li><code>assert hasattr(obj, "method")</code> — tests API surface existence</li>
+</ul>
+<p><strong>Policy:</strong> Consolidate into a single parametrized test if the values serve as a schema contract (e.g., "all enum members have expected string values"). Remove outright if the assertion is redundant with type checking.</p>
+<h3 id="tier-4-negative-value-must-remove">Tier 4 — Negative Value (MUST REMOVE)<a class="headerlink" href="#tier-4-negative-value-must-remove" title="Permanent link">¶</a></h3>
+<p>Tests that <strong>can never fail</strong>, <strong>duplicate another test with weaker assertions</strong>, or <strong>contain broken mocking</strong>. These actively harm the test suite by creating false confidence.</p>
+<p><strong>Red flags that indicate Tier 4:</strong></p>
+<ul>
+<li><code>assert isinstance(result, type(result))</code> — tautology</li>
+<li><code>assert exit_code == 0 or exit_code == 2</code> — accepts all outcomes</li>
+<li><code>with patch(...): pass</code> — mocks something but asserts nothing</li>
+<li><code>assert result is None or isinstance(result, Path)</code> — vacuously true</li>
+</ul>
+<p><strong>Policy:</strong> Remove immediately. No consolidation — these provide negative signal.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>╔══════════════════════════════════════════════════════════════════╗
+</span><span id="__span-3-2"><a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>║              TEST VALUE DECISION FLOWCHART                       ║
+</span><span id="__span-3-3"><a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>╠══════════════════════════════════════════════════════════════════╣
+</span><span id="__span-3-4"><a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>║                                                                  ║
+</span><span id="__span-3-5"><a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a>║  Does the test exercise a conditional branch?                    ║
+</span><span id="__span-3-6"><a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a>║     YES → Does it cover both success and error paths?            ║
+</span><span id="__span-3-7"><a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a>║              YES → TIER 1 (High Value) ✅                        ║
+</span><span id="__span-3-8"><a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a>║              NO  → TIER 2 (Moderate) if behavioral               ║
+</span><span id="__span-3-9"><a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a>║     NO  → Does it validate a non-trivial schema or boundary?     ║
+</span><span id="__span-3-10"><a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a>║              YES → TIER 2 (Moderate) ✅                          ║
+</span><span id="__span-3-11"><a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a>║              NO  → Can the assertion ever fail in practice?       ║
+</span><span id="__span-3-12"><a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a>║                     NO  → TIER 4 (Negative) ❌ Remove            ║
+</span><span id="__span-3-13"><a href="#__codelineno-3-13" id="__codelineno-3-13" name="__codelineno-3-13"></a>║                     YES → Is it testing Python/framework itself?  ║
+</span><span id="__span-3-14"><a href="#__codelineno-3-14" id="__codelineno-3-14" name="__codelineno-3-14"></a>║                            YES → TIER 3 (Low) ⚠️ Consolidate    ║
+</span><span id="__span-3-15"><a href="#__codelineno-3-15" id="__codelineno-3-15" name="__codelineno-3-15"></a>║                            NO  → TIER 2 (Moderate) ✅            ║
+</span><span id="__span-3-16"><a href="#__codelineno-3-16" id="__codelineno-3-16" name="__codelineno-3-16"></a>║                                                                  ║
+</span><span id="__span-3-17"><a href="#__codelineno-3-17" id="__codelineno-3-17" name="__codelineno-3-17"></a>╚══════════════════════════════════════════════════════════════════╝
+</span></code></pre></div>
+<hr/>
+<h2 id="7-enforceable-rules">7. Enforceable Rules<a class="headerlink" href="#7-enforceable-rules" title="Permanent link">¶</a></h2>
+<p>Seven rules that address the five root causes identified in Section 3.3:</p>
+<h3 id="rule-1-one-canonical-test-file-per-source-module">Rule 1: One Canonical Test File Per Source Module<a class="headerlink" href="#rule-1-one-canonical-test-file-per-source-module" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>When a source module has tests, there must be exactly one test file for it. No parallel/shadow test files.</strong></p>
+</blockquote>
+<p>Addresses: RC1 (refactoring without cleanup), RC4 (no ownership model).</p>
+<p>When refactoring a source module (e.g., extracting <code>evaluation_scoring.py</code> from <code>evaluation.py</code>), the corresponding tests must be extracted to a new test file AND the originals must be deleted from the old test file. This prevents the duplication pattern found in <code>test_auth.py</code> / <code>test_server_auth.py</code> and <code>test_websocket.py</code> / <code>test_server_websocket.py</code>.</p>
+<p><strong>Naming convention:</strong> <code>test_{module_name}.py</code> maps to <code>{module_name}.py</code>. If a test file tests multiple related modules (e.g., <code>test_phase2d_tools.py</code> covers multiple <code>tools/builtin/</code> modules), document the mapping in a module docstring.</p>
+<h3 id="rule-2-every-test-must-assert-behavior">Rule 2: Every Test Must Assert Behavior<a class="headerlink" href="#rule-2-every-test-must-assert-behavior" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>No bare <code>isinstance</code>, <code>is not None</code>, <code>hasattr</code>, or <code>callable</code> assertions unless they guard a subsequent behavioral assertion.</strong></p>
+</blockquote>
+<p>Addresses: RC2 (no test value policy), RC3 (count as quality proxy).</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="c1"># FORBIDDEN — Tier 3/4, tests Python's type system</span>
+</span><span id="__span-4-2"><a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_returns_string</span><span class="p">():</span>
+</span><span id="__span-4-3"><a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">my_function</span><span class="p">(</span><span class="s2">"input"</span><span class="p">)</span>
+</span><span id="__span-4-4"><a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+</span><span id="__span-4-5"><a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="c1"># ALLOWED — isinstance guards a behavioral check</span>
+</span><span id="__span-4-7"><a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_parse_returns_valid_json</span><span class="p">():</span>
+</span><span id="__span-4-8"><a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">parse_response</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
+</span><span id="__span-4-9"><a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>  <span class="c1"># guard</span>
+</span><span id="__span-4-10"><a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a>    <span class="k">assert</span> <span class="s2">"status"</span> <span class="ow">in</span> <span class="n">result</span>         <span class="c1"># behavioral</span>
+</span><span id="__span-4-11"><a href="#__codelineno-4-11" id="__codelineno-4-11" name="__codelineno-4-11"></a>    <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">"status"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"success"</span><span class="p">,</span> <span class="s2">"failed"</span><span class="p">)</span>  <span class="c1"># behavioral</span>
+</span></code></pre></div>
+<h3 id="rule-3-parametrize-dont-duplicate">Rule 3: Parametrize, Don't Duplicate<a class="headerlink" href="#rule-3-parametrize-dont-duplicate" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>When 3+ tests differ only in input values, consolidate into a single <code>@pytest.mark.parametrize</code> test.</strong></p>
+</blockquote>
+<p>Addresses: RC2, RC3.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="c1"># FORBIDDEN — 7 nearly identical test functions</span>
+</span><span id="__span-5-2"><a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_valid_transition_pending_to_ready</span><span class="p">():</span> <span class="o">...</span>
+</span><span id="__span-5-3"><a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_valid_transition_ready_to_running</span><span class="p">():</span> <span class="o">...</span>
+</span><span id="__span-5-4"><a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_valid_transition_running_to_success</span><span class="p">():</span> <span class="o">...</span>
+</span><span id="__span-5-5"><a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="c1"># ... 4 more</span>
+</span><span id="__span-5-6"><a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a><span class="c1"># REQUIRED — single parametrized test</span>
+</span><span id="__span-5-8"><a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">"from_state,to_state"</span><span class="p">,</span> <span class="p">[</span>
+</span><span id="__span-5-9"><a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">READY</span><span class="p">),</span>
+</span><span id="__span-5-10"><a href="#__codelineno-5-10" id="__codelineno-5-10" name="__codelineno-5-10"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">READY</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">),</span>
+</span><span id="__span-5-11"><a href="#__codelineno-5-11" id="__codelineno-5-11" name="__codelineno-5-11"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">),</span>
+</span><span id="__span-5-12"><a href="#__codelineno-5-12" id="__codelineno-5-12" name="__codelineno-5-12"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">FAILED</span><span class="p">),</span>
+</span><span id="__span-5-13"><a href="#__codelineno-5-13" id="__codelineno-5-13" name="__codelineno-5-13"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">RETRYING</span><span class="p">),</span>
+</span><span id="__span-5-14"><a href="#__codelineno-5-14" id="__codelineno-5-14" name="__codelineno-5-14"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">RETRYING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">),</span>
+</span><span id="__span-5-15"><a href="#__codelineno-5-15" id="__codelineno-5-15" name="__codelineno-5-15"></a>    <span class="p">(</span><span class="n">StepState</span><span class="o">.</span><span class="n">PENDING</span><span class="p">,</span> <span class="n">StepState</span><span class="o">.</span><span class="n">SKIPPED</span><span class="p">),</span>
+</span><span id="__span-5-16"><a href="#__codelineno-5-16" id="__codelineno-5-16" name="__codelineno-5-16"></a><span class="p">])</span>
+</span><span id="__span-5-17"><a href="#__codelineno-5-17" id="__codelineno-5-17" name="__codelineno-5-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_valid_state_transitions</span><span class="p">(</span><span class="n">from_state</span><span class="p">,</span> <span class="n">to_state</span><span class="p">):</span>
+</span><span id="__span-5-18"><a href="#__codelineno-5-18" id="__codelineno-5-18" name="__codelineno-5-18"></a>    <span class="n">manager</span> <span class="o">=</span> <span class="n">StepStateManager</span><span class="p">()</span>
+</span><span id="__span-5-19"><a href="#__codelineno-5-19" id="__codelineno-5-19" name="__codelineno-5-19"></a>    <span class="n">manager</span><span class="o">.</span><span class="n">_states</span><span class="p">[</span><span class="s2">"step"</span><span class="p">]</span> <span class="o">=</span> <span class="n">from_state</span>
+</span><span id="__span-5-20"><a href="#__codelineno-5-20" id="__codelineno-5-20" name="__codelineno-5-20"></a>    <span class="n">manager</span><span class="o">.</span><span class="n">transition</span><span class="p">(</span><span class="s2">"step"</span><span class="p">,</span> <span class="n">to_state</span><span class="p">)</span>
+</span><span id="__span-5-21"><a href="#__codelineno-5-21" id="__codelineno-5-21" name="__codelineno-5-21"></a>    <span class="k">assert</span> <span class="n">manager</span><span class="o">.</span><span class="n">get_state</span><span class="p">(</span><span class="s2">"step"</span><span class="p">)</span> <span class="o">==</span> <span class="n">to_state</span>
+</span></code></pre></div>
+<h3 id="rule-4-test-file-hygiene-on-refactor">Rule 4: Test File Hygiene on Refactor<a class="headerlink" href="#rule-4-test-file-hygiene-on-refactor" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>When extracting code from a monolithic source file into focused modules, the corresponding tests must move too. The PR must not merge until the old test file no longer contains tests for the extracted code.</strong></p>
+</blockquote>
+<p>Addresses: RC1 (refactoring without cleanup).</p>
+<p>This is the rule that would have prevented the <code>test_langchain_engine.py</code> bloat. The PR that created <code>test_langchain_expressions.py</code> should have also deleted <code>TestExpressions</code>, <code>TestCoalesceExpression</code>, and <code>TestCompositeExpressions</code> from <code>test_langchain_engine.py</code>.</p>
+<p><strong>CI enforcement opportunity:</strong> A pre-commit hook or CI check that flags when a test file imports from a module other than the one implied by its filename. For example, <code>test_langchain_engine.py</code> importing <code>resolve_expression</code> from <code>langchain.expressions</code> is a signal that these tests belong in <code>test_langchain_expressions.py</code>.</p>
+<h3 id="rule-5-no-facade-re-testing">Rule 5: No Facade Re-Testing<a class="headerlink" href="#rule-5-no-facade-re-testing" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>If function A trivially delegates to function B (no conditional logic, no transformation), test B directly. Don't create separate tests for A unless A adds meaningful logic.</strong></p>
+</blockquote>
+<p>Addresses: RC2, RC5.</p>
+<p>This is the rule that would have prevented the 7 duplicate hard-gate tests between <code>test_server_evaluation.py</code> and <code>test_evaluation_scoring.py</code>. The <code>score_workflow_result()</code> function in <code>evaluation.py</code> is a one-line delegation to <code>score_workflow_result_impl()</code> in <code>evaluation_scoring.py</code>. Testing both is pure duplication.</p>
+<h3 id="rule-6-mock-completeness">Rule 6: Mock Completeness<a class="headerlink" href="#rule-6-mock-completeness" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>Every mock/patch must have at least one assertion that exercises the mocked behavior. <code>with patch(...): pass</code> is forbidden.</strong></p>
+</blockquote>
+<p>Addresses: RC2, RC5.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="c1"># FORBIDDEN — mock is never used</span>
+</span><span id="__span-6-2"><a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_something</span><span class="p">():</span>
+</span><span id="__span-6-3"><a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a>    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">"module.expensive_function"</span><span class="p">):</span>
+</span><span id="__span-6-4"><a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a>        <span class="k">pass</span>  <span class="c1"># asserts nothing</span>
+</span><span id="__span-6-5"><a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a>
+</span><span id="__span-6-6"><a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a><span class="c1"># REQUIRED — mock enables a behavioral assertion</span>
+</span><span id="__span-6-7"><a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_fallback_on_failure</span><span class="p">():</span>
+</span><span id="__span-6-8"><a href="#__codelineno-6-8" id="__codelineno-6-8" name="__codelineno-6-8"></a>    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">"module.primary_api"</span><span class="p">,</span> <span class="n">side_effect</span><span class="o">=</span><span class="ne">ConnectionError</span><span class="p">):</span>
+</span><span id="__span-6-9"><a href="#__codelineno-6-9" id="__codelineno-6-9" name="__codelineno-6-9"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">get_data_with_fallback</span><span class="p">()</span>
+</span><span id="__span-6-10"><a href="#__codelineno-6-10" id="__codelineno-6-10" name="__codelineno-6-10"></a>        <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">source</span> <span class="o">==</span> <span class="s2">"cache"</span>  <span class="c1"># behavioral assertion</span>
+</span></code></pre></div>
+<h3 id="rule-7-coverage-floors-per-package">Rule 7: Coverage Floors Per Package<a class="headerlink" href="#rule-7-coverage-floors-per-package" title="Permanent link">¶</a></h3>
+<blockquote>
+<p><strong>Enforce differentiated coverage targets based on module risk level.</strong></p>
+</blockquote>
+<p>Addresses: RC5 (CI checks coverage % not quality).</p>
+<table>
+<thead>
+<tr>
+<th>Package/Module Category</th>
+<th>Coverage Floor</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Business logic (engine/, agents/, workflows/, models/)</td>
+<td>80%</td>
+<td>Core execution paths, high blast radius</td>
+</tr>
+<tr>
+<td>Server routes and evaluation</td>
+<td>70%</td>
+<td>API contract enforcement</td>
+</tr>
+<tr>
+<td>Infrastructure (integrations/, CLI, config)</td>
+<td>60%</td>
+<td>Lower blast radius, harder to unit test</td>
+</tr>
+<tr>
+<td>UI components</td>
+<td>40%</td>
+<td>Snapshot/render tests have diminishing returns</td>
+</tr>
+<tr>
+<td>Shared tools (tools/)</td>
+<td>60%</td>
+<td>Currently at ~5%, needs significant investment</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="8-immediate-remediation-plan">8. Immediate Remediation Plan<a class="headerlink" href="#8-immediate-remediation-plan" title="Permanent link">¶</a></h2>
+<h3 id="phase-0-cleanup-95-test-removals">Phase 0: Cleanup (~95 test removals)<a class="headerlink" href="#phase-0-cleanup-95-test-removals" title="Permanent link">¶</a></h3>
+<p>Execute the cleanup summarized in this ADR:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Tests Removed</th>
+<th>Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delete <code>test_server_auth.py</code> (migrate 1 unique test first)</td>
+<td>14</td>
+<td>A1</td>
+</tr>
+<tr>
+<td>Delete <code>test_server_websocket.py</code> (migrate 1 unique test first)</td>
+<td>19</td>
+<td>A1</td>
+</tr>
+<tr>
+<td>Delete <code>test_agents_integration.py</code> (migrate unique tests first)</td>
+<td>8</td>
+<td>A2</td>
+</tr>
+<tr>
+<td>Remove 3 orchestrator/integration tests from <code>test_agents.py</code></td>
+<td>3</td>
+<td>A2</td>
+</tr>
+<tr>
+<td>Remove <code>TestExpressions</code>, <code>TestCoalesceExpression</code>, <code>TestCompositeExpressions</code> + 6 config/model tests from <code>test_langchain_engine.py</code></td>
+<td>18</td>
+<td>A3</td>
+</tr>
+<tr>
+<td>Remove 5 duplicate tests from <code>test_langchain_integration.py</code></td>
+<td>5</td>
+<td>A4</td>
+</tr>
+<tr>
+<td>Remove 7 duplicate hard-gate tests from <code>test_server_evaluation.py</code></td>
+<td>7</td>
+<td>A5</td>
+</tr>
+<tr>
+<td>Remove 3 duplicate tests from <code>test_dag.py</code></td>
+<td>3</td>
+<td>A6</td>
+</tr>
+<tr>
+<td>Fix or remove 4 broken/no-op tests</td>
+<td>4</td>
+<td>A8</td>
+</tr>
+<tr>
+<td>Remove <code>test_execute_as_pipeline_deprecated</code></td>
+<td>1</td>
+<td>A9</td>
+</tr>
+<tr>
+<td>Clean dead code in <code>server/evaluation.py</code> lines 102-120</td>
+<td>—</td>
+<td>A10</td>
+</tr>
+<tr>
+<td><strong>TOTAL</strong></td>
+<td><strong>~82</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Remaining ~13 low-value tests (Section A7) should be consolidated into parametrized tests or removed during normal code review, not as a bulk operation.</p>
+<h3 id="phase-1-highest-impact-new-coverage">Phase 1: Highest-Impact New Coverage<a class="headerlink" href="#phase-1-highest-impact-new-coverage" title="Permanent link">¶</a></h3>
+<p>Target the 3 critical zero-coverage modules:</p>
+<table>
+<thead>
+<tr>
+<th>New Test File</th>
+<th>Source Module</th>
+<th>Target Tests</th>
+<th>Key Functions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/test_agent_resolver.py</code></td>
+<td><code>engine/agent_resolver.py</code> (979 lines)</td>
+<td>50+</td>
+<td><code>_extract_json_candidates</code>, <code>_parse_llm_json_output</code>, <code>_run_tool_calls</code>, <code>_make_llm_step</code></td>
+</tr>
+<tr>
+<td><code>tools/tests/test_model_probe.py</code></td>
+<td><code>tools/llm/model_probe.py</code> (2,313 lines)</td>
+<td>40+</td>
+<td><code>ModelProbeCache</code>, <code>check_model</code>, <code>_classify_error</code>, <code>_retry_with_backoff</code></td>
+</tr>
+<tr>
+<td><code>tools/tests/test_llm_evaluator.py</code></td>
+<td><code>tools/agents/benchmarks/llm_evaluator.py</code> (777 lines)</td>
+<td>30+</td>
+<td><code>LLMEvaluator.__call__</code>, <code>_score_with_rubric</code>, <code>_compute_confidence</code></td>
+</tr>
+<tr>
+<td><code>tools/tests/test_benchmark_pipeline.py</code></td>
+<td><code>tools/agents/benchmarks/evaluation_pipeline.py</code> + <code>workflow_pipeline.py</code> (714 lines)</td>
+<td>30+</td>
+<td>Pipeline orchestration, dataset loading</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-2-server-hardening">Phase 2: Server Hardening<a class="headerlink" href="#phase-2-server-hardening" title="Permanent link">¶</a></h3>
+<p>Expand existing thin test files:</p>
+<table>
+<thead>
+<tr>
+<th>Test File</th>
+<th>Current</th>
+<th>Target</th>
+<th>Key Gaps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_server_workflow_routes.py</code></td>
+<td>9</td>
+<td>40+</td>
+<td>Streaming, dataset integration, error paths, pagination</td>
+</tr>
+<tr>
+<td><code>test_evaluation_scoring.py</code></td>
+<td>18</td>
+<td>50+</td>
+<td>23 helper functions, multi-stage pipeline edge cases</td>
+</tr>
+<tr>
+<td><code>test_server_judge.py</code></td>
+<td>4</td>
+<td>25+</td>
+<td>Calibration, consistency, structured output validation</td>
+</tr>
+<tr>
+<td><code>test_provider_adapters.py</code></td>
+<td>11</td>
+<td>40+</td>
+<td>Per-backend auth, rate limits, streaming, network errors</td>
+</tr>
+<tr>
+<td><code>test_server_datasets.py</code> (NEW)</td>
+<td>0</td>
+<td>25+</td>
+<td>Dataset management, sample loading, workflow matching</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-3-fill-remaining-gaps">Phase 3: Fill Remaining Gaps<a class="headerlink" href="#phase-3-fill-remaining-gaps" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Test File</th>
+<th>Current</th>
+<th>Target</th>
+<th>Module</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_memory_context_tools.py</code></td>
+<td>3</td>
+<td>20+</td>
+<td><code>memory_ops.py</code> + <code>context_ops.py</code></td>
+</tr>
+<tr>
+<td><code>test_run_logger.py</code></td>
+<td>3</td>
+<td>12+</td>
+<td><code>run_logger.py</code></td>
+</tr>
+<tr>
+<td><code>test_tool_init.py</code> (NEW)</td>
+<td>0</td>
+<td>15+</td>
+<td><code>tools/core/tool_init.py</code></td>
+</tr>
+<tr>
+<td><code>test_model_inventory.py</code> (NEW)</td>
+<td>0</td>
+<td>20+</td>
+<td><code>tools/llm/model_inventory.py</code></td>
+</tr>
+<tr>
+<td><code>test_artifact_extractor.py</code> (NEW)</td>
+<td>0</td>
+<td>8+</td>
+<td><code>workflows/artifact_extractor.py</code></td>
+</tr>
+<tr>
+<td><code>test_integrations.py</code> (NEW)</td>
+<td>0</td>
+<td>15+</td>
+<td><code>integrations/langchain.py</code> + <code>otel.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-4-frontend-e2e">Phase 4: Frontend &amp; E2E<a class="headerlink" href="#phase-4-frontend-e2e" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Current</th>
+<th>Target</th>
+<th>Focus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI components</td>
+<td>29 tests across 6 files</td>
+<td>80+ across 15+ files</td>
+<td>Pages, DAG components, hooks</td>
+</tr>
+<tr>
+<td>E2E</td>
+<td>1 smoke test</td>
+<td>5-10 tests</td>
+<td>Full workflow execution, multi-agent coordination, WebSocket streaming</td>
+</tr>
+</tbody>
+</table>
+<h3 id="projected-impact">Projected Impact<a class="headerlink" href="#projected-impact" title="Permanent link">¶</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a>╔══════════════════════════════════════════════════════════════════╗
+</span><span id="__span-7-2"><a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a>║                    PROJECTED TEST SUITE EVOLUTION                ║
+</span><span id="__span-7-3"><a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a>╠═══════════════════════════╦═══════════╦══════════════════════════╣
+</span><span id="__span-7-4"><a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a>║ Metric                    ║ Before    ║ After (all phases)       ║
+</span><span id="__span-7-5"><a href="#__codelineno-7-5" id="__codelineno-7-5" name="__codelineno-7-5"></a>╠═══════════════════════════╬═══════════╬══════════════════════════╣
+</span><span id="__span-7-6"><a href="#__codelineno-7-6" id="__codelineno-7-6" name="__codelineno-7-6"></a>║ Total test functions      ║ ~1,100    ║ ~1,350 (+250 new, -95)   ║
+</span><span id="__span-7-7"><a href="#__codelineno-7-7" id="__codelineno-7-7" name="__codelineno-7-7"></a>║ Duplicate/broken tests    ║ ~95       ║ 0                        ║
+</span><span id="__span-7-8"><a href="#__codelineno-7-8" id="__codelineno-7-8" name="__codelineno-7-8"></a>║ Zero-coverage modules     ║ 15        ║ 0                        ║
+</span><span id="__span-7-9"><a href="#__codelineno-7-9" id="__codelineno-7-9" name="__codelineno-7-9"></a>║ Modules under 30%         ║ 6         ║ 0                        ║
+</span><span id="__span-7-10"><a href="#__codelineno-7-10" id="__codelineno-7-10" name="__codelineno-7-10"></a>║ tools/ package coverage   ║ 3 of 35+  ║ 12 of 35+               ║
+</span><span id="__span-7-11"><a href="#__codelineno-7-11" id="__codelineno-7-11" name="__codelineno-7-11"></a>║ UI test coverage          ║ 29 tests  ║ 80+ tests               ║
+</span><span id="__span-7-12"><a href="#__codelineno-7-12" id="__codelineno-7-12" name="__codelineno-7-12"></a>║ E2E test coverage         ║ 1 test    ║ 5-10 tests              ║
+</span><span id="__span-7-13"><a href="#__codelineno-7-13" id="__codelineno-7-13" name="__codelineno-7-13"></a>║ Average test quality tier ║ ~2.1      ║ ~1.6 (more Tier 1)      ║
+</span><span id="__span-7-14"><a href="#__codelineno-7-14" id="__codelineno-7-14" name="__codelineno-7-14"></a>╚═══════════════════════════╩═══════════╩══════════════════════════╝
+</span></code></pre></div>
+<hr/>
+<h2 id="9-consequences">9. Consequences<a class="headerlink" href="#9-consequences" title="Permanent link">¶</a></h2>
+<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Higher defect detection rate</strong> — Net addition of ~250 Tier 1/2 tests targeting the riskiest untested code paths (tool loops, error recovery, multi-provider routing)</li>
+<li><strong>Lower maintenance burden</strong> — Removing ~95 duplicate/broken tests eliminates churn when source modules change</li>
+<li><strong>Clear review criteria</strong> — The 4-tier taxonomy gives reviewers an objective framework for evaluating new tests during code review</li>
+<li><strong>Prevents recurrence</strong> — The 7 rules address all 5 root causes, making it structurally harder to reintroduce the patterns that caused the current state</li>
+<li><strong>Focused investment</strong> — Risk-proportional coverage floors ensure high-blast-radius modules get tested first</li>
+</ol>
+<h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Upfront effort</strong> — Phase 0 cleanup and Phase 1 new tests require dedicated sprint allocation</li>
+<li><strong>Temporary coverage dip</strong> — Removing ~95 tests in Phase 0 will reduce the absolute test count before Phase 1 adds replacements. Coverage percentage may briefly decrease.</li>
+<li><strong>Judgment required</strong> — The Tier 3/4 distinction requires human judgment during code review. Edge cases will arise (e.g., is a Pydantic serialization test Tier 2 or Tier 3?). Resolve ambiguity by asking: "Would this test catch a real bug?"</li>
+<li><strong>Rule enforcement overhead</strong> — Rules 1-6 require attention during code review. Some may benefit from automated enforcement (see Section 10).</li>
+</ol>
+<hr/>
+<h2 id="10-code-level-recommendations">10. Code-Level Recommendations<a class="headerlink" href="#10-code-level-recommendations" title="Permanent link">¶</a></h2>
+<h3 id="101-immediate-actions-phase-0">10.1 Immediate Actions (Phase 0)<a class="headerlink" href="#101-immediate-actions-phase-0" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Migrate unique tests, then delete duplicate files:</strong></li>
+<li>Move <code>test_whitespace_stripped_from_x_api_key</code> from <code>test_server_auth.py</code> to <code>test_auth.py</code> → delete <code>test_server_auth.py</code></li>
+<li>Move <code>test_broadcast_tolerates_failed_ws</code> from <code>test_server_websocket.py</code> to <code>test_websocket.py</code> → delete <code>test_server_websocket.py</code></li>
+<li>
+<p>Move any unique tests from <code>test_agents_integration.py</code> to <code>test_agents_orchestrator.py</code> → delete <code>test_agents_integration.py</code></p>
+</li>
+<li>
+<p><strong>Strip extracted tests from <code>test_langchain_engine.py</code>:</strong></p>
+</li>
+<li>Delete classes: <code>TestExpressions</code>, <code>TestCoalesceExpression</code>, <code>TestCompositeExpressions</code></li>
+<li>Delete tests: <code>TestConfigLoader::test_list_workflows</code>, <code>TestConfigLoader::test_load_nonexistent_raises</code></li>
+<li>
+<p>Delete tests: <code>TestModelRegistry::test_retryable_model_error_detects_rate_limits</code>, <code>test_env_model_override_with_fallback</code>, <code>test_env_model_override_uses_env_value</code>, <code>test_model_candidates_keep_explicit_override</code></p>
+</li>
+<li>
+<p><strong>Remove dead code:</strong> Delete unreachable lines 102-120 in <code>agentic_v2/server/evaluation.py</code></p>
+</li>
+<li>
+<p><strong>Fix broken tests:</strong> Either rewrite with proper assertions or delete:</p>
+</li>
+<li><code>test_runner_ui.py::test_returns_empty_dict_when_file_missing_and_probe_unavailable</code></li>
+<li><code>test_provider_adapters.py::test_resolves_to_onnx_directory</code></li>
+<li><code>test_cli.py::test_no_arguments</code> and <code>test_orchestrate_shows_note</code></li>
+</ol>
+<h3 id="102-ciautomation-opportunities">10.2 CI/Automation Opportunities<a class="headerlink" href="#102-ciautomation-opportunities" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Add per-package coverage enforcement to <code>ci.yml</code>:</strong></li>
+</ol>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="c1"># agentic-workflows-v2 business logic</span>
+</span><span id="__span-8-2"><a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest tests/ --cov=agentic_v2 --cov-fail-under=70</span>
+</span><span id="__span-8-3"><a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a><span class="c1"># tools package (currently ~5%, ramp to 40% after Phase 1)</span>
+</span><span id="__span-8-4"><a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytest tests/ --cov=tools --cov-fail-under=40</span>
+</span></code></pre></div>
+<ol>
+<li><strong>Add a pre-commit check</strong> (optional, future) that warns when a test file's imports suggest cross-module testing (e.g., <code>test_langchain_engine.py</code> importing from <code>langchain.expressions</code> instead of <code>langchain.graph</code>).</li>
+</ol>
+<h3 id="103-update-existing-rules">10.3 Update Existing Rules<a class="headerlink" href="#103-update-existing-rules" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Update contributor-facing testing guidance</strong> to reference this ADR and incorporate the Test Value Taxonomy as the authoritative guide for what constitutes a valuable test.</li>
+</ol>
+<hr/>
+<h2 id="11-references">11. References<a class="headerlink" href="#11-references" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Citation</th>
+<th>Relevance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fowler, M. — "Test Coverage" (martinfowler.com, 2012)</td>
+<td>"High coverage numbers are too easy to reach with low quality testing. Coverage is a useful tool for finding untested parts of a codebase — it is of little use as a numeric statement of how good your tests are."</td>
+</tr>
+<tr>
+<td>Google Testing Blog — "Test Sizes" (2010)</td>
+<td>Google's small/medium/large test taxonomy for enforcement. Precedent for tier-based classification.</td>
+</tr>
+<tr>
+<td>Goodhart's Law (1975)</td>
+<td>"When a measure becomes a target, it ceases to be a good measure." Explains why coverage % alone fails as a quality metric.</td>
+</tr>
+<tr>
+<td>ADR-001 (this repo)</td>
+<td>Conformance testing approach for dual execution engines. Section on <code>hypothesis</code> property-based testing.</td>
+</tr>
+<tr>
+<td>ADR-007 (this repo)</td>
+<td>Multidimensional quality classification. Precedent for non-compensatory scoring in this codebase.</td>
+</tr>
+<tr>
+<td>DORA State of DevOps (2024)</td>
+<td>Test suite reliability as a predictor of deployment frequency. Flaky and low-value tests reduce developer trust in the suite.</td>
+</tr>
+<tr>
+<td>Fowler, M. — "Mocks Aren't Stubs" (martinfowler.com, 2007)</td>
+<td>Classical vs. mockist testing. Relevant to Rule 6 (Mock Completeness).</td>
+</tr>
+<tr>
+<td>CI coverage reports and this ADR</td>
+<td>Current coverage gates, test health, and remediation priorities.</td>
+</tr>
+</tbody>
+</table>
+<hr/>
+<h2 id="12-open-questions">12. Open Questions<a class="headerlink" href="#12-open-questions" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>Priority</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q1</td>
+<td>Should Rule 7 coverage floors be enforced in CI immediately or phased in with ratcheting (e.g., <code>--cov-fail-under</code> increases by 5% per quarter)?</td>
+<td>P1</td>
+<td>Backend Lead</td>
+</tr>
+<tr>
+<td>Q2</td>
+<td>Should the <code>/test-coverage</code> slash command be extended to automatically classify tests into the 4-tier taxonomy?</td>
+<td>P2</td>
+<td>Platform Engineering</td>
+</tr>
+<tr>
+<td>Q3</td>
+<td>Should we add a <code>pytest</code> plugin or custom marker (<code>@pytest.mark.tier1</code>) to track test value tiers in CI reports?</td>
+<td>P3</td>
+<td>QA</td>
+</tr>
+<tr>
+<td>Q4</td>
+<td>For the <code>tools/</code> package (3 of 35+ modules tested), should we enforce "no new module without tests" as a merge-blocking rule?</td>
+<td>P1</td>
+<td>Backend Lead</td>
+</tr>
+</tbody>
+</table>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Last update">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+</span>
+<span class="md-source-file__fact">
+<span class="md-icon" title="Created">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+</span>
+</aside>
+<form class="md-feedback" hidden="" name="feedback">
+<fieldset>
+<legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+<div class="md-feedback__inner">
+<div class="md-feedback__list">
+<button class="md-feedback__icon md-icon" data-md-value="1" title="Helpful" type="submit">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"></path></svg>
+</button>
+<button class="md-feedback__icon md-icon" data-md-value="0" title="Could be improved" type="submit">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"></path></svg>
+</button>
+</div>
+<div class="md-feedback__note">
+<div data-md-value="1" hidden="">
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for the feedback.
+            </div>
+<div data-md-value="0" hidden="">
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Please let us know how we can improve this page by opening an <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" rel="noopener" target="_blank">issue</a>.
+            </div>
+</div>
+</div>
+</fieldset>
+</form>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/tafreeman/agentic-runtime-platform" rel="noopener" target="_blank" title="GitHub">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+window.mermaidConfig = {default: {
+    startOnLoad: false
+}};</script></body>
+</html>
