@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "type": {
+      "const": "workflow_start",
+      "default": "workflow_start",
+      "title": "Type",
+      "type": "string"
+    },
+    "workflow_name": {
+      "title": "Workflow Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "workflow_name",
+    "timestamp"
+  ],
+  "title": "WorkflowStartEvent",
+  "type": "object"
+}

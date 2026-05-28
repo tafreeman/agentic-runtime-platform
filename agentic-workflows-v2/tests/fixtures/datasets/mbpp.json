@@ -1,0 +1,182 @@
+[
+  {
+    "task_id": "Synthetic/1",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/2",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/3",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/4",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/5",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/6",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/7",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/8",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/9",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/10",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/11",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/12",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/13",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/14",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/15",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/16",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/17",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/18",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/19",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  },
+  {
+    "task_id": "Synthetic/20",
+    "text": "Write a function that sums the even numbers in a list.",
+    "code": "def sum_even(values: list[int]) -> int:\n    return sum(v for v in values if v % 2 == 0)\n",
+    "test_list": [
+      "assert sum_even([1, 2, 3, 4]) == 6",
+      "assert sum_even([]) == 0"
+    ]
+  }
+]

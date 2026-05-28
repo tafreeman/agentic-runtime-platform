@@ -1,0 +1,54 @@
+{
+  "description": "Aggregate statistics across all (or filtered) workflow runs.\n\nAttributes:\n    total_runs: Total number of runs found.\n    success: Count of runs with ``SUCCESS`` status.\n    failed: Count of runs with ``FAILED`` status.\n    avg_duration_ms: Mean duration in milliseconds, or None.\n    workflows: Distinct workflow names seen.\n    tokens_30d: Total tokens consumed in the last 30 days, or None.",
+  "properties": {
+    "avg_duration_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Avg Duration Ms"
+    },
+    "failed": {
+      "default": 0,
+      "title": "Failed",
+      "type": "integer"
+    },
+    "success": {
+      "default": 0,
+      "title": "Success",
+      "type": "integer"
+    },
+    "tokens_30d": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tokens 30D"
+    },
+    "total_runs": {
+      "default": 0,
+      "title": "Total Runs",
+      "type": "integer"
+    },
+    "workflows": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Workflows",
+      "type": "array"
+    }
+  },
+  "title": "RunsSummaryResponse",
+  "type": "object"
+}

@@ -1,0 +1,142 @@
+[
+  {
+    "question_id": "synthetic-review-1",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-2",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-3",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-4",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-5",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-6",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-7",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-8",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-9",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-10",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-11",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-12",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-13",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-14",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-15",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-16",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-17",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-18",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-19",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  },
+  {
+    "question_id": "synthetic-review-20",
+    "prompt": "Review a Python helper that normalizes whitespace in user-provided labels.",
+    "body": "def normalize_label(value):\n    return ' '.join(str(value).split())\n",
+    "response": "def normalize_label(value: object) -> str:\n    return ' '.join(str(value).split())\n",
+    "answer": "Add type annotations and a regression test for non-string inputs."
+  }
+]

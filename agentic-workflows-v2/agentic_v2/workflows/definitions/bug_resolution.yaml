@@ -1,0 +1,142 @@
+name: bug_resolution
+description: Bug and defect resolution workflow — triage, root cause analysis, fix generation, and verification
+version: "1.0"
+
+capabilities:
+  inputs: [bug_report, code_file, resolution_depth]
+  outputs: [root_cause, fix, verification_report]
+
+evaluation:
+  rubric_id: bug_resolution_v1
+  scoring_profile: B
+  criteria:
+    - name: root_cause_accuracy
+      definition: Accuracy of root cause identification.
+      evidence_required:
+        - Clear causal chain from symptom to defect
+        - No contradictions with provided code
+      scale:
+        "1": Root cause missed or entirely wrong
+        "2": Superficial diagnosis, core cause missed
+        "3": Correct root cause with minor gaps
+        "4": Accurate and well-evidenced root cause
+        "5": Precise, deeply explained root cause
+      weight: 0.35
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: fix_quality
+      definition: Correctness and completeness of the generated fix.
+      evidence_required:
+        - Fix addresses root cause
+        - No regressions introduced
+      scale:
+        "1": Fix is wrong or makes things worse
+        "2": Partial fix with significant gaps
+        "3": Acceptable fix, minor issues remain
+        "4": Solid fix with good coverage
+        "5": Complete, clean fix with no regressions
+      weight: 0.35
+      critical_floor: 0.75
+      formula_id: zero_one
+    - name: verification
+      definition: Quality of the verification / test plan.
+      evidence_required:
+        - Test cases cover the fix scenario
+      scale:
+        "1": No verification provided
+        "2": Trivial or inadequate tests
+        "3": Basic tests covering the fix
+        "4": Good test coverage
+        "5": Comprehensive tests including edge cases
+      weight: 0.20
+      formula_id: zero_one
+    - name: documentation
+      definition: Clarity of the resolution summary.
+      evidence_required:
+        - Readable summary linking cause → fix → tests
+      scale:
+        "1": Unclear and incomplete
+        "2": Hard to follow
+        "3": Adequate clarity
+        "4": Clear and structured
+        "5": Excellent clarity
+      weight: 0.10
+      formula_id: zero_one
+
+# Workflow inputs
+inputs:
+  bug_report:
+    type: string
+    description: Bug description, error message, or reproduction steps
+  code_file:
+    type: string
+    description: Path to the source file containing the defect
+  resolution_depth:
+    type: string
+    enum: [quick, standard, deep]
+    default: standard
+
+# DAG steps
+steps:
+  - name: triage
+    agent: tier0_parser
+    description: Parse bug report and code file; extract symptoms and affected components
+    inputs:
+      bug_report: ${inputs.bug_report}
+      file_path: ${inputs.code_file}
+    outputs:
+      symptoms: triage_symptoms
+      affected_components: affected_components
+
+  - name: root_cause_analysis
+    agent: tier2_reviewer
+    description: Identify root cause by correlating symptoms with code structure
+    depends_on: [triage]
+    inputs:
+      symptoms: ${steps.triage.outputs.symptoms}
+      affected_components: ${steps.triage.outputs.affected_components}
+    outputs:
+      root_cause: root_cause_report
+
+  - name: generate_fix
+    agent: tier2_reviewer
+    description: Generate a code fix that addresses the root cause
+    depends_on: [root_cause_analysis]
+    inputs:
+      root_cause: ${steps.root_cause_analysis.outputs.root_cause}
+      file_path: ${inputs.code_file}
+    outputs:
+      fix: proposed_fix
+
+  - name: regression_check
+    agent: tier1_analyzer
+    description: Analyse the proposed fix for potential regressions
+    depends_on: [generate_fix]
+    when: ${inputs.resolution_depth} != 'quick'
+    inputs:
+      fix: ${steps.generate_fix.outputs.fix}
+      affected_components: ${steps.triage.outputs.affected_components}
+    outputs:
+      regression_risks: regression_risks
+
+  - name: generate_verification
+    agent: tier2_summarizer
+    description: Generate test cases and a verification plan for the fix
+    depends_on: [generate_fix, regression_check]
+    when: ${inputs.resolution_depth} != 'quick'
+    inputs:
+      root_cause: ${steps.root_cause_analysis.outputs.root_cause}
+      fix: ${steps.generate_fix.outputs.fix}
+      regression_risks: ${steps.regression_check.outputs.regression_risks}
+    outputs:
+      verification_report: verification_report
+
+# Workflow outputs
+outputs:
+  root_cause:
+    from: ${steps.root_cause_analysis.outputs.root_cause}
+  fix:
+    from: ${steps.generate_fix.outputs.fix}
+  verification_report:
+    from: ${steps.generate_verification.outputs.verification_report}
+    optional: true

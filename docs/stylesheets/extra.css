@@ -1,0 +1,193 @@
+/* ===============================================
+   Agentic Runtime Platform — custom Material theme overrides
+   =============================================== */
+
+/* Tighter hero spacing on the landing page */
+.md-typeset h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+  line-height: 1.15;
+}
+
+.md-typeset .md-content__inner > h1:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.md-typeset .md-content__inner > h1:first-of-type + p {
+  font-size: 1.1rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.6rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Accent color on links */
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+  text-decoration: none;
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Crisper monospace for inline code */
+.md-typeset code {
+  font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.85em;
+  font-feature-settings: "liga" 0, "calt" 0;
+  padding: 0.15em 0.45em;
+  border-radius: 4px;
+}
+
+/* Slightly tighter code blocks */
+.md-typeset pre > code {
+  padding: 1rem 1.2rem;
+  line-height: 1.55;
+}
+
+/* Trusted Stack badge row on the landing page */
+.trusted-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 1.6rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: var(--md-code-bg-color);
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.trusted-stack span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 999px;
+  background: var(--md-default-bg-color);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--md-default-fg-color);
+  white-space: nowrap;
+}
+
+/* By the numbers — stat strip */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+  padding: 1.2rem;
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    var(--md-primary-fg-color) 0%,
+    var(--md-accent-fg-color) 130%
+  );
+  color: #ffffff;
+  text-align: center;
+}
+
+.stat-strip .stat-item {
+  padding: 0.4rem;
+}
+
+.stat-strip .stat-value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.stat-strip .stat-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.92;
+}
+
+/* Quote / testimonial cards */
+.quote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.4rem 0 2rem;
+}
+
+.quote-card {
+  padding: 1.2rem 1.3rem;
+  border-radius: 10px;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  background: var(--md-default-bg-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.quote-card blockquote {
+  margin: 0 0 1rem;
+  padding: 0;
+  border-left: none;
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--md-default-fg-color);
+}
+
+.quote-card cite {
+  font-size: 0.82rem;
+  color: var(--md-default-fg-color--light);
+  font-style: normal;
+}
+
+/* Final CTA card */
+.cta-card {
+  margin: 2rem 0 1rem;
+  padding: 1.6rem 1.8rem;
+  border-radius: 12px;
+  background: var(--md-code-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.cta-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cta-card p {
+  margin: 0;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Mobile-friendly tweaks */
+@media (max-width: 600px) {
+  .md-typeset h1 {
+    font-size: 1.9rem;
+  }
+
+  .stat-strip .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .trusted-stack {
+    padding: 0.6rem;
+  }
+
+  .trusted-stack span {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+  }
+}

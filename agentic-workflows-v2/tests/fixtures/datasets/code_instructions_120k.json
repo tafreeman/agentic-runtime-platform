@@ -1,0 +1,102 @@
+[
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 1.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 2.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 3.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 4.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 5.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 6.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 7.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 8.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 9.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 10.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 11.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 12.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 13.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 14.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 15.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 16.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 17.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 18.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 19.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  },
+  {
+    "instruction": "Create a small service endpoint that validates a payload and returns a typed response. Case 20.",
+    "input": "payload contains name and priority",
+    "output": "class Ticket(BaseModel):\n    name: str\n    priority: int\n"
+  }
+]

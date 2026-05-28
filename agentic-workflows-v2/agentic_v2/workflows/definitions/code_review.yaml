@@ -1,0 +1,131 @@
+name: code_review
+description: Automated code review workflow with tiered models
+version: "1.0"
+
+capabilities:
+  inputs: [code_file, review_depth]
+  outputs: [review, summary]
+
+evaluation:
+  rubric_id: code_review_v1
+  scoring_profile: B
+  criteria:
+    - name: correctness_rubric
+      definition: Review output correctness and requirement alignment.
+      evidence_required:
+        - Requirement-to-review mapping
+        - No contradiction with code facts
+      scale:
+        "1": Major requirement failures
+        "2": Multiple significant errors
+        "3": Minimum acceptable correctness
+        "4": Accurate with minor issues
+        "5": Fully correct and robust
+      weight: 0.35
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: code_quality
+      definition: Quality and actionability of code feedback.
+      evidence_required:
+        - Specific issues identified
+      scale:
+        "1": No useful quality feedback
+        "2": Limited quality feedback
+        "3": Basic actionable feedback
+        "4": Strong actionable feedback
+        "5": Comprehensive high-value feedback
+      weight: 0.30
+      critical_floor: 0.80
+      formula_id: zero_one
+    - name: efficiency
+      definition: Execution/runtime efficiency.
+      evidence_required:
+        - Reasonable duration and retries
+      scale:
+        "1": Excessive latency/retries
+        "2": High latency/retries
+        "3": Acceptable latency/retries
+        "4": Good latency/retries
+        "5": Excellent latency/retries
+      weight: 0.20
+      formula_id: zero_one
+    - name: documentation
+      definition: Clarity of final summary/documentation.
+      evidence_required:
+        - Readable summary
+      scale:
+        "1": Unclear and incomplete
+        "2": Hard to follow
+        "3": Adequate clarity
+        "4": Clear and structured
+        "5": Excellent clarity
+      weight: 0.15
+      formula_id: zero_one
+
+# Workflow inputs
+inputs:
+  code_file:
+    type: string
+    description: Path to the code file to review
+  review_depth:
+    type: string
+    enum: [quick, standard, deep]
+    default: standard
+
+# DAG steps
+steps:
+  - name: parse_code
+    agent: tier0_parser
+    description: Parse and analyze code structure
+    inputs:
+      file_path: ${inputs.code_file}
+    outputs:
+      ast: parsed_ast
+      metrics: code_metrics
+
+  - name: style_check
+    agent: tier1_linter
+    description: Check code style and formatting
+    depends_on: [parse_code]
+    inputs:
+      ast: ${steps.parse_code.outputs.ast}
+    outputs:
+      issues: style_issues
+
+  - name: complexity_analysis
+    agent: tier1_analyzer
+    description: Analyze code complexity
+    depends_on: [parse_code]
+    inputs:
+      metrics: ${steps.parse_code.outputs.metrics}
+    outputs:
+      complexity_report: complexity
+
+  - name: review_code
+    agent: tier2_reviewer
+    description: Deep code review with suggestions
+    depends_on: [style_check, complexity_analysis]
+    inputs:
+      ast: ${steps.parse_code.outputs.ast}
+      style_issues: ${steps.style_check.outputs.issues}
+      complexity: ${steps.complexity_analysis.outputs.complexity_report}
+    outputs:
+      review: code_review
+
+  - name: generate_summary
+    agent: tier2_summarizer
+    description: Generate human-readable review summary
+    depends_on: [review_code]
+    when: ${inputs.review_depth} != 'quick'
+    inputs:
+      review: ${steps.review_code.outputs.review}
+    outputs:
+      summary: review_summary
+
+# Workflow outputs
+outputs:
+  review:
+    from: ${steps.review_code.outputs.review}
+  summary:
+    from: ${steps.generate_summary.outputs.summary}
+    optional: true

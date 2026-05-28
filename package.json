@@ -1,0 +1,37 @@
+{
+  "name": "agentic-runtime-platform",
+  "version": "1.0.0",
+  "description": "Production-grade multi-agent orchestration platform with DAG execution, tiered model routing, LLM evaluation, provider failover, and live workflow observability.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "eval:code": "promptfoo eval -c evals/code-gen.yaml",
+    "eval:agents": "promptfoo eval -c evals/agents.yaml",
+    "eval:research": "promptfoo eval -c evals/research.yaml",
+    "eval:all": "promptfoo eval -c evals/code-gen.yaml && promptfoo eval -c evals/agents.yaml && promptfoo eval -c evals/research.yaml",
+    "eval:view": "promptfoo view"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tafreeman/agentic-runtime-platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tafreeman/agentic-runtime-platform/issues"
+  },
+  "homepage": "https://github.com/tafreeman/agentic-runtime-platform#readme",
+  "dependencies": {
+    "@playwright/test": "^1.59.1"
+  },
+  "devDependencies": {
+    "promptfoo": "latest"
+  }
+}

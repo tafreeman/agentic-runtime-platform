@@ -1,0 +1,63 @@
+{
+  "properties": {
+    "criteria": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Criteria",
+      "type": "array"
+    },
+    "grade": {
+      "title": "Grade",
+      "type": "string"
+    },
+    "overall_score": {
+      "title": "Overall Score",
+      "type": "number"
+    },
+    "pass_threshold": {
+      "default": 70.0,
+      "title": "Pass Threshold",
+      "type": "number"
+    },
+    "passed": {
+      "default": false,
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "rubric": {
+      "title": "Rubric",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "type": {
+      "const": "evaluation_complete",
+      "default": "evaluation_complete",
+      "title": "Type",
+      "type": "string"
+    },
+    "weighted_score": {
+      "title": "Weighted Score",
+      "type": "number"
+    }
+  },
+  "required": [
+    "run_id",
+    "rubric",
+    "weighted_score",
+    "overall_score",
+    "grade",
+    "timestamp"
+  ],
+  "title": "EvaluationCompleteEvent",
+  "type": "object"
+}

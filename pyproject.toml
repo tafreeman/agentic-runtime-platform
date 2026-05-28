@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-tools"
+version = "0.1.0"
+description = "Shared utilities for Agentic Workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "aiohttp>=3.9",
+    "pydantic>=2.13.4",
+    "langchain-core>=0.3,<0.4",
+    "anthropic>=0.101.0,<1",
+    "openai>=1.58.1,<2",
+    "numpy>=1.26.4,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["tools"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.12",
+    "pytest-timeout>=2.2",
+    "black>=26.3.1",
+    "ruff>=0.1.0",
+    "mypy>=2.0.0",
+    "pre-commit>=3.0",
+]
+
+# The root project (`agentic-tools`) owns `tools/`; workspace members list
+# only child package directories.
+[tool.uv.workspace]
+members = [
+    "agentic-workflows-v2",
+    "agentic-v2-eval",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "e2e: end-to-end cross-package integration tests",
+    "slow: tests taking more than 5 seconds",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff — shared config inherited by all workspace members
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "SIM", "TCH", "RUF"]
+ignore = [
+    "S101", "S105", "S603", "S607",  # Security: reviewed manually
+    "S110", "S112",                   # Try-except-pass/continue: graceful degradation patterns
+    "S310", "S311", "S324",           # URL open, pseudo-random, hash: non-security-critical usage
+    "UP007", "UP045", "UP017", "UP035", "UP037",  # PEP 604 migration deferred
+    "E501",   # Line length: long strings/URLs
+    "E402",   # Module-level import ordering: deferred (conditional imports)
+    "I001",   # Unsorted imports: deferred
+    "F401",   # Unused imports: some are re-exports
+    "B904",   # Raise from err: deferred bulk cleanup
+    "N806",   # Variable casing in functions: deferred
+    "TC001", "TC002", "TC003",  # TYPE_CHECKING guards: deferred
+    "C420",   # Dict comprehension simplification: deferred
+    "SIM102", "SIM105", "SIM117",  # Code simplifications: deferred
+    "RUF012", # Mutable class variable: deferred
+    "RUF013", # Implicit Optional: deferred
+    "RUF022", # Unsorted __all__: intentional logical grouping by category
+    "RUF059", # Unused unpacked variable: deferred
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "instruction": "Write a Python function that returns the first 1 squared integers.",
+    "input": "count=1",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 2 squared integers.",
+    "input": "count=2",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 3 squared integers.",
+    "input": "count=3",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 4 squared integers.",
+    "input": "count=4",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 5 squared integers.",
+    "input": "count=5",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 6 squared integers.",
+    "input": "count=6",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 7 squared integers.",
+    "input": "count=7",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 8 squared integers.",
+    "input": "count=8",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 9 squared integers.",
+    "input": "count=9",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 10 squared integers.",
+    "input": "count=10",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 11 squared integers.",
+    "input": "count=11",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 12 squared integers.",
+    "input": "count=12",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 13 squared integers.",
+    "input": "count=13",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 14 squared integers.",
+    "input": "count=14",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 15 squared integers.",
+    "input": "count=15",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 16 squared integers.",
+    "input": "count=16",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 17 squared integers.",
+    "input": "count=17",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 18 squared integers.",
+    "input": "count=18",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 19 squared integers.",
+    "input": "count=19",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  },
+  {
+    "instruction": "Write a Python function that returns the first 20 squared integers.",
+    "input": "count=20",
+    "output": "def first_squares(count: int) -> list[int]:\n    return [n * n for n in range(count)]\n"
+  }
+]

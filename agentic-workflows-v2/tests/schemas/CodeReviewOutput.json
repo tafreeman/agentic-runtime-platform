@@ -1,0 +1,185 @@
+{
+  "$defs": {
+    "CodeIssue": {
+      "description": "A single issue found during code review.",
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/IssueCategory",
+          "description": "Issue category"
+        },
+        "code_snippet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relevant code",
+          "title": "Code Snippet"
+        },
+        "column": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column"
+        },
+        "line_number": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Number"
+        },
+        "message": {
+          "description": "Issue description",
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "description": "Issue severity"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Suggested fix",
+          "title": "Suggestion"
+        }
+      },
+      "required": [
+        "severity",
+        "category",
+        "message"
+      ],
+      "title": "CodeIssue",
+      "type": "object"
+    },
+    "IssueCategory": {
+      "description": "Category of code issue.",
+      "enum": [
+        "security",
+        "performance",
+        "maintainability",
+        "correctness",
+        "style",
+        "documentation",
+        "testing"
+      ],
+      "title": "IssueCategory",
+      "type": "string"
+    },
+    "Severity": {
+      "description": "Severity level for code issues.",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Output from code review tasks.\n\nAggressive improvements:\n- Issue aggregation by severity/category\n- Quality score calculation\n- Actionable summary",
+  "properties": {
+    "confidence": {
+      "default": 1.0,
+      "description": "Model's confidence in output (0-1)",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Error message if failed",
+      "title": "Error"
+    },
+    "issues": {
+      "description": "Issues found in code",
+      "items": {
+        "$ref": "#/$defs/CodeIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "model_used": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Model that produced this output",
+      "title": "Model Used"
+    },
+    "quality_score": {
+      "default": 0.0,
+      "description": "Overall quality score (0-100)",
+      "maximum": 100.0,
+      "minimum": 0.0,
+      "title": "Quality Score",
+      "type": "number"
+    },
+    "success": {
+      "description": "Whether task completed successfully",
+      "title": "Success",
+      "type": "boolean"
+    },
+    "summary": {
+      "default": "",
+      "description": "Overall review summary",
+      "title": "Summary",
+      "type": "string"
+    },
+    "tokens_used": {
+      "default": 0,
+      "description": "Total tokens consumed",
+      "minimum": 0,
+      "title": "Tokens Used",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "success"
+  ],
+  "title": "CodeReviewOutput",
+  "type": "object"
+}

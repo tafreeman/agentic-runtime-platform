@@ -1,0 +1,109 @@
+name: Nightly E2E Reliability
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # 07:00 UTC (≈ 03:00 ET in EDT; 02:00 ET in EST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  streaming-50x:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Pinned to 22.12 because `--experimental-strip-types` requires >=22.6
+      # and a bare "22" can resolve to 22.0-22.5 on a cold runner cache.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12"
+          cache: "npm"
+          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+
+      - name: Install backend
+        run: pip install -e "agentic-workflows-v2/[dev,server]"
+
+      - name: Install UI deps
+        run: npm --prefix agentic-workflows-v2/ui ci
+
+      - name: Install Playwright browsers
+        run: npm --prefix agentic-workflows-v2/ui exec -- playwright install --with-deps chromium
+
+      # Pull the previous night's SLO data from the dedicated slo-data branch
+      # into the working tree, so the subsequent tests read/append to the
+      # current rolling window. If the branch doesn't exist yet (first run),
+      # fall back to the empty seed files committed to main.
+      - name: Restore SLO data from slo-data branch
+        run: |
+          if git fetch origin slo-data:refs/remotes/origin/slo-data 2>/dev/null; then
+            git checkout origin/slo-data -- agentic-workflows-v2/tests/slo/ || {
+              echo "slo-data branch exists but has no tests/slo/ payload; keeping seed files."
+            }
+          else
+            echo "slo-data branch does not exist yet; using seed data from main."
+          fi
+
+      # Seed the fails sentinel BEFORE the loop so a harness-level crash
+      # (shell syntax error, OOM, setup-node failure) leaves a detectable
+      # value rather than an empty string that Number(...) would silently
+      # coerce to 0 -> fake green record.
+      - name: Run streaming E2E 50x
+        id: run50
+        continue-on-error: true
+        run: |
+          echo "fails=__UNSET__" >> "$GITHUB_OUTPUT"
+          fails=0
+          for i in $(seq 1 50); do
+            if ! npm --prefix agentic-workflows-v2/ui run test:e2e -- streaming.spec.ts; then
+              fails=$((fails + 1))
+            fi
+          done
+          echo "fails=$fails" >> "$GITHUB_OUTPUT"
+
+      - name: Append flake record + enforce 0.5% rolling gate
+        working-directory: agentic-workflows-v2/ui
+        run: |
+          node --experimental-strip-types e2e/flake-gate.ts "${{ steps.run50.outputs.fails }}"
+
+      # Run the first-span SLO spec once to append a new latency sample to
+      # first-span-latency.json. This is what makes the Task 7 p95 gate
+      # actually activate — without this step the gate reads an empty file
+      # forever and passes trivially.
+      - name: Record time-to-first-span sample + enforce p95 gate
+        run: npm --prefix agentic-workflows-v2/ui run test:e2e -- slo-first-span.spec.ts
+
+      - name: Publish SLO data to slo-data branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          # Stash the updated JSON files so we can move them onto slo-data
+          # without dragging any unrelated working-tree noise along.
+          cp agentic-workflows-v2/tests/slo/first-span-latency.json /tmp/first-span-latency.json
+          cp agentic-workflows-v2/tests/slo/flake-rate.json /tmp/flake-rate.json
+
+          # Create or reset slo-data from current main, then overlay the
+          # freshly updated JSON files.
+          git checkout -B slo-data
+          cp /tmp/first-span-latency.json agentic-workflows-v2/tests/slo/first-span-latency.json
+          cp /tmp/flake-rate.json agentic-workflows-v2/tests/slo/flake-rate.json
+          git add agentic-workflows-v2/tests/slo/first-span-latency.json \
+                  agentic-workflows-v2/tests/slo/flake-rate.json
+          if git diff --cached --quiet; then
+            echo "No SLO data changes to publish."
+          else
+            git commit -m "chore(slo): nightly data update [skip ci]"
+            # Force-push is safe here: slo-data is a machine-owned branch
+            # whose sole purpose is carrying the rolling JSON history.
+            git push --force origin slo-data
+          fi

@@ -1,0 +1,32 @@
+{
+  "description": "Base class for all task inputs.\n\nDesign: Generic base with common fields and validation hooks.\nSubclasses add task-specific fields and validators.",
+  "properties": {
+    "constraints": {
+      "additionalProperties": true,
+      "description": "Execution constraints (max_tokens, timeout, etc.)",
+      "title": "Constraints",
+      "type": "object"
+    },
+    "context": {
+      "additionalProperties": true,
+      "description": "Additional context for task execution",
+      "title": "Context",
+      "type": "object"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Unique task identifier for tracking",
+      "title": "Task Id"
+    }
+  },
+  "title": "TaskInput",
+  "type": "object"
+}

@@ -1,0 +1,111 @@
+/*
+ * Console UI — Design Tokens (Direction B)
+ * Three themes: dark (default), paper (warm cream), bolt (cobalt).
+ * Apply theme by setting data-theme on <html>.
+ */
+
+:root,
+[data-theme="dark"] {
+  --b-bg0: 8 8 12;
+  --b-bg1: 16 16 24;
+  --b-bg2: 22 22 30;
+  --b-bg3: 29 29 38;
+  --b-line: 44 44 54;
+  --b-line-soft: 29 29 38;
+  --b-text: 236 236 222;
+  --b-text-mid: 164 164 148;
+  /* --b-text-dim audited 2026-04-22: 5.03:1 on --b-bg1 (dark) — passes AA 4.5:1 */
+  --b-text-dim: 132 132 125;
+  --b-text-faint: 64 64 58;
+  --b-clay: 217 119 87;
+  --b-clay-soft: rgba(217, 119, 87, 0.12);
+  --b-green: 74 222 128;
+  --b-amber: 251 191 36;
+  --b-blue: 56 189 248;
+  --b-red: 248 113 113;
+  --b-purple: 192 132 252;
+  --b-btn-primary-ink: #000000;
+  --b-scroll-thumb: #2a2a32;
+}
+
+[data-theme="paper"] {
+  --b-bg0: 243 239 228;
+  --b-bg1: 250 247 238;
+  --b-bg2: 236 230 212;
+  --b-bg3: 226 219 195;
+  --b-line: 211 203 180;
+  --b-line-soft: 227 221 200;
+  --b-text: 20 19 12;
+  --b-text-mid: 60 58 46;
+  /* --b-text-dim audited 2026-04-21: 7.45:1 on --b-bg1 (paper) — passes AA 4.5:1 */
+  --b-text-dim: 84 81 66;
+  --b-text-faint: 139 133 114;
+  --b-clay: 184 74 28;
+  --b-clay-soft: rgba(184, 74, 28, 0.16);
+  --b-green: 46 111 52;
+  --b-amber: 156 111 16;
+  --b-blue: 29 95 168;
+  --b-red: 168 45 24;
+  --b-purple: 111 63 176;
+  --b-btn-primary-ink: #faf7ee;
+  --b-scroll-thumb: #c3bba0;
+}
+
+[data-theme="bolt"] {
+  --b-bg0: 238 241 247;
+  --b-bg1: 255 255 255;
+  --b-bg2: 228 232 241;
+  --b-bg3: 212 218 234;
+  --b-line: 197 203 219;
+  --b-line-soft: 221 225 236;
+  --b-text: 14 18 32;
+  --b-text-mid: 47 54 71;
+  --b-text-dim: 92 100 120;
+  --b-text-faint: 149 160 183;
+  --b-clay: 47 93 255;
+  --b-clay-soft: rgba(47, 93, 255, 0.14);
+  --b-green: 16 137 74;
+  --b-amber: 156 107 18;
+  --b-blue: 11 111 192;
+  --b-red: 192 51 28;
+  --b-purple: 123 62 222;
+  --b-btn-primary-ink: #ffffff;
+  --b-scroll-thumb: #b5bccf;
+}
+
+:root {
+  --b-font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, monospace;
+  --b-font-heading: "Geist", -apple-system, system-ui, sans-serif;
+}
+
+/* Scrollbar (all themes) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--b-scroll-thumb) transparent;
+}
+
+/* Shared animations */
+@keyframes b-dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+@keyframes b-pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes b-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px;
+    height: 640px;
+    overflow: hidden;
+    background: #0d1117;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e6edf3;
+  }
+
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(48, 111, 232, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(48, 111, 232, 0.07) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glow-left {
+    position: absolute;
+    left: -100px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(48, 111, 232, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .glow-right {
+    position: absolute;
+    right: -80px;
+    top: 30%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(110, 84, 232, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    width: 1280px;
+    height: 640px;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* LEFT PANEL */
+  .left {
+    flex: 0 0 620px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 56px 60px 72px;
+    position: relative;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(48, 111, 232, 0.15);
+    border: 1px solid rgba(48, 111, 232, 0.4);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #79b8ff;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    width: fit-content;
+  }
+
+  .badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #58a6ff;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  h1 {
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: #f0f6fc;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, #58a6ff 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: #8b949e;
+    line-height: 1.5;
+    margin-bottom: 44px;
+    max-width: 460px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #c9d1d9;
+  }
+
+  .pill-icon {
+    font-size: 15px;
+  }
+
+  /* RIGHT PANEL — DAG visualization */
+  .right {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 48px 40px 20px;
+  }
+
+  .dag-card {
+    background: rgba(22, 27, 34, 0.9);
+    border: 1px solid rgba(48, 111, 232, 0.25);
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 100%;
+    max-width: 520px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .dag-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .dag-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .dag-title {
+    font-size: 12px;
+    color: #8b949e;
+    font-family: 'Courier New', monospace;
+    margin-left: 4px;
+  }
+
+  .dag-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #3fb950;
+    font-weight: 600;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3fb950;
+  }
+
+  /* DAG Nodes */
+  .dag-nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dag-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .node {
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+
+  .node-done {
+    background: rgba(63, 185, 80, 0.12);
+    border-color: rgba(63, 185, 80, 0.3);
+    color: #3fb950;
+  }
+
+  .node-active {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: rgba(88, 166, 255, 0.5);
+    color: #58a6ff;
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
+  }
+
+  .node-pending {
+    background: rgba(139, 148, 158, 0.08);
+    border-color: rgba(139, 148, 158, 0.2);
+    color: #8b949e;
+  }
+
+  .node-parallel {
+    background: rgba(167, 139, 250, 0.12);
+    border-color: rgba(167, 139, 250, 0.35);
+    color: #a78bfa;
+  }
+
+  .arrow {
+    color: #30363d;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .connector {
+    width: 24px;
+    height: 1px;
+    background: rgba(88, 166, 255, 0.3);
+    flex-shrink: 0;
+  }
+
+  .connector-v {
+    display: flex;
+    justify-content: center;
+    height: 10px;
+    position: relative;
+  }
+
+  .connector-v::before {
+    content: '';
+    width: 1px;
+    height: 100%;
+    background: rgba(88, 166, 255, 0.3);
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 0;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .stat {
+    flex: 1;
+    text-align: center;
+  }
+
+  .stat + .stat {
+    border-left: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .stat-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f0f6fc;
+    font-family: 'Courier New', monospace;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: #6e7681;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1f6feb 0%, #58a6ff 30%, #a78bfa 70%, #6e40c9 100%);
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="glow-left"></div>
+<div class="glow-right"></div>
+
+<div class="container">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="badge">
+      <div class="badge-dot"></div>
+      v0.3.0 · Production Ready
+    </div>
+
+    <h1>Agentic<br><span>Runtimes</span></h1>
+
+    <p class="subtitle">Multi-agent AI orchestration with DAG execution, circuit-breaker model routing, and rubric-based LLM evaluation.</p>
+
+    <div class="pills">
+      <div class="pill"><span class="pill-icon">⚡</span> DAG Executor (Kahn's)</div>
+      <div class="pill"><span class="pill-icon">🔀</span> 8+ LLM Providers</div>
+      <div class="pill"><span class="pill-icon">🛡️</span> Circuit Breakers</div>
+      <div class="pill"><span class="pill-icon">📊</span> Rubric Evaluation</div>
+      <div class="pill"><span class="pill-icon">🔗</span> LangGraph + Native</div>
+      <div class="pill"><span class="pill-icon">🌐</span> React Dashboard</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="dag-card">
+      <div class="dag-header">
+        <div class="dag-dots">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+        </div>
+        <span class="dag-title">code_review.yaml — DAG Executor</span>
+        <div class="dag-status">
+          <div class="status-dot"></div>
+          RUNNING
+        </div>
+      </div>
+
+      <div class="dag-nodes">
+        <!-- Row 1: single -->
+        <div class="dag-row">
+          <div class="node node-done">✓ intake_scope <span style="font-size:9px;opacity:0.6">tier3_planner</span></div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Row 2: single -->
+        <div class="dag-row">
+          <div class="node node-done">✓ parse_code <span style="font-size:9px;opacity:0.6">tier2_reader</span></div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Row 3: parallel -->
+        <div class="dag-row">
+          <div class="node node-active">⟳ arch_review <span style="font-size:9px;opacity:0.7">tier3_analyst</span></div>
+          <div style="width:16px;height:1px;background:rgba(88,166,255,0.2);flex-shrink:0"></div>
+          <div class="node node-parallel">⟳ quality_review <span style="font-size:9px;opacity:0.7">tier3_analyst</span></div>
+        </div>
+
+        <div class="connector-v"></div>
+
+        <!-- Row 4: merge + pending -->
+        <div class="dag-row">
+          <div class="node node-pending">○ synthesize <span style="font-size:9px;opacity:0.5">tier4_writer</span></div>
+          <div style="width:16px;height:1px;background:rgba(139,148,158,0.15);flex-shrink:0"></div>
+          <div class="node node-pending">○ score_output <span style="font-size:9px;opacity:0.5">tier0_scorer</span></div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-val">6</div>
+          <div class="stat-label">Workflows</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">17</div>
+          <div class="stat-label">Patterns</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">100+</div>
+          <div class="stat-label">Tests</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">8+</div>
+          <div class="stat-label">Providers</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar"></div>
+</body>
+</html>

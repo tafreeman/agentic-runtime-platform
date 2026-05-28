@@ -1,0 +1,342 @@
+[
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 1."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 2."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 3."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 4."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 5."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 6."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 7."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 8."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 9."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 10."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 11."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 12."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 13."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 14."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 15."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 16."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 17."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 18."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 19."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  },
+  {
+    "model": "synthetic-offline-fixture",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Return concise implementation guidance."
+      },
+      {
+        "role": "user",
+        "content": "Build a React task filter panel with search, status chips, and keyboard-friendly controls. Fixture 20."
+      },
+      {
+        "role": "assistant",
+        "content": "Use controlled inputs, derive filtered rows from state, and keep aria labels on icon controls."
+      }
+    ]
+  }
+]

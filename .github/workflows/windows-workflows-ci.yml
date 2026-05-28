@@ -1,0 +1,98 @@
+name: Windows Workflow Verification
+
+on:
+  push:
+    branches: [main, agenticv2]
+    paths:
+      - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
+      - 'agentic-workflows-v2/agentic_v2/cli/**'
+      - 'agentic-workflows-v2/scripts/setup-dev.ps1'
+      - 'agentic-workflows-v2/scripts/fixtures/**'
+      - '.github/workflows/windows-workflows-ci.yml'
+  pull_request:
+    branches: [main, agenticv2]
+    paths:
+      - 'agentic-workflows-v2/agentic_v2/workflows/definitions/**'
+      - 'agentic-workflows-v2/agentic_v2/cli/**'
+      - 'agentic-workflows-v2/scripts/setup-dev.ps1'
+      - 'agentic-workflows-v2/scripts/fixtures/**'
+      - '.github/workflows/windows-workflows-ci.yml'
+
+jobs:
+  verify-workflows:
+    name: Verify 6 bundled workflows on Windows
+    runs-on: windows-latest
+
+    env:
+      # Prevent Rich/Python Unicode encoding errors on Windows cp1252 terminals.
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: 1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: agentic-workflows-v2
+        run: uv sync --frozen --extra dev --extra server --extra langchain
+
+      - name: Validate all bundled workflows
+        working-directory: agentic-workflows-v2
+        shell: pwsh
+        run: |
+          $workflows = @(
+            'bug_resolution'
+            'code_review'
+            'conditional_branching'
+            'fullstack_generation'
+            'iterative_review'
+            'test_deterministic'
+          )
+          $failed = @()
+          foreach ($wf in $workflows) {
+            Write-Host "Validating $wf..."
+            $LASTEXITCODE = 0
+            uv run agentic validate $wf
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::error::Workflow validation FAILED: $wf"
+              $failed += $wf
+            }
+          }
+          if ($failed.Count -gt 0) {
+            Write-Host "::error::$($failed.Count) workflow(s) failed: $($failed -join ', ')"
+            exit 1
+          }
+          Write-Host "All 6 workflows validated on windows-latest."
+
+      - name: Verify CLI commands on Windows
+        working-directory: agentic-workflows-v2
+        shell: pwsh
+        run: |
+          $LASTEXITCODE = 0
+          uv run agentic list workflows
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::agentic list workflows failed"; exit 1 }
+          $LASTEXITCODE = 0
+          uv run agentic validate test_deterministic
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::agentic validate failed"; exit 1 }
+          Write-Host "CLI verification passed on windows-latest."
+
+      - name: Run deterministic smoke test (dry-run)
+        # Uses --dry-run: validates parsing, graph compilation, and plan generation
+        # without requiring live LLM providers or API keys.
+        # Full end-to-end run is blocked by pre-existing WorkflowResult bugs (tracked in deferred-work.md).
+        working-directory: agentic-workflows-v2
+        shell: pwsh
+        run: |
+          $LASTEXITCODE = 0
+          uv run agentic run test_deterministic `
+            --input scripts/fixtures/smoke-input.json `
+            --dry-run
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Deterministic smoke test failed (exit $LASTEXITCODE)"
+            exit 1
+          }
+          Write-Host "Smoke test passed."

@@ -1,0 +1,139 @@
+definitions:
+  coherence:
+    system_prompt: You are an expert evaluator. Your goal is to evaluate the Coherence of a response.
+    prompt_template: |
+      # Definition
+      Coherence refers to the logical and orderly presentation of ideas in a response.
+      A coherent response flows naturally, connects ideas logically, maintains consistent
+      focus on the topic, and presents information in a well-structured manner that is
+      easy for the reader to follow.
+
+      # Scoring Rubric
+      1 - **Incoherent**: The response lacks any logical structure, ideas are disconnected
+          and contradictory, impossible to follow.
+      2 - **Mostly Incoherent**: The response has major coherence issues, frequent topic
+          shifts, and weak logical connections between ideas.
+      3 - **Somewhat Coherent**: The response has a basic structure but contains noticeable
+          gaps in logic, some abrupt transitions, or occasional inconsistencies.
+      4 - **Coherent**: The response is well-organized with clear logical flow, minor
+          issues in transitions or structure that do not impede understanding.
+      5 - **Highly Coherent**: The response demonstrates excellent logical flow, smooth
+          transitions, consistent focus, and a well-structured presentation of ideas.
+
+      # Data
+      QUERY: {{input}}
+      RESPONSE: {{completion}}
+
+      # Task
+      Evaluate the coherence of the RESPONSE given the QUERY. Think step by step, then
+      on the last line output ONLY a single number from 1 to 5.
+    choices_type: standard_5_point
+
+  fluency:
+    system_prompt: You are an expert evaluator. Your goal is to evaluate the Fluency of a response.
+    prompt_template: |
+      # Definition
+      Fluency measures the quality of language use in a response: grammar, spelling,
+      punctuation, word choice, and sentence structure. A fluent response reads naturally
+      and is free of linguistic errors.
+
+      # Scoring Rubric
+      1 - **Very Poor**: Numerous grammatical errors, broken sentences, largely unreadable.
+      2 - **Poor**: Frequent grammatical or spelling errors that hinder comprehension.
+      3 - **Adequate**: Some errors present but the text is generally understandable.
+      4 - **Good**: Minor errors that do not affect readability or comprehension.
+      5 - **Excellent**: Flawless or near-flawless language with natural, polished prose.
+
+      # Data
+      RESPONSE: {{completion}}
+
+      # Task
+      Evaluate the fluency of the RESPONSE. Think step by step, then on the last line
+      output ONLY a single number from 1 to 5.
+    choices_type: standard_5_point
+
+  relevance:
+    system_prompt: You are an expert evaluator. Your goal is to evaluate the Relevance of a response.
+    prompt_template: |
+      # Definition
+      Relevance measures how well a response addresses the specific query or task. A
+      relevant response directly answers the question, stays on topic, and avoids
+      unnecessary tangents or off-topic information.
+
+      # Scoring Rubric
+      1 - **Irrelevant**: The response does not address the query at all.
+      2 - **Mostly Irrelevant**: The response barely touches on the query with mostly
+          off-topic content.
+      3 - **Partially Relevant**: The response addresses some aspects of the query but
+          misses key points or includes significant off-topic material.
+      4 - **Relevant**: The response addresses the query well with minor tangents or
+          missing aspects.
+      5 - **Highly Relevant**: The response directly and comprehensively addresses every
+          aspect of the query without unnecessary content.
+
+      # Data
+      QUERY: {{input}}
+      RESPONSE: {{completion}}
+
+      # Task
+      Evaluate the relevance of the RESPONSE to the QUERY. Think step by step, then
+      on the last line output ONLY a single number from 1 to 5.
+    choices_type: standard_5_point
+
+  groundedness:
+    system_prompt: You are an expert evaluator. Your goal is to evaluate the Groundedness of a response.
+    prompt_template: |
+      # Definition
+      Groundedness measures whether the claims in a response are supported by the provided
+      context or source material. A grounded response makes only claims that can be traced
+      back to the given context, and does not introduce unsupported information.
+
+      # Scoring Rubric
+      1 - **Ungrounded**: The response contains mostly fabricated claims with no support
+          from the context.
+      2 - **Mostly Ungrounded**: The response has some connection to the context but
+          introduces significant unsupported claims.
+      3 - **Partially Grounded**: Some claims are supported by context, but notable
+          unsupported claims are present.
+      4 - **Mostly Grounded**: Nearly all claims are supported by context, with only
+          minor unsupported inferences.
+      5 - **Fully Grounded**: Every claim in the response is directly supported by the
+          provided context.
+
+      # Data
+      CONTEXT: {{context}}
+      RESPONSE: {{completion}}
+
+      # Task
+      Evaluate the groundedness of the RESPONSE given the CONTEXT. Think step by step,
+      then on the last line output ONLY a single number from 1 to 5.
+    choices_type: standard_5_point
+
+  similarity:
+    system_prompt: You are an expert evaluator. Your goal is to evaluate the Similarity between two responses.
+    prompt_template: |
+      # Definition
+      Similarity measures the semantic equivalence between a generated response and a
+      reference answer. Two responses are similar if they convey the same meaning,
+      cover the same key points, and reach the same conclusions, even if the wording
+      differs.
+
+      # Scoring Rubric
+      1 - **Completely Different**: The responses convey entirely different meanings or
+          reach opposite conclusions.
+      2 - **Mostly Different**: The responses share minimal overlap in meaning or content.
+      3 - **Somewhat Similar**: The responses share some key points but differ on
+          important aspects.
+      4 - **Mostly Similar**: The responses convey largely the same meaning with minor
+          differences in detail or emphasis.
+      5 - **Equivalent**: The responses are semantically identical, covering the same
+          points and reaching the same conclusions.
+
+      # Data
+      REFERENCE: {{expected}}
+      RESPONSE: {{completion}}
+
+      # Task
+      Evaluate the similarity of the RESPONSE compared to the REFERENCE. Think step by
+      step, then on the last line output ONLY a single number from 1 to 5.
+    choices_type: standard_5_point

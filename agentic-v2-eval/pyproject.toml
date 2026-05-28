@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-v2-eval"
+version = "0.3.0"
+description = "Evaluation framework for Agentic Workflows v2."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+dependencies = [
+    "pyyaml>=6.0",
+    "agentic-tools",
+]
+
+[tool.uv.sources]
+agentic-tools = { workspace = true }
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.0",
+    "ruff>=0.1.0",
+    "types-PyYAML",
+]
+
+[project.scripts]
+agentic-v2-eval = "agentic_v2_eval.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentic_v2_eval"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: end-to-end tests (deselect with -m 'not integration')",
+    "slow: tests taking more than 5 seconds",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/agentic_v2_eval"]
+
+[tool.coverage.report]
+fail_under = 80
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tools.*",
+    "yaml",
+]
+ignore_missing_imports = true

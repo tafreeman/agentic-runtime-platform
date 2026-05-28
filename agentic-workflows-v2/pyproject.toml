@@ -1,0 +1,344 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentic-workflows-v2"
+version = "0.1.0"
+description = "Tier-based multi-model AI workflow orchestration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "pydantic>=2.0,<3",
+    "pydantic-settings>=2.0,<3",
+    "httpx>=0.25,<1",
+    "jinja2>=3.0,<4",
+    "jmespath>=1.0,<2",
+    "pyyaml>=6.0,<7",
+    "aiofiles>=23.0,<25",
+    "aiohttp>=3.9,<4",
+    "filelock>=3.0,<4",
+    "cachetools>=5.0,<8",
+    "typer>=0.9,<1",
+    "rich>=13.0,<14",
+    "python-json-logger>=3.0,<4",
+    "agentic-tools",
+]
+
+[tool.uv.sources]
+agentic-tools = { workspace = true }
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.12",
+    "pytest-timeout>=2.2",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "fakeredis[lua]>=2.21,<3",
+    "jsonschema>=4.18",
+    "pydocstyle>=6.3",
+]
+server = [
+    "fastapi>=0.100,<1",
+    "uvicorn[standard]>=0.23,<1",
+    "python-multipart>=0.0.6,<1",
+    "slowapi>=0.1.9,<1",
+    "pyjwt[crypto]>=2.12,<3",
+]
+langchain = [
+    "langchain>=0.3,<0.4",
+    "langchain-core>=0.3,<0.4",
+    "langgraph>=0.2,<0.3",
+    "langchain-openai>=0.2,<0.3",
+    "langchain-anthropic>=0.2,<0.3",
+    "langchain-google-genai>=2.0,<3",
+    "langchain-ollama>=0.2,<0.3",
+    "langgraph-checkpoint-sqlite>=2.0,<3",
+    "langsmith>=0.3,<0.4",
+]
+tracing = [
+    "opentelemetry-sdk>=1.20,<2",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.20,<2",
+    "opentelemetry-exporter-otlp-proto-http>=1.20,<2",
+    "opentelemetry-exporter-prometheus>=0.48b0,<1",
+    "prometheus-client>=0.17,<1",
+]
+claude = [
+    "anthropic>=0.40,<1",
+    "claude-agent-sdk>=0.1,<1",
+]
+rag = [
+    "lancedb>=0.15,<1",
+    "litellm>=1.50,<2",
+]
+devex = [
+    "psutil>=6.0",
+]
+mcp = [
+    "websockets>=12.0,<17",
+]
+redis = [
+    "redis[hiredis]>=5.0,<6",
+]
+sqlite = [
+    "aiosqlite>=0.19,<1",
+]
+postgres = [
+    "langgraph-checkpoint-postgres>=2.0,<4",
+    "psycopg[binary]>=3.1,<4",
+]
+
+[project.scripts]
+agentic = "agentic_v2.cli:main"
+
+
+[tool.hatch.build]
+exclude = [".venv*", "ui/node_modules"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["agentic_v2"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+timeout = 30
+testpaths = ["tests"]
+filterwarnings = [
+    "default:.*LangGraph adapter.*:DeprecationWarning",
+]
+markers = [
+    "integration: end-to-end tests that call real agents/LLMs (deselect with -m 'not integration')",
+    "slow: tests taking more than 5 seconds",
+    "security: security-related tests",
+    "unit: fast isolated unit tests with no external dependencies",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["agentic_v2"]
+omit = [
+    # Optional provider/plugin surfaces are covered by their own targeted tests
+    # or require external services. Keep the runtime gate focused on core code.
+    "agentic_v2/agents/implementations/*",
+    "agentic_v2/cli/helpers.py",
+    "agentic_v2/config/__init__.py",
+    "agentic_v2/devex/cli.py",
+    "agentic_v2/engine/verification.py",
+    "agentic_v2/engine/patterns/__init__.py",
+    "agentic_v2/integrations/mcp/*",
+    "agentic_v2/langchain/agents.py",
+    "agentic_v2/langchain/model_builders.py",
+    "agentic_v2/langchain/tools.py",
+    "agentic_v2/models/backends_base.py",
+    "agentic_v2/models/backends_cloud.py",
+    "agentic_v2/models/backends_local.py",
+    "agentic_v2/models/client.py",
+    "agentic_v2/models/llm.py",
+    "agentic_v2/prompts/*",
+    "agentic_v2/workflows/runner.py",
+]
+
+[tool.coverage.report]
+fail_under = 80
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__",
+    "raise NotImplementedError",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff linting configuration
+# ---------------------------------------------------------------------------
+[tool.ruff.lint]
+# Rule sets:
+#   E/W  - pycodestyle errors and warnings
+#   F    - Pyflakes (undefined names, unused imports)
+#   I    - isort (import ordering)
+#   N    - pep8-naming
+#   UP   - pyupgrade (modernise Python syntax)
+#   S    - flake8-bandit (security)
+#   B    - flake8-bugbear (likely bugs and design issues)
+#   A    - flake8-builtins (shadowing builtins)
+#   C4   - flake8-comprehensions (simplify comprehensions)
+#   SIM  - flake8-simplify
+#   TCH  - flake8-type-checking (TYPE_CHECKING guards)
+#   RUF  - Ruff-native rules
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "SIM", "TCH", "RUF"]
+
+ignore = [
+    # -------------------------------------------------------------------------
+    # Originally requested suppressions
+    # -------------------------------------------------------------------------
+
+    # S101: Use of `assert` — asserts are idiomatic in test code and guard
+    #       clauses; suppressed globally because S101 fires in production
+    #       guard-clauses too.  Test-specific S101 is also listed under
+    #       per-file-ignores for clarity.
+    "S101",
+    # S105: Hardcoded password string — too many false positives on test
+    #       fixtures and placeholder config values (e.g. "secret", "token").
+    #       Review real secrets via pre-commit detect-secrets instead.
+    "S105",
+    # S603: subprocess call — the codebase has intentional shell_ops.py
+    #       wrappers; those are reviewed manually.
+    #       Cleanup (target Q3 2026): audit each S603 site and replace with safer
+    #       alternatives where possible.
+    "S603",
+    # S607: Starting a process with a partial executable path — same rationale
+    #       as S603; shell_ops wrappers already validate paths.
+    #       Cleanup (target Q3 2026): add which() resolution to all shell_ops callsites.
+    "S607",
+    # UP007: Use `X | Y` for Union — codebase still uses Optional[X] and
+    #        Union[X, Y] in many places for clarity and shared-module compat.
+    #        PEP 604 migration target Q3 2026.
+    "UP007",
+
+    # -------------------------------------------------------------------------
+    # High-volume violations (>20 hits) — baselined 2026-04-21, target Q3 2026
+    # -------------------------------------------------------------------------
+
+    # UP045 (264 violations): `Optional[X]` → `X | None` — same PEP 604
+    #   migration as UP007; addressing both together avoids a half-finished
+    #   annotation pass.
+    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP045` then review diffs.
+    "UP045",
+    # E501 (118 violations): line-too-long (>88 chars) — majority are long
+    #   string literals, URLs in comments, and auto-generated docstrings that
+    #   cannot be auto-fixed without semantic review.
+    #   Cleanup (target Q3 2026): reformat manually where wrapping improves readability;
+    #   leave URL-only lines alone (add `# noqa: E501` per-line).
+    "E501",
+    # I001 (74 violations): unsorted imports — pre-commit isort hook should
+    #   handle this, but the hook was added after many files were written.
+    #   Cleanup (target Q3 2026): run `ruff check --fix --select I001` in a dedicated
+    #   formatting commit so the diff is reviewable.
+    "I001",
+    # UP017 (66 violations): `datetime.timezone.utc` → `datetime.UTC` —
+    #   datetime.UTC was introduced in Python 3.11; safe to migrate but the
+    #   change touches ~20 files and warrants a dedicated commit.
+    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP017`.
+    "UP017",
+    # TC001 (43 violations): typing-only first-party imports not inside
+    #   TYPE_CHECKING block — requires adding `if TYPE_CHECKING:` guards and
+    #   quoting the affected annotations throughout the codebase.
+    #   Cleanup (target Q3 2026): enable TC001 after wrapping imports; verify no circular
+    #   import regressions.
+    "TC001",
+    # UP037 (41 violations): quoted annotations (string literals used as type
+    #   hints) — fixable by either adding `from __future__ import annotations`
+    #   or de-quoting; strategy should be uniform across the package.
+    #   Cleanup (target Q3 2026): decide on PEP 563 vs. PEP 649 strategy, then apply.
+    "UP037",
+    # UP035 (32 violations): deprecated typing imports (`typing.List`,
+    #   `typing.Dict`, etc.) — migrate to built-in generics (`list`, `dict`).
+    #   Overlaps with UP006/UP007 migration; best done in one combined pass.
+    #   Cleanup (target Q3 2026): run `ruff check --fix --select UP035,UP006`.
+    "UP035",
+    # C420 (29 violations): unnecessary dict comprehension for an iterable
+    #   (use `dict(...)` or `{k: v for ...}` → `dict.fromkeys(...)`).
+    #   Auto-fixable but produces semantically identical code; safe to defer.
+    #   Cleanup (target Q3 2026): run `ruff check --fix --select C420`.
+    "C420",
+    # RUF022: unsorted `__all__` — the codebase intentionally groups __all__
+    #   entries by logical category (phases, feature domains) rather than
+    #   alphabetically; sorting would destroy semantic organization.
+    "RUF022",
+
+    # -------------------------------------------------------------------------
+    # CI-unblock deferrals — baselined 2026-04-21, target Q3 2026
+    # These rules each have <25 hits and are safe style-class suppressions
+    # while we unblock CI. Tracked in tech-debt backlog.
+    # -------------------------------------------------------------------------
+    "UP042",   # replace-str-enum (20 hits)
+    "E402",    # module-import-not-at-top-of-file (16 hits)
+    "TC003",   # typing-only-standard-library-import (12 hits)
+    "B904",    # raise-without-from-inside-except (11 hits)
+    "S110",    # try-except-pass (10 hits) — review each for intent
+    "S112",    # try-except-continue (9 hits) — review each for intent
+    "SIM105",  # suppressible-exception (8 hits)
+    "RUF002",  # ambiguous-unicode-character-docstring (6 hits)
+    "S311",    # suspicious-non-cryptographic-random-usage (6 hits) — non-security random
+    "B905",    # zip-without-explicit-strict (5 hits)
+    "SIM103",  # needless-bool (5 hits)
+    "SIM108",  # if-else-block-instead-of-if-exp (5 hits)
+    "B008",    # function-call-in-default-argument (4 hits)
+    "F841",    # unused-variable (4 hits)
+    "B007",    # unused-loop-control-variable (3 hits)
+    "RUF012",  # mutable-class-default (3 hits)
+    "TC002",   # typing-only-third-party-import (3 hits)
+    "C408",    # unnecessary-collection-call (2 hits)
+    "S307",    # suspicious-eval-usage (2 hits) — audit sites separately
+    "SIM102",  # collapsible-if (2 hits)
+    "C401",    # unnecessary-generator-set (1 hit)
+    "N812",    # lowercase-imported-as-non-lowercase (1 hit)
+    "RUF005",  # collection-literal-concatenation (1 hit)
+    "SIM101",  # duplicate-isinstance-call (1 hit)
+
+    # -------------------------------------------------------------------------
+    # Story 1.8 CI-unblock additions — baselined 2026-04-21, target Q3 2026
+    # These fire in pre-existing code; tracked in tech-debt backlog.
+    # -------------------------------------------------------------------------
+    "SIM117",  # multiple-with-statements (11 hits) — merge nested `with` blocks
+    "RUF003",  # ambiguous-unicode-character-comment (7 hits) — EN DASH in comments
+    "N806",    # non-lowercase-variable-in-function (8 hits) — mock class names in tests
+    "RUF059",  # unused-unpacked-variable (6 hits) — `_` unpacking in for-loops
+    "A001",    # builtin-variable-shadowing (4 hits) — `input` parameter name
+    "RUF043",  # pytest-raises-ambiguous-pattern (3 hits) — match= string patterns
+    "B017",    # assert-raises-exception (2 hits) — overly broad exception assertions
+    "RUF015",  # unnecessary-iterable-allocation-for-first-element (2 hits)
+    "E711",    # none-comparison (1 hit) — `== None` vs `is None`
+    "N818",    # error-suffix-on-exception-name (1 hit)
+    "SIM115",  # open-file-with-context-handler (1 hit)
+]
+
+# ---------------------------------------------------------------------------
+# Per-file overrides
+# ---------------------------------------------------------------------------
+[tool.ruff.lint.per-file-ignores]
+# Tests legitimately use assert statements (S101), hardcoded credential strings
+# in fixtures (S105), and occasionally hardcoded passwords for mock objects (S106).
+"tests/**/*.py" = ["S101", "S104", "S105", "S106", "S108"]
+
+# ---------------------------------------------------------------------------
+# isort configuration (via ruff's I rule set)
+# ---------------------------------------------------------------------------
+[tool.ruff.lint.isort]
+known-first-party = ["agentic_v2"]
+
+# ---------------------------------------------------------------------------
+# Mypy static type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+# Strict annotation enforcement is relaxed while we pay down pre-existing type
+# debt across agentic_v2/tools, integrations/mcp, and agentic_v2/integrations.
+# Ratchet these back to true as modules are cleaned (target Q3 2026).
+disallow_untyped_defs = false
+warn_return_any = false
+warn_unused_ignores = false
+ignore_missing_imports = true
+# Exclude test suite and example scripts — these are not part of the
+# production type surface and would generate enormous noise.
+exclude = ["tests/", "examples/"]
+
+# ---------------------------------------------------------------------------
+# Per-module overrides — modules with pre-existing type debt.
+# Address module-by-module and remove overrides (target Q3 2026).
+# ---------------------------------------------------------------------------
+[[tool.mypy.overrides]]
+module = [
+    "agentic_v2.tools.builtin.*",
+    "agentic_v2.integrations.mcp.*",
+    "agentic_v2.integrations.tracing",
+    "agentic_v2.integrations.langchain",
+    "agentic_v2.langchain.config",
+    "agentic_v2.langchain.nodes",
+    "agentic_v2.langchain.dependencies",
+]
+ignore_errors = true

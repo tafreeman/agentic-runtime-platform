@@ -1,0 +1,21 @@
+# Force LF line endings on generated wire-format artifacts. The
+# `wire-format-drift` CI job runs on Linux runners but commits originate from
+# both Windows and Linux developer machines. Without this rule, Windows-authored
+# commits ship CRLF while CI regenerates LF, producing spurious drift failures.
+agentic-workflows-v2/tests/schemas/events.schema.json text eol=lf
+agentic-workflows-v2/tests/schemas/step_result.schema.json text eol=lf
+agentic-workflows-v2/tests/schemas/dag_response.schema.json text eol=lf
+agentic-workflows-v2/tests/schemas/workflow_input_schema.schema.json text eol=lf
+agentic-workflows-v2/tests/schemas/workflow_editor_step.schema.json text eol=lf
+agentic-workflows-v2/tests/schemas/runs_summary.schema.json text eol=lf
+agentic-workflows-v2/ui/src/api/events.generated.ts text eol=lf
+agentic-workflows-v2/ui/src/api/step_result.generated.ts text eol=lf
+agentic-workflows-v2/ui/src/api/dag_response.generated.ts text eol=lf
+agentic-workflows-v2/ui/src/api/workflow_input_schema.generated.ts text eol=lf
+agentic-workflows-v2/ui/src/api/workflow_editor_step.generated.ts text eol=lf
+agentic-workflows-v2/ui/src/api/runs_summary.generated.ts text eol=lf
+
+# The Python and Node generator scripts must also stay LF so the CI-vs-dev
+# diff is deterministic.
+agentic-workflows-v2/scripts/generate_ts_types.py text eol=lf
+agentic-workflows-v2/ui/scripts/generate-ts-types.mjs text eol=lf

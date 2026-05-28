@@ -1,0 +1,416 @@
+"""Agent resolver -- maps YAML agent names to executable step functions.
+
+This is the bridge between the declarative YAML workflow definitions and
+the executable runtime.  Each step in a YAML workflow declares an ``agent``
+field (e.g. ``tier2_coder``).  The resolver:
+
+1. **Infers the model tier** from the agent name prefix (``tier{N}_``).
+2. **Selects an implementation**:
+   - Tier 0 agents -> deterministic Python function from ``TIER0_REGISTRY``.
+   - Tier 1+ agents -> auto-generated LLM-backed step via :func:`_make_llm_step`.
+3. **Assembles the prompt** from persona Markdown files (``prompts/<role>.md``),
+   task description, available context, tool contracts, and the universal
+   sentinel output format instructions.
+4. **Executes multi-turn tool loops** -- LLM steps can call registered tools
+   (up to 8 rounds, 12 calls/round) with truncated results.
+5. **Parses LLM output** via sentinel artifacts (``<<<ARTIFACT>>>``), JSON
+   extraction, and robust review-report normalization for gating conditions.
+
+Implementation is split across focused sub-modules:
+- :mod:`.llm_output_parsing` — JSON/artifact extraction and normalization
+- :mod:`.prompt_assembly` — system-message and tool-contract construction
+- :mod:`.tool_execution` — tool call dispatch and LLM chat fallback
+
+Key constants:
+- ``_TIER_MAX_TOKENS``: Conservative per-tier output token limits.
+- ``_MAX_TOOL_ROUNDS`` / ``_MAX_TOOL_CALLS_PER_ROUND``: Tool loop bounds.
+- ``_MAX_TOOL_RESULT_CHARS``: Truncation limit for tool results.
+"""
+
+from __future__ import annotations
+
+import ast
+import logging
+from pathlib import Path
+from typing import Any
+
+from ..models.router import ModelTier
+from .context import ExecutionContext
+from .llm_output_parsing import (
+    extract_files_from_artifact,
+    extract_json_candidates,
+    normalize_expected_structure,
+    parse_llm_json_output,
+    parse_sentinel_output,
+)
+from .prompt_assembly import (
+    SENTINEL_OUTPUT_INSTRUCTIONS,
+    build_system_prompt,
+    load_agent_system_prompt,
+)
+from .step import StepDefinition, StepFunction
+from .tool_execution import (
+    MAX_TOOL_CALLS_PER_ROUND,
+    MAX_TOOL_RESULT_CHARS,
+    MAX_TOOL_ROUNDS,
+    build_tool_contracts,
+    complete_chat_with_fallback,
+    run_tool_calls,
+)
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Backward-compatibility aliases (private names used by tests and scripts)
+# ---------------------------------------------------------------------------
+
+# llm_output_parsing.py re-exports
+_extract_json_candidates = extract_json_candidates
+_normalize_expected_structure = normalize_expected_structure
+_parse_llm_json_output = parse_llm_json_output
+_extract_files_from_artifact = extract_files_from_artifact
+_parse_sentinel_output = parse_sentinel_output
+
+# prompt_assembly.py re-exports
+_load_agent_system_prompt = load_agent_system_prompt
+_SENTINEL_OUTPUT_INSTRUCTIONS = SENTINEL_OUTPUT_INSTRUCTIONS
+
+# tool_execution.py re-exports
+_MAX_TOOL_ROUNDS = MAX_TOOL_ROUNDS
+_MAX_TOOL_CALLS_PER_ROUND = MAX_TOOL_CALLS_PER_ROUND
+_MAX_TOOL_RESULT_CHARS = MAX_TOOL_RESULT_CHARS
+_build_tool_contracts = build_tool_contracts
+_complete_chat_with_fallback = complete_chat_with_fallback
+_run_tool_calls = run_tool_calls
+
+# Maximum output tokens per model tier.  These are conservative values that
+# work across all providers at each tier.  Tier 2+ use capable models that
+# support at least 8 192 output tokens; tier 3+ supports 16 384.
+_TIER_MAX_TOKENS: dict[ModelTier, int] = {
+    ModelTier.TIER_0: 0,  # deterministic, no LLM
+    ModelTier.TIER_1: 4096,
+    ModelTier.TIER_2: 8192,
+    ModelTier.TIER_3: 16384,
+    ModelTier.TIER_4: 16384,
+    ModelTier.TIER_5: 32768,
+}
+
+
+# ---------------------------------------------------------------------------
+# Tier-0 deterministic step implementations
+# ---------------------------------------------------------------------------
+
+
+async def _parse_code_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: Parse a code file and return basic structure info."""
+    file_path = None
+    # Try multiple ways to get the file path from context
+    for key in ("file_path", "code_file"):
+        try:
+            file_path = await ctx.get(key)
+            if file_path:
+                break
+        except Exception:
+            pass
+
+    # Also check parent context
+    if not file_path:
+        try:
+            all_vars = ctx.all_variables()
+            file_path = all_vars.get("file_path") or all_vars.get("code_file")
+        except Exception:
+            pass
+
+    source = ""
+    if file_path:
+        p = Path(file_path)
+        if p.exists():
+            source = p.read_text(encoding="utf-8", errors="replace")
+        else:
+            source = str(file_path)  # Might be inline code
+
+    # Basic AST analysis for Python files
+    parsed_ast: dict[str, Any] = {"raw_source": source[:500]}
+    metrics: dict[str, Any] = {"lines": len(source.splitlines()), "chars": len(source)}
+
+    try:
+        tree = ast.parse(source)
+        functions = [
+            n.name
+            for n in ast.walk(tree)
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        ]
+        classes = [n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+        imports = [
+            n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)
+        ] + [
+            alias.name
+            for n in ast.walk(tree)
+            if isinstance(n, ast.Import)
+            for alias in n.names
+        ]
+        parsed_ast.update(
+            {
+                "language": "python",
+                "functions": functions,
+                "classes": classes,
+                "imports": imports,
+            }
+        )
+        metrics.update(
+            {
+                "function_count": len(functions),
+                "class_count": len(classes),
+                "import_count": len(imports),
+            }
+        )
+    except SyntaxError:
+        parsed_ast["language"] = "unknown"
+        parsed_ast["parse_error"] = "Could not parse as Python"
+
+    return {"parsed_ast": parsed_ast, "code_metrics": metrics}
+
+
+async def _noop_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0 fallback: return empty outputs."""
+    return {}
+
+
+# Registry of known tier-0 deterministic step implementations
+TIER0_REGISTRY: dict[str, StepFunction] = {
+    "tier0_parser": _parse_code_step,
+}
+
+
+# ---------------------------------------------------------------------------
+# LLM-backed step factory
+# ---------------------------------------------------------------------------
+
+
+def _make_llm_step(
+    agent_name: str,
+    description: str,
+    tier: ModelTier,
+    expected_output_keys: list[str] | None = None,
+    prompt_file_override: str | None = None,
+    enabled_tools: list[str] | None = None,
+) -> StepFunction:
+    """Create an async step function that calls an LLM for its output.
+
+    Prompt assembly (in order):
+    1. Agent persona from ``prompts/<role>.md`` (or ``prompt_file_override``)
+    2. Task description and available context
+    3. Required artifact key list (if ``expected_output_keys`` provided)
+    4. ``SENTINEL_OUTPUT_INSTRUCTIONS`` -- always appended so the output
+       contract is enforced regardless of which persona prompt is loaded.
+
+    Args:
+        expected_output_keys: Keys that MUST appear as <<<ARTIFACT>>> blocks.
+        prompt_file_override: Optional filename (relative to prompts/) to use
+            instead of the role-based lookup.
+        enabled_tools: Optional explicit tool allowlist. ``None`` means all
+            tools available for the step's tier.
+    """
+    persona_prompt = load_agent_system_prompt(agent_name, prompt_file_override)
+
+    async def _llm_step(ctx: ExecutionContext) -> dict[str, Any]:
+        # Gather available context as step input
+        all_vars = ctx.all_variables()
+
+        # Build tool contracts
+        tool_schemas, bound_tools = build_tool_contracts(tier, enabled_tools)
+
+        # Assemble the full prompt
+        prompt = build_system_prompt(
+            agent_name=agent_name,
+            description=description,
+            all_vars=all_vars,
+            expected_output_keys=expected_output_keys,
+            bound_tool_names=list(bound_tools.keys()),
+            persona_prompt=persona_prompt,
+        )
+
+        # Try to get a model client from the service container
+        try:
+            from ..models.client import get_client
+
+            client = get_client(auto_configure=True)
+            max_tokens = _TIER_MAX_TOKENS.get(tier, 8192)
+            messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+            response = ""
+            model_used = ""
+            tokens_used = 0
+            tool_call_count = 0
+
+            for iteration in range(MAX_TOOL_ROUNDS + 1):
+                chat_response, model_used, turn_tokens = (
+                    await complete_chat_with_fallback(
+                        client=client,
+                        tier=tier,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        tools=tool_schemas if bound_tools else None,
+                    )
+                )
+                tokens_used += turn_tokens
+
+                response = str(chat_response.get("content", "") or "")
+                tool_calls = chat_response.get("tool_calls") or []
+
+                assistant_message: dict[str, Any] = {
+                    "role": "assistant",
+                    "content": response,
+                }
+                if tool_calls:
+                    assistant_message["tool_calls"] = tool_calls
+                messages.append(assistant_message)
+
+                if not tool_calls:
+                    break
+
+                if iteration >= MAX_TOOL_ROUNDS:
+                    logger.warning(
+                        "Tool loop maxed out for agent '%s' after %s rounds.",
+                        agent_name,
+                        MAX_TOOL_ROUNDS,
+                    )
+                    break
+
+                executed = await run_tool_calls(tool_calls, bound_tools, messages)
+                tool_call_count += executed
+                if executed == 0:
+                    break
+        except Exception as e:
+            logger.warning(
+                "LLM call failed for agent '%s' (tier %s): %s. "
+                "Returning placeholder output.",
+                agent_name,
+                tier.name,
+                e,
+            )
+            placeholder_output: dict[str, Any] = {
+                "agent": agent_name,
+                "status": "llm_unavailable",
+                "description": description,
+                "note": str(e),
+            }
+
+            # Preserve workflow handoff contracts even when the model call
+            # fails by emitting all declared output keys with deterministic
+            # placeholder payloads.
+            for key in expected_output_keys or []:
+                if key in placeholder_output:
+                    continue
+                if key in {"review_report", "code_review"}:
+                    placeholder_output[key] = {
+                        "overall_status": "NEEDS_FIXES",
+                        "reason": "llm_unavailable",
+                    }
+                elif key == "overall_status":
+                    placeholder_output[key] = "NEEDS_FIXES"
+                else:
+                    placeholder_output[key] = {
+                        "placeholder": True,
+                        "key": key,
+                        "reason": "llm_unavailable",
+                    }
+
+            return placeholder_output
+
+        parsed = parse_sentinel_output(
+            response, expected_output_keys
+        ) or parse_llm_json_output(response, expected_output_keys)
+
+        # Attach metadata so StepExecutor can populate StepResult.model_used
+        parsed["_meta"] = {
+            "model_used": model_used,
+            "tokens_used": tokens_used,
+            "tool_calls": tool_call_count,
+        }
+        return parsed
+
+    _llm_step.__qualname__ = f"llm_step[{agent_name}]"
+    return _llm_step
+
+
+# ---------------------------------------------------------------------------
+# Resolver
+# ---------------------------------------------------------------------------
+
+
+def _infer_tier(agent_name: str) -> ModelTier:
+    """Infer model tier from agent name convention: tier{N}_{role}."""
+    if agent_name.startswith("tier0_"):
+        return ModelTier.TIER_0
+    elif agent_name.startswith("tier1_"):
+        return ModelTier.TIER_1
+    elif agent_name.startswith("tier2_"):
+        return ModelTier.TIER_2
+    elif agent_name.startswith("tier3_"):
+        return ModelTier.TIER_3
+    elif agent_name.startswith("tier4_"):
+        return ModelTier.TIER_4
+    elif agent_name.startswith("tier5_"):
+        return ModelTier.TIER_5
+    else:
+        return ModelTier.TIER_2  # Default to balanced tier
+
+
+def resolve_agent(step_def: StepDefinition) -> StepDefinition:
+    """Resolve a step definition's agent metadata into an executable function.
+
+    If `step_def.func` is already set, this is a no-op.
+    Otherwise, looks up the agent name from metadata and either:
+      - Uses a registered Tier-0 deterministic implementation, or
+      - Generates an LLM-backed step function for higher tiers.
+
+    The step's `tier` field is also updated based on the agent name.
+
+    Returns the mutated StepDefinition (same object).
+    """
+    if step_def.func is not None:
+        return step_def  # Already has a function
+
+    agent_name = step_def.metadata.get("agent")
+    if not agent_name:
+        raise ValueError(
+            f"Step '{step_def.name}' has no agent and no func -- "
+            f"check YAML 'agent:' field or provide a 'func:' reference"
+        )
+
+    tier = _infer_tier(agent_name)
+    step_def.tier = tier
+
+    # Check tier-0 registry first
+    if tier == ModelTier.TIER_0 and agent_name in TIER0_REGISTRY:
+        step_def.func = TIER0_REGISTRY[agent_name]
+        logger.debug(
+            "Resolved step '%s' -> deterministic %s", step_def.name, agent_name
+        )
+    else:
+        # Generate an LLM-backed step
+        step_def.func = _make_llm_step(
+            agent_name=agent_name,
+            description=step_def.description,
+            tier=tier,
+            expected_output_keys=list(step_def.output_mapping.keys()) or None,
+            prompt_file_override=step_def.metadata.get("prompt_file"),
+            enabled_tools=step_def.metadata.get("tools"),
+        )
+        logger.debug(
+            "Resolved step '%s' -> LLM agent %s (tier %s)",
+            step_def.name,
+            agent_name,
+            tier.name,
+        )
+
+    return step_def
+
+
+# ---------------------------------------------------------------------------
+# Re-exports for backward compatibility
+# ---------------------------------------------------------------------------
+# Every name that was importable from this module before the split remains
+# importable here.  The sub-modules are the authoritative definitions.
+# The explicit imports at the top of this file make all names available
+# as ``engine.agent_resolver.<name>`` without any further action needed.

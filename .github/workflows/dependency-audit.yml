@@ -1,0 +1,183 @@
+# Dependency Vulnerability Audit
+#
+# Implements NIST SP 800-218 (SSDF) PW.4.1:
+#   "Verify software for vulnerabilities prior to release."
+#   Both Python packages (via pip-audit) and the npm UI (via npm audit) are
+#   scanned on every push/PR and on a weekly schedule. Any HIGH or CRITICAL
+#   finding fails the build so that vulnerable dependencies cannot reach
+#   production without a deliberate exception.
+#
+# pip-audit does not expose a --severity filter flag. We use its JSON output
+# and a Python post-processor to fail only on vulnerabilities that either
+# (a) have a reported CVSS v3 base score >= 7.0 (HIGH/CRITICAL), or
+# (b) have no reported score (treated as HIGH to be conservative).
+# The audit results JSON is retained as a build artifact for 30 days.
+
+name: Dependency Audit
+
+on:
+  push:
+    branches: [main, agenticv2]
+  pull_request:
+    branches: [main, agenticv2]
+  schedule:
+    # Weekly scan: Monday 06:00 UTC
+    - cron: "0 6 * * 1"
+
+# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
+# The Node 20 default is being removed from runners on 2026-09-16.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  python-audit:
+    name: pip-audit (Python packages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+
+      - name: Install all Python packages
+        # Install root agentic-tools package first so downstream packages
+        # that import from `tools.*` resolve correctly.
+        run: |
+          pip install "."
+          pip install -e "agentic-workflows-v2/[dev,server,langchain]"
+          pip install "agentic-v2-eval[dev]"
+
+      - name: Run pip-audit (fail on HIGH/CRITICAL)
+        # Scans the full shared environment that covers all three packages.
+        # --strict: fail if any dependency cannot be resolved (missing PURL metadata)
+        # --skip-editable: editable installs are our own source packages; pip-audit
+        #   cannot resolve their PURLs cleanly and they have no third-party advisories.
+        #   Third-party deps pulled in by those packages ARE still audited via --local.
+        # --format json: machine-readable output for severity filtering
+        # --local: audit only packages installed in the current environment
+        # --desc on: include advisory descriptions in the output
+        # The Python script below reads the JSON and exits 1 if any
+        # vulnerability has CVSS >= 7.0 (HIGH) or has no reported score.
+        run: |
+          pip-audit \
+            --strict \
+            --skip-editable \
+            --format json \
+            --local \
+            --desc on \
+            --output audit-results.json \
+          ; AUDIT_EXIT=$?
+
+          python - <<'PYEOF'
+          import json, sys
+
+          try:
+              with open("audit-results.json") as fh:
+                  data = json.load(fh)
+          except (FileNotFoundError, json.JSONDecodeError) as exc:
+              print(f"ERROR: Could not read audit results: {exc}", file=sys.stderr)
+              sys.exit(1)
+
+          # pip-audit JSON schema: {"dependencies": [{"name", "version", "vulns": [...]}]}
+          HIGH_CVSS_THRESHOLD = 7.0  # NIST definition of HIGH severity
+
+          failing: list[dict] = []
+          low_medium: list[dict] = []
+
+          for dep in data.get("dependencies", []):
+              for vuln in dep.get("vulns", []):
+                  entry = {
+                      "package": dep["name"],
+                      "version": dep["version"],
+                      "id": vuln.get("id", "UNKNOWN"),
+                      "aliases": vuln.get("aliases", []),
+                      "fix_versions": vuln.get("fix_versions", []),
+                      "description": (vuln.get("description") or "")[:120],
+                  }
+                  # CVSS score may be present depending on advisory backend
+                  cvss = vuln.get("cvss")
+                  score = float(cvss) if cvss is not None else None
+
+                  if score is None or score >= HIGH_CVSS_THRESHOLD:
+                      # No score → treat as HIGH (conservative); score >= 7.0 → HIGH/CRITICAL
+                      failing.append({**entry, "score": score})
+                  else:
+                      low_medium.append({**entry, "score": score})
+
+          bar = "=" * 60
+
+          if low_medium:
+              print(f"\n{bar}")
+              print(f"INFO: {len(low_medium)} LOW/MODERATE vulnerability(ies) — not blocking")
+              print(bar)
+              for v in low_medium:
+                  score_str = f"{v['score']:.1f}" if v['score'] is not None else "unscored"
+                  print(f"  [{score_str}] {v['package']} {v['version']} — {v['id']}")
+
+          if failing:
+              print(f"\n{bar}")
+              print(f"FAIL: {len(failing)} HIGH/CRITICAL vulnerability(ies) detected")
+              print(bar)
+              for v in failing:
+                  score_str = f"{v['score']:.1f}" if v['score'] is not None else "no-score→HIGH"
+                  print(f"\n  Package : {v['package']} {v['version']}")
+                  print(f"  CVSS    : {score_str}")
+                  print(f"  ID      : {v['id']}")
+                  if v['aliases']:
+                      print(f"  Aliases : {', '.join(v['aliases'])}")
+                  if v['fix_versions']:
+                      print(f"  Fix in  : {', '.join(v['fix_versions'])}")
+                  if v['description']:
+                      print(f"  Desc    : {v['description']}")
+              print(f"\n{bar}")
+              print("Upgrade the packages above or add --ignore-vuln <ID> with justification.")
+              sys.exit(1)
+          else:
+              total = len(low_medium)
+              if total:
+                  print(f"\nAudit passed — 0 HIGH/CRITICAL findings ({total} LOW/MODERATE skipped).")
+              else:
+                  print("\nAudit passed — no vulnerabilities found.")
+          PYEOF
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-results
+          path: audit-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+  npm-audit:
+    name: npm audit (UI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+
+      - name: Install UI dependencies
+        run: |
+          cd agentic-workflows-v2/ui
+          npm ci
+
+      - name: Audit npm dependencies (HIGH/CRITICAL only)
+        # --audit-level=high exits non-zero on HIGH or CRITICAL vulnerabilities.
+        # LOW and MODERATE findings are printed but do not fail the build,
+        # matching the same severity threshold applied by the python-audit job.
+        run: |
+          cd agentic-workflows-v2/ui
+          npm audit --audit-level=high

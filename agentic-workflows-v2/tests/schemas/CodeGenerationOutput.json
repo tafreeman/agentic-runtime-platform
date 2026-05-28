@@ -1,0 +1,90 @@
+{
+  "additionalProperties": true,
+  "description": "Output from code generation tasks.\n\nAggressive improvements:\n- Automatic diff generation\n- Syntax validation hooks\n- Import extraction",
+  "properties": {
+    "code": {
+      "default": "",
+      "description": "Generated code",
+      "title": "Code",
+      "type": "string"
+    },
+    "confidence": {
+      "default": 1.0,
+      "description": "Model's confidence in output (0-1)",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Error message if failed",
+      "title": "Error"
+    },
+    "explanation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Explanation of generated code",
+      "title": "Explanation"
+    },
+    "imports": {
+      "description": "Required imports extracted from code",
+      "items": {
+        "type": "string"
+      },
+      "title": "Imports",
+      "type": "array"
+    },
+    "language": {
+      "default": "",
+      "description": "Language of generated code",
+      "title": "Language",
+      "type": "string"
+    },
+    "model_used": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Model that produced this output",
+      "title": "Model Used"
+    },
+    "success": {
+      "description": "Whether task completed successfully",
+      "title": "Success",
+      "type": "boolean"
+    },
+    "tokens_used": {
+      "default": 0,
+      "description": "Total tokens consumed",
+      "minimum": 0,
+      "title": "Tokens Used",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "success"
+  ],
+  "title": "CodeGenerationOutput",
+  "type": "object"
+}

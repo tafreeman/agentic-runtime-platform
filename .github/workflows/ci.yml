@@ -1,0 +1,269 @@
+name: CI
+
+# CI: verifies Python imports + smoke tests, frontend build, ruff lint, and 80% coverage gate.
+# Integration and slow tests are excluded from the fast CI pass.
+
+on:
+  push:
+    branches: [main, agenticv2]
+  pull_request:
+    branches: [main, agenticv2]
+
+# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
+# The Node 20 default is being removed from runners on 2026-09-16.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  python-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing]"
+          pip install -e "agentic-v2-eval/[dev]"
+      - name: Verify critical imports
+        run: |
+          python -c "
+          import agentic_v2
+          from agentic_v2.core.protocols import AgentProtocol, ToolProtocol, ExecutionEngine
+          from agentic_v2.workflows import WorkflowLoader
+          print('Critical imports OK')
+          "
+      - name: Pytest smoke (unit only)
+        run: |
+          cd agentic-workflows-v2
+          python -m pytest tests/ -q \
+            -m "not integration and not slow" \
+            --ignore=tests/e2e \
+            -x --timeout=120 2>&1 | tail -30
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+      - name: Install and build UI
+        run: |
+          cd agentic-workflows-v2/ui
+          npm ci
+          npm run build
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "agentic-workflows-v2/[dev]"
+      - name: Ruff lint (blocking)
+        shell: bash
+        run: |
+          cd agentic-workflows-v2
+          python -m ruff check --show-fixes agentic_v2/ tests/
+      - name: Check for unfixed autofixes
+        shell: bash
+        run: |
+          cd agentic-workflows-v2
+          python -m ruff check --fix --show-fixes agentic_v2/ tests/
+          if ! git diff --quiet -- agentic_v2/ tests/; then
+            echo "::error::Ruff applied autofixes. Run 'ruff check --fix agentic_v2/ tests/' locally and commit the result."
+            exit 1
+          fi
+
+  test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          # Install the repo-root agentic-tools package first so tests that
+          # `from tools...` resolve. Then install the runtime with langchain
+          # + tracing extras so adapter validation and tracing tests both run.
+          pip install -e .
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing]"
+      - name: Run tests with coverage
+        run: |
+          cd agentic-workflows-v2
+          python -m pytest tests/ -q \
+            -m "not integration and not slow" \
+            --cov=agentic_v2 \
+            --cov-report=term-missing \
+            --cov-fail-under=80
+
+  wire-format-drift:
+    # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.
+    # Sources of truth:
+    #   agentic_v2/contracts/events.py              → events.schema.json + events.generated.ts
+    #   agentic_v2/server/models.StepResultRecord   → step_result.schema.json + step_result.generated.ts
+    #   agentic_v2/server/models.DAGResponse        → dag_response.schema.json + dag_response.generated.ts
+    #   agentic_v2/server/models.WorkflowInputSchemaResponse → workflow_input_schema.schema.json + workflow_input_schema.generated.ts
+    #   agentic_v2/server/models.WorkflowEditorStep → workflow_editor_step.schema.json + workflow_editor_step.generated.ts
+    #   agentic_v2/server/models.RunsSummaryResponse → runs_summary.schema.json + runs_summary.generated.ts
+    # This job regenerates all committed artifacts and fails the PR if the
+    # working tree no longer matches what's checked in.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "agentic-workflows-v2/[dev,server]"
+      - name: Install UI
+        run: |
+          cd agentic-workflows-v2/ui
+          npm ci
+      - name: Regenerate execution event schema
+        run: |
+          cd agentic-workflows-v2
+          python -m scripts.generate_ts_types
+      - name: Regenerate TypeScript types
+        run: |
+          cd agentic-workflows-v2/ui
+          npm run generate:types
+      - name: Fail on drift
+        run: |
+          if ! git diff --exit-code -- \
+              agentic-workflows-v2/tests/schemas/events.schema.json \
+              agentic-workflows-v2/tests/schemas/step_result.schema.json \
+              agentic-workflows-v2/tests/schemas/dag_response.schema.json \
+              agentic-workflows-v2/tests/schemas/workflow_input_schema.schema.json \
+              agentic-workflows-v2/tests/schemas/workflow_editor_step.schema.json \
+              agentic-workflows-v2/tests/schemas/runs_summary.schema.json \
+              agentic-workflows-v2/ui/src/api/events.generated.ts \
+              agentic-workflows-v2/ui/src/api/step_result.generated.ts \
+              agentic-workflows-v2/ui/src/api/dag_response.generated.ts \
+              agentic-workflows-v2/ui/src/api/workflow_input_schema.generated.ts \
+              agentic-workflows-v2/ui/src/api/workflow_editor_step.generated.ts \
+              agentic-workflows-v2/ui/src/api/runs_summary.generated.ts; then
+            echo "::error::Wire-format drift detected. Run 'python -m scripts.generate_ts_types' and 'npm run generate:types' (from agentic-workflows-v2/ui/) and commit the result."
+            exit 1
+          fi
+
+  e2e-streaming:
+    # Epic 2 Story 2.2 — Playwright streaming PR gate.
+    # Runs the streaming spec 5× to catch flakes early. The rolling nightly
+    # 50× job (Story 2.4) measures the long-term flake rate.
+    #
+    # LLM credentials: GITHUB_TOKEN + `models: read` permission let the
+    # runtime reach GitHub Models for a zero-config LLM backend in CI. When
+    # placeholder-mode support is implemented (tracked separately), this
+    # dependency can be dropped.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      models: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: agentic-workflows-v2/ui/package-lock.json
+      - name: Install backend (server extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+          pip install -e "agentic-workflows-v2/[dev,server,langchain]"
+      - name: Install UI + Playwright
+        run: |
+          cd agentic-workflows-v2/ui
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run streaming E2E 5×
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd agentic-workflows-v2/ui
+          npm run test:e2e:5x
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            agentic-workflows-v2/ui/test-results/
+            agentic-workflows-v2/ui/playwright-report/
+            agentic-workflows-v2/ui/e2e-results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  no-llm-smoke:
+    # SB-2: runs the full unit suite with AGENTIC_NO_LLM=1 and zero API keys.
+    # Contributors without provider credentials can use this job as their local CI baseline.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "."
+          pip install -e "agentic-workflows-v2/[dev,server,langchain]"
+      - name: Validate deterministic workflow
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: |
+          cd agentic-workflows-v2
+          agentic validate test_deterministic
+      - name: Run deterministic workflow end-to-end
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: |
+          cd agentic-workflows-v2
+          agentic run test_deterministic --input tests/fixtures/deterministic_input.json
+      - name: Run no-LLM LangChain tests
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: |
+          cd agentic-workflows-v2
+          python -m pytest tests/langchain/test_no_llm_mode_langchain.py -q
+      - name: Run unit tests (no API keys)
+        env:
+          AGENTIC_NO_LLM: "1"
+        run: |
+          cd agentic-workflows-v2
+          python -m pytest tests/ -q \
+            -m "not integration and not slow" \
+            --ignore=tests/e2e \
+            -x --timeout=120 2>&1 | tail -30

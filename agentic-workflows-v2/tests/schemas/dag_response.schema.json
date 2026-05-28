@@ -1,0 +1,163 @@
+{
+  "$defs": {
+    "DAGEdgeModel": {
+      "description": "A directed dependency edge in the workflow DAG visualization.\n\nAttributes:\n    source: Name of the predecessor step.\n    target: Name of the dependent step.",
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "target"
+      ],
+      "title": "DAGEdgeModel",
+      "type": "object"
+    },
+    "DAGNodeModel": {
+      "description": "A single node (step) in the workflow DAG visualization.\n\nAttributes:\n    id: Step name used as the unique node identifier.\n    agent: Agent name assigned to execute this step, or None.\n    description: Human-readable step description.\n    depends_on: List of predecessor step names.\n    tier: Model tier hint (often embedded in the agent name).",
+      "properties": {
+        "agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent"
+        },
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tier"
+        }
+      },
+      "required": [
+        "id",
+        "depends_on"
+      ],
+      "title": "DAGNodeModel",
+      "type": "object"
+    },
+    "WorkflowInputSchemaItem": {
+      "description": "HTTP wire shape for a single workflow input parameter descriptor.\n\nEach item in the ``inputs`` list returned by\n``GET /api/workflows/{name}/dag`` describes one declared workflow\ninput: its name, type, description, default value, whether it is\nrequired, and any allowed enum values.\n\nAttributes:\n    name: Input parameter name as declared in the workflow YAML.\n    type: Data type string (e.g. ``\"string\"``, ``\"integer\"``).\n    description: Human-readable description of the parameter.\n    default: Default value, or ``None`` when no default is set.\n    required: ``True`` if the parameter must be supplied by the caller.\n    enum: Restricted set of allowed string values, or ``None``.",
+      "properties": {
+        "default": {
+          "default": null,
+          "title": "Default"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "enum": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enum"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "default": "string",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "WorkflowInputSchemaItem",
+      "type": "object"
+    }
+  },
+  "description": "Complete DAG structure returned by ``GET /api/workflows/{name}/dag``.\n\nAttributes:\n    name: Workflow name.\n    description: Workflow description from the YAML definition.\n    nodes: List of DAG nodes (steps).\n    edges: List of directed dependency edges.\n    inputs: Ordered list of declared workflow input parameters.",
+  "properties": {
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "edges": {
+      "items": {
+        "$ref": "#/$defs/DAGEdgeModel"
+      },
+      "title": "Edges",
+      "type": "array"
+    },
+    "inputs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/WorkflowInputSchemaItem"
+      },
+      "title": "Inputs",
+      "type": "array"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/DAGNodeModel"
+      },
+      "title": "Nodes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "nodes",
+    "edges"
+  ],
+  "title": "DAGResponse",
+  "type": "object"
+}

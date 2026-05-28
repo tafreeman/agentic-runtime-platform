@@ -1,0 +1,158 @@
+{
+  "additionalProperties": false,
+  "description": "HTTP wire shape for a single step in ``GET /api/runs/{filename}``.\n\nThis is the canonical Pydantic model for the dict produced by\n``build_step_record()`` in ``agentic_v2.workflows.run_logger``.\nField names reflect the HTTP wire names: ``input``/``output`` (not the\ninternal ``input_data``/``output_data``), and ``tokens_used`` extracted\nfrom step metadata.\n\n``extra=\"forbid\"`` ensures any future ``build_step_record()`` additions\nsurface immediately at runtime rather than silently drifting.\n\nAttributes:\n    step_name: Identifier of the step within the workflow DAG.\n    status: Terminal status string (e.g. ``\"success\"``, ``\"failed\"``).\n    agent_role: Agent persona/role name assigned to this step.\n    tier: Model tier integer (0=no LLM, 1=1\u20133B, 2=7\u201314B, 3=32B+), or None.\n    model_used: Resolved model identifier used for execution.\n    duration_ms: Wall-clock execution time in milliseconds, or None if step\n        did not complete (``end_time`` absent).\n    retry_count: Number of retry attempts made (0 = first attempt succeeded).\n    tokens_used: Token count extracted from step metadata, or None.\n    input: Step input data (truncated dict).\n    output: Step output data (truncated dict).\n    error: Error message if the step failed, else None.\n    error_type: Exception class name if the step failed, else None.\n    start_time: ISO-8601 start timestamp, or None.\n    end_time: ISO-8601 end timestamp, or None.\n    metadata: Remaining step metadata after ``tokens_used`` extraction, or None.",
+  "properties": {
+    "agent_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agent Role"
+    },
+    "duration_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration Ms"
+    },
+    "end_time": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "End Time"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "error_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Type"
+    },
+    "input": {
+      "additionalProperties": true,
+      "title": "Input",
+      "type": "object"
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Metadata"
+    },
+    "model_used": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model Used"
+    },
+    "output": {
+      "additionalProperties": true,
+      "title": "Output",
+      "type": "object"
+    },
+    "retry_count": {
+      "default": 0,
+      "title": "Retry Count",
+      "type": "integer"
+    },
+    "start_time": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Start Time"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "step_name": {
+      "title": "Step Name",
+      "type": "string"
+    },
+    "tier": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tier"
+    },
+    "tokens_used": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tokens Used"
+    }
+  },
+  "required": [
+    "step_name",
+    "status",
+    "input",
+    "output"
+  ],
+  "title": "StepResultRecord",
+  "type": "object"
+}
