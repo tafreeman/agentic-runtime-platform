@@ -1,0 +1,198 @@
+name: fullstack_generation
+description: Generate a complete fullstack feature with parallel frontend/backend development
+version: "1.0"
+
+capabilities:
+  inputs: [feature_spec, tech_stack]
+  outputs: [feature_package, review_report, all_code]
+
+evaluation:
+  rubric_id: fullstack_generation_v1
+  scoring_profile: A
+  criteria:
+    - name: objective_tests
+      definition: Objective functional correctness signals.
+      evidence_required:
+        - Executable checks or equivalent objective validation
+      scale:
+        "1": Objective correctness fails
+        "2": Significant objective failures
+        "3": Baseline objective pass
+        "4": Strong objective pass
+        "5": Excellent objective pass
+      weight: 0.60
+      critical_floor: 0.70
+      formula_id: zero_one
+    - name: code_quality
+      definition: Code quality across generated stack.
+      evidence_required:
+        - Defect and maintainability indicators
+      scale:
+        "1": Poor quality
+        "2": Significant quality issues
+        "3": Acceptable quality
+        "4": Strong quality
+        "5": High quality
+      weight: 0.20
+      critical_floor: 0.80
+      formula_id: zero_one
+    - name: efficiency
+      definition: Runtime and retry efficiency.
+      evidence_required:
+        - Duration and retry signals
+      scale:
+        "1": Excessive cost/latency
+        "2": High cost/latency
+        "3": Acceptable cost/latency
+        "4": Good cost/latency
+        "5": Excellent cost/latency
+      weight: 0.10
+      formula_id: zero_one
+    - name: documentation
+      definition: Output documentation quality.
+      evidence_required:
+        - Complete summaries and handoff-ready artifacts
+      scale:
+        "1": Incomplete documentation
+        "2": Sparse documentation
+        "3": Adequate documentation
+        "4": Strong documentation
+        "5": Comprehensive documentation
+      weight: 0.10
+      formula_id: zero_one
+
+inputs:
+  feature_spec:
+    type: string
+    description: Natural language description of the feature
+    required: true
+  tech_stack:
+    type: object
+    description: Technology stack configuration
+    default:
+      frontend: react
+      backend: fastapi
+      database: postgresql
+
+steps:
+  # Phase 1: Architecture (no dependencies - runs first)
+  - name: design_architecture
+    agent: tier3_architect
+    description: Design system architecture from requirements
+    inputs:
+      spec: ${inputs.feature_spec}
+      stack: ${inputs.tech_stack}
+    outputs:
+      api_spec: api_design
+      api_design: api_design
+      db_schema: database_schema
+      database_schema: database_schema
+      component_tree: frontend_components
+      frontend_components: frontend_components
+
+  # Phase 2: Parallel development (depends on architecture)
+  - name: generate_api
+    agent: tier2_coder
+    description: Generate backend API endpoints
+    depends_on: [design_architecture]
+    inputs:
+      api_spec: ${coalesce(steps.design_architecture.outputs.api_spec, steps.design_architecture.outputs.api_design)}
+      db_schema: ${coalesce(steps.design_architecture.outputs.db_schema, steps.design_architecture.outputs.database_schema)}
+    outputs:
+      api_code: backend_code
+      backend_code: backend_code
+      api_tests: backend_tests
+      backend_tests: backend_tests
+
+  - name: generate_frontend
+    agent: tier2_coder
+    description: Generate frontend components
+    depends_on: [design_architecture]
+    inputs:
+      components: ${coalesce(steps.design_architecture.outputs.component_tree, steps.design_architecture.outputs.frontend_components)}
+      api_spec: ${coalesce(steps.design_architecture.outputs.api_spec, steps.design_architecture.outputs.api_design)}
+    outputs:
+      ui_code: frontend_code
+      frontend_code: frontend_code
+      ui_tests: frontend_tests
+      frontend_tests: frontend_tests
+
+  - name: generate_migrations
+    agent: tier1_generator
+    description: Generate database migrations
+    depends_on: [design_architecture]
+    inputs:
+      schema: ${coalesce(steps.design_architecture.outputs.db_schema, steps.design_architecture.outputs.database_schema)}
+    outputs:
+      migrations: db_migrations
+      db_migrations: db_migrations
+
+  # Phase 3: Integration (depends on parallel phase)
+  - name: generate_integration_tests
+    agent: tier2_tester
+    description: Generate integration tests
+    depends_on: [generate_api, generate_frontend]
+    inputs:
+      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+    outputs:
+      integration_tests: e2e_tests
+      e2e_tests: e2e_tests
+
+  # Phase 4: Review (depends on all code)
+  - name: review_code
+    agent: tier3_reviewer
+    description: Review all generated code
+    depends_on: [generate_api, generate_frontend, generate_migrations, generate_integration_tests]
+    inputs:
+      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+    outputs:
+      review_report: code_review
+      code_review: code_review
+      overall_status: overall_status
+      suggested_fixes: fixes
+      fixes: fixes
+
+  # Phase 4.5: Rework pass (kickback path when review is not approved)
+  - name: developer_rework
+    agent: tier2_coder
+    description: Rework generated artifacts based on reviewer feedback
+    depends_on: [review_code]
+    when: ${coalesce(steps.review_code.outputs.review_report.overall_status, steps.review_code.outputs.overall_status)} != 'APPROVED'
+    inputs:
+      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+      review_report: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
+      suggested_fixes: ${coalesce(steps.review_code.outputs.suggested_fixes, steps.review_code.outputs.fixes)}
+    outputs:
+      rework_report: rework_report
+
+  # Phase 5: Final assembly (always runs after review)
+  - name: assemble_feature
+    agent: tier1_assembler
+    description: Assemble final feature package
+    depends_on: [review_code]
+    inputs:
+      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
+      tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+    outputs:
+      package: feature_package
+
+outputs:
+  feature_package:
+    from: ${coalesce(steps.assemble_feature.outputs.package, steps.assemble_feature.outputs.feature_package)}
+    optional: true
+  review_report:
+    from: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
+  all_code:
+    from:
+      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+      migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}

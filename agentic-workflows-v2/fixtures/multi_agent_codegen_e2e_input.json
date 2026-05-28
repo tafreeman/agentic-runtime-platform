@@ -1,0 +1,28 @@
+{
+  "feature_spec": "Build a production-ready issue tracking module with auth-aware CRUD APIs, a React dashboard, filtering, optimistic updates, and audit logging.",
+  "repo_context": {
+    "language": "python",
+    "backend_framework": "fastapi",
+    "frontend_framework": "react",
+    "database": "postgresql",
+    "package_manager": "npm+pip",
+    "coding_standards": [
+      "typed interfaces",
+      "lint-clean",
+      "security review required"
+    ]
+  },
+  "constraints": {
+    "target_runtime": "python",
+    "package_type": "fullstack",
+    "max_rework_rounds": 2,
+    "require_tests": true,
+    "must_include": [
+      "unit tests",
+      "integration tests",
+      "e2e smoke tests",
+      "release manifest"
+    ]
+  },
+  "quality_bar": "strict"
+}

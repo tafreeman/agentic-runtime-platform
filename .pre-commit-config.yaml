@@ -1,0 +1,52 @@
+# Pre-commit configuration: formatting + linting + type checks
+repos:
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        args: ["--line-length", "88"]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 7.0.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  - repo: https://github.com/myint/docformatter
+    rev: v1.7.7
+    hooks:
+      - id: docformatter
+        args: ["--in-place", "--recursive", "--wrap-summaries", "88"]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # mypy: enabled for agentic-v2-eval/ (strict mode, 0 findings).
+  # The broader agentic-workflows-v2/ type debt is tracked separately (target Q3 2026).
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        name: mypy (agentic-v2-eval)
+        files: ^agentic-v2-eval/
+        args:
+          - "--config-file=agentic-v2-eval/pyproject.toml"
+        additional_dependencies:
+          - "types-PyYAML"
+
+  # pydocstyle: disabled pending Google-convention docstring backfill across
+  # agentic_v2/server/ and tools/builtin/ (target Q3 2026).
+  # - repo: https://github.com/PyCQA/pydocstyle
+  #   rev: 6.3.0
+  #   hooks:
+  #     - id: pydocstyle
+  #       args: ["--convention=google"]

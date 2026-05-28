@@ -1,0 +1,33 @@
+name: test_deterministic
+description: Simple deterministic workflow for testing (no LLM calls)
+version: "1.0"
+
+inputs:
+  input_text:
+    type: string
+    description: Text to process
+    required: true
+
+outputs:
+  processed_text:
+    from: ${steps.step1.outputs.result}
+  step_count:
+    from: ${steps.step2.outputs.count}
+
+steps:
+  - name: step1
+    agent: tier0_process
+    description: Process input text (tier-0, no LLM)
+    inputs:
+      text: ${inputs.input_text}
+    outputs:
+      result: processed_text
+
+  - name: step2
+    agent: tier0_counter
+    description: Count characters (tier-0, no LLM)
+    depends_on: [step1]
+    inputs:
+      text: ${steps.step1.outputs.result}
+    outputs:
+      count: count_value

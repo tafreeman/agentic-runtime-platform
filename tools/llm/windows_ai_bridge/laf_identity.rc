@@ -1,0 +1,6 @@
+// LAF Identity Resource
+// Required for Phi Silica Limited Access Feature unlock
+// App name: Prompts-a.prompting.learning.tool
+// Publisher ID: z2bh13qew7ej0
+
+Identity LimitedAccessFeature { L"Prompts-a.prompting.learning.tool_z2bh13qew7ej0" }

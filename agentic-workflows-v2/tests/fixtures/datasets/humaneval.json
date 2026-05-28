@@ -1,0 +1,142 @@
+[
+  {
+    "task_id": "SyntheticHumanEval/1",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/2",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/3",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/4",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/5",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/6",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/7",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/8",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/9",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/10",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/11",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/12",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/13",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/14",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/15",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/16",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/17",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/18",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/19",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  },
+  {
+    "task_id": "SyntheticHumanEval/20",
+    "prompt": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n",
+    "canonical_solution": "    return max(lower, min(value, upper))\n",
+    "entry_point": "clamp",
+    "test": "assert clamp(5, 1, 3) == 3\nassert clamp(0, 1, 3) == 1\n"
+  }
+]

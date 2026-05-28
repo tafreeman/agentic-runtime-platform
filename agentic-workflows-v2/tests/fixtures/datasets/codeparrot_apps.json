@@ -1,0 +1,342 @@
+[
+  {
+    "problem_id": "synthetic-apps-1",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-2",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-3",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-4",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-5",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-6",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-7",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-8",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-9",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-10",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-11",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-12",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-13",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-14",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-15",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-16",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-17",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-18",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-19",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  },
+  {
+    "problem_id": "synthetic-apps-20",
+    "question": "Given a list of events, print the event names sorted by timestamp.",
+    "starter_code": "def solve(events):\n    pass\n",
+    "difficulty": "introductory",
+    "solutions": [
+      "def solve(events):\n    return [name for _, name in sorted(events)]\n"
+    ],
+    "input_output": {
+      "inputs": [
+        "[(2, 'deploy'), (1, 'build')]"
+      ],
+      "outputs": [
+        "['build', 'deploy']"
+      ]
+    }
+  }
+]

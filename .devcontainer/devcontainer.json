@@ -1,0 +1,41 @@
+{
+  "name": "prompts-dev",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "..",
+    "target": "devcontainer"
+  },
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [8010, 5173, 16686, 4317, 4318],
+  "portsAttributes": {
+    "8010": {
+      "label": "Agentic Backend"
+    },
+    "5173": {
+      "label": "Agentic UI"
+    },
+    "16686": {
+      "label": "Jaeger UI"
+    },
+    "4317": {
+      "label": "OTLP gRPC"
+    },
+    "4318": {
+      "label": "OTLP HTTP"
+    }
+  },
+  "postCreateCommand": "python -m pip install --upgrade pip && pip install -e . && pip install -e \"./agentic-workflows-v2[dev,server,tracing]\" && pip install -e \"./agentic-v2-eval[dev]\" && npm --prefix agentic-workflows-v2/ui install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  }
+}

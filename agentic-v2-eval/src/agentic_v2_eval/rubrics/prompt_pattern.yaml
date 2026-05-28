@@ -1,0 +1,105 @@
+judge_prompt: |
+  You are a deterministic pattern execution evaluator.
+
+  You evaluate whether a prompt RELIABLY INDUCES a specific reasoning pattern.
+  You do NOT judge answer quality. You judge STRUCTURAL conformance.
+
+  Pattern: {pattern_name}
+  Expected phases: {phases}
+  State machine: {state_machine}
+
+  Evaluate these UNIVERSAL dimensions (0-5 scale):
+
+  A. **PIF** - Pattern Invocation Fidelity: Did model attempt the pattern?
+     0=Not invoked, 3=Explicit but flawed, 5=Explicit & clean
+
+  B. **POI** - Phase Ordering Integrity: Correct order? (HARD GATE ≥4)
+     0=Random, 3=Mostly correct, 5=Strictly ordered
+
+  C. **PC** - Phase Completeness: All phases present? (HARD GATE ≥4)
+     0=No phases, 3=Most present, 5=All with proper content
+
+  D. **CA** - Constraint Adherence: Constraints followed? (HARD GATE ≥4)
+     0=None followed, 3=Most followed, 5=Perfect adherence
+
+  E. **SRC** - Self-Reference Correctness: Is self-reference accurate?
+     0=None when required, 3=With errors, 5=Precise
+
+  F. **PR** - Pattern Robustness: % of runs pattern executes (HARD GATE ≥0.75)
+     Estimate based on prompt structure
+
+  G. **IR** - Interference Resistance: Prevents collapse to simpler pattern?
+     0=Always collapses, 3=Usually maintains, 5=Never collapses
+
+  {pattern_specific_instructions}
+
+  Output ONLY valid JSON:
+  ```json
+  {{
+    "universal_scores": {{
+      "PIF": <0-5>,
+      "POI": <0-5>,
+      "PC": <0-5>,
+      "CA": <0-5>,
+      "SRC": <0-5>,
+      "PR": <0.0-1.0>,
+      "IR": <0-5>
+    }},
+    "pattern_scores": {{
+      {pattern_score_fields}
+    }},
+    "failures": ["<failure mode if any>"],
+    "confidence": <0.0-1.0>
+  }}
+  ```
+
+  PROMPT:
+  ---
+  {prompt_content}
+  ---
+
+  MODEL OUTPUT TO EVALUATE:
+  ---
+  {model_output}
+  ---
+
+patterns:
+  react:
+    phases: [Thought, Action, Observation, Final Answer]
+    state_machine: "Thought → Action → Observation → (repeat) → Answer"
+    instructions: |
+      Also evaluate ReAct-specific dimensions:
+      - **R1** (Thought/Action Separation): Are actions tool-like? No analysis inside action?
+      - **R2** (Observation Binding): Are observations used in next thought?
+      - **R3** (Termination Discipline): Does it stop looping appropriately?
+    score_fields: '"R1": <0-5>, "R2": <0-5>, "R3": <0-5>'
+
+  cove:
+    phases: [Draft Answer, Verification Questions, Independent Checks, Revised Answer]
+    state_machine: "Draft → Verification → Independent → Revised"
+    instructions: |
+      Also evaluate CoVe-specific dimensions:
+      - **C1** (Verification Question Quality): Independent and non-leading?
+      - **C2** (Evidence Independence): Verification isn't just rephrasing?
+      - **C3** (Revision Delta): Final answer changes when verification fails?
+    score_fields: '"C1": <0-5>, "C2": <0-5>, "C3": <0-5>'
+
+  reflexion:
+    phases: [Attempt, Self-Critique, Reflection Memory, Improved Attempt]
+    state_machine: "Attempt → Critique → Memory → Improved"
+    instructions: |
+      Also evaluate Reflexion-specific dimensions:
+      - **F1** (Critique Specificity): References concrete failures?
+      - **F2** (Memory Utilization): Reflection actually used?
+      - **F3** (Improvement Signal): Measurable change between attempts?
+    score_fields: '"F1": <0-5>, "F2": <0-5>, "F3": <0-5>'
+
+  rag:
+    phases: [Query Decomposition, Retrieval Call, Evidence Integration, Answer with Citations]
+    state_machine: "Query → Retrieve → Integrate → Cite"
+    instructions: |
+      Also evaluate RAG-specific dimensions:
+      - **G1** (Retrieval Trigger Accuracy): Calls retrieval only when needed?
+      - **G2** (Evidence Grounding): Claims trace to sources?
+      - **G3** (Citation Discipline): No uncited claims?
+    score_fields: '"G1": <0-5>, "G2": <0-5>, "G3": <0-5>'

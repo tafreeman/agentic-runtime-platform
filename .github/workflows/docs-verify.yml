@@ -1,0 +1,46 @@
+name: Docs verification
+
+on:
+  # TODO(tech-debt): re-enable docs verification once link/spell/secret
+  # baselines stabilise. Manual-only for now.
+  workflow_dispatch:
+
+jobs:
+  docs-verify:
+    name: Docs verify (links, spell, secrets, schema)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Node.js (for cspell)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install cspell
+        run: |
+          npm install -g cspell
+
+      - name: Link check (HTTP/S links in docs)
+        # Uses lycheeverse/lychee-action to check external links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          extra-args: '--verbose --no-progress'
+
+      - name: Spell-check docs with cspell
+        run: |
+          # scan Markdown under docs/ (exit non-zero on spelling errors)
+          cspell "docs/**/*.{md,mdx,txt}" --no-progress
+
+      - name: Secret scan with git-secrets
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y git git-secrets
+          git secrets --register-aws --global
+          git secrets --scan -r docs

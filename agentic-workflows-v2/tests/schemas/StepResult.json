@@ -1,0 +1,149 @@
+{
+  "$defs": {
+    "StepStatus": {
+      "description": "Status of a workflow step execution.",
+      "enum": [
+        "pending",
+        "running",
+        "success",
+        "failed",
+        "skipped",
+        "retrying"
+      ],
+      "title": "StepStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Result of a single workflow step execution.\n\nDesign improvements:\n- Computed duration property\n- Success rate tracking\n- Detailed error context\n- Retry tracking",
+  "properties": {
+    "agent_role": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Role of agent that executed this step",
+      "title": "Agent Role"
+    },
+    "end_time": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "UTC timestamp when step completed",
+      "title": "End Time"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Error message if step failed",
+      "title": "Error"
+    },
+    "error_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Error class name for structured handling",
+      "title": "Error Type"
+    },
+    "input_data": {
+      "additionalProperties": true,
+      "description": "Input parameters for this step",
+      "title": "Input Data",
+      "type": "object"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Additional metrics (tokens, latency, cache hits, etc.)",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "model_used": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Specific model identifier (e.g., 'ollama:phi4', 'gh:gpt-4o')",
+      "title": "Model Used"
+    },
+    "output_data": {
+      "additionalProperties": true,
+      "description": "Output/results from this step",
+      "title": "Output Data",
+      "type": "object"
+    },
+    "retry_count": {
+      "default": 0,
+      "description": "Number of retries attempted",
+      "minimum": 0,
+      "title": "Retry Count",
+      "type": "integer"
+    },
+    "start_time": {
+      "description": "UTC timestamp when step started",
+      "format": "date-time",
+      "title": "Start Time",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/StepStatus",
+      "description": "Execution status of the step"
+    },
+    "step_name": {
+      "description": "Unique identifier for this workflow step",
+      "minLength": 1,
+      "title": "Step Name",
+      "type": "string"
+    },
+    "tier": {
+      "anyOf": [
+        {
+          "maximum": 5,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Model tier used (0=no LLM, 1=1-3B, 2=7-14B, 3=32B+)",
+      "title": "Tier"
+    }
+  },
+  "required": [
+    "step_name",
+    "status"
+  ],
+  "title": "StepResult",
+  "type": "object"
+}

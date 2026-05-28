@@ -1,0 +1,187 @@
+{
+  "$defs": {
+    "CodeIssue": {
+      "description": "A single issue found during code review.",
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/IssueCategory",
+          "description": "Issue category"
+        },
+        "code_snippet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Relevant code",
+          "title": "Code Snippet"
+        },
+        "column": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column"
+        },
+        "line_number": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line Number"
+        },
+        "message": {
+          "description": "Issue description",
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity",
+          "description": "Issue severity"
+        },
+        "suggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Suggested fix",
+          "title": "Suggestion"
+        }
+      },
+      "required": [
+        "severity",
+        "category",
+        "message"
+      ],
+      "title": "CodeIssue",
+      "type": "object"
+    },
+    "IssueCategory": {
+      "description": "Category of code issue.",
+      "enum": [
+        "security",
+        "performance",
+        "maintainability",
+        "correctness",
+        "style",
+        "documentation",
+        "testing"
+      ],
+      "title": "IssueCategory",
+      "type": "string"
+    },
+    "Severity": {
+      "description": "Severity level for code issues.",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "description": "Input for code review tasks.\n\nAggressive improvements:\n- Severity filtering\n- Focus areas\n- Previous review context",
+  "properties": {
+    "code": {
+      "description": "Code to review",
+      "minLength": 1,
+      "title": "Code",
+      "type": "string"
+    },
+    "constraints": {
+      "additionalProperties": true,
+      "description": "Execution constraints (max_tokens, timeout, etc.)",
+      "title": "Constraints",
+      "type": "object"
+    },
+    "context": {
+      "additionalProperties": true,
+      "description": "Additional context for task execution",
+      "title": "Context",
+      "type": "object"
+    },
+    "file_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "File path for context",
+      "title": "File Path"
+    },
+    "focus_areas": {
+      "description": "Categories to focus on (empty = all)",
+      "items": {
+        "$ref": "#/$defs/IssueCategory"
+      },
+      "title": "Focus Areas",
+      "type": "array"
+    },
+    "language": {
+      "description": "Programming language",
+      "title": "Language",
+      "type": "string"
+    },
+    "min_severity": {
+      "$ref": "#/$defs/Severity",
+      "default": "low",
+      "description": "Minimum severity to report"
+    },
+    "previous_issues": {
+      "description": "Issues from previous reviews to check",
+      "items": {
+        "$ref": "#/$defs/CodeIssue"
+      },
+      "title": "Previous Issues",
+      "type": "array"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Unique task identifier for tracking",
+      "title": "Task Id"
+    }
+  },
+  "required": [
+    "code",
+    "language"
+  ],
+  "title": "CodeReviewInput",
+  "type": "object"
+}

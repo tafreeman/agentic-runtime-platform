@@ -1,0 +1,635 @@
+{
+  "$defs": {
+    "ErrorEvent": {
+      "properties": {
+        "error": {
+          "title": "Error",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "error",
+          "default": "error",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "error",
+        "timestamp"
+      ],
+      "title": "ErrorEvent",
+      "type": "object"
+    },
+    "EvaluationCompleteEvent": {
+      "properties": {
+        "criteria": {
+          "default": [],
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Criteria",
+          "type": "array"
+        },
+        "grade": {
+          "title": "Grade",
+          "type": "string"
+        },
+        "overall_score": {
+          "title": "Overall Score",
+          "type": "number"
+        },
+        "pass_threshold": {
+          "default": 70.0,
+          "title": "Pass Threshold",
+          "type": "number"
+        },
+        "passed": {
+          "default": false,
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "rubric": {
+          "title": "Rubric",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "evaluation_complete",
+          "default": "evaluation_complete",
+          "title": "Type",
+          "type": "string"
+        },
+        "weighted_score": {
+          "title": "Weighted Score",
+          "type": "number"
+        }
+      },
+      "required": [
+        "run_id",
+        "rubric",
+        "weighted_score",
+        "overall_score",
+        "grade",
+        "timestamp"
+      ],
+      "title": "EvaluationCompleteEvent",
+      "type": "object"
+    },
+    "EvaluationStartEvent": {
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "evaluation_start",
+          "default": "evaluation_start",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "timestamp"
+      ],
+      "title": "EvaluationStartEvent",
+      "type": "object"
+    },
+    "StepCompleteEvent": {
+      "properties": {
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "input": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "model_used": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Used"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "outputs": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outputs"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tier"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tokens_used": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tokens Used"
+        },
+        "type": {
+          "const": "step_complete",
+          "default": "step_complete",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step",
+        "status",
+        "duration_ms",
+        "timestamp"
+      ],
+      "title": "StepCompleteEvent",
+      "type": "object"
+    },
+    "StepEndEvent": {
+      "properties": {
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "input": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "model_used": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Used"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tier"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tokens_used": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tokens Used"
+        },
+        "type": {
+          "const": "step_end",
+          "default": "step_end",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step",
+        "status",
+        "duration_ms",
+        "timestamp"
+      ],
+      "title": "StepEndEvent",
+      "type": "object"
+    },
+    "StepErrorEvent": {
+      "properties": {
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "input": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "model_used": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Used"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "outputs": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Outputs"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tier"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tokens_used": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tokens Used"
+        },
+        "type": {
+          "const": "step_error",
+          "default": "step_error",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step",
+        "duration_ms",
+        "timestamp"
+      ],
+      "title": "StepErrorEvent",
+      "type": "object"
+    },
+    "StepStartEvent": {
+      "properties": {
+        "input": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "step_start",
+          "default": "step_start",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step",
+        "timestamp"
+      ],
+      "title": "StepStartEvent",
+      "type": "object"
+    },
+    "WorkflowEndEvent": {
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "workflow_end",
+          "default": "workflow_end",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "status",
+        "timestamp"
+      ],
+      "title": "WorkflowEndEvent",
+      "type": "object"
+    },
+    "WorkflowStartEvent": {
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "workflow_start",
+          "default": "workflow_start",
+          "title": "Type",
+          "type": "string"
+        },
+        "workflow_name": {
+          "title": "Workflow Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "workflow_name",
+        "timestamp"
+      ],
+      "title": "WorkflowStartEvent",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "error": "#/$defs/ErrorEvent",
+      "evaluation_complete": "#/$defs/EvaluationCompleteEvent",
+      "evaluation_start": "#/$defs/EvaluationStartEvent",
+      "step_complete": "#/$defs/StepCompleteEvent",
+      "step_end": "#/$defs/StepEndEvent",
+      "step_error": "#/$defs/StepErrorEvent",
+      "step_start": "#/$defs/StepStartEvent",
+      "workflow_end": "#/$defs/WorkflowEndEvent",
+      "workflow_start": "#/$defs/WorkflowStartEvent"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/WorkflowStartEvent"
+    },
+    {
+      "$ref": "#/$defs/StepStartEvent"
+    },
+    {
+      "$ref": "#/$defs/StepEndEvent"
+    },
+    {
+      "$ref": "#/$defs/StepCompleteEvent"
+    },
+    {
+      "$ref": "#/$defs/StepErrorEvent"
+    },
+    {
+      "$ref": "#/$defs/WorkflowEndEvent"
+    },
+    {
+      "$ref": "#/$defs/ErrorEvent"
+    },
+    {
+      "$ref": "#/$defs/EvaluationStartEvent"
+    },
+    {
+      "$ref": "#/$defs/EvaluationCompleteEvent"
+    }
+  ]
+}

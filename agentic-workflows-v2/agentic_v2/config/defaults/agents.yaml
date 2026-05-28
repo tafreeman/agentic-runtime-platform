@@ -1,0 +1,95 @@
+# Core Agent Definitions
+# Detailed prompts are in config/prompts/{agent_name}.md
+version: "1.0.0"
+
+agents:
+  # --- Active agents (prompt files exist in prompts/*.md) ---
+
+  architect:
+    name: Architect Agent
+    role: System & Solution Architect
+    description: Expert at designing architectures and algorithms
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["gemini:gemini-2.0-flash"]
+    tools: ["diagram_generator", "complexity_analyzer", "adr_generator"]
+    prompt_file: "prompts/architect.md"
+    
+  planner:
+    name: Planner Agent
+    role: Strategic Planner & Coordinator
+    description: Expert at creating plans and roadmaps
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["gemini:gemini-2.0-flash-lite"]
+    tools: ["gantt_generator", "dependency_resolver", "risk_assessor"]
+    prompt_file: "prompts/planner.md"
+    
+  coder:
+    name: Coder Agent
+    role: Senior Software Developer
+    description: Expert at generating production-quality code
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["ollama:qwen2.5-coder:14b"]
+    tools: ["file_writer", "code_formatter", "linter", "type_checker"]
+    prompt_file: "prompts/coder.md"
+    
+  reviewer:
+    name: Reviewer Agent
+    role: Security & Code Quality Expert
+    description: Expert at code review and security analysis
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["gemini:gemini-2.0-flash"]
+    tools: ["static_analyzer", "dependency_scanner", "secret_detector"]
+    prompt_file: "prompts/reviewer.md"
+    
+  tester:
+    name: Tester Agent
+    role: QA Engineer & Test Automation
+    description: Expert at generating comprehensive tests
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["ollama:qwen2.5-coder:14b"]
+    tools: ["test_runner", "coverage_reporter", "mock_generator"]
+    prompt_file: "prompts/tester.md"
+    
+  validator:
+    name: Validator Agent
+    role: Quality Assurance & Validation
+    description: Expert at validating outputs and ensuring quality
+    default_model: "gemini:gemini-2.5-flash"
+    fallback_models: ["gemini:gemini-2.0-flash"]
+    tools: ["test_runner", "diff_comparator", "schema_validator"]
+    prompt_file: "prompts/validator.md"
+    
+  # --- DEPRECATED: prompt files removed in d921ba0f ---
+  # researcher:
+  #   name: Researcher Agent
+  #   prompt_file: "prompts/researcher.md"
+  # writer:
+  #   name: Writer Agent
+  #   prompt_file: "prompts/writer.md"
+  # reasoner:
+  #   name: Reasoner Agent
+  #   prompt_file: "prompts/reasoner.md"
+  # judge:
+  #   name: Judge Agent
+  #   prompt_file: "prompts/judge.md"
+  # debugger:
+  #   name: Debugger Agent
+  #   prompt_file: "prompts/debugger.md"
+
+  # librarian:
+  #   prompt_file: "prompts/librarian.md"
+  # engineering_expert:
+  #   prompt_file: "prompts/engineering_expert.md"
+  # explorer:
+  #   prompt_file: "prompts/explorer.md"
+  # cleanup:
+  #   prompt_file: "prompts/cleanup.md"
+
+  # lats_quality_controller:
+  #   prompt_file: "prompts/lats_quality_controller.md"
+
+settings:
+  max_iterations: 10
+  iteration_timeout_seconds: 300
+  retry_on_failure: true
+  max_retries: 3

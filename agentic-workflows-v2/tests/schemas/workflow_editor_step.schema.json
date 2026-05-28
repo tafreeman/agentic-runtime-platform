@@ -1,0 +1,127 @@
+{
+  "description": "HTTP wire shape for a single step inside a workflow editor document.\n\nMirrors the step-level fields that the workflow YAML parser produces and\nthat the React editor surfaces for visualisation and editing.\n\nAttributes:\n    name: Step identifier (unique within the workflow).\n    agent: Agent persona/tier string (e.g. ``\"tier2_coder\"``), or None.\n    description: Human-readable step description.\n    tier: Explicit model tier override, or None.\n    depends_on: Names of steps this step depends on.\n    when: Optional conditional expression string.\n    loop_until: Loop termination expression, or None.\n    loop_max: Maximum loop iterations, or None.\n    tools: Tool names allowlisted for this step.\n    prompt_file: Path to an external prompt file, or None.\n    metadata: Arbitrary step-level metadata bag, or None.",
+  "properties": {
+    "agent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agent"
+    },
+    "depends_on": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Depends On",
+      "type": "array"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "loop_max": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Loop Max"
+    },
+    "loop_until": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Loop Until"
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Metadata"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "prompt_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Prompt File"
+    },
+    "tier": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tier"
+    },
+    "tools": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Tools",
+      "type": "array"
+    },
+    "when": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "When"
+    }
+  },
+  "required": [
+    "name",
+    "depends_on"
+  ],
+  "title": "WorkflowEditorStep",
+  "type": "object"
+}

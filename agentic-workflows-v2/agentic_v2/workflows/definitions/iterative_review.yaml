@@ -1,0 +1,146 @@
+# Iterative Review Example
+#
+# Demonstrates the `loop_until:` + `loop_max:` pattern for bounded
+# review-rework cycles.
+#
+# Key patterns shown:
+#   1. `loop_until:` expression that terminates when quality gate passes
+#   2. `loop_max:` to bound iterations and prevent infinite loops
+#   3. `coalesce()` to feed reworked artifacts back into later steps
+#   4. `when:` gate on the rework step (only runs if review rejects)
+#   5. Combining conditional and iterative patterns in one workflow
+#
+# To run:
+#   agentic run iterative_review --input '{"feature_spec": "Build a REST API for user management", "max_review_rounds": 2}'
+#
+# The workflow generates code, reviews it, and reworks rejected code
+# in a bounded loop. After loop_max rounds (or approval), it assembles
+# the final package.
+
+name: iterative_review
+description: >-
+  Example workflow demonstrating bounded review-rework loops with
+  loop_until and loop_max. Code is generated, reviewed, and reworked
+  iteratively until approved or the maximum round count is reached.
+version: "1.0"
+
+capabilities:
+  inputs: [feature_spec, max_review_rounds]
+  outputs: [final_package, review_history]
+
+inputs:
+  feature_spec:
+    type: string
+    description: Natural language description of the feature to build
+    required: true
+  max_review_rounds:
+    type: integer
+    description: Maximum number of review-rework cycles (default 2)
+    default: 2
+
+steps:
+  # --- Phase 1: Initial generation (runs once) --------------------------------
+  - name: design
+    agent: tier3_architect
+    description: Design the architecture from the feature specification
+    inputs:
+      spec: ${inputs.feature_spec}
+    outputs:
+      architecture: arch_blueprint
+      acceptance_criteria: criteria
+
+  - name: implement
+    agent: tier2_coder
+    description: Generate initial code from the architecture
+    depends_on: [design]
+    inputs:
+      architecture: ${steps.design.outputs.architecture}
+      criteria: ${steps.design.outputs.acceptance_criteria}
+    outputs:
+      code: generated_code
+      tests: generated_tests
+
+  # --- Phase 2: Bounded review-rework loop ------------------------------------
+  #
+  # This step runs repeatedly: it reviews the code, and if rejected,
+  # reworks it. The loop continues until the review approves OR
+  # loop_max rounds have been exhausted.
+  #
+  # On each iteration, the step receives its own previous outputs
+  # via the coalesce() fallback chain — first iteration uses the
+  # initial implementation, subsequent iterations use reworked code.
+
+  - name: review_rework_loop
+    agent: tier3_reviewer
+    description: >-
+      Review code against acceptance criteria. If rejected, rework the
+      code to address feedback. Repeat until approved or max rounds.
+    depends_on: [implement]
+    loop_until: >-
+      ${steps.review_rework_loop.outputs.review_status} in ['APPROVED', 'APPROVED_WITH_NOTES']
+    loop_max: ${inputs.max_review_rounds}
+    inputs:
+      code: >-
+        ${coalesce(
+          steps.review_rework_loop.outputs.reworked_code,
+          steps.implement.outputs.code
+        )}
+      tests: >-
+        ${coalesce(
+          steps.review_rework_loop.outputs.reworked_tests,
+          steps.implement.outputs.tests
+        )}
+      criteria: ${steps.design.outputs.acceptance_criteria}
+    outputs:
+      review_status: status
+      review_report: report
+      reworked_code: updated_code
+      reworked_tests: updated_tests
+      iteration_count: rounds_completed
+
+  # --- Phase 3: Final assembly ------------------------------------------------
+
+  # Post-loop quality gate — only runs if review never approved
+  - name: escalation_notice
+    agent: tier1_assembler
+    description: >-
+      Generate an escalation notice when the review loop exhausted
+      all rounds without approval.
+    depends_on: [review_rework_loop]
+    when: >-
+      ${steps.review_rework_loop.outputs.review_status} not in ['APPROVED', 'APPROVED_WITH_NOTES']
+    inputs:
+      review_report: ${steps.review_rework_loop.outputs.review_report}
+      rounds_used: ${steps.review_rework_loop.outputs.iteration_count}
+    outputs:
+      escalation: escalation_report
+
+  - name: package
+    agent: tier1_assembler
+    description: >-
+      Assemble the final deliverable from the best available code,
+      whether approved or best-effort after max rounds.
+    depends_on: [review_rework_loop, escalation_notice]
+    inputs:
+      code: >-
+        ${coalesce(
+          steps.review_rework_loop.outputs.reworked_code,
+          steps.implement.outputs.code
+        )}
+      tests: >-
+        ${coalesce(
+          steps.review_rework_loop.outputs.reworked_tests,
+          steps.implement.outputs.tests
+        )}
+      review_report: ${steps.review_rework_loop.outputs.review_report}
+      escalation: ${coalesce(steps.escalation_notice.outputs.escalation, 'none')}
+      architecture: ${steps.design.outputs.architecture}
+    outputs:
+      deliverable: final_package
+      review_history: all_reviews
+
+outputs:
+  final_package:
+    from: ${steps.package.outputs.deliverable}
+  review_history:
+    from: ${steps.package.outputs.review_history}

@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.venv
+venv/
+ENV/
+
+# Node (UI)
+ui/node_modules/
+ui/dist/
+ui/.env*
+ui/coverage/
+**/*.tsbuildinfo
+ui/stats.html
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+.run-logs/
+agentic_memory.json
+_debug_*.py
+_gather_info.py
+_gen_manifest.py
+_file_info.txt
+.agent/
+.gemini/
+.env
+
+# OS
+.DS_Store
+Thumbs.db

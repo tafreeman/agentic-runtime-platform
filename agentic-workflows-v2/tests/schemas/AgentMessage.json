@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "MessageType": {
+      "description": "Type of message in the agent workflow.",
+      "enum": [
+        "task",
+        "response",
+        "error",
+        "status",
+        "tool_call",
+        "tool_result"
+      ],
+      "title": "MessageType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Message exchanged between agents and orchestrator.\n\nDesign improvements:\n- Discriminated union via message_type for polymorphic serialization\n- Auto-timestamps with timezone awareness\n- Computed properties for common checks\n- Content truncation helper for logging",
+  "properties": {
+    "content": {
+      "description": "Message content (prompt, response, error details)",
+      "minLength": 1,
+      "title": "Content",
+      "type": "string"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "ID to correlate related messages across workflow",
+      "title": "Correlation Id"
+    },
+    "message_type": {
+      "$ref": "#/$defs/MessageType",
+      "description": "Type of message for discriminated union"
+    },
+    "metadata": {
+      "additionalProperties": true,
+      "description": "Additional context (model, tier, tokens, etc.)",
+      "title": "Metadata",
+      "type": "object"
+    },
+    "role": {
+      "description": "Agent role (e.g., 'coder', 'reviewer', 'orchestrator')",
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Role",
+      "type": "string"
+    },
+    "timestamp": {
+      "description": "UTC timestamp of message creation",
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "message_type",
+    "role",
+    "content"
+  ],
+  "title": "AgentMessage",
+  "type": "object"
+}

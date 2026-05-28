@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tafreeman/agentic-runtime-platform/agentic-workflows-v2/schemas/workflow.schema.json",
+  "title": "AgenticWorkflow",
+  "description": "Schema for agentic-workflows-v2 workflow YAML definitions.",
+  "type": "object",
+  "required": ["name", "description", "steps"],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique workflow identifier (snake_case recommended)."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description of what the workflow does."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version string (e.g. '1.0')."
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Declared capability surface for tooling and documentation.",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "evaluation": {
+      "type": "object",
+      "description": "Evaluation rubric and scoring metadata.",
+      "additionalProperties": true
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Workflow-level input declarations.",
+      "additionalProperties": {
+        "$ref": "#/$defs/inputDeclaration"
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "description": "Workflow-level output declarations.",
+      "additionalProperties": true
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered list of DAG steps. Each step must have name, agent, description, inputs, and outputs.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/workflowStep"
+      }
+    }
+  },
+  "$defs": {
+    "inputDeclaration": {
+      "type": "object",
+      "description": "A single workflow-level input parameter declaration.",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Data type hint (string, integer, boolean, array, object)."
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {},
+        "enum": {
+          "type": "array"
+        }
+      },
+      "additionalProperties": true
+    },
+    "workflowStep": {
+      "type": "object",
+      "description": "A single DAG step in the workflow.",
+      "required": ["name", "agent", "description", "inputs", "outputs"],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique step name within the workflow (snake_case recommended)."
+        },
+        "agent": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Agent tier or identifier that executes this step."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable description of what this step does."
+        },
+        "depends_on": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of step names that must complete before this step runs."
+            },
+            {
+              "type": "null",
+              "description": "No dependencies (root step)."
+            }
+          ]
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Key-value map of step input bindings (may reference ${inputs.*} or ${steps.*.outputs.*}).",
+          "additionalProperties": true
+        },
+        "outputs": {
+          "type": "object",
+          "description": "Key-value map of output variable names produced by this step.",
+          "additionalProperties": true
+        },
+        "when": {
+          "type": "string",
+          "description": "Optional conditional expression; step is skipped when expression evaluates to false."
+        },
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowlisted tool names for this step. Default: DENY all high-risk tools."
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Per-step timeout in seconds."
+        },
+        "retry": {
+          "type": "object",
+          "description": "Retry policy for this step.",
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1 },
+            "backoff_seconds": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

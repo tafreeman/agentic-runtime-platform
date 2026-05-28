@@ -1,0 +1,108 @@
+# Python & AI/ML Coding Standards Rubric
+# Scores code artifacts against the 27-rule coding standards.
+# Run on-demand: `python -m agentic_v2_eval evaluate <artifact> --rubric coding_standards`
+
+criteria:
+  - name: Style & Formatting
+    weight: 0.15
+    description: "Black/isort formatting, Ruff compliance, organized imports, pyproject.toml config"
+    levels:
+      5: "Zero lint errors, all tools configured in pyproject.toml, pre-commit hooks active"
+      4: "Minor lint warnings, tools configured, formatting consistent"
+      3: "Some formatting inconsistencies, tools partially configured"
+      2: "Significant style issues, no automated formatting"
+      1: "No formatting standards applied"
+      0: "Chaotic formatting, wildcard imports, scattered configs"
+
+  - name: Type Safety
+    weight: 0.15
+    description: "Type hints on all signatures, mypy/pyright compliance, no bare Any"
+    levels:
+      5: "Full type annotations, mypy strict passes, tensor shapes documented"
+      4: "Most functions typed, minor mypy issues"
+      3: "Core functions typed, gaps in utility code"
+      2: "Sparse type hints, many Any usages"
+      1: "Minimal type annotations"
+      0: "No type hints"
+
+  - name: Naming & Structure
+    weight: 0.10
+    description: "PEP 8 naming, intent-based names, feature-based layout, no magic numbers"
+    levels:
+      5: "All PEP 8 compliant, intent-based names, config-driven constants, clean layout"
+      4: "Good naming, minor inconsistencies, few magic numbers"
+      3: "Mostly PEP 8, some type-based names, some hardcoded values"
+      2: "Inconsistent naming, magic numbers present"
+      1: "Poor naming throughout"
+      0: "Unreadable names, no structure"
+
+  - name: Error Handling
+    weight: 0.15
+    description: "No bare except, structured logging, custom exceptions, input validation at boundaries"
+    levels:
+      5: "Custom exception hierarchy, Pydantic validation, structlog, no swallowed errors"
+      4: "Specific exceptions, good logging, validation present"
+      3: "Some bare except blocks, basic logging, partial validation"
+      2: "Frequent exception swallowing, print-based logging"
+      1: "Mostly bare except, no validation"
+      0: "except: pass everywhere, no logging"
+
+  - name: Testing
+    weight: 0.15
+    description: "80%+ coverage, test pyramid, ML-specific tests, CI gating, TDD workflow"
+    levels:
+      5: "80%+ coverage, full pyramid, ML contract tests, CI blocks merge, TDD practiced"
+      4: "70%+ coverage, unit + integration tests, CI running"
+      3: "50%+ coverage, unit tests only, CI partial"
+      2: "Sparse tests, no CI integration"
+      1: "Minimal tests, no coverage tracking"
+      0: "No tests"
+
+  - name: Security & Privacy
+    weight: 0.10
+    description: "No hardcoded secrets, no PII in logs, AI code reviewed, input sanitization"
+    levels:
+      5: "Zero secrets in code, log sanitization, AI output reviewed, full input validation"
+      4: "No secrets, basic log safety, AI output mostly reviewed"
+      3: "Minor security gaps, some unvalidated inputs"
+      2: "Secrets in config files, PII leak risks"
+      1: "Hardcoded credentials found"
+      0: "Secrets committed, no input validation"
+
+  - name: ML Reproducibility
+    weight: 0.10
+    description: "Seeds pinned, data/model versioned, configs tracked, deterministic algorithms"
+    levels:
+      5: "All seeds pinned, DVC/MLflow versioning, full env logged, deterministic mode"
+      4: "Seeds set, experiment tracking active, configs in code"
+      3: "Partial seed setting, some experiment tracking"
+      2: "No seed management, ad-hoc experiment tracking"
+      1: "No reproducibility measures"
+      0: "Results not reproducible"
+
+  - name: Deployment Readiness
+    weight: 0.10
+    description: "Dockerized, deps pinned, train/eval/infer separated, model cards, no notebooks in prod"
+    levels:
+      5: "Dockerized, all deps pinned, clean separation, model cards, nbstripout active"
+      4: "Containerized, deps mostly pinned, good separation"
+      3: "Dockerfile exists, some unpinned deps, partial separation"
+      2: "No containerization, loose deps"
+      1: "Notebook-based production code"
+      0: "No deployment considerations"
+
+# Scoring thresholds
+thresholds:
+  pass: 0.70
+  excellent: 0.90
+  warning: 0.50
+
+# Metadata
+metadata:
+  version: "1.0.0"
+  author: "tafreeman/agentic-runtime-platform"
+  description: "Python & AI/ML coding standards evaluation rubric (27 rules, 5 sections)"
+  source: "docs/CODING_STANDARDS.md"
+  rules_count: 27
+  required_count: 23
+  recommended_count: 4

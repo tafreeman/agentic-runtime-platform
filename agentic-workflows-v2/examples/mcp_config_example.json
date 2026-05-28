@@ -1,0 +1,35 @@
+{
+  "servers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/projects"],
+      "enabled": true
+    },
+    "github": {
+      "type": "http",
+      "url": "https://example.invalid/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      },
+      "enabled": true
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      },
+      "enabled": true
+    },
+    "slack": {
+      "type": "http",
+      "url": "https://slack.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${SLACK_BOT_TOKEN}"
+      },
+      "enabled": false
+    }
+  }
+}

@@ -1,0 +1,298 @@
+# Evaluation Configuration for Multi-Agent Workflows
+# Defines datasets, metrics, logging, and reporting
+
+version: "1.0.0"
+
+evaluation:
+  enabled: true
+
+  # ==========================================================================
+  # Datasets
+  # ==========================================================================
+  datasets:
+    humaneval:
+      url: "https://github.com/openai/human-eval"
+      type: code_generation
+      cache_path: "./evaluation/datasets/humaneval"
+      description: OpenAI HumanEval for Python code generation
+
+    mbpp:
+      url: "https://github.com/google-research/google-research/tree/master/mbpp"
+      type: code_generation
+      cache_path: "./evaluation/datasets/mbpp"
+      description: Mostly Basic Python Problems
+
+    swe_bench:
+      url: "https://github.com/princeton-nlp/SWE-bench"
+      type: bug_fixing
+      cache_path: "./evaluation/datasets/swe_bench"
+      description: Real GitHub issues with golden patches
+
+    custom_fullstack:
+      type: fullstack_generation
+      cache_path: "./evaluation/datasets/fullstack"
+      description: Custom full-stack application examples
+      samples:
+        - name: todo_app
+          requirements: "Simple todo list with CRUD operations"
+          golden_path: "./evaluation/golden/todo_app"
+        - name: blog_platform
+          requirements: "Blog with posts, comments, and user auth"
+          golden_path: "./evaluation/golden/blog_platform"
+
+    refactoring_examples:
+      type: legacy_refactoring
+      cache_path: "./evaluation/datasets/refactoring"
+      description: Legacy code examples for refactoring evaluation
+
+    architecture_cases:
+      type: architecture_evolution
+      cache_path: "./evaluation/datasets/architecture"
+      description: Architecture case studies with golden evolution plans
+
+  # ==========================================================================
+  # Evaluation Sets
+  # ==========================================================================
+  eval_sets:
+    quick_test:
+      name: "Quick Test"
+      description: "Fast evaluation with minimal samples"
+      datasets:
+        - humaneval
+        - mbpp
+
+    comprehensive:
+      name: "Comprehensive Evaluation"
+      description: "Full evaluation across all datasets"
+      datasets:
+        - humaneval
+        - mbpp
+        - swe_bench
+        - custom_fullstack
+        - refactoring_examples
+
+    code_generation:
+      name: "Code Generation"
+      description: "Focus on code generation tasks"
+      datasets:
+        - humaneval
+        - mbpp
+
+    bug_fixing:
+      name: "Bug Fixing"
+      description: "Focus on bug fixing and issue resolution"
+      datasets:
+        - swe_bench
+        - refactoring_examples
+
+  # ==========================================================================
+  # Logging Configuration
+  # ==========================================================================
+  logging:
+    level: DEBUG # DEBUG, INFO, WARN, ERROR
+    format: structured # structured, plain, json
+
+    output:
+      - type: file
+        path: "./evaluation/results/logs/{workflow_id}_{timestamp}.log"
+
+      - type: console
+        enabled: true
+        level: INFO
+
+      - type: structured_json
+        path: "./evaluation/results/structured/{workflow_id}_{timestamp}.json"
+
+    capture:
+      agent_inputs: true
+      agent_outputs: true
+      agent_system_prompts: true
+      model_calls: true
+      model_responses: true
+      tool_invocations: true
+      tool_results: true
+      timing: true
+      token_usage: true
+      errors: true
+      intermediate_steps: true
+
+    retention:
+      days: 30
+      max_size_mb: 1000
+
+  # ==========================================================================
+  # Metrics
+  # ==========================================================================
+  metrics:
+    - name: functional_correctness
+      type: pass_at_k
+      k_values: [1, 5, 10]
+      description: Percentage of correct solutions at k attempts
+
+    - name: test_pass_rate
+      type: percentage
+      description: Percentage of generated tests that pass
+
+    - name: code_quality
+      type: composite
+      components:
+        - cyclomatic_complexity
+        - maintainability_index
+        - comment_ratio
+      description: Combined code quality score
+
+    - name: security_score
+      type: vulnerability_count
+      severity_weights:
+        critical: 10
+        high: 5
+        medium: 2
+        low: 1
+      description: Inverse of weighted vulnerability count
+
+    - name: generation_time
+      type: duration
+      unit: seconds
+      description: Total time to complete workflow
+
+    - name: tokens_used
+      type: count
+      description: Total tokens consumed across all model calls
+
+    - name: cost_estimate
+      type: currency
+      unit: USD
+      description: Estimated cost based on model pricing
+
+    - name: agent_efficiency
+      type: ratio
+      description: Ratio of successful agent executions
+
+  # ==========================================================================
+  # Scoring Configuration
+  # ==========================================================================
+  scoring:
+    normalize: true
+    scale: [0, 100]
+
+    weights:
+      correctness: 0.50
+      code_quality: 0.25
+      efficiency: 0.15
+      documentation: 0.10
+
+    pass_threshold: 70
+
+    aggregation:
+      method: weighted_average
+      handle_missing: skip # skip, zero, default
+
+  # ==========================================================================
+  # Deep Research Pipeline (ADR-007)
+  # ==========================================================================
+  deep_research:
+    # Feature flag: set to 'multidimensional' to activate the DORA-style
+    # classification matrix engine defined in multidimensional_scoring.py.
+    # Set to 'legacy' (default) to keep the existing CI weighted-sum gate.
+    # This flag can be flipped without any code changes.
+    scoring_engine: legacy # 'legacy' | 'multidimensional'
+
+    # Minimum CI score used by the LEGACY engine stop gate.
+    # Has no effect when scoring_engine = multidimensional.
+    min_ci: 0.80
+
+    # Minimum number of recent sources required by BOTH engines.
+    min_recent_sources: 10
+
+    # Tier thresholds for the MULTIDIMENSIONAL engine (0-1 normalised).
+    # elite_floor / high_floor / medium_floor per dimension.
+    tier_thresholds:
+      coverage: [0.90, 0.75, 0.50]
+      source_quality: [0.90, 0.75, 0.50]
+      agreement: [0.90, 0.75, 0.50]
+      verification: [0.90, 0.75, 0.50]
+      recency: [0.90, 0.75, 0.50]
+
+    # Domain-adaptive recency windows (days).
+    # Defines the half-life for exponential recency decay per research domain.
+    # Sources at exactly this age receive a 0.5 recency score.
+    # Overrides the module-level DOMAIN_RECENCY_DAYS defaults in ci_calculator.
+    recency_windows:
+      ai_ml: 90
+      cloud_infrastructure: 180
+      programming_languages: 365
+      academic_research: 730
+      ai_software: 120
+      default: 183
+
+    # CI tiebreaker weights (used ONLY inside coalesce() best-of-N ranking).
+    # These are NOT used as the stop-gate criterion.
+    tiebreaker_weights:
+      coverage: 0.25
+      source_quality: 0.20
+      agreement: 0.20
+      verification: 0.20
+      recency: 0.15
+
+  # ==========================================================================
+  # Reporting Configuration
+  # ==========================================================================
+  reporting:
+    generate_html: true
+    generate_markdown: true
+    generate_json: true
+
+    include_graphs: true
+    include_code_samples: true
+    compare_to_baseline: true
+
+    output_path: "./evaluation/results/reports"
+
+    templates:
+      summary: "./evaluation/templates/summary.md"
+      detailed: "./evaluation/templates/detailed.md"
+
+    email:
+      enabled: false
+      recipients: []
+
+    webhooks:
+      enabled: false
+      endpoints: []
+
+  # ==========================================================================
+  # Baseline Configuration
+  # ==========================================================================
+  baseline:
+    enabled: true
+    path: "./evaluation/baseline"
+
+    models:
+      - id: "gh:gpt-4o-mini"
+        name: "GPT-4o Mini (baseline)"
+      - id: "local:phi4mini"
+        name: "Phi-4 Mini (local baseline)"
+
+  # ==========================================================================
+  # Iteration Strategy (from rr.txt)
+  # ==========================================================================
+  iteration:
+    minimum_runs: 1
+    recommended_runs: 20
+    maximum_runs: 50
+    temperature: 0.1
+
+    outlier_handling:
+      method: trim
+      trim_percent: 10 # Reject top/bottom 10%
+
+    aggregation: median # Use median, not mean
+
+# Paths
+paths:
+  results: "./evaluation/results"
+  logs: "./evaluation/results/logs"
+  reports: "./evaluation/results/reports"
+  datasets: "./evaluation/datasets"
+  golden: "./evaluation/golden"
+  benchmarks: "./evaluation/benchmarks"

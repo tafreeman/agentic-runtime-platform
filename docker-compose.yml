@@ -1,0 +1,88 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-dev
+    container_name: prompts-backend
+    working_dir: /workspace/agentic-workflows-v2
+    command:
+      - python
+      - -m
+      - uvicorn
+      - agentic_v2.server.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+      - --reload
+    environment:
+      AGENTIC_TRACING: "${AGENTIC_TRACING:-1}"
+      AGENTIC_TRACE_SENSITIVE: "${AGENTIC_TRACE_SENSITIVE:-0}"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "agentic-workflows-v2"
+    volumes:
+      - ./:/workspace
+    ports:
+      - "8010:8010"
+    depends_on:
+      otel-collector:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+      target: frontend-dev
+    container_name: prompts-frontend
+    working_dir: /workspace/agentic-workflows-v2/ui
+    command:
+      - npm
+      - run
+      - dev
+      - --
+      - --host
+      - 0.0.0.0
+      - --port
+      - "5173"
+    environment:
+      VITE_API_PROXY_TARGET: "http://backend:8010"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./:/workspace
+      - ui_node_modules:/workspace/agentic-workflows-v2/ui/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_started
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.102.1
+    container_name: prompts-otel-collector
+    command:
+      - --config=/etc/otelcol-contrib/config.yaml
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      jaeger:
+        condition: service_started
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    container_name: prompts-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+
+volumes:
+  ui_node_modules:

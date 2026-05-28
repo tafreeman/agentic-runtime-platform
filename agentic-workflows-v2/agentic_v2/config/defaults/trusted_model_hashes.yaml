@@ -1,0 +1,27 @@
+# Trusted local model weight hashes.
+#
+# Schema:
+# - schema_version: must be "trusted-model-hashes.v1"
+# - models: list of trusted local model artifacts
+# - each entry requires id, path, and sha256
+# - algorithm is optional and defaults to sha256
+#
+# Paths may use "~" or environment variables. Directory hashes are computed
+# deterministically from every file below the directory.
+schema_version: trusted-model-hashes.v1
+models:
+  - id: aigallery-mistral-7b-cpu-int4-rtn-block-32
+    path: ~/.cache/aigallery/microsoft--mistral-7b-instruct-v0.2-ONNX/main/onnx/cpu_and_mobile/mistral-7b-instruct-v0.2-cpu-int4-rtn-block-32
+    sha256: 8e61deabd0dfadfe997d9e1a80cdb58ba4066e43d4261652ec33b69edeb8cbde
+    source: local-aigallery-discovery
+    notes: Discovered in ~/.cache/aigallery during E8-4 implementation.
+  - id: aigallery-mistral-7b-cpu-int4-rtn-block-32-acc-level-4
+    path: ~/.cache/aigallery/microsoft--mistral-7b-instruct-v0.2-ONNX/main/onnx/cpu_and_mobile/mistral-7b-instruct-v0.2-cpu-int4-rtn-block-32-acc-level-4
+    sha256: c5c9716bd025153b067d95558e704782ded56566b211f4391741c1de4fb83689
+    source: local-aigallery-discovery
+    notes: Discovered in ~/.cache/aigallery during E8-4 implementation.
+  - id: aigallery-phi-4-mini-cpu-int4-rtn-block-32-acc-level-4
+    path: ~/.cache/aigallery/microsoft--Phi-4-mini-instruct-onnx/main/cpu_and_mobile/cpu-int4-rtn-block-32-acc-level-4
+    sha256: 99b298defdb6eaa56bf49faffb9d883f7cb1181b7e4d6774998f5943ad120b7d
+    source: local-aigallery-discovery
+    notes: Discovered in ~/.cache/aigallery during E8-4 implementation.

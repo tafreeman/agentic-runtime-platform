@@ -1,0 +1,128 @@
+{
+  "run_id": "wf-code_review",
+  "workflow_name": "code_review",
+  "status": "success",
+  "success_rate": 100.0,
+  "total_duration_ms": 177598.351,
+  "total_retries": 0,
+  "step_count": 5,
+  "failed_step_count": 0,
+  "start_time": "2026-02-07T21:00:57.461901+00:00",
+  "end_time": "2026-02-07T21:03:55.060252+00:00",
+  "dataset": {
+    "source": "google-research-datasets/mbpp",
+    "task_id": 601,
+    "description": "Write a function to find the longest chain which can be formed from the given set of pairs.",
+    "test_list": [
+      "assert max_chain_length([Pair(5, 24), Pair(15, 25),Pair(27, 40), Pair(50, 60)], 4) == 3",
+      "assert max_chain_length([Pair(1, 2), Pair(3, 4),Pair(5, 6), Pair(7, 8)], 4) == 4",
+      "assert max_chain_length([Pair(19, 10), Pair(11, 12),Pair(13, 14), Pair(15, 16), Pair(31, 54)], 5) == 5"
+    ]
+  },
+  "inputs": {
+    "code_file": "__inline__",
+    "review_depth": "standard"
+  },
+  "steps": [
+    {
+      "step_name": "parse_code",
+      "status": "success",
+      "agent_role": null,
+      "tier": 0,
+      "model_used": null,
+      "duration_ms": 0.251,
+      "retry_count": 0,
+      "tokens_used": null,
+      "input": {},
+      "output": {
+        "parsed_ast": {
+          "raw_source": "",
+          "language": "python",
+          "functions": [],
+          "classes": [],
+          "imports": []
+        },
+        "code_metrics": {
+          "lines": 0,
+          "chars": 0,
+          "function_count": 0,
+          "class_count": 0,
+          "import_count": 0
+        }
+      }
+    },
+    {
+      "step_name": "generate_review",
+      "status": "success",
+      "agent_role": "reviewer",
+      "tier": 2,
+      "model_used": "claude-3-5-sonnet-20241022",
+      "duration_ms": 158853.426,
+      "retry_count": 0,
+      "tokens_used": {
+        "input": 615,
+        "output": 324
+      },
+      "input": {
+        "code": "",
+        "depth": "standard"
+      },
+      "output": {
+        "review": "# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review."
+      }
+    },
+    {
+      "step_name": "check_best_practices",
+      "status": "success",
+      "agent_role": "quality_checker",
+      "tier": 1,
+      "model_used": "gpt-4o-mini",
+      "duration_ms": 8953.341,
+      "retry_count": 0,
+      "tokens_used": {
+        "input": 420,
+        "output": 89
+      },
+      "input": {
+        "code": "",
+        "review": "# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review."
+      },
+      "output": {
+        "best_practices_report": "No specific best practices violations detected."
+      }
+    },
+    {
+      "step_name": "aggregate_results",
+      "status": "success",
+      "agent_role": null,
+      "tier": 0,
+      "model_used": null,
+      "duration_ms": 0.083,
+      "retry_count": 0,
+      "tokens_used": null,
+      "input": {
+        "review": "# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review.",
+        "best_practices": "No specific best practices violations detected."
+      },
+      "output": {
+        "final_report": "## Code Review Report\n\n### Review\n# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review.\n\n### Best Practices\nNo specific best practices violations detected."
+      }
+    },
+    {
+      "step_name": "format_output",
+      "status": "success",
+      "agent_role": null,
+      "tier": 0,
+      "model_used": null,
+      "duration_ms": 9791.2,
+      "retry_count": 0,
+      "tokens_used": null,
+      "input": {
+        "report": "## Code Review Report\n\n### Review\n# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review.\n\n### Best Practices\nNo specific best practices violations detected."
+      },
+      "output": {
+        "formatted_output": "## Code Review Report\n\n### Review\n# Code Review\n\n## Summary\nNo code provided for review.\n\n## Issues Found\nNone - no code to analyze.\n\n## Recommendations\nPlease provide code for review.\n\n### Best Practices\nNo specific best practices violations detected."
+      }
+    }
+  ]
+}

@@ -1,0 +1,211 @@
+site_name: Agentic Runtime Platform
+site_description: >-
+  Production-grade multi-agent AI orchestration. DAG execution, tiered
+  model routing, and rubric-based LLM evaluation for federal and regulated
+  environments.
+site_url: https://tafreeman.github.io/agentic-runtime-platform/
+repo_url: https://github.com/tafreeman/agentic-runtime-platform
+repo_name: tafreeman/agentic-runtime-platform
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - navigation.indexes
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - search.suggest
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+    - content.action.edit
+    - content.action.view
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+extra_css:
+  - stylesheets/extra.css
+
+# Files excluded from the built site (gitignore-style patterns relative to docs/).
+# OWASP_LLM_THREAT_MODEL.md uses docs/-prefixed internal links that are
+# structurally incorrect for an mkdocs build and cause strict-mode failures.
+# The file is intentionally excluded from nav; suppress it entirely so its
+# broken link patterns do not abort the build.
+exclude_docs: |
+  OWASP_LLM_THREAT_MODEL.md
+  archive/
+  analysis/
+  reports/
+
+  pr-checklists/
+
+plugins:
+  - search
+  - tags
+  - mermaid2
+  - git-revision-date-localized:
+      type: date
+      enable_creation_date: true
+      fallback_to_build_date: true
+      enable_git_follow: false
+  - social:
+      cards: !ENV [CARDS, true]
+      cards_layout_options:
+        background_color: "#1a1f2e"
+        color: "#ffffff"
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - abbr
+  - def_list
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Overview: getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - First Workflow: getting-started/first-workflow.md
+      - Development Guide: development-guide.md
+      - No-LLM Dev Mode: NO_LLM_MODE.md
+      - Onboarding: ONBOARDING.md
+  - Architecture:
+      - Overview: ARCHITECTURE.md
+      - Runtime Engine: architecture-runtime.md
+      - UI Dashboard: architecture-ui.md
+      - Evaluation Framework: architecture-eval.md
+      - Tools & Providers: architecture-tools.md
+      - Integration: integration-architecture.md
+      - C4 Diagrams: architecture/c4/index.md
+  - Deep Dives:
+      - Server & API: deep-dive-server.md
+      - Agents: deep-dive-agents.md
+      - RAG Pipeline: rag/index.md
+      - Evaluation Engine: deep-dive-agentic-v2-eval.md
+  - API Reference:
+      - REST Endpoints: api-contracts-runtime.md
+      - Data Models: data-models-runtime.md
+      - UI Components: component-inventory-ui.md
+      - UI Pages: ui/pages.md
+      - UI API Integration: ui/api-integration.md
+  - Workflows:
+      - Authoring Guide: WORKFLOW_AUTHORING.md
+      - Pattern Catalog: PATTERN_CATALOG.md
+      - Reference: workflows/index.md
+  - Evaluation:
+      - Framework: architecture-eval.md
+      - Rubrics: evaluation/rubrics.md
+      - LLM-as-Judge: evaluation/judge.md
+      - Production Gating: evaluation/gating.md
+      - Runners: evaluation/runners.md
+      - Datasets: evaluation/datasets.md
+  - Tools:
+      - Overview: tools/index.md
+      - Architecture: architecture-tools.md
+      - LLM Client: tools/llm-client.md
+      - Local ONNX Models: tools/local-models.md
+      - Windows AI: tools/windows-ai.md
+      - Model Probing: tools/model-probing.md
+      - Provider Limits: tools/provider-limits.md
+      - Benchmarks: tools/benchmarks.md
+  - Operations:
+      - Overview: operations/index.md
+      - Deployment Guide: deployment-guide.md
+      - Security Hardening: operations/security-hardening.md
+      - Troubleshooting: operations/troubleshooting.md
+  - Reference:
+      - Configuration Reference: configuration.md
+      - Glossary: GLOSSARY.md
+      - Coding Standards: CODING_STANDARDS.md
+      - Known Limitations: KNOWN_LIMITATIONS.md
+      - AI Risk Management: AI_RISK_MANAGEMENT.md
+      - Migrations: MIGRATIONS.md
+  - Project:
+      - Overview: project-overview.md
+      - Roadmap: ROADMAP.md
+      - Changelog: CHANGELOG.md
+      - ADRs: adr/ADR-INDEX.md
+      - Contributing: CONTRIBUTING.md
+      - Demo: DEMO.md
+
+extra:
+  generator: false
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: Helpful
+          data: 1
+          note: Thanks for the feedback.
+        - icon: material/emoticon-sad-outline
+          name: Could be improved
+          data: 0
+          note: >-
+            Please let us know how we can improve this page by opening an
+            <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/tafreeman/agentic-runtime-platform
+      name: GitHub
+  tags:
+    Architecture: architecture
+    Workflow: workflow
+    Evaluation: evaluation
+    Tooling: tooling

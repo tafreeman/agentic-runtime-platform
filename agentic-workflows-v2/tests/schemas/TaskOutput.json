@@ -1,0 +1,57 @@
+{
+  "additionalProperties": true,
+  "description": "Base class for all task outputs.\n\nDesign: Common success/error handling with rich metadata.",
+  "properties": {
+    "confidence": {
+      "default": 1.0,
+      "description": "Model's confidence in output (0-1)",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Error message if failed",
+      "title": "Error"
+    },
+    "model_used": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Model that produced this output",
+      "title": "Model Used"
+    },
+    "success": {
+      "description": "Whether task completed successfully",
+      "title": "Success",
+      "type": "boolean"
+    },
+    "tokens_used": {
+      "default": 0,
+      "description": "Total tokens consumed",
+      "minimum": 0,
+      "title": "Tokens Used",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "success"
+  ],
+  "title": "TaskOutput",
+  "type": "object"
+}

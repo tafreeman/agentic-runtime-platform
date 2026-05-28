@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "type": {
+      "const": "workflow_end",
+      "default": "workflow_end",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "status",
+    "timestamp"
+  ],
+  "title": "WorkflowEndEvent",
+  "type": "object"
+}

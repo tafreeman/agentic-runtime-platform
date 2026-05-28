@@ -1,0 +1,49 @@
+# CodeQL SAST analysis for Python and TypeScript. Results appear in GitHub Security tab →
+# Code scanning alerts. Free for public repositories. Implements NIST SP 800-218 SSDF
+# PW.7.1 (use automated testing for vulnerabilities).
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main, agenticv2]
+  pull_request:
+    branches: [main, agenticv2]
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly Sunday 2am UTC
+
+# Opt into Node.js 24 for JS-based actions (actions/checkout, codeql-action).
+# The Node 20 default is being removed from runners on 2026-09-16.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

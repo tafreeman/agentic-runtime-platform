@@ -1,0 +1,123 @@
+# Conditional Branching Example
+#
+# Demonstrates the `when:` conditional gate on workflow steps.
+#
+# Key patterns shown:
+#   1. Simple equality check on an input parameter
+#   2. `in` / `not in` list membership tests
+#   3. Boolean expressions with `and` / `or`
+#   4. Conditional fan-out: multiple steps share a dependency but
+#      only a subset execute based on runtime values
+#
+# To run:
+#   agentic run conditional_branching --input '{"feature_spec": "...", "review_depth": "thorough", "target_env": "production"}'
+#
+# With review_depth="quick", only the quick-path steps run.
+# With review_depth="thorough", the full analysis path runs.
+# With target_env="production", the deployment-readiness check runs.
+
+name: conditional_branching
+description: >-
+  Example workflow demonstrating conditional step execution with when: gates.
+  Steps activate or skip based on input parameters at runtime.
+version: "1.0"
+
+capabilities:
+  inputs: [feature_spec, review_depth, target_env]
+  outputs: [analysis_report]
+
+inputs:
+  feature_spec:
+    type: string
+    description: Description of the feature to analyze
+    required: true
+  review_depth:
+    type: string
+    description: "Review depth: 'quick' or 'thorough'"
+    default: thorough
+  target_env:
+    type: string
+    description: "Deployment target: 'development', 'staging', or 'production'"
+    default: development
+
+steps:
+  # --- Phase 1: Always runs ---------------------------------------------------
+  - name: parse_requirements
+    agent: tier2_coder
+    description: Parse and structure the feature specification
+    inputs:
+      spec: ${inputs.feature_spec}
+    outputs:
+      structured_spec: parsed_spec
+      complexity_score: complexity
+
+  # --- Phase 2: Conditional fan-out based on review_depth ---------------------
+
+  # Quick path — runs ONLY when review_depth is "quick"
+  - name: quick_review
+    agent: tier2_coder
+    description: Perform a fast surface-level review
+    depends_on: [parse_requirements]
+    when: ${inputs.review_depth} == 'quick'
+    inputs:
+      spec: ${steps.parse_requirements.outputs.structured_spec}
+    outputs:
+      review_summary: quick_summary
+
+  # Thorough path — runs when review_depth is NOT "quick"
+  - name: deep_analysis
+    agent: tier3_architect
+    description: Perform deep architectural analysis
+    depends_on: [parse_requirements]
+    when: ${inputs.review_depth} != 'quick'
+    inputs:
+      spec: ${steps.parse_requirements.outputs.structured_spec}
+    outputs:
+      architecture_review: arch_review
+      risk_assessment: risks
+
+  - name: security_scan
+    agent: tier3_reviewer
+    description: Run security analysis (only for thorough reviews)
+    depends_on: [parse_requirements]
+    when: ${inputs.review_depth} not in ['quick']
+    inputs:
+      spec: ${steps.parse_requirements.outputs.structured_spec}
+    outputs:
+      security_findings: security_report
+
+  # --- Phase 3: Environment-specific gates ------------------------------------
+
+  # Production-only step — demonstrates compound boolean condition
+  - name: deployment_readiness
+    agent: tier3_reviewer
+    description: >-
+      Verify production deployment readiness.
+      Only runs for thorough reviews targeting production.
+    depends_on: [deep_analysis, security_scan]
+    when: >-
+      ${inputs.target_env} == 'production'
+      and ${inputs.review_depth} != 'quick'
+    inputs:
+      architecture: ${steps.deep_analysis.outputs.architecture_review}
+      security: ${steps.security_scan.outputs.security_findings}
+    outputs:
+      readiness_report: prod_readiness
+
+  # --- Phase 4: Assembly (always runs) ----------------------------------------
+  - name: assemble_report
+    agent: tier1_assembler
+    description: >-
+      Assemble the final analysis report from whichever path executed.
+      Uses coalesce() to pick the first non-null result.
+    depends_on: [quick_review, deep_analysis, security_scan, deployment_readiness]
+    inputs:
+      summary: ${coalesce(steps.quick_review.outputs.review_summary, steps.deep_analysis.outputs.architecture_review)}
+      security: ${coalesce(steps.security_scan.outputs.security_findings, 'not_assessed')}
+      prod_ready: ${coalesce(steps.deployment_readiness.outputs.readiness_report, 'not_assessed')}
+    outputs:
+      report: analysis_report
+
+outputs:
+  analysis_report:
+    from: ${steps.assemble_report.outputs.report}

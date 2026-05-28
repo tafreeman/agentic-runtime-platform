@@ -1,0 +1,122 @@
+[
+  {
+    "instance_id": "synthetic-lite-1",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-2",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-3",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-4",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-5",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-6",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-7",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-8",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-9",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-10",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-11",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-12",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-13",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-14",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-15",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-16",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-17",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-18",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-19",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  },
+  {
+    "instance_id": "synthetic-lite-20",
+    "repo": "example/project",
+    "problem_statement": "A cache invalidation helper should ignore expired entries before returning a hit.",
+    "patch": "diff --git a/cache.py b/cache.py\n+if item.expires_at <= now:\n+    return None\n"
+  }
+]

@@ -1,0 +1,174 @@
+{
+  "$defs": {
+    "Finding": {
+      "additionalProperties": true,
+      "description": "A single code-review finding with structured location and fix info.\n\nDesigned to be stable across LLM outputs: all fields except\n``finding_id`` and ``description`` are optional so partial responses\ncan still be stored and displayed.",
+      "properties": {
+        "category": {
+          "default": "quality",
+          "description": "Category: security | quality | performance",
+          "title": "Category",
+          "type": "string"
+        },
+        "code_after": {
+          "default": "",
+          "description": "Fixed snippet",
+          "title": "Code After",
+          "type": "string"
+        },
+        "code_before": {
+          "default": "",
+          "description": "Vulnerable/problematic snippet",
+          "title": "Code Before",
+          "type": "string"
+        },
+        "description": {
+          "description": "What is wrong",
+          "title": "Description",
+          "type": "string"
+        },
+        "file": {
+          "default": "",
+          "description": "Affected file path",
+          "title": "File",
+          "type": "string"
+        },
+        "finding_id": {
+          "description": "Unique identifier, e.g. 'F-001'",
+          "title": "Finding Id",
+          "type": "string"
+        },
+        "impact": {
+          "default": "",
+          "description": "What could happen if unfixed",
+          "title": "Impact",
+          "type": "string"
+        },
+        "line_range": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "(start_line, end_line) in the affected file",
+          "title": "Line Range"
+        },
+        "references": {
+          "description": "CWE / OWASP references",
+          "items": {
+            "type": "string"
+          },
+          "title": "References",
+          "type": "array"
+        },
+        "severity": {
+          "$ref": "#/$defs/FindingSeverity",
+          "description": "Severity level"
+        },
+        "suggested_fix": {
+          "default": "",
+          "description": "How to fix it",
+          "title": "Suggested Fix",
+          "type": "string"
+        },
+        "title": {
+          "default": "",
+          "description": "Brief one-line title",
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "finding_id",
+        "severity",
+        "description"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "FindingSeverity": {
+      "description": "Severity level for a code review finding.",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "FindingSeverity",
+      "type": "string"
+    },
+    "ReviewStatus": {
+      "description": "Canonical review outcome values.\n\nAll LLM-returned review statuses are normalized to one of\nthese values, eliminating the need for free-form string\ncomparisons in YAML when-conditions.\n\nUsed in YAML conditions:\n    when: ${steps.review_code.outputs.overall_status} not in ['APPROVED', 'APPROVED_WITH_NOTES']",
+      "enum": [
+        "APPROVED",
+        "APPROVED_WITH_NOTES",
+        "NEEDS_FIXES",
+        "REJECTED"
+      ],
+      "title": "ReviewStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Structured output from a code-review step.\n\nThe ``overall_status`` field drives ``when:`` conditions in YAML;\n``findings`` carry the machine-readable detail.",
+  "properties": {
+    "findings": {
+      "description": "Ordered list of findings (critical first)",
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "overall_status": {
+      "$ref": "#/$defs/ReviewStatus",
+      "default": "NEEDS_FIXES",
+      "description": "Canonical review outcome"
+    },
+    "positive_observations": {
+      "description": "Things done well",
+      "items": {
+        "type": "string"
+      },
+      "title": "Positive Observations",
+      "type": "array"
+    },
+    "quality_score": {
+      "anyOf": [
+        {
+          "maximum": 10,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "0-10 quality score (10 = perfect)",
+      "title": "Quality Score"
+    },
+    "summary": {
+      "additionalProperties": true,
+      "description": "Counts by severity: {critical, high, medium, low, passed_checks}",
+      "title": "Summary",
+      "type": "object"
+    }
+  },
+  "title": "ReviewReport",
+  "type": "object"
+}

@@ -1,0 +1,70 @@
+# Code Generation Rubric
+# Specialized rubric for evaluating code generation outputs
+
+criteria:
+  - name: Correctness
+    weight: 0.30
+    description: "Does the code produce correct output for the given specification?"
+    levels:
+      5: "Passes all test cases, handles edge cases"
+      4: "Passes main tests, minor edge case issues"
+      3: "Mostly correct, some test failures"
+      2: "Significant bugs or logic errors"
+      1: "Fundamentally broken"
+      0: "Does not compile/run"
+
+  - name: Completeness
+    weight: 0.20
+    description: "Does the code implement all required functionality?"
+    levels:
+      5: "All requirements fully implemented"
+      4: "Main requirements met, minor features missing"
+      3: "Core functionality present, gaps exist"
+      2: "Significant missing functionality"
+      1: "Only partial implementation"
+      0: "No meaningful implementation"
+
+  - name: Code Quality
+    weight: 0.20
+    description: "Is the code clean, readable, and well-structured?"
+    levels:
+      5: "Excellent style, well-documented, follows best practices"
+      4: "Good quality, minor style issues"
+      3: "Acceptable quality, some improvements needed"
+      2: "Poor quality, difficult to maintain"
+      1: "Very poor, confusing structure"
+      0: "Unreadable"
+
+  - name: Efficiency
+    weight: 0.15
+    description: "Is the code reasonably efficient in time and space complexity?"
+    levels:
+      5: "Optimal algorithm, efficient implementation"
+      4: "Good efficiency, minor optimizations possible"
+      3: "Acceptable efficiency for typical inputs"
+      2: "Noticeably slow or memory-intensive"
+      1: "Very inefficient, problematic for real use"
+      0: "Unusably slow or crashes on normal input"
+
+  - name: Security
+    weight: 0.15
+    description: "Does the code avoid common security vulnerabilities?"
+    levels:
+      5: "No security issues, follows security best practices"
+      4: "Minor security considerations missing"
+      3: "Some security concerns, not critical"
+      2: "Notable security vulnerabilities"
+      1: "Serious security flaws"
+      0: "Dangerous security holes"
+
+# Code-specific thresholds
+thresholds:
+  pass: 0.75
+  excellent: 0.90
+  warning: 0.60
+
+# Metadata
+metadata:
+  version: "1.0.0"
+  author: "agentic-v2-eval"
+  description: "Code generation evaluation rubric"

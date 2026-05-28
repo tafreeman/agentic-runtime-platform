@@ -1,0 +1,96 @@
+# Pattern Execution Rubric
+# Rubric for evaluating adherence to reasoning patterns (ReAct, CoVe, etc.)
+
+criteria:
+  - name: Pattern Invocation
+    weight: 0.20
+    description: "Did the model attempt and invoke the specified reasoning pattern?"
+    levels:
+      5: "Pattern explicitly and cleanly invoked"
+      4: "Pattern invoked with minor deviations"
+      3: "Pattern partially invoked"
+      2: "Pattern barely recognizable"
+      1: "Wrong pattern used"
+      0: "No pattern evident"
+
+  - name: Phase Ordering
+    weight: 0.20
+    description: "Are the pattern phases executed in correct order?"
+    hard_gate: true
+    minimum: 4
+    levels:
+      5: "Strict correct ordering throughout"
+      4: "Correct ordering with minimal deviation"
+      3: "Mostly correct, some out-of-order steps"
+      2: "Significant ordering violations"
+      1: "Random or reversed ordering"
+      0: "No discernible order"
+
+  - name: Phase Completeness
+    weight: 0.20
+    description: "Are all required phases present with proper content?"
+    hard_gate: true
+    minimum: 4
+    levels:
+      5: "All phases present with rich content"
+      4: "All phases present, some thin"
+      3: "Most phases present"
+      2: "Several phases missing"
+      1: "Only one or two phases"
+      0: "No phases identifiable"
+
+  - name: Constraint Adherence
+    weight: 0.20
+    description: "Were pattern-specific constraints followed?"
+    hard_gate: true
+    minimum: 4
+    levels:
+      5: "Perfect constraint adherence"
+      4: "Minor constraint violations"
+      3: "Some constraints violated"
+      2: "Significant violations"
+      1: "Most constraints violated"
+      0: "No constraints followed"
+
+  - name: Termination Discipline
+    weight: 0.10
+    description: "Does the pattern terminate appropriately?"
+    levels:
+      5: "Clean termination at right point"
+      4: "Terminates correctly, minor issues"
+      3: "Terminates but not optimally"
+      2: "Premature or late termination"
+      1: "Fails to terminate properly"
+      0: "Infinite loop or crash"
+
+  - name: Self-Reference Accuracy
+    weight: 0.10
+    description: "When the pattern references prior steps, is it accurate?"
+    levels:
+      5: "All references accurate"
+      4: "Minor reference errors"
+      3: "Some inaccurate references"
+      2: "Frequent errors"
+      1: "Mostly wrong references"
+      0: "No valid self-references"
+
+# Hard gates for pattern compliance
+hard_gates:
+  - criterion: Phase Ordering
+    minimum: 4
+  - criterion: Phase Completeness
+    minimum: 4
+  - criterion: Constraint Adherence
+    minimum: 4
+
+# Thresholds
+thresholds:
+  pass: 0.75
+  excellent: 0.90
+  warning: 0.60
+
+# Metadata
+metadata:
+  version: "1.0.0"
+  author: "agentic-v2-eval"
+  description: "Pattern execution evaluation rubric (ReAct, CoVe, Reflexion, RAG)"

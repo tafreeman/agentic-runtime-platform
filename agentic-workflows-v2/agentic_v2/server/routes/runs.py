@@ -1,0 +1,318 @@
+"""Run history routes for the Agentic Workflows V2 server.
+
+Provides:
+
+* ``GET /api/runs`` -- list past runs with summary metadata.
+* ``GET /api/runs/summary`` -- aggregate statistics across runs.
+* ``GET /api/runs/{filename}`` -- full run detail with step data.
+* ``GET /api/runs/{run_id}/stream`` -- SSE event stream for a running workflow.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
+
+from ...core.tenant import TenantContext, get_tenant_context
+from ...models.secrets import get_secret
+from ...utils.path_safety import is_within_base
+
+# LangChain imports — optional at the package level.
+try:
+    from ...langchain import load_workflow_config
+
+    _LANGCHAIN_AVAILABLE = True
+except ImportError:
+    _LANGCHAIN_AVAILABLE = False
+from ...workflows.run_logger import RunLogger
+from .. import websocket
+from ..models import RunsSummaryResponse, RunSummaryModel, RunEvaluationDetailResponse, RunEvaluationDetail
+
+logger = logging.getLogger(__name__)
+router = APIRouter(tags=["workflows"])
+run_logger = RunLogger()
+
+
+def _is_within_base(path, base_dir) -> bool:
+    """Compatibility shim for tests importing this helper directly."""
+    return is_within_base(path, base_dir)
+
+
+def _tenant_run_logger(tenant: TenantContext) -> RunLogger:
+    return run_logger.for_tenant(tenant.tenant_id)
+
+
+def _resolve_run_or_404(identifier: str, tenant: TenantContext) -> Path:
+    """Resolve a run filename or run id to an on-disk JSON path."""
+    tenant_logger = _tenant_run_logger(tenant)
+    resolved = tenant_logger.resolve_run_path(identifier)
+    if resolved is None or not _is_within_base(
+        resolved.resolve(), tenant_logger.base_runs_dir
+    ):
+        raise HTTPException(status_code=404, detail=f"Run not found: {identifier}")
+    return resolved
+
+
+@router.get("/runs", response_model=list[RunSummaryModel])
+async def list_runs(
+    request: Request,
+    workflow: str | None = None,
+    limit: int = 50,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    """List past workflow runs with summary data."""
+    tenant_logger = _tenant_run_logger(tenant)
+    paths = tenant_logger.list_runs(workflow_name=workflow)
+    results = []
+    # Reverse iterate, take at most limit valid runs
+    for p in reversed(paths):
+        if len(results) >= limit:
+            break
+        try:
+            record = tenant_logger.load_run(p)
+            # Skip invalid runs (e.g., config files)
+            if (
+                not isinstance(record, dict)
+                or "workflow_name" not in record
+                or "status" not in record
+            ):
+                continue
+
+            extra = record.get("extra") if isinstance(record.get("extra"), dict) else {}
+            evaluation = (
+                extra.get("evaluation")
+                if isinstance(extra.get("evaluation"), dict)
+                else {}
+            )
+            results.append(
+                {
+                    "filename": p.name,
+                    **{
+                        k: v
+                        for k, v in record.items()
+                        if k
+                        in (
+                            "run_id",
+                            "workflow_name",
+                            "status",
+                            "success_rate",
+                            "total_duration_ms",
+                            "step_count",
+                            "failed_step_count",
+                            "start_time",
+                            "end_time",
+                        )
+                    },
+                    "evaluation_score": evaluation.get("weighted_score"),
+                    "evaluation_grade": evaluation.get("grade"),
+                }
+            )
+            await _audit_data_accessed(
+                request,
+                tenant,
+                "run.list",
+                run_id=record.get("run_id") if isinstance(record.get("run_id"), str) else None,
+            )
+        except Exception as e:
+            logger.warning("Failed to load run %s: %s", p.name, e)
+    return results
+
+
+@router.get("/runs/summary", response_model=RunsSummaryResponse)
+async def runs_summary(
+    workflow: str | None = None,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    """Aggregate stats across runs."""
+    return _tenant_run_logger(tenant).summary(workflow_name=workflow)
+
+
+@router.get("/runs/{filename}", responses={404: {"description": "Run not found"}})
+async def get_run(
+    request: Request,
+    filename: str,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    """Get full run detail including all step data.
+
+    Step records are revalidated through :class:`StepResultRecord` so the HTTP
+    wire shape is enforced on the read path as well as at write time. Older
+    on-disk run files that pre-date the formalized wire format may fail
+    validation: in that case we log a warning and fall back to the raw stored
+    dict for that step rather than 422-ing the whole response.
+    """
+    from ..models import StepResultRecord
+
+    tenant_logger = _tenant_run_logger(tenant)
+    run_data = tenant_logger.load_run(_resolve_run_or_404(filename, tenant))
+    await _audit_data_accessed(
+        request,
+        tenant,
+        "run.detail",
+        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+    )
+
+    steps = run_data.get("steps")
+    if isinstance(steps, list):
+        validated_steps: list[Any] = []
+        for raw_step in steps:
+            if not isinstance(raw_step, dict):
+                validated_steps.append(raw_step)
+                continue
+            try:
+                validated_steps.append(
+                    StepResultRecord.model_validate(raw_step).model_dump(mode="json")
+                )
+            except Exception as exc:
+                logger.warning(
+                    "StepResultRecord read-time validation failed for run %s "
+                    "step %r; returning raw dict. error=%s",
+                    filename,
+                    raw_step.get("step_name", "<unknown>"),
+                    exc,
+                )
+                validated_steps.append(raw_step)
+        run_data["steps"] = validated_steps
+
+    # Best-effort retroactive model identification
+    # If model_used is missing in the run log, try to infer it from current workflow config
+    workflow_name = run_data.get("workflow_name")
+    if workflow_name and _LANGCHAIN_AVAILABLE:
+        try:
+            config = load_workflow_config(workflow_name)
+            steps_cfg = {s.name: s for s in config.steps}
+
+            for step in run_data.get("steps", []):
+                # Skip if we already have a model
+                if step.get("model_used"):
+                    continue
+
+                # Skip tier 0 (no model)
+                if step.get("tier") == 0:
+                    continue
+
+                s_name = step.get("step_name")
+                if s_name in steps_cfg:
+                    step_cfg = steps_cfg[s_name]
+
+                    # 1. Check specific model override
+                    if step_cfg.model_override:
+                        val = step_cfg.model_override
+                        # Handle "env:VAR|fallback"
+                        if val.startswith("env:"):
+                            parts = val.split("|", 1)
+                            if len(parts) > 1:
+                                env_key = parts[0][4:]
+                                val = get_secret(env_key, default=parts[1])
+                            else:
+                                env_key = val[4:]
+                                val = get_secret(env_key, default=val)
+
+                        step["model_used"] = val
+                        # Mark as inferred (optional, maybe distinct UI style?)
+                        step["metadata"] = step.get("metadata", {})
+                        step["metadata"]["model_inferred"] = True
+        except Exception as exc:
+            # Workflow definition might have changed or been deleted; ignore errors
+            # but log at debug level for operational diagnostics
+            logger.debug(
+                "Failed to infer model_used for run %s: %s",
+                filename,
+                exc,
+                exc_info=True,
+            )
+
+    return run_data
+
+
+@router.get(
+    "/runs/{filename}/evaluation",
+    response_model=RunEvaluationDetailResponse,
+    responses={404: {"description": "Run not found"}},
+)
+async def get_run_evaluation(
+    request: Request,
+    filename: str,
+    tenant: TenantContext = Depends(get_tenant_context),
+):
+    """Get full rubric evaluation detail for a scored workflow run."""
+    tenant_logger = _tenant_run_logger(tenant)
+    run_data = tenant_logger.load_run(_resolve_run_or_404(filename, tenant))
+    await _audit_data_accessed(
+        request,
+        tenant,
+        "run.evaluation",
+        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+    )
+
+    extra = run_data.get("extra") or {}
+    evaluation_requested = bool(extra.get("evaluation_requested", False))
+    evaluation_raw = extra.get("evaluation") if isinstance(extra.get("evaluation"), dict) else None
+
+    evaluation: RunEvaluationDetail | None = None
+    if evaluation_raw and evaluation_raw.get("enabled"):
+        try:
+            evaluation = RunEvaluationDetail.model_validate(evaluation_raw)
+        except Exception as exc:
+            logger.warning("Failed to parse evaluation for %s: %s", filename, exc)
+
+    return RunEvaluationDetailResponse(
+        filename=filename,
+        run_id=run_data.get("run_id"),
+        workflow_name=run_data.get("workflow_name"),
+        status=run_data.get("status"),
+        evaluation_requested=evaluation_requested,
+        dataset=run_data.get("dataset"),
+        evaluation=evaluation,
+    )
+
+
+async def _audit_data_accessed(
+    request: Request,
+    tenant: TenantContext,
+    target_type: str,
+    *,
+    run_id: str | None = None,
+) -> None:
+    from ..audit_log import audit_request_event
+
+    await audit_request_event(
+        request,
+        "data.accessed",
+        outcome="success",
+        target={"type": target_type},
+        run_id=run_id,
+        tenant_id=tenant.tenant_id,
+        metadata={"tenant_source": tenant.source},
+    )
+
+
+@router.get("/runs/{run_id}/stream")
+async def stream_run_events(run_id: str):
+    """SSE stream of execution events for a running workflow."""
+
+    async def event_generator():
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        websocket.manager.register_sse_listener(run_id, queue)
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=30)
+                    yield f"data: {json.dumps(event)}\n\n"
+                    if event.get("type") in {
+                        "evaluation_complete",
+                        "workflow_end",
+                    }:
+                        break
+                except TimeoutError:
+                    yield f"data: {json.dumps({'type': 'keepalive'})}\n\n"
+        finally:
+            websocket.manager.unregister_sse_listener(run_id, queue)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

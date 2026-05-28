@@ -1,0 +1,644 @@
+"""Factory functions that construct LangChain ``BaseChatModel`` instances.
+
+Each ``build_*`` function accepts the bare model name (without provider prefix)
+and a ``temperature`` float, and returns a ready-to-use chat model.
+
+Provider-specific LangChain packages are imported lazily inside each builder so
+that only the packages required for the providers actually in use need to be
+installed.
+
+Supported providers
+-------------------
+- GitHub Models     — ``build_github_model``
+- OpenAI            — ``build_openai_model``
+- Anthropic         — ``build_anthropic_model``
+- Gemini            — ``build_gemini_model``
+- NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
+- Ollama            — ``build_ollama_model``
+- LM Studio         — ``build_lmstudio_model``
+- Local API         — ``build_local_api_model``
+- Local ONNX        — ``build_local_onnx_model``
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+# GitHub Models base URL — used by build_github_model
+_GH_BASE_URL = "https://models.inference.ai.azure.com"
+
+# Module-level flag so ``build_placeholder_model`` warns once per process
+# rather than once per agent step (MED-1 from Sprint B #5 review).
+_PLACEHOLDER_WARNED = False
+
+# Cached ``PlaceholderChatModel`` class so every call to
+# ``build_placeholder_model`` returns an instance of the *same* class (P4
+# from Sprint B #5 follow-up review).  Defining the class at import time
+# is not possible because ``BaseChatModel`` lives in the optional
+# ``[langchain]`` extra, so the class is built lazily on first call and
+# reused thereafter.
+_PLACEHOLDER_CHAT_MODEL_CLS: Any | None = None
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+def _import_repo_llm_client() -> Any:
+    """Import repo ``tools.llm.llm_client`` with workspace fallback."""
+    try:
+        from tools.llm.llm_client import LLMClient
+
+        return LLMClient
+    except ImportError as exc:
+        raise ImportError(
+            "Local ONNX provider requires importing tools.llm.llm_client. "
+            "Run from repo root or install the agentic-tools package."
+        ) from exc
+
+
+def _resolve_notebooklm_model_name(model_name: str) -> str:
+    """Resolve the Gemini model used for NotebookLM alias."""
+    raw = (model_name or "").strip()
+    if raw:
+        return raw
+
+    env_model = (
+        os.environ.get("NOTEBOOKLM_MODEL")
+        or os.environ.get("NOTEBOOKLM_GEMINI_MODEL")
+        or ""
+    ).strip()
+    if env_model:
+        return env_model
+
+    return "gemini-2.5-pro"
+
+
+# ---------------------------------------------------------------------------
+# Provider builders (public API — no underscore prefix)
+# ---------------------------------------------------------------------------
+
+
+def build_github_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance pointed at GitHub Models.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``gh:`` prefix, e.g. ``openai/gpt-4o``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance configured for the GitHub Models endpoint.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    ValueError
+        If ``GITHUB_TOKEN`` is not set.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for GitHub Models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        raise ValueError(
+            "GITHUB_TOKEN environment variable is required for GitHub Models. "
+            "Set it to a GitHub personal access token with 'models:read' scope."
+        )
+
+    # GitHub Models API accepts only the bare model name (e.g. "gpt-4o-mini").
+    # Strip the optional org/publisher prefix that callers may include,
+    # e.g. "openai/gpt-4o-mini" -> "gpt-4o-mini",
+    #      "meta/llama-4-scout"  -> "llama-4-scout".
+    api_model_name = model_name.split("/", 1)[-1] if "/" in model_name else model_name
+    logger.debug("Using GitHub Models: %s (requested: %s)", api_model_name, model_name)
+    return ChatOpenAI(
+        model=api_model_name,
+        base_url=_GH_BASE_URL,
+        api_key=token,
+        temperature=temperature,
+    )
+
+
+def build_openai_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance for direct OpenAI API.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``openai:`` prefix, e.g. ``gpt-4o``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    ValueError
+        If ``OPENAI_API_KEY`` is not set.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for OpenAI models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "OPENAI_API_KEY environment variable is required for OpenAI models."
+        )
+
+    kwargs: dict[str, Any] = {
+        "model": model_name,
+        "api_key": api_key,
+        "temperature": temperature,
+    }
+
+    base_url = os.environ.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_API_BASE")
+    if base_url:
+        kwargs["base_url"] = base_url
+
+    org = os.environ.get("OPENAI_ORG_ID")
+    if org:
+        kwargs["organization"] = org
+
+    logger.debug("Using OpenAI model: %s", model_name)
+    return ChatOpenAI(**kwargs)
+
+
+def build_anthropic_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatAnthropic instance.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``anthropic:`` / ``claude:`` prefix.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatAnthropic`` instance.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-anthropic`` is not installed.
+    ValueError
+        If ``ANTHROPIC_API_KEY`` is not set.
+    """
+    try:
+        from langchain_anthropic import ChatAnthropic
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-anthropic is required for Anthropic models. "
+            "Install with: pip install langchain-anthropic"
+        ) from exc
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "ANTHROPIC_API_KEY environment variable is required for Anthropic models."
+        )
+
+    logger.debug("Using Anthropic model: %s", model_name)
+    return ChatAnthropic(
+        model=model_name,
+        api_key=api_key,
+        temperature=temperature,
+    )
+
+
+def build_gemini_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatGoogleGenerativeAI instance.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``gemini:`` prefix, e.g. ``gemini-2.0-flash``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatGoogleGenerativeAI`` instance.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-google-genai`` is not installed.
+    ValueError
+        If neither ``GOOGLE_API_KEY`` nor ``GEMINI_API_KEY`` is set.
+    """
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-google-genai is required for Gemini models. "
+            "Install with: pip install langchain-google-genai"
+        ) from exc
+
+    api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "GOOGLE_API_KEY (or GEMINI_API_KEY) is required for Gemini models."
+        )
+
+    logger.debug("Using Gemini model: %s", model_name)
+    return ChatGoogleGenerativeAI(
+        model=model_name,
+        google_api_key=api_key,
+        temperature=temperature,
+    )
+
+
+def build_notebooklm_model(model_name: str, temperature: float) -> Any:
+    """NotebookLM alias routed through Gemini models.
+
+    Parameters
+    ----------
+    model_name:
+        Optional bare model name after the ``notebooklm:`` prefix.  When empty
+        the value is resolved from ``NOTEBOOKLM_MODEL`` / ``NOTEBOOKLM_GEMINI_MODEL``
+        env vars, falling back to ``gemini-2.5-pro``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatGoogleGenerativeAI`` instance for the resolved Gemini model.
+    """
+    resolved = _resolve_notebooklm_model_name(model_name)
+    logger.debug("Using NotebookLM alias via Gemini model: %s", resolved)
+    return build_gemini_model(resolved, temperature)
+
+
+def build_ollama_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOllama instance for local Ollama server.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``ollama:`` prefix, e.g. ``qwen2.5-coder``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOllama`` instance.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-ollama`` is not installed.
+    """
+    try:
+        from langchain_ollama import ChatOllama
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-ollama is required for Ollama models. "
+            "Install with: pip install langchain-ollama"
+        ) from exc
+
+    base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+    logger.debug("Using Ollama: %s at %s", model_name, base_url)
+    return ChatOllama(
+        model=model_name,
+        base_url=base_url,
+        temperature=temperature,
+    )
+
+
+def build_lmstudio_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance for local LM Studio server.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``lmstudio:`` prefix.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance pointed at the local LM Studio endpoint.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for LM Studio models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    base_url = os.environ.get("LMSTUDIO_HOST", "http://127.0.0.1:12340")
+    if not base_url.endswith("/v1"):
+        base_url = f"{base_url.rstrip('/')}/v1"
+
+    logger.debug("Using LM Studio: %s at %s", model_name, base_url)
+    return ChatOpenAI(
+        model=model_name,
+        base_url=base_url,
+        api_key="lm-studio",
+        temperature=temperature,
+    )
+
+
+def build_local_api_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance for generic local OpenAI-compatible API.
+
+    The base URL is resolved from environment variables in priority order:
+    ``OPENAI_BASE_URL``, ``OPENAI_API_BASE``, ``LOCAL_AI_API_BASE_URL``,
+    ``LOCAL_OPENAI_BASE_URL``, falling back to ``http://localhost:1234/v1``.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``local-api:`` prefix.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance pointed at the local API endpoint.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for local API models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    base_url = (
+        os.getenv("OPENAI_BASE_URL")
+        or os.getenv("OPENAI_API_BASE")
+        or os.getenv("LOCAL_AI_API_BASE_URL")
+        or os.getenv("LOCAL_OPENAI_BASE_URL")
+        or "http://localhost:1234/v1"
+    )
+    if not base_url.endswith("/v1"):
+        base_url = f"{base_url.rstrip('/')}/v1"
+
+    logger.debug("Using Local API: %s at %s", model_name, base_url)
+    return ChatOpenAI(
+        model=model_name,
+        base_url=base_url,
+        api_key="local-api",
+        temperature=temperature,
+    )
+
+
+def build_local_onnx_model(model_name: str, temperature: float) -> Any:
+    """Build a minimal chat wrapper over repo-local ONNX via ``LLMClient``.
+
+    Constructs and returns a ``LocalOnnxChatModel`` subclass of
+    ``BaseChatModel``.  This path is prompt-only and does **not** support
+    structured tool-calling.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``local:`` prefix, e.g. ``phi4mini``.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``BaseChatModel`` instance backed by the repo's ``LLMClient``.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-core`` is not installed or ``tools.llm.llm_client``
+        cannot be imported.
+    """
+    try:
+        from langchain_core.language_models.chat_models import BaseChatModel
+        from langchain_core.messages import (
+            AIMessage,
+            BaseMessage,
+            HumanMessage,
+            SystemMessage,
+        )
+        from langchain_core.outputs import ChatGeneration, ChatResult
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-core is required for local ONNX chat wrapper. "
+            "Install with: pip install langchain-core"
+        ) from exc
+
+    llm_client = _import_repo_llm_client()
+    key = (model_name or "phi4mini").strip()
+
+    class LocalOnnxChatModel(BaseChatModel):
+        model_key: str = key
+        default_temperature: float = temperature
+
+        @property
+        def _llm_type(self) -> str:
+            return "local-onnx"
+
+        def bind_tools(self, tools: Any, **kwargs: Any) -> Any:
+            return self
+
+        def _messages_to_prompt(
+            self,
+            messages: list[BaseMessage],
+        ) -> tuple[str, str | None]:
+            system_text: str | None = None
+            chunks: list[str] = []
+            for msg in messages:
+                if isinstance(msg, SystemMessage):
+                    system_text = str(msg.content)
+                elif isinstance(msg, HumanMessage):
+                    chunks.append(f"User: {msg.content}")
+                else:
+                    chunks.append(f"Assistant: {msg.content}")
+            prompt = "\n\n".join(chunks) if chunks else ""
+            return prompt, system_text
+
+        def _generate(
+            self,
+            messages: list[BaseMessage],
+            stop: list[str] | None = None,
+            run_manager: Any | None = None,
+            **kwargs: Any,
+        ) -> Any:
+            prompt, system_text = self._messages_to_prompt(messages)
+            response = llm_client.generate_text(
+                model_name=f"local:{self.model_key}",
+                prompt=prompt,
+                system_instruction=system_text,
+                temperature=float(kwargs.get("temperature", self.default_temperature)),
+                max_tokens=int(kwargs.get("max_tokens", 4096)),
+            )
+            text = response
+            if stop:
+                for token in stop:
+                    if token and token in text:
+                        text = text.split(token, 1)[0]
+                        break
+            message = AIMessage(content=text)
+            return ChatResult(generations=[ChatGeneration(message=message)])
+
+    logger.warning(
+        "Using local ONNX wrapper for 'local:%s'. This path is prompt-only and "
+        "does not support structured tool-calling.",
+        key,
+    )
+    return LocalOnnxChatModel()
+
+
+def _get_placeholder_chat_model_cls() -> Any:
+    """Return the module-level ``PlaceholderChatModel`` class, building it lazily.
+
+    Deferred so that users who never take the no-LLM LangChain path
+    aren't forced to install ``langchain-core``.  Cached so all callers
+    see the same class object (``isinstance`` checks and pickling both
+    rely on class identity).
+    """
+    global _PLACEHOLDER_CHAT_MODEL_CLS
+    if _PLACEHOLDER_CHAT_MODEL_CLS is not None:
+        return _PLACEHOLDER_CHAT_MODEL_CLS
+
+    try:
+        from langchain_core.language_models.chat_models import BaseChatModel
+        from langchain_core.messages import AIMessage, AIMessageChunk, BaseMessage
+        from langchain_core.outputs import (
+            ChatGeneration,
+            ChatGenerationChunk,
+            ChatResult,
+        )
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-core is required for the placeholder chat model. "
+            "Install with: pip install langchain-core"
+        ) from exc
+
+    # Late import to keep the module import graph acyclic and cheap when
+    # the no-LLM path isn't exercised.
+    from ..models.backends import PLACEHOLDER_RESPONSE_TEXT
+
+    class PlaceholderChatModel(BaseChatModel):
+        """Deterministic LangChain chat model used under ``AGENTIC_NO_LLM=1``.
+
+        Returns :data:`PLACEHOLDER_RESPONSE_TEXT` for every prompt, on
+        every engine path (sync ``_generate`` and async ``_astream``).
+        ``bind_tools`` returns a *new* instance rather than ``self`` so
+        concurrent callers cannot accidentally share mutable state (P3
+        from Sprint B #5 follow-up review).
+        """
+
+        @property
+        def _llm_type(self) -> str:
+            return "placeholder"
+
+        def bind_tools(self, tools: Any, **kwargs: Any) -> Any:
+            # Intentionally returns a fresh instance, not ``self``: matches
+            # LangChain's "bind_tools returns a new thing" contract well
+            # enough for the placeholder use case without implementing
+            # the full ``RunnableBinding`` protocol.  Tools are ignored —
+            # the placeholder response never produces tool calls.
+            return PlaceholderChatModel()
+
+        def _generate(
+            self,
+            messages: list[BaseMessage],
+            stop: list[str] | None = None,
+            run_manager: Any | None = None,
+            **kwargs: Any,
+        ) -> Any:
+            return ChatResult(
+                generations=[
+                    ChatGeneration(
+                        message=AIMessage(content=PLACEHOLDER_RESPONSE_TEXT)
+                    )
+                ]
+            )
+
+        async def _astream(
+            self,
+            messages: list[BaseMessage],
+            stop: list[str] | None = None,
+            run_manager: Any | None = None,
+            **kwargs: Any,
+        ) -> Any:
+            # One-shot chunk — matches the documented "streaming yields
+            # the entire placeholder as one chunk" contract.  Defining
+            # this explicitly (rather than inheriting the ABC fallback
+            # that re-runs ``_generate`` in a thread pool) future-proofs
+            # against upstream signature churn (P1).
+            yield ChatGenerationChunk(
+                message=AIMessageChunk(content=PLACEHOLDER_RESPONSE_TEXT)
+            )
+
+    _PLACEHOLDER_CHAT_MODEL_CLS = PlaceholderChatModel
+    return _PLACEHOLDER_CHAT_MODEL_CLS
+
+
+def build_placeholder_model(temperature: float = 0.0) -> Any:
+    """Build a LangChain chat model that returns a fixed placeholder.
+
+    Used when ``AGENTIC_NO_LLM=1``.  No API calls, no provider package
+    beyond ``langchain-core`` (the only hard dep of the LangChain engine
+    — declared in the ``[langchain]`` install extra).  ``bind_tools`` is
+    accepted and ignored so workflows that bind tools don't crash; the
+    returned model never emits tool calls.
+
+    The placeholder class is cached module-wide so every call returns an
+    instance of the *same* class; ``isinstance`` checks across calls are
+    stable.
+    """
+    cls = _get_placeholder_chat_model_cls()
+    global _PLACEHOLDER_WARNED
+    if not _PLACEHOLDER_WARNED:
+        logger.warning(
+            "AGENTIC_NO_LLM=1: LangChain engine using PlaceholderChatModel. "
+            "Disable for production workloads."
+        )
+        _PLACEHOLDER_WARNED = True
+    return cls()
+
+
+def _reset_placeholder_state_for_tests() -> None:
+    """Reset module-level placeholder caches.  For test fixtures only.
+
+    Clears both the warning flag (so caplog assertions work across
+    tests) and the cached class (so test runs that toggle the flag
+    mid-session don't see a stale class object).
+    """
+    global _PLACEHOLDER_WARNED, _PLACEHOLDER_CHAT_MODEL_CLS
+    _PLACEHOLDER_WARNED = False
+    _PLACEHOLDER_CHAT_MODEL_CLS = None

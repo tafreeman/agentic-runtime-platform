@@ -1,0 +1,142 @@
+[
+  {
+    "instance_id": "synthetic-verified-1",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-2",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-3",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-4",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-5",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-6",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-7",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-8",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-9",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-10",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-11",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-12",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-13",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-14",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-15",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-16",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-17",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-18",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-19",
+    "repo": "example/project",
+    "difficulty": "easy",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  },
+  {
+    "instance_id": "synthetic-verified-20",
+    "repo": "example/project",
+    "difficulty": "medium",
+    "problem_statement": "A retry loop should stop after the configured attempt budget and surface the final error.",
+    "patch": "diff --git a/retry.py b/retry.py\n+if attempts >= max_attempts:\n+    raise last_error\n"
+  }
+]

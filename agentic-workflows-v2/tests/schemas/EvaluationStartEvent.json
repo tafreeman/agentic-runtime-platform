@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "type": {
+      "const": "evaluation_start",
+      "default": "evaluation_start",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "timestamp"
+  ],
+  "title": "EvaluationStartEvent",
+  "type": "object"
+}
