@@ -130,7 +130,6 @@ nav:
       - Evaluation Framework: architecture-eval.md
       - Tools & Providers: architecture-tools.md
       - Integration: integration-architecture.md
-      - C4 Diagrams: architecture/c4/index.md
   - Deep Dives:
       - Server & API: deep-dive-server.md
       - Agents: deep-dive-agents.md

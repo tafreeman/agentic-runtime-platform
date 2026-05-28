@@ -101,10 +101,10 @@ The `slowapi` global rate limiter and the `AuthThrottle` per-IP auth throttle (b
 
 ### 5.1 Implementation plans for Epics 3, 5, and 6 are retrospective
 
-Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without plan docs — the retrospective plans under [`implementation notes/retro-epic*`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/docs/implementation notes) were written after the fact to preserve decision history. They are shorter and less exhaustive than the Epic 1/2 plans.
+Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shipped without prospective plan docs — decision history for those epics is reconstructed from commit messages and ADRs rather than dedicated planning artifacts.
 
 - **Risk:** Decision rationale may be under-documented compared to prospective plans.
-- **Mitigation:** Three load-bearing decisions from Epic 6 are called out in [`retro-epic6-eval-depth.md`](implementation notes/retro-epic6-eval-depth.md).
+- **Mitigation:** Load-bearing decisions are captured in ADRs (`docs/adr/`).
 - **Status:** Accepted; new epics are expected to ship with prospective plans going forward.
 
 ### 5.2 `Generated:` and `Last Updated:` dates in docs may lag
