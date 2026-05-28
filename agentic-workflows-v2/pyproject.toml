@@ -59,7 +59,7 @@ langchain = [
     "langchain-google-genai>=2.0,<3",
     "langchain-ollama>=0.2,<0.3",
     "langgraph-checkpoint-sqlite>=2.0,<3",
-    "langsmith>=0.3,<0.4",
+    "langsmith>=0.3,<0.9",
 ]
 tracing = [
     "opentelemetry-sdk>=1.20,<2",
