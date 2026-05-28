@@ -178,7 +178,7 @@ AGENTIC_RATE_LIMIT_DEFAULT=120/minute
     counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
     / API-gateway layer for multi-replica deployments.
 
-    See [KNOWN_LIMITATIONS.md §4.3](../KNOWN_LIMITATIONS.md#43-rate-limiting-is-in-process-only).
+    See [KNOWN_LIMITATIONS.md §4.3](../KNOWN_LIMITATIONS.md#41-rate-limiting-is-in-process-only).
 
 !!! note "Reference"
     See [ADR-018](../adr/ADR-018-api-rate-limiting-and-auth-throttle.md) for the design
@@ -241,7 +241,7 @@ window has also expired.
     attacker who spreads probes across replicas can stay under each replica's threshold while
     collectively exceeding the intended lockout threshold.
 
-    See [KNOWN_LIMITATIONS.md §4.4](../KNOWN_LIMITATIONS.md#44-per-ip-auth-throttle-shares-the-same-multi-replica-caveat).
+    See [KNOWN_LIMITATIONS.md §4.4](../KNOWN_LIMITATIONS.md#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat).
     Sprint 2 will migrate to a Redis-backed shared store.
 
 ### Recipe: investigate a locked-out client

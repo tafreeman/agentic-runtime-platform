@@ -23,9 +23,9 @@ This page is the navigation hub for all `tools/` documentation. If you are looki
 |--------------------|-----|
 | Check if a model is available before calling it | [model-probing.md](model-probing.md) |
 | Discover all models across all providers | [model-probing.md — Discovery](model-probing.md#model-discovery) |
-| Get a structured inventory of all models | [model-probing.md — Inventory](model-probing.md#model-inventory) |
+| Get a structured inventory of all models | [model-probing.md — Inventory](model-probing.md) |
 | Check rate limits and API quotas before a bakeoff | [provider-limits.md](provider-limits.md) |
-| Rank available models by preference | [provider-limits.md — Model Ranking](provider-limits.md#model-ranking) |
+| Rank available models by preference | [provider-limits.md — Model Ranking](provider-limits.md) |
 
 ---
 
@@ -57,10 +57,10 @@ This page is the navigation hub for all `tools/` documentation. If you are looki
 | `probe_providers_local.py` | Local provider probe logic | [model-probing.md](model-probing.md) |
 | `probe_discovery.py` | `discover_all_models()` — full scan | [model-probing.md — Discovery](model-probing.md#model-discovery) |
 | `probe_discovery_providers.py` | Per-provider discovery helpers | [model-probing.md](model-probing.md) |
-| `model_inventory.py` | `build_inventory()` — capability audit | [model-probing.md — Inventory](model-probing.md#model-inventory) |
+| `model_inventory.py` | `build_inventory()` — capability audit | [model-probing.md — Inventory](model-probing.md) |
 | `model_locks.py` | PID lock files for concurrent ONNX loading | [model-probing.md](model-probing.md) |
 | `check_provider_limits.py` | Rate-limit check per provider | [provider-limits.md](provider-limits.md) |
-| `rank_models.py` | Rank models from probe + limits data | [provider-limits.md — Ranking](provider-limits.md#model-ranking) |
+| `rank_models.py` | Rank models from probe + limits data | [provider-limits.md — Ranking](provider-limits.md) |
 | `model_bakeoff.py` | Full multi-model bakeoff runner | [benchmarks.md](benchmarks.md) |
 | `bakeoff_tasks.py` | Task definitions for bakeoff | [benchmarks.md](benchmarks.md) |
 | `bakeoff_reporting.py` | Output reports for bakeoff | [benchmarks.md](benchmarks.md) |
