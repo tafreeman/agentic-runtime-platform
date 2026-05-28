@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0.3",
-    "aiohttp>=3.9",
+    "aiohttp>=3.13.5",
     "pydantic>=2.13.4",
     "langchain-core>=0.3,<0.4",
     "anthropic>=0.101.0,<1",
