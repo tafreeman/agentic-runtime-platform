@@ -25,7 +25,10 @@ test.describe('streaming PR gate', () => {
     await page.getByTestId('nav-workflows').click();
     await page.getByTestId('workflow-link-code_review').click();
 
-    // 2. Launch the run
+    // 2. Fill required input and launch the run.
+    // code_file is required (no default); tier0_parser handles non-existent
+    // paths gracefully so "sample.py" is sufficient for streaming tests.
+    await page.getByTestId('input-code_file').fill('sample.py');
     await page.getByTestId('run-button').click();
 
     // 3. Run header must render with the new run id
