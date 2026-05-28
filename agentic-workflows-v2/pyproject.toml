@@ -21,7 +21,7 @@ dependencies = [
     "filelock>=3.0,<4",
     "cachetools>=5.0,<8",
     "typer>=0.9,<1",
-    "rich>=13.0,<14",
+    "rich>=13.0,<16",
     "python-json-logger>=3.0,<4",
     "agentic-tools",
 ]
