@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### CI Test Fixes (2026-05-27)
+
+- `test_path_safety_fallback_branch_without_is_relative_to`: replaced hardcoded Windows-style paths with `os.sep`-based paths so the fallback branch passes on Linux CI and Windows.
+- `test_score_step_handles_eval_unavailable_and_missing_default`: added mid-test `pytest.skip` for the `load_rubric` monkeypatch section; `load_rubric` is only in the module namespace when `agentic_v2_eval` is installed.
+- `test_score_step_falls_back_to_default_rubric`: added `@pytest.mark.skipif(not hasattr(step_scoring, "load_rubric"), ...)` for the same reason.
+
 ### Test Fixes (2026-05-26)
 
 - Fixed `_agenerate` NameError in `agentic_v2/integrations/langchain.py` by adding router lookup for the model name (resolves 3 test failures).

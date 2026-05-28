@@ -29,11 +29,18 @@ def test_score_step_handles_eval_unavailable_and_missing_default(monkeypatch: py
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", False)
     assert step_scoring.score_step("coder_step", "coder", "output") is None
 
+    if not hasattr(step_scoring, "load_rubric"):
+        pytest.skip("agentic_v2_eval not installed; load_rubric not in module namespace")
+
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", True)
     monkeypatch.setattr(step_scoring, "load_rubric", lambda _name: (_ for _ in ()).throw(FileNotFoundError()))
     assert step_scoring.score_step("coder_step", "coder", "output") is None
 
 
+@pytest.mark.skipif(
+    not hasattr(step_scoring, "load_rubric"),
+    reason="agentic_v2_eval not installed; load_rubric/Scorer not in module namespace",
+)
 def test_score_step_falls_back_to_default_rubric(monkeypatch: pytest.MonkeyPatch) -> None:
     rubric_calls: list[str] = []
 
