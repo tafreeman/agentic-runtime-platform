@@ -6,6 +6,7 @@ allowing callers to catch broad or narrow categories.
 
 from __future__ import annotations
 
+import enum
 from textwrap import dedent
 
 
@@ -71,3 +72,30 @@ class NoProviderConfiguredError(ConfigurationError):
     def __init__(self, message: str = _NO_PROVIDER_MSG) -> None:
         """Initialize with a default message prompting provider configuration."""
         super().__init__(message)
+
+
+class ErrorCode(enum.Enum):
+    """Classification codes for LLM API errors used by retry logic."""
+
+    RATE_LIMITED = "rate_limited"
+    AUTH_ERROR = "auth_error"
+    NOT_FOUND = "not_found"
+    TRANSIENT = "transient"
+    UNKNOWN = "unknown"
+
+
+def classify_error(error_message: str) -> tuple[ErrorCode, bool]:
+    """Classify an error string into an ErrorCode and whether it is retryable.
+
+    Returns:
+        A ``(code, should_retry)`` tuple.  ``should_retry`` is ``False`` for
+        permanent errors (auth, not-found) and ``True`` for transient ones.
+    """
+    msg = error_message.lower()
+    if any(kw in msg for kw in ("rate limit", "rate_limit", "ratelimit", "429", "too many requests")):
+        return ErrorCode.RATE_LIMITED, True
+    if any(kw in msg for kw in ("401", "403", "unauthorized", "forbidden", "authentication")):
+        return ErrorCode.AUTH_ERROR, False
+    if "404" in msg or "not found" in msg:
+        return ErrorCode.NOT_FOUND, False
+    return ErrorCode.TRANSIENT, True

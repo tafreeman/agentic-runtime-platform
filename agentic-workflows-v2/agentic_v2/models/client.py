@@ -31,9 +31,8 @@ from datetime import datetime, timezone
 from functools import wraps
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Protocol, TypeVar
 
-from tools.core.errors import ErrorCode, classify_error
-
 if TYPE_CHECKING:
+    from ..core.errors import ErrorCode
     from ..middleware.response_sanitizer import ResponseSanitizer
     from ..middleware.sanitization import SanitizationMiddleware
 
@@ -105,6 +104,7 @@ def retry_with_jitter(
                     if attempt >= max_retries - 1:
                         break
 
+                    from ..core.errors import ErrorCode, classify_error
                     code, should_retry = classify_error(str(e))
                     if not should_retry:
                         raise e  # Permanent error, do not retry
