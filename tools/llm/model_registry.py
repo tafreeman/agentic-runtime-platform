@@ -624,12 +624,12 @@ REGISTRY: dict[str, ProviderEntry] = {
     },
 
     # ── OpenAI Direct ─────────────────────────────────────────────────────────
-    # Model listing works; completions blocked — project quota exhausted
+    # Model listing works; completions blocked until billing/quota is configured.
     "openai": {
         "base_url": "https://api.openai.com/v1",
         "auth_env": "OPENAI_API_KEY",
         "status": "billing_needed",
-        "note": "Key valid (sk-proj-). insufficient_quota — add credits at platform.openai.com/billing.",
+        "note": "API key detected; configure billing or quota before using completions.",
         "models": [
             {"id": "gpt-4o-mini",    "capability": "chat",  "status": "billing_needed"},
             {"id": "gpt-4o",         "capability": "chat",  "status": "billing_needed"},

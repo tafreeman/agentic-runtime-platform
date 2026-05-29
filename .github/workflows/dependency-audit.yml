@@ -52,7 +52,7 @@ jobs:
         run: |
           pip install "."
           pip install -e "agentic-workflows-v2/[dev,server,langchain]"
-          pip install "agentic-v2-eval[dev]"
+          pip install -e "agentic-v2-eval[dev]"
 
       - name: Run pip-audit (fail on HIGH/CRITICAL)
         # Scans the full shared environment that covers all three packages.
@@ -66,6 +66,7 @@ jobs:
         # The Python script below reads the JSON and exits 1 if any
         # vulnerability has CVSS >= 7.0 (HIGH) or has no reported score.
         run: |
+          set +e
           pip-audit \
             --strict \
             --skip-editable \
@@ -74,6 +75,7 @@ jobs:
             --desc on \
             --output audit-results.json \
           ; AUDIT_EXIT=$?
+          set -e
 
           python - <<'PYEOF'
           import json, sys
