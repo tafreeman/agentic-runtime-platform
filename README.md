@@ -227,7 +227,7 @@ agentic-runtime-platform/
 - **Rubric-based evaluation** with YAML-defined criteria and LLM-as-judge
 - **Zero-credential dev mode**: Run all tests and workflows without API keys
 - **Type-safe interfaces**: Full Pydantic v2 contracts; `mypy --strict` is enforced for `agentic-v2-eval`, with broader runtime coverage in progress
-- **Production-ready**: Pre-commit hooks (black, ruff, mypy for `agentic-v2-eval`), 100+ tests, 80%+ coverage
+- **Production-ready core**: The DAG executor, model router, and evaluation framework are hardened with pre-commit hooks (black, ruff, mypy for `agentic-v2-eval`), 100+ tests, and 80%+ coverage. RAG, Redis state, and some provider adapters are explicitly in-progress — see [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
 - **Rate limiting + 401 throttle**: `slowapi` global limiter (`AGENTIC_RATE_LIMIT_DEFAULT`, default `60/minute`); per-IP sliding-window lockout after repeated auth failures (`AGENTIC_AUTH_LOCKOUT_THRESHOLD`, `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS`, `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS`)
 - **DAG executor timeout watchdog**: pass `timeout=` to the executor; in-flight tasks are cancelled structurally, downstream steps are cascade-skipped, and a `dag.timeout_exceeded` OTEL span attribute is emitted
 
