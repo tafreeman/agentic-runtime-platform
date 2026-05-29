@@ -51,8 +51,8 @@ jobs:
         # that import from `tools.*` resolve correctly.
         run: |
           pip install "."
-          pip install -e "agentic-workflows-v2/[dev,server,langchain]"
-          pip install -e "agentic-v2-eval[dev]"
+          pip install "agentic-workflows-v2/[dev,server,langchain]"
+          pip install "agentic-v2-eval[dev]"
 
       - name: Run pip-audit (fail on HIGH/CRITICAL)
         # Scans the full shared environment that covers all three packages.
@@ -154,9 +154,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pip-audit-results
-          path: audit-results.json
+          path: |
+            audit-results.json
+            **/audit-results.json
           retention-days: 30
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   npm-audit:
     name: npm audit (UI)
