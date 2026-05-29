@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![Coverage gate: 80%+](https://img.shields.io/badge/coverage%20gate-80%25%2B-brightgreen.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
+[![Coverage gate: 80%+ (core)](https://img.shields.io/badge/coverage%20gate-80%25%2B%20core-brightgreen.svg)](docs/KNOWN_LIMITATIONS.md#12-the-80-coverage-gate-scopes-out-optional-providerplugin-surfaces)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-MkDocs-blue.svg)](https://tafreeman.github.io/agentic-runtime-platform/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
