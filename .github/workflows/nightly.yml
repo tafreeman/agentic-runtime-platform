@@ -58,6 +58,10 @@ jobs:
       # (shell syntax error, OOM, setup-node failure) leaves a detectable
       # value rather than an empty string that Number(...) would silently
       # coerce to 0 -> fake green record.
+      # continue-on-error: true — this step is a flake-rate SENSOR, not a
+      # release gate. Individual run failures are expected and counted; the
+      # real gate is the 0.5% rolling threshold enforced by flake-gate.ts in
+      # the next step, which DOES fail the job if the rate is exceeded.
       - name: Run streaming E2E 50x
         id: run50
         continue-on-error: true
