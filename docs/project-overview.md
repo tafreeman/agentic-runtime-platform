@@ -117,7 +117,7 @@ The monorepo is organized as a **uv workspace** with four packages occupying dis
 
 **Fail-closed security.** The sanitization middleware pipeline returns HTTP 400 on any unhandled exception rather than passing unvalidated content. Tool operations default to DENY without explicit configuration. Subprocess environments are scrubbed of API keys before any shell or git tool invocation.
 
-**Zero-credential development.** `AGENTIC_NO_LLM=1` installs a deterministic placeholder at both engine chokepoints, allowing full end-to-end execution and all 379 tests to pass without provider credentials. CI runs exclusively in this mode.
+**Zero-credential development.** `AGENTIC_NO_LLM=1` installs a deterministic placeholder at both engine chokepoints, allowing full end-to-end execution and all 2,595 tests to pass without provider credentials. CI runs exclusively in this mode.
 
 ---
 

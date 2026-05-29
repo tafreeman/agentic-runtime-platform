@@ -29,7 +29,7 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 | **Tiered Model Router** | Health-weighted selection across 8+ providers with adaptive cooldowns and circuit breakers — no single-provider lock-in |
 | **Evaluation Framework** | YAML-defined rubrics, multidimensional scoring (S/A/B/C/D/F tiers), LLM-as-judge integration for subjective quality |
 | **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, token usage tracking, historical runs |
-| **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — all 379 tests pass without API keys |
+| **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — all 2,595 tests pass without API keys |
 
 ## Quick Start
 

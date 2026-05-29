@@ -103,7 +103,7 @@ The React 19 SPA streams workflow execution events over WebSocket. DAG nodes ani
 
 ### Zero-credential development mode
 
-`AGENTIC_NO_LLM=1` installs a deterministic placeholder at both engine chokepoints. Native and LangGraph engines both run end-to-end without provider credentials. All 379 tests pass in this mode; CI runs exclusively in it. Federal-friendly by default.
+`AGENTIC_NO_LLM=1` installs a deterministic placeholder at both engine chokepoints. Native and LangGraph engines both run end-to-end without provider credentials. All 2,595 tests pass in this mode; CI runs exclusively in it. Federal-friendly by default.
 
 ### Windows-first support
 
@@ -121,7 +121,7 @@ The runtime and all tooling are validated on Windows in CI. `scripts/setup-dev.p
   <div class="stat-label">Lines of Python</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">379</div>
+  <div class="stat-value">2,595</div>
   <div class="stat-label">Tests passing</div>
 </div>
 <div class="stat-item">
