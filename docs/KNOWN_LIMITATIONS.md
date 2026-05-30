@@ -24,6 +24,15 @@ Sprint 1 (S1-1) extended the schema-drift CI gate to cover six HTTP response sha
 - **Status:** Partially resolved by S1-1 (six shapes now gated). Remainder ratified as manual in [ADR-014](adr/ADR-014-pydantic-wire-format.md).
 - **Upstream fix:** Future sprint — extend gate coverage to remaining endpoint payloads.
 
+### 1.2 The 80% coverage gate scopes out optional provider/plugin surfaces
+
+The `--cov-fail-under=80` gate measures the core runtime only. By design, `[tool.coverage.run] omit` in `agentic-workflows-v2/pyproject.toml` excludes optional provider and plugin surfaces from the gated number — notably the **LangChain adapter** (`agentic_v2/langchain/*`), the **model backends/router** (`agentic_v2/models/*`), MCP integrations, and CLI/prompt scaffolding.
+
+- **Why:** These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.
+- **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure.
+- **Status:** Intentional. Documented here so the badge is not read as a whole-repo claim.
+- **Upstream fix:** Future sprint — add a separate, ungated whole-repo coverage report for visibility.
+
 ---
 
 ## 2. API quirks
