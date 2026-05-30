@@ -24,11 +24,6 @@ on:
     # Weekly scan: Monday 06:00 UTC
     - cron: "0 6 * * 1"
 
-# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   python-audit:
     name: pip-audit (Python packages)

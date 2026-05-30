@@ -3,14 +3,13 @@
 name: SBOM Generation
 
 on:
-  push:
-    branches: [main]
+  # SBOMs track released artifacts, so generate them on publish rather than on
+  # every push to main. A weekly run keeps main covered between releases.
+  release:
+    types: [published]
+  schedule:
+    - cron: "0 6 * * 1"  # Weekly Monday 06:00 UTC
   workflow_dispatch:
-
-# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   generate-sbom:
