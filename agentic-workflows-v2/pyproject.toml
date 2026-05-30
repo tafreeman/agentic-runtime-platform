@@ -151,6 +151,10 @@ omit = [
 
 [tool.coverage.report]
 fail_under = 80
+# Compare against the 2-decimal coverage value (e.g. 79.93%) rather than the
+# rounded whole-number display, so a 79.93% measurement actually fails the
+# 80% gate instead of being silently rounded up to 80% and treated as pass.
+precision = 2
 skip_empty = true
 exclude_lines = [
     "pragma: no cover",
