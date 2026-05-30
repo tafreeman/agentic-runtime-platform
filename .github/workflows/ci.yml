@@ -105,13 +105,22 @@ jobs:
           pip install -e .
           pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing]"
       - name: Run tests with coverage
+        # pytest-cov 7.x prints `FAIL Required test coverage of N% not reached`
+        # but does not propagate a non-zero exit when the test session passed,
+        # which can leave a sub-threshold coverage run inside a green CI job.
+        # We therefore collect coverage here without `--cov-fail-under` and
+        # enforce the gate explicitly in the next step via `coverage report
+        # --fail-under=80`, which is guaranteed to exit non-zero when below.
         run: |
           cd agentic-workflows-v2
           python -m pytest tests/ -q \
             -m "not integration and not slow" \
             --cov=agentic_v2 \
-            --cov-report=term-missing \
-            --cov-fail-under=80
+            --cov-report=term-missing
+      - name: Enforce 80% coverage gate
+        run: |
+          cd agentic-workflows-v2
+          python -m coverage report --fail-under=80
 
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.

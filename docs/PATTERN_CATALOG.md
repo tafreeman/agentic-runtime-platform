@@ -4,8 +4,8 @@
 
 This document is a navigational guide. For each pattern, it identifies the specific files, classes, and line numbers where the pattern is implemented. Use it to locate how a pattern works without reading the full codebase.
 
-**Source:** `docs/analysis/ml-ai-patterns-review.md` Section 8 (Agentic Patterns Inventory)
-**Last updated:** 2026-03-09 (**Note:** content frozen at this date. Epic 1-6 April 2026 changes may have drifted the file/line references below. Trust current code over this doc when mismatched.)
+**Source:** Originally derived from an internal `ml-ai-patterns-review.md` analysis (since removed from the repo). The patterns themselves are still implemented; the analysis document is no longer the canonical reference.
+**Last updated:** 2026-03-09 (**Note:** content frozen at this date. Epic 1-6 April 2026 changes may have drifted the file/line references below. Trust current code over this doc when mismatched. Some referenced workflow and prompt files have since been removed and are explicitly marked `*(removed)*`.)
 
 ---
 
