@@ -21,10 +21,10 @@ jobs:
       REGRESSION_THRESHOLD_PCT: ${{ inputs.max_regression_percent || 20 }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -148,7 +148,7 @@ jobs:
           echo "No prior benchmark-baseline artifact found. Skipping regression check for this run." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload benchmark results artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results-${{ github.run_id }}
           path: benchmark_results.json

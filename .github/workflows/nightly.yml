@@ -15,17 +15,17 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
       # Pinned to 22.12 because `--experimental-strip-types` requires >=22.6
       # and a bare "22" can resolve to 22.0-22.5 on a cold runner cache.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22.12"
           cache: "npm"
