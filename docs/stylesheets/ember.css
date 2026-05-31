@@ -36,7 +36,7 @@
   --md-primary-fg-color--light:    var(--accent-2);    /* #e8a285 */
   --md-primary-fg-color--dark:     var(--accent-press);/* #b8603f */
   --md-primary-bg-color:           var(--fg-on-accent);/* #0a0a10 */
-  --md-primary-bg-color--light:    rgba(8,8,12,0.75);
+  --md-primary-bg-color--light:    color-mix(in srgb, var(--bg) 75%, transparent);
 
   /* Accent interactive */
   --md-accent-fg-color:            var(--accent);      /* #d97757 */
@@ -50,7 +50,7 @@
   --md-typeset-kbd-color:          var(--surface-2);
   --md-typeset-kbd-border-color:   var(--border);
   --md-typeset-kbd-accent-color:   var(--fg-2);
-  --md-typeset-table-color:        rgba(217,119,87,0.05);
+  --md-typeset-table-color:        color-mix(in srgb, var(--accent) 5%, transparent);
 
   /* Code blocks */
   --md-code-bg-color:              var(--surface);     /* #101018 */
@@ -260,6 +260,8 @@
 .md-typeset table:not([class]) {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  border-collapse: separate;
+  border-spacing: 0;
   overflow: hidden;
 }
 
@@ -277,6 +279,10 @@
 .md-typeset table:not([class]) td {
   border-bottom: 1px solid var(--border);
   color: var(--fg-1);
+}
+
+.md-typeset table:not([class]) tr:last-child td {
+  border-bottom: none;
 }
 
 .md-typeset table:not([class]) tr:hover td {
@@ -413,22 +419,13 @@
 .ember-hero {
   margin: 0 0 2rem;
   padding: 2.5rem 2rem;
-  background: var(--surface);
+  background: radial-gradient(ellipse at 20% 50%, var(--accent-soft) 0%, transparent 60%), var(--surface);
   border: 1px solid var(--border);
   border-top: var(--border-accent);  /* 3px ember signal stripe */
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   position: relative;
   overflow: hidden;
-}
-
-/* Subtle background glow */
-.ember-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 20% 50%, var(--accent-soft) 0%, transparent 60%);
-  pointer-events: none;
 }
 
 .ember-hero .eyebrow {
@@ -514,9 +511,9 @@
   text-transform: uppercase;
   padding: 0.25em 0.65em;
   border-radius: var(--radius-pill);
-  background: rgba(74, 222, 128, 0.12);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
   color: var(--success);
-  border: 1px solid rgba(74, 222, 128, 0.25);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
 }
 
 .status-badge::before {
