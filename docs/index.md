@@ -5,7 +5,7 @@ hide:
   - toc
 ---
 
-<div class="ember-hero" markdown>
+<div class="ember-hero" markdown="1">
 
 <a href="https://github.com/tafreeman" class="hero-back-link">
   <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
