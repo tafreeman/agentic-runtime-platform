@@ -12,11 +12,6 @@ on:
   schedule:
     - cron: '0 2 * * 0'  # Weekly Sunday 2am UTC
 
-# Opt into Node.js 24 for JS-based actions (actions/checkout, codeql-action).
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
