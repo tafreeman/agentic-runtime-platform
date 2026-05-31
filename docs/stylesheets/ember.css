@@ -13,8 +13,12 @@
    1. Map ember tokens → MkDocs Material CSS properties
    ============================================================ */
 
-/* Slate (dark) scheme — primary surface and chrome */
-[data-md-color-scheme="slate"] {
+/* Map ember tokens → Material chrome for BOTH palette schemes.
+   The mapping is value-agnostic (it references ember tokens via var()); the
+   per-scheme values come from tokens.css — dark from :root under "slate",
+   and the Paper & Ink light values under "default". */
+[data-md-color-scheme="slate"],
+[data-md-color-scheme="default"] {
   /* Core surface */
   --md-default-bg-color:           var(--bg);          /* #08080c */
   --md-default-bg-color--light:    var(--surface);     /* #101018 */
