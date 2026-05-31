@@ -5,11 +5,31 @@ hide:
   - toc
 ---
 
+<div class="ember-hero" markdown>
+
+<a href="https://github.com/tafreeman" class="hero-back-link">
+  <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  tafreeman
+</a>
+
+<div class="eyebrow">
+  <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
+  Multi-agent orchestration platform
+</div>
+
+<span class="status-badge">Active</span>
+
 # Agentic Runtime Platform
 
-**Production-grade multi-agent AI orchestration.**
+<p class="hero-sub">Declarative YAML workflows compiled to executable DAGs. Tiered model routing across 8+ providers with circuit-breaker failover. Rubric-based LLM evaluation and live SSE/WebSocket observability.</p>
 
-Build workflows where specialized agents — Planner, Coder, Reviewer, Architect, Orchestrator — coordinate through declarative YAML definitions and execute across a DAG with full observability. Ships with circuit-breaker model routing, a full RAG pipeline, rubric-based LLM evaluation, a live React dashboard, and zero-credential development mode.
+<div class="term">
+  <span class="term-prompt">$</span>
+  <span class="term-cmd">AGENTIC_NO_LLM=1 agentic run test_deterministic --input /tmp/test-input.json</span>
+  <span class="term-comment"># zero-credential dev mode</span>
+</div>
+
+</div>
 
 [Quick Start](getting-started/quickstart.md){ .md-button .md-button--primary }
 [Architecture](ARCHITECTURE.md){ .md-button }

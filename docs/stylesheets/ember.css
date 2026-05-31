@@ -1,0 +1,628 @@
+/*
+  Agentic Runtime Platform — ember/console design system overlay
+  Imports shared brand tokens and maps them to MkDocs Material CSS custom
+  properties. This file is NON-DESTRUCTIVE: it layers on top of Material's
+  existing palette/theme; no docs page or build pipeline is changed.
+
+  Token source: docs/stylesheets/tokens.css  (single source of truth — G3)
+*/
+
+@import url("tokens.css");
+
+/* ============================================================
+   1. Map ember tokens → MkDocs Material CSS properties
+   ============================================================ */
+
+/* Map ember tokens → Material chrome for BOTH palette schemes.
+   The mapping is value-agnostic (it references ember tokens via var()); the
+   per-scheme values come from tokens.css — dark from :root under "slate",
+   and the Paper & Ink light values under "default". */
+[data-md-color-scheme="slate"],
+[data-md-color-scheme="default"] {
+  /* Core surface */
+  --md-default-bg-color:           var(--bg);          /* #08080c */
+  --md-default-bg-color--light:    var(--surface);     /* #101018 */
+  --md-default-bg-color--lighter:  var(--surface-2);   /* #16161e */
+  --md-default-bg-color--lightest: var(--surface-deep);/* #0a0a10 */
+
+  /* Foreground / text */
+  --md-default-fg-color:           var(--fg-1);        /* #ececde */
+  --md-default-fg-color--light:    var(--fg-2);        /* #8a8a82 */
+  --md-default-fg-color--lighter:  var(--fg-3);        /* #50504a */
+  --md-default-fg-color--lightest: var(--border);      /* #2c2c36 */
+
+  /* Ember accent (primary) */
+  --md-primary-fg-color:           var(--accent);      /* #d97757 */
+  --md-primary-fg-color--light:    var(--accent-2);    /* #e8a285 */
+  --md-primary-fg-color--dark:     var(--accent-press);/* #b8603f */
+  --md-primary-bg-color:           var(--fg-on-accent);/* #0a0a10 */
+  --md-primary-bg-color--light:    rgba(8,8,12,0.75);
+
+  /* Accent interactive */
+  --md-accent-fg-color:            var(--accent);      /* #d97757 */
+  --md-accent-fg-color--transparent: var(--accent-soft);
+  --md-accent-bg-color:            var(--fg-on-accent);
+
+  /* Typeset */
+  --md-typeset-a-color:            var(--accent);
+  --md-typeset-color:              var(--fg-1);
+  --md-typeset-mark-color:         var(--accent-soft);
+  --md-typeset-kbd-color:          var(--surface-2);
+  --md-typeset-kbd-border-color:   var(--border);
+  --md-typeset-kbd-accent-color:   var(--fg-2);
+  --md-typeset-table-color:        rgba(217,119,87,0.05);
+
+  /* Code blocks */
+  --md-code-bg-color:              var(--surface);     /* #101018 */
+  --md-code-hl-color:              var(--accent-soft);
+  --md-code-fg-color:              var(--fg-1);
+  --md-code-hl-keyword-color:      var(--accent);
+  --md-code-hl-string-color:       var(--accent-2);
+  --md-code-hl-comment-color:      var(--fg-3);
+  --md-code-hl-number-color:       var(--success);
+  --md-code-hl-function-color:     var(--info);
+  --md-code-hl-operator-color:     var(--fg-2);
+
+  /* Admonitions */
+  --md-admonition-fg-color:        var(--fg-1);
+  --md-admonition-bg-color:        var(--surface);
+
+  /* Feedback */
+  --md-feedback-fg-color:          var(--fg-2);
+  --md-feedback-bg-color:          var(--surface-2);
+
+  /* Footer */
+  --md-footer-bg-color:            var(--bg-deep);
+  --md-footer-bg-color--dark:      var(--bg-deep);
+  --md-footer-fg-color:            var(--fg-2);
+  --md-footer-fg-color--light:     var(--fg-3);
+  --md-footer-fg-color--lighter:   var(--border);
+}
+
+/* ============================================================
+   2. Top navigation bar — ember branded header
+   ============================================================ */
+
+.md-header {
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.md-header__title {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+}
+
+/* Signal stripe on top of header (3px ember accent bar — design token) */
+.md-header::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-brand);
+  z-index: 1;
+}
+
+/* Nav tabs */
+.md-tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.md-tabs__link {
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.md-tabs__link:hover,
+.md-tabs__link--active {
+  color: var(--accent);
+}
+
+/* ============================================================
+   3. Sidebar navigation
+   ============================================================ */
+
+.md-sidebar {
+  background: var(--bg);
+}
+
+.md-nav__title {
+  background: var(--surface);
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.md-nav__link {
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.md-nav__link:hover,
+.md-nav__link--active,
+.md-nav__link--passed {
+  color: var(--accent);
+}
+
+.md-nav__link--active {
+  font-weight: 600;
+}
+
+/* ============================================================
+   4. Content typeset — ember refinements
+   ============================================================ */
+
+.md-content {
+  background: var(--bg);
+}
+
+.md-typeset {
+  color: var(--fg-1);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: var(--lh-body);
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+  font-family: var(--font-display);
+  color: var(--fg-1);
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+}
+
+.md-typeset h1 {
+  font-size: 2.2rem;
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--lh-snug);
+  margin-bottom: 0.4rem;
+}
+
+.md-typeset h2 {
+  font-size: 1.55rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+  margin-top: 2rem;
+}
+
+.md-typeset h3 { font-size: 1.2rem; }
+.md-typeset h4 { font-size: 1rem; }
+
+.md-typeset a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+
+.md-typeset a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+/* Inline code — ember surface */
+.md-typeset code {
+  background: var(--surface);
+  color: var(--accent-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  padding: 0.12em 0.42em;
+}
+
+/* Code blocks */
+.md-typeset pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.md-typeset pre > code {
+  background: transparent;
+  border: none;
+  color: var(--fg-1);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  padding: 1rem 1.2rem;
+}
+
+/* Horizontal rule */
+.md-typeset hr {
+  border-color: var(--border);
+  margin: 2rem 0;
+}
+
+/* Tables */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--surface);
+  color: var(--fg-1);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--accent);
+}
+
+.md-typeset table:not([class]) td {
+  border-bottom: 1px solid var(--border);
+  color: var(--fg-1);
+}
+
+.md-typeset table:not([class]) tr:hover td {
+  background: var(--surface-2);
+}
+
+/* Admonitions */
+.md-typeset .admonition {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+.md-typeset .admonition-title {
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+/* Note/info admonition in ember */
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-left: 3px solid var(--accent);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-left: 3px solid var(--success);
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-left: 3px solid var(--warning);
+}
+
+.md-typeset .admonition.danger,
+.md-typeset details.danger {
+  border-left: 3px solid var(--danger);
+}
+
+/* Search */
+.md-search__form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.md-search__form:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.md-search__input {
+  background: transparent;
+  color: var(--fg-1);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.md-search__input::placeholder {
+  color: var(--fg-3);
+}
+
+/* ============================================================
+   5. Buttons — ember branded
+   ============================================================ */
+
+.md-button {
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.55em 1.2em;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.md-button:hover {
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  box-shadow: var(--shadow-glow);
+  text-decoration: none;
+}
+
+.md-button--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--fg-on-accent);
+}
+
+.md-button--primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--fg-on-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+/* ============================================================
+   6. Footer
+   ============================================================ */
+
+.md-footer {
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border);
+}
+
+.md-footer-meta {
+  background: var(--bg-deep);
+}
+
+.md-footer__link {
+  color: var(--fg-2);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.md-footer__link:hover {
+  color: var(--accent);
+}
+
+/* ============================================================
+   7. Landing page — hero block (injected via index.md HTML)
+   ============================================================ */
+
+/* Hero section wrapper */
+.ember-hero {
+  margin: 0 0 2rem;
+  padding: 2.5rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: var(--border-accent);  /* 3px ember signal stripe */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle background glow */
+.ember-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, var(--accent-soft) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.ember-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.ember-hero .eyebrow svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ember-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+  margin: 0 0 0.6rem;
+}
+
+.ember-hero .hero-sub {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--fg-2);
+  line-height: var(--lh-body);
+  max-width: 56ch;
+  margin: 0 0 1.4rem;
+}
+
+/* Terminal prompt line */
+.term {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--fg-2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.45em 0.9em;
+  margin-bottom: 1.5rem;
+}
+
+.term .term-prompt {
+  color: var(--accent);
+  user-select: none;
+}
+
+.term .term-cmd {
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+.term .term-comment {
+  color: var(--fg-3);
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  padding: 0.25em 0.65em;
+  border-radius: var(--radius-pill);
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.status-badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+/* Hero back-link */
+.hero-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--fg-3);
+  text-decoration: none;
+  border-bottom: none !important;
+  transition: color var(--dur-fast) var(--ease-out);
+  margin-bottom: 0.5rem;
+}
+
+.hero-back-link:hover {
+  color: var(--accent);
+  border-bottom: none !important;
+}
+
+/* ============================================================
+   8. Stat strip — ember variant
+   ============================================================ */
+
+.stat-strip {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-top: var(--border-accent) !important;  /* ember signal stripe */
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.stat-strip .stat-value {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-strip .stat-label {
+  color: var(--fg-2) !important;
+  opacity: 1 !important;
+}
+
+/* ============================================================
+   9. Trusted stack badges
+   ============================================================ */
+
+.trusted-stack {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.trusted-stack span {
+  background: var(--surface-2) !important;
+  border-color: var(--border) !important;
+  color: var(--fg-2) !important;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+/* ============================================================
+   10. CTA card — ember variant
+   ============================================================ */
+
+.cta-card {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-left: var(--border-accent) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.cta-card h3 {
+  color: var(--fg-1) !important;
+}
+
+.cta-card p {
+  color: var(--fg-2) !important;
+}
+
+/* ============================================================
+   11. Mobile responsiveness
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .ember-hero {
+    padding: 1.5rem 1rem;
+  }
+
+  .ember-hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .stat-strip .stat-value {
+    font-size: 1.4rem;
+  }
+}
