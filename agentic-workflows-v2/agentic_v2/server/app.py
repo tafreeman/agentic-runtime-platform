@@ -175,9 +175,10 @@ async def lifespan(app: FastAPI):
     # surfaced with a clear error instead of an obscure mid-workflow traceback.
     #
     # AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as its
-    # "selected" engine at startup.  The default is "langchain" because
-    # WorkflowRunRequest.adapter defaults to "langchain".  Set to "native" to
-    # skip the LangChain extras check (safe when LangChain is not installed).
+    # selected engine at startup. Named YAML workflow requests default to
+    # "langchain" during the migration window because WorkflowRunRequest.adapter
+    # defaults to "langchain". Set to "native" to validate and run the
+    # dependency-light DAG/Pipeline adapter instead.
     _selected_adapter = os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
     logger.info("Default adapter: %s", _selected_adapter)
     try:

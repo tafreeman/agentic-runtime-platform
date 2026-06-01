@@ -7,6 +7,7 @@
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![Coverage gate: 80%+ (core)](https://img.shields.io/badge/coverage%20gate-80%25%2B%20core-brightgreen.svg)](docs/KNOWN_LIMITATIONS.md#12-the-80-coverage-gate-scopes-out-optional-providerplugin-surfaces)
+[![Coverage visibility: whole repo](https://img.shields.io/badge/coverage%20visibility-whole%20repo-informational.svg)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-MkDocs-blue.svg)](https://tafreeman.github.io/agentic-runtime-platform/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -29,7 +30,9 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 | **Tiered Model Router** | Health-weighted selection across 8+ providers with adaptive cooldowns and circuit breakers — no single-provider lock-in |
 | **Evaluation Framework** | YAML-defined rubrics, multidimensional scoring (S/A/B/C/D/F tiers), LLM-as-judge integration for subjective quality |
 | **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, token usage tracking, historical runs |
-| **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — all 2,595 tests pass without API keys |
+| **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — the full test suite passes without API keys |
+
+**Engine defaults:** CLI, server, and dashboard requests use the LangGraph adapter (`adapter=langchain`) for named YAML workflows during the migration window. Use `--adapter native` or request `adapter: "native"` for the dependency-light native DAG/Pipeline path. Runtime-generated DAGs use the native engine by default. `AGENTIC_NO_LLM=1` changes provider calls to deterministic placeholders; it does not change engine selection.
 
 ## Quick Start
 
@@ -220,7 +223,7 @@ agentic-runtime-platform/
 
 ## Features
 
-- **Dual execution engine**: Native DAG (Kahn's algorithm) + LangGraph state machines
+- **Dual execution engine**: LangGraph for default named YAML workflow runs; native DAG/Pipeline execution for explicit `--adapter native` runs and runtime-generated DAGs
 - **8+ LLM providers**: OpenAI, Anthropic, Gemini, Azure OpenAI, Azure Foundry, GitHub Models, Ollama, local ONNX
 - **Tiered model routing** with health-weighted selection and circuit breakers
 - **Observable execution**: SSE/WebSocket streaming to React dashboard

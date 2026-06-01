@@ -31,7 +31,8 @@ The `--cov-fail-under=80` gate measures the core runtime only. By design, `[tool
 - **Why:** These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.
 - **Surface:** The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure.
 - **Status:** Intentional. Documented here so the badge is not read as a whole-repo claim.
-- **Upstream fix:** Future sprint — add a separate, ungated whole-repo coverage report for visibility.
+- **Visibility:** CI now publishes a separate ungated `whole-repo-coverage` artifact across the runtime, eval package, and shared tools using the same fast test selection without the core-only coverage omit list.
+- **Upstream fix:** Future sprint — decide whether any optional surface should move from visibility-only reporting into a blocking gate.
 
 ---
 

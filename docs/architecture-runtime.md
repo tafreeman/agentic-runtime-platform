@@ -799,7 +799,7 @@ The `compare` command is useful for verifying that the native and LangGraph engi
 
 ### Dual Execution Engine
 
-The system supports two execution engines behind a shared `ExecutionEngine` protocol. The native engine has no optional dependencies and is the default; the LangGraph engine is opt-in and provides richer LangChain ecosystem integration. This allows teams to migrate workflows incrementally and compare outputs using `agentic compare`.
+The system supports two execution engines behind a shared `ExecutionEngine` protocol. CLI, server, and dashboard requests default to the LangGraph adapter for named YAML workflows during the migration window; the native engine has no optional dependencies and is the default for runtime-generated DAG/Pipeline execution or explicit `--adapter native` runs. This allows teams to migrate workflows incrementally and compare outputs using `agentic compare`.
 
 ### Additive-Only Contracts
 

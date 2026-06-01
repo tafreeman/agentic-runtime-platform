@@ -125,7 +125,9 @@ class WorkflowRunRequest(BaseModel):
         workflow: Workflow name or YAML path to execute.
         input_data: Key-value input variables for the workflow.
         run_id: Optional user-supplied run identifier (auto-generated if None).
-        adapter: Execution adapter name (default ``"langchain"``).
+        adapter: Execution adapter name. Named YAML workflow requests default
+            to ``"langchain"``; pass ``"native"`` for the native DAG/Pipeline
+            path.
         evaluation: Optional evaluation settings for scored runs.
         execution_profile: Optional runtime execution controls.
     """
@@ -149,7 +151,7 @@ class WorkflowRunRequest(BaseModel):
 
     adapter: str = Field(
         "langchain",
-        description="Execution adapter: 'langchain' (default) or 'native'",
+        description="Execution adapter: 'langchain' (default for named YAML workflows) or 'native'",
     )
 
     @field_validator("adapter", mode="before")

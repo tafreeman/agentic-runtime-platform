@@ -107,7 +107,7 @@ The monorepo is organized as a **uv workspace** with four packages occupying dis
 
 ### Architectural Characteristics
 
-**Dual execution engine.** Every workflow YAML definition can execute through either the native DAG engine (`engine/`) or the LangGraph engine (`langchain/`). The `agentic compare` CLI command runs both engines on the same input and diffs their outputs. The `AdapterRegistry` in `adapters/registry.py` maps names (`"native"`, `"langchain"`) to `ExecutionEngine` protocol implementations.
+**Dual execution engine.** Named YAML workflows can execute through either the LangGraph engine (`adapter=langchain`) or the native DAG engine (`adapter=native`). CLI, server, and dashboard requests default to LangGraph during the migration window; runtime-generated DAGs default to the native engine. The `agentic compare` CLI command runs both engines on the same input and diffs their outputs. The `AdapterRegistry` in `adapters/registry.py` maps names (`"native"`, `"langchain"`) to `ExecutionEngine` protocol implementations.
 
 **Protocol-based abstraction.** `core/protocols.py` defines all inter-component contracts as `@runtime_checkable` protocols. Concrete implementations are registered at startup, not hard-coded. This makes the system testable with minimal mocking and allows new engine backends or agent types to be added without modifying the core.
 
@@ -117,7 +117,7 @@ The monorepo is organized as a **uv workspace** with four packages occupying dis
 
 **Fail-closed security.** The sanitization middleware pipeline returns HTTP 400 on any unhandled exception rather than passing unvalidated content. Tool operations default to DENY without explicit configuration. Subprocess environments are scrubbed of API keys before any shell or git tool invocation.
 
-**Zero-credential development.** `AGENTIC_NO_LLM=1` installs a deterministic placeholder at both engine chokepoints, allowing full end-to-end execution and all 2,595 tests to pass without provider credentials. CI runs exclusively in this mode.
+**Zero-credential development.** `AGENTIC_NO_LLM=1` installs deterministic placeholder providers at both engine chokepoints, allowing full end-to-end execution with the entire test suite passing without provider credentials. It affects provider calls only; adapter selection remains explicit (`langchain` by default for named YAML workflows, `native` for runtime-generated DAGs or `--adapter native`). CI runs exclusively in placeholder mode.
 
 ---
 

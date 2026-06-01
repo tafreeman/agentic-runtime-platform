@@ -429,7 +429,7 @@ Request body for `POST /api/run`.
 |-------|------|----------|---------|-------------|
 | `workflow` | `str` | Yes | — | Workflow name to execute |
 | `inputs` | `dict[str, Any]` | Yes | — | Workflow input key-value mapping |
-| `adapter` | `str` | No | `"native"` | Execution engine adapter key |
+| `adapter` | `str` | No | `"langchain"` | Execution engine adapter key; pass `"native"` for the dependency-light DAG/Pipeline path |
 | `run_id` | `str \| None` | No | `None` | Client-supplied UUID; auto-generated when `None` |
 
 ---
@@ -677,7 +677,6 @@ Request to capture a performance profile of a workflow execution.
 |-------|------|----------|-------------|
 | `workflow` | `str` | Yes | Workflow to profile |
 | `inputs` | `dict[str, Any]` | Yes | Workflow inputs |
-| `adapter` | `str` | No | Engine adapter (default `"native"`) |
 | `trace_depth` | `int` | No | OpenTelemetry trace depth limit |
 
 ---

@@ -1,6 +1,6 @@
 name: CI
 
-# CI: verifies Python imports + smoke tests, frontend build, ruff lint, and 80% coverage gate.
+# CI: verifies Python imports + smoke tests, frontend build, ruff lint, core coverage gate, and whole-repo coverage visibility.
 # Integration and slow tests are excluded from the fast CI pass.
 
 on:
@@ -121,6 +121,29 @@ jobs:
         run: |
           cd agentic-workflows-v2
           python -m coverage report --fail-under=80
+      - name: Report whole-repo coverage (visibility only)
+        if: success() || failure()
+        run: |
+          pip install -e "agentic-v2-eval/[dev]"
+          COVERAGE_FILE=.coverage-whole-repo python -m pytest \
+            agentic-workflows-v2/tests \
+            agentic-v2-eval/tests \
+            -q \
+            -m "not integration and not slow" \
+            --ignore=agentic-workflows-v2/tests/e2e \
+            --cov=agentic-workflows-v2/agentic_v2 \
+            --cov=agentic-v2-eval/src/agentic_v2_eval \
+            --cov=tools \
+            --cov-config=/dev/null \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage-whole-repo.xml
+      - name: Upload whole-repo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whole-repo-coverage
+          path: coverage-whole-repo.xml
+          if-no-files-found: error
 
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.

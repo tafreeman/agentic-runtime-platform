@@ -1,7 +1,7 @@
 """CLI interface for agentic workflows v2.
 
 Commands:
-- agentic run <workflow> --input <file.json>  - Run a workflow via LangChain engine
+- agentic run <workflow> --input <file.json>  - Run a named YAML workflow via the default LangGraph adapter
 - agentic compare <workflow> --input <file>   - Compare adapters side by side
 - agentic list workflows|agents|tools         - List available components
 - agentic validate <workflow>                 - Validate a workflow definition
@@ -71,7 +71,7 @@ except ImportError:
 # Create CLI app
 app = typer.Typer(
     name="agentic",
-    help="Agentic Workflows V2 - LangChain/LangGraph workflow orchestration",
+    help="Agentic Workflows V2 - YAML workflows default to LangGraph; pass --adapter native for the native DAG engine",
     add_completion=False,
 )
 
@@ -143,7 +143,7 @@ def run(
         "langchain",
         "--adapter",
         "-a",
-        help="Execution adapter: 'langchain' (default) or 'native'",
+        help="Execution adapter: 'langchain' (default for named YAML workflows) or 'native' (dependency-light DAG/Pipeline path)",
     ),
 ):
     """Execute a workflow from a YAML definition.
@@ -373,11 +373,11 @@ def orchestrate(
 ):
     """Dynamically generate and execute a workflow from a task description.
 
-    Note: Dynamic orchestration is not yet available in the LangChain engine.
-    Use 'agentic run <workflow>' to run a YAML-defined workflow.
+    Note: Dynamic orchestration is not exposed through the default LangGraph
+    workflow path yet. Use 'agentic run <workflow>' for YAML-defined workflows.
     """
     console.print(
-        "[yellow]Dynamic Orchestration is not yet implemented in the LangChain engine.[/yellow]"
+        "[yellow]Dynamic orchestration is not exposed through the default LangGraph workflow path yet.[/yellow]"
     )
     console.print(
         "Use [bold]agentic run <workflow>[/bold] to run a YAML-defined workflow "

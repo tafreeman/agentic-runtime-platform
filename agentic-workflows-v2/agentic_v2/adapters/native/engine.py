@@ -2,8 +2,10 @@
 
 :class:`NativeEngine` satisfies the :class:`ExecutionEngine` protocol
 by delegating to the existing ``engine/`` executors based on the
-workflow type.  This is the default adapter when no external engine
-(e.g. LangChain) is needed.
+workflow type.  This is the default adapter for runtime-generated DAG
+and Pipeline execution; named YAML workflows default to the LangGraph
+adapter in CLI/server requests unless ``--adapter native`` or
+``adapter="native"`` is supplied.
 
 Additionally satisfies :class:`SupportsCheckpointing` (via structural
 subtyping) when constructed with a ``checkpoint_db_path``.  Checkpoint
