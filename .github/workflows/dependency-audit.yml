@@ -24,20 +24,15 @@ on:
     # Weekly scan: Monday 06:00 UTC
     - cron: "0 6 * * 1"
 
-# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   python-audit:
     name: pip-audit (Python packages)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -173,7 +168,7 @@ jobs:
 
       - name: Upload audit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pip-audit-results
           # Glob (not a literal path) so the artifact is captured wherever the
@@ -195,10 +190,10 @@ jobs:
     name: npm audit (UI)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"

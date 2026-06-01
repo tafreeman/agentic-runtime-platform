@@ -1,6 +1,6 @@
 name: CI
 
-# CI: verifies Python imports + smoke tests, frontend build, ruff lint, core coverage gate, and whole-repo coverage visibility.
+# CI: verifies Python imports + smoke tests, frontend build, ruff lint, and 80% coverage gate.
 # Integration and slow tests are excluded from the fast CI pass.
 
 on:
@@ -9,18 +9,13 @@ on:
   pull_request:
     branches: [main, agenticv2]
 
-# Opt into Node.js 24 for JS-based actions (actions/checkout, setup-python).
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   python-smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install packages
@@ -48,9 +43,9 @@ jobs:
   frontend-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
@@ -64,9 +59,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install packages
@@ -91,9 +86,9 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install packages
@@ -158,13 +153,13 @@ jobs:
     # working tree no longer matches what's checked in.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
@@ -217,13 +212,13 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
@@ -246,7 +241,7 @@ jobs:
           npm run test:e2e:5x
       - name: Upload Playwright artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-artifacts
           path: |
@@ -261,9 +256,9 @@ jobs:
     # Contributors without provider credentials can use this job as their local CI baseline.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install packages
@@ -298,3 +293,62 @@ jobs:
             -m "not integration and not slow" \
             --ignore=tests/e2e \
             -x --timeout=120 2>&1 | tail -30
+
+  # ── Documentation & schema quality gates (merged from doc-drift.yml) ──────
+  # Cheap, high-signal checks; each completes in well under 30s on a warm runner.
+  validate-workflows:
+    name: Validate workflow YAMLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml jsonschema
+      - name: Validate workflow YAML definitions
+        run: python scripts/validate-workflows.py
+
+  check-doc-drift:
+    name: Protocol ↔ ARCHITECTURE.md drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check protocol names appear in ARCHITECTURE.md
+        run: python scripts/check-doc-drift.py
+
+  pydocstyle:
+    name: pydocstyle (core + contracts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pydocstyle
+        run: |
+          python -m pip install --upgrade pip
+          pip install pydocstyle
+      - name: Run pydocstyle on core/
+        run: |
+          pydocstyle \
+            --convention=google \
+            --add-ignore=D100,D104 \
+            agentic-workflows-v2/agentic_v2/core/
+      - name: Run pydocstyle on contracts/
+        # D101: missing docstring in public class — Pydantic model classes
+        # routinely skip class-level docstrings in favour of field-level
+        # documentation.  Enforce only function/method docstrings here.
+        run: |
+          pydocstyle \
+            --convention=google \
+            --add-ignore=D100,D101,D104 \
+            agentic-workflows-v2/agentic_v2/contracts/

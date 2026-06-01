@@ -12,11 +12,6 @@ on:
       - 'agentic-workflows-v2/ui/package.json'
       - 'agentic-workflows-v2/ui/package-lock.json'
 
-# Opt into Node.js 24 for JS-based actions.
-# The Node 20 default is being removed from runners on 2026-09-16.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   validate-devcontainer:
     name: Build and test devcontainer
@@ -25,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build and smoke test devcontainer
         uses: devcontainers/ci@v0.3

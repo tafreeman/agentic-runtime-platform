@@ -47,6 +47,8 @@ theme:
     code: JetBrains Mono
 
 extra_css:
+  - stylesheets/tokens.css
+  - stylesheets/ember.css
   - stylesheets/extra.css
 
 # Files excluded from the built site (gitignore-style patterns relative to docs/).
@@ -74,8 +76,9 @@ plugins:
   - social:
       cards: !ENV [CARDS, true]
       cards_layout_options:
-        background_color: "#1a1f2e"
-        color: "#ffffff"
+        background_color: "#08080c"
+        color: "#ececde"
+        font_family: "JetBrains Mono"
 
 markdown_extensions:
   - pymdownx.superfences:
@@ -183,22 +186,8 @@ nav:
 
 extra:
   generator: false
-  analytics:
-    provider: google
-    property: G-XXXXXXXXXX
-    feedback:
-      title: Was this page helpful?
-      ratings:
-        - icon: material/emoticon-happy-outline
-          name: Helpful
-          data: 1
-          note: Thanks for the feedback.
-        - icon: material/emoticon-sad-outline
-          name: Could be improved
-          data: 0
-          note: >-
-            Please let us know how we can improve this page by opening an
-            <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new" target="_blank" rel="noopener">issue</a>.
+  # analytics block removed — placeholder G-XXXXXXXXXX was sending to no real
+  # property. Re-add with a valid measurement ID when ready.
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/tafreeman/agentic-runtime-platform
