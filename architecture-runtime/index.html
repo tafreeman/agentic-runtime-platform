@@ -5503,7 +5503,7 @@
 <hr />
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <h3 id="dual-execution-engine">Dual Execution Engine<a class="headerlink" href="#dual-execution-engine" title="Permanent link">&para;</a></h3>
-<p>The system supports two execution engines behind a shared <code>ExecutionEngine</code> protocol. The native engine has no optional dependencies and is the default; the LangGraph engine is opt-in and provides richer LangChain ecosystem integration. This allows teams to migrate workflows incrementally and compare outputs using <code>agentic compare</code>.</p>
+<p>The system supports two execution engines behind a shared <code>ExecutionEngine</code> protocol. CLI, server, and dashboard requests default to the LangGraph adapter for named YAML workflows during the migration window; the native engine has no optional dependencies and is the default for runtime-generated DAG/Pipeline execution or explicit <code>--adapter native</code> runs. This allows teams to migrate workflows incrementally and compare outputs using <code>agentic compare</code>.</p>
 <h3 id="additive-only-contracts">Additive-Only Contracts<a class="headerlink" href="#additive-only-contracts" title="Permanent link">&para;</a></h3>
 <p>All Pydantic models in <code>contracts/</code> follow an additive-only policy. Fields are never removed or renamed in ways that break existing serialised data (JSON run logs) or running clients. New fields are added as <code>Optional</code> with defaults. This policy protects filesystem-persisted run logs from becoming unreadable after upgrades.</p>
 <h3 id="deny-by-default-tool-safety">DENY-by-Default Tool Safety<a class="headerlink" href="#deny-by-default-tool-safety" title="Permanent link">&para;</a></h3>
@@ -5650,7 +5650,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 1, 2026 06:54:03 UTC">June 1, 2026</span>
   </span>
 
     
