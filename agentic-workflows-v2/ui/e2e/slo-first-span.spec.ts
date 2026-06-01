@@ -9,7 +9,7 @@ test.describe.serial('SLO: time-to-first-span p95 <= 2s', () => {
     const t0 = Date.now();
     await page.getByRole('link', { name: /workflows/i }).click();
     await page.getByRole('link', { name: /code_review/i }).click();
-    await page.getByRole('button', { name: /run/i }).click();
+    await page.getByTestId('run-button').click();
 
     // Wait for first DAG node render
     await expect(page.locator('[data-testid^="dag-node-"]').first()).toBeVisible();
