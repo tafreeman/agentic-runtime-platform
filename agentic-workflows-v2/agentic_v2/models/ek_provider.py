@@ -151,9 +151,16 @@ class SmartRouterProvider:
         temperature: float | None = None,
         max_tokens: int | None = None,
         tools: Sequence[dict[str, Any]] | None = None,
+        model: str | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
         """Route a chat completion through the hardened router, return EK type.
+
+        When ``model`` is provided it bypasses tier-based router selection and
+        the request is attempted against that exact model only — the fallback
+        loop does not re-select other tier candidates, so a forced model that
+        fails surfaces its error rather than silently routing elsewhere
+        (preserving the legacy ``complete(model=...)`` override contract).
 
         Runs a bounded fallback loop (``_MAX_FALLBACK_TRIES``) mirroring the
         legacy ``call_with_fallback`` sequence so failover + circuit-breaking
@@ -180,28 +187,32 @@ class SmartRouterProvider:
         last_error: Exception | None = None
 
         for _ in range(_MAX_FALLBACK_TRIES):
-            model = self.router.get_model_for_tier(self.tier)
-            if model is None:
+            # An explicit ``model`` override bypasses tier selection and is
+            # attempted as-is; without one we ask the router for the tier's
+            # current best candidate.
+            current_model = model or self.router.get_model_for_tier(self.tier)
+            if current_model is None:
                 # No model for this tier (AGENTIC_NO_LLM single-tier miss, or
                 # cross-tier disabled). Surface as an EK ProviderError so EK
                 # callers see a contract-typed failure.
                 break
-            if model in tried:
-                # Router re-selected an already-attempted model: every healthy
-                # candidate is exhausted for this loop.
+            if current_model in tried:
+                # Router re-selected an already-attempted model (or the forced
+                # override was already tried): every healthy candidate is
+                # exhausted for this loop.
                 break
-            tried.append(model)
+            tried.append(current_model)
 
             # Honour the same bulkhead/probe readiness gate the legacy loop
             # uses so we do not pile onto a saturated provider or race a
             # HALF_OPEN probe.
-            if not self.router._is_model_ready_for_attempt(model):
+            if not self.router._is_model_ready_for_attempt(current_model):
                 continue
 
             start_mono = time.monotonic()
             try:
                 raw = await self._call_backend(
-                    model,
+                    current_model,
                     chat_messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
@@ -212,7 +223,7 @@ class SmartRouterProvider:
                 # Fire circuit-breaker bookkeeping EXACTLY once for this
                 # physical call (rate-limit headers, cooldown, permanent
                 # marking all happen here).
-                self.router._classify_and_record_error(model, exc)
+                self.router._classify_and_record_error(current_model, exc)
                 last_error = exc
                 translated = self._translate_error(exc)
                 if translated is not None:
@@ -226,7 +237,7 @@ class SmartRouterProvider:
 
             latency_ms = (time.monotonic() - start_mono) * 1000.0
             # Success bookkeeping fires EXACTLY once for this physical call.
-            self.router.record_success(model, latency_ms)
+            self.router.record_success(current_model, latency_ms)
             return ek_adapters.dict_to_llm_response(raw)
 
         raise ProviderError(

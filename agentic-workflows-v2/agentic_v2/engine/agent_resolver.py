@@ -292,9 +292,11 @@ def _make_llm_step(
                         max_observation_chars=MAX_TOOL_RESULT_CHARS,
                     )
                 )
-                parsed = parse_sentinel_output(
-                    response, expected_output_keys
-                ) or parse_llm_json_output(response, expected_output_keys)
+                parsed = (
+                    parse_sentinel_output(response, expected_output_keys)
+                    or parse_llm_json_output(response, expected_output_keys)
+                    or {}
+                )
                 parsed["_meta"] = {
                     "model_used": model_used,
                     "tokens_used": tokens_used,
