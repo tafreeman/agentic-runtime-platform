@@ -5,7 +5,6 @@ from typing import Any, Optional
 from unittest.mock import AsyncMock
 
 import pytest
-from agentic_v2.core.errors import NoProviderConfiguredError
 from agentic_v2.contracts.messages import StepStatus, WorkflowResult
 from agentic_v2.engine.context import ExecutionContext
 from agentic_v2.engine.dag import DAG
@@ -114,8 +113,8 @@ class TestCrossTierDegradation:
             for _ in range(5):
                 stats.record_failure("test")
 
-        with pytest.raises(NoProviderConfiguredError):
-            router.get_model_for_tier(ModelTier.TIER_2)
+        model = router.get_model_for_tier(ModelTier.TIER_2)
+        assert model is None
 
     def test_tier_0_never_auto_selected(self) -> None:
         """TIER_0 (deterministic, no LLM) is never a degradation target."""

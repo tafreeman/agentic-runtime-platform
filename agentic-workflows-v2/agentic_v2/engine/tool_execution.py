@@ -328,11 +328,12 @@ async def complete_chat_with_fallback(
         raise RuntimeError("No LLM backend configured")
 
     # ADR-023 Phase 6a: flag-gated EK delegation of the inner completion turn.
-    # DEFAULT OFF — when AGENTIC_EK_PROVIDER is unset/false the legacy fallback
-    # loop below runs byte-for-byte. When on, the plain-completion turn is
-    # routed through EK ``_TrackedProvider`` / ``checked_complete`` over a
-    # ``SmartRouterProvider`` (budget-checked, retry-wrapped, truncation-tracked),
-    # with the runtime ``TokenBudget`` token-sum ceiling enforced FIRST. The
+    # DEFAULT OFF — when AGENTIC_EK_PROVIDER is unset/false the call delegates to
+    # ``client.complete_chat`` (router-based fallback + budget tracking) exactly
+    # as before. When on, the plain-completion turn is routed through EK
+    # ``_TrackedProvider`` / ``checked_complete`` over a ``SmartRouterProvider``
+    # (budget-checked, retry-wrapped, truncation-tracked), with the runtime
+    # ``TokenBudget`` token-sum ceiling enforced FIRST. The
     # ``(response_dict, model, tokens)`` contract is preserved so the caller's
     # downstream parsing and ReviewStatus.normalize (DAG layer) are unchanged.
     from ..settings import get_settings
@@ -354,48 +355,12 @@ async def complete_chat_with_fallback(
             metadata={},
         )
 
-    tried: list[str] = []
-    last_error: Exception | None = None
-
-    for _ in range(6):
-        model = client.router.get_model_for_tier(tier)
-        if model is None or model in tried:
-            break
-        tried.append(model)
-
-        start = time.perf_counter()
-        try:
-            async with client.router.execute_with_bulkhead(model):
-                response = await client.backend.complete_chat(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    tools=tools,
-                )
-
-            latency_ms = (time.perf_counter() - start) * 1000
-            client.router.record_success(model, latency_ms)
-
-            tokens_used = extract_usage_tokens(response.get("usage"))
-            if tokens_used <= 0:
-                tokens_used = client.backend.count_tokens(
-                    messages_to_text(messages) + str(response.get("content", "")),
-                    model,
-                )
-            if getattr(client, "budget", None):
-                client.budget.consume(tokens_used)
-
-            return response, model, int(tokens_used)
-
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            last_error = exc
-            _classify_router_error(client.router, model, exc)
-            logger.warning("Model %s failed during chat completion: %s", model, exc)
-
-    raise RuntimeError(
-        f"All chat models failed. Tried: {tried}. Last error: {last_error}"
+    return await client.complete_chat(
+        messages=messages,
+        tier=tier,
+        max_retries=6,
+        tools=tools,
+        max_tokens=max_tokens,
     )
 
 

@@ -15,7 +15,6 @@ from agentic_v2.langchain import load_workflow_config
 from agentic_v2.langchain.config import InputConfig, OutputConfig, WorkflowConfig
 from agentic_v2.server import execution as execution_mod
 from agentic_v2.server import result_normalization
-from agentic_v2.server.app import create_app
 from tests._server_test_helpers import FAKE_TENANT, make_configured_app
 from agentic_v2.server.evaluation import (
     adapt_sample_to_workflow_inputs,

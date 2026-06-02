@@ -535,18 +535,6 @@ class WorkflowResult(BaseModel):
         """Count total retry attempts across all steps."""
         return sum(step.retry_count for step in self.steps)
 
-    @computed_field
-    @property
-    def run_id(self) -> str:
-        """Alias for workflow_id — the unique run identifier.
-
-        Additive field: callers that already use ``workflow_id`` are unaffected.
-        New callers (e.g. the WorkflowRunner test suite) may use this shorter
-        name to retrieve the run identifier that was used as the LangGraph
-        checkpoint thread id.
-        """
-        return self.workflow_id
-
     def add_step(self, step: StepResult) -> None:
         """Add a step result to the workflow.
 

@@ -51,16 +51,6 @@ logger = logging.getLogger(__name__)
 # count_tokens remain behavior-identical.
 __all_reexports__ = ("LLMBackend",)
 
-    async def complete_chat(
-        self,
-        model: str,
-        messages: list[dict[str, Any]],
-        tools: list[dict[str, Any]] | None = None,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
-        """Send chat completion request."""
-        ...
-
 
 T = TypeVar("T")
 

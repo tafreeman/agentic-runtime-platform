@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from tests._server_test_helpers import make_configured_app  # noqa: F401 (re-exported)
+from tests._server_test_helpers import make_configured_app
 
 
 @pytest.fixture()

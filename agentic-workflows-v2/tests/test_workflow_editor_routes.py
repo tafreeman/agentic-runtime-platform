@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import yaml
 from agentic_v2.langchain import config as lc_config
-from agentic_v2.server.app import create_app
 from agentic_v2.server.routes import workflows
 from fastapi.testclient import TestClient
 from tests._server_test_helpers import make_configured_app
