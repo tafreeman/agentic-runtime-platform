@@ -179,6 +179,58 @@ async def test_tools_forwarded_to_backend() -> None:
 
 
 # ---------------------------------------------------------------------------
+# model= override (ADR-023 review): bypasses tier selection, no silent fallback
+# ---------------------------------------------------------------------------
+
+
+async def test_model_override_bypasses_tier_selection() -> None:
+    """An explicit ``model=`` is attempted as-is, not the tier's default pick."""
+    # Tier default (first in chain) is the openai model; we force the second.
+    chain = ("openai:gpt-4o-mini", "anthropic:claude-3-5-haiku-20241022")
+    router = _router_with(chain, _TIER)
+    backend = _FakeBackend(
+        [{"content": "forced", "tool_calls": None, "finish_reason": "stop"}]
+    )
+    provider = SmartRouterProvider(router, backend, _TIER)
+
+    override = "anthropic:claude-3-5-haiku-20241022"
+    resp = await provider.complete(_MESSAGES, model=override)
+
+    assert resp.content == "forced"
+    # The forced model served the call; the tier default was never touched.
+    assert len(backend.calls) == 1
+    assert backend.calls[0]["model"] == override
+    assert router.model_stats[override].success_count == 1
+    # The tier default was never selected, so its stats were never created
+    # (model_stats entries are populated lazily on first use).
+    assert "openai:gpt-4o-mini" not in router.model_stats
+
+
+async def test_model_override_does_not_fall_back_on_failure() -> None:
+    """A forced model that fails surfaces its error — no tier-candidate swap."""
+    chain = ("openai:gpt-4o-mini", "anthropic:claude-3-5-haiku-20241022")
+    router = _router_with(chain, _TIER)
+    # Non-HTTP error normally falls through to the next candidate; with a
+    # forced model the loop re-selects it, finds it in ``tried``, and breaks —
+    # so the tier's other model is never reached.
+    backend = _FakeBackend(
+        [
+            TimeoutError("connection timeout"),
+            {"content": "unreached", "tool_calls": None, "finish_reason": "stop"},
+        ]
+    )
+    provider = SmartRouterProvider(router, backend, _TIER)
+
+    override = "anthropic:claude-3-5-haiku-20241022"
+    with pytest.raises(ProviderError):
+        await provider.complete(_MESSAGES, model=override)
+
+    assert len(backend.calls) == 1  # exactly one physical call — the override
+    assert backend.calls[0]["model"] == override
+    assert router.model_stats[override].failure_count == 1
+
+
+# ---------------------------------------------------------------------------
 # HTTP error translation -> EK error classes (RetryConfig-recognisable)
 # ---------------------------------------------------------------------------
 

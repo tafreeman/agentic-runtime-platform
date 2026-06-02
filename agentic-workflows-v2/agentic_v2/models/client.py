@@ -331,7 +331,7 @@ class LLMClientWrapper:
 
         if get_settings().agentic_ek_provider:
             return await self._complete_via_ek(
-                prompt, tier, use_cache=use_cache, **kwargs
+                prompt, tier, use_cache=use_cache, model=model, **kwargs
             )
 
         # --- DEPRECATED: legacy text-only complete() path (ADR-023) ---
@@ -443,6 +443,7 @@ class LLMClientWrapper:
         prompt: str,
         tier: ModelTier,
         use_cache: bool = True,
+        model: str | None = None,
         **kwargs: Any,
     ) -> tuple[str, str, int]:
         """ADR-023 Phase 5b EK provider path for :meth:`complete`.
@@ -478,8 +479,10 @@ class LLMClientWrapper:
         if self.backend is None:
             raise RuntimeError("No LLM backend configured")
 
-        # 1. Cache lookup (short-circuit). Same key as the legacy path.
-        cache_key = self._cache_key(prompt, tier, **kwargs)
+        # 1. Cache lookup (short-circuit). Same key as the legacy path —
+        # scoped by the model override so a forced model never reads a cache
+        # entry served by the tier default (mirrors the legacy path).
+        cache_key = self._cache_key(prompt, tier, model=model, **kwargs)
         if use_cache and self.enable_cache:
             cached = self._get_cached(cache_key)
             if cached:
@@ -505,7 +508,7 @@ class LLMClientWrapper:
         # 3. Route through the EK provider shim (reliability lives here).
         messages = [{"role": "user", "content": effective_prompt}]
         provider = SmartRouterProvider(self.router, self.backend, tier)
-        response = await provider.complete(messages, **kwargs)
+        response = await provider.complete(messages, model=model, **kwargs)
 
         content = response.content
         total_tokens = response.total_tokens
@@ -529,7 +532,7 @@ class LLMClientWrapper:
         if isinstance(raw, dict):
             model_used = str(raw.get("model") or "")
         if not model_used:
-            model_used = self.router.get_model_for_tier(tier) or ""
+            model_used = model or self.router.get_model_for_tier(tier) or ""
 
         # 6. Cache store.
         if use_cache:

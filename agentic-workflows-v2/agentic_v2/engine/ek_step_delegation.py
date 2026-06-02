@@ -246,10 +246,15 @@ async def structured_via_ek(
     runtime ``ReviewStatus.normalize`` is intentionally NOT applied here — it
     still runs at the DAG/gating layer afterward.
 
+    The runtime ``TokenBudget`` token-sum ceiling is enforced *eagerly* inside
+    :class:`BudgetEnforcingProvider` — every physical turn consumes its tokens
+    and raises ``BudgetExhaustedError`` on cap BEFORE the next retry, matching
+    the eager precedence used by :func:`complete_turn_via_ek` /
+    :func:`run_tool_loop_via_ek` (no token leak when ``structured`` ultimately
+    raises ``PatternError``, no wasted retries once the budget is exhausted).
     ``structured`` owns its own ``CostTracker`` internally; we fold its reported
     usage into the caller's shared ``tracker`` via ``add_usage`` so the step's
-    cumulative ledger stays accurate, then enforce the runtime ``TokenBudget``
-    token-sum ceiling FIRST (raising ``BudgetExhaustedError`` on cap).
+    cumulative ledger stays accurate.
 
     Returns:
         A ``(value, tokens_used)`` tuple where ``value`` is the parsed JSON
@@ -260,7 +265,7 @@ async def structured_via_ek(
         PatternError: When EK could not produce valid structured output.
     """
     provider = BudgetEnforcingProvider(
-        SmartRouterProvider(router, backend, tier), budget=None
+        SmartRouterProvider(router, backend, tier), budget=budget
     )
     result = await ek_structured(
         provider,
@@ -270,11 +275,6 @@ async def structured_via_ek(
     )
     tokens_used = result.cost.input_tokens + result.cost.output_tokens
     tracker.add_usage(result.cost)
-
-    if budget is not None and not budget.consume(tokens_used):
-        raise BudgetExhaustedError(
-            f"Token budget exhausted: {budget.used_tokens}/{budget.max_tokens}",
-        )
     return result.value, int(tokens_used)
 
 
