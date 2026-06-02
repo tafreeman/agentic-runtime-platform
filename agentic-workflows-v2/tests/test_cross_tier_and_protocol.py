@@ -90,9 +90,18 @@ class TestCrossTierDegradation:
         model = router.get_model_for_tier(ModelTier.TIER_2)
         assert model in ("anthropic:claude-3-sonnet", "anthropic:claude-3-opus")
 
-    def test_all_tiers_exhausted_raises_no_provider(self, monkeypatch) -> None:
-        """When all tiers are exhausted, raise the explicit no-provider error."""
-        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+    def test_all_tiers_exhausted_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When ALL registered tiers are exhausted, return None.
+
+        Run in offline mode: with the flag unset, ``get_model_for_tier`` raises
+        ``NoProviderConfiguredError`` on a keyless box (see test_no_provider_error)
+        — a different contract. Under ``AGENTIC_NO_LLM=1`` the router degrades to
+        ``None`` on exhaustion, which is what this test asserts. Previously
+        supplied by a session-wide flag leak; now scoped here.
+        """
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
         router = SmartModelRouter()
         # Register ALL tiers with single models we control
         router.register_chain(ModelTier.TIER_1, FallbackChain(("m1:a",), "t1"))

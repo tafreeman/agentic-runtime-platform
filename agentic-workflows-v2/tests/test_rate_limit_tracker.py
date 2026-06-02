@@ -304,6 +304,26 @@ class TestRateLimitTracker:
 class TestSmartModelRouterHardening:
     """Tests for ADR-002 hardening features in SmartModelRouter."""
 
+    @pytest.fixture(autouse=True)
+    def _pin_legacy_path(self, monkeypatch: pytest.MonkeyPatch):
+        """Pin the LEGACY ``wrapper.complete -> backend.complete`` path.
+
+        These tests assert legacy router/bulkhead mechanics and synchronize on
+        an ``asyncio.Event`` set inside a backend's text ``complete`` method.
+        Under an ambient ``AGENTIC_EK_PROVIDER=1`` (the ADR-023 B-2 default-on
+        condition) ``LLMClientWrapper.complete`` reroutes through the EK shim's
+        ``complete_chat`` seam, the legacy ``complete`` is never called, the
+        handshake event never fires, and the test deadlocks. Forcing the flag
+        OFF keeps the class testing the path it was written for. The EK path
+        has its own bulkhead coverage in ``tests/models/test_ek_provider_wrapper``.
+        """
+        from agentic_v2.settings import get_settings
+
+        monkeypatch.setenv("AGENTIC_EK_PROVIDER", "0")
+        get_settings.cache_clear()
+        yield
+        get_settings.cache_clear()
+
     def _make_router(self) -> SmartModelRouter:
         """Create a router with a test fallback chain."""
         router = SmartModelRouter()

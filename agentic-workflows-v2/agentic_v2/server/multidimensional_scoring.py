@@ -39,6 +39,8 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from agentic_v2.workflows.lib import ci_calculator
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -46,14 +48,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 #: Dimension names used by the multidimensional scoring engine.
-#: Previously imported from workflows.lib.ci_calculator (now removed).
-RESEARCH_DIMENSIONS: tuple[str, ...] = (
-    "coverage",
-    "source_quality",
-    "agreement",
-    "verification",
-    "recency",
-)
+#: Single source of truth: ``workflows.lib.ci_calculator`` (ADR-023 reconciliation —
+#: re-introduced from the lab fork; this module re-exports the names rather than
+#: re-declaring them). ``ci_calculator`` is pure-stdlib and imports nothing from
+#: ``server``, so there is no import cycle.
+RESEARCH_DIMENSIONS: tuple[str, ...] = ci_calculator.RESEARCH_DIMENSIONS
 
 #: CI tiebreaker weights — used ONLY inside ``coalesce()`` best-of-N ranking.
 #: Per ADR-007 §4.3 these are provisional; equal weights may be substituted.

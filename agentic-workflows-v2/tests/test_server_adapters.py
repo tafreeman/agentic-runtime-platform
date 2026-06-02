@@ -9,8 +9,8 @@ Covers:
 
 from __future__ import annotations
 
+from tests._server_test_helpers import make_configured_app
 
-from agentic_v2.server.app import create_app
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class TestGetAdapters:
 
     def test_get_adapters_returns_list(self):
         """GET /api/adapters returns a list of adapter names."""
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.get("/api/adapters")
@@ -35,7 +35,7 @@ class TestGetAdapters:
 
     def test_get_adapters_includes_native(self):
         """GET /api/adapters includes 'native' adapter."""
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.get("/api/adapters")
@@ -46,7 +46,7 @@ class TestGetAdapters:
 
     def test_get_adapters_includes_langchain(self):
         """GET /api/adapters includes 'langchain' adapter."""
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.get("/api/adapters")
@@ -110,7 +110,7 @@ class TestRunWithAdapter:
 
         monkeypatch.setattr(execution_mod, "_run_via_native_adapter", _fake_native)
 
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.post(
@@ -141,7 +141,7 @@ class TestRunWithAdapter:
 
         monkeypatch.setattr(workflows, "load_workflow_config", _mock_load_config)
 
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.post(
@@ -164,7 +164,7 @@ class TestRunWithAdapter:
 
         monkeypatch.setattr(workflows, "load_workflow_config", _mock_load_config)
 
-        app = create_app()
+        app = make_configured_app()
         client = TestClient(app)
 
         response = client.post(

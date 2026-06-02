@@ -28,9 +28,18 @@ dependencies = [
 
 [tool.uv.sources]
 agentic-tools = { workspace = true }
+# ADR-023 Option A′: single ExecutionKit dependency (editable path source).
+# EK lives outside this uv workspace; declared as an editable path-dep so the
+# runtime↔engine bridge picks up EK edits live during finishing work.
+executionkit = { path = "../../../executionkit", editable = true }
 
 
 [project.optional-dependencies]
+# ADR-023 Option A′: the ExecutionKit execution kernel (single package; the
+# `executionkit-contracts` seam is dropped). Source declared in
+# [tool.uv.sources] above. httpx (an EK [httpx] extra) is already a base
+# runtime dependency, so EK's value types + error tree import with no extra.
+ek = ["executionkit"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",

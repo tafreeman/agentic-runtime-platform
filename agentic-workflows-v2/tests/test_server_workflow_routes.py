@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests._server_test_helpers import make_configured_app
+
 from agentic_v2.server import result_normalization
 from agentic_v2.server.app import create_app
 from agentic_v2.server.routes import evaluation_routes
@@ -9,7 +11,7 @@ from fastapi.testclient import TestClient
 
 
 def test_eval_datasets_endpoint_returns_expected_shape():
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     response = client.get("/api/eval/datasets")
@@ -23,7 +25,7 @@ def test_eval_datasets_endpoint_returns_expected_shape():
 
 
 def test_run_endpoint_returns_422_when_repository_dataset_id_missing(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     # Mock load_workflow_config for this validation-path test
@@ -52,7 +54,7 @@ def test_run_endpoint_returns_422_when_repository_dataset_id_missing(monkeypatch
 
 
 def test_run_endpoint_returns_422_when_local_dataset_ref_missing(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -80,7 +82,7 @@ def test_run_endpoint_returns_422_when_local_dataset_ref_missing(monkeypatch):
 
 
 def test_eval_datasets_filtered_by_workflow(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -100,7 +102,7 @@ def test_eval_datasets_filtered_by_workflow(monkeypatch):
     monkeypatch.setattr(
         evaluation_routes,
         "list_local_datasets",
-        lambda: [
+        lambda tenant_id=None: [
             {
                 "id": "a.json",
                 "name": "A",
@@ -119,7 +121,7 @@ def test_eval_datasets_filtered_by_workflow(monkeypatch):
     )
     monkeypatch.setattr(evaluation_routes, "list_repository_datasets", lambda: [])
 
-    def _load_local(dataset_id: str, sample_index: int = 0):
+    def _load_local(dataset_id: str, sample_index: int = 0, **_kwargs):
         if dataset_id == "a.json":
             return {"code_file": "x.py"}, {"source": "local", "dataset_id": dataset_id}
         return {"prompt": ""}, {"source": "local", "dataset_id": dataset_id}
@@ -134,7 +136,7 @@ def test_eval_datasets_filtered_by_workflow(monkeypatch):
 
 
 def test_run_rejects_incompatible_dataset_422(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -155,7 +157,7 @@ def test_run_rejects_incompatible_dataset_422(monkeypatch):
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0: ({"prompt": ""}, {"source": "local"}),
+        lambda _dataset_ref, sample_index=0, **_kw: ({"prompt": ""}, {"source": "local"}),
     )
 
     response = client.post(
@@ -177,7 +179,7 @@ def test_run_rejects_incompatible_dataset_422(monkeypatch):
 
 
 def test_reject_empty_required_adapted_input(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -201,7 +203,7 @@ def test_reject_empty_required_adapted_input(monkeypatch):
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0: (
+        lambda _dataset_ref, sample_index=0, **_kw: (
             {"code_file": "x.py"},
             {"source": "local"},
         ),
@@ -231,7 +233,7 @@ def test_reject_empty_required_adapted_input(monkeypatch):
 
 
 def test_accept_empty_optional_adapted_input(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -255,7 +257,7 @@ def test_accept_empty_optional_adapted_input(monkeypatch):
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0: (
+        lambda _dataset_ref, sample_index=0, **_kw: (
             {"code_file": "x.py"},
             {"source": "local"},
         ),
@@ -284,7 +286,7 @@ def test_accept_empty_optional_adapted_input(monkeypatch):
 
 
 def test_accept_full_adapted_inputs(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -308,7 +310,7 @@ def test_accept_full_adapted_inputs(monkeypatch):
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0: (
+        lambda _dataset_ref, sample_index=0, **_kw: (
             {"code_file": "x.py"},
             {"source": "local"},
         ),
@@ -335,7 +337,7 @@ def test_accept_full_adapted_inputs(monkeypatch):
 
 
 def test_empty_request_input_does_not_override_dataset_adapted_value(monkeypatch):
-    app = create_app()
+    app = make_configured_app()
     client = TestClient(app)
 
     from agentic_v2.langchain import config
@@ -359,7 +361,7 @@ def test_empty_request_input_does_not_override_dataset_adapted_value(monkeypatch
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0: (
+        lambda _dataset_ref, sample_index=0, **_kw: (
             {"prompt": "Review this code"},
             {"source": "local"},
         ),

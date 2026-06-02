@@ -1,0 +1,7 @@
+{
+  "content": "",
+  "thinking": "The user said hello. I should greet them back and offer assistance. A simple, friendly response is appropriate here.",
+  "tool_calls": null,
+  "finish_reason": "stop",
+  "model": "qwen3:8b"
+}

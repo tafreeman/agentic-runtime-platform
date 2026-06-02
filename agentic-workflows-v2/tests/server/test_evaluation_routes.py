@@ -217,7 +217,9 @@ def _hf_datasets_available() -> bool:
 )
 def test_sample_list_humaneval_real_fetch() -> None:
     """End-to-end: pull humaneval from HuggingFace through the route."""
-    app = create_app()
+    from tests._server_test_helpers import make_configured_app
+
+    app = make_configured_app()
     client = TestClient(app)
 
     response = client.get(

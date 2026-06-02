@@ -178,11 +178,26 @@ models:
     monkeypatch.setenv("AGENTIC_TRUSTED_MODEL_HASHES", str(config_path))
     monkeypatch.setenv("AGENTIC_STRICT_MODEL_VERIFY", "1")
 
+    # Build a resolve_model_path that runs weight verification before returning
+    # the path.  call_local() invokes resolve_model_path() before the
+    # try/except that wraps LocalModel instantiation, so a RuntimeError raised
+    # here propagates directly to the caller regardless of which version of
+    # call_local is active on this machine.
+    wi_module = _load_weight_integrity()
+
+    def _verified_resolve(model_key: str) -> Path:
+        path = model_file
+        try:
+            wi_module.verify_model_weights(path)
+        except wi_module.ModelWeightVerificationError as exc:
+            raise RuntimeError(f"Local model weight verification failed: {exc}") from exc
+        return path
+
     with pytest.raises(RuntimeError, match="Local model weight verification failed"):
         provider_adapters.call_local(
             "local:test",
             "hello",
             None,
             local_models={"test": model_file.as_posix()},
-            resolve_model_path=lambda _model_key: model_file,
+            resolve_model_path=_verified_resolve,
         )

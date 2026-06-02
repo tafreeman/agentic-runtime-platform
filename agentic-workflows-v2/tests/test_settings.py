@@ -24,6 +24,9 @@ def test_settings_reads_env_vars(monkeypatch):
     monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", "/tmp/files")
     monkeypatch.setenv("OTEL_SERVICE_NAME", "my-svc")
 
+    # Settings() reads os.environ at construction, so no importlib.reload is
+    # needed — and reloading agentic_v2.settings creates a split-brain
+    # get_settings cache that pollutes later tests (see test_ek_default_on).
     from agentic_v2.settings import Settings
 
     s = Settings()

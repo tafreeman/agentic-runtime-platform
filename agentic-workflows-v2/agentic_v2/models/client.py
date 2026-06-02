@@ -15,8 +15,9 @@ within the native engine.  It combines:
 - **Retry with jitter** — :func:`retry_with_jitter` decorator provides
   exponential backoff with configurable jitter factor.
 
-The :class:`LLMBackend` :class:`Protocol` defines the minimal interface
-that concrete backends (OpenAI, Anthropic, Gemini, etc.) must implement.
+The :class:`LLMBackend` ABC (re-exported from
+:mod:`agentic_v2.models.backends_base`) defines the interface that
+concrete backends (OpenAI, Anthropic, Gemini, etc.) must implement.
 """
 
 from __future__ import annotations
@@ -29,35 +30,26 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import wraps
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Protocol, TypeVar
+from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, TypeVar
 
 if TYPE_CHECKING:
     from ..middleware.response_sanitizer import ResponseSanitizer
     from ..middleware.sanitization import SanitizationMiddleware
 
+from .backends_base import LLMBackend
 from .router import ModelTier
 from .smart_router import SmartModelRouter, get_smart_router
 
 logger = logging.getLogger(__name__)
 
 
-# Protocol for LLM backend
-class LLMBackend(Protocol):
-    """Protocol for LLM backend implementations."""
-
-    async def complete(self, model: str, prompt: str, **kwargs: Any) -> str:
-        """Send completion request."""
-        ...
-
-    async def complete_stream(
-        self, model: str, prompt: str, **kwargs: Any
-    ) -> AsyncIterator[str]:
-        """Send streaming completion request."""
-        ...
-
-    def count_tokens(self, text: str, model: str) -> int:
-        """Count tokens in text."""
-        ...
+# LLMBackend re-exported from backends_base for backward compatibility.
+# ADR-023 Phase 2: unified the divergent Protocol/ABC definitions onto the
+# single ABC in backends_base. The ABC is a strict superset of the prior
+# Protocol (adds complete_chat + default complete_stream/count_tokens),
+# so existing call sites that only touched complete/complete_stream/
+# count_tokens remain behavior-identical.
+__all_reexports__ = ("LLMBackend",)
 
     async def complete_chat(
         self,
@@ -340,6 +332,23 @@ class LLMClientWrapper:
         if self.backend is None:
             raise RuntimeError("No LLM backend configured")
 
+        # ADR-023 Phase 5b: flag-gated EK provider hot path. DEFAULT ON since
+        # P7 (2026-05-31) — the EK path is now the default. Force the legacy
+        # branch with AGENTIC_EK_PROVIDER=0; when off, the legacy branch below
+        # runs byte-for-byte. The EK path does NOT wrap in retry_with_jitter:
+        # the router + EK already own retry/record-once semantics.
+        from ..settings import get_settings
+
+        if get_settings().agentic_ek_provider:
+            return await self._complete_via_ek(
+                prompt, tier, use_cache=use_cache, **kwargs
+            )
+
+        # --- DEPRECATED: legacy text-only complete() path (ADR-023) ---
+        # Retained as the bake-in rollback path (reachable via
+        # AGENTIC_EK_PROVIDER=0). Slated for removal post-bake-in once the
+        # EK provider path has soaked in production. Do NOT extend this
+        # branch with new behaviour — changes belong in _complete_via_ek.
         # Check cache
         if use_cache and self.enable_cache:
             cache_key = self._cache_key(prompt, tier, model=model, **kwargs)
@@ -410,9 +419,13 @@ class LLMClientWrapper:
                 if self.budget:
                     self.budget.consume(tokens)
 
-                # Cache response
+                # Cache response. Guard on enable_cache too: cache_key is only
+                # bound above when caching is enabled, so storing under the
+                # bare `use_cache` flag raised UnboundLocalError when caching
+                # was disabled. _set_cached is itself a no-op when disabled, so
+                # this is behaviour-preserving.
                 if use_cache and self.enable_cache:
-                    self._set_cached(cache_key, response, selected_model, tokens)
+                    self._set_cached(cache_key, response, model, tokens)
 
                 # Log response if enabled
                 if self.log_responses:
@@ -434,6 +447,108 @@ class LLMClientWrapper:
         raise RuntimeError(
             f"All models failed. Tried: {tried}. No further information available."
         )
+
+    async def _complete_via_ek(
+        self,
+        prompt: str,
+        tier: ModelTier,
+        use_cache: bool = True,
+        **kwargs: Any,
+    ) -> tuple[str, str, int]:
+        """ADR-023 Phase 5b EK provider path for :meth:`complete`.
+
+        Routes through the ExecutionKit ``LLMProvider`` shim
+        (:class:`SmartRouterProvider` -> ``backend.complete_chat``) instead of
+        the legacy text ``backend.complete``. Reached ONLY when
+        ``settings.agentic_ek_provider`` is true; otherwise the legacy branch
+        in :meth:`complete` runs unchanged.
+
+        Ordering is preserved end-to-end (matches the legacy path's observable
+        sequence):
+
+        1. cache lookup (a hit short-circuits before any provider call);
+        2. pre-send sanitization (may raise / rewrite the prompt);
+        3. ``SmartRouterProvider(...).complete(messages)`` — the provider owns
+           bulkhead, circuit breaker, rate-limit cooldown, cross-tier
+           fallback, HTTP->EK error translation, and record-once bookkeeping;
+        4. post-receive response sanitization;
+        5. ``TokenBudget.consume(total_tokens)`` — runtime budget owns the
+           token-sum ceiling and raises BEFORE returning when the cap is hit
+           (mirrors the legacy ``ValueError`` contract; no new exception type);
+        6. cache store.
+
+        Retry/record-once is NOT layered with ``retry_with_jitter`` here: the
+        router + EK already retry and record exactly once per physical call.
+
+        Returns:
+            ``(response.content, model_used, response.total_tokens)``.
+        """
+        from .ek_provider import SmartRouterProvider
+
+        if self.backend is None:
+            raise RuntimeError("No LLM backend configured")
+
+        # 1. Cache lookup (short-circuit). Same key as the legacy path.
+        cache_key = self._cache_key(prompt, tier, **kwargs)
+        if use_cache and self.enable_cache:
+            cached = self._get_cached(cache_key)
+            if cached:
+                logger.debug(f"Cache hit for key {cache_key} (EK path)")
+                return cached.response, cached.model, cached.tokens_used
+
+        if self.log_prompts:
+            logger.info(f"Prompt (tier={tier.name}, EK): {prompt[:200]}...")
+
+        # 2. Pre-send sanitization (identical gate to the legacy path).
+        effective_prompt = prompt
+        if self.sanitization is not None:
+            san_result = await self.sanitization.process(
+                prompt, {"source": "llm_complete", "tier": tier.name}
+            )
+            if not san_result.is_safe:
+                raise ValueError(
+                    f"Prompt blocked by sanitization: {san_result.classification.value}"
+                )
+            if san_result.sanitized_text is not None:
+                effective_prompt = san_result.sanitized_text
+
+        # 3. Route through the EK provider shim (reliability lives here).
+        messages = [{"role": "user", "content": effective_prompt}]
+        provider = SmartRouterProvider(self.router, self.backend, tier)
+        response = await provider.complete(messages, **kwargs)
+
+        content = response.content
+        total_tokens = response.total_tokens
+
+        # 4. Post-receive response sanitization.
+        if self.response_sanitizer is not None:
+            resp_result = await self.response_sanitizer.sanitize_response(content)
+            if resp_result.sanitized_text is not None:
+                content = resp_result.sanitized_text
+
+        # 5. Runtime TokenBudget owns the token-sum ceiling — consume FIRST and
+        # raise on cap BEFORE returning or caching (ACCEPTED budget precedence).
+        if self.budget and not self.budget.consume(total_tokens):
+            raise ValueError(
+                f"Budget exceeded: {self.budget.used_tokens}/{self.budget.max_tokens}"
+            )
+
+        # Resolve the model that served the request for cache metadata + return.
+        model_used = ""
+        raw = getattr(response, "raw", None)
+        if isinstance(raw, dict):
+            model_used = str(raw.get("model") or "")
+        if not model_used:
+            model_used = self.router.get_model_for_tier(tier) or ""
+
+        # 6. Cache store.
+        if use_cache:
+            self._set_cached(cache_key, content, model_used, total_tokens)
+
+        if self.log_responses:
+            logger.info(f"Response from {model_used} (EK): {content[:200]}...")
+
+        return content, model_used, total_tokens
 
     async def complete_stream(
         self, prompt: str, tier: ModelTier = ModelTier.TIER_2, **kwargs: Any

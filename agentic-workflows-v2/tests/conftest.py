@@ -18,8 +18,59 @@ from unittest.mock import MagicMock
 
 import pytest
 import yaml
+
+import agentic_v2.settings as _settings_module
 from agentic_v2.langchain.config import load_workflow_config
 from agentic_v2.models.client import get_client, reset_client
+
+
+@pytest.fixture(autouse=True)
+def _snapshot_os_environ():
+    """Snapshot ``os.environ`` before each test and restore it afterwards.
+
+    Defined FIRST so it is set up first and torn down LAST (outermost). This
+    is the suite's backstop against env-var leakage: a test that writes to
+    ``os.environ`` directly (instead of via ``monkeypatch``) — or a module-level
+    ``os.environ.setdefault`` evaluated at import time — would otherwise leak
+    that variable into every later test and make the suite order-dependent.
+    ``monkeypatch`` changes are already undone by its own teardown (which runs
+    before this one), so restoring here only reverts the unmanaged writes.
+
+    This neutralises the whole class of "ambient flag leaked session-wide"
+    polluters (``AGENTIC_NO_LLM``, ``AGENTIC_EK_PROVIDER``, provider keys, …)
+    that previously masked or unmasked failures depending on collection order.
+    """
+    saved = dict(os.environ)
+    yield
+    if os.environ != saved:
+        os.environ.clear()
+        os.environ.update(saved)
+
+
+@pytest.fixture(autouse=True)
+def _reset_settings_cache():
+    """Bracket every test with a ``get_settings()`` cache reset (ADR-023 B-1).
+
+    ``get_settings`` is ``lru_cache(maxsize=1)``-d, so any test that mutates an
+    env var feeding ``Settings`` (``AGENTIC_EK_PROVIDER``, ``AGENTIC_NO_LLM``,
+    ``AGENTIC_OIDC_*``, …) can leave a stale singleton cached for later tests.
+    Per-fixture clears were racy: a fixture's post-yield ``cache_clear()`` runs
+    *before* the ``monkeypatch`` it depends on restores the env, so nothing
+    guarantees a clean cache once the env is back to baseline.
+
+    We clear via the LIVE module attribute (``_settings_module.get_settings``)
+    rather than a name bound at import time: if any test ever rebinds the
+    settings module's ``get_settings`` (e.g. via ``importlib.reload``), the live
+    attribute is the function the production code under test actually calls, so
+    we always clear the cache that matters and avoid a split-brain where the
+    code reads a stale cached ``Settings`` that no test could clear.
+
+    Ordered after ``_snapshot_os_environ`` so its setup clear runs once the env
+    is at the per-test baseline and the next test always re-reads fresh settings.
+    """
+    _settings_module.get_settings.cache_clear()
+    yield
+    _settings_module.get_settings.cache_clear()
 
 
 @pytest.fixture(autouse=True)
@@ -31,14 +82,66 @@ def clear_workflow_cache():
 
 
 @pytest.fixture(autouse=True)
+def _reset_global_routers():
+    """Reset the module-global router singletons around every test.
+
+    ``smart_router._smart_router`` and ``router._default_router`` are process
+    globals that accumulate circuit-breaker / model-stats state. Left unreset,
+    that state leaks across tests (a test that opens breakers can make a later
+    test see "sick" models), contributing to order-dependent failures. Reset is
+    best-effort: the helpers are imported lazily so this fixture stays usable
+    even if a module is monkeypatched out of ``sys.modules`` mid-test.
+    """
+
+    def _reset() -> None:
+        try:
+            from agentic_v2.models.smart_router import reset_smart_router
+
+            reset_smart_router()
+        except Exception:
+            pass
+        try:
+            import agentic_v2.models.router as _router_mod
+
+            _router_mod._default_router = None
+        except Exception:
+            pass
+
+    _reset()
+    yield
+    _reset()
+
+
+@pytest.fixture(autouse=True)
 def _reset_llm_client():
-    """Pre-create a backend-less global client for each test."""
+    """Pre-create a backend-less global client for each test.
+
+    IMPORTANT: ``get_client()`` reads ``get_settings().agentic_no_llm`` and thus
+    *populates* the settings ``lru_cache`` with the current (baseline) env. If
+    left populated, code under test that reads the LIVE
+    ``agentic_v2.settings.get_settings`` (``get_client``, ``LLMClientWrapper.complete``,
+    ``langchain.get_chat_model`` — all import it at call time) would see that
+    stale cached ``Settings`` even after a test sets ``AGENTIC_NO_LLM`` /
+    ``AGENTIC_EK_PROVIDER`` and clears its *own* (module-bound) ``get_settings``
+    reference. Under the full suite those two references can diverge (a settings
+    reload elsewhere rebinds the live attribute), producing a split-brain where
+    the test reads the flag as True but the callee reads the stale False.
+
+    Clearing the LIVE cache here — as the last thing this fixture does at setup —
+    guarantees an empty cache at the start of every test body, so the first read
+    of the live ``get_settings`` re-reads the environment the test just set. This
+    is the order-independence backstop for the flag-driven hot paths.
+    """
     reset_client()
     # Eagerly create a backend-less client; subsequent get_client() calls
     # will return this instance because _client is no longer None.
     get_client(auto_configure=False)
+    # Drop the Settings the line above just cached so the live cache is empty
+    # when the test body runs (see docstring).
+    _settings_module.get_settings.cache_clear()
     yield
     reset_client()
+    _settings_module.get_settings.cache_clear()
 
 
 @pytest.fixture(autouse=True)
