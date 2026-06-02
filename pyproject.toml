@@ -48,6 +48,7 @@ members = [
 ]
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 markers = [
     "e2e: end-to-end cross-package integration tests",
     "slow: tests taking more than 5 seconds",
