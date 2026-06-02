@@ -145,6 +145,13 @@ omit = [
     "agentic_v2/devex/cli.py",
     "agentic_v2/engine/verification.py",
     "agentic_v2/engine/patterns/__init__.py",
+    # ADR-023 ExecutionKit bridge: opt-in (AGENTIC_EK_PROVIDER), gated on the
+    # optional `executionkit` dependency that the CI coverage job does not
+    # install. Covered by the dedicated EK suite (tests/models/test_ek_*,
+    # tests/engine/test_step_ek_*) which runs only when executionkit is present.
+    "agentic_v2/engine/ek_step_delegation.py",
+    "agentic_v2/models/ek_adapters.py",
+    "agentic_v2/models/ek_provider.py",
     "agentic_v2/integrations/mcp/*",
     "agentic_v2/langchain/agents.py",
     "agentic_v2/langchain/model_builders.py",
