@@ -203,9 +203,17 @@ class SmartRouterProvider:
                 break
             tried.append(current_model)
 
-            # Honour the same bulkhead/probe readiness gate the legacy loop
-            # uses so we do not pile onto a saturated provider or race a
-            # HALF_OPEN probe.
+            # Load-shedding bulkhead gate (INTENTIONAL — mirrors the legacy
+            # ``call_with_fallback`` byte-for-byte). When the per-provider
+            # semaphore is fully held (or a HALF_OPEN probe is in flight), this
+            # SHEDS the caller rather than queuing it: the loop re-selects the
+            # same model, finds it in ``tried``, and raises ``ProviderError`` —
+            # fast-fail under saturation, not a blocking wait. This is the
+            # documented contract asserted by
+            # ``test_d_bulkhead_caps_concurrency``. Do NOT remove this gate to
+            # "let execute_with_bulkhead queue": that would invert shed->queue
+            # and diverge from the legacy loop. (Probe serialisation is still
+            # owned by ``execute_with_bulkhead`` regardless of this gate.)
             if not self.router._is_model_ready_for_attempt(current_model):
                 continue
 
