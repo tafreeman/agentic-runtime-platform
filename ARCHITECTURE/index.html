@@ -587,6 +587,64 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#8-adr-023-executionkit-runtime-llm-seam-end-state">
+<span class="md-ellipsis">
+      
+        8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)
+      
+    </span>
+</a>
+<nav aria-label="8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#kernel-seam-scope">
+<span class="md-ellipsis">
+      
+        Kernel seam scope
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#budget-ownership-layered-not-merged">
+<span class="md-ellipsis">
+      
+        Budget ownership (layered, not merged)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#retry-ownership">
+<span class="md-ellipsis">
+      
+        Retry ownership
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tool-path-ownership">
+<span class="md-ellipsis">
+      
+        Tool-path ownership
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#preserved-router-reliability">
+<span class="md-ellipsis">
+      
+        Preserved router reliability
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#5-what-this-document-is-not">
 <span class="md-ellipsis">
       
@@ -1499,6 +1557,64 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#8-adr-023-executionkit-runtime-llm-seam-end-state">
+<span class="md-ellipsis">
+      
+        8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)
+      
+    </span>
+</a>
+<nav aria-label="8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#kernel-seam-scope">
+<span class="md-ellipsis">
+      
+        Kernel seam scope
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#budget-ownership-layered-not-merged">
+<span class="md-ellipsis">
+      
+        Budget ownership (layered, not merged)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#retry-ownership">
+<span class="md-ellipsis">
+      
+        Retry ownership
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tool-path-ownership">
+<span class="md-ellipsis">
+      
+        Tool-path ownership
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#preserved-router-reliability">
+<span class="md-ellipsis">
+      
+        Preserved router reliability
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#5-what-this-document-is-not">
 <span class="md-ellipsis">
       
@@ -1847,9 +1963,109 @@
 <td>LangChain adapter eager validation at startup</td>
 <td>Accepted</td>
 </tr>
+<tr>
+<td><a href="../adr/ADR-023-executionkit-runtime-contract-relationship/">023</a></td>
+<td>ExecutionKit ↔ runtime contract unification (Option A′: single <code>executionkit</code> package)</td>
+<td>Accepted</td>
+</tr>
 </tbody>
 </table>
 <p>ADRs 004–006 and 013 are <strong>intentionally unused</strong> — the gap is documented in <a href="../adr/ADR-INDEX/"><code>adr/ADR-INDEX.md</code></a> and should not be reclaimed.</p>
+<hr/>
+<h2 id="8-adr-023-executionkit-runtime-llm-seam-end-state">8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)<a class="headerlink" href="#8-adr-023-executionkit-runtime-llm-seam-end-state" title="Permanent link">¶</a></h2>
+<p>The Option A′ migration (ADR-023, F0–F5 landed 2026-06-01) unified the runtime
+and ExecutionKit (EK) LLM contracts onto a single seam using the <strong>single
+<code>executionkit</code> package</strong> — the intermediate <code>executionkit-contracts</code> package
+was retired (see ADR-023 Amendment). The end state:</p>
+<ul>
+<li><strong>One runtime backend interface</strong> — the <code>LLMBackend</code> ABC in
+  <code>models/backends_base.py</code> (re-exported from <code>models/client.py</code>). The prior
+  divergent <code>Protocol</code> definition was deleted (P2). All concrete backends
+  (OpenAI, Anthropic, Gemini, Ollama, …) implement this one ABC.</li>
+<li><strong>One EK provider protocol</strong> — the EK <code>LLMProvider</code> protocol. The runtime
+  bridges to it via <code>SmartRouterProvider</code> (<code>models/ek_provider.py</code>), which
+  wraps the router + backend so the EK kernel sees a uniform
+  <code>complete(messages) -&gt; LLMResponse</code>.</li>
+<li><strong><code>ek_adapters.py</code> is the sole bridge</strong> — <code>dict_to_llm_response</code>,
+  <code>llm_response_to_dict</code>, and <code>map_http_error</code> (<code>models/ek_adapters.py</code>,
+  backed by the <code>executionkit</code> package directly) are the only sanctioned
+  translation between OpenAI-shaped backend dicts and the frozen EK value
+  types (<code>LLMResponse</code>, <code>ToolCall</code>, <code>TokenUsage</code>, <code>LLMError</code> hierarchy). No
+  mapping logic is reimplemented elsewhere.</li>
+<li><strong>Legacy retained, opt-in EK path</strong> — <code>agentic_ek_provider</code> defaults to
+  <strong>OFF</strong> (opt-in via <code>AGENTIC_EK_PROVIDER=1</code>). <code>LLMClientWrapper.complete()</code>
+  routes through the EK path (<code>_complete_via_ek</code>) when the flag is set. The
+  legacy text-only branch is <strong>retained</strong> as the rollback path, marked
+  deprecated and slated for removal once the flag-ON full suite is clean.</li>
+</ul>
+<h3 id="kernel-seam-scope">Kernel seam scope<a class="headerlink" href="#kernel-seam-scope" title="Permanent link">¶</a></h3>
+<p>The EK kernel seam is <strong><code>complete(messages) -&gt; LLMResponse</code> only</strong>. Streaming
+(<code>complete_stream</code>) and per-provider <code>count_tokens</code> stay <strong>out of the kernel</strong>;
+they remain reachable on the <code>LLMBackend</code> ABC, and the <code>SupportsStreaming</code>
+protocol (<code>core/protocols.py</code>) already exists for callers that need streaming
+(ADR-023 decision #7, accepted).</p>
+<h3 id="budget-ownership-layered-not-merged">Budget ownership (layered, not merged)<a class="headerlink" href="#budget-ownership-layered-not-merged" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Owner</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token-sum ceiling</td>
+<td>runtime <code>TokenBudget</code></td>
+<td><code>TokenBudget.consume(total_tokens)</code> runs <strong>first</strong> and raises on cap</td>
+</tr>
+<tr>
+<td><code>llm_calls</code> count</td>
+<td>EK <code>CostTracker</code></td>
+<td>two-phase <code>reserve_call()</code> / <code>record_without_call()</code></td>
+</tr>
+</tbody>
+</table>
+<p>A cache hit counts as a <strong>0-token recorded call</strong> (<code>call_count++</code>, tokens 0).
+The two layers are stacked, never merged.</p>
+<h3 id="retry-ownership">Retry ownership<a class="headerlink" href="#retry-ownership" title="Permanent link">¶</a></h3>
+<p>httpx errors translate to EK error classes via <code>map_http_error</code>
+(<code>429 -&gt; RateLimitError(retry_after)</code>; <code>401/403/404 -&gt; PermanentError</code>;
+else <code>-&gt; ProviderError</code>) so EK <code>RetryConfig.should_retry</code> recognizes them.
+<code>record_success</code> / <code>_classify_and_record_error</code> fire <strong>exactly once per
+physical HTTP call</strong> — the router and EK each retry, but neither
+double-counts. The EK path is <strong>not</strong> additionally wrapped in
+<code>retry_with_jitter</code>.</p>
+<h3 id="tool-path-ownership">Tool-path ownership<a class="headerlink" href="#tool-path-ownership" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>When</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EK <code>react_loop</code></td>
+<td><strong>default</strong></td>
+<td>uniform retry/budget/structured tool-calling</td>
+</tr>
+<tr>
+<td>native</td>
+<td>step opts out with <code>tool_path: native</code></td>
+<td><code>tool_execution.run_tool_calls</code></td>
+</tr>
+</tbody>
+</table>
+<p>The two paths are never mixed mid-thread for a single step. Gemini routes
+report <code>supports_tools=False</code>; <code>react_loop</code> <strong>refuses</strong> rather than silently
+dropping tools.</p>
+<h3 id="preserved-router-reliability">Preserved router reliability<a class="headerlink" href="#preserved-router-reliability" title="Permanent link">¶</a></h3>
+<p>The cutover preserves all <code>SmartModelRouter</code> reliability machinery: circuit
+breaker, per-provider bulkhead semaphore, rate-limit header cooldown,
+cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
+<code>supports_tools</code> delegation.</p>
 <hr/>
 <h2 id="5-what-this-document-is-not">5. What this document is not<a class="headerlink" href="#5-what-this-document-is-not" title="Permanent link">¶</a></h2>
 <ul>
@@ -1863,7 +2079,7 @@
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">
