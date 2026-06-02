@@ -110,16 +110,26 @@ class OllamaBackend(LLMBackend):
         data = response.json()
         message = data.get("message", {})
 
-        # Reasoning models may return content in "thinking" with empty "content"
-        content = message.get("content", "")
-        if not content.strip():
-            content = message.get("thinking", "")
+        # ADR-023 Phase 3: canonicalize the dict shape.  Reasoning models
+        # (qwen3, deepseek-r1, phi4-reasoning) put their chain-of-thought
+        # in ``message.thinking`` and may leave ``message.content`` empty.
+        # The previous adapter folded ``thinking`` into ``content`` when
+        # ``content`` was blank, which lost the distinction between answer
+        # and reasoning.  The chosen convention (ADR-023 open decision
+        # ollama-thinking-marker) is a separate top-level ``thinking`` key
+        # with ``content`` carrying only the actual answer text.  The
+        # prompt-path wrapper ``complete()`` retains its own fallback for
+        # backwards compatibility.
+        content = message.get("content", "") or ""
+        thinking = message.get("thinking", "") or ""
 
         return {
             "content": content,
+            "thinking": thinking,
             "tool_calls": message.get("tool_calls"),
             "finish_reason": "stop",
             "model": model_name,
+            "_raw_ollama": data,
         }
 
     async def close(self) -> None:

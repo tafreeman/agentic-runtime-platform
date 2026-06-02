@@ -13,6 +13,7 @@ variables and communicates with the provider over ``httpx.AsyncClient``.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -310,19 +311,50 @@ class AnthropicBackend(LLMBackend):
 
         # Extract text from content blocks
         text_parts = []
-        tool_calls = []
+        raw_tool_use_blocks: list[dict[str, Any]] = []
         for block in content_blocks:
             if block.get("type") == "text":
                 text_parts.append(block.get("text", ""))
             elif block.get("type") == "tool_use":
-                tool_calls.append(block)
+                raw_tool_use_blocks.append(block)
+
+        # ADR-023 Phase 3: canonicalize to OpenAI-flavoured dict shape.
+        # Map Anthropic tool_use content blocks -> OpenAI tool_calls shape.
+        canonical_tool_calls: list[dict[str, Any]] | None
+        if raw_tool_use_blocks:
+            canonical_tool_calls = [
+                {
+                    "id": block.get("id", ""),
+                    "type": "function",
+                    "function": {
+                        "name": block.get("name", ""),
+                        "arguments": json.dumps(block.get("input", {})),
+                    },
+                }
+                for block in raw_tool_use_blocks
+            ]
+        else:
+            canonical_tool_calls = None
+
+        # Map Anthropic stop_reason -> OpenAI finish_reason.
+        raw_stop_reason = data.get("stop_reason", "end_turn")
+        _stop_reason_map = {
+            "end_turn": "stop",
+            "max_tokens": "length",
+            "tool_use": "tool_calls",
+            "stop_sequence": "stop",
+        }
+        canonical_finish_reason = _stop_reason_map.get(
+            raw_stop_reason, raw_stop_reason
+        )
 
         return {
             "content": "\n".join(text_parts),
-            "tool_calls": tool_calls or None,
-            "finish_reason": data.get("stop_reason", "end_turn"),
+            "tool_calls": canonical_tool_calls,
+            "finish_reason": canonical_finish_reason,
             "model": data.get("model"),
             "usage": data.get("usage", {}),
+            "_raw_anthropic": data,
         }
 
     async def close(self) -> None:
@@ -420,12 +452,36 @@ class GeminiBackend(LLMBackend):
         parts = candidates[0].get("content", {}).get("parts", [])
         text_parts = [p.get("text", "") for p in parts if "text" in p]
 
+        # ADR-023 Phase 3: canonicalize Gemini dict shape to OpenAI-flavoured
+        # fields. The raw Gemini response stays available under
+        # ``_raw_gemini`` for downstream consumers that still need vendor
+        # specifics (telemetry, debugging).
+        raw_finish_reason = candidates[0].get("finishReason", "STOP")
+        _GEMINI_FINISH_REASON_MAP = {
+            "STOP": "stop",
+            "MAX_TOKENS": "length",
+            "SAFETY": "content_filter",
+            "RECITATION": "content_filter",
+            "OTHER": "stop",
+        }
+        finish_reason = _GEMINI_FINISH_REASON_MAP.get(
+            raw_finish_reason, raw_finish_reason.lower()
+        )
+
+        raw_usage = data.get("usageMetadata", {}) or {}
+        usage = {
+            "prompt_tokens": raw_usage.get("promptTokenCount", 0),
+            "completion_tokens": raw_usage.get("candidatesTokenCount", 0),
+            "total_tokens": raw_usage.get("totalTokenCount", 0),
+        }
+
         return {
             "content": "\n".join(text_parts),
             "tool_calls": None,
-            "finish_reason": candidates[0].get("finishReason", "STOP"),
+            "finish_reason": finish_reason,
             "model": model_name,
-            "usage": data.get("usageMetadata", {}),
+            "usage": usage,
+            "_raw_gemini": data,
         }
 
     async def close(self) -> None:

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import yaml
 from agentic_v2.langchain import config as lc_config
-from agentic_v2.server.app import create_app
 from agentic_v2.server.routes import workflows
 from fastapi.testclient import TestClient
+from tests._server_test_helpers import make_configured_app
 
 
 def _write_workflow(tmp_path, name: str, document: dict) -> None:
@@ -43,7 +43,7 @@ def test_get_workflow_editor_returns_yaml_and_document(tmp_path, monkeypatch) ->
     )
     _patch_workflow_editor_dir(monkeypatch, tmp_path)
 
-    client = TestClient(create_app())
+    client = TestClient(make_configured_app())
     response = client.get("/api/workflows/editor-demo/editor")
 
     assert response.status_code == 200
@@ -56,7 +56,7 @@ def test_get_workflow_editor_returns_yaml_and_document(tmp_path, monkeypatch) ->
 def test_put_workflow_editor_persists_document(tmp_path, monkeypatch) -> None:
     _patch_workflow_editor_dir(monkeypatch, tmp_path)
 
-    client = TestClient(create_app())
+    client = TestClient(make_configured_app())
     response = client.put(
         "/api/workflows/new-editor",
         json={
@@ -86,7 +86,7 @@ def test_validate_workflow_editor_rejects_invalid_dependency_graph(
         ),
     )
 
-    client = TestClient(create_app())
+    client = TestClient(make_configured_app())
     response = client.post(
         "/api/workflows/validate",
         json={

@@ -207,8 +207,84 @@ Redis is an optional dependency. Install with `pip install -e ".[redis]"`. The s
 | [018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md) | API rate limiting + per-IP auth throttle | Accepted |
 | [019](adr/ADR-019-dag-executor-top-level-timeout.md) | DAG executor top-level timeout watchdog | Accepted |
 | [020](adr/ADR-020-langchain-adapter-eager-validation.md) | LangChain adapter eager validation at startup | Accepted |
+| [023](adr/ADR-023-executionkit-runtime-contract-relationship.md) | ExecutionKit ↔ runtime contract unification (Option A′: single `executionkit` package) | Accepted |
 
 ADRs 004–006 and 013 are **intentionally unused** — the gap is documented in [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md) and should not be reclaimed.
+
+---
+
+## 8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)
+
+The Option A′ migration (ADR-023, F0–F5 landed 2026-06-01) unified the runtime
+and ExecutionKit (EK) LLM contracts onto a single seam using the **single
+`executionkit` package** — the intermediate `executionkit-contracts` package
+was retired (see ADR-023 Amendment). The end state:
+
+- **One runtime backend interface** — the `LLMBackend` ABC in
+  `models/backends_base.py` (re-exported from `models/client.py`). The prior
+  divergent `Protocol` definition was deleted (P2). All concrete backends
+  (OpenAI, Anthropic, Gemini, Ollama, …) implement this one ABC.
+- **One EK provider protocol** — the EK `LLMProvider` protocol. The runtime
+  bridges to it via `SmartRouterProvider` (`models/ek_provider.py`), which
+  wraps the router + backend so the EK kernel sees a uniform
+  `complete(messages) -> LLMResponse`.
+- **`ek_adapters.py` is the sole bridge** — `dict_to_llm_response`,
+  `llm_response_to_dict`, and `map_http_error` (`models/ek_adapters.py`,
+  backed by the `executionkit` package directly) are the only sanctioned
+  translation between OpenAI-shaped backend dicts and the frozen EK value
+  types (`LLMResponse`, `ToolCall`, `TokenUsage`, `LLMError` hierarchy). No
+  mapping logic is reimplemented elsewhere.
+- **Legacy retained, opt-in EK path** — `agentic_ek_provider` defaults to
+  **OFF** (opt-in via `AGENTIC_EK_PROVIDER=1`). `LLMClientWrapper.complete()`
+  routes through the EK path (`_complete_via_ek`) when the flag is set. The
+  legacy text-only branch is **retained** as the rollback path, marked
+  deprecated and slated for removal once the flag-ON full suite is clean.
+
+### Kernel seam scope
+
+The EK kernel seam is **`complete(messages) -> LLMResponse` only**. Streaming
+(`complete_stream`) and per-provider `count_tokens` stay **out of the kernel**;
+they remain reachable on the `LLMBackend` ABC, and the `SupportsStreaming`
+protocol (`core/protocols.py`) already exists for callers that need streaming
+(ADR-023 decision #7, accepted).
+
+### Budget ownership (layered, not merged)
+
+| Dimension | Owner | Mechanism |
+|-----------|-------|-----------|
+| Token-sum ceiling | runtime `TokenBudget` | `TokenBudget.consume(total_tokens)` runs **first** and raises on cap |
+| `llm_calls` count | EK `CostTracker` | two-phase `reserve_call()` / `record_without_call()` |
+
+A cache hit counts as a **0-token recorded call** (`call_count++`, tokens 0).
+The two layers are stacked, never merged.
+
+### Retry ownership
+
+httpx errors translate to EK error classes via `map_http_error`
+(`429 -> RateLimitError(retry_after)`; `401/403/404 -> PermanentError`;
+else `-> ProviderError`) so EK `RetryConfig.should_retry` recognizes them.
+`record_success` / `_classify_and_record_error` fire **exactly once per
+physical HTTP call** — the router and EK each retry, but neither
+double-counts. The EK path is **not** additionally wrapped in
+`retry_with_jitter`.
+
+### Tool-path ownership
+
+| Path | When | Mechanism |
+|------|------|-----------|
+| EK `react_loop` | **default** | uniform retry/budget/structured tool-calling |
+| native | step opts out with `tool_path: native` | `tool_execution.run_tool_calls` |
+
+The two paths are never mixed mid-thread for a single step. Gemini routes
+report `supports_tools=False`; `react_loop` **refuses** rather than silently
+dropping tools.
+
+### Preserved router reliability
+
+The cutover preserves all `SmartModelRouter` reliability machinery: circuit
+breaker, per-provider bulkhead semaphore, rate-limit header cooldown,
+cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
+`supports_tools` delegation.
 
 ---
 

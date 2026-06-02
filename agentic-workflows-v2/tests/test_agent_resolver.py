@@ -255,8 +255,17 @@ class TestMakeLlmStep:
             tier=ModelTier.TIER_2,
         )
         ctx = ExecutionContext()
-        # get_client will raise since no LLM is configured in test env
-        result = await step_fn(ctx)
+        # Force the "no LLM configured" path deterministically. The closure does
+        # `from ..models.client import get_client` at call time, so patch it to
+        # raise (matching this test's intent). Without this, a leaked
+        # AGENTIC_NO_LLM=1 makes get_client return a placeholder MockBackend
+        # instead of raising, so the step never reaches the llm_unavailable
+        # branch and the result has no 'status' key (order-dependent failure).
+        with patch(
+            "agentic_v2.models.client.get_client",
+            side_effect=RuntimeError("No LLM backend configured"),
+        ):
+            result = await step_fn(ctx)
         assert result["status"] == "llm_unavailable"
         assert result["agent"] == "tier2_coder"
 

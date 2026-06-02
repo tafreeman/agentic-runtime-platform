@@ -147,6 +147,9 @@ dev = [
 devex = [
     { name = "psutil" },
 ]
+ek = [
+    { name = "executionkit" },
+]
 langchain = [
     { name = "langchain" },
     { name = "langchain-anthropic" },
@@ -201,6 +204,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
     { name = "cachetools", specifier = ">=5.0,<8" },
     { name = "claude-agent-sdk", marker = "extra == 'claude'", specifier = ">=0.1,<1" },
+    { name = "executionkit", marker = "extra == 'ek'", editable = "../../executionkit" },
     { name = "fakeredis", extras = ["lua"], marker = "extra == 'dev'", specifier = ">=2.21,<3" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.100,<1" },
     { name = "filelock", specifier = ">=3.0,<4" },
@@ -248,7 +252,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.23,<1" },
     { name = "websockets", marker = "extra == 'mcp'", specifier = ">=12.0,<17" },
 ]
-provides-extras = ["dev", "server", "langchain", "tracing", "claude", "rag", "devex", "mcp", "redis", "sqlite", "postgres"]
+provides-extras = ["ek", "dev", "server", "langchain", "tracing", "claude", "rag", "devex", "mcp", "redis", "sqlite", "postgres"]
 
 [[package]]
 name = "aiofiles"
@@ -972,6 +976,29 @@ sdist = { url = "https://files.pythonhosted.org/packages/e0/4d/f332313098c1de1b2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/5f/ed01f9a3cdffbd5a008556fc7b2a08ddb1cc6ace7effa7340604b1d16699/docstring_parser-0.18.0-py3-none-any.whl", hash = "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b", size = 22484, upload-time = "2026-04-14T04:09:18.638Z" },
 ]
+
+[[package]]
+name = "executionkit"
+source = { editable = "../../executionkit" }
+
+[package.metadata]
+requires-dist = [
+    { name = "bandit", extras = ["toml"], marker = "extra == 'dev'", specifier = ">=1.8" },
+    { name = "build", marker = "extra == 'dev'", specifier = ">=1.2" },
+    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
+    { name = "httpx", marker = "extra == 'httpx'", specifier = ">=0.27" },
+    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5" },
+    { name = "mkdocs-material", extras = ["imaging"], marker = "extra == 'docs'", specifier = ">=9.5" },
+    { name = "mkdocs-mermaid2-plugin", marker = "extra == 'docs'", specifier = ">=1.1" },
+    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.25" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.18" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.2" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.0,<0.16" },
+]
+provides-extras = ["dev", "docs", "httpx"]
 
 [[package]]
 name = "fakeredis"

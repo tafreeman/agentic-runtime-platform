@@ -1,0 +1,6 @@
+{
+  "content": "Hello! How can I help you today?",
+  "tool_calls": null,
+  "finish_reason": "stop",
+  "model": "llama3.2"
+}

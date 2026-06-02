@@ -385,9 +385,21 @@ class TestAutoConfigureBackend:
 
     @pytest.fixture(autouse=True)
     def _clean_provider_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Remove all provider env vars to start with a clean slate."""
+        """Remove all provider env vars to start with a clean slate.
+
+        Also pin ``AGENTIC_NO_LLM=1`` for the class: ``auto_configure_backend``
+        raises ``NoProviderConfiguredError`` when no cloud key is present *and*
+        the flag is unset (backends.py), so the no-cloud-key tests
+        (Ollama-only / probe-resilience) need offline mode to exercise the
+        MultiBackend assembly path instead of the keyless-box error. The flag
+        does not suppress provider registration, so the keyed tests
+        (``test_registers_openai`` etc.) still see their provider. Previously
+        this was supplied by a session-wide ``AGENTIC_NO_LLM`` leak; it is now
+        scoped here. ``get_settings`` is cache-reset by the root conftest.
+        """
         for var in _PROVIDER_ENV_VARS:
             monkeypatch.delenv(var, raising=False)
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
 
     def _call(self) -> MultiBackend:
         """Call auto_configure_backend with dotenv loading disabled."""

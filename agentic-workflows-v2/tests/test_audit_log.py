@@ -35,10 +35,16 @@ def _load_audit_module():
     server_package.__path__ = [str(_PACKAGE_ROOT / "server")]  # type: ignore[attr-defined]
     sys.modules.setdefault("agentic_v2.server", server_package)
 
-    sys.modules.setdefault(
-        "agentic_v2.settings",
-        _load_module("agentic_v2.settings", _PACKAGE_ROOT / "settings.py"),
-    )
+    # Preserve an already-imported ``agentic_v2.settings``. ``_load_module``
+    # assigns ``sys.modules[name]`` unconditionally, so calling it here would
+    # REPLACE a settings module the rest of the suite already imported with a
+    # second copy that owns a distinct ``get_settings`` lru_cache. That split
+    # cache is invisible to the conftest cache-reset (which holds the original
+    # reference), so flag-sensitive tests (AGENTIC_NO_LLM / AGENTIC_EK_PROVIDER)
+    # read a stale flag and fail in full-suite order (ADR-023 B-1). Only load
+    # from file when settings is genuinely absent (isolated single-module run).
+    if "agentic_v2.settings" not in sys.modules:
+        _load_module("agentic_v2.settings", _PACKAGE_ROOT / "settings.py")
     return _load_module(
         "agentic_v2.server.audit_log",
         _PACKAGE_ROOT / "server" / "audit_log.py",

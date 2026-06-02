@@ -126,6 +126,54 @@ class Settings(BaseSettings):
         ),
     )
 
+    # --- ADR-023 Phase 5b: EK provider hot-path switch ---
+    agentic_ek_provider: bool = Field(
+        default=False,
+        description=(
+            "ADR-023 Option A hot-path switch. When true, "
+            "LLMClientWrapper.complete() routes through the ExecutionKit "
+            "LLMProvider shim (SmartRouterProvider -> backend.complete_chat) "
+            "instead of the legacy text complete() path. DEFAULT OFF "
+            "(opt-in via AGENTIC_EK_PROVIDER=1). P7 briefly flipped this to "
+            "default-on (2026-05-31) but it was reverted the same day: "
+            "default-on exposed two blockers tracked in ADR-023-migration-notes "
+            "(an AGENTIC_EK_PROVIDER + get_settings lru_cache test-isolation "
+            "leak, and a hang in the EK-default path). The EK path is "
+            "fully functional opt-in; default-on resumes once both are fixed. "
+            "Accepted string values mirror AGENTIC_NO_LLM: "
+            "'1'/'true'/'yes'/'on' are True; ''/'0'/'false'/'no'/'off' are "
+            "False; unknown values are coerced to False with a logged warning."
+        ),
+    )
+
+    @field_validator("agentic_ek_provider", mode="before")
+    @classmethod
+    def _coerce_ek_provider_flag(cls, v: Any) -> bool:
+        """Normalise ``AGENTIC_EK_PROVIDER`` env values.
+
+        Mirrors :meth:`_coerce_no_llm_flag` so an unusual string never
+        surfaces as an opaque ``ValidationError`` at the first LLM call;
+        unrecognised values fall back to ``False`` (legacy path) with a
+        logged warning so operators find out via the log, not a crash.
+        """
+        if isinstance(v, bool):
+            return v
+        if v is None:
+            return False
+        s = str(v).strip().lower()
+        if s in _TRUE_LITERALS:
+            return True
+        if s in _FALSE_LITERALS:
+            return False
+        logger.warning(
+            "AGENTIC_EK_PROVIDER=%r not recognised; treating as False "
+            "(legacy path). Accepted: %s (True) or %s (False).",
+            v,
+            sorted(_TRUE_LITERALS),
+            sorted(_FALSE_LITERALS),
+        )
+        return False
+
     @field_validator("agentic_no_llm", mode="before")
     @classmethod
     def _coerce_no_llm_flag(cls, v: Any) -> bool:

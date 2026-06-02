@@ -15,7 +15,7 @@ from agentic_v2.langchain import load_workflow_config
 from agentic_v2.langchain.config import InputConfig, OutputConfig, WorkflowConfig
 from agentic_v2.server import execution as execution_mod
 from agentic_v2.server import result_normalization
-from agentic_v2.server.app import create_app
+from tests._server_test_helpers import FAKE_TENANT, make_configured_app
 from agentic_v2.server.evaluation import (
     adapt_sample_to_workflow_inputs,
     list_local_datasets,
@@ -80,7 +80,7 @@ def _build_workflow_definition() -> WorkflowConfig:
 
 
 def _build_http_request() -> Request:
-    app = create_app()
+    app = make_configured_app()
     scope = {
         "type": "http",
         "method": "POST",
@@ -165,6 +165,15 @@ def test_criterion_result_stores_both_scores():
 
 
 def test_hard_gate_all_pass_with_score(monkeypatch):
+    # Provide a guaranteed-passing criterion score so the test can verify that
+    # when all hard gates pass AND weighted_score >= pass_threshold, passed=True.
+    # The real criterion scorer produces ~35 for a synthetic test double (short
+    # output, no expected text), which is below the 70.0 threshold — that is
+    # correct behaviour for the scorer but not the point of this test.
+    monkeypatch.setattr(
+        "agentic_v2.server.evaluation._compute_criterion_score",
+        lambda *_args, **_kwargs: 85.0,
+    )
     result = _build_result(StepStatus.SUCCESS)
     workflow_def = _build_workflow_definition()
 
@@ -643,7 +652,7 @@ async def test_sse_payload_includes_hard_gates(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request())
+    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
     for task in background.tasks:
         await task()
 
@@ -689,11 +698,14 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
         execution_mod, "_get_lc_runner", lambda: type("R", (), {"run": _fake_run})()
     )
     monkeypatch.setattr(execution_mod.websocket.manager, "broadcast", _fake_broadcast)
-    monkeypatch.setattr(
-        execution_mod.run_logger,
-        "for_tenant",
-        lambda *_args, **_kwargs: type("TenantRunLogger", (), {"log": _fake_log})(),
-    )
+    # execution.py calls run_logger.for_tenant(tenant_id).log(...) — patch
+    # for_tenant to return a stub whose .log captures kwargs.
+    class _FakeLogger:
+        def log(self, *_args, **kwargs):
+            captured.update(kwargs)
+            return Path("dummy.json")
+
+    monkeypatch.setattr(execution_mod.run_logger, "for_tenant", lambda _tid: _FakeLogger())
 
     request = WorkflowRunRequest(
         workflow="dummy_workflow",
@@ -707,7 +719,7 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request())
+    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
     for task in background.tasks:
         await task()
 
@@ -759,7 +771,7 @@ async def test_sse_payload_schema_validation(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request())
+    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
     for task in background.tasks:
         await task()
 
@@ -796,6 +808,7 @@ async def test_run_workflow_preserves_422_for_invalid_repository_dataset(monkeyp
             request,
             BackgroundTasks(),
             _build_http_request(),
+            FAKE_TENANT,
         )
 
     assert exc_info.value.status_code == 422
