@@ -5,6 +5,7 @@
 **Production-grade multi-agent AI orchestration — DAG execution, tiered model routing, rubric-based evaluation. Works with 8+ LLM providers.**
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
+[![Nightly E2E](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 ![coverage](https://img.shields.io/badge/coverage-80%25-brightgreen)
 [![Coverage visibility: whole repo](https://img.shields.io/badge/coverage%20visibility-whole%20repo-informational.svg)](.github/workflows/ci.yml)
