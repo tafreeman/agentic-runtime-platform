@@ -6,12 +6,13 @@ build_run_record, and RunLogger.
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.workflows.run_logger import (
     RunLogger,
@@ -120,7 +121,7 @@ class TestSafeSerialize:
 
     def test_datetime_to_isoformat(self):
         """ADR-008 Phase 3: datetime objects serialize to ISO 8601 string."""
-        dt = datetime(2026, 3, 17, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2026, 3, 17, 12, 0, 0, tzinfo=UTC)
         assert _safe_serialize(dt) == dt.isoformat()
 
     def test_step_status_to_value(self):
@@ -380,7 +381,7 @@ class TestRunLogger:
     def test_log_filenames_do_not_collide_for_same_timestamp(self, tmp_path, monkeypatch):
         """ADR-008 Phase 3: concurrent logs keep distinct filenames per run id."""
         rl = RunLogger(runs_dir=tmp_path)
-        frozen_now = datetime(2026, 5, 2, 18, 20, 21, 123456, tzinfo=timezone.utc)
+        frozen_now = datetime(2026, 5, 2, 18, 20, 21, 123456, tzinfo=UTC)
 
         class _FrozenDateTime(datetime):
             @classmethod
@@ -459,7 +460,7 @@ class TestRunLogger:
     def test_summary_avg_duration(self, tmp_path):
         """ADR-008 Phase 3: summary computes average duration from records."""
         rl = RunLogger(runs_dir=tmp_path)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         r = _result(end_time=now)
         path = rl.log(r)
         # Patch the file to have a known duration

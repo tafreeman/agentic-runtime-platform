@@ -24,7 +24,6 @@ import sys
 
 # ---- RAG imports from the agentic-workflows-v2 package -------------------
 from agentic_v2.rag import (
-    BM25Index,
     ChunkingConfig,
     Document,
     HybridRetriever,

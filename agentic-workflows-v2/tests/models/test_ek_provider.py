@@ -27,7 +27,6 @@ import pytest
 # — guard so the suite skips gracefully when ExecutionKit / httpx is absent.
 try:
     import httpx
-
     from executionkit.errors import (
         PermanentError,
         ProviderError,

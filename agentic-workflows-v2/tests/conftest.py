@@ -152,8 +152,8 @@ def _default_shell_allowlist(monkeypatch: pytest.MonkeyPatch):
     yield
 
 
-from agentic_v2.adapters.registry import AdapterRegistry, get_registry
 from agentic_v2.adapters.native import NativeEngine
+from agentic_v2.adapters.registry import AdapterRegistry, get_registry
 
 
 def _register_builtin_adapters() -> None:

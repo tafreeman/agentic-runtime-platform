@@ -15,9 +15,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from agentic_v2.settings import get_settings
-from agentic_v2.models.client import get_client, reset_client
 from agentic_v2.models.backends import MockBackend
+from agentic_v2.models.client import get_client, reset_client
+from agentic_v2.settings import get_settings
 
 _PLACEHOLDER_PREFIX = "[AGENTIC_NO_LLM placeholder]"
 

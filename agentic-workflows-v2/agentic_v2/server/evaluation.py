@@ -50,11 +50,6 @@ from .evaluation_scoring import (
     _build_judge_criteria,
     _clamp,
     _compose_hybrid_score,
-)
-from .evaluation_scoring import (
-    _compute_criterion_score as _compute_criterion_score_impl,
-)
-from .evaluation_scoring import (
     _extract_expected_text,
     _grade,
     _output_text,
@@ -67,6 +62,9 @@ from .evaluation_scoring import (
     pass_threshold,
     score_workflow_result_impl,
     validate_evaluation_payload_schema,
+)
+from .evaluation_scoring import (
+    _compute_criterion_score as _compute_criterion_score_impl,
 )
 from .judge import LLMJudge
 

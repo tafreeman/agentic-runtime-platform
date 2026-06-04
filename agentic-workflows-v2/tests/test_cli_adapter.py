@@ -13,8 +13,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
-from agentic_v2.cli.main import app
 from typer.testing import CliRunner
+
+from agentic_v2.cli.main import app
 
 runner = CliRunner()
 

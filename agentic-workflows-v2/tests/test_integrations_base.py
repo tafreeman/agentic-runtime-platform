@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+
 from agentic_v2.integrations.base import (
     AgentAdapter,
     CanonicalEvent,

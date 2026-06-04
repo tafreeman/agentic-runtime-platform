@@ -7,11 +7,11 @@ Provides:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import logging
 import math
 import struct
+from dataclasses import dataclass
 from typing import Sequence
 
 from .errors import EmbeddingError

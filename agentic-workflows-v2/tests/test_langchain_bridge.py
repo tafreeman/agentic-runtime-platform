@@ -6,9 +6,10 @@ translate LangGraph runner state into canonical contract types.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.langchain.runner import _build_workflow_result, _steps_dict_to_list
 
@@ -106,7 +107,7 @@ class TestBuildWorkflowResult:
         return {
             "workflow_name": "test_workflow",
             "run_id": "run-123",
-            "started_at": datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            "started_at": datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC),
             "elapsed_seconds": 5.0,
         }
 
@@ -137,7 +138,7 @@ class TestBuildWorkflowResult:
 
     def test_end_time_computed(self, base_kwargs):
         result = _build_workflow_result(**base_kwargs)
-        assert result.end_time == datetime(2026, 1, 1, 12, 0, 5, tzinfo=timezone.utc)
+        assert result.end_time == datetime(2026, 1, 1, 12, 0, 5, tzinfo=UTC)
 
     def test_token_counts_in_metadata(self, base_kwargs):
         tc = {"step_a": {"input": 100, "output": 50}}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -66,7 +66,7 @@ class SanitizationResult(BaseModel):
     original_hash: str = Field(
         description="SHA-256 of original input for audit trail, NOT the input itself"
     )
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     detector_versions: dict[str, str] = Field(default_factory=dict)
 
     model_config = {"frozen": True}

@@ -139,6 +139,11 @@ jobs:
           name: whole-repo-coverage
           path: coverage-whole-repo.xml
           if-no-files-found: error
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage-whole-repo.xml
+          fail_ci_if_error: false
 
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.

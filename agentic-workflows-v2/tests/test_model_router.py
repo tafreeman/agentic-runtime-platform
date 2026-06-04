@@ -2,10 +2,11 @@
 
 import tempfile
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+
 from agentic_v2.models import (  # Stats; Router; Smart router; Client
     CircuitState,
     CooldownConfig,
@@ -129,7 +130,7 @@ class TestModelStats:
         assert stats.circuit_state == CircuitState.OPEN
 
         # Simulate time passing (both wall clock and monotonic)
-        stats._last_failure_time = datetime.now(timezone.utc) - timedelta(seconds=2)
+        stats._last_failure_time = datetime.now(UTC) - timedelta(seconds=2)
         stats._last_failure_mono = time.monotonic() - 2.0
 
         # Should allow test request

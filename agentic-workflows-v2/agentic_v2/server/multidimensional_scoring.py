@@ -34,7 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Mapping
@@ -223,7 +223,7 @@ class MultidimensionalGateResult:
             # CI tiebreaker — retained for coalesce() compatibility
             "ci_score": round(self.ci_tiebreaker, 4),
             "ci_role": "tiebreaker_only",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "scoring_engine": "multidimensional",
         }
 

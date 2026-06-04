@@ -18,6 +18,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 from agentic_v2.engine.agent_resolver import (
     TIER0_REGISTRY,
     _infer_tier,

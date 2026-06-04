@@ -30,11 +30,10 @@ Key constants:
 from __future__ import annotations
 
 import ast
+import contextlib
 import logging
 from pathlib import Path
 from typing import Any
-
-import contextlib
 
 from ..integrations.otel import get_tracer as _get_tracer
 from ..models.router import ModelTier

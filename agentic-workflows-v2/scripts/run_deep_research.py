@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -248,7 +248,7 @@ def main(argv: list[str]) -> int:
     runner = WorkflowRunner()
     result = runner.invoke("deep_research", thread_id=run_id, **workflow_inputs)
 
-    timestamp_utc = datetime.now(timezone.utc).isoformat()
+    timestamp_utc = datetime.now(UTC).isoformat()
     metadata = result.metadata or {}
     payload = {
         "run_id": run_id,
@@ -273,7 +273,7 @@ def main(argv: list[str]) -> int:
     if not out_dir.is_absolute():
         out_dir = _repo_root() / out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
     json_path = out_dir / f"deep_research_{stamp}.json"
     md_path = out_dir / f"deep_research_{stamp}.md"
     json_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")

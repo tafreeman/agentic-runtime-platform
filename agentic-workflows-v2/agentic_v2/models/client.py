@@ -28,7 +28,7 @@ import logging
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import wraps
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, TypeVar
 
@@ -169,7 +169,7 @@ class CachedResponse:
     @property
     def age_seconds(self) -> float:
         """Get age of cached response in seconds."""
-        return (datetime.now(timezone.utc) - self.timestamp).total_seconds()
+        return (datetime.now(UTC) - self.timestamp).total_seconds()
 
 
 @dataclass
@@ -279,7 +279,7 @@ class LLMClientWrapper:
         self.cache[key] = CachedResponse(
             response=response,
             model=model,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             tokens_used=tokens,
         )
 

@@ -8,13 +8,14 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
+from aiohttp import web
+
 from agentic_v2.tools.builtin.build_ops import BuildAppTool
 from agentic_v2.tools.builtin.code_analysis import AstDumpTool, CodeAnalysisTool
 from agentic_v2.tools.builtin.git_ops import GitDiffTool, GitStatusTool, GitTool
 from agentic_v2.tools.builtin.http_ops import HttpGetTool, HttpPostTool, HttpTool
 from agentic_v2.tools.builtin.search_ops import GrepTool, SearchTool
 from agentic_v2.tools.builtin.shell_ops import ShellExecTool, ShellTool
-from aiohttp import web
 
 # ============================================================================
 # Build Tool Tests

@@ -43,14 +43,26 @@ from ..integrations.otel import is_tracing_enabled, shutdown_tracing
 from ..logging_config import configure_logging
 from ..settings import get_settings
 from . import websocket
-from .auth import APIKeyMiddleware, AuthThrottle, _get_api_key, get_allowed_origins, is_public_path
-from .auth_oidc import OIDCAuthMiddleware, validate_oidc_settings
 from .audit_log import AuditLogger, NullAuditStore, build_audit_logger
+from .auth import (
+    APIKeyMiddleware,
+    AuthThrottle,
+    _get_api_key,
+    get_allowed_origins,
+    is_public_path,
+)
+from .auth_oidc import OIDCAuthMiddleware, validate_oidc_settings
 from .middleware.metrics import MetricsMiddleware
 from .middleware.tracing import TraceparentMiddleware
-
-from .routes import agents, evaluation_routes, health, model_finder, models, runs, workflows
-
+from .routes import (
+    agents,
+    evaluation_routes,
+    health,
+    model_finder,
+    models,
+    runs,
+    workflows,
+)
 
 # Configure logging — JSON when LOG_FORMAT=json, text otherwise.
 configure_logging(log_format=get_settings().log_format)

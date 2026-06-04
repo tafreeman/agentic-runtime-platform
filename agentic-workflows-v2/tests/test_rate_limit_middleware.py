@@ -23,7 +23,6 @@ from starlette.testclient import TestClient
 
 from agentic_v2.server.auth import is_public_path
 
-
 # ---------------------------------------------------------------------------
 # Test-app builder
 # ---------------------------------------------------------------------------
@@ -233,8 +232,8 @@ class TestCreateAppRateLimitIntegration:
         """app.state.auth_throttle is always set by create_app()."""
         monkeypatch.setenv("AGENTIC_DEFAULT_ADAPTER", "native")
 
-        from agentic_v2.server.auth import AuthThrottle
         from agentic_v2.server.app import create_app
+        from agentic_v2.server.auth import AuthThrottle
 
         app = create_app()
         assert hasattr(app.state, "auth_throttle"), "app.state.auth_throttle not set"

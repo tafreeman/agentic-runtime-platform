@@ -9,7 +9,6 @@ import pytest
 
 from agentic_v2.devex.port_guard import check_port, guard_ports
 
-
 # ---------------------------------------------------------------------------
 # check_port — socket-level tests
 # ---------------------------------------------------------------------------

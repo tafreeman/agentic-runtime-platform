@@ -40,8 +40,8 @@ from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator, Generic, TypeVar
 
 from ..contracts import TaskInput, TaskOutput
-from ..integrations.otel import get_tracer as _get_tracer
 from ..engine import ExecutionContext, StepDefinition
+from ..integrations.otel import get_tracer as _get_tracer
 from ..models import (
     LLMClientWrapper,
     SmartModelRouter,

@@ -38,6 +38,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: agentic-workflows-v2
+        # ExecutionKit (the `ek` extra) is an opt-in provider sourced from a sibling
+        # editable path that is intentionally absent in CI; it is excluded here.
         run: uv sync --frozen --extra dev --extra server --extra langchain
 
       - name: Validate all bundled workflows
@@ -56,7 +58,7 @@ jobs:
           foreach ($wf in $workflows) {
             Write-Host "Validating $wf..."
             $LASTEXITCODE = 0
-            uv run agentic validate $wf
+            uv run --no-sync agentic validate $wf
             if ($LASTEXITCODE -ne 0) {
               Write-Host "::error::Workflow validation FAILED: $wf"
               $failed += $wf
@@ -73,10 +75,10 @@ jobs:
         shell: pwsh
         run: |
           $LASTEXITCODE = 0
-          uv run agentic list workflows
+          uv run --no-sync agentic list workflows
           if ($LASTEXITCODE -ne 0) { Write-Host "::error::agentic list workflows failed"; exit 1 }
           $LASTEXITCODE = 0
-          uv run agentic validate test_deterministic
+          uv run --no-sync agentic validate test_deterministic
           if ($LASTEXITCODE -ne 0) { Write-Host "::error::agentic validate failed"; exit 1 }
           Write-Host "CLI verification passed on windows-latest."
 
@@ -88,7 +90,7 @@ jobs:
         shell: pwsh
         run: |
           $LASTEXITCODE = 0
-          uv run agentic run test_deterministic `
+          uv run --no-sync agentic run test_deterministic `
             --input scripts/fixtures/smoke-input.json `
             --dry-run
           if ($LASTEXITCODE -ne 0) {

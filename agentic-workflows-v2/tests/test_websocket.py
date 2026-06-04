@@ -7,10 +7,11 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agentic_v2.server.app import create_app
-from agentic_v2.server.websocket import ConnectionManager
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
+
+from agentic_v2.server.app import create_app
+from agentic_v2.server.websocket import ConnectionManager
 
 
 def _mock_websocket() -> AsyncMock:

@@ -16,6 +16,7 @@ from __future__ import annotations
 import math
 
 import pytest
+
 from agentic_v2.rag.contracts import Chunk, RetrievalResult
 from agentic_v2.rag.protocols import VectorStoreProtocol
 

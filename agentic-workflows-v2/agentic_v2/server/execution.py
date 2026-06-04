@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any, Awaitable, Callable, Mapping
 
@@ -366,7 +366,7 @@ async def _stream_and_run(
                 continue
 
             _merge_stream_state(aggregated_state, node_update)
-            now = datetime.now(timezone.utc).isoformat()
+            now = datetime.now(UTC).isoformat()
 
             for step_state in node_update.values():
                 if not isinstance(step_state, Mapping):
@@ -615,7 +615,7 @@ async def _run_and_evaluate(
                 "type": "workflow_start",
                 "run_id": run_id,
                 "workflow_name": workflow_name,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
         result = await _stream_and_run(
@@ -649,7 +649,7 @@ async def _run_and_evaluate(
                     else 0.0
                 ),
                 "errors": workflow_errors,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -660,7 +660,7 @@ async def _run_and_evaluate(
                 {
                     "type": "evaluation_start",
                     "run_id": run_id,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
             judge_model = _resolve_judge_model()
@@ -697,7 +697,7 @@ async def _run_and_evaluate(
                             "step_scores",
                         )
                     },
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -724,6 +724,6 @@ async def _run_and_evaluate(
                 "type": "error",
                 "run_id": run_id,
                 "error": str(e),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             },
         )

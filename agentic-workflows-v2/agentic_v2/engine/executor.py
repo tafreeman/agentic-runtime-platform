@@ -24,7 +24,7 @@ import logging
 import traceback
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Awaitable, Callable
 
@@ -112,7 +112,7 @@ class ExecutionHistory:
         """Record an event."""
         self.entries.append(
             {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "event": event_type,
                 "step": step_name,
                 "data": data or {},

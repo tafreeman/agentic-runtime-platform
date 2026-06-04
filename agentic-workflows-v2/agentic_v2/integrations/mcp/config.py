@@ -13,7 +13,7 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from agentic_v2.integrations.mcp.types import (
     McpServerConfig,
@@ -32,8 +32,8 @@ VAR_EXPANSION_PATTERN = re.compile(
 
 def expand_variables(
     value: str,
-    env_vars: Optional[dict[str, str]] = None,
-    input_values: Optional[dict[str, str]] = None,
+    env_vars: dict[str, str] | None = None,
+    input_values: dict[str, str] | None = None,
 ) -> str:
     """Expand ${VAR_NAME}, ${env:VAR_NAME}, and ${input:VAR_NAME} in strings.
 
@@ -80,8 +80,8 @@ def expand_variables(
 
 def expand_dict_variables(
     data: dict[str, Any],
-    env_vars: Optional[dict[str, str]] = None,
-    input_values: Optional[dict[str, str]] = None,
+    env_vars: dict[str, str] | None = None,
+    input_values: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Recursively expand variables in a dictionary.
 
@@ -118,9 +118,9 @@ def expand_dict_variables(
 def parse_server_config(
     server_name: str,
     server_data: dict[str, Any],
-    env_vars: Optional[dict[str, str]] = None,
-    input_values: Optional[dict[str, str]] = None,
-) -> Optional[McpServerConfig]:
+    env_vars: dict[str, str] | None = None,
+    input_values: dict[str, str] | None = None,
+) -> McpServerConfig | None:
     """Parse a single server configuration from VS Code MCP format.
 
     Args:
@@ -208,8 +208,8 @@ def parse_server_config(
 
 def load_config_file(
     file_path: str,
-    env_vars: Optional[dict[str, str]] = None,
-    input_values: Optional[dict[str, str]] = None,
+    env_vars: dict[str, str] | None = None,
+    input_values: dict[str, str] | None = None,
 ) -> list[McpServerConfig]:
     """Load MCP configuration from a JSON file.
 
@@ -254,10 +254,10 @@ def load_config_file(
 
 
 def load_all_configs(
-    workspace_root: Optional[str] = None,
-    user_home: Optional[str] = None,
-    env_vars: Optional[dict[str, str]] = None,
-    input_values: Optional[dict[str, str]] = None,
+    workspace_root: str | None = None,
+    user_home: str | None = None,
+    env_vars: dict[str, str] | None = None,
+    input_values: dict[str, str] | None = None,
 ) -> list[McpServerConfig]:
     """Load MCP configurations from all standard locations.
 
@@ -381,10 +381,10 @@ class McpConfigLoader:
 
     def __init__(
         self,
-        workspace_root: Optional[str] = None,
-        user_home: Optional[str] = None,
-        env_vars: Optional[dict[str, str]] = None,
-        input_values: Optional[dict[str, str]] = None,
+        workspace_root: str | None = None,
+        user_home: str | None = None,
+        env_vars: dict[str, str] | None = None,
+        input_values: dict[str, str] | None = None,
     ) -> None:
         """Initialize config loader.
 
@@ -398,7 +398,7 @@ class McpConfigLoader:
         self.user_home = user_home or str(Path.home())
         self.env_vars = env_vars or dict(os.environ)  # env-pass: subprocess env
         self.input_values = input_values or {}
-        self._cached_configs: Optional[list[McpServerConfig]] = None
+        self._cached_configs: list[McpServerConfig] | None = None
 
     def load(self, force_reload: bool = False) -> list[McpServerConfig]:
         """Load all configurations (with caching).
@@ -432,7 +432,7 @@ class McpConfigLoader:
         all_configs = self.load(force_reload)
         return filter_enabled_configs(all_configs)
 
-    def get_by_name(self, name: str) -> Optional[McpServerConfig]:
+    def get_by_name(self, name: str) -> McpServerConfig | None:
         """Get a specific server configuration by name.
 
         Args:

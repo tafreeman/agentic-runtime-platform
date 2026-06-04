@@ -9,8 +9,8 @@ TDD: Tests written FIRST, then implementations.
 
 from __future__ import annotations
 
-
 import pytest
+
 from agentic_v2.core.memory import InMemoryStore, MemoryStoreProtocol
 from agentic_v2.rag import InMemoryEmbedder, InMemoryVectorStore
 from agentic_v2.rag.memory import RAGMemoryStore

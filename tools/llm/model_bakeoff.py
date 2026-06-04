@@ -21,7 +21,7 @@ import os
 import statistics
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -337,7 +337,7 @@ def main(argv: list[str]) -> int:
     )
     alignment = _recommend_alignment(results)
 
-    now_utc = datetime.now(timezone.utc).isoformat()
+    now_utc = datetime.now(UTC).isoformat()
     payload = {
         "timestamp_utc": now_utc,
         "config": {

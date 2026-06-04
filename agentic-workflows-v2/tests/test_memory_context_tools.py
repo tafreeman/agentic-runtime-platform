@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 import pytest
+
 from agentic_v2.tools.builtin.context_ops import ContextTrimTool, TokenEstimateTool
 from agentic_v2.tools.builtin.memory_ops import (
     MemoryClearTool,

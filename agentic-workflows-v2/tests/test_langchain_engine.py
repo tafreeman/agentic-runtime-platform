@@ -12,6 +12,7 @@ import os
 from datetime import datetime
 
 import pytest
+
 from agentic_v2.contracts import StepStatus
 from agentic_v2.integrations.base import CanonicalEvent, TraceAdapter
 from agentic_v2.integrations.tracing import LangSmithTraceAdapter
@@ -176,8 +177,9 @@ class TestPerStepModelOverride:
         assert config.steps[1].model_override == "gh:openai/gpt-4o"
 
     async def test_step_model_override_is_passed_to_agent_factory(self, monkeypatch):
-        from agentic_v2.langchain import graph as graph_module
         from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
 
         captured = {}
 
@@ -993,8 +995,9 @@ class TestGraphResponseParsing:
     """Regression tests for provider-specific response parsing."""
 
     def test_extract_agent_response_text_handles_content_list(self):
-        from agentic_v2.langchain import graph as graph_module
         from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
 
         payload = {
             "messages": [
@@ -1023,8 +1026,9 @@ class TestGraphResponseParsing:
         assert parsed["references"] == ["a"]
 
     async def test_llm_step_maps_outputs_from_list_content(self, monkeypatch):
-        from agentic_v2.langchain import graph as graph_module
         from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
 
         class _DummyAgent:
             def invoke(self, payload):
@@ -1062,8 +1066,9 @@ class TestGraphResponseParsing:
         assert updated["steps"]["intake_scope"]["outputs"]["scoped_goal"] == "mapped"
 
     async def test_llm_step_retries_with_fallback_model(self, monkeypatch):
-        from agentic_v2.langchain import graph as graph_module
         from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
 
         created_models: list[str] = []
 

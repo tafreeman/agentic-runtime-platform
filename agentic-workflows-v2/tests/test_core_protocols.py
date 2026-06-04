@@ -256,9 +256,11 @@ class TestProtocolSignatures:
         """Protocol annotations must be introspectable at runtime."""
         from typing import get_type_hints
 
-        from agentic_v2.core.protocols import DetectorProtocol
-        from agentic_v2.core.protocols import MiddlewareProtocol
-        from agentic_v2.core.protocols import VerifierProtocol
+        from agentic_v2.core.protocols import (
+            DetectorProtocol,
+            MiddlewareProtocol,
+            VerifierProtocol,
+        )
 
         assert get_type_hints(ExecutionEngine.execute)
         assert get_type_hints(SupportsCheckpointing.resume)
@@ -302,7 +304,11 @@ class TestCoreModuleExports:
         )
 
     def test_dag_available(self):
-        from agentic_v2.core import DAG, CycleDetectedError, MissingDependencyError  # noqa: F401
+        from agentic_v2.core import (  # noqa: F401
+            DAG,
+            CycleDetectedError,
+            MissingDependencyError,
+        )
 
     def test_errors_available(self):
         from agentic_v2.core import (  # noqa: F401

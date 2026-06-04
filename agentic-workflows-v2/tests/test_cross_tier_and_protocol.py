@@ -1,10 +1,11 @@
 """Tests for ADR-002B (cross-tier degradation) and ADR-001 (ExecutionEngine
 Protocol)."""
 
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
+
 from agentic_v2.contracts.messages import StepStatus, WorkflowResult
 from agentic_v2.engine.context import ExecutionContext
 from agentic_v2.engine.dag import DAG
@@ -209,7 +210,7 @@ class TestExecutionEngineProtocol:
             async def execute(
                 self,
                 workflow: Any,
-                ctx: Optional[ExecutionContext] = None,
+                ctx: ExecutionContext | None = None,
                 on_update: Any = None,
                 **kwargs: Any,
             ) -> WorkflowResult:
@@ -252,7 +253,7 @@ class TestExecutionEngineProtocol:
 
             def get_checkpoint_state(
                 self, workflow: Any, *, thread_id: str, **kwargs: Any
-            ) -> Optional[dict[str, Any]]:
+            ) -> dict[str, Any] | None:
                 return None
 
             async def resume(

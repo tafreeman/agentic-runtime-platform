@@ -7,7 +7,7 @@ Provides two special tools to the LLM:
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from agentic_v2.integrations.mcp.discovery.resources import ResourceDiscovery
 from agentic_v2.integrations.mcp.runtime.manager import McpConnectionManager
@@ -37,7 +37,7 @@ class McpResourceAdapter:
         self.connection_manager = connection_manager
         self.resource_discovery = resource_discovery
 
-    async def list_resources(self, server_name: Optional[str] = None) -> str:
+    async def list_resources(self, server_name: str | None = None) -> str:
         """List available resources from MCP servers.
 
         Args:
@@ -174,7 +174,7 @@ class McpResourceAdapter:
             logger.error(error_msg)
             return f"Error: {error_msg}"
 
-    async def _find_resource_server(self, uri: str) -> Optional[str]:
+    async def _find_resource_server(self, uri: str) -> str | None:
         """Find which server provides a given resource URI.
 
         Args:

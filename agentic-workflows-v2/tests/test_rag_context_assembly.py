@@ -13,6 +13,7 @@ Covers:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.rag.context_assembly import TokenBudgetAssembler, frame_content
 from agentic_v2.rag.contracts import RAGResponse, RetrievalResult
 

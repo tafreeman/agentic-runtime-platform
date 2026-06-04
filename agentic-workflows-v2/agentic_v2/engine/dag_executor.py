@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Awaitable, Callable
 
 from ..contracts import StepResult, StepStatus, WorkflowResult
@@ -152,7 +152,7 @@ class DAGExecutor:
                     "type": "workflow_start",
                     "run_id": result.workflow_id,
                     "workflow_name": result.workflow_name,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -174,7 +174,7 @@ class DAGExecutor:
                         "type": "step_start",
                         "run_id": result.workflow_id,
                         "step": step_name,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     }
                 )
             step_def = dag.steps[step_name]
@@ -187,7 +187,7 @@ class DAGExecutor:
                 return
             step_result = StepResult(step_name=step_name, status=StepStatus.SKIPPED)
             step_result.metadata["skip_reason"] = reason
-            step_result.end_time = datetime.now(timezone.utc)
+            step_result.end_time = datetime.now(UTC)
             results[step_name] = step_result
             result.add_step(step_result)
             completed.add(step_name)
@@ -277,7 +277,7 @@ class DAGExecutor:
                             step_name=failed_name, status=StepStatus.FAILED
                         )
                         step_result.error = str(exc)
-                        step_result.end_time = datetime.now(timezone.utc)
+                        step_result.end_time = datetime.now(UTC)
                         results[failed_name] = step_result
                         result.add_step(step_result)
                         completed.add(failed_name)
@@ -307,7 +307,7 @@ class DAGExecutor:
                                 "input": step_result.input_data,
                                 "output": step_result.output_data,
                                 "error": step_result.error,
-                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "timestamp": datetime.now(UTC).isoformat(),
                             }
                         )
 
@@ -375,7 +375,7 @@ class DAGExecutor:
 
             # 3. Transition every step still in RUNNING state to FAILED and
             #    record a StepResult for it.
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             for step_name in list(running):
                 if step_name not in completed:
                     step_result = StepResult(
@@ -417,7 +417,7 @@ class DAGExecutor:
                     "type": "workflow_end",
                     "run_id": result.workflow_id,
                     "status": result.overall_status.value,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 

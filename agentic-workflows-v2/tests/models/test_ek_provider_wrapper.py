@@ -42,7 +42,6 @@ import pytest
 # Skip the whole module if the executionkit/httpx stack is not present.
 try:
     import httpx
-
     from executionkit.errors import (
         PermanentError,
         ProviderError,

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from tests._server_test_helpers import make_configured_app
+from fastapi.testclient import TestClient
 
 from agentic_v2.server import result_normalization
 from agentic_v2.server.routes import evaluation_routes
-from fastapi.testclient import TestClient
+from tests._server_test_helpers import make_configured_app
 
 
 def test_eval_datasets_endpoint_returns_expected_shape():

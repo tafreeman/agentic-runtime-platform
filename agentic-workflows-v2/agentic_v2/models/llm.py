@@ -3,7 +3,6 @@
 from typing import Any
 
 from agentic_v2_eval.interfaces import LLMClientProtocol
-
 from tools.llm.llm_client import LLMClient as LegacyClient
 
 

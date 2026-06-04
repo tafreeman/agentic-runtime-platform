@@ -32,15 +32,13 @@ from typing import Any
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parents[3]))
 
-from tools.agents.benchmarks.datasets import BENCHMARK_DEFINITIONS
 from tools.agents.benchmarks.evaluation_pipeline import (
     evaluate_task_output_llm,
 )
-from tools.agents.benchmarks.loader import clear_cache, load_benchmark
+from tools.agents.benchmarks.loader import load_benchmark
 from tools.agents.benchmarks.registry import (
     PRESET_CONFIGS,
     BenchmarkConfig,
-    BenchmarkRegistry,
 )
 
 # ---------------------------------------------------------------------------
@@ -56,11 +54,8 @@ from tools.agents.benchmarks.runner_commands import (
     cmd_run,
 )
 from tools.agents.benchmarks.runner_ui import (
-    colorize,
-    get_available_models_by_provider,
     interactive_mode,
     print_header,
-    print_table,
     prompt_input,
     prompt_yes_no,
 )

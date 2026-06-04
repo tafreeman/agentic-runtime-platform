@@ -39,7 +39,6 @@ from tools.llm.probe_providers_cloud import (
     probe_gemini,
     probe_github,
     probe_openai,
-    probe_openai_compatible_endpoint,
 )
 from tools.llm.probe_providers_local import (
     probe_ai_toolkit,

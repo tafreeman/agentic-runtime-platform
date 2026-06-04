@@ -22,13 +22,12 @@ from agentic_v2.server.models import (
     DAGEdgeModel,
     DAGNodeModel,
     DAGResponse,
-    RunSummaryModel,
     RunsSummaryResponse,
+    RunSummaryModel,
     WorkflowEditorStep,
     WorkflowInputSchemaItem,
     WorkflowInputSchemaResponse,
 )
-
 
 # ---------------------------------------------------------------------------
 # WorkflowInputSchemaItem — Tier 2 contract tests

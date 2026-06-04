@@ -9,6 +9,7 @@ Covers:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.rag.contracts import Chunk, RetrievalResult
 from agentic_v2.rag.embeddings import InMemoryEmbedder
 from agentic_v2.rag.retrieval import BM25Index, HybridRetriever, reciprocal_rank_fusion

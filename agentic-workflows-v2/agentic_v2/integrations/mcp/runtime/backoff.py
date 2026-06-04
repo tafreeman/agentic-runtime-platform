@@ -4,7 +4,6 @@ Implements the backoff strategy used when MCP connections fail.
 """
 
 import random
-from typing import Optional
 
 
 class ExponentialBackoff:
@@ -20,7 +19,7 @@ class ExponentialBackoff:
         max_delay: float = 30.0,
         multiplier: float = 2.0,
         jitter: float = 0.2,
-        max_attempts: Optional[int] = 5,
+        max_attempts: int | None = 5,
     ) -> None:
         """Initialize backoff strategy.
 
@@ -40,7 +39,7 @@ class ExponentialBackoff:
         self._current_attempt = 0
         self._current_delay = initial_delay
 
-    def next_delay(self) -> Optional[float]:
+    def next_delay(self) -> float | None:
         """Calculate next delay value.
 
         Returns:

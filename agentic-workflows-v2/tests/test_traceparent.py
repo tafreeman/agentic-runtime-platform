@@ -15,7 +15,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from starlette.testclient import TestClient
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -388,7 +387,9 @@ class TestWebSocketTraceContext:
         with patch("agentic_v2.server.websocket.is_tracing_enabled", return_value=False):
             await mgr.connect(ws, "run-no-trace")
             # Simulate the endpoint logic: only send trace_context when enabled
-            from agentic_v2.server.websocket import is_tracing_enabled  # type: ignore[attr-defined]
+            from agentic_v2.server.websocket import (
+                is_tracing_enabled,  # type: ignore[attr-defined]
+            )
 
             if is_tracing_enabled():
                 await ws.send_json({"type": "trace_context", "traceparent": "dummy"})

@@ -5,9 +5,9 @@ from __future__ import annotations
 __version__ = "0.1.0"
 
 # Phase 3: Agents
-from .agents import AgentEvent  # Base; Capabilities; Agents
 from .agents import (
     AgentConfig,
+    AgentEvent,  # Base; Capabilities; Agents
     AgentState,
     BaseAgent,
     Capability,
@@ -32,9 +32,9 @@ from .agents import (
 )
 
 # Phase 1: Contracts
-from .contracts import CodeGenerationInput  # Messages; Schemas
 from .contracts import (
     AgentMessage,
+    CodeGenerationInput,  # Messages; Schemas
     CodeGenerationOutput,
     CodeIssue,
     CodeReviewInput,
@@ -54,8 +54,8 @@ from .contracts import (
 )
 
 # Phase 2: Engine
-from .engine import DAG  # Context; Steps; Pipeline; DAG; Executor
 from .engine import (
+    DAG,  # Context; Steps; Pipeline; DAG; Executor
     ConditionalBranch,
     CycleDetectedError,
     DAGExecutor,
@@ -91,9 +91,9 @@ from .engine import (
 )
 
 # Phase 1: Models
-from .models import FallbackChain  # Stats; Router; Client
 from .models import (
     CircuitState,
+    FallbackChain,  # Stats; Router; Client
     LLMClientWrapper,
     ModelRouter,
     ModelStats,
