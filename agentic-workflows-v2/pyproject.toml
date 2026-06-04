@@ -369,3 +369,9 @@ module = [
     "agentic_v2.langchain.dependencies",
 ]
 ignore_errors = true
+
+# Strict typing enabled incrementally for the core engine and contracts modules.
+[[tool.mypy.overrides]]
+module = ["agentic_v2.engine.*", "agentic_v2.contracts.*"]
+disallow_untyped_defs = true
+warn_return_any = true
