@@ -28,18 +28,18 @@ dependencies = [
 
 [tool.uv.sources]
 agentic-tools = { workspace = true }
-# ADR-023 Option A′: single ExecutionKit dependency (editable path source).
-# EK lives outside this uv workspace; declared as an editable path-dep so the
-# runtime↔engine bridge picks up EK edits live during finishing work.
-executionkit = { path = "../../../executionkit", editable = true }
+# ADR-023 Option A′: ExecutionKit is consumed as the published PyPI release
+# (`executionkit` on PyPI), not an editable sibling path — so the workspace
+# resolves cleanly on any checkout and in CI without a co-located EK clone.
+# Re-add an editable path source here if active EK↔runtime co-development resumes.
 
 
 [project.optional-dependencies]
 # ADR-023 Option A′: the ExecutionKit execution kernel (single package; the
-# `executionkit-contracts` seam is dropped). Source declared in
-# [tool.uv.sources] above. httpx (an EK [httpx] extra) is already a base
-# runtime dependency, so EK's value types + error tree import with no extra.
-ek = ["executionkit"]
+# `executionkit-contracts` seam is dropped), consumed from the published PyPI
+# release. httpx (an EK [httpx] extra) is already a base runtime dependency, so
+# EK's value types + error tree import with no extra.
+ek = ["executionkit>=0.1.0,<0.2.0"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
