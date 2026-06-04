@@ -501,14 +501,15 @@ def _extract_openai_chat(data: dict[str, Any]) -> dict[str, Any]:
     ``choices[0].message`` envelope, so the extraction is shared between
     their backends rather than duplicated.
     """
-    choice = data.get("choices", [{}])[0]
-    message = choice.get("message", {})
+    choices = data.get("choices")
+    choice = choices[0] if choices else {}
+    message = choice.get("message") or {}
     return {
-        "content": message.get("content", ""),
+        "content": message.get("content") or "",
         "tool_calls": message.get("tool_calls"),
         "finish_reason": choice.get("finish_reason"),
         "model": data.get("model"),
-        "usage": data.get("usage", {}),
+        "usage": data.get("usage") or {},
     }
 
 
