@@ -437,6 +437,9 @@ presentation/src/tokens/raw-themes/*
 .claude/logs/
 .claude/cache/
 
+# Local editor config — VS Code workspace state and per-user MCP config
+.vscode/
+
 
 # Gemini CLI — commit GEMINI.md and shared config, ignore creds
 .gemini/oauth_creds.json
