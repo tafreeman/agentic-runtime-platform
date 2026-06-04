@@ -18,11 +18,14 @@ import pytest
 from agentic_v2.models.backends import (
     PREFIX_MAP,
     AnthropicBackend,
+    AzureFoundryBackend,
+    AzureOpenAIBackend,
     GeminiBackend,
     GitHubModelsBackend,
     MockBackend,
     MultiBackend,
     OllamaBackend,
+    OnnxBackend,
     OpenAIBackend,
     auto_configure_backend,
     get_backend,
@@ -37,6 +40,10 @@ _PROVIDER_ENV_VARS = (
     "GITHUB_TOKEN",
     "GH_TOKEN",
     "GEMINI_API_KEY",
+    "AZURE_OPENAI_API_KEY",
+    "AZURE_OPENAI_ENDPOINT",
+    "AZURE_FOUNDRY_API_KEY",
+    "AZURE_FOUNDRY_ENDPOINT",
 )
 
 
@@ -124,12 +131,28 @@ class TestPrefixMap:
     """Verify PREFIX_MAP is complete and correct."""
 
     def test_contains_all_expected_prefixes(self) -> None:
-        expected = {"gh:", "openai:", "anthropic:", "gemini:", "ollama:", "local:"}
+        expected = {
+            "gh:",
+            "openai:",
+            "anthropic:",
+            "gemini:",
+            "azure:",
+            "azure-foundry:",
+            "ollama:",
+            "local:",
+            "onnx:",
+        }
         assert set(PREFIX_MAP.keys()) == expected
 
     def test_local_prefix_routes_through_ollama(self) -> None:
         """local: models should be served by the same Ollama backend."""
         assert PREFIX_MAP["local:"] == "ollama"
+
+    def test_azure_prefix_does_not_collide_with_azure_foundry(self) -> None:
+        """'azure-foundry:' must not be shadowed by the 'azure:' prefix."""
+        assert PREFIX_MAP["azure:"] == "azure"
+        assert PREFIX_MAP["azure-foundry:"] == "azure_foundry"
+        assert not "azure-foundry:model".startswith("azure:")
 
     @pytest.mark.parametrize(
         "prefix,provider",
@@ -138,7 +161,10 @@ class TestPrefixMap:
             ("openai:", "openai"),
             ("anthropic:", "anthropic"),
             ("gemini:", "gemini"),
+            ("azure:", "azure"),
+            ("azure-foundry:", "azure_foundry"),
             ("ollama:", "ollama"),
+            ("onnx:", "onnx"),
         ],
     )
     def test_prefix_maps_to_correct_provider(self, prefix: str, provider: str) -> None:
@@ -160,8 +186,11 @@ class TestMultiBackendRouting:
             ("openai:gpt-4o", "openai"),
             ("anthropic:claude-3-opus", "anthropic"),
             ("gemini:gemini-1.5-pro", "gemini"),
+            ("azure:gpt-4o-deployment", "azure"),
+            ("azure-foundry:phi4mini", "azure_foundry"),
             ("ollama:llama3", "ollama"),
             ("local:phi3", "ollama"),
+            ("onnx:phi4", "onnx"),
         ],
     )
     def test_routes_prefixed_model_to_correct_backend(
@@ -349,7 +378,24 @@ class TestGetBackendFactory:
             ("openai", {"OPENAI_API_KEY": "test-key"}, OpenAIBackend),
             ("anthropic", {"ANTHROPIC_API_KEY": "test-key"}, AnthropicBackend),
             ("gemini", {"GEMINI_API_KEY": "test-key"}, GeminiBackend),
+            (
+                "azure",
+                {
+                    "AZURE_OPENAI_API_KEY": "test-key",
+                    "AZURE_OPENAI_ENDPOINT": "https://r.openai.azure.com",
+                },
+                AzureOpenAIBackend,
+            ),
+            (
+                "azure_foundry",
+                {
+                    "AZURE_FOUNDRY_API_KEY": "test-key",
+                    "AZURE_FOUNDRY_ENDPOINT": "https://r.services.ai.azure.com/models",
+                },
+                AzureFoundryBackend,
+            ),
             ("ollama", {}, OllamaBackend),
+            ("onnx", {}, OnnxBackend),
             ("mock", {}, MockBackend),
         ],
     )
@@ -364,6 +410,38 @@ class TestGetBackendFactory:
             monkeypatch.setenv(key, val)
         result = get_backend(provider)
         assert isinstance(result, expected_type)
+
+    def test_supports_eight_plus_concrete_providers(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Regression guard for the public '8+ providers' claim.
+
+        ``get_backend`` must construct at least eight distinct concrete
+        provider backends (excluding the mock). If a backend is removed or
+        a prefix is unwired, this fails before the README claim can drift.
+        """
+        provider_env = {
+            "github": {"GITHUB_TOKEN": "t"},
+            "openai": {"OPENAI_API_KEY": "k"},
+            "anthropic": {"ANTHROPIC_API_KEY": "k"},
+            "gemini": {"GEMINI_API_KEY": "k"},
+            "azure": {
+                "AZURE_OPENAI_API_KEY": "k",
+                "AZURE_OPENAI_ENDPOINT": "https://r.openai.azure.com",
+            },
+            "azure_foundry": {
+                "AZURE_FOUNDRY_API_KEY": "k",
+                "AZURE_FOUNDRY_ENDPOINT": "https://r.services.ai.azure.com/models",
+            },
+            "ollama": {},
+            "onnx": {},
+        }
+        built: set[type] = set()
+        for provider, env in provider_env.items():
+            for key, val in env.items():
+                monkeypatch.setenv(key, val)
+            built.add(type(get_backend(provider)))
+        assert len(built) >= 8
 
     def test_unknown_provider_raises_value_error(self) -> None:
         with pytest.raises(ValueError, match="Unknown provider: nope"):
@@ -453,6 +531,34 @@ class TestAutoConfigureBackend:
         result = self._call()
         assert "gemini" in result.backends
         assert isinstance(result.backends["gemini"], GeminiBackend)
+
+    def test_registers_azure_when_key_and_endpoint_present(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-azure-key")
+        monkeypatch.setenv("AZURE_OPENAI_ENDPOINT", "https://r.openai.azure.com")
+        result = self._call()
+        assert "azure" in result.backends
+        assert isinstance(result.backends["azure"], AzureOpenAIBackend)
+
+    def test_skips_azure_when_endpoint_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Azure needs both key and endpoint; a key alone is not enough."""
+        monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-azure-key")
+        result = self._call()
+        assert "azure" not in result.backends
+
+    def test_registers_azure_foundry_when_key_and_endpoint_present(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("AZURE_FOUNDRY_API_KEY", "test-foundry-key")
+        monkeypatch.setenv(
+            "AZURE_FOUNDRY_ENDPOINT", "https://r.services.ai.azure.com/models"
+        )
+        result = self._call()
+        assert "azure_foundry" in result.backends
+        assert isinstance(result.backends["azure_foundry"], AzureFoundryBackend)
 
     def test_registers_multiple_providers_simultaneously(
         self, monkeypatch: pytest.MonkeyPatch
