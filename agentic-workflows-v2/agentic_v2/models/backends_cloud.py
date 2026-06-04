@@ -489,8 +489,227 @@ class GeminiBackend(LLMBackend):
             await self._client.aclose()
 
 
+# ---------------------------------------------------------------------------
+# Azure OpenAI / Azure AI Foundry
+# ---------------------------------------------------------------------------
+
+
+def _extract_openai_chat(data: dict[str, Any]) -> dict[str, Any]:
+    """Canonicalize an OpenAI-shaped ``chat/completions`` response.
+
+    Azure OpenAI and Azure AI Foundry both return the OpenAI
+    ``choices[0].message`` envelope, so the extraction is shared between
+    their backends rather than duplicated.
+    """
+    choices = data.get("choices")
+    choice = choices[0] if choices else {}
+    message = choice.get("message") or {}
+    return {
+        "content": message.get("content") or "",
+        "tool_calls": message.get("tool_calls"),
+        "finish_reason": choice.get("finish_reason"),
+        "model": data.get("model"),
+        "usage": data.get("usage") or {},
+    }
+
+
+@dataclass
+class AzureOpenAIBackend(LLMBackend):
+    """Backend for the Azure OpenAI Service.
+
+    Differs from :class:`OpenAIBackend` in three ways: authentication uses
+    the ``api-key`` header (not a Bearer token), the *deployment* name is
+    carried in the URL path rather than the request body, and every request
+    is pinned to an ``api-version``. Model strings are ``azure:<deployment>``.
+    """
+
+    api_key: str = field(
+        default_factory=lambda: get_secret("AZURE_OPENAI_API_KEY", default="") or "",
+        repr=False,
+    )
+    endpoint: str = field(
+        default_factory=lambda: get_secret("AZURE_OPENAI_ENDPOINT", default="") or "",
+    )
+    api_version: str = field(
+        default_factory=lambda: (
+            get_secret("AZURE_OPENAI_API_VERSION", default="2024-10-21")
+            or "2024-10-21"
+        ),
+    )
+    timeout: float = 120.0
+    _client: httpx.AsyncClient | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if not self.api_key:
+            raise ValueError("AZURE_OPENAI_API_KEY environment variable required")
+        if not self.endpoint:
+            raise ValueError("AZURE_OPENAI_ENDPOINT environment variable required")
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                base_url=self.endpoint.rstrip("/"),
+                timeout=self.timeout,
+                headers={
+                    "api-key": self.api_key,
+                    "Content-Type": "application/json",
+                },
+            )
+        return self._client
+
+    async def complete(
+        self,
+        model: str,
+        prompt: str,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        **kwargs: Any,
+    ) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        result = await self.complete_chat(
+            model, messages, max_tokens, temperature, **kwargs
+        )
+        return result.get("content", "")
+
+    async def complete_chat(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        client = await self._get_client()
+
+        # Azure carries the deployment name in the path, not the body.
+        deployment = model.removeprefix("azure:")
+
+        payload: dict[str, Any] = {
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            **kwargs,
+        }
+
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        response = await client.post(
+            f"/openai/deployments/{deployment}/chat/completions",
+            params={"api-version": self.api_version},
+            json=payload,
+        )
+        response.raise_for_status()
+        return _extract_openai_chat(response.json())
+
+    async def close(self) -> None:
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+
+
+@dataclass
+class AzureFoundryBackend(LLMBackend):
+    """Backend for Azure AI Foundry model deployments.
+
+    Targets the unified Azure AI Inference endpoint (OpenAI-compatible
+    ``/chat/completions``), which serves catalog models such as Phi-4,
+    Mistral, and Llama from a single resource. Unlike Azure OpenAI the
+    model name travels in the request body. Model strings are
+    ``azure-foundry:<model>``.
+    """
+
+    api_key: str = field(
+        default_factory=lambda: get_secret("AZURE_FOUNDRY_API_KEY", default="") or "",
+        repr=False,
+    )
+    endpoint: str = field(
+        default_factory=lambda: get_secret("AZURE_FOUNDRY_ENDPOINT", default="") or "",
+    )
+    api_version: str = field(
+        default_factory=lambda: (
+            get_secret("AZURE_FOUNDRY_API_VERSION", default="2024-05-01-preview")
+            or "2024-05-01-preview"
+        ),
+    )
+    timeout: float = 120.0
+    _client: httpx.AsyncClient | None = field(default=None, repr=False)
+
+    def __post_init__(self) -> None:
+        if not self.api_key:
+            raise ValueError("AZURE_FOUNDRY_API_KEY environment variable required")
+        if not self.endpoint:
+            raise ValueError("AZURE_FOUNDRY_ENDPOINT environment variable required")
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(
+                base_url=self.endpoint.rstrip("/"),
+                timeout=self.timeout,
+                headers={
+                    "api-key": self.api_key,
+                    "Content-Type": "application/json",
+                },
+            )
+        return self._client
+
+    async def complete(
+        self,
+        model: str,
+        prompt: str,
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        **kwargs: Any,
+    ) -> str:
+        messages = [{"role": "user", "content": prompt}]
+        result = await self.complete_chat(
+            model, messages, max_tokens, temperature, **kwargs
+        )
+        return result.get("content", "")
+
+    async def complete_chat(
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        tools: list[dict[str, Any]] | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        client = await self._get_client()
+
+        model_name = model.removeprefix("azure-foundry:")
+
+        payload: dict[str, Any] = {
+            "model": model_name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            **kwargs,
+        }
+
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        response = await client.post(
+            "/chat/completions",
+            params={"api-version": self.api_version},
+            json=payload,
+        )
+        response.raise_for_status()
+        return _extract_openai_chat(response.json())
+
+    async def close(self) -> None:
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+
+
 __all__ = [
     "AnthropicBackend",
+    "AzureFoundryBackend",
+    "AzureOpenAIBackend",
     "GeminiBackend",
     "GitHubModelsBackend",
     "OpenAIBackend",
