@@ -223,7 +223,7 @@ class OnnxBackend(LLMBackend):
         parts: list[str] = []
         for msg in messages:
             role = msg.get("role", "user")
-            content = msg.get("content", "")
+            content = msg.get("content") or ""
             parts.append(f"<|{role}|>\n{content}")
         parts.append("<|assistant|>\n")
         return "\n".join(parts)
