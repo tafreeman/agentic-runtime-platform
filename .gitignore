@@ -212,6 +212,9 @@ SB-2-IMPLEMENTATION-REPORT.md
 .claude/
 .mcp.json
 
+# Local editor config — VS Code workspace state and per-user MCP config
+.vscode/
+
 docs/archive/
 docs/audit/
 repo.git/
