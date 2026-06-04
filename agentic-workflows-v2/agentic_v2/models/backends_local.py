@@ -201,14 +201,15 @@ class OnnxBackend(LLMBackend):
 
     def _get_model(self, model: str) -> tuple[Any, Any, Any]:
         path = self._resolve_path(model)
-        cached = self._models.get(path)
-        if cached is None:
-            og = _load_onnxruntime_genai()
-            loaded = og.Model(path)
-            tokenizer = og.Tokenizer(loaded)
-            cached = (og, loaded, tokenizer)
-            self._models[path] = cached
-        return cached
+        with self._lock:
+            cached = self._models.get(path)
+            if cached is None:
+                og = _load_onnxruntime_genai()
+                loaded = og.Model(path)
+                tokenizer = og.Tokenizer(loaded)
+                cached = (og, loaded, tokenizer)
+                self._models[path] = cached
+            return cached
 
     @staticmethod
     def _messages_to_prompt(messages: list[dict[str, Any]]) -> str:
