@@ -355,13 +355,14 @@ async def complete_chat_with_fallback(
             metadata={},
         )
 
-    return await client.complete_chat(
+    result: tuple[dict[str, Any], str, int] = await client.complete_chat(
         messages=messages,
         tier=tier,
         max_retries=6,
         tools=tools,
         max_tokens=max_tokens,
     )
+    return result
 
 
 # Backward-compatibility alias

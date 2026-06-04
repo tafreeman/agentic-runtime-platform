@@ -7,7 +7,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, TypeVar
 
 if TYPE_CHECKING:
     from ..contracts.verification import VerificationPolicy
@@ -72,8 +72,10 @@ class RetryConfig:
         return isinstance(error, self.retry_on)
 
 
-# Type for step functions
-StepFunction = Callable[[ExecutionContext], Awaitable[dict[str, Any]]]
+# Type for step functions. Implementations are ``async def`` coroutines, so the
+# return type is ``Coroutine`` (not the broader ``Awaitable``) — this lets
+# ``asyncio.create_task`` accept ``func(ctx)`` without a cast.
+StepFunction = Callable[[ExecutionContext], Coroutine[Any, Any, dict[str, Any]]]
 HookFunction = Callable[[ExecutionContext, "StepDefinition"], Awaitable[None]]
 ConditionFunction = Callable[[ExecutionContext], bool]
 
@@ -222,8 +224,8 @@ def step(
 class StepExecutor:
     """Executes StepDefinition instances with full lifecycle management."""
 
-    def __init__(self):
-        self._running_tasks: dict[str, asyncio.Task] = {}
+    def __init__(self) -> None:
+        self._running_tasks: dict[str, asyncio.Task[dict[str, Any]]] = {}
 
     async def execute(
         self, step_def: StepDefinition, ctx: ExecutionContext
