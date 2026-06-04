@@ -239,7 +239,10 @@ class ExpressionEvaluator:
         # step data (stored by StepExecutor as ctx["steps"]).  This allows
         # when-conditions like ${steps.review_code.outputs.review_report.approved}
         # to resolve even when the evaluator has no step_results param.
-        step_views = self._build_step_views()
+        # Holds typed StepResultView objects plus raw dicts merged from
+        # ctx["steps"]; _to_namespace handles both shapes uniformly.
+        step_views: dict[str, StepResultView | dict[str, Any]] = {}
+        step_views.update(self._build_step_views())
         ctx_steps = all_vars.get("steps")
         if isinstance(ctx_steps, dict):
             for name, data in ctx_steps.items():
