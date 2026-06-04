@@ -11,7 +11,6 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +32,8 @@ class McpOutputStorage:
 
     def __init__(
         self,
-        output_dir: Optional[str] = None,
-        workspace_root: Optional[str] = None,
+        output_dir: str | None = None,
+        workspace_root: str | None = None,
     ) -> None:
         """
         Initialize output storage.
@@ -101,7 +100,7 @@ class McpOutputStorage:
         data: bytes,
         server_name: str,
         tool_name: str,
-        mime_type: Optional[str] = None,
+        mime_type: str | None = None,
     ) -> tuple[str, str]:
         """
         Save binary output to disk.
@@ -149,7 +148,7 @@ class McpOutputStorage:
         base64_data: str,
         server_name: str,
         tool_name: str,
-        mime_type: Optional[str] = None,
+        mime_type: str | None = None,
     ) -> tuple[str, str]:
         """
         Save base64-encoded output to disk.
@@ -178,7 +177,7 @@ class McpOutputStorage:
         file_path: str,
         original_size: int,
         content_type: str = "output",
-        format_description: Optional[str] = None,
+        format_description: str | None = None,
     ) -> str:
         """
         Generate a friendly message with file pointer for the LLM.

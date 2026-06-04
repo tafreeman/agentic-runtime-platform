@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.server.scoring_profiles import (
     DEFAULT_PROFILE_ID,
     SCORING_PROFILES,

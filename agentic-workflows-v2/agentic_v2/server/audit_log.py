@@ -19,7 +19,7 @@ import hashlib
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, Protocol, runtime_checkable
 from uuid import uuid4
@@ -319,7 +319,7 @@ class AuditLogger:
         record: dict[str, Any] = {
             "schema_version": "audit.v1",
             "id": uuid4().hex,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "event_type": event_type,
             "outcome": outcome,
             "actor": _json_safe(actor or {}),

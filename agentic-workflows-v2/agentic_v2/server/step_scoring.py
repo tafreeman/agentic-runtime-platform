@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -215,7 +215,7 @@ def score_step(
         weighted_score=scoring_result.weighted_score,
         criterion_scores=dict(scoring_result.criterion_scores),
         passed=scoring_result.weighted_score >= threshold,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )
 
 

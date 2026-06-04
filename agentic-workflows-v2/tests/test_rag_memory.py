@@ -18,6 +18,7 @@ from __future__ import annotations
 import math
 
 import pytest
+
 from agentic_v2.core.memory import MemoryStoreProtocol
 from agentic_v2.rag.embeddings import InMemoryEmbedder
 from agentic_v2.rag.memory import RAGMemoryStore

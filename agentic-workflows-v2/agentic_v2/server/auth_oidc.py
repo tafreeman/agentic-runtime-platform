@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from ..settings import Settings, get_settings
+from .audit_log import audit_auth_request_event
 from .auth import (
     _get_api_key,
     _get_auth_throttle_singleton,
@@ -27,7 +28,6 @@ from .auth import (
     is_public_path,
     is_token_authorized,
 )
-from .audit_log import audit_auth_request_event
 
 if TYPE_CHECKING:
     from fastapi import Request

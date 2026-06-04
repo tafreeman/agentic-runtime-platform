@@ -33,7 +33,6 @@ from typing import (
     AsyncIterator,
     Awaitable,
     Callable,
-    Optional,
     Protocol,
     Sequence,
     runtime_checkable,
@@ -79,8 +78,8 @@ class ExecutionEngine(Protocol):
     async def execute(
         self,
         workflow: Any,
-        ctx: Optional[_ExecutionContext] = None,
-        on_update: Optional[Callable[[dict[str, Any]], Awaitable[None]]] = None,
+        ctx: _ExecutionContext | None = None,
+        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> _WorkflowResult:
         """Execute a workflow and return results.
@@ -107,7 +106,7 @@ class SupportsStreaming(Protocol):
     async def stream(
         self,
         workflow: Any,
-        ctx: Optional[_ExecutionContext] = None,
+        ctx: _ExecutionContext | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream execution events as an async iterator."""
@@ -133,7 +132,7 @@ class SupportsCheckpointing(Protocol):
         workflow: Any,
         *,
         thread_id: str,
-        ctx: Optional[_ExecutionContext] = None,
+        ctx: _ExecutionContext | None = None,
         **kwargs: Any,
     ) -> _WorkflowResult:
         """Resume execution from the last checkpoint."""
@@ -161,7 +160,7 @@ class AgentProtocol(Protocol):
     async def run(
         self,
         input_data: object,
-        ctx: Optional[_ExecutionContext] = None,
+        ctx: _ExecutionContext | None = None,
     ) -> object:
         """Execute the agent on the given input.
 

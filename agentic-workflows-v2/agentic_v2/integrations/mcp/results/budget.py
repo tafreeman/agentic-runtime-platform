@@ -5,7 +5,7 @@ Implements token counting and truncation to prevent context window overflow.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +103,8 @@ class ContextBudgetGuard:
 
     def __init__(
         self,
-        max_tokens: Optional[int] = None,
-        truncation_message_template: Optional[str] = None,
+        max_tokens: int | None = None,
+        truncation_message_template: str | None = None,
     ) -> None:
         """
         Initialize context budget guard.

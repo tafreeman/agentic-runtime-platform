@@ -13,6 +13,7 @@ They verify:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.server.multidimensional_scoring import (
     RESEARCH_DIMENSIONS,
     MultidimensionalGateResult,

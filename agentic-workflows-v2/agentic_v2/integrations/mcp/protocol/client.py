@@ -7,7 +7,7 @@ Strictly separated from transport layer (doesn't know about WebSocket vs stdio).
 
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Union
 
 from agentic_v2.integrations.mcp.protocol.messages import MessageBuilder
 from agentic_v2.integrations.mcp.transports.base import McpTransport
@@ -65,8 +65,8 @@ class McpProtocolClient:
         self._pending_requests: dict[Union[str, int], asyncio.Future] = {}
         self._notification_handlers: dict[str, Callable[[dict[str, Any]], None]] = {}
         self._initialized = False
-        self._capabilities: Optional[McpCapabilities] = None
-        self._server_info: Optional[McpServerInfo] = None
+        self._capabilities: McpCapabilities | None = None
+        self._server_info: McpServerInfo | None = None
 
         # Wire up transport event handlers
         self.transport.on_message = self._handle_message
@@ -84,8 +84,8 @@ class McpProtocolClient:
 
     async def initialize(
         self,
-        client_info: Optional[dict[str, str]] = None,
-        capabilities: Optional[dict[str, Any]] = None,
+        client_info: dict[str, str] | None = None,
+        capabilities: dict[str, Any] | None = None,
     ) -> McpServerInfo:
         """Perform MCP initialize handshake.
 
@@ -145,8 +145,8 @@ class McpProtocolClient:
     async def request(
         self,
         method: str,
-        params: Optional[dict[str, Any]] = None,
-        timeout: Optional[float] = None,
+        params: dict[str, Any] | None = None,
+        timeout: float | None = None,
     ) -> Any:
         """Send a JSON-RPC request and wait for response.
 
@@ -193,7 +193,7 @@ class McpProtocolClient:
         self,
         name: str,
         arguments: dict[str, Any],
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> Any:
         """Invoke a remote MCP tool via ``tools/call``.
 
@@ -225,7 +225,7 @@ class McpProtocolClient:
     async def notify(
         self,
         method: str,
-        params: Optional[dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> None:
         """Send a JSON-RPC notification (no response expected).
 
@@ -272,12 +272,12 @@ class McpProtocolClient:
         await self.transport.close()
 
     @property
-    def capabilities(self) -> Optional[McpCapabilities]:
+    def capabilities(self) -> McpCapabilities | None:
         """Get server capabilities (available after initialize)."""
         return self._capabilities
 
     @property
-    def server_info(self) -> Optional[McpServerInfo]:
+    def server_info(self) -> McpServerInfo | None:
         """Get server info (available after initialize)."""
         return self._server_info
 

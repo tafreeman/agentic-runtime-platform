@@ -6,7 +6,7 @@ logic.
 """
 
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from typing import Callable
 
 from agentic_v2.integrations.mcp.types import JsonRpcMessage
 
@@ -29,9 +29,9 @@ class McpTransport(ABC):
 
     def __init__(self) -> None:
         """Initialize transport with empty event handlers."""
-        self.on_message: Optional[Callable[[JsonRpcMessage], None]] = None
-        self.on_error: Optional[Callable[[Exception], None]] = None
-        self.on_close: Optional[Callable[[], None]] = None
+        self.on_message: Callable[[JsonRpcMessage], None] | None = None
+        self.on_error: Callable[[Exception], None] | None = None
+        self.on_close: Callable[[], None] | None = None
         self._started = False
         self._closed = False
 

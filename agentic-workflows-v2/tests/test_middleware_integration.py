@@ -7,6 +7,7 @@ verifying end-to-end behavior from raw input to classification.
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.contracts.sanitization import Classification
 from agentic_v2.middleware.policy import PolicyConfig
 from agentic_v2.middleware.response_sanitizer import ResponseSanitizer

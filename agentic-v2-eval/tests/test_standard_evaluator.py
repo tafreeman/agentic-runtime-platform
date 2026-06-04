@@ -6,7 +6,6 @@ import json
 from typing import Any
 
 import pytest
-
 from agentic_v2_eval.evaluators.standard import StandardEvaluator
 
 

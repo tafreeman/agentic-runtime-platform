@@ -3,7 +3,7 @@
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -130,7 +130,7 @@ class TraceAdapter(ABC):
         self.emit(
             CanonicalEvent(
                 type="workflow_start",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 data={
                     "workflow_name": workflow_name,
                     "run_id": run_id,
@@ -146,7 +146,7 @@ class TraceAdapter(ABC):
         self.emit(
             CanonicalEvent(
                 type="workflow_end",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 data={
                     "workflow_name": workflow_name,
                     "run_id": run_id,
@@ -163,7 +163,7 @@ class TraceAdapter(ABC):
         self.emit(
             CanonicalEvent(
                 type="step_start",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 step_name=step_name,
                 data={"run_id": run_id, "inputs": inputs},
             )
@@ -176,7 +176,7 @@ class TraceAdapter(ABC):
         self.emit(
             CanonicalEvent(
                 type="step_complete",
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 step_name=step_name,
                 data={"run_id": run_id, "status": status, "outputs": outputs},
             )

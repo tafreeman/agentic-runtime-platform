@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 REQUIRED_ENV_EXAMPLE_KEYS = {
     "AGENTIC_API_KEY",
     "AGENTIC_CORS_ORIGINS",

@@ -5,11 +5,9 @@ Tests use an injectable clock so time can be controlled without real sleeps.
 
 from __future__ import annotations
 
-
 import pytest
 
 from agentic_v2.server.auth import AuthThrottle
-
 
 # ---------------------------------------------------------------------------
 # Helpers

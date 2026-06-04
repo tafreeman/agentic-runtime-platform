@@ -32,7 +32,12 @@ except ImportError:
     _LANGCHAIN_AVAILABLE = False
 from ...workflows.run_logger import RunLogger
 from .. import websocket
-from ..models import RunsSummaryResponse, RunSummaryModel, RunEvaluationDetailResponse, RunEvaluationDetail
+from ..models import (
+    RunEvaluationDetail,
+    RunEvaluationDetailResponse,
+    RunsSummaryResponse,
+    RunSummaryModel,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["workflows"])

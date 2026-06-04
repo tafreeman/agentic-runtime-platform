@@ -1,6 +1,7 @@
 """Tests for Architect and Test agents."""
 
 import pytest
+
 from agentic_v2.agents import (
     ArchitectAgent,
     ArchitectureInput,

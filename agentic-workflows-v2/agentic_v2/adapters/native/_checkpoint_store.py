@@ -27,7 +27,7 @@ import asyncio
 import json
 import logging
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -111,7 +111,7 @@ class CheckpointStore:
         """Synchronous write — called from a background thread."""
         self._ensure_table()
         serialized = json.dumps(output_data, default=str)
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         conn = self._get_connection()
         try:
             conn.execute(

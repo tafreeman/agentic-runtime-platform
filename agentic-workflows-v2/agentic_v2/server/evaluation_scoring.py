@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable
 
 from ..contracts import StepStatus, WorkflowResult
@@ -687,7 +687,7 @@ def score_workflow_result_impl(
         },
         "hybrid_weights": active_hybrid_weights,
         "judge": judge_result.to_payload() if judge_result is not None else None,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
     }
 
     dataset_compatible = True

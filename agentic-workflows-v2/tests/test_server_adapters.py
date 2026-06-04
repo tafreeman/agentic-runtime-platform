@@ -9,9 +9,11 @@ Covers:
 
 from __future__ import annotations
 
-from tests._server_test_helpers import make_configured_app
+from datetime import UTC
 
 from fastapi.testclient import TestClient
+
+from tests._server_test_helpers import make_configured_app
 
 # ---------------------------------------------------------------------------
 # GET /api/adapters
@@ -93,7 +95,7 @@ class TestRunWithAdapter:
             on_update=None,
         ):
             import asyncio
-            from datetime import datetime, timezone
+            from datetime import datetime
 
             from agentic_v2.contracts import StepStatus, WorkflowResult
 
@@ -103,7 +105,7 @@ class TestRunWithAdapter:
                 workflow_id=run_id,
                 workflow_name=workflow_name,
                 overall_status=StepStatus.SUCCESS,
-                start_time=datetime.now(timezone.utc),
+                start_time=datetime.now(UTC),
             )
 
         from agentic_v2.server import execution as execution_mod

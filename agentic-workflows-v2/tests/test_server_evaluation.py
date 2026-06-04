@@ -6,16 +6,18 @@ docs/adr/ADR-008-testing-approach-overhaul.md)
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from fastapi import BackgroundTasks, HTTPException
+from starlette.requests import Request
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.langchain import load_workflow_config
 from agentic_v2.langchain.config import InputConfig, OutputConfig, WorkflowConfig
 from agentic_v2.server import execution as execution_mod
 from agentic_v2.server import result_normalization
-from tests._server_test_helpers import FAKE_TENANT, make_configured_app
 from agentic_v2.server.evaluation import (
     adapt_sample_to_workflow_inputs,
     list_local_datasets,
@@ -34,12 +36,11 @@ from agentic_v2.workflows.loader import (
     WorkflowInput,
     WorkflowLoader,
 )
-from fastapi import BackgroundTasks, HTTPException
-from starlette.requests import Request
+from tests._server_test_helpers import FAKE_TENANT, make_configured_app
 
 
 def _build_result(status: StepStatus = StepStatus.SUCCESS) -> WorkflowResult:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     step = StepResult(
         step_name="analyze",
         status=status,
@@ -553,7 +554,7 @@ def test_hybrid_hard_gates_still_override():
 
 def test_hard_gate_release_build_verification_overrides_pass():
     result = _build_result(StepStatus.SUCCESS)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     result.add_step(
         StepResult(
             step_name="build_verify_release",

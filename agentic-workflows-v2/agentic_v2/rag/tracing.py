@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Generator
 
 from ..integrations.base import CanonicalEvent, TraceAdapter
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 def _utc_now() -> datetime:
     """Return the current UTC timestamp."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 #: Type alias for span accumulators — single-element lists that the caller

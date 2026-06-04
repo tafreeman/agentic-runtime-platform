@@ -20,7 +20,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 # Sample step data
 # ---------------------------------------------------------------------------
 
-_START = datetime(2025, 5, 21, 9, 0, 0, tzinfo=timezone.utc)
+_START = datetime(2025, 5, 21, 9, 0, 0, tzinfo=UTC)
 
 
 def _iso(dt: datetime) -> str:

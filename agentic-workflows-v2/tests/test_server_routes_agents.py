@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import agentic_v2.server.routes.agents as agents_module
 import pytest
 import yaml
+
+import agentic_v2.server.routes.agents as agents_module
 from agentic_v2.server.routes.agents import _discover_agents
 
 

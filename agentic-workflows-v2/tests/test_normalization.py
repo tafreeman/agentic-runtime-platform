@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.server.normalization import adjust_for_sample_size, normalize_score
 
 

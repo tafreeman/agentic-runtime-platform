@@ -7,7 +7,6 @@ Uses the `websockets` library for async WebSocket client implementation.
 import asyncio
 import json
 import logging
-from typing import Optional
 
 # Note: websockets library needs to be added to dependencies
 try:
@@ -40,7 +39,7 @@ class WebSocketTransport(McpTransport):
     def __init__(
         self,
         url: str,
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Initialize WebSocket transport.
 
@@ -54,8 +53,8 @@ class WebSocketTransport(McpTransport):
 
         self.url = url
         self.headers = headers or {}
-        self._ws: Optional[WebSocketClientProtocol] = None
-        self._receive_task: Optional[asyncio.Task] = None
+        self._ws: WebSocketClientProtocol | None = None
+        self._receive_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Connect to the WebSocket server and start receiving.

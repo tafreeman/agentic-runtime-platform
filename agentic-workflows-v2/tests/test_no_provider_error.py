@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
-from agentic_v2.core.errors import NoProviderConfiguredError, _NO_PROVIDER_MSG
+from agentic_v2.core.errors import _NO_PROVIDER_MSG, NoProviderConfiguredError
 from agentic_v2.models import (
     ModelTier,
     SmartModelRouter,
@@ -173,8 +173,9 @@ def test_server_maps_no_provider_to_503(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
     monkeypatch.delenv("AGENTIC_API_KEY", raising=False)
 
-    from agentic_v2.server.app import create_app
     from fastapi.routing import APIRoute
+
+    from agentic_v2.server.app import create_app
 
     app = create_app()
 

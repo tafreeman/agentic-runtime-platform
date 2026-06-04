@@ -10,9 +10,9 @@ import pytest
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from agentic_v2.core import tenant as tenant_mod
 from agentic_v2 import langchain as langchain_module
 from agentic_v2.adapters import langchain as langchain_adapter_module
+from agentic_v2.core import tenant as tenant_mod
 from agentic_v2.server import middleware as server_middleware
 from agentic_v2.server.routes import models as model_routes
 from agentic_v2.settings import (

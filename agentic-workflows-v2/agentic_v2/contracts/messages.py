@@ -18,7 +18,7 @@ All models use Pydantic v2 with computed fields, field validators,
 and ``exclude_none`` serialization.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -293,7 +293,7 @@ class AgentMessage(BaseModel):
         description="Additional context (model, tier, tokens, etc.)",
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="UTC timestamp of message creation",
     )
     correlation_id: str | None = Field(
@@ -395,7 +395,7 @@ class StepResult(BaseModel):
         default=None, description="Error class name for structured handling"
     )
     start_time: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="UTC timestamp when step started",
     )
     end_time: datetime | None = Field(
@@ -445,7 +445,7 @@ class StepResult(BaseModel):
             success: Whether step succeeded
             error: Optional error message if failed
         """
-        self.end_time = datetime.now(timezone.utc)
+        self.end_time = datetime.now(UTC)
         self.status = StepStatus.SUCCESS if success else StepStatus.FAILED
         if error:
             self.error = error
@@ -486,7 +486,7 @@ class WorkflowResult(BaseModel):
         description="Aggregate status of entire workflow"
     )
     start_time: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="UTC timestamp when workflow started",
     )
     end_time: datetime | None = Field(
@@ -552,7 +552,7 @@ class WorkflowResult(BaseModel):
         Args:
             success: Whether workflow succeeded overall
         """
-        self.end_time = datetime.now(timezone.utc)
+        self.end_time = datetime.now(UTC)
         self.overall_status = StepStatus.SUCCESS if success else StepStatus.FAILED
 
     def __repr__(self) -> str:

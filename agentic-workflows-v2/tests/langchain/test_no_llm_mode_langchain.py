@@ -17,8 +17,8 @@ import pytest
 # Users running only the native suite must not be forced to install LangChain.
 langchain_core = pytest.importorskip("langchain_core")
 
-from agentic_v2.settings import get_settings
 from agentic_v2.langchain.models import get_chat_model
+from agentic_v2.settings import get_settings
 
 _PLACEHOLDER_PREFIX = "[AGENTIC_NO_LLM placeholder]"
 

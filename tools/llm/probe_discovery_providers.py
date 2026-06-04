@@ -32,6 +32,7 @@ from tools.llm.probe_config import (
     AITK_TRAILING_CHARS,
     AZURE_SLOT_RANGE,
     CACHE_BASE_DIR,
+    CLOUD_API_HOSTS_SKIPLIST,
     DOTNET_CLI_ARG_PROJECT,
     ENDPOINT_TRUNCATION_LENGTH,
     ENV_ANTHROPIC_API_KEY,
@@ -51,18 +52,17 @@ from tools.llm.probe_config import (
     ENV_LOCAL_OPENAI_BASE_URL,
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
-    NVIDIA_NIM_TOKEN_SLOT_RANGE,
     ENV_OLLAMA_HOST,
     ENV_OPENAI_API_BASE,
     ENV_OPENAI_API_KEY,
     ENV_OPENAI_BASE_URL,
-    CLOUD_API_HOSTS_SKIPLIST,
     ERROR_BRIEF_LENGTH,
     GH_CLI_OUTPUT_MODELS_LIMIT,
     GITHUB_MODELS_API_BASE,
     GITHUB_TOKEN_SLOT_RANGE,
     LMSTUDIO_DEFAULT_HOST,
     LOCAL_SERVER_COMMON_PORTS,
+    NVIDIA_NIM_TOKEN_SLOT_RANGE,
     OLLAMA_API_TAGS_ENDPOINT,
     OLLAMA_DEFAULT_HOST,
     PATH_SEPARATOR,
@@ -76,10 +76,7 @@ from tools.llm.probe_config import (
     PREFIX_LOCAL_API,
     PREFIX_OLLAMA,
     PREFIX_OPENAI,
-    TAB_SEPARATOR,
     TIMEOUT_CLOUD_HTTP,
-    TIMEOUT_GH_AUTH,
-    TIMEOUT_GH_MODELS_LIST,
     TIMEOUT_OLLAMA_HTTP,
     TIMEOUT_WINDOWS_AI_BRIDGE,
     WINDOWS_AI_BRIDGE_DIR,
@@ -93,7 +90,6 @@ logger = logging.getLogger(__name__)
 
 def _probe_local_onnx(verbose: bool = False) -> dict[str, Any]:
     """Probe local ONNX models from the AI Gallery cache."""
-    import shutil
 
     ai_gallery = Path.home() / CACHE_BASE_DIR / AI_GALLERY_CACHE_DIR
     local_models: list[str] = []

@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 import re
 from dataclasses import dataclass
-from datetime import timezone
+from datetime import UTC
 from types import SimpleNamespace
 from typing import Any
 
@@ -272,7 +272,7 @@ class ExpressionEvaluator:
         for name, result in self.step_results.items():
             completed_at = None
             if result.end_time:
-                completed_at = result.end_time.astimezone(timezone.utc).isoformat()
+                completed_at = result.end_time.astimezone(UTC).isoformat()
             views[name] = StepResultView(
                 status=result.status.value,
                 output=result.output_data,

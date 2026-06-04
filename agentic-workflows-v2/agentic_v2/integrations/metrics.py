@@ -66,7 +66,9 @@ except ImportError:
     _Resource = None  # type: ignore[assignment]
 
 try:
-    from opentelemetry.exporter.prometheus import PrometheusMetricReader as _PrometheusReader
+    from opentelemetry.exporter.prometheus import (
+        PrometheusMetricReader as _PrometheusReader,
+    )
 
     _PROMETHEUS_AVAILABLE = True
 except ImportError:

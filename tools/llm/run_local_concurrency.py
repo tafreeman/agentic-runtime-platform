@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -163,7 +163,7 @@ def _run_parallel(
 
 def _write_report(payload: dict[str, Any], out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
     out_path = out_dir / f"local_concurrency_{stamp}.json"
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return out_path
@@ -297,7 +297,7 @@ def main(argv: list[str]) -> int:
         )
 
     payload = {
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timestamp_utc": datetime.now(UTC).isoformat(),
         "summary": summary,
         "records": records,
     }

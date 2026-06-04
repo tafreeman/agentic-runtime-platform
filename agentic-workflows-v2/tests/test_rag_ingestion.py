@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from agentic_v2.rag.config import ChunkingConfig
 from agentic_v2.rag.contracts import Chunk, Document
 

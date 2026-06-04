@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
 import pytest
-from fastapi import Depends
-from agentic_v2.core.tenant import TenantContext, get_tenant_context
-from agentic_v2.server.auth_oidc import OIDCAuthMiddleware, OIDCAuthenticator
-from agentic_v2.settings import Settings, get_settings
 from cryptography.hazmat.primitives.asymmetric import rsa
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from starlette.testclient import TestClient
 
+from agentic_v2.core.tenant import TenantContext, get_tenant_context
+from agentic_v2.server.auth_oidc import OIDCAuthenticator, OIDCAuthMiddleware
+from agentic_v2.settings import Settings, get_settings
 
 ISSUER = "https://issuer.example/"
 AUDIENCE = "agentic-api"
@@ -61,7 +60,7 @@ def make_token(
     subject: str = "user-123",
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     claims = {
         "sub": subject,
         "iss": issuer,

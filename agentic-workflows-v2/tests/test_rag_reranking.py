@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+
 from agentic_v2.rag.contracts import RetrievalResult
 from agentic_v2.rag.protocols import RerankerProtocol
 

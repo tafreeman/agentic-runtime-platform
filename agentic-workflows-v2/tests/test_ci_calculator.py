@@ -18,6 +18,7 @@ import dataclasses
 import math
 
 import pytest
+
 from agentic_v2.workflows.lib.ci_calculator import (
     DEFAULT_WEIGHTS,
     DOMAIN_RECENCY_DAYS,

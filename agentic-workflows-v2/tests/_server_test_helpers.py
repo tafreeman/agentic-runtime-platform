@@ -18,7 +18,7 @@ that a None sanitizer state triggers HTTP 503.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agentic_v2.contracts.sanitization import Classification, SanitizationResult
@@ -42,7 +42,7 @@ class _PassThroughSanitizer:
             findings=(),
             sanitized_text=text,
             original_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             detector_versions={},
         )
 

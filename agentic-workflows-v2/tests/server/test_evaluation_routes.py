@@ -16,10 +16,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
-from agentic_v2.server import datasets as datasets_module
-from agentic_v2.server.app import create_app
 from fastapi.testclient import TestClient
 
+from agentic_v2.server import datasets as datasets_module
+from agentic_v2.server.app import create_app
 
 # ---------------------------------------------------------------------------
 # Test doubles

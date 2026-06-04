@@ -19,14 +19,13 @@ Covers:
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from tools.core.errors import ErrorCode
 from tools.llm.model_probe import (
     ModelProbe,
-    filter_usable_models,
     get_model_error,
     get_probe,
     is_model_usable,
