@@ -247,13 +247,13 @@ class ReviewReport(BaseModel):
             return v
         return ReviewStatus.normalize(str(v) if v is not None else None)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def needs_fixes(self) -> bool:
         """True when at least one finding requires rework."""
         return self.overall_status != ReviewStatus.APPROVED
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def critical_count(self) -> int:
         """Number of critical findings."""
@@ -309,19 +309,19 @@ class AgentMessage(BaseModel):
             raise ValueError(f"Role must be alphanumeric (with _ or -), got: {v}")
         return cleaned
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_error(self) -> bool:
         """Check if this message represents an error."""
         return self.message_type == MessageType.ERROR
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_tool_call(self) -> bool:
         """Check if this message is a tool invocation."""
         return self.message_type == MessageType.TOOL_CALL
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_tool_result(self) -> bool:
         """Check if this message is a tool result."""
@@ -407,19 +407,19 @@ class StepResult(BaseModel):
         description="Additional metrics (tokens, latency, cache hits, etc.)",
     )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_success(self) -> bool:
         """Check if step succeeded."""
         return self.status == StepStatus.SUCCESS
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_failed(self) -> bool:
         """Check if step failed."""
         return self.status == StepStatus.FAILED
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_complete(self) -> bool:
         """Check if step finished (success or failure)."""
@@ -429,7 +429,7 @@ class StepResult(BaseModel):
             StepStatus.SKIPPED,
         )
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def duration_ms(self) -> float | None:
         """Calculate execution duration in milliseconds."""
@@ -505,7 +505,7 @@ class WorkflowResult(BaseModel):
         """Backward-compatible alias for ``workflow_id``."""
         return self.workflow_id
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def total_duration_ms(self) -> float | None:
         """Calculate total workflow duration in milliseconds."""
@@ -514,7 +514,7 @@ class WorkflowResult(BaseModel):
         delta = self.end_time - self.start_time
         return delta.total_seconds() * 1000
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def success_rate(self) -> float:
         """Calculate percentage of successful steps."""
@@ -523,13 +523,13 @@ class WorkflowResult(BaseModel):
         successful = sum(1 for step in self.steps if step.is_success)
         return (successful / len(self.steps)) * 100
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def failed_steps(self) -> list[StepResult]:
         """Get list of failed steps."""
         return [step for step in self.steps if step.is_failed]
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def total_retries(self) -> int:
         """Count total retry attempts across all steps."""
