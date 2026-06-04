@@ -232,14 +232,15 @@ class OnnxBackend(LLMBackend):
         self, model: str, prompt: str, max_tokens: int, temperature: float
     ) -> str:
         og, loaded, tokenizer = self._get_model(model)
+        input_tokens = tokenizer.encode(prompt)
+        max_len = len(input_tokens) + min(max_tokens, self.max_tokens_cap)
 
         params = og.GeneratorParams(loaded)
         params.set_search_options(
-            max_length=min(max_tokens, self.max_tokens_cap),
+            max_length=max_len,
             temperature=temperature,
         )
 
-        input_tokens = tokenizer.encode(prompt)
         generator = og.Generator(loaded, params)
         generator.append_tokens(input_tokens)
 
