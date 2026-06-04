@@ -487,4 +487,3 @@ secrets.txt
 # Cleanup: removed AI scaffolding and generated artifacts
 AGENTS.md
 .github/agents/
-.secrets.baseline
