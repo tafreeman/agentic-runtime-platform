@@ -2,7 +2,7 @@
 
 # Agentic Runtime Platform
 
-**Production-grade multi-agent AI orchestration — DAG execution, tiered model routing, rubric-based evaluation. Works with 8+ LLM providers.**
+**Multi-agent AI orchestration — DAG execution, tiered model routing, rubric-based evaluation. Works with 8+ LLM providers.**
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Nightly E2E](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml)
