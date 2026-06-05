@@ -1,0 +1,11 @@
+{
+  "content": "Hello! How can I help you today?",
+  "tool_calls": null,
+  "finish_reason": "stop",
+  "model": "gpt-4o-mini-2024-07-18",
+  "usage": {
+    "prompt_tokens": 9,
+    "completion_tokens": 9,
+    "total_tokens": 18
+  }
+}

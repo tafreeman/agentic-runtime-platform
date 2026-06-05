@@ -5,6 +5,7 @@ from typing import Any, AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from agentic_v2.integrations.mcp.protocol.client import McpProtocolClient
 from agentic_v2.integrations.mcp.transports.base import McpTransport
 from agentic_v2.integrations.mcp.types import (

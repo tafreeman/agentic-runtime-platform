@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.middleware.detectors.unicode import UnicodeSanitizer
 from tests.fixtures.unicode_corpus import (
     DANGEROUS_UNICODE,

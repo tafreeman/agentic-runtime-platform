@@ -16,6 +16,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+
 from agentic_v2.integrations.base import CanonicalEvent, TraceAdapter
 from agentic_v2.integrations.tracing import NullTraceAdapter
 from agentic_v2.rag.tracing import RAGTracer

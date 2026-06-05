@@ -12,11 +12,12 @@ Verifies:
 from __future__ import annotations
 
 import importlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, AsyncIterator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from agentic_v2.contracts import StepStatus, WorkflowResult
 from agentic_v2.core.protocols import ExecutionEngine, SupportsStreaming
 
@@ -32,8 +33,8 @@ def _make_fake_result(workflow_name: str = "test_workflow") -> WorkflowResult:
         workflow_name=workflow_name,
         steps=[],
         overall_status=StepStatus.SUCCESS,
-        start_time=datetime.now(timezone.utc),
-        end_time=datetime.now(timezone.utc),
+        start_time=datetime.now(UTC),
+        end_time=datetime.now(UTC),
         final_output={"answer": 42},
     )
 

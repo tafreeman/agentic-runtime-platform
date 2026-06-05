@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import inspect
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -236,7 +236,7 @@ def build_step_results(
         start_time = (
             datetime.fromisoformat(start_ts)
             if isinstance(start_ts, str)
-            else datetime.now(timezone.utc)
+            else datetime.now(UTC)
         )
 
         end_ts = step_data.get("end_time")
@@ -334,7 +334,7 @@ def normalize_workflow_result(
     except Exception:
         elapsed_seconds = 0.0
 
-    end_time = datetime.now(timezone.utc)
+    end_time = datetime.now(UTC)
     start_time = end_time - timedelta(seconds=max(elapsed_seconds, 0.0))
 
     final_output = as_dict(

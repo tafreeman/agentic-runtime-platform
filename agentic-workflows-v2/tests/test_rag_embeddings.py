@@ -12,6 +12,7 @@ Verifies:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.rag.errors import EmbeddingError
 from agentic_v2.rag.protocols import EmbeddingProtocol
 

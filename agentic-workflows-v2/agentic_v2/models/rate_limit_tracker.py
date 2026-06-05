@@ -15,7 +15,7 @@ import math
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 
 
@@ -171,7 +171,7 @@ class RateLimitTracker:
             # Try HTTP-date format (RFC 7231 Section 7.1.3)
             try:
                 dt = parsedate_to_datetime(retry_after)
-                delta = (dt - datetime.now(timezone.utc)).total_seconds()
+                delta = (dt - datetime.now(UTC)).total_seconds()
                 cooldown = _cooldown_seconds(delta)
                 if cooldown is not None:
                     return cooldown
@@ -558,14 +558,14 @@ def _parse_reset_seconds(value: str | None) -> float | None:
 
     try:
         dt = parsedate_to_datetime(stripped)
-        seconds = (dt - datetime.now(timezone.utc)).total_seconds()
+        seconds = (dt - datetime.now(UTC)).total_seconds()
         return seconds if seconds > 0 else None
     except (ValueError, TypeError):
         pass
 
     try:
         dt = datetime.fromisoformat(stripped.replace("Z", "+00:00"))
-        seconds = (dt - datetime.now(timezone.utc)).total_seconds()
+        seconds = (dt - datetime.now(UTC)).total_seconds()
         return seconds if seconds > 0 else None
     except ValueError:
         return None

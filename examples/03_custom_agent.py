@@ -22,9 +22,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-from typing import Any, Optional
+from typing import Any
 
-from agentic_v2.agents import AgentConfig, AgentEvent, AgentState, BaseAgent
+from agentic_v2.agents import AgentConfig, AgentEvent, BaseAgent
 from agentic_v2.contracts import TaskInput, TaskOutput
 from agentic_v2.models import ModelTier
 
@@ -46,7 +46,7 @@ class SummarizerAgent(BaseAgent[TaskInput, TaskOutput]):
     requiring an API key.
     """
 
-    def __init__(self, config: Optional[AgentConfig] = None, **kwargs: Any):
+    def __init__(self, config: AgentConfig | None = None, **kwargs: Any):
         if config is None:
             config = AgentConfig(
                 name="summarizer",
@@ -65,7 +65,7 @@ class SummarizerAgent(BaseAgent[TaskInput, TaskOutput]):
     async def _call_model(
         self,
         messages: list[dict[str, Any]],
-        tools: Optional[list[dict[str, Any]]] = None,
+        tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Simulate an LLM call with a deterministic response.
 

@@ -176,12 +176,16 @@ class TestResolveLocalModelPath:
         result = resolve_local_model_path("phi4", local_models={})
         assert result is None
 
-    @pytest.mark.skip(
-        reason="Fails when global sys.path resolves tools.llm to a sibling clone. "
-               "Requires isolated venv for correct execution."
-    )
-    def test_resolves_known_key_to_path_or_none(self, tmp_path: Path) -> None:
+    def test_resolves_known_key_to_path_or_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from tools.llm.provider_adapters import resolve_local_model_path
+
+        # Isolate the test from any real ~/.cache/aigallery on the machine.
+        # The resolver uses Path.home() / ".cache" / "aigallery" as its scan
+        # root; pointing home() at tmp_path ensures that directory is always
+        # empty (it won't exist under tmp_path).
+        monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path))
 
         # When the key is in local_models but the path doesn't exist on disk,
         # resolve_local_model_path should return None (not raise).

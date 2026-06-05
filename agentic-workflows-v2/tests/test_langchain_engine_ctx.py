@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
+
 from agentic_v2.adapters.langchain.engine import LangChainEngine
 
 # ---------------------------------------------------------------------------

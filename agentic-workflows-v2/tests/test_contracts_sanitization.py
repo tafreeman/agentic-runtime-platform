@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
+
 from agentic_v2.contracts.sanitization import (
     Classification,
     Finding,
@@ -16,7 +18,6 @@ from agentic_v2.contracts.verification import (
     VerificationResult,
     VerificationStatus,
 )
-from pydantic import ValidationError
 
 
 class TestFinding:

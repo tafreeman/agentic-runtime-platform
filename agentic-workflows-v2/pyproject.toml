@@ -16,7 +16,7 @@ dependencies = [
     "jinja2>=3.0,<4",
     "jmespath>=1.0,<2",
     "pyyaml>=6.0,<7",
-    "aiofiles>=23.0,<25",
+    "aiofiles>=23.0,<26",
     "aiohttp>=3.9,<4",
     "filelock>=3.0,<4",
     "cachetools>=5.0,<8",
@@ -28,9 +28,18 @@ dependencies = [
 
 [tool.uv.sources]
 agentic-tools = { workspace = true }
+# ADR-023 Option A′: ExecutionKit is consumed as the published PyPI release
+# (`executionkit` on PyPI), not an editable sibling path — so the workspace
+# resolves cleanly on any checkout and in CI without a co-located EK clone.
+# Re-add an editable path source here if active EK↔runtime co-development resumes.
 
 
 [project.optional-dependencies]
+# ADR-023 Option A′: the ExecutionKit execution kernel (single package; the
+# `executionkit-contracts` seam is dropped), consumed from the published PyPI
+# release. httpx (an EK [httpx] extra) is already a base runtime dependency, so
+# EK's value types + error tree import with no extra.
+ek = ["executionkit>=0.1.0,<0.2.0"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
@@ -90,7 +99,7 @@ mcp = [
     "websockets>=12.0,<17",
 ]
 redis = [
-    "redis[hiredis]>=5.0,<6",
+    "redis[hiredis]>=5.0,<9",
 ]
 sqlite = [
     "aiosqlite>=0.19,<1",
@@ -136,6 +145,13 @@ omit = [
     "agentic_v2/devex/cli.py",
     "agentic_v2/engine/verification.py",
     "agentic_v2/engine/patterns/__init__.py",
+    # ADR-023 ExecutionKit bridge: opt-in (AGENTIC_EK_PROVIDER), gated on the
+    # optional `executionkit` dependency that the CI coverage job does not
+    # install. Covered by the dedicated EK suite (tests/models/test_ek_*,
+    # tests/engine/test_step_ek_*) which runs only when executionkit is present.
+    "agentic_v2/engine/ek_step_delegation.py",
+    "agentic_v2/models/ek_adapters.py",
+    "agentic_v2/models/ek_provider.py",
     "agentic_v2/integrations/mcp/*",
     "agentic_v2/langchain/agents.py",
     "agentic_v2/langchain/model_builders.py",
@@ -353,3 +369,9 @@ module = [
     "agentic_v2.langchain.dependencies",
 ]
 ignore_errors = true
+
+# Strict typing enabled incrementally for the core engine and contracts modules.
+[[tool.mypy.overrides]]
+module = ["agentic_v2.engine.*", "agentic_v2.contracts.*"]
+disallow_untyped_defs = true
+warn_return_any = true

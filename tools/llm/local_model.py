@@ -30,8 +30,6 @@ from typing import Any
 
 from tools.llm.local_model_discovery import (
     _AI_GALLERY_ROOT,
-    _MODEL_DIRS,
-    _find_onnx_model_dir,
     _resolve_model_path,
     _safe_float,
 )
@@ -636,7 +634,6 @@ Return ONLY valid JSON:
 from tools.llm.local_model_cli import main
 
 # Backward-compat re-exports
-from tools.llm.local_model_discovery import check_model_available, get_model_info
 
 if __name__ == "__main__":
     main()

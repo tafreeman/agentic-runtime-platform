@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +38,7 @@ def _write_reports(
     write_env: Path | None,
 ) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    ts = datetime.now(UTC).strftime("%Y%m%d-%H%M%SZ")
 
     json_path = out_dir / f"model_bakeoff_{ts}.json"
     md_path = out_dir / f"model_bakeoff_{ts}.md"

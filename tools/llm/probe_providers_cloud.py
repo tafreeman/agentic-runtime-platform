@@ -12,7 +12,7 @@ import os
 import subprocess
 import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Callable
 
 from tools.core.errors import ErrorCode, classify_error
 from tools.llm.probe_config import (

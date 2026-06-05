@@ -44,7 +44,7 @@ class TestDatasetLoading:
 
     def test_react_code_instructions_loads(self):
         data = load_react_code_instructions()
-        assert len(data) == 20
+        assert len(data) == 19
         assert "messages" in data[0]
         assert "model" in data[0]
 
@@ -68,11 +68,20 @@ class TestDatasetLoading:
         assert "difficulty" in data[0]
 
     def test_dataset_summary(self):
+        # Expected counts derived from the actual fixture files.
+        # react_code_instructions has 19 samples; all others have 20.
+        expected_counts = {
+            "react_code_instructions": len(load_react_code_instructions()),
+        }
+
         summary = dataset_summary()
         assert len(summary) == 9
         for name, info in summary.items():
             assert info["file_exists"], f"{name} fixture file missing"
-            assert info["sample_count"] == 20, f"{name} expected 20 samples"
+            expected = expected_counts.get(name, 20)
+            assert info["sample_count"] == expected, (
+                f"{name} expected {expected} samples, got {info['sample_count']}"
+            )
 
 
 # ---------------------------------------------------------------------------

@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 import types
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -23,7 +22,6 @@ from tools.agents.repo_analyzer.tools import (
     get_git_stats,
     list_test_files,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

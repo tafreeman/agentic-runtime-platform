@@ -20,10 +20,11 @@ from __future__ import annotations
 import os
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Import the module under test (not individual functions) so we can
 # patch the module-level _tracer_instance.
 import agentic_v2.integrations.otel as otel_mod
-import pytest
 from agentic_v2.integrations.otel import (
     DEFAULT_OTLP_ENDPOINT,
     DEFAULT_SERVICE_NAME,

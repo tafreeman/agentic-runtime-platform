@@ -16,12 +16,25 @@ import pytest
 
 @pytest.fixture
 def otel_memory_exporter(monkeypatch):
-    """Configure OTEL with InMemorySpanExporter and return it."""
+    """Configure OTEL with InMemorySpanExporter and return it.
+
+    The fixture:
+    1. Installs an in-memory TracerProvider so spans are captured without a
+       real OTLP collector.
+    2. Patches ``agentic_v2.integrations.otel._tracer_instance`` with a tracer
+       backed by this provider so that ``get_tracer()`` returns our test tracer
+       instead of calling ``_setup_otel_tracer()`` (which would try to install a
+       new OTLP exporter and override the provider we just set).
+    """
     pytest.importorskip("opentelemetry.sdk.trace")
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    import agentic_v2.integrations.otel as otel_module
 
     monkeypatch.setenv("AGENTIC_TRACING", "1")
 
@@ -29,6 +42,11 @@ def otel_memory_exporter(monkeypatch):
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
+
+    # Inject the test tracer directly so get_tracer() skips _setup_otel_tracer()
+    # and never tries to install a competing OTLP exporter / provider.
+    test_tracer = provider.get_tracer("agentic-test")
+    monkeypatch.setattr(otel_module, "_tracer_instance", test_tracer)
 
     yield exporter
 

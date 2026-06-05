@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from fastapi import FastAPI, Request, WebSocket
+from fastapi.responses import StreamingResponse
+from starlette.testclient import TestClient
+
 from agentic_v2.server.auth import (
     APIKeyMiddleware,
     _extract_token,
@@ -11,9 +15,6 @@ from agentic_v2.server.auth import (
     is_websocket_origin_allowed,
     websocket_uses_query_token,
 )
-from fastapi import FastAPI, Request, WebSocket
-from fastapi.responses import StreamingResponse
-from starlette.testclient import TestClient
 
 
 def _make_app(api_key: str | None) -> FastAPI:

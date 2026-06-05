@@ -9,9 +9,10 @@ docs/adr/ADR-008-testing-approach-overhaul.md)
 import os
 
 import pytest
+from langgraph.checkpoint.memory import MemorySaver
+
 from agentic_v2.langchain import WorkflowRunner, compile_workflow, load_workflow_config
 from agentic_v2.langchain.state import initial_state
-from langgraph.checkpoint.memory import MemorySaver
 
 # Skip when neither set of API credentials is available in the environment
 _HAS_CREDENTIALS = bool(os.environ.get("GH_TOKEN") or os.environ.get("GOOGLE_API_KEY"))

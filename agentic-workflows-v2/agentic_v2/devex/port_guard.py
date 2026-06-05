@@ -9,7 +9,6 @@ owning PID.
 from __future__ import annotations
 
 import socket
-from typing import Optional
 
 try:
     import psutil as _psutil
@@ -22,7 +21,7 @@ DEFAULT_PORTS: dict[str, int] = {
 }
 
 
-def _get_pid_for_port(port: int) -> Optional[int]:
+def _get_pid_for_port(port: int) -> int | None:
     """Return the PID of the process listening on *port*, or None."""
     if _psutil is None:
         return None
@@ -38,7 +37,7 @@ def _get_pid_for_port(port: int) -> Optional[int]:
     return None
 
 
-def check_port(port: int) -> tuple[bool, Optional[int]]:
+def check_port(port: int) -> tuple[bool, int | None]:
     """Check whether *port* is available on localhost.
 
     Returns:

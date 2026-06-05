@@ -5,11 +5,11 @@ notifications.
 """
 
 import logging
-from typing import Optional
+
+from cachetools import TTLCache
 
 from agentic_v2.integrations.mcp.protocol.client import McpProtocolClient
 from agentic_v2.integrations.mcp.types import McpPromptDescriptor
-from cachetools import TTLCache
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class PromptDiscovery:
         server_name: str,
         client: McpProtocolClient,
         prompt_name: str,
-        arguments: Optional[dict] = None,
+        arguments: dict | None = None,
     ) -> dict:
         """Get a specific prompt from an MCP server.
 

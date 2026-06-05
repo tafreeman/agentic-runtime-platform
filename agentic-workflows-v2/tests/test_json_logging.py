@@ -21,7 +21,6 @@ import pytest
 from agentic_v2.logging_config import configure_logging
 from agentic_v2.settings import Settings
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

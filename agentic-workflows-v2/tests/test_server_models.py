@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
+
 from agentic_v2.server.models import (
     AgentInfo,
     DAGEdgeModel,
@@ -15,7 +17,6 @@ from agentic_v2.server.models import (
     WorkflowExecutionProfileRequest,
     WorkflowRunRequest,
 )
-from pydantic import ValidationError
 
 
 class TestWorkflowRunRequest:

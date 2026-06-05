@@ -39,7 +39,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Re-export everything callers used to import from this module
-from tools.core.errors import ErrorCode, classify_error
+from tools.core.errors import ErrorCode
 from tools.llm.probe_config import (
     CACHE_VERSION,
     ProbeResult,

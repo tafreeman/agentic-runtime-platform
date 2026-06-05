@@ -6,10 +6,11 @@ during the refactoring described in REFACTORING_PLAN.md.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.server.evaluation_scoring import (
     CriterionFloorResult,
@@ -51,7 +52,7 @@ def _make_result(
     final_output: dict | None = None,
     step_statuses: list[StepStatus] | None = None,
 ) -> WorkflowResult:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     result = WorkflowResult(
         workflow_id="wf-scoring",
         workflow_name="test_workflow",
@@ -293,7 +294,7 @@ def _make_result_with_steps(
     Each entry in ``step_configs`` is a dict with ``name``, ``status``,
     and optionally ``output_data`` and ``retry_count``.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     result = WorkflowResult(
         workflow_id="wf-scoring",
         workflow_name="test_workflow",
@@ -390,7 +391,7 @@ class TestStepScores:
         assert scores[2]["score"] == 0.0
 
     def test_empty_steps_returns_empty(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = WorkflowResult(
             workflow_id="wf-scoring",
             workflow_name="test_workflow",
@@ -850,7 +851,7 @@ class TestComputeCriterionScore:
         assert score < 86.0  # 78 - penalty + status_bonus
 
     def test_efficiency_penalized_by_duration(self) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = WorkflowResult(
             workflow_id="wf-scoring",
             workflow_name="test",

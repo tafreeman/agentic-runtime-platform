@@ -7,9 +7,8 @@ includes WebSocket support.
 
 from __future__ import annotations
 
-from pathlib import Path
 import tomllib
-
+from pathlib import Path
 
 PYPROJECT_PATH = Path(__file__).resolve().parent.parent / "pyproject.toml"
 WEBSOCKET_RUNTIME_PREFIXES = (

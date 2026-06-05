@@ -28,9 +28,9 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -93,11 +93,12 @@ class ServiceContainer:
         Checks singletons first, then tries factory.
         """
         if service_type in self._singletons:
-            return self._singletons[service_type]
+            # Heterogeneous DI store: value was registered as T under type[T].
+            return cast("T", self._singletons[service_type])
 
         if service_type in self._factories:
             instance = self._factories[service_type]()
-            return instance
+            return cast("T", instance)
 
         return None
 
@@ -148,7 +149,7 @@ class ExecutionContext:
     services: ServiceContainer = field(default_factory=ServiceContainer)
 
     # Execution metadata
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # Step tracking
@@ -423,7 +424,7 @@ class ExecutionContext:
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         checkpoint_name = (
-            name or f"checkpoint_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+            name or f"checkpoint_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
         )
         checkpoint_path = self.checkpoint_dir / f"{checkpoint_name}.json"
 
@@ -434,7 +435,7 @@ class ExecutionContext:
             "completed_steps": self.completed_steps,
             "failed_steps": self.failed_steps,
             "metadata": self.metadata,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         checkpoint_path.write_text(json.dumps(checkpoint_data, indent=2, default=str))
@@ -491,7 +492,7 @@ class ExecutionContext:
                 return {"__type__": "path", "value": str(obj)}
             return str(obj)
 
-        return serialize(self._variables)
+        return {key: serialize(value) for key, value in self._variables.items()}
 
     # -------------------------------------------------------------------------
     # Utilities
@@ -500,7 +501,7 @@ class ExecutionContext:
     @property
     def elapsed_seconds(self) -> float:
         """Get elapsed time since context creation."""
-        return (datetime.now(timezone.utc) - self.start_time).total_seconds()
+        return (datetime.now(UTC) - self.start_time).total_seconds()
 
     def __repr__(self) -> str:
         return (

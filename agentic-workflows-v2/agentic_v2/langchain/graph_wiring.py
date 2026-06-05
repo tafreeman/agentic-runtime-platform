@@ -24,7 +24,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -445,7 +445,7 @@ def make_step_node(
 
         def _tier0_node(state: WorkflowState) -> dict[str, Any]:
             run_id = state.get("context", {}).get("workflow_run_id", "")
-            start_time = datetime.now(timezone.utc)
+            start_time = datetime.now(UTC)
 
             ctx, resolved_inputs = resolve_inputs_into_context(step, state)
             _trace.emit_step_start(step.name, run_id, resolved_inputs)
@@ -461,7 +461,7 @@ def make_step_node(
             step_outputs = (
                 result.get("steps", {}).get("__current__", {}).get("outputs", {})
             )
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             steps = record_step_result(
                 state,
                 step.name,
@@ -532,7 +532,7 @@ def make_step_node(
 
     def _llm_node(state: WorkflowState) -> dict[str, Any]:
         run_id = state.get("context", {}).get("workflow_run_id", "")
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         ctx, resolved_inputs = resolve_inputs_into_context(step, state)
         _trace.emit_step_start(step.name, run_id, resolved_inputs)
 
@@ -580,7 +580,7 @@ def make_step_node(
                 err_text = (
                     f"{err_text} (last model={last.get('model')}: {last.get('error')})"
                 )
-            end_time = datetime.now(timezone.utc)
+            end_time = datetime.now(UTC)
             steps = record_step_result(
                 state,
                 step.name,
@@ -619,7 +619,7 @@ def make_step_node(
         # Map outputs to context
         ctx = map_step_outputs_to_context(step, step_outputs, ctx)
 
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now(UTC)
         steps = record_step_result(
             state,
             step.name,

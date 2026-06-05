@@ -1,6 +1,7 @@
 """Tests for VectorStore metadata filtering."""
 
 import pytest
+
 from agentic_v2.rag.contracts import Chunk
 from agentic_v2.rag.vectorstore import InMemoryVectorStore
 

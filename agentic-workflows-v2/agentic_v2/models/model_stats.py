@@ -11,7 +11,7 @@ Aggressive design improvements:
 import bisect
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 
 
@@ -89,7 +89,7 @@ class ModelStats:
     # Timestamps (wall clock — for logging/serialization only)
     last_success: datetime | None = None
     last_failure: datetime | None = None
-    first_seen: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    first_seen: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Cooldown tracking — monotonic clock for runtime, wall clock for persistence
     cooldown_until: datetime | None = None  # Wall clock (serialization only)
@@ -178,7 +178,7 @@ class ModelStats:
         Args:
             latency_ms: Call latency in milliseconds
         """
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         self.success_count += 1
         self.last_success = now_utc
 
@@ -221,7 +221,7 @@ class ModelStats:
         Args:
             error_type: Type of error encountered
         """
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         self.failure_count += 1
         self.last_failure = now_utc
         self._last_failure_time = now_utc
@@ -269,7 +269,7 @@ class ModelStats:
             seconds: Duration of cooldown in seconds
         """
         self._cooldown_until_mono = time.monotonic() + seconds
-        self.cooldown_until = datetime.now(timezone.utc) + timedelta(seconds=seconds)
+        self.cooldown_until = datetime.now(UTC) + timedelta(seconds=seconds)
 
     def clear_cooldown(self) -> None:
         """Clear any active cooldown."""
@@ -297,7 +297,7 @@ class ModelStats:
             elif self._last_failure_time is not None:
                 # Fallback for stats loaded from persistence (no mono reference)
                 elapsed = (
-                    datetime.now(timezone.utc) - self._last_failure_time
+                    datetime.now(UTC) - self._last_failure_time
                 ).total_seconds()
                 if elapsed >= self._recovery_timeout_seconds:
                     self.circuit_state = CircuitState.HALF_OPEN
@@ -361,7 +361,7 @@ class ModelStats:
             stats.cooldown_until = datetime.fromisoformat(data["cooldown_until"])
             # Recompute monotonic deadline from remaining wall-clock seconds
             remaining = (
-                stats.cooldown_until - datetime.now(timezone.utc)
+                stats.cooldown_until - datetime.now(UTC)
             ).total_seconds()
             if remaining > 0:
                 stats._cooldown_until_mono = time.monotonic() + remaining

@@ -3,7 +3,7 @@
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -212,7 +212,7 @@ class LangSmithTraceAdapter(TraceAdapter):
 
     @staticmethod
     def _utc_now() -> datetime:
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     def _extract_workflow_run_id(self, event: CanonicalEvent) -> str | None:
         run_id = event.data.get("run_id")

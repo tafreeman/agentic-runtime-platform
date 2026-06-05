@@ -8,7 +8,7 @@ import time
 from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 try:
     from ..integrations.metrics import (
         record_circuit_breaker_trip as _record_cb_trip,
+    )
+    from ..integrations.metrics import (
         record_llm_request as _record_llm_request,
     )
 
@@ -410,7 +412,7 @@ class SmartModelRouter(ModelRouter):
             # Recency score (recent successes preferred)
             recency_score = 0.2
             if stats.last_success:
-                age = (datetime.now(timezone.utc) - stats.last_success).total_seconds()
+                age = (datetime.now(UTC) - stats.last_success).total_seconds()
                 recency_score = max(0, 1 - (age / 3600)) * 0.2  # Decay over 1 hour
 
             return success_score + latency_score + recency_score
@@ -569,7 +571,7 @@ class SmartModelRouter(ModelRouter):
 
         data = {
             "version": "1.0",
-            "saved_at": datetime.now(timezone.utc).isoformat(),
+            "saved_at": datetime.now(UTC).isoformat(),
             "stats": {
                 model: stats.to_dict() for model, stats in self.model_stats.items()
             },

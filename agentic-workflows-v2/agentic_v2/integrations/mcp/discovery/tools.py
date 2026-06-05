@@ -5,9 +5,11 @@ notifications.
 """
 
 import logging
+
+from cachetools import TTLCache
+
 from agentic_v2.integrations.mcp.protocol.client import McpProtocolClient
 from agentic_v2.integrations.mcp.types import McpToolDescriptor
-from cachetools import TTLCache
 
 logger = logging.getLogger(__name__)
 

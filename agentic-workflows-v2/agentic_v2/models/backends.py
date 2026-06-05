@@ -5,7 +5,10 @@ Provides concrete backends for:
 - OpenAI API (openai:* models)
 - Anthropic Claude API (anthropic:* models)
 - Google Gemini API (gemini:* models)
-- Ollama local models (ollama:* models)
+- Azure OpenAI Service (azure:* models)
+- Azure AI Foundry (azure-foundry:* models)
+- Ollama local models (ollama:* / local:* models)
+- ONNX local runtime (onnx:* models, via onnxruntime-genai)
 - Multi-backend dispatcher (routes by model prefix)
 - Mock backend for testing
 
@@ -37,11 +40,13 @@ PLACEHOLDER_RESPONSE_TEXT = (
 from .backends_base import LLMBackend
 from .backends_cloud import (
     AnthropicBackend,
+    AzureFoundryBackend,
+    AzureOpenAIBackend,
     GeminiBackend,
     GitHubModelsBackend,
     OpenAIBackend,
 )
-from .backends_local import OllamaBackend
+from .backends_local import OllamaBackend, OnnxBackend
 from .secrets import SecretProvider, get_first_secret, get_secret
 
 logger = logging.getLogger(__name__)
@@ -57,8 +62,11 @@ PREFIX_MAP: dict[str, str] = {
     "openai:": "openai",
     "anthropic:": "anthropic",
     "gemini:": "gemini",
+    "azure:": "azure",
+    "azure-foundry:": "azure_foundry",
     "ollama:": "ollama",
-    "local:": "ollama",  # local models route through Ollama
+    "local:": "ollama",  # local: models route through Ollama
+    "onnx:": "onnx",  # onnx: models run on the local onnxruntime-genai backend
 }
 
 
@@ -211,6 +219,13 @@ class MockBackend(LLMBackend):
 # ---------------------------------------------------------------------------
 
 
+def _onnx_runtime_available() -> bool:
+    """Return True when onnxruntime-genai can be imported on this host."""
+    import importlib.util
+
+    return importlib.util.find_spec("onnxruntime_genai") is not None
+
+
 def get_backend(
     provider: str = "github",
     *,
@@ -219,7 +234,8 @@ def get_backend(
     """Factory function to get a single LLM backend.
 
     Args:
-        provider: One of 'github', 'openai', 'anthropic', 'gemini', 'ollama', 'mock'
+        provider: One of 'github', 'openai', 'anthropic', 'gemini', 'azure',
+            'azure_foundry', 'ollama', 'onnx', 'mock'
 
     Returns:
         Configured LLM backend
@@ -262,8 +278,32 @@ def get_backend(
             )
             or ""
         )
+    elif provider == "azure":
+        return AzureOpenAIBackend(
+            api_key=get_secret(
+                "AZURE_OPENAI_API_KEY", default="", provider=secret_provider
+            )
+            or "",
+            endpoint=get_secret(
+                "AZURE_OPENAI_ENDPOINT", default="", provider=secret_provider
+            )
+            or "",
+        )
+    elif provider == "azure_foundry":
+        return AzureFoundryBackend(
+            api_key=get_secret(
+                "AZURE_FOUNDRY_API_KEY", default="", provider=secret_provider
+            )
+            or "",
+            endpoint=get_secret(
+                "AZURE_FOUNDRY_ENDPOINT", default="", provider=secret_provider
+            )
+            or "",
+        )
     elif provider == "ollama":
         return OllamaBackend()
+    elif provider == "onnx":
+        return OnnxBackend()
     elif provider == "mock":
         return MockBackend()
     else:
@@ -327,13 +367,43 @@ def auto_configure_backend(
         except ValueError:
             pass
 
+    # Azure OpenAI (needs both key and endpoint)
+    azure_key = get_secret("AZURE_OPENAI_API_KEY", provider=active_provider)
+    azure_endpoint = get_secret("AZURE_OPENAI_ENDPOINT", provider=active_provider)
+    if azure_key and azure_endpoint:
+        try:
+            backends["azure"] = AzureOpenAIBackend(
+                api_key=azure_key, endpoint=azure_endpoint
+            )
+            logger.info("Registered Azure OpenAI backend")
+        except ValueError:
+            pass
+
+    # Azure AI Foundry (needs both key and endpoint)
+    foundry_key = get_secret("AZURE_FOUNDRY_API_KEY", provider=active_provider)
+    foundry_endpoint = get_secret("AZURE_FOUNDRY_ENDPOINT", provider=active_provider)
+    if foundry_key and foundry_endpoint:
+        try:
+            backends["azure_foundry"] = AzureFoundryBackend(
+                api_key=foundry_key, endpoint=foundry_endpoint
+            )
+            logger.info("Registered Azure AI Foundry backend")
+        except ValueError:
+            pass
+
     # Ollama (always register -- it's local and free)
     backends["ollama"] = OllamaBackend()
+
+    # ONNX (register when the native onnxruntime-genai runtime is importable;
+    # the model files themselves are resolved lazily at call time).
+    if _onnx_runtime_available():
+        backends["onnx"] = OnnxBackend()
+        logger.info("Registered ONNX (onnxruntime-genai) backend")
 
     # Detect no-cloud-key situation. Ollama is always present, so return the
     # local-only MultiBackend and let higher-level callers decide whether that
     # is sufficient for the requested workload.
-    cloud_keys = {k for k in backends if k != "ollama"}
+    cloud_keys = {k for k in backends if k not in ("ollama", "onnx")}
     if not cloud_keys:
         logger.warning(
             "No cloud LLM provider credentials configured; returning Ollama-only backend."
@@ -354,7 +424,10 @@ __all__ = [
     "OpenAIBackend",
     "AnthropicBackend",
     "GeminiBackend",
+    "AzureOpenAIBackend",
+    "AzureFoundryBackend",
     "OllamaBackend",
+    "OnnxBackend",
     "MultiBackend",
     "MockBackend",
     "PREFIX_MAP",

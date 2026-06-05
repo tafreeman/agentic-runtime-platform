@@ -30,10 +30,12 @@ Key constants:
 from __future__ import annotations
 
 import ast
+import contextlib
 import logging
 from pathlib import Path
 from typing import Any
 
+from ..integrations.otel import get_tracer as _get_tracer
 from ..models.router import ModelTier
 from .context import ExecutionContext
 from .llm_output_parsing import (
@@ -194,6 +196,7 @@ def _make_llm_step(
     expected_output_keys: list[str] | None = None,
     prompt_file_override: str | None = None,
     enabled_tools: list[str] | None = None,
+    tool_path: str | None = None,
 ) -> StepFunction:
     """Create an async step function that calls an LLM for its output.
 
@@ -210,10 +213,26 @@ def _make_llm_step(
             instead of the role-based lookup.
         enabled_tools: Optional explicit tool allowlist. ``None`` means all
             tools available for the step's tier.
+        tool_path: ADR-023 Phase 6b per-step tool-loop selector. ``"native"``
+            keeps the bespoke ``run_tool_calls`` loop. Any other value (or
+            ``None``) uses the DEFAULT path: when ``agentic_ek_provider`` is ON
+            the step's tool loop is driven by EK ``react_loop``; when the flag
+            is OFF the legacy ``run_tool_calls`` loop runs byte-for-byte.
+            Single-owner: exactly one loop drives a given step.
     """
     persona_prompt = load_agent_system_prompt(agent_name, prompt_file_override)
 
     async def _llm_step(ctx: ExecutionContext) -> dict[str, Any]:
+        _tracer = _get_tracer()
+        _span_cm = (
+            _tracer.start_as_current_span(f"agent.{agent_name}")
+            if _tracer
+            else contextlib.nullcontext()
+        )
+        with _span_cm:
+            return await _llm_step_inner(ctx)
+
+    async def _llm_step_inner(ctx: ExecutionContext) -> dict[str, Any]:
         # Gather available context as step input
         all_vars = ctx.all_variables()
 
@@ -241,6 +260,48 @@ def _make_llm_step(
             model_used = ""
             tokens_used = 0
             tool_call_count = 0
+
+            # ADR-023 Phase 6b: EK react_loop is the DEFAULT tool-calling loop.
+            # DEFAULT OFF — only taken when AGENTIC_EK_PROVIDER is set AND the
+            # step did not opt out with ``tool_path: native`` AND the step has
+            # tools. When the flag is off OR tool_path == "native" the legacy
+            # ``run_tool_calls`` loop below runs byte-for-byte. Single-owner:
+            # exactly one loop drives this step (never both mid-thread).
+            from ..settings import get_settings
+
+            _use_ek_tool_loop = (
+                bool(bound_tools)
+                and tool_path != "native"
+                and get_settings().agentic_ek_provider
+            )
+            if _use_ek_tool_loop:
+                from .ek_step_delegation import run_tool_loop_via_ek
+
+                response, model_used, tokens_used, tool_call_count = (
+                    await run_tool_loop_via_ek(
+                        router=client.router,
+                        backend=client.backend,
+                        tier=tier,
+                        prompt=prompt,
+                        tool_schemas=tool_schemas,
+                        bound_tools=bound_tools,
+                        max_tokens=max_tokens,
+                        budget=getattr(client, "budget", None),
+                        max_rounds=MAX_TOOL_ROUNDS,
+                        max_observation_chars=MAX_TOOL_RESULT_CHARS,
+                    )
+                )
+                parsed = (
+                    parse_sentinel_output(response, expected_output_keys)
+                    or parse_llm_json_output(response, expected_output_keys)
+                    or {}
+                )
+                parsed["_meta"] = {
+                    "model_used": model_used,
+                    "tokens_used": tokens_used,
+                    "tool_calls": tool_call_count,
+                }
+                return parsed
 
             for iteration in range(MAX_TOOL_ROUNDS + 1):
                 chat_response, model_used, turn_tokens = (
@@ -396,6 +457,7 @@ def resolve_agent(step_def: StepDefinition) -> StepDefinition:
             expected_output_keys=list(step_def.output_mapping.keys()) or None,
             prompt_file_override=step_def.metadata.get("prompt_file"),
             enabled_tools=step_def.metadata.get("tools"),
+            tool_path=step_def.metadata.get("tool_path"),
         )
         logger.debug(
             "Resolved step '%s' -> LLM agent %s (tier %s)",

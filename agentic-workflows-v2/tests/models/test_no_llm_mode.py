@@ -11,11 +11,13 @@ Covers:
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
-from agentic_v2.settings import get_settings
-from agentic_v2.models.client import get_client, reset_client
 from agentic_v2.models.backends import MockBackend
+from agentic_v2.models.client import get_client, reset_client
+from agentic_v2.settings import get_settings
 
 _PLACEHOLDER_PREFIX = "[AGENTIC_NO_LLM placeholder]"
 
@@ -79,11 +81,16 @@ def test_flag_unset_still_probes_providers(monkeypatch):
     from agentic_v2.models import backends
 
     probe_calls: list[bool] = []
-    original = backends.auto_configure_backend
 
+    # Return a non-Mock stand-in instead of calling the real probe: on a
+    # keyless box the real auto_configure_backend raises
+    # NoProviderConfiguredError (a ConfigurationError, intentionally NOT
+    # swallowed by get_client — see test_no_provider_error.py), which would
+    # make this test machine-dependent. We only need to prove (a) the probe
+    # branch was entered and (b) MockBackend was NOT installed.
     def _tracked() -> object:
         probe_calls.append(True)
-        return original()
+        return MagicMock(name="probed_non_mock_backend")
 
     monkeypatch.setattr(backends, "auto_configure_backend", _tracked)
 
@@ -138,7 +145,19 @@ def test_reset_client_plus_cache_clear_reflects_env_change(monkeypatch):
 
     FAILS today: same root cause as test 1 — flag path not wired.
     """
-    # Phase A: flag absent — should NOT be MockBackend
+    # Phase A: flag absent — should NOT be MockBackend.
+    # Stub the probe so it returns a non-Mock backend instead of raising
+    # NoProviderConfiguredError on a keyless machine (the real probe path is
+    # exercised by test_flag_unset_still_probes_providers); here we only care
+    # that the flag-absent branch does not install MockBackend.
+    from agentic_v2.models import backends
+
+    monkeypatch.setattr(
+        backends,
+        "auto_configure_backend",
+        lambda: MagicMock(name="probed_non_mock_backend"),
+    )
+
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
     get_settings.cache_clear()
     reset_client()

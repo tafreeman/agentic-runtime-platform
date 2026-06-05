@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.contracts.sanitization import Severity
 from agentic_v2.middleware.detectors.secrets import SecretDetector
 from tests.fixtures.secrets_corpus import NEGATIVE_SECRETS, POSITIVE_SECRETS

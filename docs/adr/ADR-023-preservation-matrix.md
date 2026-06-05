@@ -1,0 +1,70 @@
+# Functionality Preservation Matrix — ADR-023 Option A
+
+| Capability | Origin | Disposition | How preserved | Verifying test |
+|---|---|---|---|---|
+| `LLMProvider` Protocol (`complete(...)->LLMResponse`) | executionkit | kept_as_is | `provider.py:118-134`; becomes single canonical LLM seam in `executionkit.contracts`. Runtime adapter satisfies it structurally. | `isinstance(adapter, LLMProvider)` True; EK pattern tests pass against adapter. |
+| `ToolCallingProvider` (`supports_tools`) | executionkit | kept_as_is | `provider.py:137-146` + F-04 delegation note; `SmartRouterProvider.supports_tools` delegates to inner route (False for Gemini). | `isinstance(adapter, ToolCallingProvider)` reflects inner capability; react_loop refuses non-tool route. |
+| `Provider` HTTP client (httpx/urllib, aclose) | executionkit | kept_as_is | `provider.py:154-341`; stays EK reference provider, coexists with runtime MultiBackend. | Provider unit tests (post/parse/429/401/aclose) pass. |
+| `LLMResponse` value type (+usage normalization) | executionkit | kept_as_is + extended | `provider.py:70-110`; usage normalization (OpenAI+Anthropic+**Gemini camelCase**+**Anthropic cache**) centralized here; `FinishReason` enum added. | Round-trip from each backend dict preserves content/tool_calls/finish_reason/tokens; cache + Gemini branches nonzero. |
+| `ToolCall` value type | executionkit | kept_as_is | `provider.py:61-67`. | `_parse_tool_calls` yields id/name/arguments(dict) for dict + JSON-string forms. |
+| `ExecutionKitError` base (cost, metadata) | executionkit | kept_as_is | `errors.py` root; runtime catches + maps, never replaces. | StepExecutor maps EK error to `StepResult.error` preserving cost/metadata. |
+| `LLMError`/`RateLimitError`/`PermanentError`/`ProviderError` | executionkit | kept_as_is | `provider.py:452-485` classification; `RetryConfig.retryable=(RateLimit,Provider)`. | Status->class test; should_retry True for RateLimit/Provider, False for Permanent. |
+| `PatternError`/`Budget`/`Consensus`/`MaxIterations` | executionkit | kept_as_is | `errors.py` subtree; raised by checked_complete/consensus/react. | unanimous mismatch->ConsensusFailed; max_rounds->MaxIterations; over-budget->BudgetExhausted. |
+| `RetryConfig` + `DEFAULT_RETRY` (full jitter) | executionkit | kept_as_is | `retry.py:21-54`; canonical pattern-level retry. | get_delay in [0,cap]; with_retry retries then re-raises. |
+| `with_retry` (CancelledError propagation) | executionkit | kept_as_is | `retry.py:76-105`; cancellation re-raised at :105. | CancelledError propagates unretried; `_before_attempt` invoked 1-indexed. |
+| `TokenUsage` (frozen, `__add__`) | executionkit | kept_as_is | `types.py:26-44`; canonical cost unit; feeds runtime TokenBudget via `.total_tokens`. | a+b summed + immutable; FrozenInstanceError on mutate. |
+| `CostTracker` (reserve/release/record TOCTOU-safe) | executionkit | kept_as_is | `cost.py:17-81` two-phase ordering preserved when wrapped. | concurrent reserve gates at limit; release restores; record no double-count. |
+| `consensus` pattern | executionkit | kept_as_is | `patterns/consensus.py` via gather_strict. | num_samples=5 yields PatternResult metadata; unanimous mismatch raises. |
+| `refine_loop` (injection-mitigated evaluator) | executionkit | kept_as_is | `patterns/refine_loop.py` + ConvergenceDetector; XML delimiters/max_eval_chars. | converges on target/patience; delimiter+truncation security test. |
+| `react_loop` (arg validation, truncation, history trim) | executionkit | kept_as_is | `patterns/react_loop.py`; max_observation_chars=12000, max_history. | terminates on final answer/max_rounds; oversized result truncated; bad args rejected. |
+| `structured` pattern | executionkit | kept_as_is | `patterns/structured.py` (extract_json 3-strategy). | parses fenced/raw/balanced; invalid repairs then raises; metadata recorded. |
+| `pipe` composition (-1 sentinel, sig filtering) | executionkit | kept_as_is | `compose.py:44-55,:72,:131`. | threads value->prompt, accumulates cost, kwarg-filter prevents TypeError; empty->zero cost. |
+| `PatternResult[T]` (frozen generic, MappingProxyType) | executionkit | kept_as_is | `types.py:47-59`; distinct from runtime StepResult. | each pattern returns it; metadata read-only; pipe composes without substitution. |
+| `checked_complete` (precheck->retry->record) | executionkit | kept_as_is | `patterns/base.py` ordering preserved. | concurrent calls respect budget; cancel propagates; usage recorded once. |
+| `validate_score` | executionkit | kept_as_is | `patterns/base.py`. | in-range ok; NaN/out-of-range raises. |
+| `ConvergenceDetector` | executionkit | kept_as_is | `engine/convergence.py`. | should_stop on threshold/patience; reset clears. |
+| `extract_json` (3-strategy) | executionkit | kept_as_is | `engine/json_extraction.py`; distinct from runtime llm_output_parsing. | handles raw/fenced/balanced; raises when none; removing a strategy fails a case. |
+| `gather_strict` (TaskGroup all-or-nothing) | executionkit | kept_as_is | `engine/parallel.py`; used by consensus. | cancels on first failure; single exception unwrapped; semaphore-capped. |
+| `gather_resilient` (return_exceptions) | executionkit | kept_as_is | `engine/parallel.py`. | exceptions returned in order; CancelledError propagates. |
+| `Kit` session facade | executionkit | kept_as_is | `kit.py`; works against runtime adapter. | delegates + accumulates usage; `__aexit__` aclose. |
+| `Tool` value type (`to_schema`) | executionkit | kept_as_is | `types.py:71-93`; canonical for react_loop. | to_schema valid OpenAI fn schema; params MappingProxyType. |
+| `VotingStrategy` enum / `Evaluator` alias / `PatternStep` | executionkit | kept_as_is | `types.py`/`compose.py`. | consensus accepts enum+string; pipe accepts matching callables. |
+| `RetryConfig` as data (contract) | executionkit | moved_to_contract | Phase 1: `RetryConfig`+`DEFAULT_RETRY` move to `executionkit.contracts`; `with_retry()` stays in engine. | import asserts field values; patterns default to DEFAULT_RETRY. |
+| `LLMBackend` ABC (complete/complete_chat/stream/count_tokens) | runtime | moved_to_adapter | `backends_base.py:14-40` stays runtime contract; adapter wraps it as EK `LLMProvider` via `complete_chat`->`LLMResponse`. Full surface retained. | each concrete backend wrapped returns correct LLMResponse; stream/count_tokens reachable. |
+| `LLMBackend` Protocol in `client.py` (lossy) | runtime | **removed** (was at_risk) | **Phase 2: DELETED** (`client.py:45-60`); `client.py` imports the ABC; wrapper backend retyped to ABC. | mypy --strict: complete_chat reachable; no reference to lossy Protocol. |
+| GitHub/OpenAI/Anthropic/Gemini/Ollama backends | runtime | stays_in_runtime + normalized | `backends_cloud.py`/`backends_local.py`; **Phase 3** normalizes outputs (Anthropic tool_use->OpenAI, Gemini functionCall+finishReason+usage, Ollama thinking+usage). | per-backend tests: shapes/finish_reason/usage normalized; Ollama thinking populates content. |
+| `MultiBackend` (model-prefix dispatch) | runtime | stays_in_runtime | `backends.py`; exposed to EK as single LLMProvider. | prefix routing + unconfigured raises; EK patterns route transparently. |
+| `LLMClientWrapper` (cache/sanitization/budget/retry) | runtime | stays_in_runtime + re-pointed | `client.py`; **Phase 5** drives message/complete_chat path through adapter; cache/sanitization/budget kept; wrapper retry retired on EK path only. | identical prompt hits cache; TTL/LRU prune fire; sanitization invoked; tool_calls/usage survive. |
+| `TokenBudget` (per-run scalar cap) | runtime | stays_in_runtime | `client.py`; fed from `response.total_tokens`; precedence documented (Phase 6). | can_afford gates; consume False over cap; no double-count vs CostTracker. |
+| `retry_with_jitter` decorator | runtime | stays_in_runtime (off EK seam) | `client.py`; kept for non-LLM/non-EK call sites; retired on EK LLM seam to avoid double retry. | backoff+jitter+cap; coexistence test: no double-retry storm. |
+| `SmartModelRouter` (circuit breaker, rate-limit, bulkhead, Redis CAS, cross-tier) | runtime | stays_in_runtime | `smart_router.py`; surfaced to EK only via `SmartRouterProvider`; EK never sees internals. | breaker opens after 3 fails/half-opens; cooldown from headers; degraded hook fires; semaphore caps; Redis CAS + local fallback. |
+| `ModelTier` + `FallbackChain` (ChainBuilder) | runtime | stays_in_runtime | `router.py`; tier selection internal to wrapper. | selects first available in chain; immutable chain; tier escalation. |
+| `ModelStats` (EMA, percentiles, breaker state) | runtime | stays_in_runtime | `model_stats.py`; no EK counterpart. | EMA alpha=0.2; reservoir bounded 1000; CLOSED/OPEN/HALF_OPEN; JSON round-trip. |
+| `RateLimitTracker` (ADR-002E dual bucket, header parsing) | runtime | stays_in_runtime | `rate_limit_tracker.py`. | per-provider header parse; RPM+TPM buckets; backoff fallback. |
+| `StepExecutor`/`StepDefinition`/RetryStrategy lifecycle | runtime | stays_in_runtime | `step.py`; DAG lifecycle untouched; steps invoke EK patterns + catch EK errors (Phase 6). | should_run + when/unless; wait_for timeout; verification escalation; loop_until; EK-wrapping step populates model_used/tokens. |
+| `tool_execution.py` (run_tool_calls; 8 rounds/12 calls/12000 chars) | runtime | stays_in_runtime | `tool_execution.py:38-40`; one owner per tool path (Phase 6). | ≤12 calls/round, ≤8 rounds; 12000-char truncation; tier-filtered contracts; fallback selects healthy model. |
+| `llm_output_parsing.py` (sentinel FILE blocks, ReviewStatus.normalize) | runtime | stays_in_runtime | `messages.py`+`result_normalization.py`; superset of EK extract_json for gating. | fences/brackets/quoted JSON; FILE block parse; ReviewStatus.normalize variants. |
+| `VerificationGate`/Policy/Loop | runtime | stays_in_runtime | `verification.py`; wraps EK pattern calls + budget-pct floor (Phase 6). | commands return PASSED/FAILED/ERROR; max_retries + token_budget_pct floor; escalation on failure. |
+| `ExecutionContext` (scoping, hooks, DI, JMESPath) | runtime | stays_in_runtime | `context.py`; EK patterns stateless. | child inherits/isolates; JMESPath deep query; hooks propagate; concurrent set locked. |
+| `ConnectionManager`/`ReplayStore`/WebSocket | runtime | stays_in_runtime | `server/websocket.py`+`replay_store.py`. | broadcast by run_id; late replay; backend persistence; reconnect replays. |
+| `AuditLog` (hash-chained) | runtime | stays_in_runtime | `server/audit_log.py`; can record EK-driven calls. | SHA-256 chain; tamper breaks verify; File/Redis round-trip; Null no-op. |
+| Core protocols (Engine/Agent/Tool/Memory) | runtime | stays_in_runtime | `core/protocols.py`. | isinstance per impl; EK-pattern Agent satisfies AgentProtocol. |
+| `StepResult`/`WorkflowResult`/`ReviewStatus`/`ReviewReport` | runtime | stays_in_runtime | `contracts/messages.py` (Pydantic v2, additive-only). | validates v2; success_rate computed; ReviewStatus.normalize; step wrapping EK pattern populates tokens_used. |
+
+## At-risk / mitigations
+
+- **[CLOSED in P2] Lossy `client.py` `LLMBackend` Protocol** (omits `complete_chat`). Mitigation executed: delete the Protocol, import the ABC, retype `LLMClientWrapper.backend`. Verified by `mypy --strict` reachability.
+- **[CLOSED in P3] Anthropic raw `tool_use` blocks / `stop_reason`** — normalized at backend layer to OpenAI tool shape + mapped finish_reason. Defensive dual-shape branch retained in adapter (P4).
+- **[CLOSED in P3] Gemini tool-blind + UPPERCASE finishReason + camelCase usage** — backend parses functionCall, lowercases/maps finishReason, remaps usageMetadata; `supports_tools` False for Gemini routes so react_loop refuses rather than silently drops.
+- **[CLOSED in P3] Ollama no usage + flattened thinking** — `complete_chat` gains thinking fallback, count_tokens back-fill, `[THINKING]` marker, truncation heuristic.
+- **[CLOSED in P1] EK usage normalization gaps (Gemini, Anthropic cache)** — third normalization branch + cache-token summation added to `LLMResponse`, the single source of truth.
+- **[CLOSED in P1] finish_reason vocabulary** — `FinishReason` enum centralizes the canonical set; `was_truncated` updated.
+- **[CLOSED in P4] Mutable-dict aliasing** between backend dict and frozen `LLMResponse.usage` — adapter deep-copies before MappingProxyType wrap.
+- **[CLOSED in P5] complete() bypasses complete_chat** — wrapper re-pointed onto message/complete_chat path behind `AGENTIC_EK_PROVIDER` flag.
+- **[CLOSED in P5] SmartRouterProvider missing** — implemented over `execute_with_bulkhead` (not text-only `_execute_call`); httpx->EK error translation; reliability tests gate the phase.
+- **[CLOSED in P5/P6] Double retry / double cost** — wrapper retry retired on EK seam; record once inside SmartRouterProvider; budget recorded once from `response.total_tokens`.
+- **[CLOSED in P6] EK error bypasses VerificationGate/hooks** — all step execution wrapped in gate; EK errors flow to error_hooks; budget-pct floor visible to inner pattern.
+- **[CLOSED in P6] Two budget systems** — precedence: TokenBudget(scalar) consumed first, CostTracker(dimensions) records; documented layering, no merge; TOCTOU ordering preserved.
+- **[CLOSED in P6] Two tool-execution paths** — one owner per call path; until migrated a step keeps `run_tool_calls`; no mid-thread mixing.
+- **No EK equivalent (must stay in runtime, surfaced only via adapter):** SmartModelRouter circuit breaker/rate-limit/cross-tier/bulkhead/Redis CAS; ModelStats/ReplayStore/AuditLog observability+compliance; StepExecutor lifecycle + ExecutionContext; tool_execution bounds + tier-filtered contracts. Mitigation: routing never moves into EK; EK sees only one `LLMProvider`.
+- **ACCEPTED RISKS:** pre-Phase-3 Gemini tool calls unrecoverable (forward-fixed only); Ollama truncation is heuristic; streaming + per-provider `count_tokens` stay OUT of the kernel contract (roadmap, separate optional protocols).

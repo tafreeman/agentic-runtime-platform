@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import pathlib
 import subprocess
-from typing import Optional
 
 _REPO_ROOT = pathlib.Path(__file__).parents[4]
 
@@ -58,7 +57,7 @@ def run_all(
     *,
     skip_integration: bool = True,
     coverage: bool = False,
-    package_filter: Optional[str] = None,
+    package_filter: str | None = None,
 ) -> bool:
     """Run tests for all (or one) packages; return True if all passed."""
     from rich.console import Console

@@ -12,7 +12,7 @@ from __future__ import annotations
 import ast
 import re
 from dataclasses import dataclass
-from datetime import timezone
+from datetime import UTC
 from types import SimpleNamespace
 from typing import Any
 
@@ -239,7 +239,10 @@ class ExpressionEvaluator:
         # step data (stored by StepExecutor as ctx["steps"]).  This allows
         # when-conditions like ${steps.review_code.outputs.review_report.approved}
         # to resolve even when the evaluator has no step_results param.
-        step_views = self._build_step_views()
+        # Holds typed StepResultView objects plus raw dicts merged from
+        # ctx["steps"]; _to_namespace handles both shapes uniformly.
+        step_views: dict[str, StepResultView | dict[str, Any]] = {}
+        step_views.update(self._build_step_views())
         ctx_steps = all_vars.get("steps")
         if isinstance(ctx_steps, dict):
             for name, data in ctx_steps.items():
@@ -272,7 +275,7 @@ class ExpressionEvaluator:
         for name, result in self.step_results.items():
             completed_at = None
             if result.end_time:
-                completed_at = result.end_time.astimezone(timezone.utc).isoformat()
+                completed_at = result.end_time.astimezone(UTC).isoformat()
             views[name] = StepResultView(
                 status=result.status.value,
                 output=result.output_data,

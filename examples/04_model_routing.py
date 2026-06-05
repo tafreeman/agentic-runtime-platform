@@ -22,10 +22,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-from pathlib import Path
 
 from agentic_v2.models import (
-    DEFAULT_CHAINS,
     FallbackChain,
     ModelRouter,
     ModelTier,

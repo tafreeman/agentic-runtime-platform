@@ -1,0 +1,19 @@
+{
+  "content": "Hello! How can I help you today?",
+  "tool_calls": [
+    {
+      "type": "tool_use",
+      "id": "toolu_01A09q90qw90lq917835lq9",
+      "name": "get_weather",
+      "input": {
+        "location": "San Francisco, CA"
+      }
+    }
+  ],
+  "finish_reason": "end_turn",
+  "model": "claude-3-5-sonnet-20241022",
+  "usage": {
+    "input_tokens": 12,
+    "output_tokens": 10
+  }
+}

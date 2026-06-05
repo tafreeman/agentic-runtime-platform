@@ -1,11 +1,11 @@
 """Tests for ADR-002B (cross-tier degradation) and ADR-001 (ExecutionEngine
 Protocol)."""
 
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
-from agentic_v2.core.errors import NoProviderConfiguredError
+
 from agentic_v2.contracts.messages import StepStatus, WorkflowResult
 from agentic_v2.engine.context import ExecutionContext
 from agentic_v2.engine.dag import DAG
@@ -90,9 +90,18 @@ class TestCrossTierDegradation:
         model = router.get_model_for_tier(ModelTier.TIER_2)
         assert model in ("anthropic:claude-3-sonnet", "anthropic:claude-3-opus")
 
-    def test_all_tiers_exhausted_raises_no_provider(self, monkeypatch) -> None:
-        """When all tiers are exhausted, raise the explicit no-provider error."""
-        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+    def test_all_tiers_exhausted_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When ALL registered tiers are exhausted, return None.
+
+        Run in offline mode: with the flag unset, ``get_model_for_tier`` raises
+        ``NoProviderConfiguredError`` on a keyless box (see test_no_provider_error)
+        — a different contract. Under ``AGENTIC_NO_LLM=1`` the router degrades to
+        ``None`` on exhaustion, which is what this test asserts. Previously
+        supplied by a session-wide flag leak; now scoped here.
+        """
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
         router = SmartModelRouter()
         # Register ALL tiers with single models we control
         router.register_chain(ModelTier.TIER_1, FallbackChain(("m1:a",), "t1"))
@@ -105,8 +114,8 @@ class TestCrossTierDegradation:
             for _ in range(5):
                 stats.record_failure("test")
 
-        with pytest.raises(NoProviderConfiguredError):
-            router.get_model_for_tier(ModelTier.TIER_2)
+        model = router.get_model_for_tier(ModelTier.TIER_2)
+        assert model is None
 
     def test_tier_0_never_auto_selected(self) -> None:
         """TIER_0 (deterministic, no LLM) is never a degradation target."""
@@ -201,7 +210,7 @@ class TestExecutionEngineProtocol:
             async def execute(
                 self,
                 workflow: Any,
-                ctx: Optional[ExecutionContext] = None,
+                ctx: ExecutionContext | None = None,
                 on_update: Any = None,
                 **kwargs: Any,
             ) -> WorkflowResult:
@@ -244,7 +253,7 @@ class TestExecutionEngineProtocol:
 
             def get_checkpoint_state(
                 self, workflow: Any, *, thread_id: str, **kwargs: Any
-            ) -> Optional[dict[str, Any]]:
+            ) -> dict[str, Any] | None:
                 return None
 
             async def resume(

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -285,7 +285,7 @@ class RunLogger:
             extra=extra,
         )
 
-        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
         workflow_name = _sanitize_filename_segment(result.workflow_name)
         run_id = _sanitize_filename_segment(result.workflow_id)
         status = _sanitize_filename_segment(result.overall_status.value)
@@ -390,7 +390,7 @@ class RunLogger:
             if isinstance(r.get("total_duration_ms"), (int, float))
         ]
 
-        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        cutoff = datetime.now(UTC) - timedelta(days=30)
         tokens_30d = 0
         for r in records:
             try:
@@ -399,7 +399,7 @@ class RunLogger:
                     continue
                 start_dt = datetime.fromisoformat(start_raw)
                 if start_dt.tzinfo is None:
-                    start_dt = start_dt.replace(tzinfo=timezone.utc)
+                    start_dt = start_dt.replace(tzinfo=UTC)
                 if start_dt < cutoff:
                     continue
                 for step in r.get("steps", []):

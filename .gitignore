@@ -212,6 +212,9 @@ SB-2-IMPLEMENTATION-REPORT.md
 .claude/
 .mcp.json
 
+# Local editor config — VS Code workspace state and per-user MCP config
+.vscode/
+
 docs/archive/
 docs/audit/
 repo.git/
@@ -437,6 +440,9 @@ presentation/src/tokens/raw-themes/*
 .claude/logs/
 .claude/cache/
 
+# Local editor config — VS Code workspace state and per-user MCP config
+.vscode/
+
 
 # Gemini CLI — commit GEMINI.md and shared config, ignore creds
 .gemini/oauth_creds.json
@@ -481,4 +487,3 @@ secrets.txt
 # Cleanup: removed AI scaffolding and generated artifacts
 AGENTS.md
 .github/agents/
-.secrets.baseline

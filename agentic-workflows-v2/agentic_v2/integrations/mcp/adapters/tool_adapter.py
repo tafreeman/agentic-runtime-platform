@@ -10,7 +10,7 @@ Critical design choices:
 
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from agentic_v2.integrations.mcp.discovery.tools import ToolDiscovery
 from agentic_v2.integrations.mcp.protocol.client import (
@@ -42,7 +42,7 @@ class McpToolAdapter:
         server_name: str,
         tool_descriptor: McpToolDescriptor,
         client: McpProtocolClient,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> None:
         """Initialize tool adapter.
 
@@ -69,7 +69,7 @@ class McpToolAdapter:
     async def execute(
         self,
         arguments: dict[str, Any],
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
     ) -> str:
         """Execute the remote tool.
 

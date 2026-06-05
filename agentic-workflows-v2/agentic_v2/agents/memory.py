@@ -18,7 +18,7 @@ Key abstractions:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable
 
 
@@ -40,7 +40,7 @@ class ConversationMessage:
 
     role: str  # "user", "assistant", "system", "tool"
     content: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     tool_call_id: str | None = None
     tool_name: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)

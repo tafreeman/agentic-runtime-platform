@@ -22,7 +22,6 @@ import pytest
 from agentic_v2.adapters.registry import get_registry
 from agentic_v2.core.errors import ConfigurationError
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

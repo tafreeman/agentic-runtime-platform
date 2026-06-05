@@ -9,6 +9,7 @@ Covers:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.rag.chunking import RecursiveChunker
 from agentic_v2.rag.contracts import Chunk
 from agentic_v2.rag.embeddings import InMemoryEmbedder

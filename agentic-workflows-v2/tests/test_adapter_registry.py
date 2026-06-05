@@ -14,6 +14,7 @@ from __future__ import annotations
 import importlib
 
 import pytest
+
 from agentic_v2.core import AdapterError, AdapterNotFoundError
 
 

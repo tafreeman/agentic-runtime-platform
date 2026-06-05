@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Construct final output
     output = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source_probe": PROBE_FILE,
         "source_checks": LIMITS_FILE,
         "summary": {

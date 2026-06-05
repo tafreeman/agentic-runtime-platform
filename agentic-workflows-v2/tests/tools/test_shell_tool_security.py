@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
 from agentic_v2.tools.builtin.shell_ops import ShellExecTool, ShellTool
 
 # ---------------------------------------------------------------------------

@@ -8,7 +8,6 @@ import asyncio
 import json
 import logging
 import signal
-from typing import Optional
 
 from agentic_v2.integrations.mcp.transports.base import McpTransport
 from agentic_v2.integrations.mcp.types import (
@@ -36,8 +35,8 @@ class StdioTransport(McpTransport):
     def __init__(
         self,
         command: str,
-        args: Optional[list[str]] = None,
-        env: Optional[dict[str, str]] = None,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
     ) -> None:
         """Initialize stdio transport.
 
@@ -50,8 +49,8 @@ class StdioTransport(McpTransport):
         self.command = command
         self.args = args or []
         self.env = env
-        self._process: Optional[asyncio.subprocess.Process] = None
-        self._read_task: Optional[asyncio.Task] = None
+        self._process: asyncio.subprocess.Process | None = None
+        self._read_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Spawn the subprocess and start reading from stdout.

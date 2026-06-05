@@ -6,9 +6,9 @@ import json
 
 from fastapi.testclient import TestClient
 
-from agentic_v2.server.app import create_app
 from agentic_v2.server.routes import runs as runs_routes
 from agentic_v2.workflows.run_logger import RunLogger
+from tests._server_test_helpers import make_configured_app
 
 
 def test_get_run_accepts_run_id_json_alias(monkeypatch, tmp_path):
@@ -24,7 +24,7 @@ def test_get_run_accepts_run_id_json_alias(monkeypatch, tmp_path):
 
     monkeypatch.setattr(runs_routes, "run_logger", RunLogger(runs_dir=tmp_path))
 
-    client = TestClient(create_app())
+    client = TestClient(make_configured_app())
     response = client.get("/api/runs/code_review-abc123.json")
 
     assert response.status_code == 200
@@ -35,7 +35,7 @@ def test_get_run_returns_404_for_unknown_run_identifier(monkeypatch, tmp_path):
     """Return 404 when a run filename or run_id cannot be resolved."""
     monkeypatch.setattr(runs_routes, "run_logger", RunLogger(runs_dir=tmp_path))
 
-    client = TestClient(create_app())
+    client = TestClient(make_configured_app())
     response = client.get("/api/runs/missing-run.json")
 
     assert response.status_code == 404

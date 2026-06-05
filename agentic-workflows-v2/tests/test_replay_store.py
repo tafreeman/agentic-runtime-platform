@@ -19,11 +19,11 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from agentic_v2.server.replay_store import (
+    _REDIS_AVAILABLE,
+    _SQLITE_AVAILABLE,
     InMemoryReplayStore,
     ReplayStore,
     SqliteReplayStore,
-    _REDIS_AVAILABLE,
-    _SQLITE_AVAILABLE,
     build_replay_store,
 )
 from agentic_v2.server.websocket import ConnectionManager

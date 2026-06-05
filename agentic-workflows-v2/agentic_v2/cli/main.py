@@ -36,6 +36,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from ..devex.cli import devex_app
 from ..integrations.otel import create_trace_adapter, shutdown_tracing
 from .display import (
     _list_adapters,
@@ -46,14 +47,13 @@ from .display import (
     _show_results,
 )
 from .helpers import (
+    _normalize_result,
     _rag_ingest_impl,  # noqa: F401 — patched by tests via agentic_v2.cli.main._rag_ingest_impl
     _rag_search_impl,  # noqa: F401 — patched by tests via agentic_v2.cli.main._rag_search_impl
-    _normalize_result,
     _run_adapter,
     _run_via_adapter,
 )
 from .rag_commands import rag_group
-from ..devex.cli import devex_app
 
 logger = logging.getLogger(__name__)
 

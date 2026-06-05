@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.workflows.artifact_extractor import (
     _collect_strings,

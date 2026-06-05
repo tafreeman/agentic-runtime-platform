@@ -1,0 +1,11 @@
+{
+  "content": "Hello! How can I help you today?",
+  "tool_calls": null,
+  "finish_reason": "STOP",
+  "model": "gemini-1.5-flash",
+  "usage": {
+    "promptTokenCount": 8,
+    "candidatesTokenCount": 9,
+    "totalTokenCount": 17
+  }
+}

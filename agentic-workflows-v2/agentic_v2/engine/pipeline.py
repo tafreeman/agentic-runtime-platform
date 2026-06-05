@@ -55,7 +55,7 @@ class ParallelGroup:
     fail_fast: bool = True  # Stop on first failure
     max_concurrency: int | None = None  # Limit parallel execution
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.steps:
             raise ValueError("ParallelGroup must have at least one step")
 
@@ -180,7 +180,7 @@ class PipelineExecutor:
     cancellation, and external cancellation via :meth:`cancel`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._step_executor = StepExecutor()
         self._status = PipelineStatus.PENDING
         self._cancelled = False

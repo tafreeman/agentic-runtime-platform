@@ -10,6 +10,7 @@ Verifies:
 from __future__ import annotations
 
 import pytest
+
 from agentic_v2.adapters import get_registry
 from agentic_v2.core.protocols import ExecutionEngine
 

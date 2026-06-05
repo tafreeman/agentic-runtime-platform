@@ -12,7 +12,6 @@ from starlette.testclient import TestClient
 
 from agentic_v2.server.auth import APIKeyMiddleware, AuthThrottle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

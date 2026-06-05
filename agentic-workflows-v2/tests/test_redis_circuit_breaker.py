@@ -11,8 +11,8 @@ import pytest
 
 from agentic_v2.models.model_stats import CircuitState, ModelStats
 from agentic_v2.models.redis_state import (
-    RedisCircuitBreakerStore,
     _REDIS_AVAILABLE,
+    RedisCircuitBreakerStore,
 )
 from agentic_v2.models.smart_router import SmartModelRouter
 

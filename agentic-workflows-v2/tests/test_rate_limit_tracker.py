@@ -6,11 +6,12 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
+
 import agentic_v2.models.model_stats as model_stats_module
 from agentic_v2.engine.tool_execution import complete_chat_with_fallback
 from agentic_v2.models.client import LLMClientWrapper
@@ -303,6 +304,26 @@ class TestRateLimitTracker:
 
 class TestSmartModelRouterHardening:
     """Tests for ADR-002 hardening features in SmartModelRouter."""
+
+    @pytest.fixture(autouse=True)
+    def _pin_legacy_path(self, monkeypatch: pytest.MonkeyPatch):
+        """Pin the LEGACY ``wrapper.complete -> backend.complete`` path.
+
+        These tests assert legacy router/bulkhead mechanics and synchronize on
+        an ``asyncio.Event`` set inside a backend's text ``complete`` method.
+        Under an ambient ``AGENTIC_EK_PROVIDER=1`` (the ADR-023 B-2 default-on
+        condition) ``LLMClientWrapper.complete`` reroutes through the EK shim's
+        ``complete_chat`` seam, the legacy ``complete`` is never called, the
+        handshake event never fires, and the test deadlocks. Forcing the flag
+        OFF keeps the class testing the path it was written for. The EK path
+        has its own bulkhead coverage in ``tests/models/test_ek_provider_wrapper``.
+        """
+        from agentic_v2.settings import get_settings
+
+        monkeypatch.setenv("AGENTIC_EK_PROVIDER", "0")
+        get_settings.cache_clear()
+        yield
+        get_settings.cache_clear()
 
     def _make_router(self) -> SmartModelRouter:
         """Create a router with a test fallback chain."""
@@ -670,9 +691,9 @@ class TestMonotonicClockIntegration:
         stats.set_cooldown(1)
         data = stats.to_dict()
         # Hack: Make the wall-clock time be in the past
-        from datetime import datetime, timezone
+        from datetime import datetime
 
-        past = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        past = datetime(2020, 1, 1, tzinfo=UTC)
         data["cooldown_until"] = past.isoformat()
 
         restored = ModelStats.from_dict(data)
@@ -694,7 +715,7 @@ class TestMonotonicClockIntegration:
 
             @classmethod
             def now(cls, tz=None):  # type: ignore[no-untyped-def]
-                return datetime(2026, 5, 9, tzinfo=timezone.utc) + cls.offset
+                return datetime(2026, 5, 9, tzinfo=UTC) + cls.offset
 
         monkeypatch.setattr(model_stats_module, "datetime", JumpedDateTime)
 
@@ -766,7 +787,7 @@ class TestRetryAfterHTTPDate:
         """HTTP-date Retry-After should parse to seconds delta."""
         tracker = RateLimitTracker()
         # Use a date 60 seconds in the future
-        future = datetime.now(timezone.utc) + timedelta(seconds=60)
+        future = datetime.now(UTC) + timedelta(seconds=60)
         date_str = future.strftime("%a, %d %b %Y %H:%M:%S GMT")
         result = tracker.parse_retry_after({"Retry-After": date_str})
         assert result is not None
@@ -775,7 +796,7 @@ class TestRetryAfterHTTPDate:
     def test_parse_retry_after_http_date_past(self) -> None:
         """HTTP-date in the past should return None (0 seconds)."""
         tracker = RateLimitTracker()
-        past = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        past = datetime(2020, 1, 1, tzinfo=UTC)
         date_str = past.strftime("%a, %d %b %Y %H:%M:%S GMT")
         result = tracker.parse_retry_after({"Retry-After": date_str})
         assert result is None  # 0 seconds fails the > 0 check
@@ -789,7 +810,7 @@ class TestRetryAfterHTTPDate:
     def test_parse_retry_after_http_date_far_future(self) -> None:
         """HTTP-date > 3600 seconds in the future should be rejected."""
         tracker = RateLimitTracker()
-        far = datetime.now(timezone.utc) + timedelta(hours=2)
+        far = datetime.now(UTC) + timedelta(hours=2)
         date_str = far.strftime("%a, %d %b %Y %H:%M:%S GMT")
         result = tracker.parse_retry_after({"Retry-After": date_str})
         assert result is None  # > 3600 rejected

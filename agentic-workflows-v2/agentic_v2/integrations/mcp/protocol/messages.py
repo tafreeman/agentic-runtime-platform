@@ -5,7 +5,7 @@ the MCP protocol.
 """
 
 import uuid
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from agentic_v2.integrations.mcp.types import (
     JsonRpcNotification,
@@ -24,8 +24,8 @@ class MessageBuilder:
     @staticmethod
     def create_request(
         method: str,
-        params: Optional[dict[str, Any]] = None,
-        request_id: Optional[Union[str, int]] = None,
+        params: dict[str, Any] | None = None,
+        request_id: Union[str, int] | None = None,
     ) -> JsonRpcRequest:
         """Create a JSON-RPC request.
 
@@ -50,8 +50,8 @@ class MessageBuilder:
     @staticmethod
     def create_response(
         request_id: Union[str, int],
-        result: Optional[Any] = None,
-        error: Optional[dict[str, Any]] = None,
+        result: Any | None = None,
+        error: dict[str, Any] | None = None,
     ) -> JsonRpcResponse:
         """Create a JSON-RPC response.
 
@@ -81,7 +81,7 @@ class MessageBuilder:
     @staticmethod
     def create_notification(
         method: str,
-        params: Optional[dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> JsonRpcNotification:
         """Create a JSON-RPC notification (no response expected).
 
@@ -101,8 +101,8 @@ class MessageBuilder:
     @staticmethod
     def create_initialize_request(
         protocol_version: str = "2024-11-05",
-        client_info: Optional[dict[str, str]] = None,
-        capabilities: Optional[dict[str, Any]] = None,
+        client_info: dict[str, str] | None = None,
+        capabilities: dict[str, Any] | None = None,
     ) -> JsonRpcRequest:
         """Create an MCP initialize request.
 
@@ -127,7 +127,7 @@ class MessageBuilder:
     def create_error(
         code: int,
         message: str,
-        data: Optional[Any] = None,
+        data: Any | None = None,
     ) -> dict[str, Any]:
         """Create a JSON-RPC error object.
 

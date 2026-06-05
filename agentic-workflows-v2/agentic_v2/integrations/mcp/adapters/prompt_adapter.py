@@ -5,7 +5,7 @@ Prompts are server-defined context templates that can be parameterized.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from agentic_v2.integrations.mcp.discovery.prompts import PromptDiscovery
 from agentic_v2.integrations.mcp.protocol.client import McpProtocolClient
@@ -49,7 +49,7 @@ class McpPromptAdapter:
 
     async def get_content(
         self,
-        arguments: Optional[dict[str, Any]] = None,
+        arguments: dict[str, Any] | None = None,
     ) -> str:
         """Retrieve prompt content from server.
 

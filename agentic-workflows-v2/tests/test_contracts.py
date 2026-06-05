@@ -3,8 +3,9 @@
 from datetime import timedelta
 
 import pytest
-from agentic_v2.contracts import AgentMessage  # Messages; Schemas
+
 from agentic_v2.contracts import (
+    AgentMessage,  # Messages; Schemas
     CodeGenerationInput,
     CodeGenerationOutput,
     CodeIssue,

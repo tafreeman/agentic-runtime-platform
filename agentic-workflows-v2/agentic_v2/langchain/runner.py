@@ -19,13 +19,14 @@ import logging
 import sys
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, AsyncIterator, Iterator
 
 from ..contracts import WorkflowResult
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
+from ..settings import get_settings
 from .config import WorkflowConfig, list_workflows, load_workflow_config
 from .expressions import resolve_expression
 from .graph import compile_workflow
@@ -34,9 +35,7 @@ from .result_builder import (
     extract_metadata,
     steps_dict_to_list,
 )
-from .state import WorkflowState
-from .state import initial_state
-from ..settings import get_settings
+from .state import WorkflowState, initial_state
 
 logger = logging.getLogger(__name__)
 
@@ -349,7 +348,7 @@ class WorkflowRunner:
         # Seed workflow_run_id for step tracing
         state["context"]["workflow_run_id"] = run_id
 
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         start = time.perf_counter()
         try:
             final = graph.invoke(state, config=langgraph_config)
@@ -449,7 +448,7 @@ class WorkflowRunner:
         if ctx is not None:
             _merge_execution_context_into_state(state, ctx, workflow_name)
 
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         start = time.perf_counter()
         try:
             final = await graph.ainvoke(state, config=langgraph_config)
@@ -696,7 +695,7 @@ class WorkflowRunner:
         graph = self._get_or_compile(config, use_cache)
         langgraph_config = self._build_langgraph_config(thread_id, run_config)
 
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         start = time.perf_counter()
         self._trace_adapter.emit_workflow_start(
             workflow_name,

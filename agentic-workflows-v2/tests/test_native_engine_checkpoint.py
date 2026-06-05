@@ -20,6 +20,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from agentic_v2.adapters.native._checkpoint_store import CheckpointStore
 from agentic_v2.adapters.native.engine import NativeEngine
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult

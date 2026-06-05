@@ -5,6 +5,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from agentic_v2.integrations.base import CanonicalEvent, TraceAdapter
 from agentic_v2.workflows.runner import WorkflowRunner
 

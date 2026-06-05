@@ -9,7 +9,6 @@ import asyncio
 import hashlib
 import logging
 import time
-from typing import Optional
 
 from agentic_v2.integrations.mcp.protocol.client import (
     McpProtocolClient,
@@ -68,9 +67,9 @@ class ConnectionMetadata:
         self.client = client
         self.backoff = backoff
         self.state = McpConnectionState.CONNECTING
-        self.server_info: Optional[McpServerInfo] = None
-        self.last_error: Optional[str] = None
-        self.auth_failure_timestamp: Optional[float] = None
+        self.server_info: McpServerInfo | None = None
+        self.last_error: str | None = None
+        self.auth_failure_timestamp: float | None = None
 
     def is_auth_suppressed(self) -> bool:
         """Check if auth failures are being suppressed (within cache window)."""
@@ -215,7 +214,7 @@ class McpConnectionManager:
         self._connections[name] = metadata
 
         # Attempt connection with backoff
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
 
         while not backoff.is_exhausted:
             try:
@@ -322,7 +321,7 @@ class McpConnectionManager:
 
             self._connections.clear()
 
-    def get_connection(self, name: str) -> Optional[McpProtocolClient]:
+    def get_connection(self, name: str) -> McpProtocolClient | None:
         """Get existing connection by name (if connected).
 
         Args:
@@ -336,7 +335,7 @@ class McpConnectionManager:
                 return metadata.client
         return None
 
-    def get_connection_state(self, name: str) -> Optional[McpConnectionState]:
+    def get_connection_state(self, name: str) -> McpConnectionState | None:
         """Get connection state by name.
 
         Args:
@@ -350,7 +349,7 @@ class McpConnectionManager:
                 return metadata.state
         return None
 
-    def list_connections(self) -> dict[str, tuple[McpConnectionState, Optional[str]]]:
+    def list_connections(self) -> dict[str, tuple[McpConnectionState, str | None]]:
         """List all connections with their states.
 
         Returns:
