@@ -19,6 +19,7 @@ call time.
 from __future__ import annotations
 
 import asyncio
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -192,6 +193,7 @@ class OnnxBackend(LLMBackend):
     max_tokens_cap: int = 4096
     # Cache of resolved path -> (og_module, model, tokenizer).
     _models: dict[str, tuple[Any, Any, Any]] = field(default_factory=dict, repr=False)
+    _lock: threading.Lock = field(default_factory=threading.Lock, init=False, compare=False, repr=False)
 
     def _resolve_path(self, model: str) -> str:
         name = model.removeprefix("onnx:")
