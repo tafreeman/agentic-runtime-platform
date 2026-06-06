@@ -95,7 +95,7 @@ export default function RunsPage() {
                 const count =
                   f === "all"
                     ? (runs?.length ?? 0)
-                    : counts[f as keyof typeof counts];
+                    : counts[f];
                 const active = filter === f;
                 return (
                   <button

@@ -114,7 +114,7 @@ export default function ModelFinderPage() {
           {error && (
             <BBox bodyClassName="p-4">
               <p className="font-mono text-[12px] text-b-red">
-                failed to load model recommendations: {(error as Error).message}
+                failed to load model recommendations: {error.message}
               </p>
             </BBox>
           )}
