@@ -128,7 +128,7 @@ function WorkflowDAGInner({
 
   // Auto-pan / fitView to the running node(s) when changed
   useEffect(() => {
-    const runningStr = [...runningStepIds].sort().join(",");
+    const runningStr = [...runningStepIds].sort((a, b) => a.localeCompare(b)).join(",");
     if (!runningStr || runningStr === prevRunningStrRef.current) return;
     if (userInteractedRef.current) return; // respect manual navigation
 

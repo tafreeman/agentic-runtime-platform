@@ -140,7 +140,10 @@ def _initialize_sanitization_state(app: FastAPI) -> Exception | None:
     while still letting lifespan fail closed if initialization actually broke.
     """
     if hasattr(app.state, "sanitization"):
-        return getattr(app.state, "sanitization_init_error", None)
+        prior_error = getattr(app.state, "sanitization_init_error", None)
+        # Narrow the untyped getattr result so the return type is provably
+        # ``Exception | None`` (keeps the exception-chain cause valid; python:S5707).
+        return prior_error if isinstance(prior_error, BaseException) else None
 
     try:
         from ..middleware.sanitization import SanitizationMiddleware
@@ -244,10 +247,15 @@ async def lifespan(app: FastAPI):
             )
             app.state.sanitization = None
         else:
+            # Bind to a BaseException|None-typed local so the exception-chain
+            # cause is always provably valid (python:S5707).
+            cause: BaseException | None = (
+                init_error if isinstance(init_error, BaseException) else None
+            )
             raise RuntimeError(
                 "Sanitization middleware failed to initialize. "
                 "Set AGENTIC_SANITIZER_FAIL_OPEN=1 to bypass (insecure — not for production)."
-            ) from init_error
+            ) from cause
 
     if is_tracing_enabled():
         logger.info("OpenTelemetry tracing is enabled")
@@ -286,14 +294,18 @@ def create_app() -> FastAPI:
 
     Middleware order (outermost → innermost, i.e. request processing order):
 
-    1. ``SlowAPIMiddleware`` — global per-IP rate limiting (outermost so it
-       can reject abusive clients before any auth work is done).
-    2. ``SanitizationASGIMiddleware`` — prompt-injection and secret redaction.
-    3. ``APIKeyMiddleware`` — bearer-token authentication + per-IP 401 throttle.
-    4. ``CORSMiddleware`` — CORS preflight / header injection (innermost).
+    1. ``CORSMiddleware`` — CORS preflight / header injection (outermost so
+       it can handle preflight OPTIONS requests before any other layer runs).
+    2. ``SlowAPIMiddleware`` — global per-IP rate limiting.
+    3. ``MetricsMiddleware`` — HTTP request duration and count recording.
+    4. ``TraceparentMiddleware`` — W3C traceparent response-header injection.
+    5. ``SanitizationASGIMiddleware`` — prompt-injection and secret redaction.
+    6. ``APIKeyMiddleware`` — bearer-token authentication + per-IP 401 throttle
+       (innermost).
 
     Note that ``app.add_middleware`` prepends each layer, so the first call
     adds the innermost middleware and the last call adds the outermost.
+    CORSMiddleware is therefore registered last.
 
     Returns:
         A fully configured ``FastAPI`` instance ready for ``uvicorn``.
@@ -310,18 +322,6 @@ def create_app() -> FastAPI:
     app.state.auth_throttle = AuthThrottle()
     app.state.audit_logger = AuditLogger(NullAuditStore(), enabled=False)
     _initialize_sanitization_state(app)
-
-    # Configure CORS (added first → innermost)
-    # expose_headers allows the browser to read traceparent/tracestate from
-    # CORS responses (same-origin requests can read all headers already).
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=get_allowed_origins(),
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "X-API-Key", "Content-Type", "Accept"],
-        expose_headers=["traceparent", "tracestate", "Server-Timing"],
-    )
 
     settings = get_settings()
 
@@ -358,6 +358,20 @@ def create_app() -> FastAPI:
             logger.info("Rate limiting disabled (AGENTIC_RATE_LIMIT_DISABLED=1)")
         else:
             logger.warning("slowapi not installed — rate limiting is inactive")
+
+    # Configure CORS (added last → outermost so it wraps the full chain and
+    # CORS preflight responses are always returned before any other middleware
+    # can short-circuit the request).
+    # expose_headers allows the browser to read traceparent/tracestate from
+    # CORS responses (same-origin requests can read all headers already).
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=get_allowed_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "X-API-Key", "Content-Type", "Accept"],
+        expose_headers=["traceparent", "tracestate", "Server-Timing"],
+    )
 
     # E7-3: Map NoProviderConfiguredError to 503 Service Unavailable
     from ..core.errors import NoProviderConfiguredError

@@ -415,6 +415,12 @@ class StepExecutor:
                 break
 
             except asyncio.CancelledError:
+                # NOTE: SonarQube python:S7497 suggests re-raising CancelledError.
+                # We intentionally do NOT here: a cancelled step is converted into a
+                # recorded FAILED StepResult so WorkflowExecutor can report per-step
+                # status (e.g. on global timeout). Re-raising would drop this step's
+                # result from result.steps and break global-timeout semantics
+                # (see tests/test_engine.py::test_global_timeout).
                 result.status = StepStatus.FAILED
                 result.error = "Step was cancelled"
                 result.error_type = "CancelledError"

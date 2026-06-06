@@ -22,6 +22,12 @@ RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" \
     && pip install --no-cache-dir -e "./agentic-v2-eval[dev]"
 
+# Run as non-root user (S6471)
+RUN groupadd --system appgroup \
+    && useradd --system --gid appgroup --no-create-home appuser \
+    && chown -R appuser:appgroup /workspace
+USER appuser
+
 WORKDIR /workspace/agentic-workflows-v2
 EXPOSE 8010
 
@@ -42,6 +48,11 @@ RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -e . \
     && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" \
     && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" \
-    && npm --prefix /workspace/agentic-workflows-v2/ui install
+    && npm --prefix /workspace/agentic-workflows-v2/ui install \
+    && groupadd --system appgroup \
+    && useradd --system --gid appgroup --no-create-home appuser \
+    && chown -R appuser:appgroup /workspace
+# Run as non-root user (S6471)
+USER appuser
 
 CMD ["sleep", "infinity"]

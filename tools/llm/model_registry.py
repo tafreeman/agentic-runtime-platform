@@ -46,6 +46,16 @@ class ProviderEntry(TypedDict, total=False):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Local-inference endpoint constants
+# 172.30.240.1 is the WSL2 host-gateway IP used to reach LM Studio running on
+# the Windows host from inside a WSL/Docker network. Not a routable address.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LM_STUDIO_HOST = "172.30.240.1"
+_LM_STUDIO_PORT = 12340
+_LM_STUDIO_BASE_URL = f"http://{_LM_STUDIO_HOST}:{_LM_STUDIO_PORT}"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Registry
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -554,7 +564,7 @@ REGISTRY: dict[str, ProviderEntry] = {
 
     # ── LM Studio (local) ─────────────────────────────────────────────────────
     "lm_studio": {
-        "base_url": "http://172.30.240.1:12340",
+        "base_url": _LM_STUDIO_BASE_URL,
         "auth_env": "LM_STUDIO_BASE_URL",
         "status": "working",
         "note": "Local inference server. No rate limits. Hardware-bound throughput.",
