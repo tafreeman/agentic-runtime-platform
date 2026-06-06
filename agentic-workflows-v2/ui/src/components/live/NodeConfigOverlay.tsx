@@ -84,8 +84,10 @@ export default function NodeConfigOverlay({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-end">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+      <button
+        type="button"
+        className="absolute inset-0 cursor-default border-0 bg-black/30 backdrop-blur-sm"
+        aria-label="Close configuration overlay"
         onClick={onClose}
       />
 

@@ -30,6 +30,10 @@ _FILE_BLOCK_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 
+# Maximum blob length before applying DOTALL regex on untrusted LLM strings.
+# A missing ENDFILE sentinel causes catastrophic backtracking without this guard.
+_MAX_BLOB_LEN = 262144  # 256 KB
+
 
 def _collect_strings(value: Any) -> list[str]:
     """Recursively collect all string leaf values from a nested structure."""
@@ -67,6 +71,9 @@ def _scan_output_for_files(output: Any) -> dict[Path, str]:
     """Return {relative_path: content} for every FILE block found in output."""
     files: dict[Path, str] = {}
     for blob in _collect_strings(output):
+        # Guard against ReDoS on untrusted LLM blobs that lack a closing ENDFILE.
+        if len(blob) > _MAX_BLOB_LEN:
+            blob = blob[:_MAX_BLOB_LEN]
         for match in _FILE_BLOCK_RE.finditer(blob):
             rel = _safe_rel_path(match.group("path"))
             if rel is None:

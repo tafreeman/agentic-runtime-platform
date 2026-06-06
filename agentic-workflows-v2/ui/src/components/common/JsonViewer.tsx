@@ -132,9 +132,13 @@ function Collapsible({
           <span className="text-gray-500">{bracket[1]}</span>
         </>
       ) : (
-        <span className="cursor-pointer text-gray-500 hover:text-gray-300" onClick={onToggle}>
+        <button
+          type="button"
+          className="cursor-pointer border-0 bg-transparent p-0 text-left text-gray-500 hover:text-gray-300"
+          onClick={onToggle}
+        >
           {bracket[0]} {summary} {bracket[1]}
-        </span>
+        </button>
       )}
     </span>
   );

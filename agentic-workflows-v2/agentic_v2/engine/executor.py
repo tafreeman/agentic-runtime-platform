@@ -272,6 +272,24 @@ class WorkflowExecutor:
             result.metadata["cancelled"] = True
             self._history.record("cancelled")
             await self._emit(ExecutorEvent.CANCELLED, {})
+            # Finalize before propagating cancellation so subscribers (e.g. the
+            # WebSocket run stream) receive a terminal WORKFLOW_END event instead
+            # of hanging when the task is cancelled externally (e.g. shutdown).
+            result.mark_complete(False)
+            result.metadata["history_entries"] = len(self._history.entries)
+            self._history.record(
+                "workflow_end", data={"status": result.overall_status.value}
+            )
+            await self._emit(
+                ExecutorEvent.WORKFLOW_END,
+                {
+                    "status": result.overall_status.value,
+                    "duration_ms": result.total_duration_ms,
+                },
+            )
+            if self.config.cleanup_on_complete:
+                self._current_ctx = None
+            raise
 
         except Exception as e:
             result.overall_status = StepStatus.FAILED

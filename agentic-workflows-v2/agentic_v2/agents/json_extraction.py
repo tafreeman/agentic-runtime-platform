@@ -30,6 +30,10 @@ _FENCED_JSON_RE = re.compile(r"```json\s*(.*?)```", re.DOTALL)
 # Pattern: ``` ... ``` (non-greedy, captures content inside any code fence)
 _FENCED_ANY_RE = re.compile(r"```\s*\n?(\{.*?\})\s*\n?```", re.DOTALL)
 
+# Maximum input length accepted before regex matching to prevent ReDoS on
+# untrusted LLM output that contains no closing fence (causes backtracking).
+_MAX_INPUT_LEN = 262144  # 256 KB
+
 
 def _find_json_string(text: str) -> str:
     """Extract the most likely JSON string from LLM response text.
@@ -51,6 +55,11 @@ def _find_json_string(text: str) -> str:
     Raises:
         ValueError: If no JSON-like content is found.
     """
+    # Guard against ReDoS: cap input length before applying DOTALL regexes
+    # on untrusted LLM text (missing closing fence triggers backtracking).
+    if len(text) > _MAX_INPUT_LEN:
+        text = text[:_MAX_INPUT_LEN]
+
     # Strategy 1: ```json ... ```
     match = _FENCED_JSON_RE.search(text)
     if match:

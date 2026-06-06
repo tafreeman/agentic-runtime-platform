@@ -25,3 +25,28 @@ decks-generated
 research
 docs
 .full-review
+
+# Sensitive files — never bake into the image (S6470)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.secrets.baseline
+.secrets.baseline
+secrets/
+.secrets/
+
+# Runtime artefacts that add size but no value
+runs/
+coverage/
+htmlcov/
+.coverage.*
+*.log
+dist/
+build/
+*.egg-info/

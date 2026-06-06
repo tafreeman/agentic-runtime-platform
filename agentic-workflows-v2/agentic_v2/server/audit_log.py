@@ -98,18 +98,25 @@ class FileAuditStore:
         """Append one JSONL record.
 
         The file is opened with ``os.O_APPEND`` for each write, so concurrent
-        writers cannot seek and overwrite prior records.
+        writers cannot seek and overwrite prior records.  The blocking I/O is
+        delegated to a thread via ``asyncio.to_thread`` to avoid stalling the
+        event loop.
         """
         line = _canonical_json(record).encode("utf-8") + b"\n"
-        async with self._lock:
-            self.path.parent.mkdir(parents=True, exist_ok=True)
+        path = self.path
+
+        def _write_line() -> None:
+            path.parent.mkdir(parents=True, exist_ok=True)
             flags = os.O_APPEND | os.O_CREAT | os.O_WRONLY
-            fd = os.open(self.path, flags, 0o600)
+            fd = os.open(path, flags, 0o600)
             try:
                 os.write(fd, line)
                 os.fsync(fd)
             finally:
                 os.close(fd)
+
+        async with self._lock:
+            await asyncio.to_thread(_write_line)
         return str(self.path)
 
     async def get_last_hash(self) -> str | None:

@@ -315,6 +315,10 @@ class PatternEvaluator:
 
     def _parse_json_response(self, text: str) -> dict[str, Any] | None:
         """Extract and parse JSON from text (handles markdown blocks)."""
+        # Guard against ReDoS on pathological untrusted input (LLM output).
+        _MAX_PARSE_LEN = 262144  # 256 KB — ample for any realistic LLM response
+        if len(text) > _MAX_PARSE_LEN:
+            text = text[:_MAX_PARSE_LEN]
         # remove markdown code blocks
         match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
         if match:

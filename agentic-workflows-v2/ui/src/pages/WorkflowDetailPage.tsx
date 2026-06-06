@@ -304,7 +304,7 @@ export default function WorkflowDetailPage() {
 
       {runMutation.isError && (
         <div className="border-t border-b-red bg-b-red/10 px-4 py-2 font-mono text-[11px] text-b-red">
-          [!] {(runMutation.error as Error).message}
+          [!] {runMutation.error.message}
         </div>
       )}
     </div>

@@ -259,12 +259,15 @@ class CodeExecutionTool(BaseTool):
             print(json.dumps(output))
         """)
 
-        try:
+        def _write_temp_file(content: str) -> str:
             with tempfile.NamedTemporaryFile(
                 mode="w", suffix=".py", delete=False, encoding="utf-8"
             ) as f:
-                f.write(wrapper)
-                tmp_path = f.name
+                f.write(content)
+                return f.name
+
+        try:
+            tmp_path = await asyncio.to_thread(_write_temp_file, wrapper)
 
             try:
                 proc = await asyncio.create_subprocess_exec(

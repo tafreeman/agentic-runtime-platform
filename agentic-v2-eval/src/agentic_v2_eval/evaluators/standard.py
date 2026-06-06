@@ -208,6 +208,10 @@ class StandardEvaluator:
         )
 
     def _parse_response(self, text: str) -> dict[str, Any] | None:
+        # Guard against ReDoS on pathological untrusted input (LLM output).
+        _MAX_PARSE_LEN = 262144  # 256 KB — ample for any realistic LLM response
+        if len(text) > _MAX_PARSE_LEN:
+            text = text[:_MAX_PARSE_LEN]
         match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
         if match:
             text = match.group(1)

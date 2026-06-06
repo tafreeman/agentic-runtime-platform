@@ -121,10 +121,7 @@ class StdioTransport(McpTransport):
 
         if self._read_task and not self._read_task.done():
             self._read_task.cancel()
-            try:
-                await self._read_task
-            except asyncio.CancelledError:
-                pass
+            await asyncio.gather(self._read_task, return_exceptions=True)
 
         self._emit_close()
 
@@ -157,6 +154,7 @@ class StdioTransport(McpTransport):
 
         except asyncio.CancelledError:
             logger.debug("Read loop cancelled")
+            raise
         except Exception as e:
             logger.error(f"Read loop error: {e}")
             self._emit_error(e)

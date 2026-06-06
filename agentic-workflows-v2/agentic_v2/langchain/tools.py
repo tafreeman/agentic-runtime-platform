@@ -41,6 +41,9 @@ _SHELL_BLOCKLIST = frozenset(
 # Allowed URL schemes for HTTP tools.
 _ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
 
+# AWS/Azure/GCP instance metadata service endpoint — blocked for SSRF safety.
+_IMDS_IP = "169.254.169.254"
+
 
 def _is_dangerous_command(command: str) -> bool:
     """Return True if *command* matches any entry in the shell blocklist."""
@@ -86,8 +89,8 @@ def _validate_url(url: str) -> str | None:
     if _is_private_ip(hostname):
         return f"Access to private/reserved IP address '{hostname}' is blocked."
 
-    # Block well-known metadata hostnames
-    metadata_hosts = {"metadata.google.internal", "metadata", "169.254.169.254"}
+    # Block well-known metadata hostnames (including IMDS link-local IP).
+    metadata_hosts = {"metadata.google.internal", "metadata", _IMDS_IP}
     if hostname.lower() in metadata_hosts:
         return f"Access to metadata endpoint '{hostname}' is blocked."
 
@@ -397,15 +400,20 @@ def web_search(
         )
         body = response.text
 
+        # Guard against ReDoS on untrusted HTTP response bodies: cap input
+        # length and rewrite inner-content captures to exclude '<' so the
+        # engine cannot backtrack across tag boundaries.
+        _MAX_BODY_LEN = 524288  # 512 KB — generous for a DuckDuckGo HTML page
+        body = body[:_MAX_BODY_LEN]
         links = re.findall(
-            r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
+            r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
             body,
-            flags=re.IGNORECASE | re.DOTALL,
+            flags=re.IGNORECASE,
         )
         snippets = re.findall(
-            r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>',
+            r'<a[^>]+class="result__snippet"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
             body,
-            flags=re.IGNORECASE | re.DOTALL,
+            flags=re.IGNORECASE,
         )
 
         from urllib.parse import urlparse

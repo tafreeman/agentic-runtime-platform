@@ -34,6 +34,10 @@ FILE_BLOCK_RE = re.compile(
     re.DOTALL | re.MULTILINE,
 )
 
+# Maximum input length before applying DOTALL regexes on untrusted LLM output.
+# Missing closing sentinels cause backtracking; capping input bounds the runtime.
+_MAX_SENTINEL_INPUT_LEN = 262144  # 256 KB
+
 # Backward-compatibility aliases
 _ARTIFACT_RE = ARTIFACT_RE
 _FILE_BLOCK_RE = FILE_BLOCK_RE
@@ -356,6 +360,10 @@ def extract_files_from_artifact(content: str) -> dict[str, str]:
     individual files rather than treating the artifact as a single blob.
     Returns an empty dict when no FILE blocks are present.
     """
+    # Guard against ReDoS: cap input length before applying DOTALL regexes
+    # on untrusted LLM content (missing ENDFILE sentinel triggers backtracking).
+    if len(content) > _MAX_SENTINEL_INPUT_LEN:
+        content = content[:_MAX_SENTINEL_INPUT_LEN]
     return {
         match.group(1).strip(): match.group(2)
         for match in FILE_BLOCK_RE.finditer(content)
@@ -391,6 +399,10 @@ def parse_sentinel_output(
     Returns ``None`` when no sentinel blocks are found so callers can fall back
     to JSON parsing.
     """
+    # Guard against ReDoS: cap input length before applying DOTALL regexes
+    # on untrusted LLM text (missing <<<ENDARTIFACT>>> triggers backtracking).
+    if len(text) > _MAX_SENTINEL_INPUT_LEN:
+        text = text[:_MAX_SENTINEL_INPUT_LEN]
     matches = ARTIFACT_RE.findall(text)
     if not matches:
         return None

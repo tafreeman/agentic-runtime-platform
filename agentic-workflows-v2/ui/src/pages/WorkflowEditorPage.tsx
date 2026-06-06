@@ -142,7 +142,7 @@ export default function WorkflowEditorPage() {
             <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-red-400">
               <TriangleAlert className="h-5 w-5" />
               <div>Unable to load workflow editor.</div>
-              <div className="text-xs text-red-300/80">{(error as Error).message}</div>
+              <div className="text-xs text-red-300/80">{error.message}</div>
             </div>
           ) : data ? (
             <WorkflowDAG
@@ -186,12 +186,12 @@ export default function WorkflowEditorPage() {
               <div className="space-y-2 p-3 text-xs">
                 {validateMutation.isError && (
                   <div className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-red-300">
-                    {(validateMutation.error as Error).message}
+                    {validateMutation.error.message}
                   </div>
                 )}
                 {saveMutation.isError && (
                   <div className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-red-300">
-                    {(saveMutation.error as Error).message}
+                    {saveMutation.error.message}
                   </div>
                 )}
                 {issueCount === 0 && !validateMutation.isPending && (

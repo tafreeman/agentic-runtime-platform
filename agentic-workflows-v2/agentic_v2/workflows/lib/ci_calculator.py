@@ -86,7 +86,7 @@ def compute_ci(
         product = 1.0
         for dim in RESEARCH_DIMENSIONS:
             score = _clamp_score(scores.get(dim, 0.0))
-            if score == 0.0:
+            if math.isclose(score, 0.0, abs_tol=1e-10):
                 return 0.0
             product *= score ** float(effective_weights.get(dim, 0.0))
         return _clamp_score(product ** (1.0 / total_weight))

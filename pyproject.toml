@@ -82,3 +82,8 @@ ignore = [
     "RUF022", # Unsorted __all__: intentional logical grouping by category
     "RUF059", # Unused unpacked variable: deferred
 ]
+
+[tool.coverage.run]
+# Emit repo-relative file paths so SonarQube can map coverage onto indexed
+# sources (the scanner runs in a container; absolute Windows paths won't map).
+relative_files = true

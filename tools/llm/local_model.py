@@ -204,6 +204,12 @@ Return ONLY valid JSON in this exact format:
         # Step 1: Clean up the response
         response = response.strip()
 
+        # Guard against ReDoS on pathological LLM output (missing closing fence
+        # causes catastrophic backtracking in the DOTALL quantifier below).
+        _MAX_PARSE_LEN = 262144  # 256 KB
+        if len(response) > _MAX_PARSE_LEN:
+            response = response[:_MAX_PARSE_LEN]
+
         # Remove markdown code blocks if present
         if "```json" in response:
             match = re.search(r"```json\s*([\s\S]*?)\s*```", response)
@@ -392,6 +398,12 @@ Return ONLY valid JSON in this exact format:
         Expected format: {"reasoning": [...], "score": N, "summary": "..."}
         """
         response = response.strip()
+
+        # Guard against ReDoS on pathological LLM output (missing closing fence
+        # causes catastrophic backtracking in the DOTALL quantifier below).
+        _MAX_PARSE_LEN = 262144  # 256 KB
+        if len(response) > _MAX_PARSE_LEN:
+            response = response[:_MAX_PARSE_LEN]
 
         # Remove markdown code blocks
         if "```json" in response:

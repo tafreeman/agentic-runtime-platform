@@ -305,7 +305,7 @@ def save_cache(cache: dict[str, Any]) -> None:
 
 def cache_key(model: str) -> str:
     """Generate cache key for a model."""
-    return hashlib.md5(model.encode()).hexdigest()[:CACHE_KEY_MD5_LENGTH]
+    return hashlib.md5(model.encode(), usedforsecurity=False).hexdigest()[:CACHE_KEY_MD5_LENGTH]
 
 
 # =============================================================================

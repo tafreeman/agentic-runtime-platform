@@ -9,6 +9,10 @@ RUN npm ci
 
 COPY agentic-workflows-v2/ui ./
 
+# Run as the built-in non-root 'node' user (S6471)
+RUN chown -R node:node /workspace
+USER node
+
 EXPOSE 5173
 
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

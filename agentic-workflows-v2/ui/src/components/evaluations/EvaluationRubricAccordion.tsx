@@ -1,5 +1,4 @@
 import { useRunEvaluationDetail } from "../../hooks/useRuns";
-import type { HardGates } from "../../api/types";
 import BPill from "../common/BPill";
 import type { BPillTone } from "../common/BPill";
 import CriterionRow from "./CriterionRow";
@@ -38,7 +37,7 @@ export default function EvaluationRubricAccordion({
     );
   }
 
-  const hardGates = detail.hard_gates as HardGates | null | undefined;
+  const hardGates = detail.hard_gates;
 
   return (
     <div className="space-y-3 py-2">

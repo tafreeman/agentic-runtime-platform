@@ -124,10 +124,7 @@ class WebSocketTransport(McpTransport):
 
         if self._receive_task and not self._receive_task.done():
             self._receive_task.cancel()
-            try:
-                await self._receive_task
-            except asyncio.CancelledError:
-                pass
+            await asyncio.gather(self._receive_task, return_exceptions=True)
 
         self._emit_close()
 
@@ -161,6 +158,7 @@ class WebSocketTransport(McpTransport):
 
         except asyncio.CancelledError:
             logger.debug("WebSocket receive loop cancelled")
+            raise
         except websockets.exceptions.ConnectionClosed as e:
             logger.info(f"WebSocket connection closed: {e}")
         except Exception as e:

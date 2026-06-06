@@ -160,7 +160,7 @@ describe("RunConfigForm", () => {
     // The form should emit onChange on initial render with defaults
     expect(onChange).toHaveBeenCalled();
 
-    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1]?.[0];
+    const lastCall = onChange.mock.calls.at(-1)?.[0];
     expect(lastCall).toBeDefined();
     expect(lastCall!.inputValues).toHaveProperty("prompt", "hello");
     expect(lastCall!.executionProfile).toHaveProperty("runtime", "subprocess");
