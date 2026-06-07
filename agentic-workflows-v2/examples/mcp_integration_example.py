@@ -93,7 +93,7 @@ async def main():
     for tool in all_tools:
         # Find the client for this tool (match by server name)
         tool_server = tool.name.split("_")[1]  # Assumes "mcp_<server>_<tool>"
-        client = next((c for c in clients if True), clients[0])  # Simplified
+        client = clients[0]  # Simplified: example uses the first client
 
         adapter = McpToolAdapter(
             server_name=tool_server,

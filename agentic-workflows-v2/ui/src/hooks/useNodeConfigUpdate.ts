@@ -51,10 +51,9 @@ export function useNodeConfigUpdate({ runId }: UseNodeConfigUpdateOptions) {
 
         wsRef.current.onclose = () => {
           console.log("WebSocket closed, will attempt reconnect in 3s");
-          // Attempt reconnect after 3 seconds
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connectWs();
-          }, 3000);
+          // Attempt reconnect after 3 seconds. Pass connectWs directly (it
+          // ignores setTimeout's timer arg) to avoid a 5th nested-function level.
+          reconnectTimeoutRef.current = setTimeout(connectWs, 3000);
         };
       } catch (error) {
         console.error("Failed to connect WebSocket:", error);

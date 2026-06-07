@@ -342,11 +342,13 @@ def main(argv: list[str]) -> int:
         f"Calls: {summary['successful_calls']}/{summary['total_calls']} successful "
         f"(failed={summary['failed_calls']})"
     )
+    logger.info(f"Report: {out_path}")
+
     if summary["failed_calls"] > 0:
         logger.warning(
             "One or more model calls failed; latency comparison may be invalid."
         )
-    logger.info(f"Report: {out_path}")
+        return 1
 
     return 0
 

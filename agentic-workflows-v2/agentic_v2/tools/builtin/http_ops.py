@@ -15,7 +15,11 @@ from ..base import BaseTool, ToolResult
 # ---------------------------------------------------------------------------
 
 _ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
-_METADATA_HOSTS = frozenset({"metadata.google.internal", "metadata", "169.254.169.254"})
+# NOSONAR(python:S1313): the link-local IP 169.254.169.254 is the cloud metadata
+# endpoint we deliberately blocklist here for SSRF defense — it must stay hardcoded.
+_METADATA_HOSTS = frozenset(
+    {"metadata.google.internal", "metadata", "169.254.169.254"}  # NOSONAR
+)
 
 
 def _validate_url(url: str) -> str | None:
