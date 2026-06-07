@@ -25,6 +25,8 @@ from typing import Any
 
 from ..base import BaseTool, ToolResult
 
+MEMORY_KEY_LABEL = "Memory key"
+
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
@@ -205,7 +207,7 @@ class MemoryUpsertTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
             "value": {
                 "type": "object",
                 "description": "JSON-serializable value",
@@ -251,7 +253,7 @@ class MemoryGetTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
         }
 
     async def execute(self, key: str) -> ToolResult:
@@ -350,7 +352,7 @@ class MemoryDeleteTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
         }
 
     async def execute(self, key: str) -> ToolResult:

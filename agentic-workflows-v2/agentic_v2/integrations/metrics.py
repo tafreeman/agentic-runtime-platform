@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 # Re-use the service name constant from the tracing module
 DEFAULT_SERVICE_NAME = "agentic-workflows-v2"
+METRIC_LLM_PROVIDER = "llm.provider"
 
 _TRUTHY_VALUES = frozenset({"1", "true", "yes"})
 
@@ -306,12 +307,12 @@ def record_llm_request(
         return
     if _llm_request_duration is not None:
         _llm_request_duration.record(
-            duration_seconds, {"llm.provider": provider}
+            duration_seconds, {METRIC_LLM_PROVIDER: provider}
         )
     if _llm_tokens is not None and input_tokens > 0:
-        _llm_tokens.add(input_tokens, {"llm.provider": provider, "direction": "input"})
+        _llm_tokens.add(input_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "input"})
     if _llm_tokens is not None and output_tokens > 0:
-        _llm_tokens.add(output_tokens, {"llm.provider": provider, "direction": "output"})
+        _llm_tokens.add(output_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "output"})
 
 
 def record_circuit_breaker_trip(provider: str, state: str) -> None:
