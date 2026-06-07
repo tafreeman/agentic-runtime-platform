@@ -1,9 +1,9 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
 import BBox from "../components/common/BBox";
-import BPill from "../components/common/BPill";
+import BPill, { type BPillTone } from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
@@ -50,36 +50,23 @@ export default function EvaluationsPage() {
     }));
   }, [evaluatedRuns]);
 
-  return (
-    <div className="flex h-full flex-col">
-      <BTopBar path="evaluations" />
-
-      <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-6xl space-y-3 p-6">
-          <div>
-            <h1
-              className="text-[24px] font-semibold text-b-text"
-              style={{ letterSpacing: "-0.5px" }}
-            >
-              Evaluations
-            </h1>
-            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ {evaluatedRuns.length} runs scored · automated grading across
-              workflows
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center p-12 font-mono text-[11px] text-b-text-dim">
-              Loading evaluations...
-            </div>
-          ) : evaluatedRuns.length === 0 ? (
-            <BBox>
-              <div className="p-8 text-center font-mono text-[11px] text-b-text-dim">
-                No evaluations found
-              </div>
-            </BBox>
-          ) : (
+  let mainContent: ReactNode;
+  if (isLoading) {
+    mainContent = (
+      <div className="flex justify-center p-12 font-mono text-[11px] text-b-text-dim">
+        Loading evaluations...
+      </div>
+    );
+  } else if (evaluatedRuns.length === 0) {
+    mainContent = (
+      <BBox>
+        <div className="p-8 text-center font-mono text-[11px] text-b-text-dim">
+          No evaluations found
+        </div>
+      </BBox>
+    );
+  } else {
+    mainContent = (
             <>
               {/* Top row: histogram + workflow pass rates */}
               <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-5">
@@ -100,7 +87,7 @@ export default function EvaluationsPage() {
                           }
                           return (
                             <div
-                              key={`histogram-${i}`}
+                              key={`histogram-${i}-${c}`}
                               className="flex flex-1 flex-col justify-end"
                               title={`${i * 5}–${i * 5 + 5}: ${c} run${c === 1 ? "" : "s"}`}
                             >
@@ -144,7 +131,7 @@ export default function EvaluationsPage() {
                           </div>
                           <div className="mt-0.5">
                             {(() => {
-                              let workflowBarColor: string;
+                              let workflowBarColor: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
                               if (w.rate >= 0.75) {
                                 workflowBarColor = "b-green";
                               } else if (w.rate >= 0.5) {
@@ -193,24 +180,34 @@ export default function EvaluationsPage() {
                         const passFromGrade =
                           grade === "A" || grade === "B";
                         const warnFromGrade = grade === "C";
-                        const passTone = grade
-                          ? passFromGrade
-                            ? "ok"
-                            : warnFromGrade
-                              ? "warn"
-                              : "err"
-                          : pct >= 75
-                            ? "ok"
-                            : "err";
-                        const passLabel = grade
-                          ? passFromGrade
-                            ? "pass"
-                            : warnFromGrade
-                              ? "warn"
-                              : "fail"
-                          : pct >= 75
-                            ? "pass"
-                            : "fail";
+                        let passTone: BPillTone;
+                        if (grade) {
+                          if (passFromGrade) {
+                            passTone = "ok";
+                          } else if (warnFromGrade) {
+                            passTone = "warn";
+                          } else {
+                            passTone = "err";
+                          }
+                        } else if (pct >= 75) {
+                          passTone = "ok";
+                        } else {
+                          passTone = "err";
+                        }
+                        let passLabel: "pass" | "warn" | "fail";
+                        if (grade) {
+                          if (passFromGrade) {
+                            passLabel = "pass";
+                          } else if (warnFromGrade) {
+                            passLabel = "warn";
+                          } else {
+                            passLabel = "fail";
+                          }
+                        } else if (pct >= 75) {
+                          passLabel = "pass";
+                        } else {
+                          passLabel = "fail";
+                        }
                         const isExpanded =
                           expandedFilename === run.filename;
 
@@ -231,17 +228,23 @@ export default function EvaluationsPage() {
                                 {pct.toFixed(1)}
                               </td>
                               <td className="px-3 py-2">
-                                <BAsciiBar
-                                  value={Math.max(0, Math.min(1, pct / 100))}
-                                  width={20}
-                                  color={
-                                    pct >= 75
-                                      ? "b-green"
-                                      : pct >= 50
-                                        ? "b-amber"
-                                        : "b-red"
+                                {(() => {
+                                  let progressBarColor: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
+                                  if (pct >= 75) {
+                                    progressBarColor = "b-green";
+                                  } else if (pct >= 50) {
+                                    progressBarColor = "b-amber";
+                                  } else {
+                                    progressBarColor = "b-red";
                                   }
-                                />
+                                  return (
+                                    <BAsciiBar
+                                      value={Math.max(0, Math.min(1, pct / 100))}
+                                      width={20}
+                                      color={progressBarColor}
+                                    />
+                                  );
+                                })()}
                               </td>
                               <td className="px-3 py-2 text-b-text-mid">
                                 {run.evaluation_grade || "—"}
@@ -304,7 +307,29 @@ export default function EvaluationsPage() {
                 </div>
               </BBox>
             </>
-          )}
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <BTopBar path="evaluations" />
+
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-6xl space-y-3 p-6">
+          <div>
+            <h1
+              className="text-[24px] font-semibold text-b-text"
+              style={{ letterSpacing: "-0.5px" }}
+            >
+              Evaluations
+            </h1>
+            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
+              $ {evaluatedRuns.length} runs scored · automated grading across
+              workflows
+            </div>
+          </div>
+
+          {mainContent}
         </div>
       </div>
     </div>

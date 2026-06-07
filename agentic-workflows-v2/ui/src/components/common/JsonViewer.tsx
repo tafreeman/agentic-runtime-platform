@@ -65,7 +65,7 @@ function JsonNode({
         bracket={["[", "]"]}
       >
         {value.map((item, i) => (
-          <div key={String(item) + i} className="pl-4">
+          <div key={`${typeof item === 'object' ? JSON.stringify(item) : String(item)}-${i}`} className="pl-4">
             <JsonNode value={item} depth={depth + 1} expanded={false} maxDepth={maxDepth} />
             {i < value.length - 1 && <span className="text-gray-600">,</span>}
           </div>
@@ -97,7 +97,7 @@ function JsonNode({
     );
   }
 
-  return <span className="text-gray-400">{value + ""}</span>;
+  return <span className="text-gray-400">{String(value)}</span>;
 }
 
 function Collapsible({

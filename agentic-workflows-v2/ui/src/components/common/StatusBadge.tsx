@@ -10,11 +10,11 @@ const config: Record<StepStatus, { label: string; color: string; animate?: boole
 };
 
 interface Props {
-  status: StepStatus | string;
+  status: string;
   size?: "sm" | "md";
 }
 
-export default function StatusBadge({ status, size = "sm" }: Props) {
+export default function StatusBadge({ status, size = "sm" }: Readonly<Props>) {
   const cfg = config[status as StepStatus] ?? config.pending;
   const sizeClass = size === "sm" ? "text-xs" : "text-sm";
   const animateClass = cfg.animate ? "animate-pulse" : "";

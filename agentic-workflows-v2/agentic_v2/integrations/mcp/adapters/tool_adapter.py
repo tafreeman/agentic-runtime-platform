@@ -89,10 +89,10 @@ class McpToolAdapter:
 
         try:
             # Call remote tool with timeout
-            response = await asyncio.wait_for(
-                self.client.call_tool(self.tool_descriptor.name, arguments),
-                timeout=timeout_value,
-            )
+            async with asyncio.timeout(timeout_value):
+                response = await self.client.call_tool(
+                    self.tool_descriptor.name, arguments
+                )
 
             # Extract content from response
             content = response.get("content", [])

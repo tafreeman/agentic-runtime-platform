@@ -151,7 +151,7 @@ export default function WorkflowsPage() {
 
               {filtered.length === 0 && !isLoading && (
                 <div className="rounded-sm border border-dashed border-b-line py-10 text-center font-mono text-[11px] text-b-text-dim">
-                  {`no workflows match "`}<span className="text-b-text">{query}</span>{'"'}
+                  {`no workflows match "${query}"`}
                 </div>
               )}
             </div>

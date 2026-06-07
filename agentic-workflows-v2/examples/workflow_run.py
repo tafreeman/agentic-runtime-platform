@@ -10,6 +10,8 @@ from pathlib import Path
 from agentic_v2 import DAGExecutor, ExecutionContext
 from agentic_v2.workflows import WorkflowLoader
 
+DUMMY_CODE_FILENAME = "dummy_code.py"
+
 
 async def main():
     # Configure logging
@@ -38,7 +40,7 @@ async def main():
         # For code_review, we need a 'code_file' input.
         if wf_name == "code_review":
             # Create a dummy python file to review
-            dummy_file = Path("dummy_code.py")
+            dummy_file = Path(DUMMY_CODE_FILENAME)
             dummy_file.write_text("def hello():\n    print('world')\n")
             ctx.set_sync("code_file", str(dummy_file))
             logger.info(f"Created dummy file: {dummy_file}")
@@ -48,8 +50,8 @@ async def main():
         res = await executor.execute(dag, ctx=ctx)
 
         # Cleanup dummy file
-        if wf_name == "code_review" and Path("dummy_code.py").exists():
-            Path("dummy_code.py").unlink()
+        if wf_name == "code_review" and Path(DUMMY_CODE_FILENAME).exists():
+            Path(DUMMY_CODE_FILENAME).unlink()
             logger.info("Cleaned up dummy file")
 
         print("\nWorkflow Execution Result:")

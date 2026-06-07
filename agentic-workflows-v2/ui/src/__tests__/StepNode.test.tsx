@@ -2,7 +2,6 @@ import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { ReactFlowProvider, type NodeProps } from "@xyflow/react";
 import StepNode, { type StepNodeData } from "../components/dag/StepNode";
-import type { StepStatus } from "../api/types";
 
 /** Minimal wrapper that mounts StepNode inside the ReactFlow context. */
 function renderStepNode(
@@ -14,7 +13,7 @@ function renderStepNode(
     agent: data.agent ?? null,
     description: data.description ?? "",
     tier: data.tier ?? null,
-    status: (data.status ?? "pending") as StepStatus,
+    status: data.status ?? "pending",
     startTime: data.startTime,
     durationMs: data.durationMs,
     modelUsed: data.modelUsed,
@@ -211,7 +210,7 @@ describe("StepNode — per-theme DOM snapshots", () => {
   const THEMES = ["dark", "paper", "bolt"] as const;
   for (const theme of THEMES) {
     it(`renders identical DOM under data-theme='${theme}'`, () => {
-      document.documentElement.setAttribute("data-theme", theme);
+      document.documentElement.dataset.theme = theme;
       const { container } = renderStepNode({
         status: "running",
         label: "parse_code",
@@ -222,7 +221,7 @@ describe("StepNode — per-theme DOM snapshots", () => {
       // Snapshot the rendered subtree for this theme. With CSS-var-only
       // styling, the HTML should be identical across themes.
       expect(container.innerHTML).toMatchSnapshot(`theme=${theme}`);
-      document.documentElement.removeAttribute("data-theme");
+      delete document.documentElement.dataset.theme;
     });
   }
 });

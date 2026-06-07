@@ -158,25 +158,7 @@ def parse_server_config(
                 enabled=expanded.get("enabled", True),
             )
 
-        elif transport_str == "http":
-            url = expanded.get("url")
-            if not url:
-                logger.warning(f"Server '{server_name}' missing 'url' field")
-                return None
-
-            ws_config = McpWebSocketConfig(
-                url=url,
-                headers=expanded.get("headers", {}),
-            )
-
-            return McpServerConfig(
-                name=server_name,
-                transport_type=TransportType.WEBSOCKET,
-                websocket=ws_config,
-                enabled=expanded.get("enabled", True),
-            )
-
-        elif transport_str == "sse":
+        elif transport_str == "http" or transport_str == "sse":
             # SSE (Server-Sent Events) - treat as WebSocket for now
             url = expanded.get("url")
             if not url:

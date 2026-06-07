@@ -7,7 +7,7 @@ interface Props {
   className?: string;
 }
 
-export default function StepLogPanel({ events, className = "" }: Props) {
+export default function StepLogPanel({ events, className = "" }: Readonly<Props>) {
   const [expanded, setExpanded] = useState(true);
   const panelId = useId();
 
@@ -39,7 +39,7 @@ export default function StepLogPanel({ events, className = "" }: Props) {
             </div>
           )}
           {displayEvents.map((event, i) => (
-            <EventLine key={`${event.type ?? "event"}-${i}`} event={event} />
+            <EventLine key={`${event.type ?? "event"}-${"timestamp" in event ? event.timestamp : i}`} event={event} />
           ))}
         </div>
       )}
@@ -47,7 +47,7 @@ export default function StepLogPanel({ events, className = "" }: Props) {
   );
 }
 
-function EventLine({ event }: { event: ExecutionEvent }) {
+function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
   let color = "text-gray-500";
   let message = "";
 

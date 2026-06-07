@@ -104,7 +104,8 @@ def generate_image(
     # Set seed for reproducibility
     generator = None
     if seed is not None:
-        generator = np.random.RandomState(seed)
+        rng = np.random.default_rng(seed=seed)
+        generator = rng
 
     if verbose:
         logger.debug("Generating image for: %s...", prompt[:50])

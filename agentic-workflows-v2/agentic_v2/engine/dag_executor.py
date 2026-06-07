@@ -343,7 +343,8 @@ class DAGExecutor:
 
         try:
             if timeout is not None:
-                await asyncio.wait_for(_scheduling_loop(), timeout=timeout)
+                async with asyncio.timeout(timeout):
+                    await _scheduling_loop()
             else:
                 await _scheduling_loop()
         except TimeoutError:

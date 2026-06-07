@@ -71,7 +71,12 @@ def main() -> None:
     else:
         print("No trailing whitespace found.")
 
-    sys.exit(0 if not args.dry_run else (1 if modified else 0))
+    if not args.dry_run:
+        sys.exit(0)
+    elif modified:
+        sys.exit(1)
+    else:
+        sys.exit(0)
 
 
 if __name__ == "__main__":

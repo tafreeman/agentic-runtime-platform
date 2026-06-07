@@ -42,6 +42,12 @@ from .smart_router import SmartModelRouter, get_smart_router
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192 — define once, reuse)
+# ---------------------------------------------------------------------------
+
+ERR_NO_LLM_BACKEND = "No LLM backend configured"
+
 
 # LLMBackend re-exported from backends_base for backward compatibility.
 # ADR-023 Phase 2: unified the divergent Protocol/ABC definitions onto the
@@ -320,7 +326,7 @@ class LLMClientWrapper:
             ValueError: If budget exceeded
         """
         if self.backend is None:
-            raise RuntimeError("No LLM backend configured")
+            raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         # ADR-023 Phase 5b: flag-gated EK provider hot path. DEFAULT ON since
         # P7 (2026-05-31) — the EK path is now the default. Force the legacy
@@ -477,7 +483,7 @@ class LLMClientWrapper:
         from .ek_provider import SmartRouterProvider
 
         if self.backend is None:
-            raise RuntimeError("No LLM backend configured")
+            raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         # 1. Cache lookup (short-circuit). Same key as the legacy path —
         # scoped by the model override so a forced model never reads a cache
@@ -559,7 +565,7 @@ class LLMClientWrapper:
             Response chunks
         """
         if self.backend is None:
-            raise RuntimeError("No LLM backend configured")
+            raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         model = self.router.get_model_for_tier(tier)
         if model is None:
@@ -635,7 +641,7 @@ class LLMClientWrapper:
             ValueError: If budget exceeded
         """
         if self.backend is None:
-            raise RuntimeError("No LLM backend configured")
+            raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         if not hasattr(self.backend, "complete_chat"):
             raise RuntimeError("Backend does not support complete_chat")

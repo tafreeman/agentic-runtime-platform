@@ -239,7 +239,8 @@ function WorkflowDAGInner({
       const isKickback = kickbackEdges?.has(edgeId) ?? false;
 
       // Design token colors
-      let strokeColor = "#2c2c36"; // b-bg2 — pending/dark
+      const defaultColor = "#2c2c36"; // b-bg2 — pending/dark
+      let strokeColor = defaultColor;
       let animated = false;
       let strokeDasharray: string | undefined;
       const isActiveEdge =
@@ -258,8 +259,6 @@ function WorkflowDAGInner({
         strokeColor = "#d97757"; // b-clay — running source
       } else if (sourceState?.status === "failed") {
         strokeColor = "rgba(248,113,113,0.5)"; // b-red faint
-      } else if (!sourceState || sourceState.status === "pending") {
-        strokeColor = "#2c2c36"; // dark — not yet reached
       }
 
       return {

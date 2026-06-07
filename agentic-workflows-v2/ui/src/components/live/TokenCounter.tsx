@@ -5,7 +5,7 @@ interface Props {
   events: ExecutionEvent[];
 }
 
-export default function TokenCounter({ events }: Props) {
+export default function TokenCounter({ events }: Readonly<Props>) {
   let totalTokens = 0;
   let models = new Set<string>();
 

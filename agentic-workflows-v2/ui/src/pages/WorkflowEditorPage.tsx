@@ -209,11 +209,7 @@ export default function WorkflowEditorPage() {
                 {issues.map((issue, index) => (
                   <div
                     key={`${issue.level}-${issue.path ?? "root"}-${index}`}
-                    className={`rounded-md border px-3 py-2 ${
-                      issue.level === "error"
-                        ? "border-red-500/20 bg-red-500/10 text-red-300"
-                        : "border-amber-500/20 bg-amber-500/10 text-amber-300"
-                    }`}
+                    className={issue.level === "error" ? "rounded-md border px-3 py-2 border-red-500/20 bg-red-500/10 text-red-300" : "rounded-md border px-3 py-2 border-amber-500/20 bg-amber-500/10 text-amber-300"}
                   >
                     <div className="font-medium">{issue.message}</div>
                     {issue.path && <div className="mt-1 font-mono text-[11px] opacity-80">{issue.path}</div>}

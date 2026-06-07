@@ -12,6 +12,8 @@ from typing import Callable
 
 logger = logging.getLogger(__name__)
 
+ONNX_GLOB_PATTERN = "*.onnx"
+
 
 def call_ollama(
     model_name: str,
@@ -136,7 +138,7 @@ def resolve_local_model_path(
     if explicit_path.is_absolute():
         if explicit_path.is_dir():
             try:
-                if any(explicit_path.glob("*.onnx")):
+                if any(explicit_path.glob(ONNX_GLOB_PATTERN)):
                     return explicit_path
             except OSError:
                 pass
@@ -146,7 +148,7 @@ def resolve_local_model_path(
     direct_path = ai_gallery_root / spec_norm
     if direct_path.is_dir():
         try:
-            if any(direct_path.glob("*.onnx")):
+            if any(direct_path.glob(ONNX_GLOB_PATTERN)):
                 return direct_path
         except OSError:
             pass
@@ -161,7 +163,7 @@ def resolve_local_model_path(
         if not subdir.is_dir():
             continue
         try:
-            if any(subdir.glob("*.onnx")):
+            if any(subdir.glob(ONNX_GLOB_PATTERN)):
                 candidates.append(subdir)
         except OSError:
             continue

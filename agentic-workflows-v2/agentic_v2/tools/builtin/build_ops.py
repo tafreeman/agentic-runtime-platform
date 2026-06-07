@@ -174,7 +174,8 @@ class BuildAppTool(BaseTool):
                 env=minimal_subprocess_env(),
             )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            async with asyncio.timeout(timeout):
+                stdout, stderr = await proc.communicate()
             duration_ms = (time.perf_counter() - started) * 1000
             return {
                 "command": command,

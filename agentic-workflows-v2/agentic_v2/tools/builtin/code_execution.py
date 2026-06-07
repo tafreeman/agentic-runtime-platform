@@ -160,11 +160,10 @@ class CodeExecutionTool(BaseTool):
                     top = alias.name.split(".")[0]
                     if top in self._DANGEROUS_IMPORTS:
                         return f"Blocked: import of restricted module '{top}'"
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    top = node.module.split(".")[0]
-                    if top in self._DANGEROUS_IMPORTS:
-                        return f"Blocked: import from restricted module '{top}'"
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                top = node.module.split(".")[0]
+                if top in self._DANGEROUS_IMPORTS:
+                    return f"Blocked: import from restricted module '{top}'"
 
         return None
 

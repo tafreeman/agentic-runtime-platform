@@ -23,6 +23,10 @@ from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/model-finder", tags=["model-finder"])
 
+QUANT_FORMAT_Q4_K_M: Final[str] = "GGUF Q4_K_M"
+LICENSE_APACHE_2: Final[str] = "apache-2.0"
+COMPAT_Q4: Final[str] = "Q4 compatible"
+
 TaskCategory = Literal["general", "swe", "biomed", "physics", "math", "vision"]
 SortField = Literal["downloads", "release_date", "likes", "forks", "fit"]
 
@@ -106,11 +110,11 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=180,
         release_date=date(2024, 9, 19),
         parameters_b=7.6,
-        quantization="GGUF Q4_K_M",
+        quantization=QUANT_FORMAT_Q4_K_M,
         min_ram_gb=8,
         recommended_ram_gb=16,
         context_tokens=32768,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
     ),
     CatalogItem(
@@ -138,11 +142,11 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=880,
         release_date=date(2024, 5, 22),
         parameters_b=7.3,
-        quantization="GGUF Q4_K_M",
+        quantization=QUANT_FORMAT_Q4_K_M,
         min_ram_gb=8,
         recommended_ram_gb=16,
         context_tokens=32768,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3",
     ),
     CatalogItem(
@@ -171,7 +175,7 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=210,
         release_date=date(2024, 6, 17),
         parameters_b=16,
-        quantization="GGUF Q4_K_M",
+        quantization=QUANT_FORMAT_Q4_K_M,
         min_ram_gb=16,
         recommended_ram_gb=32,
         min_vram_gb=10,
@@ -204,11 +208,11 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=95,
         release_date=date(2024, 1, 4),
         parameters_b=7.2,
-        quantization="GGUF Q4_K_M",
+        quantization=QUANT_FORMAT_Q4_K_M,
         min_ram_gb=8,
         recommended_ram_gb=16,
         context_tokens=8192,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/BioMistral/BioMistral-7B",
     ),
     CatalogItem(
@@ -220,11 +224,11 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=70,
         release_date=date(2024, 2, 2),
         parameters_b=7,
-        quantization="Q4 compatible",
+        quantization=COMPAT_Q4,
         min_ram_gb=8,
         recommended_ram_gb=16,
         context_tokens=4096,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/AdaptLLM/medicine-LLM",
     ),
     CatalogItem(
@@ -236,7 +240,7 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=280,
         release_date=date(2024, 8, 15),
         parameters_b=8,
-        quantization="GGUF Q4_K_M",
+        quantization=QUANT_FORMAT_Q4_K_M,
         min_ram_gb=10,
         recommended_ram_gb=16,
         context_tokens=131072,
@@ -252,11 +256,11 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=160,
         release_date=date(2024, 11, 20),
         parameters_b=7,
-        quantization="Q4 compatible",
+        quantization=COMPAT_Q4,
         min_ram_gb=8,
         recommended_ram_gb=16,
         context_tokens=4096,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/allenai/OLMo-2-1124-7B-Instruct",
     ),
     CatalogItem(
@@ -268,12 +272,12 @@ CATALOG: tuple[CatalogItem, ...] = (
         forks=320,
         release_date=date(2024, 1, 30),
         parameters_b=7.6,
-        quantization="Q4 compatible",
+        quantization=COMPAT_Q4,
         min_ram_gb=12,
         recommended_ram_gb=24,
         min_vram_gb=8,
         context_tokens=4096,
-        license="apache-2.0",
+        license=LICENSE_APACHE_2,
         url="https://huggingface.co/llava-hf/llava-v1.6-mistral-7b-hf",
     ),
 )

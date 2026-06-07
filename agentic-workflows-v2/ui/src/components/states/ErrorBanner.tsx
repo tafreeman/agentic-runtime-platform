@@ -17,7 +17,7 @@ export default function ErrorBanner({
   message,
   ctaLabel = "return to dashboard",
   ctaHref = "/",
-}: ErrorBannerProps) {
+}: Readonly<ErrorBannerProps>) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 font-mono">
       <div className="max-w-lg rounded-[3px] border border-b-red/40 bg-b-red/10 px-5 py-4">

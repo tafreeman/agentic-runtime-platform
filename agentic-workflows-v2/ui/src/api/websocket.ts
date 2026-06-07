@@ -24,9 +24,13 @@ export function connectExecutionStream(
     // to it directly so the WebSocket upgrade doesn't pass through the Vite
     // proxy (which drops the upgrade and forwards a plain HTTP GET instead).
     const apiTarget = import.meta.env.VITE_API_PROXY_TARGET as string | undefined;
-    const wsBase = apiTarget
-      ? apiTarget.replace(/^http/, "ws")
-      : `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}`;
+    let wsBase: string;
+    if (apiTarget) {
+      wsBase = apiTarget.replace(/^http/, "ws");
+    } else {
+      const wsScheme = location.protocol === "https:" ? "wss:" : "ws:";
+      wsBase = `${wsScheme}//${location.host}`;
+    }
     ws = new WebSocket(`${wsBase}/ws/${pathPrefix}/${runId}`);
 
     ws.onopen = () => {

@@ -137,7 +137,7 @@ export default function RunsPage() {
             <div className="space-y-[2px]">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
-                  key={`loading-${i}`}
+                  key={`loading-skeleton-${i}`}
                   className="h-[48px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}
@@ -176,6 +176,14 @@ export default function RunsPage() {
                     )}
                     {filtered.map((r) => {
                       const score = r.evaluation_score ?? null;
+                      let scoreClass: string;
+                      if (score === null) {
+                        scoreClass = "text-b-text-faint";
+                      } else if (score > 0.85) {
+                        scoreClass = "text-b-green";
+                      } else {
+                        scoreClass = "text-b-amber";
+                      }
                       return (
                         <tr
                           key={r.filename}
@@ -218,13 +226,7 @@ export default function RunsPage() {
                             <DurationDisplay ms={r.total_duration_ms} />
                           </td>
                           <td
-                            className={`px-3 py-2 text-right tabular-nums ${
-                              score === null
-                                ? "text-b-text-faint"
-                                : score > 0.85
-                                  ? "text-b-green"
-                                  : "text-b-amber"
-                            }`}
+                            className={`px-3 py-2 text-right tabular-nums ${scoreClass}`}
                           >
                             {score === null ? "—" : (score * 100).toFixed(0)}
                           </td>

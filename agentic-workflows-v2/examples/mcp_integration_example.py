@@ -120,7 +120,7 @@ async def main():
             # Check token budget
             if guard.is_oversized(result):
                 logger.warning("Output exceeds budget, saving to disk...")
-                file_path, rel_path = storage.save_text_output(
+                _, rel_path = storage.save_text_output(
                     result,
                     server_name=adapter.server_name,
                     tool_name=adapter.tool_descriptor.name,

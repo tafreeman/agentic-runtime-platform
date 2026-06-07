@@ -45,6 +45,8 @@ from tools.llm.probe_config import (
     ProbeResult,
 )
 
+CONTENT_TYPE_JSON = "application/json"
+
 # Type alias for optional logging callback
 LogFn = Callable[[str], None] | None
 
@@ -320,7 +322,7 @@ def probe_gemini(model: str, _log: LogFn = None) -> ProbeResult:
     try:
         url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1"
         req = urllib.request.Request(
-            url, headers={"Accept": "application/json", "x-goog-api-key": api_key}
+            url, headers={"Accept": CONTENT_TYPE_JSON, "x-goog-api-key": api_key}
         )
         with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -402,7 +404,7 @@ def probe_claude(model: str, _log: LogFn = None) -> ProbeResult:
             headers={
                 "x-api-key": api_key,
                 "anthropic-version": "2023-06-01",
-                "Accept": "application/json",
+                "Accept": CONTENT_TYPE_JSON,
             },
         )
         with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
@@ -468,7 +470,7 @@ def probe_openai_compatible_endpoint(
 
     try:
         url = f"{base}/v1/models"
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        req = urllib.request.Request(url, headers={"Accept": CONTENT_TYPE_JSON})
         with urllib.request.urlopen(req, timeout=TIMEOUT_OLLAMA_HTTP) as resp:
             raw = resp.read()
             # Verify the response is a valid OpenAI-compatible model list

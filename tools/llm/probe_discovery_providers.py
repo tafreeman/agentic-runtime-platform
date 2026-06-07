@@ -87,6 +87,8 @@ from tools.llm.probe_config import (
 
 logger = logging.getLogger(__name__)
 
+CONTENT_TYPE_JSON = "application/json"
+
 
 def _probe_local_onnx(verbose: bool = False) -> dict[str, Any]:
     """Probe local ONNX models from the AI Gallery cache."""
@@ -147,7 +149,7 @@ def _probe_github_models() -> dict[str, Any]:
     try:
         req = urllib.request.Request(
             f"{GITHUB_MODELS_API_BASE}/models",
-            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            headers={"Authorization": f"Bearer {token}", "Accept": CONTENT_TYPE_JSON},
         )
         with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
             catalog = json.loads(resp.read().decode("utf-8"))
@@ -182,7 +184,7 @@ def _probe_ollama() -> dict[str, Any]:
     try:
         req = urllib.request.Request(
             f"{ollama_host}{OLLAMA_API_TAGS_ENDPOINT}",
-            headers={"Accept": "application/json"},
+            headers={"Accept": CONTENT_TYPE_JSON},
         )
         with urllib.request.urlopen(req, timeout=TIMEOUT_OLLAMA_HTTP) as resp:
             data = json.loads(resp.read().decode("utf-8"))
@@ -289,7 +291,7 @@ def _probe_gemini() -> dict[str, Any]:
             url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=50"
             req = urllib.request.Request(
                 url,
-                headers={"Accept": "application/json", "x-goog-api-key": gemini_key},
+                headers={"Accept": CONTENT_TYPE_JSON, "x-goog-api-key": gemini_key},
             )
             with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -340,7 +342,7 @@ def _probe_anthropic() -> dict[str, Any]:
                 headers={
                     "x-api-key": anthropic_key,
                     "anthropic-version": "2023-06-01",
-                    "Accept": "application/json",
+                    "Accept": CONTENT_TYPE_JSON,
                 },
             )
             with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
@@ -538,7 +540,7 @@ def _probe_nvidia() -> dict[str, Any]:
 
     try:
         models_url = f"{base.rstrip('/')}/models"
-        headers = {"Accept": "application/json"}
+        headers = {"Accept": CONTENT_TYPE_JSON}
         if active_key:
             headers["Authorization"] = f"Bearer {active_key}"
         req = urllib.request.Request(models_url, headers=headers)
@@ -580,7 +582,7 @@ def _probe_lmstudio() -> dict[str, Any]:
 
     try:
         lm_url = f"{lmstudio_host.rstrip('/')}/v1/models"
-        req = urllib.request.Request(lm_url, headers={"Accept": "application/json"})
+        req = urllib.request.Request(lm_url, headers={"Accept": CONTENT_TYPE_JSON})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             for m in data.get("data", []):
@@ -639,7 +641,7 @@ def _probe_local_openai_compatible(lmstudio_host: str = "") -> dict[str, Any]:
     if local_api_base:
         try:
             la_url = f"{local_api_base.rstrip('/')}/v1/models"
-            req = urllib.request.Request(la_url, headers={"Accept": "application/json"})
+            req = urllib.request.Request(la_url, headers={"Accept": CONTENT_TYPE_JSON})
             with urllib.request.urlopen(req, timeout=3) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 for m in data.get("data", []):
@@ -658,7 +660,7 @@ def _probe_local_openai_compatible(lmstudio_host: str = "") -> dict[str, Any]:
             try:
                 scan_url = f"http://localhost:{port}/v1/models"
                 req = urllib.request.Request(
-                    scan_url, headers={"Accept": "application/json"}
+                    scan_url, headers={"Accept": CONTENT_TYPE_JSON}
                 )
                 with urllib.request.urlopen(req, timeout=1) as resp:
                     data = json.loads(resp.read().decode("utf-8"))

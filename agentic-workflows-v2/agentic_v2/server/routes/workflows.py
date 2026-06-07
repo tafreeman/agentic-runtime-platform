@@ -243,7 +243,10 @@ async def get_workflow_capabilities(name: str):
     }
 
 
-@router.get("/workflows/{name}/editor", response_model=WorkflowEditorResponse)
+@router.get("/workflows/{name}/editor", response_model=WorkflowEditorResponse, responses={
+    404: {"description": "Not Found"},
+    422: {"description": "Unprocessable Entity"},
+})
 async def get_workflow_editor(name: str):
     """Return the raw YAML workflow document for editor clients."""
     try:
@@ -255,7 +258,10 @@ async def get_workflow_editor(name: str):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.put("/workflows/{name}", response_model=WorkflowEditorResponse)
+@router.put("/workflows/{name}", response_model=WorkflowEditorResponse, responses={
+    422: {"description": "Unprocessable Entity"},
+    503: {"description": "Service Unavailable"},
+})
 async def save_workflow_editor(name: str, request: WorkflowEditorRequest):
     """Validate and persist a workflow document."""
     try:
@@ -281,6 +287,10 @@ async def save_workflow_editor(name: str, request: WorkflowEditorRequest):
 @router.post(
     "/workflows/validate",
     response_model=WorkflowValidationResponse,
+    responses={
+        422: {"description": "Unprocessable Entity"},
+        501: {"description": "Not Implemented"},
+    },
 )
 async def validate_workflow_editor(request: WorkflowEditorRequest):
     """Validate a workflow document without persisting it."""
@@ -305,7 +315,13 @@ async def validate_workflow_editor(request: WorkflowEditorRequest):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.post("/run", response_model=WorkflowRunResponse)
+@router.post("/run", response_model=WorkflowRunResponse, responses={
+    400: {"description": "Bad Request"},
+    422: {"description": "Unprocessable Entity"},
+    500: {"description": "Internal Server Error"},
+    501: {"description": "Not Implemented"},
+    503: {"description": "Service Unavailable"},
+})
 async def run_workflow(
     request: WorkflowRunRequest,
     background_tasks: BackgroundTasks,

@@ -13,7 +13,7 @@ export default function SampleIndexGrid({
   datasetId,
   selectedIndex,
   onSelect,
-}: SampleIndexGridProps) {
+}: Readonly<SampleIndexGridProps>) {
   const [offset, setOffset] = useState(0);
   const limit = 20;
   const { data, isLoading, error } = useDatasetSamples(datasetSource, datasetId, offset, limit);

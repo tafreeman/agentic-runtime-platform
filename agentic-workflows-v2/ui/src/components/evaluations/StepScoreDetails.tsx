@@ -69,7 +69,7 @@ export default function StepScoreDetails({
                 <span className="text-right tabular-nums text-b-text">{scoreLabel}</span>
                 {(() => {
                   const tone = scoreTone(step.score);
-                  let barColor: string;
+                  let barColor: "b-green" | "b-amber" | "b-red";
                   if (tone === "ok") {
                     barColor = "b-green";
                   } else if (tone === "warn") {

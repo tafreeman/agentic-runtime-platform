@@ -16,7 +16,7 @@ function gradeToTone(grade: string): BPillTone {
 
 export default function EvaluationRubricAccordion({
   filename,
-}: EvaluationRubricAccordionProps) {
+}: Readonly<EvaluationRubricAccordionProps>) {
   const { data, isLoading } = useRunEvaluationDetail(filename);
 
   if (isLoading) {

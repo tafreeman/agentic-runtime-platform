@@ -325,7 +325,12 @@ def _score_text_heuristic(
 
     # Relevance: placeholder — without a reference answer we assume relevance
     # based on non-emptiness and minimum substance.
-    relevance = 0.85 if word_count > 30 else (0.6 if word_count > 5 else 0.2)
+    if word_count > 30:
+        relevance = 0.85
+    elif word_count > 5:
+        relevance = 0.6
+    else:
+        relevance = 0.2
 
     # Efficiency (time + response length)
     if duration_seconds is None:

@@ -23,6 +23,13 @@ from .backends_base import LLMBackend
 from .secrets import get_first_secret, get_secret
 
 # ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192 — define once, reuse)
+# ---------------------------------------------------------------------------
+
+CONTENT_TYPE_JSON = "application/json"
+CHAT_COMPLETIONS_PATH = "/chat/completions"
+
+# ---------------------------------------------------------------------------
 # GitHub Models
 # ---------------------------------------------------------------------------
 
@@ -57,7 +64,7 @@ class GitHubModelsBackend(LLMBackend):
                 timeout=self.timeout,
                 headers={
                     "Authorization": f"Bearer {self.token}",
-                    "Content-Type": "application/json",
+                    "Content-Type": CONTENT_TYPE_JSON,
                 },
             )
         return self._client
@@ -106,7 +113,7 @@ class GitHubModelsBackend(LLMBackend):
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
 
-        response = await client.post("/chat/completions", json=payload)
+        response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
         response.raise_for_status()
 
         data = response.json()
@@ -155,7 +162,7 @@ class OpenAIBackend(LLMBackend):
                 timeout=self.timeout,
                 headers={
                     "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
+                    "Content-Type": CONTENT_TYPE_JSON,
                 },
             )
         return self._client
@@ -199,7 +206,7 @@ class OpenAIBackend(LLMBackend):
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
 
-        response = await client.post("/chat/completions", json=payload)
+        response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
         response.raise_for_status()
 
         data = response.json()
@@ -249,7 +256,7 @@ class AnthropicBackend(LLMBackend):
                 headers={
                     "x-api-key": self.api_key,
                     "anthropic-version": self.api_version,
-                    "Content-Type": "application/json",
+                    "Content-Type": CONTENT_TYPE_JSON,
                 },
             )
         return self._client
@@ -552,7 +559,7 @@ class AzureOpenAIBackend(LLMBackend):
                 timeout=self.timeout,
                 headers={
                     "api-key": self.api_key,
-                    "Content-Type": "application/json",
+                    "Content-Type": CONTENT_TYPE_JSON,
                 },
             )
         return self._client
@@ -649,7 +656,7 @@ class AzureFoundryBackend(LLMBackend):
                 timeout=self.timeout,
                 headers={
                     "api-key": self.api_key,
-                    "Content-Type": "application/json",
+                    "Content-Type": CONTENT_TYPE_JSON,
                 },
             )
         return self._client
@@ -694,7 +701,7 @@ class AzureFoundryBackend(LLMBackend):
             payload["tool_choice"] = "auto"
 
         response = await client.post(
-            "/chat/completions",
+            CHAT_COMPLETIONS_PATH,
             params={"api-version": self.api_version},
             json=payload,
         )

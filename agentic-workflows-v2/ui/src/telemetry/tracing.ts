@@ -110,7 +110,7 @@ async function _initOtel(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         applyCustomAttributesOnSpan: (_span: unknown, _request: unknown, response: any) => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-          if (response && typeof response.headers?.get === "function") {
+          if (typeof response?.headers?.get === "function") {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             const tp: string | null = response.headers.get("traceparent");
             if (tp) {

@@ -102,9 +102,18 @@ export default function RunDetailPage() {
 
   const evalData = run.extra?.evaluation;
   const evalPct =
-    evalData?.weighted_score === undefined
-      ? null
-      : Math.max(0, Math.min(1, evalData.weighted_score / 100));
+    evalData?.weighted_score !== undefined
+      ? Math.max(0, Math.min(1, evalData.weighted_score / 100))
+      : null;
+
+  let evalBarColor: "b-green" | "b-amber" | "b-red";
+  if (evalPct !== null && evalPct > 0.75) {
+    evalBarColor = "b-green";
+  } else if (evalPct !== null && evalPct > 0.5) {
+    evalBarColor = "b-amber";
+  } else {
+    evalBarColor = "b-red";
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -210,13 +219,7 @@ export default function RunDetailPage() {
                 <div className="mt-3">
                   <BAsciiBar
                     value={evalPct}
-                    color={
-                      evalPct > 0.75
-                        ? "b-green"
-                        : evalPct > 0.5
-                          ? "b-amber"
-                          : "b-red"
-                    }
+                    color={evalBarColor}
                   />
                 </div>
               </div>

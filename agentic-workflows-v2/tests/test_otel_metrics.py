@@ -320,7 +320,7 @@ class TestMetricsMiddleware:
         # Either 500 was recorded directly or not recorded because call_next raised
         # before returning a response — both outcomes are acceptable no-crashes.
         # The important thing is no exception leaked out of the middleware.
-        assert True  # if we reached here, no uncaught exception
+        pass  # if we reached here, no uncaught exception
 
 
 # ---------------------------------------------------------------------------

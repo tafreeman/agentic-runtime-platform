@@ -14,6 +14,12 @@ from pathlib import Path
 
 from langchain_core.tools import tool
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192)
+# ---------------------------------------------------------------------------
+PYPROJECT_TOML: str = "pyproject.toml"
+VENV_DIR: str = ".venv"
+
 
 @tool
 def discover_packages(root: str) -> str:
@@ -30,10 +36,10 @@ def discover_packages(root: str) -> str:
         return json.dumps({"error": f"Not a directory: {root}"})
 
     packages = []
-    for toml in sorted(root_path.rglob("pyproject.toml")):
+    for toml in sorted(root_path.rglob(PYPROJECT_TOML)):
         # Skip nested venvs and dist dirs
         parts = set(toml.parts)
-        if parts & {".venv", "venv", "dist", "__pycache__", "node_modules"}:
+        if parts & {VENV_DIR, "venv", "dist", "__pycache__", "node_modules"}:
             continue
         try:
             text = toml.read_text(encoding="utf-8")
@@ -80,7 +86,7 @@ def count_lines_of_code(package_dir: str, extensions: str = "py,ts,tsx") -> str:
 
         for filepath in p.rglob(f"*.{ext}"):
             parts = set(filepath.parts)
-            if parts & {".venv", "venv", "dist", "__pycache__", "node_modules"}:
+            if parts & {VENV_DIR, "venv", "dist", "__pycache__", "node_modules"}:
                 continue
             try:
                 lines = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -187,21 +193,21 @@ def list_test_files(package_dir: str) -> str:
     test_files = []
     for filepath in sorted(p.rglob("test_*.py")):
         parts = set(filepath.parts)
-        if parts & {".venv", "venv", "dist", "__pycache__"}:
+        if parts & {VENV_DIR, "venv", "dist", "__pycache__"}:
             continue
         test_files.append(str(filepath.relative_to(p)))
 
     for filepath in sorted(p.rglob("*_test.py")):
         parts = set(filepath.parts)
-        if parts & {".venv", "venv", "dist", "__pycache__"}:
+        if parts & {VENV_DIR, "venv", "dist", "__pycache__"}:
             continue
         rel = str(filepath.relative_to(p))
         if rel not in test_files:
             test_files.append(rel)
 
     has_conftest = any(p.rglob("conftest.py"))
-    has_coverage = (p / "pyproject.toml").exists() and "coverage" in (
-        (p / "pyproject.toml").read_text(encoding="utf-8", errors="replace")
+    has_coverage = (p / PYPROJECT_TOML).exists() and "coverage" in (
+        (p / PYPROJECT_TOML).read_text(encoding="utf-8", errors="replace")
     )
 
     return json.dumps(
@@ -252,7 +258,7 @@ def find_key_patterns(package_dir: str) -> str:
 
     for filepath in p.rglob("*.py"):
         parts_set = set(filepath.parts)
-        if parts_set & {".venv", "venv", "dist", "__pycache__"}:
+        if parts_set & {VENV_DIR, "venv", "dist", "__pycache__"}:
             continue
         try:
             text = filepath.read_text(encoding="utf-8", errors="replace")

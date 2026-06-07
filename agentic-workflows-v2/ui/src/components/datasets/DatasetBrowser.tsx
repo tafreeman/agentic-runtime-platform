@@ -9,7 +9,7 @@ interface DatasetBrowserProps {
 
 type SelectedSource = "repository" | "local" | null;
 
-export default function DatasetBrowser({ datasets }: DatasetBrowserProps) {
+export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProps>) {
   const [selectedSource, setSelectedSource] = useState<SelectedSource>(null);
   const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
   const [selectedSampleIndex, setSelectedSampleIndex] = useState<number | null>(null);

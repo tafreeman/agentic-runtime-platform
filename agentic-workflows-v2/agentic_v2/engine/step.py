@@ -477,7 +477,8 @@ class StepExecutor:
 
         try:
             if timeout:
-                return await asyncio.wait_for(task, timeout=timeout)
+                async with asyncio.timeout(timeout):
+                    return await task
             else:
                 return await task
         finally:

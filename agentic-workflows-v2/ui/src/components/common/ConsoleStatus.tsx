@@ -17,10 +17,28 @@ export default function ConsoleStatus({ noLlmMode = false }: Readonly<ConsoleSta
   const connected = health.isSuccess;
   const loading = health.isLoading || health.isFetching;
 
+  let pillTone: "ok" | "dim" | "err";
+  if (connected) {
+    pillTone = "ok";
+  } else if (loading) {
+    pillTone = "dim";
+  } else {
+    pillTone = "err";
+  }
+
+  let pillLabel: string;
+  if (connected) {
+    pillLabel = "api connected";
+  } else if (loading) {
+    pillLabel = "api checking";
+  } else {
+    pillLabel = "api disconnected";
+  }
+
   return (
     <div className="flex items-center gap-1.5" data-testid="console-status">
-      <BPill tone={connected ? "ok" : loading ? "dim" : "err"}>
-        {connected ? "api connected" : loading ? "api checking" : "api disconnected"}
+      <BPill tone={pillTone}>
+        {pillLabel}
       </BPill>
       {connected && (
         <span className="font-mono text-[10px] text-b-text-faint">

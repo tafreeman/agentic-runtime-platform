@@ -12,6 +12,9 @@ import type { StepResultRecord as StepResult } from "./step_result.generated";
 export type { StepResult };
 
 // DAGResponse, DAGNodeModel, DAGEdgeModel, WorkflowInputSchemaItem
+// NOTE: imported locally (not just re-exported) because WorkflowEditorDocument
+// below extends DAGResponse — a bare `export type {...} from` would not bring
+// these names into local scope. Do not collapse to a re-export-only form.
 import type {
   DAGResponse,
   DAGNodeModel,

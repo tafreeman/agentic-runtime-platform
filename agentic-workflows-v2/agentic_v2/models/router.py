@@ -96,6 +96,13 @@ class ChainBuilder:
         return FallbackChain(tuple(self._models), self._name)
 
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192 — define once, reuse)
+# ---------------------------------------------------------------------------
+
+MODEL_GH_GPT4O = "gh:openai/gpt-4o"
+MODEL_OPENAI_GPT4O = "openai:gpt-4o"
+
 # Default chains for each tier
 # Ordering: free cloud (fast) → paid cloud.
 # Gemini free tier and GitHub Models are free and fast — try first.
@@ -121,8 +128,8 @@ DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = {
     ModelTier.TIER_3: FallbackChain(
         (
             "gemini:gemini-2.5-flash",
-            "gh:openai/gpt-4o",
-            "openai:gpt-4o",
+            MODEL_GH_GPT4O,
+            MODEL_OPENAI_GPT4O,
             "anthropic:claude-sonnet-4-5-20250929",
         ),
         "tier3-default",
@@ -130,8 +137,8 @@ DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = {
     ModelTier.TIER_4: FallbackChain(
         (
             "gemini:gemini-2.5-pro",
-            "gh:openai/gpt-4o",
-            "openai:gpt-4o",
+            MODEL_GH_GPT4O,
+            MODEL_OPENAI_GPT4O,
             "anthropic:claude-sonnet-4-5-20250929",
         ),
         "tier4-default",
@@ -139,9 +146,9 @@ DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = {
     ModelTier.TIER_5: FallbackChain(
         (
             "gemini:gemini-2.5-pro",
-            "openai:gpt-4o",
+            MODEL_OPENAI_GPT4O,
             "anthropic:claude-opus-4-6",
-            "gh:openai/gpt-4o",
+            MODEL_GH_GPT4O,
         ),
         "tier5-default",
     ),
