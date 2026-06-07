@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 
@@ -326,7 +326,7 @@ async def run_workflow(
     request: WorkflowRunRequest,
     background_tasks: BackgroundTasks,
     http_request: Request,
-    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
+    tenant: Annotated[Optional[TenantContext], Depends(get_tenant_context)] = None,
 ):
     """Execute a workflow asynchronously."""
     # Sanitize inputs

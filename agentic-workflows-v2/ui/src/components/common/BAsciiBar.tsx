@@ -1,8 +1,8 @@
 interface BAsciiBarProps {
-  value: number; // 0..1
-  width?: number; // character width
-  color?: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
-  className?: string;
+  readonly value: number; // 0..1
+  readonly width?: number; // character width
+  readonly color?: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
+  readonly className?: string;
 }
 
 export default function BAsciiBar({

@@ -106,13 +106,13 @@ function Collapsible({
   summary,
   bracket,
   children,
-}: {
+}: Readonly<{
   expanded: boolean;
   onToggle: () => void;
   summary: string;
   bracket: [string, string];
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <span>
       <button

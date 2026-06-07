@@ -377,7 +377,6 @@ def _score_text_heuristic(
     """
     text = output_text.strip()
     word_count = len(text.split())
-    _char_count = len(text)
     line_count = len(text.splitlines())
 
     # --- Generic sub-scores ---
@@ -513,7 +512,8 @@ def print_console_summary(
     print()
     print("=== Workflow Trace Scoring ===")
     print(f"Trace:  {trace_path.name}")
-    print(f"Steps:  {total}{f'  (skipped {skipped_count} with no output)' if skipped_count else ''}")
+    skipped_suffix = f"  (skipped {skipped_count} with no output)" if skipped_count else ""
+    print(f"Steps:  {total}{skipped_suffix}")
     print()
 
     header = (

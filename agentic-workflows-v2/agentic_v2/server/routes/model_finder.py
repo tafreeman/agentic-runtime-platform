@@ -16,7 +16,7 @@ import subprocess
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Final, Literal
+from typing import Annotated, Final, Literal
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -479,9 +479,9 @@ def profile() -> SystemProfile:
 
 @router.get("/recommendations")
 def recommendations(
-    category: TaskCategory | Literal["all"] = Query("all"),
-    sort_by: SortField = Query("downloads"),
-    limit: int = Query(12, ge=1, le=50),
+    category: Annotated[TaskCategory | Literal["all"], Query()] = "all",
+    sort_by: Annotated[SortField, Query()] = "downloads",
+    limit: Annotated[int, Query(ge=1, le=50)] = 12,
 ) -> RecommendationResponse:
     """Return hardware-aware model recommendations."""
     profile = get_system_profile()

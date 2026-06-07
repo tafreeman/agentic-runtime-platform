@@ -1,6 +1,6 @@
 interface Props {
-  ms: number | null | undefined;
-  className?: string;
+  readonly ms: number | null | undefined;
+  readonly className?: string;
 }
 
 export default function DurationDisplay({ ms, className = "" }: Readonly<Props>) {

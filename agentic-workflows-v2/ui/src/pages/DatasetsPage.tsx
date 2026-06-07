@@ -34,23 +34,23 @@ export default function DatasetsPage() {
               </div>
             );
           }
-          if (!error) {
-            if (datasets) {
-              return (
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <DatasetBrowser datasets={datasets} />
-                </div>
-              );
-            }
+          if (error) {
             return (
-              <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
-                No datasets available.
+              <div className="rounded-sm border border-b-red bg-b-red/10 p-4 font-mono text-[11px] text-b-red">
+                [!] failed to load datasets
+              </div>
+            );
+          }
+          if (datasets) {
+            return (
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <DatasetBrowser datasets={datasets} />
               </div>
             );
           }
           return (
-            <div className="rounded-sm border border-b-red bg-b-red/10 p-4 font-mono text-[11px] text-b-red">
-              [!] failed to load datasets
+            <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
+              No datasets available.
             </div>
           );
         })()}

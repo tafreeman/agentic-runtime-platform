@@ -202,10 +202,11 @@ export default function NodeConfigOverlay({
 
             {/* Max Tokens */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-max-tokens" className="block text-sm font-medium text-gray-900 mb-2">
                 Max Tokens
               </label>
               <input
+                id="node-config-max-tokens"
                 type="number"
                 min="1"
                 step="100"
@@ -224,10 +225,11 @@ export default function NodeConfigOverlay({
 
             {/* Top P */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-top-p" className="block text-sm font-medium text-gray-900 mb-2">
                 Top P
               </label>
               <input
+                id="node-config-top-p"
                 type="number"
                 min="0"
                 max="1"
@@ -250,10 +252,10 @@ export default function NodeConfigOverlay({
 
           {/* Tools Selection */}
           {availableTools.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-900 mb-2">
                 Available Tools
-              </label>
+              </legend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {availableTools.map((tool) => (
                   <label
@@ -285,7 +287,7 @@ export default function NodeConfigOverlay({
               <p className="mt-1 text-xs text-gray-500">
                 Select which tools this agent can use
               </p>
-            </div>
+            </fieldset>
           )}
 
           {/* Info Box */}

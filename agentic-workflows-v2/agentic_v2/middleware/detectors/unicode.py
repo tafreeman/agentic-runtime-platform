@@ -75,8 +75,7 @@ class UnicodeSanitizer:
                     location="full_text",
                     matched_pattern="max_passes_exceeded",
                     redacted_preview=(
-                        f"Unicode sanitization hit {self.MAX_PASSES} "
-                        f"passes without stabilizing"
+                        f"Unicode sanitization hit {self.MAX_PASSES} passes without stabilizing"
                     ),
                 )
             )
@@ -88,9 +87,7 @@ class UnicodeSanitizer:
                     severity=Severity.MEDIUM if removed_count > 5 else Severity.LOW,
                     location="full_text",
                     matched_pattern="dangerous_unicode_removed",
-                    redacted_preview=(
-                        f"Removed {removed_count} dangerous Unicode character(s)"
-                    ),
+                    redacted_preview=f"Removed {removed_count} dangerous Unicode character(s)",
                 )
             )
 
