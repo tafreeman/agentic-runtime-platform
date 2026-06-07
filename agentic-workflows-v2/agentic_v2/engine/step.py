@@ -221,6 +221,22 @@ def step(
     return decorator
 
 
+class _AttemptOutcome(Enum):
+    """Control-flow directive returned by a single execution attempt.
+
+    Lets attempt-handling helpers steer the retry loop in :meth:`StepExecutor.execute`
+    without owning ``continue``/``break``/``return`` themselves:
+
+    - ``RETRY``  -> re-run the loop body (``continue``).
+    - ``BREAK``  -> leave the loop, then fall through to ``result.mark_complete``.
+    - ``RETURN`` -> return ``result`` immediately, skipping ``mark_complete``.
+    """
+
+    RETRY = "retry"
+    BREAK = "break"
+    RETURN = "return"
+
+
 class StepExecutor:
     """Executes StepDefinition instances with full lifecycle management."""
 
@@ -271,86 +287,153 @@ class StepExecutor:
             attempt += 1
             result.retry_count = attempt - 1
 
-            try:
-                output = await self._execute_with_timeout(
-                    step_def.func, child_ctx, step_def.timeout_seconds, step_def.name
-                )
-
-                # Success - map outputs
-                result.status = StepStatus.SUCCESS
-                result.output_data = output or {}
-
-                self._extract_meta(result)
-                self._salvage_review_report(step_def, result)
-                self._normalize_review_report(result)
-                await self._map_outputs(step_def, ctx, result)
-                self._store_step_view(step_def, ctx, result)
-
-                # Run post-hooks
-                for hook in step_def.post_hooks:
-                    await hook(ctx, step_def)
-
-                # Run verification gate if configured
-                if not await self._run_verification_gate(step_def, ctx, result):
-                    return result
-
-                # Loop-until logic (R5): re-execute until condition is satisfied
-                if self._should_loop_again(step_def, ctx, result):
-                    continue  # re-run the step body
-
-                await ctx.mark_step_complete(step_def.name)
-                break
-
-            except asyncio.CancelledError:
-                # NOTE: SonarQube python:S7497 suggests re-raising CancelledError.
-                # We intentionally do NOT here: a cancelled step is converted into a
-                # recorded FAILED StepResult so WorkflowExecutor can report per-step
-                # status (e.g. on global timeout). Re-raising would drop this step's
-                # result from result.steps and break global-timeout semantics
-                # (see tests/test_engine.py::test_global_timeout).
-                result.status = StepStatus.FAILED
-                result.error = "Step was cancelled"
-                result.error_type = "CancelledError"
-                await ctx.mark_step_failed(step_def.name, result.error)
-                break
-
-            except TimeoutError:
-                result.status = StepStatus.FAILED
-                result.error = f"Step timed out after {step_def.timeout_seconds}s"
-                result.error_type = "TimeoutError"
-
-                # Timeout typically shouldn't retry
-                await ctx.mark_step_failed(step_def.name, result.error)
-                break
-
-            except Exception as e:
-                result.error = str(e)
-                result.error_type = type(e).__name__
-
-                # Check if should retry
-                if (
-                    attempt <= step_def.retry.max_retries
-                    and step_def.retry.should_retry(e)
-                ):
-                    result.status = StepStatus.RETRYING
-                    delay = step_def.retry.get_delay(attempt)
-                    result.metadata[f"retry_{attempt}_delay"] = delay
-                    await asyncio.sleep(delay)
-                    continue
-
-                # Run error hooks
-                for hook in step_def.error_hooks:
-                    try:
-                        await hook(ctx, step_def)
-                    except Exception:
-                        pass  # Don't fail on error hook failure
-
-                result.status = StepStatus.FAILED
-                await ctx.mark_step_failed(step_def.name, result.error)
-                break
+            outcome = await self._run_attempt(step_def, ctx, child_ctx, result, attempt)
+            if outcome is _AttemptOutcome.RETRY:
+                continue  # re-run the step body
+            if outcome is _AttemptOutcome.RETURN:
+                return result  # verification gate aborted; skip mark_complete
+            break
 
         result.mark_complete(result.status == StepStatus.SUCCESS, result.error)
         return result
+
+    async def _run_attempt(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        child_ctx: ExecutionContext,
+        result: StepResult,
+        attempt: int,
+    ) -> _AttemptOutcome:
+        """Run one attempt of the step body and report how the loop should proceed."""
+        # func is guaranteed non-None by execute()'s None-guard before the retry loop.
+        func = step_def.func
+        assert func is not None
+        try:
+            timeout = step_def.timeout_seconds
+            if timeout:
+                async with asyncio.timeout(timeout):
+                    output = await self._execute_with_timeout(
+                        func, child_ctx, step_def.name
+                    )
+            else:
+                output = await self._execute_with_timeout(
+                    func, child_ctx, step_def.name
+                )
+            return await self._handle_success(step_def, ctx, result, output)
+        except asyncio.CancelledError:
+            return await self._handle_cancelled(step_def, ctx, result)
+        except TimeoutError:
+            return await self._handle_timeout(step_def, ctx, result)
+        except Exception as e:
+            return await self._handle_exception(step_def, ctx, result, e, attempt)
+
+    async def _handle_success(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+        output: dict[str, Any] | None,
+    ) -> _AttemptOutcome:
+        """Finalize a successful execution: map outputs, run hooks, gate, and loop."""
+        # Success - map outputs
+        result.status = StepStatus.SUCCESS
+        result.output_data = output or {}
+
+        self._extract_meta(result)
+        self._salvage_review_report(step_def, result)
+        self._normalize_review_report(result)
+        await self._map_outputs(step_def, ctx, result)
+        self._store_step_view(step_def, ctx, result)
+
+        # Run post-hooks
+        for hook in step_def.post_hooks:
+            await hook(ctx, step_def)
+
+        # Run verification gate if configured
+        if not await self._run_verification_gate(step_def, ctx, result):
+            return _AttemptOutcome.RETURN
+
+        # Loop-until logic (R5): re-execute until condition is satisfied
+        if self._should_loop_again(step_def, ctx, result):
+            return _AttemptOutcome.RETRY
+
+        await ctx.mark_step_complete(step_def.name)
+        return _AttemptOutcome.BREAK
+
+    async def _handle_cancelled(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> _AttemptOutcome:
+        """Record a cancelled step as a FAILED result instead of re-raising.
+
+        NOTE: SonarQube python:S7497 suggests re-raising CancelledError.
+        We intentionally do NOT here: a cancelled step is converted into a
+        recorded FAILED StepResult so WorkflowExecutor can report per-step
+        status (e.g. on global timeout). Re-raising would drop this step's
+        result from result.steps and break global-timeout semantics
+        (see tests/test_engine.py::test_global_timeout).
+        """
+        result.status = StepStatus.FAILED
+        result.error = "Step was cancelled"
+        result.error_type = "CancelledError"
+        await ctx.mark_step_failed(step_def.name, result.error)
+        return _AttemptOutcome.BREAK
+
+    async def _handle_timeout(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> _AttemptOutcome:
+        """Record a timed-out step as a FAILED result (timeouts do not retry)."""
+        result.status = StepStatus.FAILED
+        result.error = f"Step timed out after {step_def.timeout_seconds}s"
+        result.error_type = "TimeoutError"
+
+        # Timeout typically shouldn't retry
+        await ctx.mark_step_failed(step_def.name, result.error)
+        return _AttemptOutcome.BREAK
+
+    async def _handle_exception(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+        error: Exception,
+        attempt: int,
+    ) -> _AttemptOutcome:
+        """Handle a step failure: retry if eligible, else run error hooks and fail."""
+        result.error = str(error)
+        result.error_type = type(error).__name__
+
+        # Check if should retry
+        if attempt <= step_def.retry.max_retries and step_def.retry.should_retry(error):
+            result.status = StepStatus.RETRYING
+            delay = step_def.retry.get_delay(attempt)
+            result.metadata[f"retry_{attempt}_delay"] = delay
+            await asyncio.sleep(delay)
+            return _AttemptOutcome.RETRY
+
+        await self._run_error_hooks(step_def, ctx)
+
+        result.status = StepStatus.FAILED
+        await ctx.mark_step_failed(step_def.name, result.error)
+        return _AttemptOutcome.BREAK
+
+    @staticmethod
+    async def _run_error_hooks(
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+    ) -> None:
+        """Run error hooks, swallowing any hook failures."""
+        for hook in step_def.error_hooks:
+            try:
+                await hook(ctx, step_def)
+            except Exception:
+                pass  # Don't fail on error hook failure
 
     async def _run_pre_hooks(
         self,
@@ -415,7 +498,7 @@ class StepExecutor:
             # Allow spaces so multi-word variants survive (e.g.
             # "APPROVED WITH NOTES", "CONDITIONAL APPROVAL") before
             # ReviewStatus.normalize() maps them.
-            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ -]+)"?',
+            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ \-]+)"?',
             raw_text,
             flags=re.IGNORECASE,
         )
@@ -560,19 +643,19 @@ class StepExecutor:
         self,
         func: StepFunction,
         ctx: ExecutionContext,
-        timeout: float | None,
         step_name: str,
     ) -> dict[str, Any]:
-        """Execute func with optional timeout and task tracking."""
+        """Execute func with task tracking.
+
+        The timeout scope is owned by the caller (see :meth:`_run_attempt`), which
+        wraps this call in an ``asyncio.timeout`` context manager when a timeout is
+        configured.
+        """
         task = asyncio.create_task(func(ctx))
         self._running_tasks[step_name] = task
 
         try:
-            if timeout:
-                async with asyncio.timeout(timeout):
-                    return await task
-            else:
-                return await task
+            return await task
         finally:
             self._running_tasks.pop(step_name, None)
 

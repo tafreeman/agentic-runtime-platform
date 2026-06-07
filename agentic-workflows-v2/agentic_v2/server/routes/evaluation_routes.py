@@ -89,6 +89,17 @@ def _encode_dataset_path(dataset_source: str, dataset_id: str) -> str:
     return f"/api/eval/datasets/{encoded_source}/{encoded_dataset_id}/samples"
 
 
+def _extract_sample_summary_text(
+    sample: dict[str, Any], field_names: list[str]
+) -> str:
+    """Return the first non-identifier string field, truncated to 200 chars."""
+    for key in field_names:
+        val = sample.get(key)
+        if isinstance(val, str) and val.strip() and key not in ("id", "task_id", "sample_id"):
+            return val[:200]
+    return ""
+
+
 def _make_sample_summary(
     sample: dict[str, Any], sample_index: int, _meta: dict[str, Any]
 ) -> DatasetSampleSummary:
@@ -108,12 +119,7 @@ def _make_sample_summary(
             title = raw[:120]
             break
 
-    summary = ""
-    for key in field_names:
-        val = sample.get(key)
-        if isinstance(val, str) and val.strip() and key not in ("id", "task_id", "sample_id"):
-            summary = val[:200]
-            break
+    summary = _extract_sample_summary_text(sample, field_names)
 
     return DatasetSampleSummary(
         sample_index=sample_index,
@@ -403,6 +409,69 @@ def _resolve_sample_count(batch: list[Any]) -> int:
     return len(batch)
 
 
+def _validate_sample_detail_source(source: str) -> None:
+    """Validate the dataset source for the sample-detail endpoint."""
+    if source not in ("repository", "local"):
+        raise HTTPException(
+            status_code=422, detail=f"Invalid source: {source!r}"
+        )
+
+
+def _load_single_sample(
+    source: str,
+    dataset_id: str,
+    sample_index: int,
+    tenant_id: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Load one dataset sample, mapping load errors to HTTP codes."""
+    try:
+        if source == "repository":
+            return load_repository_dataset_sample(
+                dataset_id, sample_index=sample_index
+            )
+        return _call_with_supported_kwargs(
+            load_local_dataset_sample,
+            dataset_id,
+            sample_index=sample_index,
+            tenant_id=tenant_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to load sample: {exc}"
+        ) from exc
+
+
+def _build_workflow_preview(
+    workflow: str | None,
+    sample: dict[str, Any],
+    tenant_id: str,
+) -> dict[str, Any] | None:
+    """Build an optional workflow-input preview for a sample.
+
+    Returns ``None`` when no workflow is requested, LangChain is unavailable, or
+    the preview computation fails (the failure is logged at debug level).
+    """
+    if not (workflow and _LANGCHAIN_AVAILABLE):
+        return None
+    try:
+        workflow_def = load_workflow_config(workflow)
+        compatible, _ = match_workflow_dataset(workflow_def, sample)
+        if not compatible:
+            return {"compatible": False}
+        adapted = adapt_sample_to_workflow_inputs(
+            workflow_def.inputs,
+            sample,
+            run_id="preview",
+            artifacts_dir=tenant_dataset_dir(tenant_id) / "_inputs",
+        )
+        return {"compatible": True, "adapted_inputs": adapted}
+    except Exception as exc:
+        logger.debug("Workflow preview failed for %s: %s", workflow, exc)
+        return None
+
+
 @router.get(
     "/eval/datasets/{source}/{dataset_id:path}/samples",
     response_model=DatasetSampleListResponse,
@@ -479,58 +548,19 @@ async def get_dataset_sample_detail_path_based(
 
     **New in Sprint B SB-1.** Replaces the query-param ``/sample-detail`` endpoint.
     """
-    if source not in ("repository", "local"):
-        raise HTTPException(
-            status_code=422, detail=f"Invalid source: {source!r}"
-        )
+    _validate_sample_detail_source(source)
 
-    try:
-        if source == "repository":
-            sample, meta = load_repository_dataset_sample(
-                dataset_id, sample_index=sample_index
-            )
-        else:
-            sample, meta = _call_with_supported_kwargs(
-                load_local_dataset_sample,
-                dataset_id,
-                sample_index=sample_index,
-                tenant_id=tenant.tenant_id,
-            )
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load sample: {exc}"
-        ) from exc
+    sample, meta = _load_single_sample(
+        source, dataset_id, sample_index, tenant.tenant_id
+    )
 
     field_names = list(sample.keys())
     sample_id = str(sample.get("id", sample.get("sample_id", ""))) or None
     task_id = str(sample.get("task_id", "")) or None
 
-    summary = ""
-    for key in field_names:
-        val = sample.get(key)
-        if isinstance(val, str) and val.strip() and key not in ("id", "task_id", "sample_id"):
-            summary = val[:200]
-            break
+    summary = _extract_sample_summary_text(sample, field_names)
 
-    workflow_preview: dict[str, Any] | None = None
-    if workflow and _LANGCHAIN_AVAILABLE:
-        try:
-            workflow_def = load_workflow_config(workflow)
-            compatible, _ = match_workflow_dataset(workflow_def, sample)
-            if compatible:
-                adapted = adapt_sample_to_workflow_inputs(
-                    workflow_def.inputs,
-                    sample,
-                    run_id="preview",
-                    artifacts_dir=tenant_dataset_dir(tenant.tenant_id) / "_inputs",
-                )
-                workflow_preview = {"compatible": True, "adapted_inputs": adapted}
-            else:
-                workflow_preview = {"compatible": False}
-        except Exception as exc:
-            logger.debug("Workflow preview failed for %s: %s", workflow, exc)
+    workflow_preview = _build_workflow_preview(workflow, sample, tenant.tenant_id)
 
     await audit_request_event(
         request,
