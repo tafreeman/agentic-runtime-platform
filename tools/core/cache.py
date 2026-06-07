@@ -70,7 +70,6 @@ def get_cached_response(
     model: str,
     prompt: str,
     system_instruction: str | None = None,
-    _max_age_hours: float = 24.0,
     **kwargs,
 ) -> str | None:
     """Get a cached response if available and not expired.
@@ -79,7 +78,6 @@ def get_cached_response(
         model: Model identifier (e.g., "gh:gpt-4o-mini")
         prompt: The user prompt
         system_instruction: Optional system prompt
-        max_age_hours: Maximum age of cached response in hours (default: 24)
         **kwargs: Additional parameters (temperature, max_tokens) - used for cache key
 
     Returns:
