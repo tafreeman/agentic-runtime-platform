@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Callable
 
 # Shared placeholder string used by both the native MockBackend path
 # (agentic_v2.models.client.get_client) and the LangChain path
@@ -226,6 +226,68 @@ def _onnx_runtime_available() -> bool:
     return importlib.util.find_spec("onnxruntime_genai") is not None
 
 
+def _required_secret(
+    name: str, *, secret_provider: SecretProvider | None
+) -> str:
+    """Resolve a single named secret, coalescing absence to an empty string."""
+    return get_secret(name, default="", provider=secret_provider) or ""
+
+
+def _build_cloud_backend(
+    provider: str, secret_provider: SecretProvider | None
+) -> LLMBackend | None:
+    """Construct a cloud backend for ``provider``, or None if not cloud.
+
+    Handles the credentialed providers (GitHub, OpenAI, Anthropic, Gemini,
+    Azure OpenAI, Azure AI Foundry). Returns None for non-cloud providers so
+    the caller can handle local/mock backends.
+    """
+    if provider == "github":
+        token = (
+            get_first_secret(
+                "GITHUB_TOKEN",
+                "GH_TOKEN",
+                default="",
+                provider=secret_provider,
+            )
+            or ""
+        )
+        return GitHubModelsBackend(token=token)
+    if provider == "openai":
+        return OpenAIBackend(
+            api_key=_required_secret("OPENAI_API_KEY", secret_provider=secret_provider)
+        )
+    if provider == "anthropic":
+        return AnthropicBackend(
+            api_key=_required_secret(
+                "ANTHROPIC_API_KEY", secret_provider=secret_provider
+            )
+        )
+    if provider == "gemini":
+        return GeminiBackend(
+            api_key=_required_secret("GEMINI_API_KEY", secret_provider=secret_provider)
+        )
+    if provider == "azure":
+        return AzureOpenAIBackend(
+            api_key=_required_secret(
+                "AZURE_OPENAI_API_KEY", secret_provider=secret_provider
+            ),
+            endpoint=_required_secret(
+                "AZURE_OPENAI_ENDPOINT", secret_provider=secret_provider
+            ),
+        )
+    if provider == "azure_foundry":
+        return AzureFoundryBackend(
+            api_key=_required_secret(
+                "AZURE_FOUNDRY_API_KEY", secret_provider=secret_provider
+            ),
+            endpoint=_required_secret(
+                "AZURE_FOUNDRY_ENDPOINT", secret_provider=secret_provider
+            ),
+        )
+    return None
+
+
 def get_backend(
     provider: str = "github",
     *,
@@ -241,73 +303,108 @@ def get_backend(
         Configured LLM backend
     """
     provider = provider.lower()
-    if provider == "github":
-        return GitHubModelsBackend(
-            token=get_first_secret(
-                "GITHUB_TOKEN",
-                "GH_TOKEN",
-                default="",
-                provider=secret_provider,
-            )
-            or ""
-        )
-    elif provider == "openai":
-        return OpenAIBackend(
-            api_key=get_secret(
-                "OPENAI_API_KEY",
-                default="",
-                provider=secret_provider,
-            )
-            or ""
-        )
-    elif provider == "anthropic":
-        return AnthropicBackend(
-            api_key=get_secret(
-                "ANTHROPIC_API_KEY",
-                default="",
-                provider=secret_provider,
-            )
-            or ""
-        )
-    elif provider == "gemini":
-        return GeminiBackend(
-            api_key=get_secret(
-                "GEMINI_API_KEY",
-                default="",
-                provider=secret_provider,
-            )
-            or ""
-        )
-    elif provider == "azure":
-        return AzureOpenAIBackend(
-            api_key=get_secret(
-                "AZURE_OPENAI_API_KEY", default="", provider=secret_provider
-            )
-            or "",
-            endpoint=get_secret(
-                "AZURE_OPENAI_ENDPOINT", default="", provider=secret_provider
-            )
-            or "",
-        )
-    elif provider == "azure_foundry":
-        return AzureFoundryBackend(
-            api_key=get_secret(
-                "AZURE_FOUNDRY_API_KEY", default="", provider=secret_provider
-            )
-            or "",
-            endpoint=get_secret(
-                "AZURE_FOUNDRY_ENDPOINT", default="", provider=secret_provider
-            )
-            or "",
-        )
-    elif provider == "ollama":
+    cloud_backend = _build_cloud_backend(provider, secret_provider)
+    if cloud_backend is not None:
+        return cloud_backend
+    if provider == "ollama":
         return OllamaBackend()
-    elif provider == "onnx":
+    if provider == "onnx":
         return OnnxBackend()
-    elif provider == "mock":
+    if provider == "mock":
         return MockBackend()
-    else:
-        raise ValueError(f"Unknown provider: {provider}")
+    raise ValueError(f"Unknown provider: {provider}")
+
+
+def _try_register_backend(
+    backends: dict[str, LLMBackend],
+    key: str,
+    factory: Callable[[], LLMBackend],
+    log_message: str,
+) -> None:
+    """Register ``factory()`` under ``key`` unless construction raises ValueError.
+
+    A no-op when the backend cannot be constructed (mirrors the original
+    per-provider ``try/except ValueError: pass`` guards).
+    """
+    try:
+        backends[key] = factory()
+        logger.info(log_message)
+    except ValueError:
+        pass
+
+
+def _register_cloud_backends(
+    backends: dict[str, LLMBackend],
+    active_provider: SecretProvider | None,
+) -> None:
+    """Probe credentials in priority order and register available backends."""
+    # OpenAI -- most common, check first
+    openai_api_key = get_secret("OPENAI_API_KEY", provider=active_provider)
+    if openai_api_key:
+        _try_register_backend(
+            backends,
+            "openai",
+            lambda: OpenAIBackend(api_key=openai_api_key),
+            "Registered OpenAI backend",
+        )
+
+    # Anthropic
+    anthropic_api_key = get_secret("ANTHROPIC_API_KEY", provider=active_provider)
+    if anthropic_api_key:
+        _try_register_backend(
+            backends,
+            "anthropic",
+            lambda: AnthropicBackend(api_key=anthropic_api_key),
+            "Registered Anthropic backend",
+        )
+
+    # GitHub Models (check both GITHUB_TOKEN and GH_TOKEN)
+    github_token = get_first_secret(
+        "GITHUB_TOKEN",
+        "GH_TOKEN",
+        provider=active_provider,
+    )
+    if github_token:
+        _try_register_backend(
+            backends,
+            "github",
+            lambda: GitHubModelsBackend(token=github_token),
+            "Registered GitHub Models backend",
+        )
+
+    # Gemini
+    gemini_api_key = get_secret("GEMINI_API_KEY", provider=active_provider)
+    if gemini_api_key:
+        _try_register_backend(
+            backends,
+            "gemini",
+            lambda: GeminiBackend(api_key=gemini_api_key),
+            "Registered Gemini backend",
+        )
+
+    # Azure OpenAI (needs both key and endpoint)
+    azure_key = get_secret("AZURE_OPENAI_API_KEY", provider=active_provider)
+    azure_endpoint = get_secret("AZURE_OPENAI_ENDPOINT", provider=active_provider)
+    if azure_key and azure_endpoint:
+        _try_register_backend(
+            backends,
+            "azure",
+            lambda: AzureOpenAIBackend(api_key=azure_key, endpoint=azure_endpoint),
+            "Registered Azure OpenAI backend",
+        )
+
+    # Azure AI Foundry (needs both key and endpoint)
+    foundry_key = get_secret("AZURE_FOUNDRY_API_KEY", provider=active_provider)
+    foundry_endpoint = get_secret("AZURE_FOUNDRY_ENDPOINT", provider=active_provider)
+    if foundry_key and foundry_endpoint:
+        _try_register_backend(
+            backends,
+            "azure_foundry",
+            lambda: AzureFoundryBackend(
+                api_key=foundry_key, endpoint=foundry_endpoint
+            ),
+            "Registered Azure AI Foundry backend",
+        )
 
 
 def auto_configure_backend(
@@ -327,69 +424,7 @@ def auto_configure_backend(
     backends: dict[str, LLMBackend] = {}
     active_provider = secret_provider
 
-    # OpenAI -- most common, check first
-    openai_api_key = get_secret("OPENAI_API_KEY", provider=active_provider)
-    if openai_api_key:
-        try:
-            backends["openai"] = OpenAIBackend(api_key=openai_api_key)
-            logger.info("Registered OpenAI backend")
-        except ValueError:
-            pass
-
-    # Anthropic
-    anthropic_api_key = get_secret("ANTHROPIC_API_KEY", provider=active_provider)
-    if anthropic_api_key:
-        try:
-            backends["anthropic"] = AnthropicBackend(api_key=anthropic_api_key)
-            logger.info("Registered Anthropic backend")
-        except ValueError:
-            pass
-
-    # GitHub Models (check both GITHUB_TOKEN and GH_TOKEN)
-    github_token = get_first_secret(
-        "GITHUB_TOKEN",
-        "GH_TOKEN",
-        provider=active_provider,
-    )
-    if github_token:
-        try:
-            backends["github"] = GitHubModelsBackend(token=github_token)
-            logger.info("Registered GitHub Models backend")
-        except ValueError:
-            pass
-
-    # Gemini
-    gemini_api_key = get_secret("GEMINI_API_KEY", provider=active_provider)
-    if gemini_api_key:
-        try:
-            backends["gemini"] = GeminiBackend(api_key=gemini_api_key)
-            logger.info("Registered Gemini backend")
-        except ValueError:
-            pass
-
-    # Azure OpenAI (needs both key and endpoint)
-    azure_key = get_secret("AZURE_OPENAI_API_KEY", provider=active_provider)
-    azure_endpoint = get_secret("AZURE_OPENAI_ENDPOINT", provider=active_provider)
-    if azure_key and azure_endpoint:
-        try:
-            backends["azure"] = AzureOpenAIBackend(
-                api_key=azure_key, endpoint=azure_endpoint
-            )
-            logger.info("Registered Azure OpenAI backend")
-        except ValueError:
-            pass
-
-    # Azure AI Foundry (needs both key and endpoint)
-    foundry_key = get_secret("AZURE_FOUNDRY_API_KEY", provider=active_provider)
-    foundry_endpoint = get_secret("AZURE_FOUNDRY_ENDPOINT", provider=active_provider)
-    if foundry_key and foundry_endpoint:
-        try:
-            backends["azure_foundry"] = AzureFoundryBackend(
-                api_key=foundry_key, endpoint=foundry_endpoint
-            )
-            logger.info("Registered Azure AI Foundry backend")
-        except ValueError:
-            pass
+    _register_cloud_backends(backends, active_provider)
 
     # Ollama (always register -- it's local and free)
     backends["ollama"] = OllamaBackend()

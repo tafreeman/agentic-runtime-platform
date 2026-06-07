@@ -30,7 +30,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from functools import wraps
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, AsyncIterator, Awaitable, Callable, TypeVar
 
 if TYPE_CHECKING:
     from ..middleware.response_sanitizer import ResponseSanitizer
@@ -90,34 +90,18 @@ def retry_with_jitter(
                     last_error = e
                     if attempt >= max_retries - 1:
                         break
-
-                    from ..core.errors import ErrorCode, classify_error
-                    code, should_retry = classify_error(str(e))
-                    if not should_retry:
-                        raise e  # Permanent error, do not retry
-
-                    delay = min(base_delay * (2**attempt), max_delay)
-
-                    # If rate limited, try to extract specific Retry-After delay
-                    if code == ErrorCode.RATE_LIMITED:
-                        # Lazy import to avoid circular dependency
-                        from .smart_router import get_smart_router
-
-                        router = get_smart_router()
-                        headers = router._headers_from_error(e)
-                        parsed_delay = None
-                        if headers:
-                            parsed_delay = router.rate_limit_tracker.parse_retry_after(headers)
-
-                        if parsed_delay is not None:
-                            delay = float(parsed_delay)
-                        else:
-                            # Match the router's default rate limit cooldown so we don't wake up too early
-                            delay = max(delay, float(router.cooldown_config.base_rate_limit_cooldown_seconds))
-
-                    jittered = delay + (delay * random.uniform(0, jitter))
-                    logger.debug(f"Retry {attempt + 1}/{max_retries} for {func.__name__} in {jittered:.2f}s due to {code}")
-                    await asyncio.sleep(jittered)
+                    # Classify, compute the (possibly rate-limit-aware) delay,
+                    # and re-raise permanent errors. Returns seconds to sleep.
+                    sleep_seconds = _next_retry_sleep_seconds(
+                        e,
+                        attempt=attempt,
+                        max_retries=max_retries,
+                        base_delay=base_delay,
+                        max_delay=max_delay,
+                        jitter=jitter,
+                        func_name=func.__name__,
+                    )
+                    await asyncio.sleep(sleep_seconds)
 
             if last_error:
                 raise last_error
@@ -126,6 +110,66 @@ def retry_with_jitter(
         return wrapper
 
     return decorator
+
+
+def _next_retry_sleep_seconds(
+    error: Exception,
+    *,
+    attempt: int,
+    max_retries: int,
+    base_delay: float,
+    max_delay: float,
+    jitter: float,
+    func_name: str,
+) -> float:
+    """Compute the jittered backoff delay before the next retry attempt.
+
+    Re-raises ``error`` for permanent (non-retryable) failures so the caller
+    aborts the retry loop. Honours a parsed ``Retry-After`` for rate limits.
+    """
+    from ..core.errors import ErrorCode, classify_error
+
+    code, should_retry = classify_error(str(error))
+    if not should_retry:
+        raise error  # Permanent error, do not retry
+
+    delay = min(base_delay * (2**attempt), max_delay)
+
+    # If rate limited, try to extract specific Retry-After delay
+    if code == ErrorCode.RATE_LIMITED:
+        delay = _rate_limited_retry_delay(error, delay)
+
+    jittered = delay + (delay * random.uniform(0, jitter))
+    logger.debug(
+        f"Retry {attempt + 1}/{max_retries} for {func_name} "
+        f"in {jittered:.2f}s due to {code}"
+    )
+    return jittered
+
+
+def _rate_limited_retry_delay(error: Exception, default_delay: float) -> float:
+    """Resolve the backoff delay for a rate-limited error.
+
+    Prefers a provider ``Retry-After`` value parsed from the error headers;
+    otherwise floors the delay at the router's default rate-limit cooldown so
+    the caller does not wake up too early.
+    """
+    # Lazy import to avoid circular dependency
+    from .smart_router import get_smart_router
+
+    router = get_smart_router()
+    headers = router._headers_from_error(error)
+    parsed_delay = None
+    if headers:
+        parsed_delay = router.rate_limit_tracker.parse_retry_after(headers)
+
+    if parsed_delay is not None:
+        return float(parsed_delay)
+    # Match the router's default rate limit cooldown so we don't wake up too early
+    return max(
+        default_delay,
+        float(router.cooldown_config.base_rate_limit_cooldown_seconds),
+    )
 
 
 @dataclass
@@ -298,6 +342,41 @@ class LLMClientWrapper:
             for k in sorted_keys[:100]:
                 del self.cache[k]
 
+    async def _sanitize_prompt(
+        self, prompt: str, source: str, tier: ModelTier
+    ) -> str:
+        """Run the inbound prompt sanitizer, returning the effective prompt.
+
+        A no-op pass-through when no sanitization middleware is attached.
+
+        Raises:
+            ValueError: If the sanitizer classifies the prompt as unsafe.
+        """
+        if self.sanitization is None:
+            return prompt
+        san_result = await self.sanitization.process(
+            prompt, {"source": source, "tier": tier.name}
+        )
+        if not san_result.is_safe:
+            raise ValueError(
+                f"Prompt blocked by sanitization: {san_result.classification.value}"
+            )
+        if san_result.sanitized_text is not None:
+            return san_result.sanitized_text
+        return prompt
+
+    async def _sanitize_response_text(self, response: str) -> str:
+        """Run the outbound response sanitizer, returning the effective text.
+
+        A no-op pass-through when no response sanitizer is attached.
+        """
+        if self.response_sanitizer is None:
+            return response
+        resp_result = await self.response_sanitizer.sanitize_response(response)
+        if resp_result.sanitized_text is not None:
+            return resp_result.sanitized_text
+        return response
+
     @retry_with_jitter(max_retries=3)
     async def complete(
         self,
@@ -346,6 +425,7 @@ class LLMClientWrapper:
         # EK provider path has soaked in production. Do NOT extend this
         # branch with new behaviour — changes belong in _complete_via_ek.
         # Check cache
+        cache_key: str | None = None
         if use_cache and self.enable_cache:
             cache_key = self._cache_key(prompt, tier, model=model, **kwargs)
             cached = self._get_cached(cache_key)
@@ -358,24 +438,67 @@ class LLMClientWrapper:
             logger.info(f"Prompt (tier={tier.name}): {prompt[:200]}...")
 
         # Pre-send sanitization
-        effective_prompt = prompt
-        if self.sanitization is not None:
-            san_result = await self.sanitization.process(
-                prompt, {"source": "llm_complete", "tier": tier.name}
-            )
-            if not san_result.is_safe:
-                raise ValueError(
-                    f"Prompt blocked by sanitization: {san_result.classification.value}"
-                )
-            if san_result.sanitized_text is not None:
-                effective_prompt = san_result.sanitized_text
+        effective_prompt = await self._sanitize_prompt(prompt, "llm_complete", tier)
 
         # Use router for model selection and fallback
         async def call_model(m: str, p: str) -> str:
             return await self.backend.complete(m, p, **kwargs)
 
-        tried = []
-        last_error = None
+        def pre_attempt(selected_model: str) -> None:
+            self._check_prompt_budget(effective_prompt, selected_model)
+
+        async def attempt(selected_model: str) -> tuple[str, str, int]:
+            start = time.monotonic()
+            return await self._run_complete_attempt(
+                call_model,
+                selected_model,
+                effective_prompt,
+                start=start,
+                use_cache=use_cache,
+                cache_key=cache_key,
+                cache_model=model,
+            )
+
+        def on_error(selected_model: str, error: Exception) -> None:
+            self.router._classify_and_record_error(selected_model, error)
+            logger.warning(f"Model {selected_model} failed: {error}")
+            logger.warning(f"Model {model} failed: {error}")
+
+        return await self._run_with_fallback(
+            tier=tier,
+            model=model,
+            max_retries=max_retries,
+            pre_attempt=pre_attempt,
+            attempt=attempt,
+            on_error=on_error,
+        )
+
+    async def _run_with_fallback(
+        self,
+        *,
+        tier: ModelTier,
+        model: str | None,
+        max_retries: int,
+        pre_attempt: Callable[[str], None],
+        attempt: Callable[[str], Awaitable[T]],
+        on_error: Callable[[str, Exception], None],
+    ) -> T:
+        """Drive the router's model-selection + fallback retry loop.
+
+        Selects up to ``max_retries`` distinct models for ``tier`` (or the
+        forced ``model``), invoking ``attempt`` per candidate and returning its
+        first success. ``pre_attempt`` runs (outside the try/except) before each
+        attempt so its failures — e.g. budget exhaustion — propagate directly
+        rather than being treated as a model failure. ``on_error`` runs the
+        call-site-specific bookkeeping for each failed candidate before the next
+        is tried.
+
+        Raises:
+            The last attempt error if every candidate failed, else RuntimeError
+            when no candidate could be selected.
+        """
+        tried: list[str] = []
+        last_error: Exception | None = None
 
         for _ in range(max_retries):
             selected_model = model or self.router.get_model_for_tier(tier)
@@ -383,66 +506,77 @@ class LLMClientWrapper:
                 break
 
             tried.append(selected_model)
-
-            # Estimate tokens and check budget
-            prompt_tokens = self.backend.count_tokens(effective_prompt, selected_model)
-            if self.budget and not self.budget.can_afford(prompt_tokens * 2):
-                raise ValueError(
-                    f"Budget exceeded: {self.budget.used_tokens}/{self.budget.max_tokens}"
-                )
-
-            start = time.monotonic()
+            pre_attempt(selected_model)
 
             try:
-                response = await self.router._execute_call(
-                    call_model, selected_model, effective_prompt
-                )
-                tokens = self.backend.count_tokens(effective_prompt + response, selected_model)
-                latency = (time.monotonic() - start) * 1000
-
-                # Record success
-                self.router.record_success(selected_model, latency)
-
-                # Post-receive response sanitization
-                if self.response_sanitizer is not None:
-                    resp_result = await self.response_sanitizer.sanitize_response(
-                        response
-                    )
-                    if resp_result.sanitized_text is not None:
-                        response = resp_result.sanitized_text
-
-                # Update budget
-                if self.budget:
-                    self.budget.consume(tokens)
-
-                # Cache response. Guard on enable_cache too: cache_key is only
-                # bound above when caching is enabled, so storing under the
-                # bare `use_cache` flag raised UnboundLocalError when caching
-                # was disabled. _set_cached is itself a no-op when disabled, so
-                # this is behaviour-preserving.
-                if use_cache and self.enable_cache:
-                    self._set_cached(cache_key, response, model, tokens)
-
-                # Log response if enabled
-                if self.log_responses:
-                    logger.info(f"Response from {selected_model}: {response[:200]}...")
-
-                return response, selected_model, tokens
-
+                return await attempt(selected_model)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
-                self.router._classify_and_record_error(selected_model, e)
+                on_error(selected_model, e)
                 last_error = e
-                logger.warning(f"Model {selected_model} failed: {e}")
-                last_error = e
-                logger.warning(f"Model {model} failed: {e}")
 
         if last_error:
             raise last_error
         raise RuntimeError(
             f"All models failed. Tried: {tried}. No further information available."
         )
+
+    def _check_prompt_budget(self, effective_prompt: str, selected_model: str) -> None:
+        """Raise ValueError if the prompt's estimated cost exceeds the budget."""
+        assert self.backend is not None  # guarded by callers before invocation
+        prompt_tokens = self.backend.count_tokens(effective_prompt, selected_model)
+        if self.budget and not self.budget.can_afford(prompt_tokens * 2):
+            raise ValueError(
+                f"Budget exceeded: {self.budget.used_tokens}/{self.budget.max_tokens}"
+            )
+
+    async def _run_complete_attempt(
+        self,
+        call_model: Callable[[str, str], Any],
+        selected_model: str,
+        effective_prompt: str,
+        *,
+        start: float,
+        use_cache: bool,
+        cache_key: str | None,
+        cache_model: str | None,
+    ) -> tuple[str, str, int]:
+        """Execute one legacy ``complete`` attempt and record its success.
+
+        Runs the routed call, counts tokens, records router success, applies
+        response sanitization, updates the budget, and caches the result.
+        """
+        assert self.backend is not None  # guarded by complete() before invocation
+        response = await self.router._execute_call(
+            call_model, selected_model, effective_prompt
+        )
+        tokens = self.backend.count_tokens(effective_prompt + response, selected_model)
+        latency = (time.monotonic() - start) * 1000
+
+        # Record success
+        self.router.record_success(selected_model, latency)
+
+        # Post-receive response sanitization
+        response = await self._sanitize_response_text(response)
+
+        # Update budget
+        if self.budget:
+            self.budget.consume(tokens)
+
+        # Cache response. Guard on enable_cache too: cache_key is only
+        # set above when caching is enabled, so storing under the
+        # bare `use_cache` flag raised UnboundLocalError when caching
+        # was disabled. _set_cached is itself a no-op when disabled, so
+        # this is behaviour-preserving.
+        if use_cache and self.enable_cache and cache_key is not None:
+            self._set_cached(cache_key, response, cache_model, tokens)
+
+        # Log response if enabled
+        if self.log_responses:
+            logger.info(f"Response from {selected_model}: {response[:200]}...")
+
+        return response, selected_model, tokens
 
     async def _complete_via_ek(
         self,
@@ -499,17 +633,7 @@ class LLMClientWrapper:
             logger.info(f"Prompt (tier={tier.name}, EK): {prompt[:200]}...")
 
         # 2. Pre-send sanitization (identical gate to the legacy path).
-        effective_prompt = prompt
-        if self.sanitization is not None:
-            san_result = await self.sanitization.process(
-                prompt, {"source": "llm_complete", "tier": tier.name}
-            )
-            if not san_result.is_safe:
-                raise ValueError(
-                    f"Prompt blocked by sanitization: {san_result.classification.value}"
-                )
-            if san_result.sanitized_text is not None:
-                effective_prompt = san_result.sanitized_text
+        effective_prompt = await self._sanitize_prompt(prompt, "llm_complete", tier)
 
         # 3. Route through the EK provider shim (reliability lives here).
         messages = [{"role": "user", "content": effective_prompt}]
@@ -520,10 +644,7 @@ class LLMClientWrapper:
         total_tokens = response.total_tokens
 
         # 4. Post-receive response sanitization.
-        if self.response_sanitizer is not None:
-            resp_result = await self.response_sanitizer.sanitize_response(content)
-            if resp_result.sanitized_text is not None:
-                content = resp_result.sanitized_text
+        content = await self._sanitize_response_text(content)
 
         # 5. Runtime TokenBudget owns the token-sum ceiling — consume FIRST and
         # raise on cap BEFORE returning or caching (ACCEPTED budget precedence).
@@ -533,12 +654,7 @@ class LLMClientWrapper:
             )
 
         # Resolve the model that served the request for cache metadata + return.
-        model_used = ""
-        raw = getattr(response, "raw", None)
-        if isinstance(raw, dict):
-            model_used = str(raw.get("model") or "")
-        if not model_used:
-            model_used = model or self.router.get_model_for_tier(tier) or ""
+        model_used = self._resolve_ek_model_used(response, model, tier)
 
         # 6. Cache store.
         if use_cache:
@@ -548,6 +664,21 @@ class LLMClientWrapper:
             logger.info(f"Response from {model_used} (EK): {content[:200]}...")
 
         return content, model_used, total_tokens
+
+    def _resolve_ek_model_used(
+        self, response: Any, model: str | None, tier: ModelTier
+    ) -> str:
+        """Resolve the model that served an EK response for cache metadata.
+
+        Prefers the model echoed in ``response.raw``; falls back to the
+        explicit override, then the tier default, then an empty string.
+        """
+        raw = getattr(response, "raw", None)
+        if isinstance(raw, dict):
+            model_used = str(raw.get("model") or "")
+            if model_used:
+                return model_used
+        return model or self.router.get_model_for_tier(tier) or ""
 
     async def complete_stream(
         self, prompt: str, tier: ModelTier = ModelTier.TIER_2, **kwargs: Any
@@ -572,17 +703,7 @@ class LLMClientWrapper:
             raise RuntimeError(f"No available model for tier {tier.name}")
 
         # Pre-send sanitization
-        effective_prompt = prompt
-        if self.sanitization is not None:
-            san_result = await self.sanitization.process(
-                prompt, {"source": "llm_stream", "tier": tier.name}
-            )
-            if not san_result.is_safe:
-                raise ValueError(
-                    f"Prompt blocked by sanitization: {san_result.classification.value}"
-                )
-            if san_result.sanitized_text is not None:
-                effective_prompt = san_result.sanitized_text
+        effective_prompt = await self._sanitize_prompt(prompt, "llm_stream", tier)
 
         start = time.monotonic()
         total_response = []
@@ -647,17 +768,12 @@ class LLMClientWrapper:
             raise RuntimeError("Backend does not support complete_chat")
 
         # Check cache
+        cache_key: str | None = None
         if use_cache and self.enable_cache:
             cache_key = self._cache_key(str(messages), tier, tools=tools, model=model, **kwargs)
-            cached = self._get_cached(cache_key)
-            if cached:
-                import json
-                try:
-                    response_dict = json.loads(cached.response)
-                    logger.debug(f"Cache hit for chat key {cache_key}")
-                    return response_dict, cached.model, cached.tokens_used
-                except json.JSONDecodeError:
-                    pass # Fall through if cache is corrupted
+            cached_chat = self._get_cached_chat(cache_key)
+            if cached_chat is not None:
+                return cached_chat
 
         # Use router for model selection and fallback
         async def call_model(m: str, p: str) -> dict[str, Any]:
@@ -665,67 +781,94 @@ class LLMClientWrapper:
             # since complete_chat takes messages natively
             return await self.backend.complete_chat(m, messages, tools=tools, **kwargs)
 
-        tried = []
-        last_error = None
+        # Estimate tokens - rudimentary for messages
+        # Convert messages to a single string to count tokens
+        prompt_str = " ".join([m.get("content", "") for m in messages])
 
-        for _ in range(max_retries):
-            selected_model = model or self.router.get_model_for_tier(tier)
-            if selected_model is None or selected_model in tried:
-                break
+        def pre_attempt(selected_model: str) -> None:
+            self._check_prompt_budget(prompt_str, selected_model)
 
-            tried.append(selected_model)
-
-            # Estimate tokens - rudimentary for messages
-            # Convert messages to a single string to count tokens
-            prompt_str = " ".join([m.get("content", "") for m in messages])
-            prompt_tokens = self.backend.count_tokens(prompt_str, selected_model)
-            if self.budget and not self.budget.can_afford(prompt_tokens * 2):
-                raise ValueError(
-                    f"Budget exceeded: {self.budget.used_tokens}/{self.budget.max_tokens}"
-                )
-
+        async def attempt(selected_model: str) -> tuple[dict[str, Any], str, int]:
             start = time.monotonic()
+            return await self._run_chat_attempt(
+                call_model,
+                selected_model,
+                prompt_str,
+                start=start,
+                use_cache=use_cache,
+                cache_key=cache_key,
+            )
 
-            try:
-                # _execute_call expects a prompt string, so we pass prompt_str
-                response_dict = await self.router._execute_call(
-                    call_model, selected_model, prompt_str
-                )
+        def on_error(selected_model: str, error: Exception) -> None:
+            self.router._classify_and_record_error(selected_model, error)
+            logger.warning(f"Model {selected_model} failed: {error}")
 
-                # Count tokens of response
-                response_text = response_dict.get("content", "") or ""
-                if response_dict.get("tool_calls"):
-                    response_text += str(response_dict.get("tool_calls"))
-
-                tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
-                latency = (time.monotonic() - start) * 1000
-
-                # Record success
-                self.router.record_success(selected_model, latency)
-
-                # Update budget
-                if self.budget:
-                    self.budget.consume(tokens)
-
-                # Cache response
-                if use_cache and self.enable_cache:
-                    import json
-                    self._set_cached(cache_key, json.dumps(response_dict), selected_model, tokens)
-
-                return response_dict, selected_model, tokens
-
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:
-                self.router._classify_and_record_error(selected_model, e)
-                last_error = e
-                logger.warning(f"Model {selected_model} failed: {e}")
-
-        if last_error:
-            raise last_error
-        raise RuntimeError(
-            f"All models failed. Tried: {tried}. No further information available."
+        return await self._run_with_fallback(
+            tier=tier,
+            model=model,
+            max_retries=max_retries,
+            pre_attempt=pre_attempt,
+            attempt=attempt,
+            on_error=on_error,
         )
+
+    def _get_cached_chat(
+        self, cache_key: str
+    ) -> tuple[dict[str, Any], str, int] | None:
+        """Return a decoded cached chat response, or None on miss/corruption."""
+        cached = self._get_cached(cache_key)
+        if cached is None:
+            return None
+        import json
+        try:
+            response_dict = json.loads(cached.response)
+        except json.JSONDecodeError:
+            return None  # Fall through if cache is corrupted
+        logger.debug(f"Cache hit for chat key {cache_key}")
+        return response_dict, cached.model, cached.tokens_used
+
+    async def _run_chat_attempt(
+        self,
+        call_model: Callable[[str, str], Any],
+        selected_model: str,
+        prompt_str: str,
+        *,
+        start: float,
+        use_cache: bool,
+        cache_key: str | None,
+    ) -> tuple[dict[str, Any], str, int]:
+        """Execute one ``complete_chat`` attempt and record its success.
+
+        Runs the routed call, counts request+response tokens, records router
+        success, updates the budget, and caches the serialized response.
+        """
+        assert self.backend is not None  # guarded by complete_chat() before invocation
+        # _execute_call expects a prompt string, so we pass prompt_str
+        response_dict = await self.router._execute_call(
+            call_model, selected_model, prompt_str
+        )
+
+        # Count tokens of response
+        response_text = response_dict.get("content", "") or ""
+        if response_dict.get("tool_calls"):
+            response_text += str(response_dict.get("tool_calls"))
+
+        tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
+        latency = (time.monotonic() - start) * 1000
+
+        # Record success
+        self.router.record_success(selected_model, latency)
+
+        # Update budget
+        if self.budget:
+            self.budget.consume(tokens)
+
+        # Cache response
+        if use_cache and self.enable_cache and cache_key is not None:
+            import json
+            self._set_cached(cache_key, json.dumps(response_dict), selected_model, tokens)
+
+        return response_dict, selected_model, tokens
 
     def with_sanitization(
         self,

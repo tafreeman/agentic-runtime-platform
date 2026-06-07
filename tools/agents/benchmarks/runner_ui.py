@@ -147,6 +147,79 @@ def select_benchmark() -> str | None:
     return options[choice]
 
 
+_MODEL_PROVIDER_DISPLAY: dict[str, tuple[str, list[str]]] = {
+    "github_models": (
+        "🌐 GitHub Models",
+        ["gh:openai/gpt-4o-mini", "gh:openai/gpt-4o", "gh:microsoft/phi-4"],
+    ),
+    "local_onnx": (
+        "💻 Local ONNX",
+        ["local:phi4", "local:phi3.5", "local:mistral"],
+    ),
+    "ollama": (
+        "🦙 Ollama",
+        [
+            "ollama:deepseek-r1:8b",
+            "ollama:qwen2.5-coder:14b",
+            "ollama:phi4-reasoning:latest",
+        ],
+    ),
+    "ai_toolkit": (
+        "🧰 AI Toolkit",
+        ["aitk:phi-4-mini-instruct", "aitk:qwen2.5-coder-7b-instruct"],
+    ),
+}
+
+
+def _print_provider_models(
+    provider_key: str,
+    display_name: str,
+    recommended: list[str],
+    providers: dict[str, list[str]],
+    all_models: list[str],
+) -> None:
+    """Print one provider's recommended models, appending them to *all_models*."""
+    available = providers[provider_key]
+    shown = [model for model in recommended if model in available][:3]
+    if not shown:
+        shown = available[:3]
+
+    print(f"  {display_name} ({len(available)} available)")
+    for model in shown:
+        idx = len(all_models) + 1
+        print(f"    [{idx}] {model}")
+        all_models.append(model)
+    if len(available) > 3:
+        print(f"      ... +{len(available) - 3} more")
+    print()
+
+
+def _resolve_model_choice(
+    choice: str,
+    all_models: list[str],
+    providers: dict[str, list[str]],
+) -> tuple[bool, str | None]:
+    """Resolve a menu *choice* to (handled, selection).
+
+    ``handled`` is False when the input was invalid and the menu should repeat.
+    """
+    if choice.lower() == "q":
+        return True, None
+
+    try:
+        idx = int(choice)
+    except ValueError:
+        return False, None
+
+    if 1 <= idx <= len(all_models):
+        return True, all_models[idx - 1]
+    if idx == len(all_models) + 1:
+        return True, browse_all_models(providers)
+    if idx == len(all_models) + 2:
+        return True, prompt_input("Enter model ID")
+    return False, None
+
+
 def select_model() -> str | None:
     """Interactive model selection using discovered models."""
     print_header("SELECT MODEL")
@@ -161,47 +234,14 @@ def select_model() -> str | None:
         print()
         return prompt_input("Enter model ID manually (e.g., 'gh:gpt-4o-mini')")
 
-    provider_display = {
-        "github_models": (
-            "🌐 GitHub Models",
-            ["gh:openai/gpt-4o-mini", "gh:openai/gpt-4o", "gh:microsoft/phi-4"],
-        ),
-        "local_onnx": (
-            "💻 Local ONNX",
-            ["local:phi4", "local:phi3.5", "local:mistral"],
-        ),
-        "ollama": (
-            "🦙 Ollama",
-            [
-                "ollama:deepseek-r1:8b",
-                "ollama:qwen2.5-coder:14b",
-                "ollama:phi4-reasoning:latest",
-            ],
-        ),
-        "ai_toolkit": (
-            "🧰 AI Toolkit",
-            ["aitk:phi-4-mini-instruct", "aitk:qwen2.5-coder-7b-instruct"],
-        ),
-    }
-
-    all_models = []
+    all_models: list[str] = []
     print()
 
-    for provider_key, (display_name, recommended) in provider_display.items():
+    for provider_key, (display_name, recommended) in _MODEL_PROVIDER_DISPLAY.items():
         if provider_key in providers:
-            available = providers[provider_key]
-            shown = [model for model in recommended if model in available][:3]
-            if not shown:
-                shown = available[:3]
-
-            print(f"  {display_name} ({len(available)} available)")
-            for model in shown:
-                idx = len(all_models) + 1
-                print(f"    [{idx}] {model}")
-                all_models.append(model)
-            if len(available) > 3:
-                print(f"      ... +{len(available) - 3} more")
-            print()
+            _print_provider_models(
+                provider_key, display_name, recommended, providers, all_models
+            )
 
     print(f"  [{len(all_models) + 1}] Browse all models")
     print(f"  [{len(all_models) + 2}] Enter model ID manually")
@@ -209,21 +249,9 @@ def select_model() -> str | None:
 
     while True:
         choice = input(f"\nSelect model [1-{len(all_models) + 2}]: ").strip()
-
-        if choice.lower() == "q":
-            return None
-
-        try:
-            idx = int(choice)
-            if 1 <= idx <= len(all_models):
-                return all_models[idx - 1]
-            if idx == len(all_models) + 1:
-                return browse_all_models(providers)
-            if idx == len(all_models) + 2:
-                return prompt_input("Enter model ID")
-        except ValueError:
-            pass
-
+        handled, selection = _resolve_model_choice(choice, all_models, providers)
+        if handled:
+            return selection
         print("Invalid choice. Try again.")
 
 

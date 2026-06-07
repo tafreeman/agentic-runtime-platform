@@ -130,6 +130,35 @@ def _extract_text(value: Any) -> str:
     return str(value) if value is not None else ""
 
 
+def _parse_duration(raw: dict[str, Any]) -> float | None:
+    """Extract a duration in seconds from a raw step dict."""
+    raw_dur = raw.get("duration_seconds") or raw.get("duration_ms")
+    if not isinstance(raw_dur, (int, float)):
+        return None
+    if "duration_ms" in raw and "duration_seconds" not in raw:
+        return float(raw_dur) / 1000.0
+    return float(raw_dur)
+
+
+def _parse_output_text(raw: dict[str, Any]) -> str:
+    """Extract output text from a raw step dict, trying multiple locations."""
+    for key in ("output_data", "outputs", "output", "result"):
+        if raw.get(key):
+            candidate = _extract_text(raw[key])
+            if candidate.strip():
+                return candidate
+
+    # If still empty, try the step's top-level text fields
+    output_text = ""
+    for key in ("content", "text", "response", "message"):
+        if raw.get(key):
+            output_text = _extract_text(raw[key])
+            if output_text.strip():
+                break
+
+    return output_text
+
+
 def _parse_step_from_dict(raw: dict[str, Any]) -> StepRecord | None:
     """Convert a raw step dict (many possible schemas) into a StepRecord."""
     # Determine step name
@@ -155,39 +184,33 @@ def _parse_step_from_dict(raw: dict[str, Any]) -> StepRecord | None:
         raw.get("status") or raw.get("step_status") or raw.get("state") or "unknown"
     )
 
-    # Duration
-    duration_seconds: float | None = None
-    raw_dur = raw.get("duration_seconds") or raw.get("duration_ms")
-    if isinstance(raw_dur, (int, float)):
-        if "duration_ms" in raw and "duration_seconds" not in raw:
-            duration_seconds = float(raw_dur) / 1000.0
-        else:
-            duration_seconds = float(raw_dur)
-
-    # Output text — try multiple locations
-    output_text = ""
-    for key in ("output_data", "outputs", "output", "result"):
-        if key in raw and raw[key]:
-            candidate = _extract_text(raw[key])
-            if candidate.strip():
-                output_text = candidate
-                break
-
-    # If still empty, try the step's top-level text fields
-    if not output_text:
-        for key in ("content", "text", "response", "message"):
-            if key in raw and raw[key]:
-                output_text = _extract_text(raw[key])
-                if output_text.strip():
-                    break
-
     return StepRecord(
         step_name=str(step_name),
         agent_type=str(agent_type),
-        output_text=output_text,
+        output_text=_parse_output_text(raw),
         status=status,
-        duration_seconds=duration_seconds,
+        duration_seconds=_parse_duration(raw),
     )
+
+
+def _unwrap_envelope(raw: Any) -> Any:
+    """Unwrap a server response envelope (``data``/``result``/``payload``)."""
+    if isinstance(raw, dict):
+        for wrapper in ("data", "result", "payload"):
+            if wrapper in raw and isinstance(raw[wrapper], dict):
+                return raw[wrapper]
+    return raw
+
+
+def _locate_steps(raw: Any) -> list[dict[str, Any]]:
+    """Locate the list of raw step dicts within a parsed trace payload."""
+    if isinstance(raw, list):
+        return raw  # type: ignore[return-value]
+    if isinstance(raw, dict):
+        for key in ("steps", "step_results", "results"):
+            if key in raw and isinstance(raw[key], list):
+                return raw[key]  # type: ignore[return-value]
+    return []
 
 
 def parse_trace(trace_path: Path) -> list[StepRecord]:
@@ -215,22 +238,8 @@ def parse_trace(trace_path: Path) -> list[StepRecord]:
     with trace_path.open("r", encoding="utf-8") as fh:
         raw: Any = json.load(fh)
 
-    # Unwrap server envelope if present
-    if isinstance(raw, dict):
-        for wrapper in ("data", "result", "payload"):
-            if wrapper in raw and isinstance(raw[wrapper], dict):
-                raw = raw[wrapper]
-                break
-
-    # Locate the steps list
-    steps_raw: list[dict[str, Any]] = []
-    if isinstance(raw, list):
-        steps_raw = raw  # type: ignore[assignment]
-    elif isinstance(raw, dict):
-        for key in ("steps", "step_results", "results"):
-            if key in raw and isinstance(raw[key], list):
-                steps_raw = raw[key]  # type: ignore[assignment]
-                break
+    raw = _unwrap_envelope(raw)
+    steps_raw = _locate_steps(raw)
 
     if not steps_raw:
         raise ValueError(
@@ -276,6 +285,80 @@ def resolve_rubric_name(agent_type: str, override: str | None) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _heuristic_completeness(word_count: int) -> float:
+    """Reward longer, structured responses up to a sweet-spot."""
+    if word_count == 0:
+        return 0.0
+    if word_count < 20:
+        return 0.3
+    if word_count < 60:
+        return 0.5
+    if word_count < 200:
+        return 0.75
+    return 0.85
+
+
+def _heuristic_correctness(text: str, word_count: int) -> float:
+    """Proxy correctness from presence of code blocks / structured data."""
+    has_code_block = "```" in text or "    " in text
+    has_numbered = any(
+        line.strip()[:2].rstrip(".").isdigit() for line in text.splitlines()
+    )
+    has_bullets = any(
+        line.strip().startswith(("-", "*", "•")) for line in text.splitlines()
+    )
+    structure_bonus = (0.1 if has_code_block else 0) + (
+        0.05 if has_numbered or has_bullets else 0
+    )
+    return min(1.0, 0.65 + structure_bonus + (0.05 if word_count > 100 else 0))
+
+
+def _heuristic_clarity(text: str, line_count: int) -> float:
+    """Reward structured, readable content (headers, code blocks)."""
+    has_code_block = "```" in text or "    " in text
+    has_headers = any(line.strip().startswith("#") for line in text.splitlines())
+    return min(
+        1.0,
+        0.60
+        + (0.15 if has_code_block else 0)
+        + (0.1 if has_headers else 0)
+        + (0.05 if line_count > 5 else 0),
+    )
+
+
+def _heuristic_relevance(word_count: int) -> float:
+    """Placeholder relevance based on non-emptiness and minimum substance."""
+    if word_count > 30:
+        return 0.85
+    if word_count > 5:
+        return 0.6
+    return 0.2
+
+
+def _heuristic_time_score(duration_seconds: float | None) -> float:
+    """Map execution duration to a time-efficiency sub-score."""
+    if duration_seconds is None:
+        return 0.75
+    if duration_seconds < 2:
+        return 1.0
+    if duration_seconds < 10:
+        return 0.85
+    if duration_seconds < 30:
+        return 0.70
+    if duration_seconds < 60:
+        return 0.55
+    return 0.40
+
+
+def _heuristic_efficiency(word_count: int, duration_seconds: float | None) -> float:
+    """Combine time score with a verbosity penalty for very long responses."""
+    time_score = _heuristic_time_score(duration_seconds)
+    verbosity_penalty = (
+        max(0.0, (word_count - 1500) / 10000) if word_count > 1500 else 0.0
+    )
+    return max(0.0, time_score - verbosity_penalty)
+
+
 def _score_text_heuristic(
     output_text: str, _rubric_name: str, duration_seconds: float | None
 ) -> dict[str, float]:
@@ -298,57 +381,11 @@ def _score_text_heuristic(
     line_count = len(text.splitlines())
 
     # --- Generic sub-scores ---
-
-    # Completeness: reward longer, structured responses up to a sweet-spot
-    if word_count == 0:
-        completeness = 0.0
-    elif word_count < 20:
-        completeness = 0.3
-    elif word_count < 60:
-        completeness = 0.5
-    elif word_count < 200:
-        completeness = 0.75
-    else:
-        completeness = 0.85
-
-    # Accuracy / Correctness: presence of code blocks, structured data, or
-    # concrete assertions is a proxy for concrete, accurate output.
-    has_code_block = "```" in text or "    " in text
-    has_numbered = any(line.strip()[:2].rstrip(".").isdigit() for line in text.splitlines())
-    has_bullets = any(line.strip().startswith(("-", "*", "•")) for line in text.splitlines())
-    structure_bonus = (0.1 if has_code_block else 0) + (0.05 if has_numbered or has_bullets else 0)
-    correctness = min(1.0, 0.65 + structure_bonus + (0.05 if word_count > 100 else 0))
-
-    # Clarity / Code Quality: reward structured, readable content
-    has_headers = any(line.strip().startswith("#") for line in text.splitlines())
-    clarity = min(1.0, 0.60 + (0.15 if has_code_block else 0) + (0.1 if has_headers else 0) + (0.05 if line_count > 5 else 0))
-
-    # Relevance: placeholder — without a reference answer we assume relevance
-    # based on non-emptiness and minimum substance.
-    if word_count > 30:
-        relevance = 0.85
-    elif word_count > 5:
-        relevance = 0.6
-    else:
-        relevance = 0.2
-
-    # Efficiency (time + response length)
-    if duration_seconds is None:
-        time_score = 0.75
-    elif duration_seconds < 2:
-        time_score = 1.0
-    elif duration_seconds < 10:
-        time_score = 0.85
-    elif duration_seconds < 30:
-        time_score = 0.70
-    elif duration_seconds < 60:
-        time_score = 0.55
-    else:
-        time_score = 0.40
-
-    # Penalise very verbose responses (over 1500 words) slightly
-    verbosity_penalty = max(0.0, (word_count - 1500) / 10000) if word_count > 1500 else 0.0
-    efficiency = max(0.0, time_score - verbosity_penalty)
+    completeness = _heuristic_completeness(word_count)
+    correctness = _heuristic_correctness(text, word_count)
+    clarity = _heuristic_clarity(text, line_count)
+    relevance = _heuristic_relevance(word_count)
+    efficiency = _heuristic_efficiency(word_count, duration_seconds)
 
     # Safety: cannot truly assess without an LLM; assume safe unless obvious red flags
     safety = 0.90
@@ -630,6 +667,74 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _parse_trace_or_exit(trace_path: Path) -> list[StepRecord] | int:
+    """Parse a trace, returning records or an exit code on failure."""
+    try:
+        return parse_trace(trace_path)
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: Invalid JSON in {trace_path}: {exc}", file=sys.stderr)
+        return 1
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+
+def _score_with_fallback(
+    record: StepRecord, rubric_override: str | None
+) -> StepScore | None:
+    """Score a record, falling back to the default rubric if needed."""
+    rubric_name = resolve_rubric_name(record.agent_type, rubric_override)
+    try:
+        return score_step(record, rubric_name, rubric_override)
+    except FileNotFoundError as exc:
+        print(
+            f"WARNING: Rubric not found for step {record.step_name!r}: {exc}",
+            file=sys.stderr,
+        )
+
+    # Fall back to default rubric
+    try:
+        result = score_step(record, "default", rubric_override)
+        return StepScore(
+            step_name=result.step_name,
+            agent_type=result.agent_type,
+            rubric_name="default (fallback)",
+            weighted_score=result.weighted_score,
+            passed=result.passed,
+            criterion_scores=result.criterion_scores,
+            missing_criteria=result.missing_criteria,
+        )
+    except Exception as inner_exc:
+        logger.error(
+            "Failed to score step %r with fallback rubric: %s",
+            record.step_name,
+            inner_exc,
+        )
+        return None
+
+
+def _score_records(
+    records: list[StepRecord], rubric_override: str | None
+) -> tuple[list[StepScore], int]:
+    """Score all records, returning ``(step_scores, skipped_count)``."""
+    step_scores: list[StepScore] = []
+    skipped = 0
+    for record in records:
+        if not record.output_text.strip():
+            logger.warning(
+                "Step %r has no output text; skipping scoring.", record.step_name
+            )
+            skipped += 1
+            continue
+        result = _score_with_fallback(record, rubric_override)
+        if result is not None:
+            step_scores.append(result)
+    return step_scores, skipped
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the score-trace CLI.
 
@@ -658,63 +763,16 @@ def main(argv: list[str] | None = None) -> int:
     trace_path: Path = args.trace
 
     # Parse trace
-    try:
-        records = parse_trace(trace_path)
-    except FileNotFoundError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
-    except json.JSONDecodeError as exc:
-        print(f"ERROR: Invalid JSON in {trace_path}: {exc}", file=sys.stderr)
-        return 1
-    except ValueError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
+    records = _parse_trace_or_exit(trace_path)
+    if isinstance(records, int):
+        return records
 
     if not records:
         print(f"ERROR: No steps found in {trace_path}.", file=sys.stderr)
         return 1
 
     # Score each step
-    step_scores: list[StepScore] = []
-    skipped: int = 0
-
-    for record in records:
-        if not record.output_text.strip():
-            logger.warning(
-                "Step %r has no output text; skipping scoring.", record.step_name
-            )
-            skipped += 1
-            continue
-
-        rubric_name = resolve_rubric_name(record.agent_type, args.rubric)
-
-        try:
-            result = score_step(record, rubric_name, args.rubric)
-            step_scores.append(result)
-        except FileNotFoundError as exc:
-            print(
-                f"WARNING: Rubric not found for step {record.step_name!r}: {exc}",
-                file=sys.stderr,
-            )
-            # Fall back to default rubric
-            try:
-                result = score_step(record, "default", args.rubric)
-                result = StepScore(
-                    step_name=result.step_name,
-                    agent_type=result.agent_type,
-                    rubric_name="default (fallback)",
-                    weighted_score=result.weighted_score,
-                    passed=result.passed,
-                    criterion_scores=result.criterion_scores,
-                    missing_criteria=result.missing_criteria,
-                )
-                step_scores.append(result)
-            except Exception as inner_exc:
-                logger.error(
-                    "Failed to score step %r with fallback rubric: %s",
-                    record.step_name,
-                    inner_exc,
-                )
+    step_scores, skipped = _score_records(records, args.rubric)
 
     # Console output (always printed)
     print_console_summary(trace_path, step_scores, skipped_count=skipped)

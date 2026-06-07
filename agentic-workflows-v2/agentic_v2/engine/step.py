@@ -258,23 +258,11 @@ class StepExecutor:
         await ctx.mark_step_start(step_def.name)
 
         # Run pre-hooks
-        try:
-            for hook in step_def.pre_hooks:
-                await hook(ctx, step_def)
-        except Exception as e:
-            result.status = StepStatus.FAILED
-            result.error = f"Pre-hook failed: {e}"
-            await ctx.mark_step_failed(step_def.name, result.error)
+        if not await self._run_pre_hooks(step_def, ctx, result):
             return result
 
         # Prepare inputs
-        child_ctx = ctx.child(step_def.name)
-        mapped_inputs: dict[str, Any] = {}
-        for step_input, ctx_var in step_def.input_mapping.items():
-            value = self._resolve_input_mapping_value(ctx, ctx_var)
-            mapped_inputs[step_input] = value
-            await child_ctx.set(step_input, value)
-        result.input_data = mapped_inputs
+        child_ctx = await self._prepare_inputs(step_def, ctx, result)
 
         # Execute with retry
         attempt = 0
@@ -292,123 +280,23 @@ class StepExecutor:
                 result.status = StepStatus.SUCCESS
                 result.output_data = output or {}
 
-                # Extract _meta injected by LLM step for model tracking
-                meta = result.output_data.pop("_meta", None)
-                if isinstance(meta, dict):
-                    result.model_used = meta.get("model_used")
-                    if meta.get("tokens_used"):
-                        result.metadata["tokens_used"] = meta["tokens_used"]
-
-                # Safety-net: reviewer outputs sometimes arrive as raw_response
-                # (e.g. fenced/truncated JSON). Ensure gating conditions can still
-                # evaluate ${steps.<review>.outputs.review_report.overall_status}.
-                if (
-                    "review_report" in step_def.output_mapping
-                    or step_def.name.startswith("review")
-                ) and "review_report" not in result.output_data:
-                    raw_text = str(result.output_data.get("raw_response", ""))
-                    status_match = re.search(
-                        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
-                        raw_text,
-                        flags=re.IGNORECASE,
-                    )
-                    approved_match = re.search(
-                        r'"?approved"?\s*[:=]\s*(true|false)',
-                        raw_text,
-                        flags=re.IGNORECASE,
-                    )
-
-                    if status_match:
-                        raw_status = status_match.group(1).strip()
-                    elif approved_match:
-                        raw_status = (
-                            "APPROVED"
-                            if approved_match.group(1).lower() == "true"
-                            else None
-                        )
-                    else:
-                        raw_status = None  # normalize() defaults to NEEDS_FIXES
-
-                    result.output_data["review_report"] = {
-                        "overall_status": ReviewStatus.normalize(raw_status).value
-                    }
-
-                # Also normalize review_report.overall_status when it IS present
-                if isinstance(result.output_data.get("review_report"), dict):
-                    rr = result.output_data["review_report"]
-                    if "overall_status" in rr:
-                        rr["overall_status"] = ReviewStatus.normalize(
-                            rr["overall_status"]
-                        ).value
-
-                for step_output, ctx_var in step_def.output_mapping.items():
-                    if step_output in result.output_data:
-                        await ctx.set(ctx_var, result.output_data[step_output])
-
-                # Store step result in context for expression resolution
-                # This enables ${steps.<name>.outputs.<key>} in when conditions
-                step_view = {
-                    "status": result.status.value,
-                    "outputs": result.output_data,
-                }
-                # Store under a shared nested "steps" namespace so expressions
-                # like ${steps.review_code.outputs.foo} resolve correctly.
-                steps_state = ctx.get_sync("steps")
-                if not isinstance(steps_state, dict):
-                    steps_state = {}
-                steps_state[step_def.name] = step_view
-                ctx.set_sync("steps", steps_state)
+                self._extract_meta(result)
+                self._salvage_review_report(step_def, result)
+                self._normalize_review_report(result)
+                await self._map_outputs(step_def, ctx, result)
+                self._store_step_view(step_def, ctx, result)
 
                 # Run post-hooks
                 for hook in step_def.post_hooks:
                     await hook(ctx, step_def)
 
                 # Run verification gate if configured
-                if step_def.verify is not None and step_def.verify.enabled:
-                    from .verification import (
-                        VerificationGate,
-                    )
-                    from .verification import VerificationStatus as VStatus
-
-                    gate = VerificationGate()
-                    v_status, failing = await gate.run_checks(
-                        step_def.verify.verification_commands,
-                        stop_on_first_failure=step_def.verify.stop_on_first_failure,
-                    )
-                    result.metadata["verification_status"] = v_status.value
-                    if failing:
-                        result.metadata["verification_failing_checks"] = list(failing)
-                    if v_status != VStatus.PASSED:
-                        strategy = step_def.verify.escalation_strategy
-                        if strategy == "block":
-                            result.status = StepStatus.FAILED
-                            result.error = f"Verification failed: {', '.join(failing)}"
-                            await ctx.mark_step_failed(step_def.name, result.error)
-                            return result
-                        # "report" and "ask" just log and continue
-                        logger.warning(
-                            "Verification failed for step %r (strategy=%s): %s",
-                            step_def.name,
-                            strategy,
-                            ", ".join(failing),
-                        )
+                if not await self._run_verification_gate(step_def, ctx, result):
+                    return result
 
                 # Loop-until logic (R5): re-execute until condition is satisfied
-                if step_def.loop_until:
-                    loop_iteration = result.metadata.get("loop_iteration", 1)
-                    if loop_iteration < step_def.loop_max:
-                        from .expressions import ExpressionEvaluator
-
-                        satisfied = ExpressionEvaluator(ctx, {}).evaluate(
-                            step_def.loop_until
-                        )
-                        if not satisfied:
-                            result.metadata["loop_iteration"] = loop_iteration + 1
-                            result.status = StepStatus.RUNNING
-                            result.retry_count = 0
-                            continue  # re-run the step body
-
-                    result.metadata.setdefault("loop_iteration", loop_iteration)
+                if self._should_loop_again(step_def, ctx, result):
+                    continue  # re-run the step body
 
                 await ctx.mark_step_complete(step_def.name)
                 break
@@ -464,6 +352,207 @@ class StepExecutor:
         result.mark_complete(result.status == StepStatus.SUCCESS, result.error)
         return result
 
+    async def _run_pre_hooks(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> bool:
+        """Run pre-hooks; return False (and mark failure) if any hook fails."""
+        try:
+            for hook in step_def.pre_hooks:
+                await hook(ctx, step_def)
+        except Exception as e:
+            result.status = StepStatus.FAILED
+            result.error = f"Pre-hook failed: {e}"
+            await ctx.mark_step_failed(step_def.name, result.error)
+            return False
+        return True
+
+    async def _prepare_inputs(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> ExecutionContext:
+        """Resolve input mappings into a child context and record input_data."""
+        child_ctx = ctx.child(step_def.name)
+        mapped_inputs: dict[str, Any] = {}
+        for step_input, ctx_var in step_def.input_mapping.items():
+            value = self._resolve_input_mapping_value(ctx, ctx_var)
+            mapped_inputs[step_input] = value
+            await child_ctx.set(step_input, value)
+        result.input_data = mapped_inputs
+        return child_ctx
+
+    @staticmethod
+    def _extract_meta(result: StepResult) -> None:
+        """Extract _meta injected by LLM step for model tracking."""
+        meta = result.output_data.pop("_meta", None)
+        if isinstance(meta, dict):
+            result.model_used = meta.get("model_used")
+            if meta.get("tokens_used"):
+                result.metadata["tokens_used"] = meta["tokens_used"]
+
+    @staticmethod
+    def _salvage_review_report(
+        step_def: StepDefinition, result: StepResult
+    ) -> None:
+        """Salvage review_report from raw_response when reviewer output is text.
+
+        Reviewer outputs sometimes arrive as raw_response (e.g. fenced/truncated
+        JSON).  Ensures gating conditions can still evaluate
+        ``${steps.<review>.outputs.review_report.overall_status}``.
+        """
+        if (
+            "review_report" not in step_def.output_mapping
+            and not step_def.name.startswith("review")
+        ) or "review_report" in result.output_data:
+            return
+
+        raw_text = str(result.output_data.get("raw_response", ""))
+        status_match = re.search(
+            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+            raw_text,
+            flags=re.IGNORECASE,
+        )
+        approved_match = re.search(
+            r'"?approved"?\s*[:=]\s*(true|false)',
+            raw_text,
+            flags=re.IGNORECASE,
+        )
+
+        if status_match:
+            raw_status = status_match.group(1).strip()
+        elif approved_match:
+            raw_status = (
+                "APPROVED"
+                if approved_match.group(1).lower() == "true"
+                else None
+            )
+        else:
+            raw_status = None  # normalize() defaults to NEEDS_FIXES
+
+        result.output_data["review_report"] = {
+            "overall_status": ReviewStatus.normalize(raw_status).value
+        }
+
+    @staticmethod
+    def _normalize_review_report(result: StepResult) -> None:
+        """Normalize review_report.overall_status when it IS present."""
+        if isinstance(result.output_data.get("review_report"), dict):
+            rr = result.output_data["review_report"]
+            if "overall_status" in rr:
+                rr["overall_status"] = ReviewStatus.normalize(
+                    rr["overall_status"]
+                ).value
+
+    @staticmethod
+    async def _map_outputs(
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> None:
+        """Map declared step outputs into context variables."""
+        for step_output, ctx_var in step_def.output_mapping.items():
+            if step_output in result.output_data:
+                await ctx.set(ctx_var, result.output_data[step_output])
+
+    @staticmethod
+    def _store_step_view(
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> None:
+        """Store step result in context for expression resolution.
+
+        This enables ``${steps.<name>.outputs.<key>}`` in when conditions.
+        """
+        step_view = {
+            "status": result.status.value,
+            "outputs": result.output_data,
+        }
+        # Store under a shared nested "steps" namespace so expressions
+        # like ${steps.review_code.outputs.foo} resolve correctly.
+        steps_state = ctx.get_sync("steps")
+        if not isinstance(steps_state, dict):
+            steps_state = {}
+        steps_state[step_def.name] = step_view
+        ctx.set_sync("steps", steps_state)
+
+    async def _run_verification_gate(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> bool:
+        """Run the verification gate if configured.
+
+        Returns False when a blocking verification failure should abort the
+        step (result already marked FAILED); True otherwise.
+        """
+        if step_def.verify is None or not step_def.verify.enabled:
+            return True
+
+        from .verification import (
+            VerificationGate,
+        )
+        from .verification import VerificationStatus as VStatus
+
+        gate = VerificationGate()
+        v_status, failing = await gate.run_checks(
+            step_def.verify.verification_commands,
+            stop_on_first_failure=step_def.verify.stop_on_first_failure,
+        )
+        result.metadata["verification_status"] = v_status.value
+        if failing:
+            result.metadata["verification_failing_checks"] = list(failing)
+        if v_status != VStatus.PASSED:
+            strategy = step_def.verify.escalation_strategy
+            if strategy == "block":
+                result.status = StepStatus.FAILED
+                result.error = f"Verification failed: {', '.join(failing)}"
+                await ctx.mark_step_failed(step_def.name, result.error)
+                return False
+            # "report" and "ask" just log and continue
+            logger.warning(
+                "Verification failed for step %r (strategy=%s): %s",
+                step_def.name,
+                strategy,
+                ", ".join(failing),
+            )
+        return True
+
+    @staticmethod
+    def _should_loop_again(
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+    ) -> bool:
+        """Loop-until logic (R5): re-execute until condition is satisfied.
+
+        Returns True when the step body should re-run (loop condition not yet
+        satisfied and iteration budget remains).
+        """
+        if not step_def.loop_until:
+            return False
+
+        loop_iteration = result.metadata.get("loop_iteration", 1)
+        if loop_iteration < step_def.loop_max:
+            from .expressions import ExpressionEvaluator
+
+            satisfied = ExpressionEvaluator(ctx, {}).evaluate(
+                step_def.loop_until
+            )
+            if not satisfied:
+                result.metadata["loop_iteration"] = loop_iteration + 1
+                result.status = StepStatus.RUNNING
+                result.retry_count = 0
+                return True
+
+        result.metadata.setdefault("loop_iteration", loop_iteration)
+        return False
+
     async def _execute_with_timeout(
         self,
         func: StepFunction,
@@ -495,7 +584,9 @@ class StepExecutor:
     async def cancel_all(self) -> int:
         """Cancel all running steps (returns count of cancelled tasks)."""
         count = 0
-        for name in self._running_tasks.keys():
+        # Snapshot keys: cancel() awaits, letting cancelled tasks' finally
+        # blocks pop from _running_tasks mid-iteration (RuntimeError otherwise).
+        for name in list(self._running_tasks):
             if await self.cancel(name):
                 count += 1
         return count

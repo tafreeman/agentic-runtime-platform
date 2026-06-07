@@ -157,6 +157,55 @@ def check_local_openai(host: str) -> dict[str, Any]:
     }
 
 
+def _run_check(out: dict[str, Any], name: str, func: Any, *args: Any) -> None:
+    """Run a provider check, storing the result (or error) under ``name``."""
+    try:
+        out["checked"][name] = func(*args)
+    except Exception as e:
+        out["checked"][name] = {"error": str(e)}
+
+
+def _collect_checks(out: dict[str, Any]) -> None:
+    """Run all configured provider checks and populate ``out['checked']``."""
+    # GitHub
+    gh = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
+    if gh:
+        _run_check(out, "github", check_github, gh)
+
+    # OpenAI
+    openai_key = os.getenv("OPENAI_API_KEY")
+    openai_base = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
+    if openai_key:
+        _run_check(out, "openai", check_openai, openai_key, openai_base)
+
+    # Anthropic
+    anth = os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY_0")
+    if anth:
+        _run_check(out, "anthropic", check_anthropic, anth)
+
+    # Gemini - best effort (Google API variations exist)
+    gem = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if gem:
+        out["checked"]["gemini"] = {
+            "note": "API key present; please verify quotas in Google Cloud Console or run provider-specific checks"
+        }
+
+    # LM Studio
+    lm = os.getenv("LMSTUDIO_HOST")
+    if lm:
+        _run_check(out, "lmstudio", check_lmstudio, lm)
+
+    # Ollama
+    oll = os.getenv("OLLAMA_HOST")
+    if oll:
+        _run_check(out, "ollama", check_ollama, oll)
+
+    # Local OpenAI-compatible
+    local_openai = os.getenv("LOCAL_AI_API_BASE_URL") or os.getenv("OPENAI_BASE_URL")
+    if local_openai:
+        _run_check(out, "local_openai", check_local_openai, local_openai)
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     p = argparse.ArgumentParser()
@@ -175,61 +224,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out: dict[str, Any] = {"checked": {}, "probe_summary": probe.get("summary")}
 
-    # GitHub
-    gh = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
-    if gh:
-        try:
-            out["checked"]["github"] = check_github(gh)
-        except Exception as e:
-            out["checked"]["github"] = {"error": str(e)}
-
-    # OpenAI
-    openai_key = os.getenv("OPENAI_API_KEY")
-    openai_base = os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE")
-    if openai_key:
-        try:
-            out["checked"]["openai"] = check_openai(openai_key, openai_base)
-        except Exception as e:
-            out["checked"]["openai"] = {"error": str(e)}
-
-    # Anthropic
-    anth = os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY_0")
-    if anth:
-        try:
-            out["checked"]["anthropic"] = check_anthropic(anth)
-        except Exception as e:
-            out["checked"]["anthropic"] = {"error": str(e)}
-
-    # Gemini - best effort (Google API variations exist)
-    gem = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if gem:
-        out["checked"]["gemini"] = {
-            "note": "API key present; please verify quotas in Google Cloud Console or run provider-specific checks"
-        }
-
-    # LM Studio
-    lm = os.getenv("LMSTUDIO_HOST")
-    if lm:
-        try:
-            out["checked"]["lmstudio"] = check_lmstudio(lm)
-        except Exception as e:
-            out["checked"]["lmstudio"] = {"error": str(e)}
-
-    # Ollama
-    oll = os.getenv("OLLAMA_HOST")
-    if oll:
-        try:
-            out["checked"]["ollama"] = check_ollama(oll)
-        except Exception as e:
-            out["checked"]["ollama"] = {"error": str(e)}
-
-    # Local OpenAI-compatible
-    local_openai = os.getenv("LOCAL_AI_API_BASE_URL") or os.getenv("OPENAI_BASE_URL")
-    if local_openai:
-        try:
-            out["checked"]["local_openai"] = check_local_openai(local_openai)
-        except Exception as e:
-            out["checked"]["local_openai"] = {"error": str(e)}
+    _collect_checks(out)
 
     # Save output or print
     if args.out:

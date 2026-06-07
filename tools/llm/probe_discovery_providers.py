@@ -118,14 +118,14 @@ def _probe_local_onnx(verbose: bool = False) -> dict[str, Any]:
     }
 
 
-def _probe_github_models() -> dict[str, Any]:
-    """Probe GitHub Models via HTTP API using GITHUB_TOKEN / GITHUB_TOKEN_0..N."""
-    gh_models: list[str] = []
-    gh_error = None
-    rotation_keys: list[str] = []
+def _collect_github_tokens() -> tuple[list[tuple[str, str]], list[str]]:
+    """Collect configured GitHub tokens (primary + numbered slots).
 
-    # Collect all configured tokens (primary + numbered slots)
+    Returns ``(tokens, rotation_keys)`` where tokens is a list of
+    ``(label, token)`` pairs.
+    """
     tokens: list[tuple[str, str]] = []  # (label, token)
+    rotation_keys: list[str] = []
     primary = os.getenv(ENV_GITHUB_TOKEN) or os.getenv(ENV_GH_TOKEN)
     if primary:
         tokens.append((ENV_GITHUB_TOKEN, primary))
@@ -135,6 +135,25 @@ def _probe_github_models() -> dict[str, Any]:
         if slot_val:
             tokens.append((slot_key, slot_val))
             rotation_keys.append(slot_key)
+    return tokens, rotation_keys
+
+
+def _github_model_id(raw_id: str) -> str:
+    """Extract the short model id from a GitHub catalog entry id."""
+    # Extract short name from azureml:// registry paths
+    if raw_id.startswith("azureml://"):
+        parts = raw_id.split("/")
+        return parts[-3] if len(parts) >= 3 else raw_id
+    return raw_id
+
+
+def _probe_github_models() -> dict[str, Any]:
+    """Probe GitHub Models via HTTP API using GITHUB_TOKEN / GITHUB_TOKEN_0..N."""
+    gh_models: list[str] = []
+    gh_error = None
+
+    # Collect all configured tokens (primary + numbered slots)
+    tokens, rotation_keys = _collect_github_tokens()
 
     if not tokens:
         return {
@@ -154,13 +173,7 @@ def _probe_github_models() -> dict[str, Any]:
         with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
             catalog = json.loads(resp.read().decode("utf-8"))
             for m in catalog:
-                raw_id = m.get("id", "")
-                # Extract short name from azureml:// registry paths
-                if raw_id.startswith("azureml://"):
-                    parts = raw_id.split("/")
-                    model_id = parts[-3] if len(parts) >= 3 else raw_id
-                else:
-                    model_id = raw_id
+                model_id = _github_model_id(m.get("id", ""))
                 if model_id:
                     gh_models.append(f"{PREFIX_GITHUB}{model_id}")
     except Exception as e:
@@ -375,6 +388,47 @@ def _probe_anthropic() -> dict[str, Any]:
     }
 
 
+def _run_windows_ai_bridge(bridge_proj: Path) -> tuple[bool, Any, str | None]:
+    """Run the .NET bridge --info and parse availability.
+
+    Returns ``(available, ready_state, error)``.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "dotnet",
+                "run",
+                DOTNET_CLI_ARG_PROJECT,
+                str(bridge_proj),
+                "--",
+                WINDOWS_AI_CLI_ARG_INFO,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_WINDOWS_AI_BRIDGE,
+            cwd=str(bridge_proj.parent),
+        )
+        stdout = (result.stdout or "").strip()
+        stderr = (result.stderr or "").strip()
+
+        info = None
+        if stdout:
+            try:
+                info = json.loads(stdout)
+            except Exception:
+                info = None
+
+        if isinstance(info, dict):
+            available = bool(info.get("available", False))
+            ready_state = info.get("readyState")
+            error = None if available else (info.get("error") or stderr or "Unknown")
+            return available, ready_state, error
+
+        return False, None, stderr or stdout or "Bridge did not return JSON"
+    except Exception as e:
+        return False, None, str(e)
+
+
 def _probe_windows_ai(bridge_dir: Path) -> dict[str, Any]:
     """Probe Windows AI (Phi Silica) via the .NET bridge project."""
     import shutil
@@ -386,40 +440,11 @@ def _probe_windows_ai(bridge_dir: Path) -> dict[str, Any]:
     if sys.platform == PLATFORM_WINDOWS and shutil.which("dotnet"):
         bridge_proj = bridge_dir / WINDOWS_AI_BRIDGE_DIR / WINDOWS_AI_BRIDGE_PROJECT
         if bridge_proj.exists():
-            try:
-                result = subprocess.run(
-                    [
-                        "dotnet",
-                        "run",
-                        DOTNET_CLI_ARG_PROJECT,
-                        str(bridge_proj),
-                        "--",
-                        WINDOWS_AI_CLI_ARG_INFO,
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=TIMEOUT_WINDOWS_AI_BRIDGE,
-                    cwd=str(bridge_proj.parent),
-                )
-                stdout = (result.stdout or "").strip()
-                stderr = (result.stderr or "").strip()
-
-                info = None
-                if stdout:
-                    try:
-                        info = json.loads(stdout)
-                    except Exception:
-                        info = None
-
-                if isinstance(info, dict):
-                    windows_ai_available = bool(info.get("available", False))
-                    windows_ai_ready_state = info.get("readyState")
-                    if not windows_ai_available:
-                        windows_ai_error = info.get("error") or stderr or "Unknown"
-                else:
-                    windows_ai_error = stderr or stdout or "Bridge did not return JSON"
-            except Exception as e:
-                windows_ai_error = str(e)
+            (
+                windows_ai_available,
+                windows_ai_ready_state,
+                windows_ai_error,
+            ) = _run_windows_ai_bridge(bridge_proj)
         else:
             windows_ai_error = "Bridge project not found"
     else:
@@ -431,6 +456,57 @@ def _probe_windows_ai(bridge_dir: Path) -> dict[str, Any]:
         "models": [WINDOWS_AI_MODEL_ID] if windows_ai_available else [],
         "error": windows_ai_error,
     }
+
+
+def _scan_aitk_downloaded_dirs(aitk_models_dir: Path) -> list[str]:
+    """Return the names of downloaded AI Toolkit model directories."""
+    downloaded: list[str] = []
+    for subdir in aitk_models_dir.iterdir():
+        if subdir.is_dir() and subdir.name != AITK_MS_SUBDIR:
+            downloaded.append(subdir.name)
+    ms_dir = aitk_models_dir / AITK_MS_SUBDIR
+    if ms_dir.exists():
+        for subdir in ms_dir.iterdir():
+            if subdir.is_dir():
+                downloaded.append(subdir.name)
+    return downloaded
+
+
+def _clean_aitk_model_name(dir_name: str) -> str:
+    """Normalize an AI Toolkit directory name into a simple model alias."""
+    simple_name = dir_name.lower()
+    for suffix in [
+        AITK_SUFFIX_GENERIC_CPU,
+        AITK_SUFFIX_GENERIC_GPU,
+        AITK_SUFFIX_CPU,
+        AITK_SUFFIX_GPU,
+    ]:
+        if suffix in simple_name:
+            simple_name = simple_name.split(suffix)[0]
+    while simple_name and simple_name[-1].isdigit():
+        simple_name = simple_name.rstrip(AITK_TRAILING_CHARS)
+    return simple_name
+
+
+def _load_aitk_catalog(
+    aitk_modelinfo: Path, already_available: list[str]
+) -> list[str]:
+    """Load chat-completion model aliases from the AI Toolkit modelinfo file."""
+    aitk_catalog: list[str] = []
+    if not aitk_modelinfo.exists():
+        return aitk_catalog
+    try:
+        info = json.loads(aitk_modelinfo.read_text(encoding="utf-8"))
+        for m in info.get("models", []):
+            if m.get("task") == AITK_MODELS_TASK_TYPE:
+                alias = m.get("alias", "")
+                if alias:
+                    catalog_id = f"{PREFIX_AITK}{alias}"
+                    if catalog_id not in already_available:
+                        aitk_catalog.append(catalog_id)
+    except Exception:
+        pass
+    return aitk_catalog
 
 
 def _probe_aitk() -> dict[str, Any]:
@@ -448,44 +524,10 @@ def _probe_aitk() -> dict[str, Any]:
     elif not aitk_models_dir.exists():
         aitk_error = "No AI Toolkit models downloaded"
     else:
-        downloaded: list[str] = []
-        for subdir in aitk_models_dir.iterdir():
-            if subdir.is_dir() and subdir.name != AITK_MS_SUBDIR:
-                downloaded.append(subdir.name)
-        ms_dir = aitk_models_dir / AITK_MS_SUBDIR
-        if ms_dir.exists():
-            for subdir in ms_dir.iterdir():
-                if subdir.is_dir():
-                    downloaded.append(subdir.name)
-
-        for d in downloaded:
-            simple_name = d.lower()
-            for suffix in [
-                AITK_SUFFIX_GENERIC_CPU,
-                AITK_SUFFIX_GENERIC_GPU,
-                AITK_SUFFIX_CPU,
-                AITK_SUFFIX_GPU,
-            ]:
-                if suffix in simple_name:
-                    simple_name = simple_name.split(suffix)[0]
-            while simple_name and simple_name[-1].isdigit():
-                simple_name = simple_name.rstrip(AITK_TRAILING_CHARS)
-            aitk_models.append(f"{PREFIX_AITK}{simple_name}")
-
+        downloaded = _scan_aitk_downloaded_dirs(aitk_models_dir)
+        aitk_models = [f"{PREFIX_AITK}{_clean_aitk_model_name(d)}" for d in downloaded]
         aitk_models = list(dict.fromkeys(aitk_models))
-
-        if aitk_modelinfo.exists():
-            try:
-                info = json.loads(aitk_modelinfo.read_text(encoding="utf-8"))
-                for m in info.get("models", []):
-                    if m.get("task") == AITK_MODELS_TASK_TYPE:
-                        alias = m.get("alias", "")
-                        if alias:
-                            catalog_id = f"{PREFIX_AITK}{alias}"
-                            if catalog_id not in aitk_models:
-                                aitk_catalog.append(catalog_id)
-            except Exception:
-                pass
+        aitk_catalog = _load_aitk_catalog(aitk_modelinfo, aitk_models)
 
     return {
         "available": aitk_models,
@@ -497,14 +539,12 @@ def _probe_aitk() -> dict[str, Any]:
     }
 
 
-def _probe_nvidia() -> dict[str, Any]:
-    """Probe NVIDIA NIM OpenAI-compatible inference endpoint."""
-    nvidia_host = os.getenv(ENV_NVIDIA_NIM_HOST, "")
-    nvidia_models: list[str] = []
-    nvidia_error = None
-    nvidia_reachable = False
+def _collect_nvidia_keys() -> tuple[list[tuple[str, str]], list[str]]:
+    """Collect configured NVIDIA NIM keys (primary + numbered slots).
 
-    # Collect all configured keys (primary + numbered slots)
+    Returns ``(keys, rotation_keys)`` where keys is a list of
+    ``(label, value)`` pairs.
+    """
     nvidia_keys: list[tuple[str, str]] = []
     primary_key = os.getenv(ENV_NVIDIA_NIM_API_KEY, "")
     if primary_key:
@@ -515,6 +555,28 @@ def _probe_nvidia() -> dict[str, Any]:
         if slot_val:
             nvidia_keys.append((slot_var, slot_val))
     rotation_keys = [k for k, _ in nvidia_keys[1:]]
+    return nvidia_keys, rotation_keys
+
+
+def _strip_nvidia_base_path(nvidia_host: str) -> str:
+    """Strip chat/completions path segments to get the base /v1 endpoint."""
+    base = nvidia_host.rstrip("/")
+    for tail in ["/chat/completions", "/completions", "/chat"]:
+        if base.endswith(tail):
+            base = base[: -len(tail)]
+            break
+    return base
+
+
+def _probe_nvidia() -> dict[str, Any]:
+    """Probe NVIDIA NIM OpenAI-compatible inference endpoint."""
+    nvidia_host = os.getenv(ENV_NVIDIA_NIM_HOST, "")
+    nvidia_models: list[str] = []
+    nvidia_error = None
+    nvidia_reachable = False
+
+    # Collect all configured keys (primary + numbered slots)
+    nvidia_keys, rotation_keys = _collect_nvidia_keys()
 
     if not nvidia_host:
         return {
@@ -529,11 +591,7 @@ def _probe_nvidia() -> dict[str, Any]:
         }
 
     # Strip chat/completions path segment — we need the base /v1/models endpoint
-    base = nvidia_host.rstrip("/")
-    for tail in ["/chat/completions", "/completions", "/chat"]:
-        if base.endswith(tail):
-            base = base[: -len(tail)]
-            break
+    base = _strip_nvidia_base_path(nvidia_host)
 
     # Use first available key for model listing
     active_key = nvidia_keys[0][1] if nvidia_keys else ""
@@ -608,6 +666,92 @@ def _probe_lmstudio() -> dict[str, Any]:
     }
 
 
+_LOCAL_API_NOTES = (
+    "Any OpenAI-compatible local server (LocalAI, AMD ROCm, text-gen-webui, etc.)"
+)
+
+
+def _cloud_skip_hostname(local_api_base: str) -> str | None:
+    """Return the hostname if the base URL points at a known cloud API, else None."""
+    from urllib.parse import urlparse
+
+    hostname = urlparse(local_api_base).hostname or ""
+    if any(hostname.endswith(h) for h in CLOUD_API_HOSTS_SKIPLIST):
+        return hostname
+    return None
+
+
+def _fetch_local_api_model_ids(url: str, timeout: int) -> list[str]:
+    """Fetch and prefix model ids from an OpenAI-compatible /v1/models endpoint."""
+    models: list[str] = []
+    req = urllib.request.Request(url, headers={"Accept": CONTENT_TYPE_JSON})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+        for m in data.get("data", []):
+            mid = m.get("id", "") if isinstance(m, dict) else ""
+            if mid:
+                models.append(f"{PREFIX_LOCAL_API}{mid}")
+    return models
+
+
+def _probe_local_api_base(local_api_base: str) -> dict[str, Any]:
+    """Probe a configured OpenAI-compatible base URL for available models."""
+    local_api_models: list[str] = []
+    local_api_error = None
+    local_api_reachable = False
+    try:
+        la_url = f"{local_api_base.rstrip('/')}/v1/models"
+        local_api_models = _fetch_local_api_model_ids(la_url, timeout=3)
+        local_api_reachable = True
+    except Exception as e:
+        local_api_error = f"Local API not reachable at {local_api_base}: {str(e)[:100]}"
+
+    return {
+        "configured": local_api_reachable,
+        "host": local_api_base,
+        "reachable": local_api_reachable,
+        "available": local_api_models,
+        "count": len(local_api_models),
+        "error": local_api_error,
+        "notes": _LOCAL_API_NOTES,
+    }
+
+
+def _scan_local_api_ports(lmstudio_host: str) -> dict[str, Any]:
+    """Scan common local ports for an OpenAI-compatible server."""
+    local_api_models: list[str] = []
+    local_api_host: str | None = None
+    local_api_reachable = False
+
+    for port in LOCAL_SERVER_COMMON_PORTS:
+        if lmstudio_host and f":{port}" in lmstudio_host:
+            continue
+        try:
+            scan_url = f"http://localhost:{port}/v1/models"
+            local_api_models = _fetch_local_api_model_ids(scan_url, timeout=1)
+            if local_api_models:
+                local_api_host = f"http://localhost:{port}"
+                local_api_reachable = True
+                break
+        except Exception:
+            continue
+
+    local_api_error = (
+        None
+        if local_api_reachable
+        else "No local API server found (set OPENAI_BASE_URL or LOCAL_AI_API_BASE_URL)"
+    )
+    return {
+        "configured": local_api_reachable,
+        "host": local_api_host,
+        "reachable": local_api_reachable,
+        "available": local_api_models,
+        "count": len(local_api_models),
+        "error": local_api_error,
+        "notes": _LOCAL_API_NOTES,
+    }
+
+
 def _probe_local_openai_compatible(lmstudio_host: str = "") -> dict[str, Any]:
     """Probe generic OpenAI-compatible local servers (LocalAI, text-gen-webui, etc.)."""
     local_api_base = (
@@ -617,72 +761,20 @@ def _probe_local_openai_compatible(lmstudio_host: str = "") -> dict[str, Any]:
         or os.getenv(ENV_LOCAL_OPENAI_BASE_URL)
     )
 
-    # Skip if the configured URL points at a well-known cloud API — those have
-    # their own dedicated probe functions and must not be double-counted here.
     if local_api_base:
-        from urllib.parse import urlparse
-        hostname = urlparse(local_api_base).hostname or ""
-        if any(hostname.endswith(h) for h in CLOUD_API_HOSTS_SKIPLIST):
+        # Skip if the configured URL points at a well-known cloud API — those have
+        # their own dedicated probe functions and must not be double-counted here.
+        skip_host = _cloud_skip_hostname(local_api_base)
+        if skip_host:
             return {
                 "configured": False,
                 "host": local_api_base,
                 "reachable": False,
                 "available": [],
                 "count": 0,
-                "error": f"Skipped: {hostname} is a cloud API (handled by its own probe)",
-                "notes": "Any OpenAI-compatible local server (LocalAI, AMD ROCm, text-gen-webui, etc.)",
+                "error": f"Skipped: {skip_host} is a cloud API (handled by its own probe)",
+                "notes": _LOCAL_API_NOTES,
             }
+        return _probe_local_api_base(local_api_base)
 
-    local_api_models: list[str] = []
-    local_api_error = None
-    local_api_host: str | None = local_api_base
-    local_api_reachable = False
-
-    if local_api_base:
-        try:
-            la_url = f"{local_api_base.rstrip('/')}/v1/models"
-            req = urllib.request.Request(la_url, headers={"Accept": CONTENT_TYPE_JSON})
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                for m in data.get("data", []):
-                    mid = m.get("id", "") if isinstance(m, dict) else ""
-                    if mid:
-                        local_api_models.append(f"{PREFIX_LOCAL_API}{mid}")
-                local_api_reachable = True
-        except Exception as e:
-            local_api_error = (
-                f"Local API not reachable at {local_api_base}: {str(e)[:100]}"
-            )
-    else:
-        for port in LOCAL_SERVER_COMMON_PORTS:
-            if lmstudio_host and f":{port}" in lmstudio_host:
-                continue
-            try:
-                scan_url = f"http://localhost:{port}/v1/models"
-                req = urllib.request.Request(
-                    scan_url, headers={"Accept": CONTENT_TYPE_JSON}
-                )
-                with urllib.request.urlopen(req, timeout=1) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    for m in data.get("data", []):
-                        mid = m.get("id", "") if isinstance(m, dict) else ""
-                        if mid:
-                            local_api_models.append(f"{PREFIX_LOCAL_API}{mid}")
-                    if local_api_models:
-                        local_api_host = f"http://localhost:{port}"
-                        local_api_reachable = True
-                        break
-            except Exception:
-                continue
-        if not local_api_reachable:
-            local_api_error = "No local API server found (set OPENAI_BASE_URL or LOCAL_AI_API_BASE_URL)"
-
-    return {
-        "configured": local_api_reachable,
-        "host": local_api_host,
-        "reachable": local_api_reachable,
-        "available": local_api_models,
-        "count": len(local_api_models),
-        "error": local_api_error,
-        "notes": "Any OpenAI-compatible local server (LocalAI, AMD ROCm, text-gen-webui, etc.)",
-    }
+    return _scan_local_api_ports(lmstudio_host)

@@ -188,6 +188,107 @@ class LLMClient:
         return sorted(set(models_out))
 
     @staticmethod
+    def _enforce_remote_gate(model_name: str) -> None:
+        """Raise unless the model's provider is allowed by default or remotes enabled.
+
+        Safe-by-default: only allow local + GitHub Models unless explicitly
+        enabled via PROMPTEVAL_ALLOW_REMOTE. GitHub Models are remote but
+        explicitly allowed here.
+        """
+
+        def _remote_allowed() -> bool:
+            v = (os.getenv("PROMPTEVAL_ALLOW_REMOTE") or "").strip().lower()
+            return v in {"1", "true", "yes", "y", "on"}
+
+        lower = (model_name or "").lower()
+        default_allowed = (
+            "local:",
+            "gh:",
+            "windows-ai:",
+            "ollama:",
+            "aitk:",
+            "ai-toolkit:",
+        )
+        if lower.startswith(default_allowed):
+            return
+
+        remote_patterns = (
+            "azure-foundry:",
+            "azure-openai:",
+            "openai:",
+            "gemini:",
+            "claude:",
+        )
+        if (
+            lower.startswith(remote_patterns)
+            or ("gpt" in lower)
+            or ("gemini" in lower)
+            or ("claude" in lower)
+        ) and not _remote_allowed():
+            raise RuntimeError(
+                f"Remote provider disabled by default: '{model_name}'. "
+                "Set PROMPTEVAL_ALLOW_REMOTE=1 to enable remote providers."
+            )
+
+    @staticmethod
+    def _dispatch_provider(
+        model_name: str,
+        prompt: str,
+        system_instruction: str | None,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """Route the request to the provider adapter matching the model prefix."""
+        lower = model_name.lower()
+        if lower.startswith("local:"):
+            return LLMClient._call_local(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
+        if lower.startswith("ollama:"):
+            return LLMClient._call_ollama(model_name, prompt, system_instruction)
+        if lower.startswith("windows-ai:"):
+            return LLMClient._call_windows_ai(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
+        if lower.startswith("azure-foundry:"):
+            return LLMClient._call_azure_foundry(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
+        if lower.startswith("azure-openai:"):
+            return LLMClient._call_azure_openai(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
+        if lower.startswith("gh:"):
+            return LLMClient._call_github_models(
+                model_name, prompt, system_instruction
+            )
+        if lower.startswith("openai:"):
+            # Explicit prefix for OpenAI hosted models
+            model_id = model_name.split(":", 1)[1]
+            return LLMClient._call_openai(
+                model_id, prompt, system_instruction, temperature, max_tokens
+            )
+        if lower.startswith("gemini:"):
+            model_id = model_name.split(":", 1)[1]
+            return LLMClient._call_gemini(model_id, prompt, system_instruction)
+        if lower.startswith("claude:"):
+            model_id = model_name.split(":", 1)[1]
+            return LLMClient._call_claude(model_id, prompt, system_instruction)
+        if "gemini" in lower:
+            return LLMClient._call_gemini(model_name, prompt, system_instruction)
+        if "claude" in lower:
+            return LLMClient._call_claude(model_name, prompt, system_instruction)
+        if "gpt" in lower:
+            return LLMClient._call_openai(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
+        raise LLMClientError(
+            model_name,
+            "Unknown model. Use local:, ollama:, windows-ai:, azure-foundry:, "
+            "azure-openai:, gh:, openai:, gemini:, claude:, or a plain model name containing gemini/claude/gpt",
+        )
+
+    @staticmethod
     def generate_text(
         model_name: str,
         prompt: str,
@@ -243,92 +344,14 @@ class LLMClient:
         except ImportError:
             cache_enabled = False
 
-        def _remote_allowed() -> bool:
-            v = (os.getenv("PROMPTEVAL_ALLOW_REMOTE") or "").strip().lower()
-            return v in {"1", "true", "yes", "y", "on"}
-
-        # Safe-by-default: only allow local + GitHub Models unless explicitly enabled.
-        # GitHub Models are remote, but are explicitly allowed here.
-        lower = (model_name or "").lower()
-        default_allowed = (
-            "local:",
-            "gh:",
-            "windows-ai:",
-            "ollama:",
-            "aitk:",
-            "ai-toolkit:",
-        )
-        if not lower.startswith(default_allowed):
-            remote_patterns = (
-                "azure-foundry:",
-                "azure-openai:",
-                "openai:",
-                "gemini:",
-                "claude:",
-            )
-            if (
-                lower.startswith(remote_patterns)
-                or ("gpt" in lower)
-                or ("gemini" in lower)
-                or ("claude" in lower)
-            ) and not _remote_allowed():
-                raise RuntimeError(
-                    f"Remote provider disabled by default: '{model_name}'. "
-                    "Set PROMPTEVAL_ALLOW_REMOTE=1 to enable remote providers."
-                )
+        LLMClient._enforce_remote_gate(model_name)
 
         logger.debug(f"[{model_name}] Processing request...")
 
         try:
-            result = None
-            if model_name.lower().startswith("local:"):
-                result = LLMClient._call_local(
-                    model_name, prompt, system_instruction, temperature, max_tokens
-                )
-            elif model_name.lower().startswith("ollama:"):
-                result = LLMClient._call_ollama(model_name, prompt, system_instruction)
-            elif model_name.lower().startswith("windows-ai:"):
-                result = LLMClient._call_windows_ai(
-                    model_name, prompt, system_instruction, temperature, max_tokens
-                )
-            elif model_name.lower().startswith("azure-foundry:"):
-                result = LLMClient._call_azure_foundry(
-                    model_name, prompt, system_instruction, temperature, max_tokens
-                )
-            elif model_name.lower().startswith("azure-openai:"):
-                result = LLMClient._call_azure_openai(
-                    model_name, prompt, system_instruction, temperature, max_tokens
-                )
-            elif model_name.lower().startswith("gh:"):
-                result = LLMClient._call_github_models(
-                    model_name, prompt, system_instruction
-                )
-            elif model_name.lower().startswith("openai:"):
-                # Explicit prefix for OpenAI hosted models
-                model_id = model_name.split(":", 1)[1]
-                result = LLMClient._call_openai(
-                    model_id, prompt, system_instruction, temperature, max_tokens
-                )
-            elif model_name.lower().startswith("gemini:"):
-                model_id = model_name.split(":", 1)[1]
-                result = LLMClient._call_gemini(model_id, prompt, system_instruction)
-            elif model_name.lower().startswith("claude:"):
-                model_id = model_name.split(":", 1)[1]
-                result = LLMClient._call_claude(model_id, prompt, system_instruction)
-            elif "gemini" in model_name.lower():
-                result = LLMClient._call_gemini(model_name, prompt, system_instruction)
-            elif "claude" in model_name.lower():
-                result = LLMClient._call_claude(model_name, prompt, system_instruction)
-            elif "gpt" in model_name.lower():
-                result = LLMClient._call_openai(
-                    model_name, prompt, system_instruction, temperature, max_tokens
-                )
-            else:
-                raise LLMClientError(
-                    model_name,
-                    "Unknown model. Use local:, ollama:, windows-ai:, azure-foundry:, "
-                    "azure-openai:, gh:, openai:, gemini:, claude:, or a plain model name containing gemini/claude/gpt",
-                )
+            result = LLMClient._dispatch_provider(
+                model_name, prompt, system_instruction, temperature, max_tokens
+            )
 
             # Cache successful response
             if result and cache_enabled and cache_response_func:

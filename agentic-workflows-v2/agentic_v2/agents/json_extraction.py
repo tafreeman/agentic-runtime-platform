@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from dataclasses import dataclass
 from typing import Any, TypeVar, overload
 
 from pydantic import BaseModel, ValidationError
@@ -74,6 +75,46 @@ def _find_json_string(text: str) -> str:
     return _extract_balanced_json(text)
 
 
+@dataclass
+class _BraceScanState:
+    """Mutable state for the balanced-brace scanner."""
+
+    depth: int = 0
+    in_string: bool = False
+    escape_next: bool = False
+
+
+def _scan_brace_char(state: _BraceScanState, char: str) -> bool:
+    """Advance *state* by one character.
+
+    Returns ``True`` when the character closes the top-level object (i.e.
+    brace depth has returned to zero), otherwise ``False``.
+    """
+    if state.escape_next:
+        state.escape_next = False
+        return False
+
+    if char == "\\":
+        state.escape_next = True
+        return False
+
+    if char == '"':
+        state.in_string = not state.in_string
+        return False
+
+    if state.in_string:
+        return False
+
+    if char == "{":
+        state.depth += 1
+    elif char == "}":
+        state.depth -= 1
+        if state.depth == 0:
+            return True
+
+    return False
+
+
 def _extract_balanced_json(text: str) -> str:
     """Extract JSON by finding balanced braces from the first ``{``.
 
@@ -94,34 +135,10 @@ def _extract_balanced_json(text: str) -> str:
     if start == -1:
         raise ValueError("No JSON object found in response")
 
-    depth = 0
-    in_string = False
-    escape_next = False
-
+    state = _BraceScanState()
     for i in range(start, len(text)):
-        char = text[i]
-
-        if escape_next:
-            escape_next = False
-            continue
-
-        if char == "\\":
-            escape_next = True
-            continue
-
-        if char == '"':
-            in_string = not in_string
-            continue
-
-        if in_string:
-            continue
-
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return text[start : i + 1]
+        if _scan_brace_char(state, text[i]):
+            return text[start : i + 1]
 
     raise ValueError("Unbalanced braces in JSON response")
 

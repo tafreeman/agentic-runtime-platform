@@ -62,23 +62,9 @@ class CodeAnalysisTool(BaseTool):
     ) -> ToolResult:
         """Analyze Python code."""
         try:
-            # Get source code
-            if from_file:
-                file_path = Path(source)
-                from ...settings import get_settings as _gs
-                base_dir = _gs().agentic_file_base_dir
-                if base_dir:
-                    try:
-                        ensure_within_base(file_path, base_dir)
-                    except ValueError as e:
-                        return ToolResult(success=False, error=str(e))
-                if not file_path.exists():
-                    return ToolResult(
-                        success=False, error=f"File does not exist: {source}"
-                    )
-                code = file_path.read_text(encoding="utf-8")
-            else:
-                code = source
+            code, load_error = self._load_source(source, from_file)
+            if load_error is not None:
+                return load_error
 
             # Parse AST
             try:
@@ -87,85 +73,7 @@ class CodeAnalysisTool(BaseTool):
                 return ToolResult(success=False, error=f"Syntax error in code: {e!s}")
 
             # Compute metrics
-            metrics = metrics or ["all"]
-            compute_all = "all" in metrics
-
-            result_data = {}
-
-            # Line counts
-            if compute_all or "lines" in metrics:
-                lines = code.splitlines()
-                result_data["lines"] = {
-                    "total": len(lines),
-                    "blank": sum(1 for line in lines if not line.strip()),
-                    "code": sum(
-                        1
-                        for line in lines
-                        if line.strip() and not line.strip().startswith("#")
-                    ),
-                    "comments": sum(
-                        1 for line in lines if line.strip().startswith("#")
-                    ),
-                }
-
-            # Functions
-            if compute_all or "functions" in metrics:
-                functions = [
-                    node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
-                ]
-                result_data["functions"] = {
-                    "count": len(functions),
-                    "names": [f.name for f in functions],
-                }
-
-            # Classes
-            if compute_all or "classes" in metrics:
-                classes = [
-                    node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)
-                ]
-                result_data["classes"] = {
-                    "count": len(classes),
-                    "names": [c.name for c in classes],
-                }
-
-            # Imports
-            if compute_all or "imports" in metrics:
-                imports = []
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.Import):
-                        imports.extend(alias.name for alias in node.names)
-                    elif isinstance(node, ast.ImportFrom):
-                        module = node.module or ""
-                        imports.extend(f"{module}.{alias.name}" for alias in node.names)
-                result_data["imports"] = {
-                    "count": len(imports),
-                    "modules": list(set(imports)),
-                }
-
-            # Complexity (cyclomatic complexity approximation)
-            if compute_all or "complexity" in metrics:
-                complexity_nodes = 0
-                for node in ast.walk(tree):
-                    # Count decision points
-                    if isinstance(
-                        node,
-                        (
-                            ast.If,
-                            ast.For,
-                            ast.While,
-                            ast.Try,
-                            ast.ExceptHandler,
-                            ast.With,
-                            ast.Assert,
-                            ast.BoolOp,
-                        ),
-                    ) or isinstance(node, ast.Lambda):
-                        complexity_nodes += 1
-
-                result_data["complexity"] = {
-                    "cyclomatic": complexity_nodes + 1,  # +1 for entry point
-                    "nodes": len(list(ast.walk(tree))),
-                }
+            result_data = self._compute_metrics(code, tree, metrics or ["all"])
 
             return ToolResult(
                 success=True,
@@ -178,6 +86,129 @@ class CodeAnalysisTool(BaseTool):
 
         except Exception as e:
             return ToolResult(success=False, error=f"Failed to analyze code: {e!s}")
+
+    def _compute_metrics(
+        self, code: str, tree: ast.AST, metrics: list[str]
+    ) -> dict[str, Any]:
+        """Compute the requested metrics for the parsed source."""
+        compute_all = "all" in metrics
+
+        result_data: dict[str, Any] = {}
+        if compute_all or "lines" in metrics:
+            result_data["lines"] = self._count_lines(code)
+        if compute_all or "functions" in metrics:
+            result_data["functions"] = self._collect_functions(tree)
+        if compute_all or "classes" in metrics:
+            result_data["classes"] = self._collect_classes(tree)
+        if compute_all or "imports" in metrics:
+            result_data["imports"] = self._collect_imports(tree)
+        if compute_all or "complexity" in metrics:
+            result_data["complexity"] = self._compute_complexity(tree)
+        return result_data
+
+    @staticmethod
+    def _load_source(
+        source: str, from_file: bool
+    ) -> tuple[str, ToolResult | None]:
+        """Resolve source code from a string or a (sandbox-checked) file path.
+
+        Returns:
+            Tuple of (code, error). On failure ``code`` is empty and ``error``
+            holds a ToolResult to return; on success ``error`` is None.
+        """
+        if not from_file:
+            return source, None
+
+        file_path = Path(source)
+        from ...settings import get_settings as _gs
+
+        base_dir = _gs().agentic_file_base_dir
+        if base_dir:
+            try:
+                ensure_within_base(file_path, base_dir)
+            except ValueError as e:
+                return "", ToolResult(success=False, error=str(e))
+        if not file_path.exists():
+            return "", ToolResult(
+                success=False, error=f"File does not exist: {source}"
+            )
+        return file_path.read_text(encoding="utf-8"), None
+
+    @staticmethod
+    def _count_lines(code: str) -> dict[str, int]:
+        """Count total/blank/code/comment lines in the source."""
+        lines = code.splitlines()
+        return {
+            "total": len(lines),
+            "blank": sum(1 for line in lines if not line.strip()),
+            "code": sum(
+                1
+                for line in lines
+                if line.strip() and not line.strip().startswith("#")
+            ),
+            "comments": sum(1 for line in lines if line.strip().startswith("#")),
+        }
+
+    @staticmethod
+    def _collect_functions(tree: ast.AST) -> dict[str, Any]:
+        """Collect function definitions and their names."""
+        functions = [
+            node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+        ]
+        return {
+            "count": len(functions),
+            "names": [f.name for f in functions],
+        }
+
+    @staticmethod
+    def _collect_classes(tree: ast.AST) -> dict[str, Any]:
+        """Collect class definitions and their names."""
+        classes = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+        return {
+            "count": len(classes),
+            "names": [c.name for c in classes],
+        }
+
+    @staticmethod
+    def _collect_imports(tree: ast.AST) -> dict[str, Any]:
+        """Collect imported module names (both ``import`` and ``from`` forms)."""
+        imports: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imports.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                imports.extend(f"{module}.{alias.name}" for alias in node.names)
+        return {
+            "count": len(imports),
+            "modules": list(set(imports)),
+        }
+
+    @staticmethod
+    def _compute_complexity(tree: ast.AST) -> dict[str, int]:
+        """Approximate cyclomatic complexity by counting decision points."""
+        complexity_nodes = 0
+        for node in ast.walk(tree):
+            # Count decision points
+            if isinstance(
+                node,
+                (
+                    ast.If,
+                    ast.For,
+                    ast.While,
+                    ast.Try,
+                    ast.ExceptHandler,
+                    ast.With,
+                    ast.Assert,
+                    ast.BoolOp,
+                ),
+            ) or isinstance(node, ast.Lambda):
+                complexity_nodes += 1
+
+        return {
+            "cyclomatic": complexity_nodes + 1,  # +1 for entry point
+            "nodes": len(list(ast.walk(tree))),
+        }
 
 
 class AstDumpTool(BaseTool):

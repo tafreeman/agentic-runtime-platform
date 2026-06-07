@@ -62,6 +62,22 @@ def _ensure_import_path() -> None:
         sys.path.insert(0, str(project_root))
 
 
+def _confidence_lines(confidence: Any) -> list[str]:
+    """Render the confidence-report section body as markdown lines."""
+    if isinstance(confidence, dict) and confidence:
+        return [f"- {key}: `{value}`" for key, value in confidence.items()]
+    return ["_No confidence report generated._"]
+
+
+def _reference_lines(refs: Any) -> list[str]:
+    """Render the references section body as markdown lines."""
+    if isinstance(refs, list):
+        if refs:
+            return [f"- {item}" for item in refs]
+        return ["_No references returned._"]
+    return [str(refs or "_No references returned._")]
+
+
 def _to_markdown(payload: dict[str, Any]) -> str:
     cfg = payload["input"]
     topic = payload.get("topic")
@@ -106,11 +122,7 @@ def _to_markdown(payload: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## Confidence Report")
     lines.append("")
-    if isinstance(confidence, dict) and confidence:
-        for key, value in confidence.items():
-            lines.append(f"- {key}: `{value}`")
-    else:
-        lines.append("_No confidence report generated._")
+    lines.extend(_confidence_lines(confidence))
     lines.append("")
     lines.append("## Limitations")
     lines.append("")
@@ -124,15 +136,7 @@ def _to_markdown(payload: dict[str, Any]) -> str:
     lines.append("")
     lines.append("## References")
     lines.append("")
-    refs = outputs.get("references")
-    if isinstance(refs, list):
-        if refs:
-            for item in refs:
-                lines.append(f"- {item}")
-        else:
-            lines.append("_No references returned._")
-    else:
-        lines.append(str(refs or "_No references returned._"))
+    lines.extend(_reference_lines(outputs.get("references")))
     lines.append("")
     lines.append("## RAG Artifacts")
     lines.append("")

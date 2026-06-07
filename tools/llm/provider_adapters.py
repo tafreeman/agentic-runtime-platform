@@ -8,7 +8,7 @@ import os
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -123,41 +123,18 @@ def call_azure_openai(
     return response.choices[0].message.content
 
 
-def resolve_local_model_path(
-    model_key: str,
-    *,
-    local_models: dict[str, str],
-) -> Path | None:
-    """Resolve local model key to the best ONNX directory."""
-    spec = local_models.get(model_key.lower())
-    if not spec:
-        return None
+def _dir_has_onnx(path: Path) -> bool:
+    """Return True if the directory contains at least one ONNX file."""
+    if not path.is_dir():
+        return False
+    try:
+        return any(path.glob(ONNX_GLOB_PATTERN))
+    except OSError:
+        return False
 
-    ai_gallery_root = Path.home() / ".cache" / "aigallery"
-    explicit_path = Path(spec).expanduser()
-    if explicit_path.is_absolute():
-        if explicit_path.is_dir():
-            try:
-                if any(explicit_path.glob(ONNX_GLOB_PATTERN)):
-                    return explicit_path
-            except OSError:
-                pass
-        return None
 
-    spec_norm = str(spec).replace("\\", "/").strip("/")
-    direct_path = ai_gallery_root / spec_norm
-    if direct_path.is_dir():
-        try:
-            if any(direct_path.glob(ONNX_GLOB_PATTERN)):
-                return direct_path
-        except OSError:
-            pass
-
-    top_dir_name = spec_norm.split("/", 1)[0]
-    top_dir = ai_gallery_root / top_dir_name
-    if not top_dir.exists():
-        return None
-
+def _collect_onnx_candidates(top_dir: Path) -> list[Path]:
+    """Recursively collect subdirectories of ``top_dir`` that contain ONNX files."""
     candidates: list[Path] = []
     for subdir in top_dir.rglob("*"):
         if not subdir.is_dir():
@@ -167,10 +144,13 @@ def resolve_local_model_path(
                 candidates.append(subdir)
         except OSError:
             continue
+    return candidates
 
-    if not candidates:
-        return None
 
+def _pick_preferred_candidate(
+    candidates: list[Path], model_key: str, spec_norm: str
+) -> Path:
+    """Choose the best ONNX candidate by CPU/GPU hint, then spec suffix, else first."""
     candidates.sort(key=lambda path: str(path).lower())
     variant_hint = model_key.lower()
     preferred_tokens: list[str] = []
@@ -191,6 +171,38 @@ def resolve_local_model_path(
                 return candidate
 
     return candidates[0]
+
+
+def resolve_local_model_path(
+    model_key: str,
+    *,
+    local_models: dict[str, str],
+) -> Path | None:
+    """Resolve local model key to the best ONNX directory."""
+    spec = local_models.get(model_key.lower())
+    if not spec:
+        return None
+
+    ai_gallery_root = Path.home() / ".cache" / "aigallery"
+    explicit_path = Path(spec).expanduser()
+    if explicit_path.is_absolute():
+        return explicit_path if _dir_has_onnx(explicit_path) else None
+
+    spec_norm = str(spec).replace("\\", "/").strip("/")
+    direct_path = ai_gallery_root / spec_norm
+    if _dir_has_onnx(direct_path):
+        return direct_path
+
+    top_dir_name = spec_norm.split("/", 1)[0]
+    top_dir = ai_gallery_root / top_dir_name
+    if not top_dir.exists():
+        return None
+
+    candidates = _collect_onnx_candidates(top_dir)
+    if not candidates:
+        return None
+
+    return _pick_preferred_candidate(candidates, model_key, spec_norm)
 
 
 def call_local(
@@ -300,108 +312,161 @@ def call_windows_ai(
         ) from exc
 
 
+_GH_MODEL_MAP = {
+    "gpt-4o-mini": "openai/gpt-4o-mini",
+    "gpt-4o": "openai/gpt-4o",
+    "gpt-4.1": "openai/gpt-4.1",
+    "gpt-4.1-mini": "openai/gpt-4.1-mini",
+    "gpt-5": "openai/gpt-5",
+    "gpt-5-mini": "openai/gpt-5-mini",
+    "llama-3.3-70b": "meta/llama-3.3-70b-instruct",
+    "llama-4-scout": "meta/llama-4-scout-17b-16e-instruct",
+    "llama-4-maverick": "meta/llama-4-maverick-17b-128e-instruct-fp8",
+    "mistral-small": "mistral-ai/mistral-small-2503",
+    "mistral-medium": "mistral-ai/mistral-medium-2505",
+    "codestral": "mistral-ai/codestral-2501",
+    "deepseek-r1": "deepseek/deepseek-r1",
+    "deepseek-v3": "deepseek/deepseek-v3-0324",
+    "phi-4": "microsoft/phi-4",
+    "phi-4-reasoning": "microsoft/phi-4-reasoning",
+    "grok-3": "xai/grok-3",
+    "grok-3-mini": "xai/grok-3-mini",
+}
+
+_GH_RATE_LIMIT_MARKERS = ["rate limit", "too many requests", "429", "quota"]
+
+
+def _gh_int_env(name: str, default: int) -> int:
+    """Read a positive integer env var, falling back to ``default``."""
+    try:
+        value = int((os.getenv(name) or "").strip() or str(default))
+        return max(1, value)
+    except Exception:
+        return default
+
+
+def _classify_gh_run_failure(
+    result: Any,
+    full_model: str,
+    attempt: int,
+    max_retries: int,
+    rate_limit_strategy: str,
+    base_delay: int,
+) -> str | None:
+    """Classify a non-zero gh run result.
+
+    Returns a final error string, or ``None`` to signal the caller should
+    wait and retry the request.
+    """
+    import time
+
+    error_msg = result.stderr.lower()
+    if any(marker in error_msg for marker in _GH_RATE_LIMIT_MARKERS):
+        if rate_limit_strategy == "wait" and attempt < max_retries - 1:
+            wait_time = min(base_delay * (2**attempt), 60)
+            logger.info(
+                f"[gh] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})..."
+            )
+            time.sleep(wait_time)
+            return None
+        return f"gh models error: Rate limited after {attempt + 1} attempt(s)"
+
+    if "no_access" in error_msg or "no access" in error_msg:
+        return f"gh models error: No access to model {full_model}"
+
+    return f"gh models error: {result.stderr}"
+
+
+def _attempt_gh_run(
+    full_model: str,
+    full_prompt: str,
+    clean_env: dict[str, str],
+    attempt: int,
+    max_retries: int,
+    rate_limit_strategy: str,
+    base_delay: int,
+) -> str | None:
+    """Run a single gh models attempt.
+
+    Returns the final output/error string, or ``None`` to signal a retry.
+    """
+    import subprocess
+    import time
+
+    try:
+        result = subprocess.run(
+            ["gh", "models", "run", full_model],
+            input=full_prompt,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            encoding="utf-8",
+            errors="replace",
+            env=clean_env,
+        )
+        if result.returncode == 0:
+            return result.stdout
+
+        return _classify_gh_run_failure(
+            result,
+            full_model,
+            attempt,
+            max_retries,
+            rate_limit_strategy,
+            base_delay,
+        )
+
+    except FileNotFoundError:
+        return "gh models error: gh CLI not found. Install with: winget install GitHub.cli"
+    except subprocess.TimeoutExpired:
+        if attempt < max_retries - 1:
+            logger.info(
+                f"[gh] Timeout, retrying (attempt {attempt + 1}/{max_retries})..."
+            )
+            time.sleep(base_delay)
+            return None
+        return "gh models error: request timed out"
+
+
 def call_github_models(
     model_name: str,
     prompt: str,
     system_instruction: str | None,
 ) -> str:
     """Call GitHub Models via gh CLI with rate limit handling."""
-    import subprocess
-    import time
-
     model = (
         model_name.split(":", 1)[1]
         if ":" in model_name
         else "meta/llama-3.3-70b-instruct"
     )
-
-    model_map = {
-        "gpt-4o-mini": "openai/gpt-4o-mini",
-        "gpt-4o": "openai/gpt-4o",
-        "gpt-4.1": "openai/gpt-4.1",
-        "gpt-4.1-mini": "openai/gpt-4.1-mini",
-        "gpt-5": "openai/gpt-5",
-        "gpt-5-mini": "openai/gpt-5-mini",
-        "llama-3.3-70b": "meta/llama-3.3-70b-instruct",
-        "llama-4-scout": "meta/llama-4-scout-17b-16e-instruct",
-        "llama-4-maverick": "meta/llama-4-maverick-17b-128e-instruct-fp8",
-        "mistral-small": "mistral-ai/mistral-small-2503",
-        "mistral-medium": "mistral-ai/mistral-medium-2505",
-        "codestral": "mistral-ai/codestral-2501",
-        "deepseek-r1": "deepseek/deepseek-r1",
-        "deepseek-v3": "deepseek/deepseek-v3-0324",
-        "phi-4": "microsoft/phi-4",
-        "phi-4-reasoning": "microsoft/phi-4-reasoning",
-        "grok-3": "xai/grok-3",
-        "grok-3-mini": "xai/grok-3-mini",
-    }
-    full_model = model_map.get(model, model)
+    full_model = _GH_MODEL_MAP.get(model, model)
 
     if system_instruction:
         full_prompt = f"System: {system_instruction}\n\nUser: {prompt}"
     else:
         full_prompt = prompt
 
-    def _get_int_env(name: str, default: int) -> int:
-        try:
-            value = int((os.getenv(name) or "").strip() or str(default))
-            return max(1, value)
-        except Exception:
-            return default
-
     rate_limit_strategy = (
         (os.getenv("PROMPTS_GH_RATE_LIMIT_STRATEGY") or "fallback").strip().lower()
     )
-    max_retries = _get_int_env("PROMPTS_GH_MAX_RETRIES", 1)
-    base_delay = _get_int_env("PROMPTS_GH_BASE_DELAY_SECONDS", 2)
+    max_retries = _gh_int_env("PROMPTS_GH_MAX_RETRIES", 1)
+    base_delay = _gh_int_env("PROMPTS_GH_BASE_DELAY_SECONDS", 2)
 
     clean_env = {
         key: value for key, value in os.environ.items() if key != "GITHUB_TOKEN"
     }
     for attempt in range(max_retries):
-        try:
-            result = subprocess.run(
-                ["gh", "models", "run", full_model],
-                input=full_prompt,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                encoding="utf-8",
-                errors="replace",
-                env=clean_env,
-            )
-            if result.returncode == 0:
-                return result.stdout
-
-            error_msg = result.stderr.lower()
-            if any(
-                marker in error_msg
-                for marker in ["rate limit", "too many requests", "429", "quota"]
-            ):
-                if rate_limit_strategy == "wait" and attempt < max_retries - 1:
-                    wait_time = min(base_delay * (2**attempt), 60)
-                    logger.info(
-                        f"[gh] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})..."
-                    )
-                    time.sleep(wait_time)
-                    continue
-                return f"gh models error: Rate limited after {attempt + 1} attempt(s)"
-
-            if "no_access" in error_msg or "no access" in error_msg:
-                return f"gh models error: No access to model {full_model}"
-
-            return f"gh models error: {result.stderr}"
-
-        except FileNotFoundError:
-            return "gh models error: gh CLI not found. Install with: winget install GitHub.cli"
-        except subprocess.TimeoutExpired:
-            if attempt < max_retries - 1:
-                logger.info(
-                    f"[gh] Timeout, retrying (attempt {attempt + 1}/{max_retries})..."
-                )
-                time.sleep(base_delay)
-                continue
-            return "gh models error: request timed out"
+        outcome = _attempt_gh_run(
+            full_model,
+            full_prompt,
+            clean_env,
+            attempt,
+            max_retries,
+            rate_limit_strategy,
+            base_delay,
+        )
+        if outcome is not None:
+            return outcome
 
     return "gh models error: max retries exceeded"
 

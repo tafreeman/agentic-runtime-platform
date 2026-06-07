@@ -322,6 +322,124 @@ def get_probe(*, verbose: bool = False, use_cache: bool = True) -> ModelProbe:
 # =============================================================================
 
 
+def _print_discovery_report(discovered: dict[str, Any]) -> None:
+    """Render a multi-provider discovery report to the logger."""
+    logger.info("\n" + "=" * 60)
+    logger.info("MODEL DISCOVERY REPORT")
+    logger.info("=" * 60)
+    logger.info(f"Total available: {discovered['summary']['total_available']}")
+    logger.info(
+        f"Providers configured: {discovered['summary']['providers_configured']}"
+    )
+    logger.info("")
+
+    for name, info in discovered["providers"].items():
+        logger.info(f"\n{name.upper().replace('_', ' ')}")
+        if info.get("available"):
+            logger.info(f"   [OK] {len(info['available'])} model(s) available:")
+            for m in info["available"][:10]:
+                logger.info(f"      - {m}")
+            if len(info.get("available", [])) > 10:
+                logger.info(f"      ... and {len(info['available']) - 10} more")
+        elif info.get("configured"):
+            logger.info("   [OK] Configured (use explicit model IDs)")
+        else:
+            logger.info(f"   [FAIL] {info.get('error', 'Not configured')}")
+
+
+_GITHUB_DEFAULT_MODELS = [
+    "gh:openai/gpt-4o-mini",
+    "gh:openai/gpt-4o",
+    "gh:openai/gpt-4.1",
+    "gh:openai/gpt-4.1-nano",
+    "gh:meta/llama-3.3-70b-instruct",
+    "gh:mistralai/mistral-small-2503",
+    "gh:openai/o1",
+    "gh:openai/o3",
+    "gh:deepseek/deepseek-r1",
+    "gh:microsoft/phi-4",
+]
+
+_LOCAL_DEFAULT_MODELS = [
+    "local:phi4",
+    "local:phi3.5",
+    "local:phi3",
+    "local:mistral",
+    "local:phi3-medium",
+]
+
+_AZURE_DEFAULT_MODELS = [
+    "azure-foundry:default",
+    "azure-openai:default",
+]
+
+
+def _discover_provider_models(provider: str) -> list[str]:
+    """Discover available models for a single provider via discovery, best-effort."""
+    try:
+        discovered = discover_all_models(verbose=False)
+        return (
+            discovered.get("providers", {}).get(provider, {}).get("available", [])
+        )
+    except Exception:
+        return []
+
+
+def _build_model_list(args: Any) -> list[str]:
+    """Assemble the list of models to probe from positional args and flags."""
+    models = list(args.models)
+
+    if args.all_github:
+        # Use full publisher/model format for GitHub models
+        models.extend(_GITHUB_DEFAULT_MODELS)
+    if args.all_local:
+        models.extend(_LOCAL_DEFAULT_MODELS)
+    if args.all_azure:
+        models.extend(_AZURE_DEFAULT_MODELS)
+    if args.all_ollama:
+        models.extend(_discover_provider_models("ollama"))
+    if args.all_aitk:
+        models.extend(_discover_provider_models("ai_toolkit"))
+
+    return models
+
+
+def _dedupe_preserve_order(models: list[str]) -> list[str]:
+    """Remove duplicate model identifiers while preserving first-seen order."""
+    seen: set[str] = set()
+    unique_models = []
+    for m in models:
+        if m not in seen:
+            seen.add(m)
+            unique_models.append(m)
+    return unique_models
+
+
+def _print_probe_report(report: dict[str, Any]) -> None:
+    """Render a model probe report (usable/unusable lists) to the logger."""
+    logger.info("\n" + "=" * 60)
+    logger.info("Model Probe Report")
+    logger.info("=" * 60)
+    logger.info(
+        f"Total: {report['total']} | Usable: {report['usable_count']} | Unusable: {report['unusable_count']}"
+    )
+    logger.info("")
+
+    if report["usable"]:
+        logger.info("[OK] Usable models:")
+        for m in report["usable"]:
+            logger.info(f"   {m}")
+
+    if report["unusable"]:
+        logger.info("\n[FAIL] Unusable models:")
+        for item in report["unusable"]:
+            logger.info(
+                f"   {item['model']}: {item['error_code']} - {item['error'][:60]}"
+            )
+
+    logger.info("")
+
+
 def main(argv: list[str]) -> int:
     """CLI entry point."""
     import argparse
@@ -385,92 +503,12 @@ def main(argv: list[str]) -> int:
             Path(args.output).write_text(json.dumps(discovered, indent=2))
             logger.info(f"Discovery saved to: {args.output}")
         else:
-            logger.info("\n" + "=" * 60)
-            logger.info("MODEL DISCOVERY REPORT")
-            logger.info("=" * 60)
-            logger.info(f"Total available: {discovered['summary']['total_available']}")
-            logger.info(
-                f"Providers configured: {discovered['summary']['providers_configured']}"
-            )
-            logger.info("")
-
-            for name, info in discovered["providers"].items():
-                logger.info(f"\n{name.upper().replace('_', ' ')}")
-                if info.get("available"):
-                    logger.info(f"   [OK] {len(info['available'])} model(s) available:")
-                    for m in info["available"][:10]:
-                        logger.info(f"      - {m}")
-                    if len(info.get("available", [])) > 10:
-                        logger.info(f"      ... and {len(info['available']) - 10} more")
-                elif info.get("configured"):
-                    logger.info("   [OK] Configured (use explicit model IDs)")
-                else:
-                    logger.info(f"   [FAIL] {info.get('error', 'Not configured')}")
+            _print_discovery_report(discovered)
 
         return 0
 
     # Build model list
-    models = list(args.models)
-
-    if args.all_github:
-        # Use full publisher/model format for GitHub models
-        models.extend(
-            [
-                "gh:openai/gpt-4o-mini",
-                "gh:openai/gpt-4o",
-                "gh:openai/gpt-4.1",
-                "gh:openai/gpt-4.1-nano",
-                "gh:meta/llama-3.3-70b-instruct",
-                "gh:mistralai/mistral-small-2503",
-                "gh:openai/o1",
-                "gh:openai/o3",
-                "gh:deepseek/deepseek-r1",
-                "gh:microsoft/phi-4",
-            ]
-        )
-
-    if args.all_local:
-        models.extend(
-            [
-                "local:phi4",
-                "local:phi3.5",
-                "local:phi3",
-                "local:mistral",
-                "local:phi3-medium",
-            ]
-        )
-
-    if args.all_azure:
-        models.extend(
-            [
-                "azure-foundry:default",
-                "azure-openai:default",
-            ]
-        )
-
-    if args.all_ollama:
-        # Discover Ollama models dynamically
-        try:
-            discovered = discover_all_models(verbose=False)
-            ollama_models = (
-                discovered.get("providers", {}).get("ollama", {}).get("available", [])
-            )
-            models.extend(ollama_models)
-        except Exception:
-            pass
-
-    if args.all_aitk:
-        # Discover AI Toolkit local models dynamically
-        try:
-            discovered = discover_all_models(verbose=False)
-            aitk_models = (
-                discovered.get("providers", {})
-                .get("ai_toolkit", {})
-                .get("available", [])
-            )
-            models.extend(aitk_models)
-        except Exception:
-            pass
+    models = _build_model_list(args)
 
     if not models:
         selected_provider_group = any(
@@ -494,12 +532,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     # Remove duplicates while preserving order
-    seen: set[str] = set()
-    unique_models = []
-    for m in models:
-        if m not in seen:
-            seen.add(m)
-            unique_models.append(m)
+    unique_models = _dedupe_preserve_order(models)
 
     # Get report
     report = probe.get_probe_report(unique_models)
@@ -509,27 +542,7 @@ def main(argv: list[str]) -> int:
         Path(args.output).write_text(json.dumps(report, indent=2))
         logger.info(f"Report saved to: {args.output}")
     else:
-        logger.info("\n" + "=" * 60)
-        logger.info("Model Probe Report")
-        logger.info("=" * 60)
-        logger.info(
-            f"Total: {report['total']} | Usable: {report['usable_count']} | Unusable: {report['unusable_count']}"
-        )
-        logger.info("")
-
-        if report["usable"]:
-            logger.info("[OK] Usable models:")
-            for m in report["usable"]:
-                logger.info(f"   {m}")
-
-        if report["unusable"]:
-            logger.info("\n[FAIL] Unusable models:")
-            for item in report["unusable"]:
-                logger.info(
-                    f"   {item['model']}: {item['error_code']} - {item['error'][:60]}"
-                )
-
-        logger.info("")
+        _print_probe_report(report)
 
     return 0 if report["unusable_count"] == 0 else 1
 

@@ -317,6 +317,64 @@ class OrchestratorAgent(
 
         return assignments
 
+    def _find_ready_subtasks(self, executed: set[str]) -> list[SubTask]:
+        """Return subtasks whose dependencies are all satisfied and unrun."""
+        ready = []
+        for task_id, subtask in self._subtasks.items():
+            if task_id in executed:
+                continue
+            if all(dep in executed for dep in subtask.dependencies):
+                ready.append(subtask)
+        return ready
+
+    async def _execute_subtask_with_fallback(self, st: SubTask) -> tuple[str, Any]:
+        """Run a single subtask, trying its primary agent then fallbacks."""
+        # Build candidate list: primary agent + fallbacks
+        candidates: list[str] = []
+        if st.assigned_agent:
+            candidates.append(st.assigned_agent)
+        candidates.extend(self._fallback_chains.get(st.id, []))
+
+        for agent_name in candidates:
+            agent = self._agents.get(agent_name)
+            if not agent:
+                continue
+            try:
+                task_input = self._resolve_task_input(st.description, agent)
+                result = await agent.run(task_input)
+                st.status = StepStatus.SUCCESS
+                st.result = result
+                return st.id, result
+            except Exception as e:
+                logger.warning(
+                    "Agent %s failed for subtask %s: %s, trying fallback",
+                    agent_name,
+                    st.id,
+                    e,
+                )
+                continue
+
+        st.status = StepStatus.FAILED
+        return st.id, {"error": f"All agents failed for subtask {st.id}"}
+
+    def _record_batch_results(
+        self,
+        batch_results: list[Any],
+        results: dict[str, Any],
+        executed: set[str],
+    ) -> None:
+        """Merge a completed batch into *results* and mark tasks executed."""
+        for task_id, result in batch_results:
+            if isinstance(result, Exception):
+                results[task_id] = {"error": str(result)}
+            else:
+                results[task_id] = result
+            executed.add(task_id)
+
+            self._execution_trace.append(
+                {"task_id": task_id, "result": str(result)[:200]}
+            )
+
     async def _execute_plan(self, task: OrchestratorInput) -> Any:
         """Execute the decomposed plan with fallback chain support."""
         # Group by dependencies for parallel execution
@@ -324,63 +382,18 @@ class OrchestratorAgent(
         results: dict[str, Any] = {}
 
         while len(executed) < len(self._subtasks):
-            # Find tasks ready to execute
-            ready = []
-            for task_id, subtask in self._subtasks.items():
-                if task_id in executed:
-                    continue
-                if all(dep in executed for dep in subtask.dependencies):
-                    ready.append(subtask)
-
+            ready = self._find_ready_subtasks(executed)
             if not ready:
                 break  # No progress possible
 
             # Execute ready tasks (limited parallelism)
             batch = ready[: task.max_parallel]
-
-            async def execute_subtask(st: SubTask) -> tuple[str, Any]:
-                # Build candidate list: primary agent + fallbacks
-                candidates: list[str] = []
-                if st.assigned_agent:
-                    candidates.append(st.assigned_agent)
-                candidates.extend(self._fallback_chains.get(st.id, []))
-
-                for agent_name in candidates:
-                    agent = self._agents.get(agent_name)
-                    if not agent:
-                        continue
-                    try:
-                        task_input = self._resolve_task_input(st.description, agent)
-                        result = await agent.run(task_input)
-                        st.status = StepStatus.SUCCESS
-                        st.result = result
-                        return st.id, result
-                    except Exception as e:
-                        logger.warning(
-                            "Agent %s failed for subtask %s: %s, trying fallback",
-                            agent_name,
-                            st.id,
-                            e,
-                        )
-                        continue
-
-                st.status = StepStatus.FAILED
-                return st.id, {"error": f"All agents failed for subtask {st.id}"}
-
             batch_results = await asyncio.gather(
-                *[execute_subtask(st) for st in batch], return_exceptions=True
+                *[self._execute_subtask_with_fallback(st) for st in batch],
+                return_exceptions=True,
             )
 
-            for task_id, result in batch_results:
-                if isinstance(result, Exception):
-                    results[task_id] = {"error": str(result)}
-                else:
-                    results[task_id] = result
-                executed.add(task_id)
-
-                self._execution_trace.append(
-                    {"task_id": task_id, "result": str(result)[:200]}
-                )
+            self._record_batch_results(batch_results, results, executed)
 
         return results
 

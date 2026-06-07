@@ -21,8 +21,8 @@ from tools.agents.benchmarks.evaluator_models import (
 # =============================================================================
 
 
-def print_evaluation_report(result: EvaluationResult, verbose: bool = True) -> None:
-    """Print formatted evaluation report to console."""
+def _print_report_header(result: EvaluationResult) -> None:
+    """Print the report banner, identifying metadata, and overall score."""
     print("\n" + "=" * 70)
     print("LLM EVALUATION REPORT")
     print("=" * 70)
@@ -36,7 +36,9 @@ def print_evaluation_report(result: EvaluationResult, verbose: bool = True) -> N
     print(f"OVERALL SCORE: {result.overall_score:.1f}/10.0 (Grade: {result.grade})")
     print(f"{'─' * 50}")
 
-    # Dimension scores
+
+def _print_dimension_scores(result: EvaluationResult, verbose: bool) -> None:
+    """Print each dimension's score bar and (optionally) wrapped reasoning."""
     print("\nDIMENSION SCORES:")
     for name, dim in sorted(result.dimension_scores.items()):
         bar = "█" * int(dim.score) + "░" * (10 - int(dim.score))
@@ -49,29 +51,29 @@ def print_evaluation_report(result: EvaluationResult, verbose: bool = True) -> N
             for line in reason_lines[:2]:  # Limit to 2 lines
                 print(f"                  {line}")
 
-    # Strengths
-    if result.strengths:
-        print("\n[+] STRENGTHS:")
-        for s in result.strengths[:5]:
-            print(f"    - {s}")
 
-    # Weaknesses
-    if result.weaknesses:
-        print("\n[-] WEAKNESSES:")
-        for w in result.weaknesses[:5]:
-            print(f"    - {w}")
+def _print_bulleted_section(header: str, items: list[str], limit: int) -> None:
+    """Print *header* followed by up to *limit* bulleted *items* when non-empty."""
+    if not items:
+        return
+    print(f"\n{header}")
+    for item in items[:limit]:
+        print(f"    - {item}")
 
-    # Suggestions
-    if result.improvement_suggestions and verbose:
-        print("\n[>] SUGGESTIONS:")
-        for s in result.improvement_suggestions[:3]:
-            print(f"    - {s}")
 
-    # Key findings
-    if result.key_findings and verbose:
-        print("\n[!] KEY FINDINGS:")
-        for f in result.key_findings[:3]:
-            print(f"    - {f}")
+def print_evaluation_report(result: EvaluationResult, verbose: bool = True) -> None:
+    """Print formatted evaluation report to console."""
+    _print_report_header(result)
+    _print_dimension_scores(result, verbose)
+
+    _print_bulleted_section("[+] STRENGTHS:", result.strengths, 5)
+    _print_bulleted_section("[-] WEAKNESSES:", result.weaknesses, 5)
+
+    if verbose:
+        _print_bulleted_section(
+            "[>] SUGGESTIONS:", result.improvement_suggestions, 3
+        )
+        _print_bulleted_section("[!] KEY FINDINGS:", result.key_findings, 3)
 
 
 # =============================================================================

@@ -31,6 +31,62 @@ interface StepLiveState {
   error?: string | null;
 }
 
+/** True when no known step is still pending or running. */
+function areAllStepsDone(stepStates: Map<string, StepLiveState>): boolean {
+  for (const st of stepStates.values()) {
+    if (st.status === "pending" || st.status === "running") {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** A pending step becomes optimistically "running" once all its deps resolve. */
+function shouldOptimisticallyRun(
+  node: DAGNode,
+  stepStates: Map<string, StepLiveState>
+): boolean {
+  const currentStatus = stepStates.get(node.id)?.status ?? "pending";
+  if (currentStatus !== "pending") return false;
+  return node.depends_on.every((depId) => {
+    const ds = stepStates.get(depId)?.status;
+    return ds === "success" || ds === "skipped";
+  });
+}
+
+/**
+ * Layer optimistic "running" status onto pending nodes whose dependencies have
+ * all resolved, while the workflow is still in flight. Returns a new map.
+ */
+function computeEffectiveStepStates(
+  stepStates: Map<string, StepLiveState> | undefined,
+  dagNodes: DAGNode[]
+): Map<string, StepLiveState> {
+  const eff = new Map<string, StepLiveState>();
+  if (!stepStates) return eff;
+
+  // Start by copying all known states
+  for (const [id, st] of stepStates) {
+    eff.set(id, st);
+  }
+
+  const workflowStarted = stepStates.size > 0;
+  const allDone = areAllStepsDone(stepStates);
+
+  // Apply optimistic running status if workflow is running
+  if (workflowStarted && !allDone) {
+    for (const dn of dagNodes) {
+      if (shouldOptimisticallyRun(dn, stepStates)) {
+        eff.set(dn.id, {
+          ...stepStates.get(dn.id),
+          status: "running",
+        });
+      }
+    }
+  }
+  return eff;
+}
+
 interface Props {
   dagNodes: DAGNode[];
   dagEdges: DAGEdge[];
@@ -73,49 +129,10 @@ function WorkflowDAGInner({
     [dagNodes, dagEdges]
   );
 
-  const effectiveStepStates = useMemo(() => {
-    const eff = new Map<string, StepLiveState>();
-    if (!stepStates) return eff;
-    
-    // Start by copying all known states
-    for (const [id, st] of stepStates) {
-      eff.set(id, st);
-    }
-    
-    const workflowStarted = stepStates.size > 0;
-    
-    // Check if we're technically all done with known states
-    let allDone = true;
-    for (const st of stepStates.values()) {
-      if (st.status === "pending" || st.status === "running") {
-        allDone = false;
-        break;
-      }
-    }
-
-    // Apply optimistic running status if workflow is running
-    if (workflowStarted && !allDone) {
-      for (const dn of dagNodes) {
-        const currentLive = stepStates.get(dn.id);
-        const currentStatus = currentLive?.status ?? "pending";
-        
-        if (currentStatus === "pending") {
-          const depsResolved = dn.depends_on.every(depId => {
-            const ds = stepStates.get(depId)?.status;
-            return ds === "success" || ds === "skipped";
-          });
-          
-          if (depsResolved) {
-            eff.set(dn.id, {
-              ...currentLive,
-              status: "running",
-            });
-          }
-        }
-      }
-    }
-    return eff;
-  }, [stepStates, dagNodes]);
+  const effectiveStepStates = useMemo(
+    () => computeEffectiveStepStates(stepStates, dagNodes),
+    [stepStates, dagNodes]
+  );
 
   // Find all currently-running steps
   const runningStepIds = useMemo(() => {

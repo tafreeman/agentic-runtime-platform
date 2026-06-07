@@ -138,6 +138,98 @@ async def runs_summary(
     return _tenant_run_logger(tenant).summary(workflow_name=workflow)
 
 
+def _revalidate_steps(steps: list[Any], filename: str) -> list[Any]:
+    """Revalidate raw step dicts through ``StepResultRecord``.
+
+    Older on-disk run files that pre-date the formalized wire format may fail
+    validation: in that case we log a warning and fall back to the raw stored
+    dict for that step rather than 422-ing the whole response.
+    """
+    from ..models import StepResultRecord
+
+    validated_steps: list[Any] = []
+    for raw_step in steps:
+        if not isinstance(raw_step, dict):
+            validated_steps.append(raw_step)
+            continue
+        try:
+            validated_steps.append(
+                StepResultRecord.model_validate(raw_step).model_dump(mode="json")
+            )
+        except Exception as exc:
+            logger.warning(
+                "StepResultRecord read-time validation failed for run %s "
+                "step %r; returning raw dict. error=%s",
+                filename,
+                raw_step.get("step_name", "<unknown>"),
+                exc,
+            )
+            validated_steps.append(raw_step)
+    return validated_steps
+
+
+def _resolve_model_override(model_override: str) -> str:
+    """Resolve a step model override, handling ``env:VAR|fallback`` syntax."""
+    val = model_override
+    if val.startswith("env:"):
+        parts = val.split("|", 1)
+        if len(parts) > 1:
+            env_key = parts[0][4:]
+            val = get_secret(env_key, default=parts[1])
+        else:
+            env_key = val[4:]
+            val = get_secret(env_key, default=val)
+    return val
+
+
+def _infer_step_model(step: dict[str, Any], steps_cfg: dict[str, Any]) -> None:
+    """Backfill ``model_used`` on a single step from its workflow config."""
+    # Skip if we already have a model
+    if step.get("model_used"):
+        return
+
+    # Skip tier 0 (no model)
+    if step.get("tier") == 0:
+        return
+
+    s_name = step.get("step_name")
+    if s_name not in steps_cfg:
+        return
+
+    step_cfg = steps_cfg[s_name]
+    # 1. Check specific model override
+    if step_cfg.model_override:
+        step["model_used"] = _resolve_model_override(step_cfg.model_override)
+        # Mark as inferred (optional, maybe distinct UI style?)
+        step["metadata"] = step.get("metadata", {})
+        step["metadata"]["model_inferred"] = True
+
+
+def _infer_missing_models(run_data: dict[str, Any], filename: str) -> None:
+    """Best-effort retroactive model identification for run steps.
+
+    If ``model_used`` is missing in the run log, try to infer it from the
+    current workflow config.
+    """
+    workflow_name = run_data.get("workflow_name")
+    if not (workflow_name and _LANGCHAIN_AVAILABLE):
+        return
+    try:
+        config = load_workflow_config(workflow_name)
+        steps_cfg = {s.name: s for s in config.steps}
+        for step in run_data.get("steps", []):
+            _infer_step_model(step, steps_cfg)
+    except Exception as exc:
+        # Workflow definition might have changed or been deleted; ignore errors
+        # but log at debug level for operational diagnostics
+        logger.debug(
+            "Failed to infer model_used for run %s: %s",
+            filename,
+            exc,
+            exc_info=True,
+        )
+
+
 @router.get("/runs/{filename}", responses={404: {"description": "Run not found"}})
 async def get_run(
     request: Request,
@@ -152,8 +244,6 @@ async def get_run(
     validation: in that case we log a warning and fall back to the raw stored
     dict for that step rather than 422-ing the whole response.
     """
-    from ..models import StepResultRecord
-
     tenant_logger = _tenant_run_logger(tenant)
     run_data = tenant_logger.load_run(_resolve_run_or_404(filename, tenant))
     await _audit_data_accessed(
@@ -165,73 +255,9 @@ async def get_run(
 
     steps = run_data.get("steps")
     if isinstance(steps, list):
-        validated_steps: list[Any] = []
-        for raw_step in steps:
-            if not isinstance(raw_step, dict):
-                validated_steps.append(raw_step)
-                continue
-            try:
-                validated_steps.append(
-                    StepResultRecord.model_validate(raw_step).model_dump(mode="json")
-                )
-            except Exception as exc:
-                logger.warning(
-                    "StepResultRecord read-time validation failed for run %s "
-                    "step %r; returning raw dict. error=%s",
-                    filename,
-                    raw_step.get("step_name", "<unknown>"),
-                    exc,
-                )
-                validated_steps.append(raw_step)
-        run_data["steps"] = validated_steps
+        run_data["steps"] = _revalidate_steps(steps, filename)
 
-    # Best-effort retroactive model identification
-    # If model_used is missing in the run log, try to infer it from current workflow config
-    workflow_name = run_data.get("workflow_name")
-    if workflow_name and _LANGCHAIN_AVAILABLE:
-        try:
-            config = load_workflow_config(workflow_name)
-            steps_cfg = {s.name: s for s in config.steps}
-
-            for step in run_data.get("steps", []):
-                # Skip if we already have a model
-                if step.get("model_used"):
-                    continue
-
-                # Skip tier 0 (no model)
-                if step.get("tier") == 0:
-                    continue
-
-                s_name = step.get("step_name")
-                if s_name in steps_cfg:
-                    step_cfg = steps_cfg[s_name]
-
-                    # 1. Check specific model override
-                    if step_cfg.model_override:
-                        val = step_cfg.model_override
-                        # Handle "env:VAR|fallback"
-                        if val.startswith("env:"):
-                            parts = val.split("|", 1)
-                            if len(parts) > 1:
-                                env_key = parts[0][4:]
-                                val = get_secret(env_key, default=parts[1])
-                            else:
-                                env_key = val[4:]
-                                val = get_secret(env_key, default=val)
-
-                        step["model_used"] = val
-                        # Mark as inferred (optional, maybe distinct UI style?)
-                        step["metadata"] = step.get("metadata", {})
-                        step["metadata"]["model_inferred"] = True
-        except Exception as exc:
-            # Workflow definition might have changed or been deleted; ignore errors
-            # but log at debug level for operational diagnostics
-            logger.debug(
-                "Failed to infer model_used for run %s: %s",
-                filename,
-                exc,
-                exc_info=True,
-            )
+    _infer_missing_models(run_data, filename)
 
     return run_data
 

@@ -134,6 +134,28 @@ def _require_langchain() -> None:
         )
 
 
+def _filter_datasets_for_workflow(
+    datasets: list[dict[str, Any]],
+    workflow_def: Any,
+    load_first_sample: Any,
+) -> list[dict[str, Any]]:
+    """Keep only datasets whose first sample is compatible with the workflow.
+
+    ``load_first_sample`` is a callable taking the dataset id and returning a
+    ``(sample, meta)`` tuple. Datasets that fail to load are skipped.
+    """
+    filtered: list[dict[str, Any]] = []
+    for dataset in datasets:
+        try:
+            sample, _ = load_first_sample(dataset["id"])
+        except Exception:
+            continue
+        compatible, _ = match_workflow_dataset(workflow_def, sample)
+        if compatible:
+            filtered.append(dataset)
+    return filtered
+
+
 @router.get(
     "/eval/datasets",
     response_model=ListEvaluationDatasetsResponse,
@@ -162,35 +184,23 @@ async def list_evaluation_datasets(
         except Exception as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-        filtered_local: list[dict[str, Any]] = []
-        for dataset in local:
-            try:
-                sample, _ = _call_with_supported_kwargs(
-                    load_local_dataset_sample,
-                    dataset["id"],
-                    sample_index=0,
-                    tenant_id=tenant.tenant_id,
-                )
-            except Exception:
-                continue
-            compatible, _ = match_workflow_dataset(workflow_def, sample)
-            if compatible:
-                filtered_local.append(dataset)
-
-        filtered_repository: list[dict[str, Any]] = []
-        for dataset in repository:
-            try:
-                sample, _ = load_repository_dataset_sample(
-                    dataset["id"], sample_index=0
-                )
-            except Exception:
-                continue
-            compatible, _ = match_workflow_dataset(workflow_def, sample)
-            if compatible:
-                filtered_repository.append(dataset)
-
-        repository = filtered_repository
-        local = filtered_local
+        local = _filter_datasets_for_workflow(
+            local,
+            workflow_def,
+            lambda dataset_id: _call_with_supported_kwargs(
+                load_local_dataset_sample,
+                dataset_id,
+                sample_index=0,
+                tenant_id=tenant.tenant_id,
+            ),
+        )
+        repository = _filter_datasets_for_workflow(
+            repository,
+            workflow_def,
+            lambda dataset_id: load_repository_dataset_sample(
+                dataset_id, sample_index=0
+            ),
+        )
 
     return ListEvaluationDatasetsResponse(
         repository=repository,
@@ -343,6 +353,56 @@ async def get_dataset_sample_detail(
 # ---------------------------------------------------------------------------
 
 
+def _validate_sample_list_params(source: str, offset: int, limit: int) -> None:
+    """Validate pagination/source params for the sample-list endpoint."""
+    if source not in ("repository", "local"):
+        raise HTTPException(
+            status_code=422, detail=f"Invalid source: {source!r}"
+        )
+    if limit < 1 or limit > 100:
+        raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
+    if offset < 0:
+        raise HTTPException(status_code=422, detail="offset must be >= 0")
+
+
+def _load_sample_batch(
+    source: str,
+    dataset_id: str,
+    offset: int,
+    limit: int,
+    tenant_id: str,
+) -> list[Any]:
+    """Load a batch of dataset samples, mapping load errors to HTTP codes."""
+    try:
+        if source == "repository":
+            return load_repository_dataset_samples(
+                dataset_id, offset=offset, limit=limit
+            )
+        return _call_with_supported_kwargs(
+            load_local_dataset_samples,
+            dataset_id,
+            offset=offset,
+            limit=limit,
+            tenant_id=tenant_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to load dataset: {exc}"
+        ) from exc
+
+
+def _resolve_sample_count(batch: list[Any]) -> int:
+    """Derive the total sample count from a loaded batch and its metadata."""
+    if not batch:
+        return 0
+    meta_count = batch[0][1].get("sample_count")
+    if isinstance(meta_count, int) and meta_count > 0:
+        return meta_count
+    return len(batch)
+
+
 @router.get(
     "/eval/datasets/{source}/{dataset_id:path}/samples",
     response_model=DatasetSampleListResponse,
@@ -364,42 +424,11 @@ async def list_dataset_samples_path_based(
 
     **New in Sprint B SB-1.** Replaces the query-param ``/sample-list`` endpoint.
     """
-    if source not in ("repository", "local"):
-        raise HTTPException(
-            status_code=422, detail=f"Invalid source: {source!r}"
-        )
-    if limit < 1 or limit > 100:
-        raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
-    if offset < 0:
-        raise HTTPException(status_code=422, detail="offset must be >= 0")
+    _validate_sample_list_params(source, offset, limit)
 
-    try:
-        if source == "repository":
-            batch = load_repository_dataset_samples(
-                dataset_id, offset=offset, limit=limit
-            )
-        else:
-            batch = _call_with_supported_kwargs(
-                load_local_dataset_samples,
-                dataset_id,
-                offset=offset,
-                limit=limit,
-                tenant_id=tenant.tenant_id,
-            )
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to load dataset: {exc}"
-        ) from exc
+    batch = _load_sample_batch(source, dataset_id, offset, limit, tenant.tenant_id)
 
-    sample_count = 0
-    if batch:
-        meta_count = batch[0][1].get("sample_count")
-        if isinstance(meta_count, int) and meta_count > 0:
-            sample_count = meta_count
-        else:
-            sample_count = len(batch)
+    sample_count = _resolve_sample_count(batch)
 
     summaries: list[DatasetSampleSummary] = [
         _make_sample_summary(sample, s_meta["sample_index"], s_meta)

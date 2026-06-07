@@ -51,12 +51,8 @@ CONTENT_TYPE_JSON = "application/json"
 LogFn = Callable[[str], None] | None
 
 
-def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
-    """Probe a GitHub Models model with a lightweight test."""
-    start = time.time()
-    model_id = model.replace(PREFIX_GITHUB, "").replace(PREFIX_GITHUB_ALT, "")
-
-    # Check if gh CLI is available
+def _check_gh_prerequisites(model: str, start: float) -> ProbeResult | None:
+    """Return an error ProbeResult if gh CLI is missing or unauthenticated."""
     import shutil
 
     if not shutil.which("gh"):
@@ -96,28 +92,45 @@ def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
             probe_time=datetime.now().isoformat(),
             duration_ms=int((time.time() - start) * 1000),
         )
+    return None
 
-    # If model_id doesn't have a slash, resolve from gh models list
-    if "/" not in model_id:
-        try:
-            result = subprocess.run(
-                ["gh", "models", "list"],
-                capture_output=True,
-                text=True,
-                timeout=TIMEOUT_GH_MODELS_LIST,
-            )
-            if result.returncode == 0:
-                for line in result.stdout.strip().split("\n"):
-                    if line.strip():
-                        parts = line.split(TAB_SEPARATOR)
-                        if parts:
-                            full_id = parts[0].strip()
-                            if full_id.endswith(f"/{model_id}") or full_id == model_id:
-                                model_id = full_id
-                                break
-        except Exception:
-            pass  # Continue with original model_id
 
+def _match_gh_model_line(line: str, model_id: str) -> str | None:
+    """Return the full model id from a gh models list line if it matches."""
+    if not line.strip():
+        return None
+    parts = line.split(TAB_SEPARATOR)
+    if not parts:
+        return None
+    full_id = parts[0].strip()
+    if full_id.endswith(f"/{model_id}") or full_id == model_id:
+        return full_id
+    return None
+
+
+def _resolve_gh_model_id(model_id: str) -> str:
+    """Resolve a bare model id to its full publisher/model id via gh models list."""
+    if "/" in model_id:
+        return model_id
+    try:
+        result = subprocess.run(
+            ["gh", "models", "list"],
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_GH_MODELS_LIST,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.strip().split("\n"):
+                matched = _match_gh_model_line(line, model_id)
+                if matched is not None:
+                    return matched
+    except Exception:
+        pass  # Continue with original model_id
+    return model_id
+
+
+def _run_gh_probe(model: str, model_id: str, start: float) -> ProbeResult:
+    """Run the minimal gh models run probe and classify the result."""
     try:
         # Do a minimal probe - just ask for a single token response
         result = subprocess.run(
@@ -145,19 +158,19 @@ def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
                 probe_time=datetime.now().isoformat(),
                 duration_ms=duration_ms,
             )
-        else:
-            error_text = result.stderr or result.stdout
-            code, retry = classify_error(error_text, result.returncode)
-            return ProbeResult(
-                model=model,
-                provider="github",
-                usable=False,
-                error_code=code.value,
-                error_message=error_text[:500],
-                should_retry=retry,
-                probe_time=datetime.now().isoformat(),
-                duration_ms=duration_ms,
-            )
+
+        error_text = result.stderr or result.stdout
+        code, retry = classify_error(error_text, result.returncode)
+        return ProbeResult(
+            model=model,
+            provider="github",
+            usable=False,
+            error_code=code.value,
+            error_message=error_text[:500],
+            should_retry=retry,
+            probe_time=datetime.now().isoformat(),
+            duration_ms=duration_ms,
+        )
 
     except subprocess.TimeoutExpired:
         return ProbeResult(
@@ -182,6 +195,21 @@ def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
             probe_time=datetime.now().isoformat(),
             duration_ms=int((time.time() - start) * 1000),
         )
+
+
+def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
+    """Probe a GitHub Models model with a lightweight test."""
+    start = time.time()
+    model_id = model.replace(PREFIX_GITHUB, "").replace(PREFIX_GITHUB_ALT, "")
+
+    prereq_error = _check_gh_prerequisites(model, start)
+    if prereq_error is not None:
+        return prereq_error
+
+    # If model_id doesn't have a slash, resolve from gh models list
+    model_id = _resolve_gh_model_id(model_id)
+
+    return _run_gh_probe(model, model_id, start)
 
 
 def probe_azure_foundry(model: str, _log: LogFn = None) -> ProbeResult:

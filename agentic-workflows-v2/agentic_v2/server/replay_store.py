@@ -601,38 +601,62 @@ async def build_replay_store(settings: Any) -> ReplayStore:
     redis_url: str | None = getattr(settings, "redis_url", None)
 
     if backend == "redis":
-        if not redis_url:
-            logger.warning(
-                "replay_store_backend='redis' but redis_url is not set; "
-                "falling back to InMemoryReplayStore"
-            )
-            return InMemoryReplayStore(max_events=max_events)
-        store = await RedisReplayStore.connect(
-            redis_url=redis_url, max_events=max_events, ttl_seconds=ttl
+        return await _build_explicit_redis_store(
+            redis_url, max_events=max_events, ttl=ttl
         )
-        if not store.is_connected:
-            logger.warning(
-                "replay_store_backend='redis' but connection failed; "
-                "falling back to InMemoryReplayStore"
-            )
-            return InMemoryReplayStore(max_events=max_events)
-        return store
 
     if backend == "sqlite":
-        if not _SQLITE_AVAILABLE:
-            logger.warning(
-                "replay_store_backend='sqlite' but aiosqlite not installed; "
-                "falling back to InMemoryReplayStore"
-            )
-            return InMemoryReplayStore(max_events=max_events)
-        return await SqliteReplayStore.connect(
-            db_path=sqlite_path, max_events=max_events
+        return await _build_explicit_sqlite_store(
+            sqlite_path, max_events=max_events
         )
 
     if backend == "memory":
         return InMemoryReplayStore(max_events=max_events)
 
-    # --- auto ---
+    return await _build_auto_store(
+        redis_url, sqlite_path=sqlite_path, max_events=max_events, ttl=ttl
+    )
+
+
+async def _build_explicit_redis_store(
+    redis_url: str | None, *, max_events: int, ttl: int
+) -> ReplayStore:
+    """Build a Redis store for ``backend='redis'``, falling back to in-memory."""
+    if not redis_url:
+        logger.warning(
+            "replay_store_backend='redis' but redis_url is not set; "
+            "falling back to InMemoryReplayStore"
+        )
+        return InMemoryReplayStore(max_events=max_events)
+    store = await RedisReplayStore.connect(
+        redis_url=redis_url, max_events=max_events, ttl_seconds=ttl
+    )
+    if not store.is_connected:
+        logger.warning(
+            "replay_store_backend='redis' but connection failed; "
+            "falling back to InMemoryReplayStore"
+        )
+        return InMemoryReplayStore(max_events=max_events)
+    return store
+
+
+async def _build_explicit_sqlite_store(
+    sqlite_path: str, *, max_events: int
+) -> ReplayStore:
+    """Build a SQLite store for ``backend='sqlite'``, falling back to in-memory."""
+    if not _SQLITE_AVAILABLE:
+        logger.warning(
+            "replay_store_backend='sqlite' but aiosqlite not installed; "
+            "falling back to InMemoryReplayStore"
+        )
+        return InMemoryReplayStore(max_events=max_events)
+    return await SqliteReplayStore.connect(db_path=sqlite_path, max_events=max_events)
+
+
+async def _build_auto_store(
+    redis_url: str | None, *, sqlite_path: str, max_events: int, ttl: int
+) -> ReplayStore:
+    """Auto-select Redis, then SQLite, then in-memory based on availability."""
     if redis_url and _REDIS_AVAILABLE:
         store = await RedisReplayStore.connect(
             redis_url=redis_url, max_events=max_events, ttl_seconds=ttl

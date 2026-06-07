@@ -101,36 +101,52 @@ class MarkdownReporter:
 
         # Table of Contents
         if self.config.include_toc:
-            lines.append("## Table of Contents")
-            lines.append("")
-            if self.config.include_summary:
-                lines.append("- [Summary](#summary)")
-            lines.append("- [Results](#results)")
-            if metadata:
-                lines.append("- [Metadata](#metadata)")
-            lines.append("")
+            lines.extend(self._render_toc(metadata))
 
         # Summary section
         if self.config.include_summary:
-            lines.append("## Summary")
-            lines.append("")
-            summary = self._calculate_summary(results)
-            lines.append(f"- **Total Results**: {summary['count']}")
-
-            for key, value in summary.items():
-                if key != "count":
-                    if isinstance(value, float):
-                        lines.append(f"- **{key}**: {value:.4f}")
-                    else:
-                        lines.append(f"- **{key}**: {value}")
-            lines.append("")
+            lines.extend(self._render_summary(results))
 
         # Results section
-        lines.append("## Results")
+        lines.extend(self._render_results(results))
+
+        # Metadata section
+        if metadata:
+            lines.extend(self._render_metadata(metadata))
+
+        return "\n".join(lines)
+
+    def _render_toc(self, metadata: dict[str, Any] | None) -> list[str]:
+        """Render the table-of-contents section lines."""
+        lines: list[str] = ["## Table of Contents", ""]
+        if self.config.include_summary:
+            lines.append("- [Summary](#summary)")
+        lines.append("- [Results](#results)")
+        if metadata:
+            lines.append("- [Metadata](#metadata)")
         lines.append("")
+        return lines
+
+    def _render_summary(self, results: list[dict[str, Any]]) -> list[str]:
+        """Render the summary statistics section lines."""
+        lines: list[str] = ["## Summary", ""]
+        summary = self._calculate_summary(results)
+        lines.append(f"- **Total Results**: {summary['count']}")
+
+        for key, value in summary.items():
+            if key != "count":
+                if isinstance(value, float):
+                    lines.append(f"- **{key}**: {value:.4f}")
+                else:
+                    lines.append(f"- **{key}**: {value}")
+        lines.append("")
+        return lines
+
+    def _render_results(self, results: list[dict[str, Any]]) -> list[str]:
+        """Render the results table section lines."""
+        lines: list[str] = ["## Results", ""]
 
         if results:
-            # Create table
             display_results = results[: self.config.max_results_in_table]
             lines.extend(self._create_table(display_results))
 
@@ -143,16 +159,15 @@ class MarkdownReporter:
             lines.append("*No results to display*")
 
         lines.append("")
+        return lines
 
-        # Metadata section
-        if metadata:
-            lines.append("## Metadata")
-            lines.append("")
-            for key, value in metadata.items():
-                lines.append(f"- **{key}**: {value}")
-            lines.append("")
-
-        return "\n".join(lines)
+    def _render_metadata(self, metadata: dict[str, Any]) -> list[str]:
+        """Render the metadata section lines."""
+        lines: list[str] = ["## Metadata", ""]
+        for key, value in metadata.items():
+            lines.append(f"- **{key}**: {value}")
+        lines.append("")
+        return lines
 
     def _create_table(self, results: list[dict[str, Any]]) -> list[str]:
         """Create Markdown table from results."""

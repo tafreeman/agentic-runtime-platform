@@ -520,6 +520,46 @@ def _load_from_local(
 # =============================================================================
 
 
+def _load_cached_tasks(
+    benchmark_id: str,
+    limit: int | None,
+    offset: int,
+    cache_ttl_hours: int,
+) -> list[BenchmarkTask] | None:
+    """Return cached tasks (with limit/offset applied), or ``None`` on cache miss."""
+    cache_path = get_cache_path(benchmark_id)
+    if not is_cache_valid(cache_path, cache_ttl_hours):
+        return None
+
+    cached_data = load_from_cache(benchmark_id)
+    if not cached_data:
+        return None
+
+    logger.info("    Loaded from cache")
+    tasks = [BenchmarkTask(**t) for t in cached_data]
+    # Apply limit/offset to cached data
+    tasks = tasks[offset:]
+    if limit:
+        tasks = tasks[:limit]
+    return tasks
+
+
+def _load_tasks_from_source(
+    benchmark: BenchmarkDefinition,
+    limit: int | None,
+    offset: int,
+) -> list[BenchmarkTask]:
+    """Dispatch to the appropriate source loader for *benchmark*."""
+    if benchmark.source == DataSource.HUGGINGFACE:
+        return _load_from_huggingface(benchmark, limit, offset)
+    if benchmark.source == DataSource.GITHUB:
+        return _load_from_github(benchmark, limit, offset)
+    if benchmark.source == DataSource.LOCAL:
+        return _load_from_local(benchmark, limit, offset)
+    logger.error("Unsupported source: %s", benchmark.source)
+    return []
+
+
 def load_benchmark(
     benchmark_id: str,
     limit: int | None = None,
@@ -554,29 +594,14 @@ def load_benchmark(
 
     # Check cache
     if use_cache:
-        cache_path = get_cache_path(benchmark_id)
-        if is_cache_valid(cache_path, cache_ttl_hours):
-            cached_data = load_from_cache(benchmark_id)
-            if cached_data:
-                logger.info("    Loaded from cache")
-                tasks = [BenchmarkTask(**t) for t in cached_data]
-                # Apply limit/offset to cached data
-                tasks = tasks[offset:]
-                if limit:
-                    tasks = tasks[:limit]
-                return tasks
+        cached_tasks = _load_cached_tasks(
+            benchmark_id, limit, offset, cache_ttl_hours
+        )
+        if cached_tasks is not None:
+            return cached_tasks
 
     # Load from source
-    tasks = []
-
-    if benchmark.source == DataSource.HUGGINGFACE:
-        tasks = _load_from_huggingface(benchmark, limit, offset)
-    elif benchmark.source == DataSource.GITHUB:
-        tasks = _load_from_github(benchmark, limit, offset)
-    elif benchmark.source == DataSource.LOCAL:
-        tasks = _load_from_local(benchmark, limit, offset)
-    else:
-        logger.error("Unsupported source: %s", benchmark.source)
+    tasks = _load_tasks_from_source(benchmark, limit, offset)
 
     # Cache results
     if use_cache and tasks:

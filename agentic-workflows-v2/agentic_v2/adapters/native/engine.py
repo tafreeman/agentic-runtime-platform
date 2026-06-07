@@ -208,15 +208,7 @@ class NativeEngine:
                     thread_id,
                     len(saved),
                 )
-                for step_name, step_data in saved.items():
-                    if step_data["status"] == StepStatus.SUCCESS.value:
-                        # Mark step as completed in context so DAG executor
-                        # skips it via should_run() dependency checks.
-                        if step_name not in ctx.completed_steps:
-                            ctx.completed_steps.append(step_name)
-                        # Restore output data into context variables
-                        for key, value in step_data["output_data"].items():
-                            ctx.set_sync(key, value)
+                self._restore_checkpoint_state(ctx, saved)
 
         return await self.execute(
             workflow,
@@ -224,6 +216,26 @@ class NativeEngine:
             thread_id=thread_id,
             **kwargs,
         )
+
+    @staticmethod
+    def _restore_checkpoint_state(
+        ctx: ExecutionContext, saved: dict[str, Any]
+    ) -> None:
+        """Replay successful checkpointed steps into *ctx*.
+
+        Marks each successful step as completed (so the DAG executor skips it)
+        and restores its output data into the context variables.
+        """
+        for step_name, step_data in saved.items():
+            if step_data["status"] != StepStatus.SUCCESS.value:
+                continue
+            # Mark step as completed in context so DAG executor
+            # skips it via should_run() dependency checks.
+            if step_name not in ctx.completed_steps:
+                ctx.completed_steps.append(step_name)
+            # Restore output data into context variables
+            for key, value in step_data["output_data"].items():
+                ctx.set_sync(key, value)
 
     # ------------------------------------------------------------------
     # Internal helpers

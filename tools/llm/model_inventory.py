@@ -29,7 +29,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,26 @@ logger = logging.getLogger(__name__)
 def _repo_root() -> Path:
     # prompts/tools/model_inventory.py -> prompts/
     return Path(__file__).resolve().parents[1]
+
+
+def _apply_dotenv_line(raw_line: str) -> None:
+    """Parse a single .env line and set the env var if not already present."""
+    line = raw_line.strip()
+    if not line or line.startswith("#"):
+        return
+    if "=" not in line:
+        return
+    k, v = line.split("=", 1)
+    key = k.strip()
+    value = v.strip()
+    if not key or key in os.environ:
+        return
+    # Strip optional quotes.
+    if (value.startswith('"') and value.endswith('"')) or (
+        value.startswith("'") and value.endswith("'")
+    ):
+        value = value[1:-1]
+    os.environ[key] = value
 
 
 def _load_dotenv(dotenv_path: Path) -> None:
@@ -57,22 +77,7 @@ def _load_dotenv(dotenv_path: Path) -> None:
         return
 
     for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        key = k.strip()
-        value = v.strip()
-        if not key or key in os.environ:
-            continue
-        # Strip optional quotes.
-        if (value.startswith('"') and value.endswith('"')) or (
-            value.startswith("'") and value.endswith("'")
-        ):
-            value = value[1:-1]
-        os.environ[key] = value
+        _apply_dotenv_line(raw_line)
 
 
 def _bool_env_present(*names: str) -> bool:
@@ -154,41 +159,13 @@ def _probe_openai_compatible_models(base_url: str) -> dict[str, Any]:
     }
 
 
-def build_inventory(active_probes: bool = False) -> dict[str, Any]:
-    """Build a JSON-serializable capability inventory."""
-
-    root = _repo_root()
-    _load_dotenv(root / ".env")
-
-    # Import lazily to avoid heavy import chains.
-    try:
-        from llm_client import LLMClient
-    except Exception as e:
-        return {
-            "ok": False,
-            "error": f"Failed to import llm_client: {e}",
-            "root": str(root),
-        }
-
-    inv: dict[str, Any] = {
-        "ok": True,
-        "root": str(root),
-        "platform": sys.platform,
-        "python": sys.version.split()[0],
-        "active_probes": active_probes,
-        "providers": {},
-    }
-
-    providers: dict[str, Any] = {}
-
-    # ---------------------------------------------------------------------
-    # Local ONNX (AI Dev Gallery cache)
-    # ---------------------------------------------------------------------
+def _inv_local_onnx(local_models: dict[str, Any]) -> dict[str, Any]:
+    """Inventory locally installed ONNX models from the AI Dev Gallery cache."""
     ai_gallery = Path.home() / ".cache" / "aigallery"
     local_models_installed: list[str] = []
     local_models_missing: list[str] = []
     if ai_gallery.exists():
-        for key, model_dir in LLMClient.LOCAL_MODELS.items():
+        for key, model_dir in local_models.items():
             # model_dir may include nested subpaths; the top folder is enough
             # to detect install.
             top = str(model_dir).split("/", 1)[0]
@@ -197,7 +174,7 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
             else:
                 local_models_missing.append(key)
 
-    providers["local_onnx"] = {
+    return {
         "configured": True,
         "aigallery_path": str(ai_gallery),
         "aigallery_exists": ai_gallery.exists(),
@@ -208,9 +185,9 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         "notes": "Model keys correspond to llm_client.LLMClient.LOCAL_MODELS",
     }
 
-    # ---------------------------------------------------------------------
-    # GitHub Models (gh models)
-    # ---------------------------------------------------------------------
+
+def _inv_github_models(active_probes: bool) -> dict[str, Any]:
+    """Inventory GitHub Models availability (gh CLI + token)."""
     gh_path = shutil.which("gh")
     gh_token_present = _bool_env_present("GITHUB_TOKEN", "GH_TOKEN")
 
@@ -237,58 +214,41 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
             gh_info["reachable"] = False
             gh_info["error"] = str(e)
 
-    providers["github_models"] = gh_info
+    return gh_info
 
-    # ---------------------------------------------------------------------
-    # OpenAI (hosted)
-    # ---------------------------------------------------------------------
-    openai_configured = _bool_env_present("OPENAI_API_KEY")
-    openai_models: list[str] = []
-    openai_error: str | None = None
 
-    if active_probes and openai_configured:
+def _inv_listed_provider(
+    active_probes: bool,
+    configured: bool,
+    list_models: Callable[[], list[str]],
+    notes: str,
+) -> dict[str, Any]:
+    """Inventory a provider whose models are fetched via a listing callback."""
+    models: list[str] = []
+    error: str | None = None
+
+    if active_probes and configured:
         try:
-            openai_models = LLMClient.list_openai_models()
+            models = list_models()
         except Exception as e:
-            openai_error = str(e)
+            error = str(e)
 
-    providers["openai"] = {
-        "configured": openai_configured,
-        "models": openai_models,
-        "model_count": len(openai_models),
-        "error": openai_error,
-        "notes": "Use model IDs directly with LLMClient (e.g., gpt-4o-mini)",
+    return {
+        "configured": configured,
+        "models": models,
+        "model_count": len(models),
+        "error": error,
+        "notes": notes,
     }
 
-    # ---------------------------------------------------------------------
-    # Gemini
-    # ---------------------------------------------------------------------
-    gemini_configured = _bool_env_present("GEMINI_API_KEY", "GOOGLE_API_KEY")
-    gemini_models: list[str] = []
-    gemini_error: str | None = None
 
-    if active_probes and gemini_configured:
-        try:
-            gemini_models = LLMClient.list_gemini_models()
-        except Exception as e:
-            gemini_error = str(e)
-
-    providers["gemini"] = {
-        "configured": gemini_configured,
-        "models": gemini_models,
-        "model_count": len(gemini_models),
-        "error": gemini_error,
-        "notes": ("Model IDs are the part after 'models/' in the Gemini list API"),
-    }
-
-    # ---------------------------------------------------------------------
-    # Anthropic Claude
-    # ---------------------------------------------------------------------
+def _inv_claude() -> dict[str, Any]:
+    """Inventory Anthropic Claude configuration."""
     claude_configured = _bool_env_present(
         "ANTHROPIC_API_KEY",
         "CLAUDE_API_KEY",
     )
-    providers["claude"] = {
+    return {
         "configured": claude_configured,
         "notes": (
             "Anthropic does not provide a public list-models endpoint via "
@@ -296,9 +256,9 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         ),
     }
 
-    # ---------------------------------------------------------------------
-    # Azure Foundry (OpenAI-compatible data-plane endpoints)
-    # ---------------------------------------------------------------------
+
+def _inv_azure_foundry() -> dict[str, Any]:
+    """Inventory Azure Foundry OpenAI-compatible data-plane endpoints."""
     foundry_api_key_present = _bool_env_present("AZURE_FOUNDRY_API_KEY")
     foundry_endpoints: list[str] = []
     for k, v in os.environ.items():
@@ -316,7 +276,7 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
             }
         )
 
-    providers["azure_foundry"] = {
+    return {
         "configured": foundry_api_key_present and bool(foundry_endpoints),
         "api_key_present": foundry_api_key_present,
         "endpoints": foundry_endpoint_hosts,
@@ -326,9 +286,9 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         ),
     }
 
-    # ---------------------------------------------------------------------
-    # Azure OpenAI (resource endpoints)
-    # ---------------------------------------------------------------------
+
+def _inv_azure_openai() -> dict[str, Any]:
+    """Inventory Azure OpenAI resource endpoints across configured slots."""
     azure_slots: list[dict[str, Any]] = []
     for i in range(0, 10):
         ep = os.getenv(f"AZURE_OPENAI_ENDPOINT_{i}")
@@ -348,7 +308,7 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
             }
         )
 
-    providers["azure_openai"] = {
+    return {
         "configured": any(
             s.get("endpoint_present") and s.get("api_key_present") for s in azure_slots
         ),
@@ -360,24 +320,23 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         ),
     }
 
-    # ---------------------------------------------------------------------
-    # Local AI API (OpenAI-compatible) + Ollama
-    # ---------------------------------------------------------------------
-    # 1) Ollama
-    ollama_host = os.getenv("OLLAMA_HOST") or "http://localhost:11434"
-    providers["ollama"] = (
-        _probe_ollama(ollama_host)
-        if active_probes
-        else {
-            "configured": True,
-            "host": ollama_host,
-            "reachable": None,
-            "models": [],
-            "notes": ("Set OLLAMA_HOST to override (default http://localhost:11434)."),
-        }
-    )
 
-    # 2) Generic OpenAI-compatible server
+def _inv_ollama(active_probes: bool) -> dict[str, Any]:
+    """Inventory the Ollama server (active probe or passive config)."""
+    ollama_host = os.getenv("OLLAMA_HOST") or "http://localhost:11434"
+    if active_probes:
+        return _probe_ollama(ollama_host)
+    return {
+        "configured": True,
+        "host": ollama_host,
+        "reachable": None,
+        "models": [],
+        "notes": ("Set OLLAMA_HOST to override (default http://localhost:11434)."),
+    }
+
+
+def _inv_local_openai_compatible(active_probes: bool) -> dict[str, Any]:
+    """Inventory a generic OpenAI-compatible local server."""
     local_openai_base = (
         os.getenv("OPENAI_BASE_URL")
         or os.getenv("OPENAI_API_BASE")
@@ -385,19 +344,8 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         or os.getenv("LOCAL_OPENAI_BASE_URL")
     )
 
-    if local_openai_base:
-        providers["local_openai_compatible"] = (
-            _probe_openai_compatible_models(local_openai_base)
-            if active_probes
-            else {
-                "configured": True,
-                "base_url": local_openai_base,
-                "reachable": None,
-                "models": [],
-            }
-        )
-    else:
-        providers["local_openai_compatible"] = {
+    if not local_openai_base:
+        return {
             "configured": False,
             "notes": (
                 "Set OPENAI_BASE_URL (or OPENAI_API_BASE) to probe an OpenAI-"
@@ -405,9 +353,42 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
             ),
         }
 
-    # ---------------------------------------------------------------------
-    # Windows AI / Phi Silica
-    # ---------------------------------------------------------------------
+    if active_probes:
+        return _probe_openai_compatible_models(local_openai_base)
+    return {
+        "configured": True,
+        "base_url": local_openai_base,
+        "reachable": None,
+        "models": [],
+    }
+
+
+def _parse_windows_ai_bridge_output(
+    windows_ai_info: dict[str, Any], r: Any
+) -> None:
+    """Merge .NET bridge subprocess output into the windows_ai_info dict."""
+    windows_ai_info["bridge_exit_code"] = r.returncode
+    stdout = (r.stdout or "").strip()
+    stderr = (r.stderr or "").strip()
+    if stdout:
+        try:
+            parsed = json.loads(stdout)
+            windows_ai_info["info"] = parsed
+            if isinstance(parsed, dict):
+                windows_ai_info["available"] = parsed.get("available")
+                windows_ai_info["readyState"] = parsed.get("readyState")
+                if parsed.get("error"):
+                    windows_ai_info["error"] = str(parsed.get("error"))[:2000]
+        except Exception:
+            windows_ai_info["info_raw"] = stdout[:2000]
+
+    # If the bridge didn't provide a structured error, fall back to stderr.
+    if r.returncode != 0 and stderr and not windows_ai_info.get("error"):
+        windows_ai_info["error"] = stderr[:2000]
+
+
+def _inv_windows_ai(root: Path, active_probes: bool) -> dict[str, Any]:
+    """Inventory Windows AI / Phi Silica via the optional .NET bridge."""
     # We do not attempt to import WinRT from Python here; instead we can
     # optionally ask the .NET bridge for info.
     bridge_proj = root / "tools" / "windows_ai_bridge" / "PhiSilicaBridge.csproj"
@@ -447,28 +428,60 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
                 timeout=60,
                 cwd=str(bridge_proj.parent),
             )
-            windows_ai_info["bridge_exit_code"] = r.returncode
-            stdout = (r.stdout or "").strip()
-            stderr = (r.stderr or "").strip()
-            if stdout:
-                try:
-                    parsed = json.loads(stdout)
-                    windows_ai_info["info"] = parsed
-                    if isinstance(parsed, dict):
-                        windows_ai_info["available"] = parsed.get("available")
-                        windows_ai_info["readyState"] = parsed.get("readyState")
-                        if parsed.get("error"):
-                            windows_ai_info["error"] = str(parsed.get("error"))[:2000]
-                except Exception:
-                    windows_ai_info["info_raw"] = stdout[:2000]
-
-            # If the bridge didn't provide a structured error, fall back to stderr.
-            if r.returncode != 0 and stderr and not windows_ai_info.get("error"):
-                windows_ai_info["error"] = stderr[:2000]
+            _parse_windows_ai_bridge_output(windows_ai_info, r)
         except Exception as e:
             windows_ai_info["error"] = str(e)
 
-    providers["windows_ai_phi_silica"] = windows_ai_info
+    return windows_ai_info
+
+
+def build_inventory(active_probes: bool = False) -> dict[str, Any]:
+    """Build a JSON-serializable capability inventory."""
+
+    root = _repo_root()
+    _load_dotenv(root / ".env")
+
+    # Import lazily to avoid heavy import chains.
+    try:
+        from llm_client import LLMClient
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"Failed to import llm_client: {e}",
+            "root": str(root),
+        }
+
+    inv: dict[str, Any] = {
+        "ok": True,
+        "root": str(root),
+        "platform": sys.platform,
+        "python": sys.version.split()[0],
+        "active_probes": active_probes,
+        "providers": {},
+    }
+
+    providers: dict[str, Any] = {
+        "local_onnx": _inv_local_onnx(LLMClient.LOCAL_MODELS),
+        "github_models": _inv_github_models(active_probes),
+        "openai": _inv_listed_provider(
+            active_probes,
+            _bool_env_present("OPENAI_API_KEY"),
+            LLMClient.list_openai_models,
+            "Use model IDs directly with LLMClient (e.g., gpt-4o-mini)",
+        ),
+        "gemini": _inv_listed_provider(
+            active_probes,
+            _bool_env_present("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+            LLMClient.list_gemini_models,
+            "Model IDs are the part after 'models/' in the Gemini list API",
+        ),
+        "claude": _inv_claude(),
+        "azure_foundry": _inv_azure_foundry(),
+        "azure_openai": _inv_azure_openai(),
+        "ollama": _inv_ollama(active_probes),
+        "local_openai_compatible": _inv_local_openai_compatible(active_probes),
+        "windows_ai_phi_silica": _inv_windows_ai(root, active_probes),
+    }
 
     inv["providers"] = providers
     return inv

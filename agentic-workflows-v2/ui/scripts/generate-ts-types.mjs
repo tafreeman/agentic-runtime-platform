@@ -66,73 +66,66 @@ function outPath(filename) {
  * Removing `default` leaves `{}` which the compiler correctly maps to
  * `unknown` — matching the field's actual `Any` Pydantic annotation.
  */
+function isUnconstrainedSchema(prop) {
+  return (
+    !('type' in prop) &&
+    !('anyOf' in prop) &&
+    !('$ref' in prop) &&
+    !('allOf' in prop) &&
+    'default' in prop
+  );
+}
+
+function stripVariantTitles(prop) {
+  if (!Array.isArray(prop.anyOf)) return;
+  for (const variant of prop.anyOf) {
+    if (variant && typeof variant === 'object' && 'title' in variant) {
+      delete variant.title;
+    }
+  }
+}
+
+/**
+ * Clean a single property-level schema: remove its generated `title`, the
+ * `default` keyword on unconstrained (`Any`) fields, the `items` title for
+ * array fields, and titles on `anyOf` variants (nullable fields).
+ */
+function cleanPropertySchema(prop) {
+  if (!prop || typeof prop !== 'object') return;
+  if ('title' in prop) {
+    delete prop.title;
+  }
+  // If the property schema has no `type`, `anyOf`, `$ref`, or `allOf`,
+  // it is unconstrained (i.e. `Any`). Strip the `default` keyword so
+  // json-schema-to-typescript emits `unknown` rather than an object
+  // index signature.
+  if (isUnconstrainedSchema(prop)) {
+    delete prop.default;
+  }
+  // `items` for array-typed properties also carries a generated title.
+  if (prop.items && typeof prop.items === 'object' && 'title' in prop.items) {
+    delete prop.items.title;
+  }
+  // `anyOf` entries (nullable fields) each get a title too.
+  stripVariantTitles(prop);
+}
+
+function cleanPropertyBag(properties) {
+  for (const prop of Object.values(properties)) {
+    cleanPropertySchema(prop);
+  }
+}
+
 function stripPropertyTitles(schema) {
   // Strip from $defs entries (discriminated-union style)
   for (const def of Object.values(schema.$defs ?? {})) {
     if (def && typeof def === 'object' && def.properties) {
-      for (const prop of Object.values(def.properties)) {
-        if (prop && typeof prop === 'object' && 'title' in prop) {
-          delete prop.title;
-        }
-        // If the property schema has no `type`, `anyOf`, `$ref`, or `allOf`,
-        // it is unconstrained (i.e. `Any`). Strip the `default` keyword so
-        // json-schema-to-typescript emits `unknown` rather than an object
-        // index signature.
-        if (
-          prop &&
-          typeof prop === 'object' &&
-          !('type' in prop) &&
-          !('anyOf' in prop) &&
-          !('$ref' in prop) &&
-          !('allOf' in prop) &&
-          'default' in prop
-        ) {
-          delete prop.default;
-        }
-        // `items` for array-typed properties also carries a generated title.
-        if (prop && typeof prop === 'object' && prop.items && typeof prop.items === 'object' && 'title' in prop.items) {
-          delete prop.items.title;
-        }
-        // `anyOf` entries (nullable fields) each get a title too.
-        if (prop && typeof prop === 'object' && Array.isArray(prop.anyOf)) {
-          for (const variant of prop.anyOf) {
-            if (variant && typeof variant === 'object' && 'title' in variant) {
-              delete variant.title;
-            }
-          }
-        }
-      }
+      cleanPropertyBag(def.properties);
     }
   }
   // Strip from flat root-level properties (single-model schemas)
   if (schema.properties) {
-    for (const prop of Object.values(schema.properties)) {
-      if (prop && typeof prop === 'object' && 'title' in prop) {
-        delete prop.title;
-      }
-      // Same unconstrained-schema default stripping for root-level properties.
-      if (
-        prop &&
-        typeof prop === 'object' &&
-        !('type' in prop) &&
-        !('anyOf' in prop) &&
-        !('$ref' in prop) &&
-        !('allOf' in prop) &&
-        'default' in prop
-      ) {
-        delete prop.default;
-      }
-      if (prop && typeof prop === 'object' && prop.items && typeof prop.items === 'object' && 'title' in prop.items) {
-        delete prop.items.title;
-      }
-      if (prop && typeof prop === 'object' && Array.isArray(prop.anyOf)) {
-        for (const variant of prop.anyOf) {
-          if (variant && typeof variant === 'object' && 'title' in variant) {
-            delete variant.title;
-          }
-        }
-      }
-    }
+    cleanPropertyBag(schema.properties);
   }
 }
 

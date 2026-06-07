@@ -202,71 +202,124 @@ def build_step_results(
     Returns:
         List of :class:`StepResult` instances.
     """
-    results: list[StepResult] = []
     token_counts = token_counts or {}
     models_used = models_used or {}
 
+    results: list[StepResult] = []
     for step_name, step_data in steps_map.items():
         if not isinstance(step_data, Mapping):
             continue
-
-        metadata_raw = step_data.get("metadata")
-        metadata: dict[str, Any] = (
-            dict(metadata_raw) if isinstance(metadata_raw, Mapping) else {}
-        )
-
-        token_meta = token_counts.get(step_name)
-        if isinstance(token_meta, Mapping):
-            input_tokens = int(token_meta.get("input") or 0)
-            output_tokens = int(token_meta.get("output") or 0)
-            metadata.setdefault("input_tokens", input_tokens)
-            metadata.setdefault("output_tokens", output_tokens)
-            metadata.setdefault("tokens_used", input_tokens + output_tokens)
-
-        model_used = models_used.get(step_name)
-        if model_used is None:
-            model_used = step_data.get("model_used")
-        if not isinstance(model_used, str):
-            model_used = None
-
-        error_val = step_data.get("error")
-        error_text = str(error_val) if error_val else None
-
-        start_ts = step_data.get("start_time")
-        start_time = (
-            datetime.fromisoformat(start_ts)
-            if isinstance(start_ts, str)
-            else datetime.now(UTC)
-        )
-
-        end_ts = step_data.get("end_time")
-        end_time = datetime.fromisoformat(end_ts) if isinstance(end_ts, str) else None
-
         results.append(
-            StepResult(
-                step_name=str(step_name),
-                status=coerce_step_status(step_data.get("status")),
-                agent_role=(
-                    str(step_data.get("agent_role"))
-                    if step_data.get("agent_role") is not None
-                    else None
-                ),
-                tier=(
-                    int(step_data["tier"])
-                    if isinstance(step_data.get("tier"), int)
-                    else None
-                ),
-                model_used=model_used,
-                input_data=as_dict(step_data.get("inputs")),
-                output_data=as_dict(step_data.get("outputs")),
-                error=error_text,
-                metadata=metadata,
-                start_time=start_time,
-                end_time=end_time,
+            _build_single_step_result(
+                step_name,
+                step_data,
+                token_counts=token_counts,
+                models_used=models_used,
             )
         )
 
     return results
+
+
+def _step_metadata(
+    step_data: Mapping[str, Any], token_meta: Any
+) -> dict[str, Any]:
+    """Build a step's metadata dict, folding in token counts when available."""
+    metadata_raw = step_data.get("metadata")
+    metadata: dict[str, Any] = (
+        dict(metadata_raw) if isinstance(metadata_raw, Mapping) else {}
+    )
+    if isinstance(token_meta, Mapping):
+        input_tokens = int(token_meta.get("input") or 0)
+        output_tokens = int(token_meta.get("output") or 0)
+        metadata.setdefault("input_tokens", input_tokens)
+        metadata.setdefault("output_tokens", output_tokens)
+        metadata.setdefault("tokens_used", input_tokens + output_tokens)
+    return metadata
+
+
+def _build_single_step_result(
+    step_name: Any,
+    step_data: Mapping[str, Any],
+    *,
+    token_counts: Mapping[str, Any],
+    models_used: Mapping[str, Any],
+) -> StepResult:
+    """Convert one step state mapping into a contract :class:`StepResult`."""
+    metadata = _step_metadata(step_data, token_counts.get(step_name))
+
+    model_used = models_used.get(step_name)
+    if model_used is None:
+        model_used = step_data.get("model_used")
+    if not isinstance(model_used, str):
+        model_used = None
+
+    error_val = step_data.get("error")
+    error_text = str(error_val) if error_val else None
+
+    start_ts = step_data.get("start_time")
+    start_time = (
+        datetime.fromisoformat(start_ts)
+        if isinstance(start_ts, str)
+        else datetime.now(UTC)
+    )
+
+    end_ts = step_data.get("end_time")
+    end_time = datetime.fromisoformat(end_ts) if isinstance(end_ts, str) else None
+
+    return StepResult(
+        step_name=str(step_name),
+        status=coerce_step_status(step_data.get("status")),
+        agent_role=(
+            str(step_data.get("agent_role"))
+            if step_data.get("agent_role") is not None
+            else None
+        ),
+        tier=(
+            int(step_data["tier"])
+            if isinstance(step_data.get("tier"), int)
+            else None
+        ),
+        model_used=model_used,
+        input_data=as_dict(step_data.get("inputs")),
+        output_data=as_dict(step_data.get("outputs")),
+        error=error_text,
+        metadata=metadata,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+
+def _normalize_result_errors(result: Any) -> list[str]:
+    """Coerce a runner result's ``errors`` attribute into a list of strings."""
+    raw_errors = getattr(result, "errors", [])
+    if isinstance(raw_errors, list):
+        return [str(e) for e in raw_errors if e]
+    if raw_errors:
+        return [str(raw_errors)]
+    return []
+
+
+def _resolve_overall_status(result: Any, errors: list[str]) -> StepStatus:
+    """Resolve the overall status from an explicit field or string status."""
+    overall_source = getattr(result, "overall_status", None)
+    if overall_source is not None:
+        return coerce_step_status(overall_source)
+    status_text = str(getattr(result, "status", "")).lower()
+    return (
+        StepStatus.SUCCESS
+        if status_text == "success" and not errors
+        else StepStatus.FAILED
+    )
+
+
+def _coerce_elapsed_seconds(result: Any) -> float:
+    """Coerce a runner result's ``elapsed_seconds`` to a float (0.0 on error)."""
+    elapsed_seconds = getattr(result, "elapsed_seconds", 0.0)
+    try:
+        return float(elapsed_seconds)
+    except Exception:
+        return 0.0
 
 
 def normalize_workflow_result(
@@ -309,30 +362,9 @@ def normalize_workflow_result(
         models_used=models_used,
     )
 
-    raw_errors = getattr(result, "errors", [])
-    if isinstance(raw_errors, list):
-        errors = [str(e) for e in raw_errors if e]
-    elif raw_errors:
-        errors = [str(raw_errors)]
-    else:
-        errors = []
-
-    overall_source = getattr(result, "overall_status", None)
-    if overall_source is not None:
-        overall_status = coerce_step_status(overall_source)
-    else:
-        status_text = str(getattr(result, "status", "")).lower()
-        overall_status = (
-            StepStatus.SUCCESS
-            if status_text == "success" and not errors
-            else StepStatus.FAILED
-        )
-
-    elapsed_seconds = getattr(result, "elapsed_seconds", 0.0)
-    try:
-        elapsed_seconds = float(elapsed_seconds)
-    except Exception:
-        elapsed_seconds = 0.0
+    errors = _normalize_result_errors(result)
+    overall_status = _resolve_overall_status(result, errors)
+    elapsed_seconds = _coerce_elapsed_seconds(result)
 
     end_time = datetime.now(UTC)
     start_time = end_time - timedelta(seconds=max(elapsed_seconds, 0.0))

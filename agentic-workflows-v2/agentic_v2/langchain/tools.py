@@ -257,6 +257,35 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _scan_file_for_query(
+    filepath: Path,
+    root: Path,
+    query_lower: str,
+    results: list[dict],
+    max_results: int,
+) -> bool:
+    """Append matching lines from *filepath* to *results*.
+
+    Returns True if *results* reached *max_results* (caller should stop).
+    """
+    try:
+        text = filepath.read_text(encoding="utf-8", errors="replace")
+        for i, line in enumerate(text.splitlines(), 1):
+            if query_lower in line.lower():
+                results.append(
+                    {
+                        "file": str(filepath.relative_to(root)),
+                        "line": i,
+                        "content": line.strip()[:200],
+                    }
+                )
+                if len(results) >= max_results:
+                    return True
+    except Exception:
+        return False
+    return False
+
+
 @tool
 def search_files(
     directory: str,
@@ -272,30 +301,18 @@ def search_files(
         file_pattern: Glob pattern for files to search (default ``*.py``).
         max_results: Maximum number of results to return.
     """
-    results = []
+    results: list[dict] = []
     p = Path(directory)
     if not p.is_dir():
         return f"ERROR: Not a directory: {directory}"
 
+    query_lower = query.lower()
     try:
         for filepath in p.rglob(file_pattern):
             if not filepath.is_file():
                 continue
-            try:
-                text = filepath.read_text(encoding="utf-8", errors="replace")
-                for i, line in enumerate(text.splitlines(), 1):
-                    if query.lower() in line.lower():
-                        results.append(
-                            {
-                                "file": str(filepath.relative_to(p)),
-                                "line": i,
-                                "content": line.strip()[:200],
-                            }
-                        )
-                        if len(results) >= max_results:
-                            return json.dumps(results, indent=2)
-            except Exception:
-                continue
+            if _scan_file_for_query(filepath, p, query_lower, results, max_results):
+                break
     except Exception as e:
         return f"ERROR: {e}"
 
@@ -352,6 +369,131 @@ def http_get(url: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _normalize_domain_filter(domains: list[str] | None) -> list[str]:
+    """Lowercase, strip, and drop empty/non-string entries from a domain filter."""
+    return [
+        d.strip().lower().lstrip(".")
+        for d in (domains or [])
+        if isinstance(d, str) and d.strip()
+    ]
+
+
+def _domain_matches(hostname: str, patterns: list[str]) -> bool:
+    """Return True if *hostname* exactly equals or is a subdomain of a pattern."""
+    host = hostname.lower().lstrip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    return any(host == pattern or host.endswith(f".{pattern}") for pattern in patterns)
+
+
+def _fetch_ddg_results(query: str) -> tuple[list, list]:
+    """Fetch DuckDuckGo HTML for *query* and return (links, snippets) matches."""
+    import re
+
+    import httpx
+
+    # DuckDuckGo HTML endpoint avoids API-key dependencies.
+    response = httpx.get(
+        "https://duckduckgo.com/html/",
+        params={"q": query},
+        timeout=20,
+        follow_redirects=True,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            )
+        },
+    )
+    body = response.text
+
+    # Guard against ReDoS on untrusted HTTP response bodies: cap input
+    # length and rewrite inner-content captures to exclude '<' so the
+    # engine cannot backtrack across tag boundaries.
+    _MAX_BODY_LEN = 524288  # 512 KB — generous for a DuckDuckGo HTML page
+    body = body[:_MAX_BODY_LEN]
+    links = re.findall(
+        r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
+        body,
+        flags=re.IGNORECASE,
+    )
+    snippets = re.findall(
+        r'<a[^>]+class="result__snippet"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
+        body,
+        flags=re.IGNORECASE,
+    )
+    return links, snippets
+
+
+def _resolve_result_url(href: str) -> str:
+    """Unwrap a DuckDuckGo ``/l/?uddg=...`` redirect link to its target URL."""
+    url = href
+    if "uddg=" in href:
+        try:
+            from urllib.parse import parse_qs, unquote, urlparse
+
+            parsed = urlparse(href)
+            qs = parse_qs(parsed.query)
+            if qs.get("uddg"):
+                url = unquote(qs["uddg"][0])
+        except Exception:
+            pass
+    return url
+
+
+def _hostname_for_url(url: str) -> str:
+    """Return the lowercased netloc of *url* with a leading ``www.`` stripped."""
+    from urllib.parse import urlparse
+
+    hostname = urlparse(url).netloc.lower()
+    if hostname.startswith("www."):
+        hostname = hostname[4:]
+    return hostname
+
+
+def _clean_html_text(raw: str) -> str:
+    """Strip HTML tags and unescape entities from *raw*, returning trimmed text."""
+    import html
+    import re
+
+    return html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
+
+
+def _collect_search_results(
+    links: list,
+    snippets: list,
+    allowed: list[str],
+    blocked: list[str],
+    max_results: int,
+) -> list[dict[str, str]]:
+    """Filter and assemble result entries from raw DuckDuckGo link/snippet matches."""
+    results: list[dict[str, str]] = []
+    for idx, (href, raw_title) in enumerate(links):
+        url = _resolve_result_url(href)
+        hostname = _hostname_for_url(url)
+
+        if blocked and _domain_matches(hostname, blocked):
+            continue
+        if allowed and not _domain_matches(hostname, allowed):
+            continue
+
+        snippet = ""
+        if idx < len(snippets):
+            snippet = _clean_html_text(snippets[idx])
+
+        results.append(
+            {
+                "title": _clean_html_text(raw_title),
+                "url": url,
+                "domain": hostname,
+                "snippet": snippet,
+            }
+        )
+        if len(results) >= max_results:
+            break
+    return results
+
+
 @tool
 def web_search(
     query: str,
@@ -368,105 +510,14 @@ def web_search(
         blocked_domains: Optional domain blocklist (exact or suffix match).
     """
     max_results = max(1, min(int(max_results), 10))
-    allowed = [
-        d.strip().lower().lstrip(".")
-        for d in (allowed_domains or [])
-        if isinstance(d, str) and d.strip()
-    ]
-    blocked = [
-        d.strip().lower().lstrip(".")
-        for d in (blocked_domains or [])
-        if isinstance(d, str) and d.strip()
-    ]
+    allowed = _normalize_domain_filter(allowed_domains)
+    blocked = _normalize_domain_filter(blocked_domains)
 
     try:
-        import html
-        import re
-
-        import httpx
-
-        # DuckDuckGo HTML endpoint avoids API-key dependencies.
-        response = httpx.get(
-            "https://duckduckgo.com/html/",
-            params={"q": query},
-            timeout=20,
-            follow_redirects=True,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-                )
-            },
+        links, snippets = _fetch_ddg_results(query)
+        results = _collect_search_results(
+            links, snippets, allowed, blocked, max_results
         )
-        body = response.text
-
-        # Guard against ReDoS on untrusted HTTP response bodies: cap input
-        # length and rewrite inner-content captures to exclude '<' so the
-        # engine cannot backtrack across tag boundaries.
-        _MAX_BODY_LEN = 524288  # 512 KB — generous for a DuckDuckGo HTML page
-        body = body[:_MAX_BODY_LEN]
-        links = re.findall(
-            r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
-            body,
-            flags=re.IGNORECASE,
-        )
-        snippets = re.findall(
-            r'<a[^>]+class="result__snippet"[^>]*>([^<]*(?:<(?!/a>)[^<]*)*)</a>',
-            body,
-            flags=re.IGNORECASE,
-        )
-
-        from urllib.parse import urlparse
-
-        def _matches(hostname: str, patterns: list[str]) -> bool:
-            host = hostname.lower().lstrip(".")
-            if host.startswith("www."):
-                host = host[4:]
-            for pattern in patterns:
-                if host == pattern or host.endswith(f".{pattern}"):
-                    return True
-            return False
-
-        results: list[dict[str, str]] = []
-        for idx, (href, raw_title) in enumerate(links):
-            # DuckDuckGo wraps redirect links as /l/?uddg=... .
-            url = href
-            if "uddg=" in href:
-                try:
-                    from urllib.parse import parse_qs, unquote, urlparse
-
-                    parsed = urlparse(href)
-                    qs = parse_qs(parsed.query)
-                    if qs.get("uddg"):
-                        url = unquote(qs["uddg"][0])
-                except Exception:
-                    pass
-
-            parsed_url = urlparse(url)
-            hostname = parsed_url.netloc.lower()
-            if hostname.startswith("www."):
-                hostname = hostname[4:]
-
-            if blocked and _matches(hostname, blocked):
-                continue
-            if allowed and not _matches(hostname, allowed):
-                continue
-
-            title = html.unescape(re.sub(r"<[^>]+>", "", raw_title)).strip()
-            snippet = ""
-            if idx < len(snippets):
-                snippet = html.unescape(re.sub(r"<[^>]+>", "", snippets[idx])).strip()
-
-            results.append(
-                {
-                    "title": title,
-                    "url": url,
-                    "domain": hostname,
-                    "snippet": snippet,
-                }
-            )
-            if len(results) >= max_results:
-                break
 
         return json.dumps(
             {

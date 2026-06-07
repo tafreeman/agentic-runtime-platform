@@ -500,33 +500,44 @@ class WorkflowExecutor:
             return
 
         if isinstance(element, ParallelGroup):
-            if not element.steps:
-                raise ValueError(f"{path} parallel group has no steps")
-            for index, step_def in enumerate(element.steps):
-                if not isinstance(step_def, StepDefinition):
-                    raise TypeError(
-                        f"{path} parallel step {index} must be StepDefinition, "
-                        f"got {type(step_def).__name__}"
-                    )
+            self._validate_parallel_group(element, path)
             return
 
         if isinstance(element, ConditionalBranch):
-            if not callable(element.condition):
-                raise TypeError(f"{path} branch condition must be callable")
-            if not isinstance(element.then_steps, list):
-                raise TypeError(f"{path} then_steps must be a list")
-            if not isinstance(element.else_steps, list):
-                raise TypeError(f"{path} else_steps must be a list")
-
-            for index, child in enumerate(element.then_steps):
-                self._validate_pipeline_element(child, f"{path}.then[{index}]")
-            for index, child in enumerate(element.else_steps):
-                self._validate_pipeline_element(child, f"{path}.else[{index}]")
+            self._validate_conditional_branch(element, path)
             return
 
         raise TypeError(
             f"{path} must be a Pipeline element, got {type(element).__name__}"
         )
+
+    @staticmethod
+    def _validate_parallel_group(element: ParallelGroup, path: str) -> None:
+        """Validate a ParallelGroup element and its steps."""
+        if not element.steps:
+            raise ValueError(f"{path} parallel group has no steps")
+        for index, step_def in enumerate(element.steps):
+            if not isinstance(step_def, StepDefinition):
+                raise TypeError(
+                    f"{path} parallel step {index} must be StepDefinition, "
+                    f"got {type(step_def).__name__}"
+                )
+
+    def _validate_conditional_branch(
+        self, element: ConditionalBranch, path: str
+    ) -> None:
+        """Validate a ConditionalBranch element and its nested children."""
+        if not callable(element.condition):
+            raise TypeError(f"{path} branch condition must be callable")
+        if not isinstance(element.then_steps, list):
+            raise TypeError(f"{path} then_steps must be a list")
+        if not isinstance(element.else_steps, list):
+            raise TypeError(f"{path} else_steps must be a list")
+
+        for index, child in enumerate(element.then_steps):
+            self._validate_pipeline_element(child, f"{path}.then[{index}]")
+        for index, child in enumerate(element.else_steps):
+            self._validate_pipeline_element(child, f"{path}.else[{index}]")
 
     @property
     def history(self) -> ExecutionHistory:

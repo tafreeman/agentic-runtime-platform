@@ -348,6 +348,21 @@ def _resolve_local_dataset(dataset_ref: str, tenant_id: str | None = None) -> Pa
     raise ValueError(f"Local dataset not found or not allowed: {dataset_ref}")
 
 
+def _sample_from_list(
+    entries: list[Any], sample_index: int
+) -> tuple[dict[str, Any], str | None]:
+    """Return ``(sample_dict, task_id)`` for the clamped index within ``entries``.
+
+    Non-dict entries are wrapped as ``{"value": entry}`` and keyed by index.
+    Assumes ``entries`` is non-empty.
+    """
+    idx = min(max(sample_index, 0), len(entries) - 1)
+    sample = entries[idx]
+    if isinstance(sample, dict):
+        return sample, str(sample.get("task_id") or sample.get("id") or idx)
+    return {"value": sample}, str(idx)
+
+
 def _extract_sample(data: Any, sample_index: int) -> tuple[dict[str, Any], str | None]:
     """Extract a single sample from parsed JSON dataset data.
 
@@ -367,21 +382,13 @@ def _extract_sample(data: Any, sample_index: int) -> tuple[dict[str, Any], str |
     if isinstance(data, list):
         if not data:
             raise ValueError("Dataset has no samples")
-        idx = min(max(sample_index, 0), len(data) - 1)
-        sample = data[idx]
-        if isinstance(sample, dict):
-            return sample, str(sample.get("task_id") or sample.get("id") or idx)
-        return {"value": sample}, str(idx)
+        return _sample_from_list(data, sample_index)
 
     if isinstance(data, dict):
         for key in ("tasks", "samples", "items"):
             entries = data.get(key)
             if isinstance(entries, list) and entries:
-                idx = min(max(sample_index, 0), len(entries) - 1)
-                sample = entries[idx]
-                if isinstance(sample, dict):
-                    return sample, str(sample.get("task_id") or sample.get("id") or idx)
-                return {"value": sample}, str(idx)
+                return _sample_from_list(entries, sample_index)
         return data, str(data.get("task_id") or data.get("id") or "0")
 
     raise ValueError("Unsupported dataset format; expected JSON object or array")

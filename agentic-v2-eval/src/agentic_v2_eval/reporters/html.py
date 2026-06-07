@@ -198,36 +198,11 @@ class HtmlReporter:
 
         # Metadata
         if metadata or self.config.include_timestamp:
-            parts.append("<div class='metadata'>")
-            if self.config.include_timestamp:
-                parts.append(
-                    f"<p><strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
-                )
-            if metadata:
-                for key, value in metadata.items():
-                    parts.append(
-                        f"<p><strong>{self._escape(str(key))}:</strong> {self._escape(str(value))}</p>"
-                    )
-            parts.append(CLOSING_DIV_TAG)
+            parts.extend(self._render_metadata(metadata))
 
         # Summary
         if self.config.include_summary:
-            parts.append("<h2>Summary</h2>")
-            parts.append("<div class='summary'>")
-
-            summary = self._calculate_summary(results)
-            for key, value in summary.items():
-                display_value = (
-                    f"{value:.4f}" if isinstance(value, float) else str(value)
-                )
-                parts.append(f"""
-                    <div class='summary-card'>
-                        <div class='value'>{display_value}</div>
-                        <div class='label'>{self._escape(str(key))}</div>
-                    </div>
-                """)
-
-            parts.append(CLOSING_DIV_TAG)
+            parts.extend(self._render_summary(results))
 
         # Results table
         parts.append("<h2>Results</h2>")
@@ -246,6 +221,38 @@ class HtmlReporter:
         parts.append("</html>")
 
         return "\n".join(parts)
+
+    def _render_metadata(self, metadata: dict[str, Any] | None) -> list[str]:
+        """Render the metadata block as HTML lines."""
+        parts: list[str] = ["<div class='metadata'>"]
+        if self.config.include_timestamp:
+            parts.append(
+                f"<p><strong>Generated:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>"
+            )
+        if metadata:
+            for key, value in metadata.items():
+                parts.append(
+                    f"<p><strong>{self._escape(str(key))}:</strong> {self._escape(str(value))}</p>"
+                )
+        parts.append(CLOSING_DIV_TAG)
+        return parts
+
+    def _render_summary(self, results: list[dict[str, Any]]) -> list[str]:
+        """Render the summary cards block as HTML lines."""
+        parts: list[str] = ["<h2>Summary</h2>", "<div class='summary'>"]
+
+        summary = self._calculate_summary(results)
+        for key, value in summary.items():
+            display_value = f"{value:.4f}" if isinstance(value, float) else str(value)
+            parts.append(f"""
+                    <div class='summary-card'>
+                        <div class='value'>{display_value}</div>
+                        <div class='label'>{self._escape(str(key))}</div>
+                    </div>
+                """)
+
+        parts.append(CLOSING_DIV_TAG)
+        return parts
 
     def _create_table(self, results: list[dict[str, Any]]) -> str:
         """Create HTML table from results."""

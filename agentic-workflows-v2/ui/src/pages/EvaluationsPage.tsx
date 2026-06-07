@@ -7,6 +7,41 @@ import BPill, { type BPillTone } from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
+type BarColor = "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
+
+/** Pill tone for a run's pass/fail status, preferring grade over raw percent. */
+function passToneFor(
+  grade: string | null | undefined,
+  pct: number,
+): BPillTone {
+  if (grade) {
+    if (grade === "A" || grade === "B") return "ok";
+    if (grade === "C") return "warn";
+    return "err";
+  }
+  return pct >= 75 ? "ok" : "err";
+}
+
+/** Pass/warn/fail label for a run, preferring grade over raw percent. */
+function passLabelFor(
+  grade: string | null | undefined,
+  pct: number,
+): "pass" | "warn" | "fail" {
+  if (grade) {
+    if (grade === "A" || grade === "B") return "pass";
+    if (grade === "C") return "warn";
+    return "fail";
+  }
+  return pct >= 75 ? "pass" : "fail";
+}
+
+/** Threshold-based bar color: green ≥75%, amber ≥50%, else red. */
+function rateBarColor(ratio: number): BarColor {
+  if (ratio >= 0.75) return "b-green";
+  if (ratio >= 0.5) return "b-amber";
+  return "b-red";
+}
+
 export default function EvaluationsPage() {
   const { data: runs, isLoading } = useRuns();
   const [expandedFilename, setExpandedFilename] = useState<string | null>(null);
@@ -130,23 +165,11 @@ export default function EvaluationsPage() {
                             </span>
                           </div>
                           <div className="mt-0.5">
-                            {(() => {
-                              let workflowBarColor: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
-                              if (w.rate >= 0.75) {
-                                workflowBarColor = "b-green";
-                              } else if (w.rate >= 0.5) {
-                                workflowBarColor = "b-amber";
-                              } else {
-                                workflowBarColor = "b-red";
-                              }
-                              return (
-                                <BAsciiBar
-                                  value={w.rate}
-                                  width={22}
-                                  color={workflowBarColor}
-                                />
-                              );
-                            })()}
+                            <BAsciiBar
+                              value={w.rate}
+                              width={22}
+                              color={rateBarColor(w.rate)}
+                            />
                           </div>
                         </div>
                       ))}
@@ -177,37 +200,8 @@ export default function EvaluationsPage() {
                         const raw = run.evaluation_score ?? 0;
                         const pct = raw <= 1 ? raw * 100 : raw;
                         const grade = run.evaluation_grade;
-                        const passFromGrade =
-                          grade === "A" || grade === "B";
-                        const warnFromGrade = grade === "C";
-                        let passTone: BPillTone;
-                        if (grade) {
-                          if (passFromGrade) {
-                            passTone = "ok";
-                          } else if (warnFromGrade) {
-                            passTone = "warn";
-                          } else {
-                            passTone = "err";
-                          }
-                        } else if (pct >= 75) {
-                          passTone = "ok";
-                        } else {
-                          passTone = "err";
-                        }
-                        let passLabel: "pass" | "warn" | "fail";
-                        if (grade) {
-                          if (passFromGrade) {
-                            passLabel = "pass";
-                          } else if (warnFromGrade) {
-                            passLabel = "warn";
-                          } else {
-                            passLabel = "fail";
-                          }
-                        } else if (pct >= 75) {
-                          passLabel = "pass";
-                        } else {
-                          passLabel = "fail";
-                        }
+                        const passTone = passToneFor(grade, pct);
+                        const passLabel = passLabelFor(grade, pct);
                         const isExpanded =
                           expandedFilename === run.filename;
 
@@ -228,23 +222,11 @@ export default function EvaluationsPage() {
                                 {pct.toFixed(1)}
                               </td>
                               <td className="px-3 py-2">
-                                {(() => {
-                                  let progressBarColor: "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
-                                  if (pct >= 75) {
-                                    progressBarColor = "b-green";
-                                  } else if (pct >= 50) {
-                                    progressBarColor = "b-amber";
-                                  } else {
-                                    progressBarColor = "b-red";
-                                  }
-                                  return (
-                                    <BAsciiBar
-                                      value={Math.max(0, Math.min(1, pct / 100))}
-                                      width={20}
-                                      color={progressBarColor}
-                                    />
-                                  );
-                                })()}
+                                <BAsciiBar
+                                  value={Math.max(0, Math.min(1, pct / 100))}
+                                  width={20}
+                                  color={rateBarColor(pct / 100)}
+                                />
                               </td>
                               <td className="px-3 py-2 text-b-text-mid">
                                 {run.evaluation_grade || "—"}

@@ -239,49 +239,62 @@ class BuildAppTool(BaseTool):
         }
 
         if detected_stack in {"python", "fullstack"}:
-            if (root / "requirements.txt").exists():
-                commands["install"] = "python -m pip install -r requirements.txt"
-            elif (root / "pyproject.toml").exists():
-                commands["install"] = "python -m pip install -e ."
-            commands["build"] = "python -m compileall -q ."
-            if (root / "tests").exists() or (root / "test").exists():
-                commands["test"] = "python -m pytest -q"
+            self._apply_python_commands(commands, root)
 
         if detected_stack in {"node", "fullstack"}:
-            pkg_path = root / "package.json"
-            scripts: dict[str, Any] = {}
-            if pkg_path.exists():
-                try:
-                    scripts = json.loads(pkg_path.read_text(encoding="utf-8")).get(
-                        "scripts", {}
-                    )
-                except Exception:
-                    scripts = {}
-
-            npm_install = (
-                "npm ci" if (root / "package-lock.json").exists() else "npm install"
-            )
-
-            if detected_stack == "node":
-                commands["install"] = npm_install
-                if "build" in scripts:
-                    commands["build"] = "npm run build"
-                if "test" in scripts:
-                    commands["test"] = "npm test"
-            else:
-                # fullstack fallback command chain if both ecosystems are present
-                py_install = commands["install"]
-                commands["install"] = (
-                    f"{py_install} && {npm_install}" if py_install else npm_install
-                )
-                if "build" in scripts:
-                    commands["build"] = "npm run build"
-                if commands["test"] and "test" in scripts:
-                    commands["test"] = f"{commands['test']} && npm test"
-                elif "test" in scripts:
-                    commands["test"] = "npm test"
+            self._apply_node_commands(commands, root, detected_stack)
 
         return commands
+
+    @staticmethod
+    def _apply_python_commands(commands: dict[str, str | None], root: Path) -> None:
+        """Populate install/build/test commands for a Python project."""
+        if (root / "requirements.txt").exists():
+            commands["install"] = "python -m pip install -r requirements.txt"
+        elif (root / "pyproject.toml").exists():
+            commands["install"] = "python -m pip install -e ."
+        commands["build"] = "python -m compileall -q ."
+        if (root / "tests").exists() or (root / "test").exists():
+            commands["test"] = "python -m pytest -q"
+
+    @staticmethod
+    def _read_npm_scripts(root: Path) -> dict[str, Any]:
+        """Read the ``scripts`` table from package.json, tolerating errors."""
+        pkg_path = root / "package.json"
+        if not pkg_path.exists():
+            return {}
+        try:
+            return json.loads(pkg_path.read_text(encoding="utf-8")).get("scripts", {})
+        except Exception:
+            return {}
+
+    def _apply_node_commands(
+        self, commands: dict[str, str | None], root: Path, detected_stack: str
+    ) -> None:
+        """Populate install/build/test commands for a Node project."""
+        scripts = self._read_npm_scripts(root)
+        npm_install = (
+            "npm ci" if (root / "package-lock.json").exists() else "npm install"
+        )
+
+        if detected_stack == "node":
+            commands["install"] = npm_install
+            if "build" in scripts:
+                commands["build"] = "npm run build"
+            if "test" in scripts:
+                commands["test"] = "npm test"
+        else:
+            # fullstack fallback command chain if both ecosystems are present
+            py_install = commands["install"]
+            commands["install"] = (
+                f"{py_install} && {npm_install}" if py_install else npm_install
+            )
+            if "build" in scripts:
+                commands["build"] = "npm run build"
+            if commands["test"] and "test" in scripts:
+                commands["test"] = f"{commands['test']} && npm test"
+            elif "test" in scripts:
+                commands["test"] = "npm test"
 
     async def execute(
         self,
@@ -306,82 +319,28 @@ class BuildAppTool(BaseTool):
         detection = self._detect_stack(root, stack_hint)
         defaults = self._default_commands(root, detection["detected_stack"])
 
-        planned = {
-            "install": (
-                install_command
-                if install_command is not None
-                else defaults.get("install")
-            ),
-            "build": (
-                build_command if build_command is not None else defaults.get("build")
-            ),
-            "test": test_command if test_command is not None else defaults.get("test"),
-            "smoke": (
-                smoke_command if smoke_command is not None else defaults.get("smoke")
-            ),
-        }
+        planned = self._plan_commands(
+            defaults,
+            install_command=install_command,
+            build_command=build_command,
+            test_command=test_command,
+            smoke_command=smoke_command,
+        )
 
-        required_files: list[str] = []
-        missing_files: list[str] = []
-        if detection["detected_stack"] in {"python", "fullstack"}:
-            required_files.append("requirements.txt|pyproject.toml|setup.py")
-            if not (
-                (root / "requirements.txt").exists()
-                or (root / "pyproject.toml").exists()
-                or (root / "setup.py").exists()
-            ):
-                missing_files.append("python manifest")
-        if detection["detected_stack"] in {"node", "fullstack"}:
-            required_files.append("package.json")
-            if not (root / "package.json").exists():
-                missing_files.append("package.json")
+        required_files, missing_files = self._check_required_files(
+            root, detection["detected_stack"]
+        )
 
         phase_order = ["install", "build", "test"] + (["smoke"] if run_smoke else [])
-        phase_results: dict[str, Any] = {}
 
         if dry_run:
-            for phase in phase_order:
-                cmd = planned.get(phase)
-                phase_results[phase] = {
-                    "command": cmd,
-                    "skipped": True,
-                    "reason": "dry_run" if cmd else "no_command",
-                    "success": True,
-                }
-            ready = not missing_files and all(
-                phase_results[p]["success"] for p in phase_results
-            )
-            return ToolResult(
-                success=ready,
-                data={
-                    "project_root": str(root),
-                    **detection,
-                    "required_files": required_files,
-                    "missing_files": missing_files,
-                    "planned_commands": planned,
-                    "phase_results": phase_results,
-                    "ready_for_release": ready,
-                    "dry_run": True,
-                },
-                metadata={"contract_version": "build_app_v1"},
+            return self._build_dry_run_result(
+                root, detection, planned, required_files, missing_files, phase_order
             )
 
-        for phase in phase_order:
-            cmd = planned.get(phase)
-            if not cmd:
-                phase_results[phase] = {
-                    "command": None,
-                    "skipped": True,
-                    "reason": "no_command",
-                    "success": True,
-                }
-                continue
-
-            result = await self._run_shell(cmd, root, timeout_per_step)
-            phase_results[phase] = result
-
-            if fail_fast and not result["success"]:
-                break
+        phase_results = await self._execute_phases(
+            phase_order, planned, root, timeout_per_step, fail_fast
+        )
 
         failed_phases = [
             name
@@ -408,3 +367,114 @@ class BuildAppTool(BaseTool):
                 "retryable": bool(failed_phases),
             },
         )
+
+    @staticmethod
+    def _plan_commands(
+        defaults: dict[str, str | None],
+        *,
+        install_command: str | None,
+        build_command: str | None,
+        test_command: str | None,
+        smoke_command: str | None,
+    ) -> dict[str, str | None]:
+        """Merge explicit command overrides with detected defaults."""
+        return {
+            "install": (
+                install_command
+                if install_command is not None
+                else defaults.get("install")
+            ),
+            "build": (
+                build_command if build_command is not None else defaults.get("build")
+            ),
+            "test": test_command if test_command is not None else defaults.get("test"),
+            "smoke": (
+                smoke_command if smoke_command is not None else defaults.get("smoke")
+            ),
+        }
+
+    @staticmethod
+    def _check_required_files(
+        root: Path, detected_stack: str
+    ) -> tuple[list[str], list[str]]:
+        """Return (required_files, missing_files) for the detected stack."""
+        required_files: list[str] = []
+        missing_files: list[str] = []
+        if detected_stack in {"python", "fullstack"}:
+            required_files.append("requirements.txt|pyproject.toml|setup.py")
+            if not (
+                (root / "requirements.txt").exists()
+                or (root / "pyproject.toml").exists()
+                or (root / "setup.py").exists()
+            ):
+                missing_files.append("python manifest")
+        if detected_stack in {"node", "fullstack"}:
+            required_files.append("package.json")
+            if not (root / "package.json").exists():
+                missing_files.append("package.json")
+        return required_files, missing_files
+
+    @staticmethod
+    def _build_dry_run_result(
+        root: Path,
+        detection: dict[str, Any],
+        planned: dict[str, str | None],
+        required_files: list[str],
+        missing_files: list[str],
+        phase_order: list[str],
+    ) -> ToolResult:
+        """Build the ToolResult for a dry-run (plan-only) invocation."""
+        phase_results: dict[str, Any] = {}
+        for phase in phase_order:
+            cmd = planned.get(phase)
+            phase_results[phase] = {
+                "command": cmd,
+                "skipped": True,
+                "reason": "dry_run" if cmd else "no_command",
+                "success": True,
+            }
+        ready = not missing_files and all(
+            phase_results[p]["success"] for p in phase_results
+        )
+        return ToolResult(
+            success=ready,
+            data={
+                "project_root": str(root),
+                **detection,
+                "required_files": required_files,
+                "missing_files": missing_files,
+                "planned_commands": planned,
+                "phase_results": phase_results,
+                "ready_for_release": ready,
+                "dry_run": True,
+            },
+            metadata={"contract_version": "build_app_v1"},
+        )
+
+    async def _execute_phases(
+        self,
+        phase_order: list[str],
+        planned: dict[str, str | None],
+        root: Path,
+        timeout_per_step: float,
+        fail_fast: bool,
+    ) -> dict[str, Any]:
+        """Run each planned phase command, honoring fail-fast semantics."""
+        phase_results: dict[str, Any] = {}
+        for phase in phase_order:
+            cmd = planned.get(phase)
+            if not cmd:
+                phase_results[phase] = {
+                    "command": None,
+                    "skipped": True,
+                    "reason": "no_command",
+                    "success": True,
+                }
+                continue
+
+            result = await self._run_shell(cmd, root, timeout_per_step)
+            phase_results[phase] = result
+
+            if fail_fast and not result["success"]:
+                break
+        return phase_results

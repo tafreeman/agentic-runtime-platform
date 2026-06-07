@@ -179,6 +179,70 @@ def render_workflow_document(document: dict[str, Any]) -> str:
     return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
 
 
+def _validate_document_name(
+    document: dict[str, Any], expected_name: str | None
+) -> str:
+    """Validate the document's name against the expected name and return it."""
+    default_name = _validate_workflow_name(expected_name or document.get("name", ""))
+    doc_name = document.get("name")
+    if doc_name is not None and str(doc_name) != default_name:
+        raise ValueError(
+            f"Workflow document name {doc_name!r} does not match requested workflow "
+            f"name {default_name!r}."
+        )
+    return default_name
+
+
+def _validate_step_depends_on(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``depends_on`` values are non-empty strings."""
+    depends_on = raw_step.get("depends_on", [])
+    if depends_on is not None and (
+        not isinstance(depends_on, list)
+        or any(not isinstance(item, str) or not item for item in depends_on)
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'depends_on' values."
+        )
+
+
+def _validate_step_mappings(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``inputs``/``outputs`` fields are mappings when present."""
+    for field_name in ("inputs", "outputs"):
+        raw_mapping = raw_step.get(field_name, {})
+        if raw_mapping is not None and not isinstance(raw_mapping, dict):
+            raise ValueError(
+                f"Workflow step {step_name!r} has invalid '{field_name}' mapping."
+            )
+
+
+def _validate_step(
+    index: int, raw_step: Any, seen_step_names: set[str]
+) -> None:
+    """Validate a single raw step mapping, tracking seen names for dup detection."""
+    if not isinstance(raw_step, dict):
+        raise ValueError(f"Workflow step #{index} must be a mapping.")
+    step_name = raw_step.get("name")
+    if not isinstance(step_name, str) or not step_name.strip():
+        raise ValueError(f"Workflow step #{index} is missing required 'name'.")
+    if step_name in seen_step_names:
+        raise ValueError(f"Workflow step name {step_name!r} is duplicated.")
+    seen_step_names.add(step_name)
+
+    _validate_step_depends_on(step_name, raw_step)
+    _validate_step_mappings(step_name, raw_step)
+
+
+def _validate_steps(document: dict[str, Any]) -> None:
+    """Validate the document's ``steps`` list and each step within it."""
+    raw_steps = document.get("steps")
+    if not isinstance(raw_steps, list) or not raw_steps:
+        raise ValueError("Workflow document must define a non-empty 'steps' list.")
+
+    seen_step_names: set[str] = set()
+    for index, raw_step in enumerate(raw_steps):
+        _validate_step(index, raw_step, seen_step_names)
+
+
 def validate_workflow_document(
     document: dict[str, Any],
     *,
@@ -188,44 +252,8 @@ def validate_workflow_document(
     if not isinstance(document, dict):
         raise ValueError("Workflow document must be a mapping.")
 
-    default_name = _validate_workflow_name(expected_name or document.get("name", ""))
-    doc_name = document.get("name")
-    if doc_name is not None and str(doc_name) != default_name:
-        raise ValueError(
-            f"Workflow document name {doc_name!r} does not match requested workflow "
-            f"name {default_name!r}."
-        )
-
-    raw_steps = document.get("steps")
-    if not isinstance(raw_steps, list) or not raw_steps:
-        raise ValueError("Workflow document must define a non-empty 'steps' list.")
-
-    seen_step_names: set[str] = set()
-    for index, raw_step in enumerate(raw_steps):
-        if not isinstance(raw_step, dict):
-            raise ValueError(f"Workflow step #{index} must be a mapping.")
-        step_name = raw_step.get("name")
-        if not isinstance(step_name, str) or not step_name.strip():
-            raise ValueError(f"Workflow step #{index} is missing required 'name'.")
-        if step_name in seen_step_names:
-            raise ValueError(f"Workflow step name {step_name!r} is duplicated.")
-        seen_step_names.add(step_name)
-
-        depends_on = raw_step.get("depends_on", [])
-        if depends_on is not None and (
-            not isinstance(depends_on, list)
-            or any(not isinstance(item, str) or not item for item in depends_on)
-        ):
-            raise ValueError(
-                f"Workflow step {step_name!r} has invalid 'depends_on' values."
-            )
-
-        for field_name in ("inputs", "outputs"):
-            raw_mapping = raw_step.get(field_name, {})
-            if raw_mapping is not None and not isinstance(raw_mapping, dict):
-                raise ValueError(
-                    f"Workflow step {step_name!r} has invalid '{field_name}' mapping."
-                )
+    default_name = _validate_document_name(document, expected_name)
+    _validate_steps(document)
 
     config = _parse(document, default_name)
     return config
@@ -317,8 +345,8 @@ def _parse_loop_max(
     return _coerce_positive_int(raw_value, field_name="loop_max"), None
 
 
-def _parse(data: dict[str, Any], default_name: str) -> WorkflowConfig:
-    # --- Inputs ---
+def _parse_inputs(data: dict[str, Any]) -> dict[str, InputConfig]:
+    """Parse the workflow ``inputs`` mapping into ``InputConfig`` objects."""
     inputs: dict[str, InputConfig] = {}
     for k, v in data.get("inputs", {}).items():
         if isinstance(v, dict):
@@ -332,38 +360,47 @@ def _parse(data: dict[str, Any], default_name: str) -> WorkflowConfig:
             )
         else:
             inputs[k] = InputConfig(name=k, default=v, required=False)
+    return inputs
 
-    # --- Steps ---
+
+def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConfig:
+    """Parse a single raw step mapping into a ``StepConfig``."""
+    loop_max, loop_max_expr = _parse_loop_max(raw.get("loop_max", 3), inputs)
+    return StepConfig(
+        name=raw["name"],
+        agent=raw.get("agent", ""),
+        description=raw.get("description", ""),
+        depends_on=raw.get("depends_on", []),
+        inputs=dict(raw.get("inputs", {})),
+        outputs=dict(raw.get("outputs", {})),
+        when=raw.get("when"),
+        loop_until=raw.get("loop_until"),
+        loop_max=loop_max,
+        loop_max_expr=loop_max_expr,
+        tools=(raw.get("tools") if isinstance(raw.get("tools"), list) else None),
+        prompt_file=raw.get("prompt_file"),
+        model_override=(
+            raw.get("model_override")
+            if isinstance(raw.get("model_override"), str)
+            else raw.get("model")
+        ),
+    )
+
+
+def _parse_steps(
+    data: dict[str, Any], inputs: dict[str, InputConfig]
+) -> list[StepConfig]:
+    """Parse the workflow ``steps`` list into ``StepConfig`` objects."""
     steps: list[StepConfig] = []
     for raw in data.get("steps", []):
         if not isinstance(raw, dict) or "name" not in raw:
             continue
-        loop_max, loop_max_expr = _parse_loop_max(raw.get("loop_max", 3), inputs)
-        steps.append(
-            StepConfig(
-                name=raw["name"],
-                agent=raw.get("agent", ""),
-                description=raw.get("description", ""),
-                depends_on=raw.get("depends_on", []),
-                inputs=dict(raw.get("inputs", {})),
-                outputs=dict(raw.get("outputs", {})),
-                when=raw.get("when"),
-                loop_until=raw.get("loop_until"),
-                loop_max=loop_max,
-                loop_max_expr=loop_max_expr,
-                tools=(
-                    raw.get("tools") if isinstance(raw.get("tools"), list) else None
-                ),
-                prompt_file=raw.get("prompt_file"),
-                model_override=(
-                    raw.get("model_override")
-                    if isinstance(raw.get("model_override"), str)
-                    else raw.get("model")
-                ),
-            )
-        )
+        steps.append(_parse_step(raw, inputs))
+    return steps
 
-    # --- Outputs ---
+
+def _parse_outputs(data: dict[str, Any]) -> dict[str, OutputConfig]:
+    """Parse the workflow ``outputs`` mapping into ``OutputConfig`` objects."""
     outputs: dict[str, OutputConfig] = {}
     for k, v in data.get("outputs", {}).items():
         if isinstance(v, dict):
@@ -374,46 +411,61 @@ def _parse(data: dict[str, Any], default_name: str) -> WorkflowConfig:
             )
         else:
             outputs[k] = OutputConfig(name=k, from_expr=v)
+    return outputs
 
-    # --- Evaluation ---
-    evaluation = None
+
+def _parse_criterion(c: dict[str, Any]) -> CriterionConfig:
+    """Parse a single evaluation criterion mapping into a ``CriterionConfig``."""
+    return CriterionConfig(
+        name=c["name"],
+        definition=c.get("definition", ""),
+        weight=float(c["weight"]) if c.get("weight") else None,
+        critical_floor=(
+            float(c["critical_floor"])
+            if c.get("critical_floor") is not None
+            else None
+        ),
+        scale={str(sk): str(sv) for sk, sv in (c.get("scale") or {}).items()},
+        evidence_required=c.get("evidence_required", []),
+        formula_id=c.get("formula_id", "zero_one"),
+    )
+
+
+def _parse_evaluation(data: dict[str, Any]) -> EvaluationConfig | None:
+    """Parse the workflow ``evaluation`` mapping into an ``EvaluationConfig``."""
     raw_eval = data.get("evaluation")
-    if isinstance(raw_eval, dict):
-        criteria = []
-        for c in raw_eval.get("criteria", []):
-            if isinstance(c, dict) and c.get("name"):
-                criteria.append(
-                    CriterionConfig(
-                        name=c["name"],
-                        definition=c.get("definition", ""),
-                        weight=float(c["weight"]) if c.get("weight") else None,
-                        critical_floor=(
-                            float(c["critical_floor"])
-                            if c.get("critical_floor") is not None
-                            else None
-                        ),
-                        scale={
-                            str(sk): str(sv)
-                            for sk, sv in (c.get("scale") or {}).items()
-                        },
-                        evidence_required=c.get("evidence_required", []),
-                        formula_id=c.get("formula_id", "zero_one"),
-                    )
-                )
-        evaluation = EvaluationConfig(
-            rubric_id=raw_eval.get("rubric_id"),
-            scoring_profile=raw_eval.get("scoring_profile"),
-            weights=raw_eval.get("weights"),
-            criteria=criteria,
-        )
+    if not isinstance(raw_eval, dict):
+        return None
+    criteria = [
+        _parse_criterion(c)
+        for c in raw_eval.get("criteria", [])
+        if isinstance(c, dict) and c.get("name")
+    ]
+    return EvaluationConfig(
+        rubric_id=raw_eval.get("rubric_id"),
+        scoring_profile=raw_eval.get("scoring_profile"),
+        weights=raw_eval.get("weights"),
+        criteria=criteria,
+    )
 
-    # --- Capabilities ---
+
+def _parse_capabilities(data: dict[str, Any]) -> dict[str, list[str]]:
+    """Parse the workflow ``capabilities`` mapping into lists of strings."""
     capabilities: dict[str, list[str]] = {}
     raw_cap = data.get("capabilities")
     if isinstance(raw_cap, dict):
         for ck, cv in raw_cap.items():
             if isinstance(cv, list):
                 capabilities[ck] = [str(i) for i in cv]
+    return capabilities
+
+
+def _parse(data: dict[str, Any], default_name: str) -> WorkflowConfig:
+    inputs = _parse_inputs(data)
+    steps = _parse_steps(data, inputs)
+    outputs = _parse_outputs(data)
+    evaluation = _parse_evaluation(data)
+    capabilities = _parse_capabilities(data)
 
     return WorkflowConfig(
         name=data.get("name", default_name),

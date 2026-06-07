@@ -125,31 +125,49 @@ def migrate_legacy_tenant_storage(
     datasets_root = (
         Path(datasets_dir) if datasets_dir is not None else _DEFAULT_DATASETS_DIR
     )
-    moved = {"runs": [], "datasets": []}
+    moved = {
+        "runs": _migrate_legacy_runs(runs_root, tenant_id, dry_run),
+        "datasets": _migrate_legacy_datasets(datasets_root, tenant_id, dry_run),
+    }
+    return moved
 
-    if runs_root.exists():
-        target = tenant_run_dir(tenant_id, base_dir=runs_root, create=not dry_run)
-        for path in sorted(runs_root.glob("*.json")):
-            destination = target / path.name
-            moved["runs"].append(f"{path} -> {destination}")
-            if not dry_run:
-                shutil.move(str(path), str(destination))
 
-    if datasets_root.exists():
-        target = tenant_dataset_dir(
-            tenant_id, base_dir=datasets_root, create=not dry_run
-        )
-        tenant_target = target.resolve()
-        for path in sorted(p for p in datasets_root.rglob("*") if p.is_file()):
-            if path.resolve().is_relative_to(tenant_target):
-                continue
-            rel = path.relative_to(datasets_root)
-            destination = target / rel
-            moved["datasets"].append(f"{path} -> {destination}")
-            if not dry_run:
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(path), str(destination))
+def _migrate_legacy_runs(
+    runs_root: Path, tenant_id: str, dry_run: bool
+) -> list[str]:
+    """Move legacy root run files into ``runs/{tenant}``."""
+    moved: list[str] = []
+    if not runs_root.exists():
+        return moved
+    target = tenant_run_dir(tenant_id, base_dir=runs_root, create=not dry_run)
+    for path in sorted(runs_root.glob("*.json")):
+        destination = target / path.name
+        moved.append(f"{path} -> {destination}")
+        if not dry_run:
+            shutil.move(str(path), str(destination))
+    return moved
 
+
+def _migrate_legacy_datasets(
+    datasets_root: Path, tenant_id: str, dry_run: bool
+) -> list[str]:
+    """Move legacy root dataset files into ``datasets/{tenant}``."""
+    moved: list[str] = []
+    if not datasets_root.exists():
+        return moved
+    target = tenant_dataset_dir(
+        tenant_id, base_dir=datasets_root, create=not dry_run
+    )
+    tenant_target = target.resolve()
+    for path in sorted(p for p in datasets_root.rglob("*") if p.is_file()):
+        if path.resolve().is_relative_to(tenant_target):
+            continue
+        rel = path.relative_to(datasets_root)
+        destination = target / rel
+        moved.append(f"{path} -> {destination}")
+        if not dry_run:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(path), str(destination))
     return moved
 
 

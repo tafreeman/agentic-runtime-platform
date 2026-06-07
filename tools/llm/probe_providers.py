@@ -58,32 +58,28 @@ LogFn = Callable[[str], None] | None
 # =============================================================================
 
 
+# Ordered (prefixes, provider) pairs; first matching prefix wins.
+_PROVIDER_PREFIXES: tuple[tuple[tuple[str, ...], str], ...] = (
+    ((PREFIX_LOCAL,), "local"),
+    ((PREFIX_WINDOWS_AI,), "windows_ai"),
+    ((PREFIX_GITHUB, PREFIX_GITHUB_ALT), "github"),
+    ((PREFIX_OPENAI, PREFIX_GPT), "openai"),
+    ((PREFIX_AZURE_FOUNDRY,), "azure_foundry"),
+    ((PREFIX_AZURE_OPENAI,), "azure_openai"),
+    ((PREFIX_OLLAMA,), "ollama"),
+    ((PREFIX_GEMINI,), "gemini"),
+    ((PREFIX_AITK, PREFIX_AITK_ALT), "ai_toolkit"),
+    ((PREFIX_CLAUDE,), "claude"),
+    ((PREFIX_LMSTUDIO, PREFIX_LMSTUDIO_ALT), "lmstudio"),
+    ((PREFIX_LOCAL_API,), "local_api"),
+)
+
+
 def get_provider(model: str) -> str:
     """Extract provider name from a model identifier string."""
-    if model.startswith(PREFIX_LOCAL):
-        return "local"
-    if model.startswith(PREFIX_WINDOWS_AI):
-        return "windows_ai"
-    if model.startswith(PREFIX_GITHUB) or model.startswith(PREFIX_GITHUB_ALT):
-        return "github"
-    if model.startswith(PREFIX_OPENAI) or model.startswith(PREFIX_GPT):
-        return "openai"
-    if model.startswith(PREFIX_AZURE_FOUNDRY):
-        return "azure_foundry"
-    if model.startswith(PREFIX_AZURE_OPENAI):
-        return "azure_openai"
-    if model.startswith(PREFIX_OLLAMA):
-        return "ollama"
-    if model.startswith(PREFIX_GEMINI):
-        return "gemini"
-    if model.startswith(PREFIX_AITK) or model.startswith(PREFIX_AITK_ALT):
-        return "ai_toolkit"
-    if model.startswith(PREFIX_CLAUDE):
-        return "claude"
-    if model.startswith(PREFIX_LMSTUDIO) or model.startswith(PREFIX_LMSTUDIO_ALT):
-        return "lmstudio"
-    if model.startswith(PREFIX_LOCAL_API):
-        return "local_api"
+    for prefixes, provider in _PROVIDER_PREFIXES:
+        if model.startswith(prefixes):
+            return provider
     return "unknown"
 
 

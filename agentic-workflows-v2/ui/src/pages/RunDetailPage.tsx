@@ -13,6 +13,24 @@ import BPill from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
+type RunTone = "ok" | "err" | "clay" | "dim";
+type EvalBarColor = "b-green" | "b-amber" | "b-red";
+
+/** Map a run's status string to a pill tone. */
+function runStatusTone(status: string): RunTone {
+  if (status === "success") return "ok";
+  if (status === "failed" || status === "error") return "err";
+  if (status === "running" || status === "in_progress") return "clay";
+  return "dim";
+}
+
+/** Choose the evaluation bar color from a normalized 0..1 score. */
+function evalBarColorFor(evalPct: number | null): EvalBarColor {
+  if (evalPct !== null && evalPct > 0.75) return "b-green";
+  if (evalPct !== null && evalPct > 0.5) return "b-amber";
+  return "b-red";
+}
+
 export default function RunDetailPage() {
   const { filename } = useParams<{ filename: string }>();
   const navigate = useNavigate();
@@ -89,16 +107,7 @@ export default function RunDetailPage() {
   const successPercent =
     run.success_rate <= 1 ? run.success_rate * 100 : run.success_rate;
 
-  let runTone: "ok" | "err" | "clay" | "dim";
-  if (run.status === "success") {
-    runTone = "ok";
-  } else if (run.status === "failed" || run.status === "error") {
-    runTone = "err";
-  } else if (run.status === "running" || run.status === "in_progress") {
-    runTone = "clay";
-  } else {
-    runTone = "dim";
-  }
+  const runTone = runStatusTone(run.status);
 
   const evalData = run.extra?.evaluation;
   const evalPct =
@@ -106,14 +115,7 @@ export default function RunDetailPage() {
       ? Math.max(0, Math.min(1, evalData.weighted_score / 100))
       : null;
 
-  let evalBarColor: "b-green" | "b-amber" | "b-red";
-  if (evalPct !== null && evalPct > 0.75) {
-    evalBarColor = "b-green";
-  } else if (evalPct !== null && evalPct > 0.5) {
-    evalBarColor = "b-amber";
-  } else {
-    evalBarColor = "b-red";
-  }
+  const evalBarColor = evalBarColorFor(evalPct);
 
   return (
     <div className="flex h-full flex-col">

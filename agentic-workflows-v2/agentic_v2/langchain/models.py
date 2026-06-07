@@ -266,6 +266,54 @@ def _configure_native_router(availability: dict[str, bool]) -> None:
 # ---------------------------------------------------------------------------
 
 
+# Prefix -> builder dispatch table. Each builder receives the model name
+# (model_id with the prefix stripped) and the temperature.  Order matters
+# only for documentation; matching strips the leading ``prefix``.
+_PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
+    ("gh:", build_github_model),
+    ("ollama:", build_ollama_model),
+    ("openai:", build_openai_model),
+    ("anthropic:", build_anthropic_model),
+    ("claude:", build_anthropic_model),
+    ("gemini:", build_gemini_model),
+    ("notebooklm:", build_notebooklm_model),
+    ("local:", build_local_onnx_model),
+    ("lmstudio:", build_lmstudio_model),
+    ("local-api:", build_local_api_model),
+)
+
+# Prefixes that are recognized provider namespaces.  A bare name that does not
+# start with any of these is treated as an Ollama local model.
+_KNOWN_PREFIXES: tuple[str, ...] = (
+    "openai:",
+    "azure:",
+    "local:",
+    "windows-ai:",
+    "anthropic:",
+    "claude:",
+    "gemini:",
+    "notebooklm:",
+    "lmstudio:",
+    "local-api:",
+)
+
+
+def _build_model_by_prefix(model_id: str, temperature: float) -> Any | None:
+    """Dispatch a prefixed model ID to its builder, or return None if unmatched."""
+    if model_id == "notebooklm":
+        return build_notebooklm_model("", temperature)
+
+    for prefix, builder in _PREFIX_BUILDERS:
+        if model_id.startswith(prefix):
+            return builder(model_id[len(prefix) :], temperature)
+
+    # Bare name without prefix -- treat as Ollama local model
+    if not any(model_id.startswith(p) for p in _KNOWN_PREFIXES):
+        return build_ollama_model(model_id, temperature)
+
+    return None
+
+
 def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     """Resolve a model ID string to a LangChain ``BaseChatModel`` instance.
 
@@ -297,56 +345,9 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     if is_agentic_no_llm_enabled():
         return build_placeholder_model(temperature)
 
-    if model_id.startswith("gh:"):
-        return build_github_model(model_id[3:], temperature)
-
-    if model_id.startswith("ollama:"):
-        return build_ollama_model(model_id[7:], temperature)
-
-    if model_id.startswith("openai:"):
-        return build_openai_model(model_id[7:], temperature)
-
-    if model_id.startswith("anthropic:"):
-        return build_anthropic_model(model_id[10:], temperature)
-
-    if model_id.startswith("claude:"):
-        return build_anthropic_model(model_id[7:], temperature)
-
-    if model_id.startswith("gemini:"):
-        return build_gemini_model(model_id[7:], temperature)
-
-    if model_id == "notebooklm":
-        return build_notebooklm_model("", temperature)
-
-    if model_id.startswith("notebooklm:"):
-        return build_notebooklm_model(model_id[11:], temperature)
-
-    if model_id.startswith("local:"):
-        return build_local_onnx_model(model_id[6:], temperature)
-
-    if model_id.startswith("lmstudio:"):
-        return build_lmstudio_model(model_id[9:], temperature)
-
-    if model_id.startswith("local-api:"):
-        return build_local_api_model(model_id[10:], temperature)
-
-    # Bare name without prefix -- treat as Ollama local model
-    if not any(
-        model_id.startswith(p)
-        for p in (
-            "openai:",
-            "azure:",
-            "local:",
-            "windows-ai:",
-            "anthropic:",
-            "claude:",
-            "gemini:",
-            "notebooklm:",
-            "lmstudio:",
-            "local-api:",
-        )
-    ):
-        return build_ollama_model(model_id, temperature)
+    model = _build_model_by_prefix(model_id, temperature)
+    if model is not None:
+        return model
 
     raise ValueError(
         f"Unsupported model provider in '{model_id}'. "

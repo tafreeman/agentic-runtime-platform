@@ -194,35 +194,17 @@ def validate_judge_structured_output(
     Returns:
         A 2-tuple of ``(is_valid, error_messages)``.
     """
-    errors: list[str] = []
     if not isinstance(payload, dict):
         return False, ["payload must be a mapping"]
 
+    errors: list[str] = []
     criteria = payload.get("criteria")
     if not isinstance(criteria, list) or not criteria:
         errors.append("criteria must be a non-empty list")
     else:
         seen: set[str] = set()
         for idx, item in enumerate(criteria):
-            if not isinstance(item, dict):
-                errors.append(f"criteria[{idx}] must be an object")
-                continue
-            for required in ("name", "score", "evidence"):
-                if required not in item:
-                    errors.append(f"criteria[{idx}] missing key: {required}")
-            name = item.get("name")
-            if not isinstance(name, str) or not name.strip():
-                errors.append(f"criteria[{idx}].name must be non-empty string")
-            else:
-                seen.add(name.strip())
-            score = item.get("score")
-            if not isinstance(score, (int, float)):
-                errors.append(f"criteria[{idx}].score must be numeric")
-            elif float(score) < 1.0 or float(score) > 5.0:
-                errors.append(f"criteria[{idx}].score must be in [1, 5]")
-            evidence = item.get("evidence")
-            if not isinstance(evidence, str):
-                errors.append(f"criteria[{idx}].evidence must be string")
+            errors.extend(_validate_judge_criterion_item(idx, item, seen))
 
         if expected_criteria:
             missing = sorted(expected_criteria - seen)
@@ -230,6 +212,48 @@ def validate_judge_structured_output(
                 errors.append(f"missing criteria: {', '.join(missing)}")
 
     return len(errors) == 0, errors
+
+
+def _validate_judge_criterion_item(
+    idx: int,
+    item: Any,
+    seen: set[str],
+) -> list[str]:
+    """Validate one judge criterion entry, recording its name in ``seen``.
+
+    Args:
+        idx: Index of the entry within the ``criteria`` list (for messages).
+        item: The raw criterion entry to validate.
+        seen: Mutable set of valid criterion names collected so far.
+
+    Returns:
+        A list of validation error messages (empty when the entry is valid).
+    """
+    if not isinstance(item, dict):
+        return [f"criteria[{idx}] must be an object"]
+
+    errors: list[str] = []
+    for required in ("name", "score", "evidence"):
+        if required not in item:
+            errors.append(f"criteria[{idx}] missing key: {required}")
+
+    name = item.get("name")
+    if not isinstance(name, str) or not name.strip():
+        errors.append(f"criteria[{idx}].name must be non-empty string")
+    else:
+        seen.add(name.strip())
+
+    score = item.get("score")
+    if not isinstance(score, (int, float)):
+        errors.append(f"criteria[{idx}].score must be numeric")
+    elif float(score) < 1.0 or float(score) > 5.0:
+        errors.append(f"criteria[{idx}].score must be in [1, 5]")
+
+    evidence = item.get("evidence")
+    if not isinstance(evidence, str):
+        errors.append(f"criteria[{idx}].evidence must be string")
+
+    return errors
 
 
 def check_swapped_order_consistency(

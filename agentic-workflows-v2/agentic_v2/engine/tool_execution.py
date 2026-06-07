@@ -404,32 +404,9 @@ async def run_tool_calls(
             continue
 
         tool = bound_tools.get(tool_name)
-        if tool is None:
-            tool_result_text = json.dumps(
-                {"success": False, "error": f"Unknown tool: {tool_name}"}
-            )
-        else:
-            is_valid, validation_error = tool.validate_parameters(**tool_args)
-            if not is_valid:
-                tool_result_text = json.dumps(
-                    {
-                        "success": False,
-                        "error": (
-                            f"Invalid parameters for {tool_name}: {validation_error}"
-                        ),
-                    }
-                )
-            else:
-                try:
-                    tool_result = await tool.execute(**tool_args)
-                    tool_result_text = serialize_tool_result(tool_result)
-                except Exception as exc:
-                    tool_result_text = json.dumps(
-                        {
-                            "success": False,
-                            "error": f"Tool execution error for {tool_name}: {exc}",
-                        }
-                    )
+        tool_result_text = await _dispatch_single_tool_call(
+            tool, tool_name, tool_args
+        )
 
         messages.append(
             {
@@ -442,6 +419,45 @@ async def run_tool_calls(
         executed += 1
 
     return executed
+
+
+async def _dispatch_single_tool_call(
+    tool: Any,
+    tool_name: str,
+    tool_args: dict[str, Any],
+) -> str:
+    """Validate and execute one tool call, returning its serialized result text.
+
+    Errors (unknown tool, invalid params, execution failure) are returned as a
+    serialized ``{"success": False, "error": ...}`` payload rather than raised,
+    so the LLM receives feedback in the next turn.
+    """
+    if tool is None:
+        return json.dumps(
+            {"success": False, "error": f"Unknown tool: {tool_name}"}
+        )
+
+    is_valid, validation_error = tool.validate_parameters(**tool_args)
+    if not is_valid:
+        return json.dumps(
+            {
+                "success": False,
+                "error": (
+                    f"Invalid parameters for {tool_name}: {validation_error}"
+                ),
+            }
+        )
+
+    try:
+        tool_result = await tool.execute(**tool_args)
+        return serialize_tool_result(tool_result)
+    except Exception as exc:
+        return json.dumps(
+            {
+                "success": False,
+                "error": f"Tool execution error for {tool_name}: {exc}",
+            }
+        )
 
 
 # Backward-compatibility alias

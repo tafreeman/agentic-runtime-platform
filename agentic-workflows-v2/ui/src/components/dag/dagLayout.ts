@@ -17,13 +17,13 @@ const NODE_HEIGHT = 120;
 const H_GAP = 60;
 const V_GAP = 80;
 
-export function layoutDAG(
-  nodes: DAGNode[],
-  edges: DAGEdge[]
-): PositionedNode[] {
-  if (nodes.length === 0) return [];
+interface Adjacency {
+  inDegree: Map<string, number>;
+  children: Map<string, string[]>;
+}
 
-  // Build adjacency (incoming edges per node)
+/** Build incoming-edge counts and child lists per node. */
+function buildAdjacency(nodes: DAGNode[], edges: DAGEdge[]): Adjacency {
   const inDegree = new Map<string, number>();
   const children = new Map<string, string[]>();
   for (const n of nodes) {
@@ -34,8 +34,11 @@ export function layoutDAG(
     inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
     children.get(e.source)?.push(e.target);
   }
+  return { inDegree, children };
+}
 
-  // Kahn's algorithm to assign levels
+/** Assign a topological level (depth) to each node via Kahn's algorithm. */
+function assignLevels({ inDegree, children }: Adjacency): Map<string, number> {
   const levels = new Map<string, number>();
   const queue: string[] = [];
 
@@ -61,14 +64,21 @@ export function layoutDAG(
     }
   }
 
-  // Group nodes by level
+  return levels;
+}
+
+/** Bucket node ids by their assigned level. */
+function groupByLevel(levels: Map<string, number>): Map<number, string[]> {
   const byLevel = new Map<number, string[]>();
   for (const [id, level] of levels) {
     if (!byLevel.has(level)) byLevel.set(level, []);
     byLevel.get(level)!.push(id);
   }
+  return byLevel;
+}
 
-  // Assign positions
+/** Place each level's nodes side-by-side, centered horizontally. */
+function assignPositions(byLevel: Map<number, string[]>): PositionedNode[] {
   const positioned: PositionedNode[] = [];
   for (const [level, ids] of byLevel) {
     const totalWidth = ids.length * NODE_WIDTH + (ids.length - 1) * H_GAP;
@@ -82,6 +92,17 @@ export function layoutDAG(
       });
     });
   }
-
   return positioned;
+}
+
+export function layoutDAG(
+  nodes: DAGNode[],
+  edges: DAGEdge[]
+): PositionedNode[] {
+  if (nodes.length === 0) return [];
+
+  const adjacency = buildAdjacency(nodes, edges);
+  const levels = assignLevels(adjacency);
+  const byLevel = groupByLevel(levels);
+  return assignPositions(byLevel);
 }

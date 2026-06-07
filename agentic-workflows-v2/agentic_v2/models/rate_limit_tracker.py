@@ -594,29 +594,54 @@ def _parse_duration(value: str | None) -> float | None:
     remaining = value.strip()
 
     # Minutes
+    minutes, remaining, minutes_failed = _consume_duration_minutes(remaining)
+    if minutes_failed:
+        return None
+    total += minutes
+
+    # Seconds
+    seconds, remaining = _consume_duration_seconds(remaining)
+    total += seconds
+
+    # Milliseconds
+    total += _consume_duration_milliseconds(remaining)
+
+    return total if total > 0 else None
+
+
+def _consume_duration_minutes(remaining: str) -> tuple[float, str, bool]:
+    """Extract the minutes component from a duration string.
+
+    Returns ``(seconds_from_minutes, rest, failed)`` where ``failed`` is True
+    only when a minutes marker is present but its value is unparseable.
+    """
     if "m" in remaining and "ms" not in remaining:
         parts = remaining.split("m", 1)
         try:
-            total += float(parts[0]) * 60
+            return float(parts[0]) * 60, parts[1], False
         except ValueError:
-            return None
-        remaining = parts[1]
+            return 0.0, remaining, True
+    return 0.0, remaining, False
 
-    # Seconds
+
+def _consume_duration_seconds(remaining: str) -> tuple[float, str]:
+    """Extract the seconds component from a duration string."""
     if "s" in remaining and "ms" not in remaining:
         parts = remaining.split("s", 1)
+        rest = parts[1] if len(parts) > 1 else ""
         try:
-            total += float(parts[0])
+            return float(parts[0]), rest
         except ValueError:
-            pass
-        remaining = parts[1] if len(parts) > 1 else ""
+            return 0.0, rest
+    return 0.0, remaining
 
-    # Milliseconds
+
+def _consume_duration_milliseconds(remaining: str) -> float:
+    """Extract the milliseconds component from a duration string."""
     if "ms" in remaining:
         parts = remaining.split("ms", 1)
         try:
-            total += float(parts[0]) / 1000
+            return float(parts[0]) / 1000
         except ValueError:
-            pass
-
-    return total if total > 0 else None
+            return 0.0
+    return 0.0
