@@ -32,6 +32,53 @@ class LintViolation:
         return f"{self.severity.upper()} {location}field '{self.field}': {self.message}"
 
 
+def _lint_depends_on(
+    step: dict[str, Any], step_name: str, step_names: set[str]
+) -> list[LintViolation]:
+    """Validate a step's ``depends_on`` field."""
+    depends = step.get("depends_on")
+    if depends is None:
+        return []
+    if not isinstance(depends, list):
+        return [
+            LintViolation(
+                field="depends_on",
+                step=step_name,
+                message="must be a list of step name strings",
+            )
+        ]
+    return [
+        LintViolation(
+            field="depends_on",
+            step=step_name,
+            message=f"references unknown step '{dep}'",
+        )
+        for dep in depends
+        if dep not in step_names
+    ]
+
+
+def _lint_step(step: Any, step_names: set[str]) -> list[LintViolation]:
+    """Validate a single step mapping and return its violations."""
+    if not isinstance(step, dict):
+        return [
+            LintViolation(field="steps[]", message="each step must be a mapping")
+        ]
+
+    step_name: str = step.get("name", "<unnamed>")
+    violations: list[LintViolation] = [
+        LintViolation(
+            field=field_name,
+            step=step_name,
+            message="required step field missing",
+        )
+        for field_name in REQUIRED_STEP_FIELDS
+        if field_name not in step
+    ]
+    violations.extend(_lint_depends_on(step, step_name, step_names))
+    return violations
+
+
 def lint_workflow_dict(doc: dict[str, Any]) -> list[LintViolation]:
     """Validate *doc* (pre-parsed YAML) and return all violations."""
     violations: list[LintViolation] = []
@@ -56,44 +103,7 @@ def lint_workflow_dict(doc: dict[str, Any]) -> list[LintViolation]:
     }
 
     for step in steps:
-        if not isinstance(step, dict):
-            violations.append(
-                LintViolation(field="steps[]", message="each step must be a mapping")
-            )
-            continue
-
-        step_name: str = step.get("name", "<unnamed>")
-
-        for field_name in REQUIRED_STEP_FIELDS:
-            if field_name not in step:
-                violations.append(
-                    LintViolation(
-                        field=field_name,
-                        step=step_name,
-                        message="required step field missing",
-                    )
-                )
-
-        depends = step.get("depends_on")
-        if depends is not None:
-            if not isinstance(depends, list):
-                violations.append(
-                    LintViolation(
-                        field="depends_on",
-                        step=step_name,
-                        message="must be a list of step name strings",
-                    )
-                )
-            else:
-                for dep in depends:
-                    if dep not in step_names:
-                        violations.append(
-                            LintViolation(
-                                field="depends_on",
-                                step=step_name,
-                                message=f"references unknown step '{dep}'",
-                            )
-                        )
+        violations.extend(_lint_step(step, step_names))
 
     return violations
 

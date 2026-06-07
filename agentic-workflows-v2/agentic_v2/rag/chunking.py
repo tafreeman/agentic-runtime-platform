@@ -103,37 +103,12 @@ class RecursiveChunker:
             part_len = len(part) + (len(separator) if current else 0)
 
             if current_len + part_len > chunk_size and current:
-                segment = separator.join(current)
-                if len(segment) > chunk_size:
-                    # Segment still too large — recurse with finer separators
-                    next_seps = (
-                        separators[separators.index(separator) + 1 :]
-                        if separator in separators
-                        else [""]
-                    )
-                    results.extend(
-                        self._recursive_split(segment, next_seps, chunk_size, overlap)
-                    )
-                else:
-                    results.append(segment)
-
-                # Overlap: keep last portion of current for context
-                if overlap > 0 and current:
-                    overlap_text = separator.join(current)
-                    overlap_parts = []
-                    olen = 0
-                    for p in reversed(current):
-                        olen += len(p) + len(separator)
-                        if olen > overlap:
-                            break
-                        overlap_parts.insert(0, p)
-                    current = overlap_parts
-                    current_len = sum(len(p) for p in current) + len(separator) * max(
-                        0, len(current) - 1
-                    )
-                else:
-                    current = []
-                    current_len = 0
+                self._flush_segment(
+                    current, separator, chunk_size, overlap, separators, results
+                )
+                current, current_len = self._carry_overlap(
+                    current, separator, overlap
+                )
 
             current.append(part)
             current_len += part_len
@@ -144,6 +119,50 @@ class RecursiveChunker:
                 results.append(segment)
 
         return [r for r in results if r.strip()]
+
+    def _flush_segment(
+        self,
+        current: list[str],
+        separator: str,
+        chunk_size: int,
+        overlap: int,
+        separators: list[str],
+        results: list[str],
+    ) -> None:
+        """Emit the accumulated parts as a segment, recursing if still oversized."""
+        segment = separator.join(current)
+        if len(segment) > chunk_size:
+            # Segment still too large — recurse with finer separators
+            next_seps = (
+                separators[separators.index(separator) + 1 :]
+                if separator in separators
+                else [""]
+            )
+            results.extend(
+                self._recursive_split(segment, next_seps, chunk_size, overlap)
+            )
+        else:
+            results.append(segment)
+
+    @staticmethod
+    def _carry_overlap(
+        current: list[str], separator: str, overlap: int
+    ) -> tuple[list[str], int]:
+        """Compute the trailing parts to retain as overlap for the next segment."""
+        # Overlap: keep last portion of current for context
+        if overlap > 0 and current:
+            overlap_parts: list[str] = []
+            olen = 0
+            for p in reversed(current):
+                olen += len(p) + len(separator)
+                if olen > overlap:
+                    break
+                overlap_parts.insert(0, p)
+            current_len = sum(len(p) for p in overlap_parts) + len(separator) * max(
+                0, len(overlap_parts) - 1
+            )
+            return overlap_parts, current_len
+        return [], 0
 
     def _hard_split(self, text: str, chunk_size: int, overlap: int) -> list[str]:
         """Split text by character count as a last resort."""

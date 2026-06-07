@@ -16,7 +16,7 @@ installed (registration simply won't occur).
 from __future__ import annotations
 
 import logging
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any, AsyncIterator
 
 from ...langchain.dependencies import (
     is_missing_langchain_dependency_error,
@@ -73,7 +73,6 @@ class LangChainEngine:
         self,
         workflow: Any,
         ctx: Any = None,
-        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> Any:
         """Execute a workflow by name via the LangChain runner.

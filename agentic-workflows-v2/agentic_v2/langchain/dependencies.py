@@ -21,7 +21,7 @@ def is_missing_langchain_dependency_error(exc: BaseException | None) -> bool:
 
 
 def to_missing_langchain_dependency_error(
-    exc: ImportError,
+    _exc: ImportError,
     *,
     install_hint: str = "pip install -e '.[langchain]'",
 ) -> MissingLangChainDependencyError:

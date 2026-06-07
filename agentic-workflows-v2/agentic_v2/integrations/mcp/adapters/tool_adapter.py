@@ -89,10 +89,10 @@ class McpToolAdapter:
 
         try:
             # Call remote tool with timeout
-            response = await asyncio.wait_for(
-                self.client.call_tool(self.tool_descriptor.name, arguments),
-                timeout=timeout_value,
-            )
+            async with asyncio.timeout(timeout_value):
+                response = await self.client.call_tool(
+                    self.tool_descriptor.name, arguments
+                )
 
             # Extract content from response
             content = response.get("content", [])
@@ -102,36 +102,7 @@ class McpToolAdapter:
                 return "[Tool returned no content]"
 
             # MCP tools can return multiple content blocks
-            formatted_parts = []
-            for block in content:
-                block_type = block.get("type")
-
-                if block_type == "text":
-                    formatted_parts.append(block.get("text", ""))
-
-                elif block_type == "image":
-                    # Image blocks have data URL
-                    image_data = block.get("data", "")
-                    mime_type = block.get("mimeType", "image/png")
-                    formatted_parts.append(
-                        f"[Image: {mime_type}, {len(image_data)} bytes]"
-                    )
-
-                elif block_type == "resource":
-                    # Resource reference — include URI and inline text if present
-                    resource = block.get("resource", {})
-                    resource_uri = resource.get("uri", "")
-                    resource_text = resource.get("text", "")
-                    if resource_text:
-                        formatted_parts.append(
-                            f"[Resource: {resource_uri}]\n{resource_text}"
-                        )
-                    else:
-                        formatted_parts.append(f"[Resource: {resource_uri}]")
-
-                else:
-                    # Unknown block type
-                    formatted_parts.append(f"[Unknown block type: {block_type}]")
+            formatted_parts = [self._format_content_block(block) for block in content]
 
             result = "\n\n".join(formatted_parts)
             logger.debug(f"Tool result length: {len(result)} chars")
@@ -157,6 +128,36 @@ class McpToolAdapter:
             error_msg = f"Unexpected error: {e}"
             logger.error(f"{self.name}: {error_msg}", exc_info=True)
             return f"Error: {error_msg}"
+
+    @staticmethod
+    def _format_content_block(block: dict[str, Any]) -> str:
+        """Format a single MCP content block into a display string."""
+        block_type = block.get("type")
+
+        if block_type == "text":
+            return block.get("text", "")
+
+        if block_type == "image":
+            # Image blocks have data URL
+            image_data = block.get("data", "")
+            mime_type = block.get("mimeType", "image/png")
+            return f"[Image: {mime_type}, {len(image_data)} bytes]"
+
+        if block_type == "resource":
+            return McpToolAdapter._format_resource_block(block)
+
+        # Unknown block type
+        return f"[Unknown block type: {block_type}]"
+
+    @staticmethod
+    def _format_resource_block(block: dict[str, Any]) -> str:
+        """Format a resource content block, including inline text if present."""
+        resource = block.get("resource", {})
+        resource_uri = resource.get("uri", "")
+        resource_text = resource.get("text", "")
+        if resource_text:
+            return f"[Resource: {resource_uri}]\n{resource_text}"
+        return f"[Resource: {resource_uri}]"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert adapter to dictionary representation.

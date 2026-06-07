@@ -56,8 +56,107 @@ TRANSIENT_ERRORS: set[ErrorCode] = {
 }
 
 
+def _classify_permission(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect permission/entitlement errors (403, 401, access denied)."""
+    if "403" in msg or "forbidden" in msg:
+        return ErrorCode.PERMISSION_DENIED, False
+    if "401" in msg or "unauthorized" in msg:
+        return ErrorCode.PERMISSION_DENIED, False
+    if "access denied" in msg or "access is denied" in msg:
+        return ErrorCode.PERMISSION_DENIED, False
+    if "limited access feature" in msg or ("laf" in msg and "token" in msg):
+        return ErrorCode.PERMISSION_DENIED, False
+    if "systemaimodels" in msg or "package identity" in msg:
+        return ErrorCode.PERMISSION_DENIED, False
+    return None
+
+
+def _classify_model_availability(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect model-availability errors."""
+    if "unavailable_model" in msg or "unavailable model" in msg:
+        return ErrorCode.UNAVAILABLE_MODEL, False
+    if "model not found" in msg or "unknown model" in msg:
+        return ErrorCode.UNAVAILABLE_MODEL, False
+    if "does not exist" in msg and "model" in msg:
+        return ErrorCode.UNAVAILABLE_MODEL, False
+    if "not found" in msg and ("model" in msg or "resource" in msg):
+        return ErrorCode.UNAVAILABLE_MODEL, False
+    return None
+
+
+def _classify_rate_limit(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect rate-limiting errors (429)."""
+    if "429" in msg or "rate limit" in msg or "too many requests" in msg:
+        return ErrorCode.RATE_LIMITED, True
+    if "quota" in msg and ("exceeded" in msg or "limit" in msg):
+        return ErrorCode.RATE_LIMITED, True
+    return None
+
+
+def _classify_timeout(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect timeout errors."""
+    if "timeout" in msg or "timed out" in msg:
+        return ErrorCode.TIMEOUT, True
+    if "deadline exceeded" in msg:
+        return ErrorCode.TIMEOUT, True
+    return None
+
+
+def _classify_network(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect network errors."""
+    if "connection" in msg and ("refused" in msg or "reset" in msg or "error" in msg):
+        return ErrorCode.NETWORK_ERROR, True
+    if "network" in msg and ("error" in msg or "unreachable" in msg):
+        return ErrorCode.NETWORK_ERROR, True
+    if "dns" in msg or "resolve" in msg:
+        return ErrorCode.NETWORK_ERROR, True
+    if "unreachable" in msg or "no route" in msg:
+        return ErrorCode.NETWORK_ERROR, True
+    return None
+
+
+def _classify_parse(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect parse errors (usually transient - model gave bad output)."""
+    if "json" in msg and ("parse" in msg or "decode" in msg or "invalid" in msg):
+        return ErrorCode.PARSE_ERROR, True
+    if "yaml" in msg and ("parse" in msg or "invalid" in msg):
+        return ErrorCode.PARSE_ERROR, True
+    return None
+
+
+def _classify_file_not_found(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect file-not-found errors."""
+    if "file not found" in msg or "no such file" in msg:
+        return ErrorCode.FILE_NOT_FOUND, False
+    if "filenotfounderror" in msg:
+        return ErrorCode.FILE_NOT_FOUND, False
+    return None
+
+
+def _classify_invalid_input(msg: str) -> tuple[ErrorCode, bool] | None:
+    """Detect invalid-input errors."""
+    if "invalid" in msg and ("input" in msg or "parameter" in msg or "argument" in msg):
+        return ErrorCode.INVALID_INPUT, False
+    if "validation" in msg and ("failed" in msg or "error" in msg):
+        return ErrorCode.INVALID_INPUT, False
+    return None
+
+
+# Ordered classification rules; first match wins.
+_CLASSIFIERS = (
+    _classify_permission,
+    _classify_model_availability,
+    _classify_rate_limit,
+    _classify_timeout,
+    _classify_network,
+    _classify_parse,
+    _classify_file_not_found,
+    _classify_invalid_input,
+)
+
+
 def classify_error(
-    error_message: str, return_code: int | None = None
+    error_message: str, _return_code: int | None = None
 ) -> tuple[ErrorCode, bool]:
     """Classify an error message into a standard error code.
 
@@ -76,67 +175,10 @@ def classify_error(
     """
     msg = error_message.lower() if error_message else ""
 
-    # Permission/entitlement errors (403, 401, access denied)
-    if "403" in msg or "forbidden" in msg:
-        return ErrorCode.PERMISSION_DENIED, False
-    if "401" in msg or "unauthorized" in msg:
-        return ErrorCode.PERMISSION_DENIED, False
-    if "access denied" in msg or "access is denied" in msg:
-        return ErrorCode.PERMISSION_DENIED, False
-    if "limited access feature" in msg or ("laf" in msg and "token" in msg):
-        return ErrorCode.PERMISSION_DENIED, False
-    if "systemaimodels" in msg or "package identity" in msg:
-        return ErrorCode.PERMISSION_DENIED, False
-
-    # Model availability
-    if "unavailable_model" in msg or "unavailable model" in msg:
-        return ErrorCode.UNAVAILABLE_MODEL, False
-    if "model not found" in msg or "unknown model" in msg:
-        return ErrorCode.UNAVAILABLE_MODEL, False
-    if "does not exist" in msg and "model" in msg:
-        return ErrorCode.UNAVAILABLE_MODEL, False
-    if "not found" in msg and ("model" in msg or "resource" in msg):
-        return ErrorCode.UNAVAILABLE_MODEL, False
-
-    # Rate limiting (429)
-    if "429" in msg or "rate limit" in msg or "too many requests" in msg:
-        return ErrorCode.RATE_LIMITED, True
-    if "quota" in msg and ("exceeded" in msg or "limit" in msg):
-        return ErrorCode.RATE_LIMITED, True
-
-    # Timeouts
-    if "timeout" in msg or "timed out" in msg:
-        return ErrorCode.TIMEOUT, True
-    if "deadline exceeded" in msg:
-        return ErrorCode.TIMEOUT, True
-
-    # Network errors
-    if "connection" in msg and ("refused" in msg or "reset" in msg or "error" in msg):
-        return ErrorCode.NETWORK_ERROR, True
-    if "network" in msg and ("error" in msg or "unreachable" in msg):
-        return ErrorCode.NETWORK_ERROR, True
-    if "dns" in msg or "resolve" in msg:
-        return ErrorCode.NETWORK_ERROR, True
-    if "unreachable" in msg or "no route" in msg:
-        return ErrorCode.NETWORK_ERROR, True
-
-    # Parse errors (usually transient - model gave bad output)
-    if "json" in msg and ("parse" in msg or "decode" in msg or "invalid" in msg):
-        return ErrorCode.PARSE_ERROR, True
-    if "yaml" in msg and ("parse" in msg or "invalid" in msg):
-        return ErrorCode.PARSE_ERROR, True
-
-    # File not found
-    if "file not found" in msg or "no such file" in msg:
-        return ErrorCode.FILE_NOT_FOUND, False
-    if "filenotfounderror" in msg:
-        return ErrorCode.FILE_NOT_FOUND, False
-
-    # Invalid input
-    if "invalid" in msg and ("input" in msg or "parameter" in msg or "argument" in msg):
-        return ErrorCode.INVALID_INPUT, False
-    if "validation" in msg and ("failed" in msg or "error" in msg):
-        return ErrorCode.INVALID_INPUT, False
+    for classifier in _CLASSIFIERS:
+        result = classifier(msg)
+        if result is not None:
+            return result
 
     # Default to internal error (non-retryable by default)
     return ErrorCode.INTERNAL_ERROR, False

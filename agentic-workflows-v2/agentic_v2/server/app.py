@@ -102,7 +102,7 @@ try:
         else Limiter(key_func=_public_exempt_key, default_limits=[_RATE_LIMIT_DEFAULT])
     )
 
-    def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    def _rate_limit_exceeded_handler(_request: Request, exc: RateLimitExceeded) -> JSONResponse:
         """Convert a slowapi ``RateLimitExceeded`` exception to a 429 JSON response."""
         retry_after = getattr(exc, "retry_after", None)
         headers = {}
@@ -121,7 +121,7 @@ except ImportError:
     SlowAPIMiddleware = None  # type: ignore[assignment,misc]
     RateLimitExceeded = None  # type: ignore[assignment,misc]
 
-    def _rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:  # type: ignore[misc]
+    def _rate_limit_exceeded_handler(_request: Request, _exc: Exception) -> JSONResponse:  # type: ignore[misc]
         return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
 
 
@@ -159,6 +159,87 @@ def _initialize_sanitization_state(app: FastAPI) -> Exception | None:
         return exc
 
 
+def _validate_selected_adapter() -> None:
+    """Eagerly validate the configured startup adapter, aborting on misconfig.
+
+    AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as its
+    selected engine at startup. Named YAML workflow requests default to
+    "langchain" during the migration window because WorkflowRunRequest.adapter
+    defaults to "langchain". Set to "native" to validate and run the
+    dependency-light DAG/Pipeline adapter instead.
+    """
+    _selected_adapter = os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
+    logger.info("Default adapter: %s", _selected_adapter)
+    try:
+        get_registry().validate_selected(_selected_adapter)
+    except ConfigurationError:
+        logger.critical(
+            "Server startup aborted: LangChain engine is selected "
+            "(AGENTIC_DEFAULT_ADAPTER=%r) but extras are not installed. "
+            "Fix with: pip install -e '.[langchain]'  "
+            "or set AGENTIC_DEFAULT_ADAPTER=native to use the native engine.",
+            _selected_adapter,
+        )
+        raise
+
+
+def _probe_llm_providers() -> None:
+    """Probe available LLM providers and update tier defaults for both engines.
+
+    NoProviderConfiguredError is non-fatal at startup — the server starts in a
+    degraded state; the error is surfaced per-request via the 503 handler.
+    """
+    try:
+        from ..langchain.models import probe_and_update_tier_defaults
+
+        summary = probe_and_update_tier_defaults()
+        logger.info(
+            "LLM providers: available=%s, unavailable=%s",
+            summary["available_providers"],
+            summary["unavailable_providers"],
+        )
+    except ImportError:
+        logger.warning("LangChain extras not installed — skipping LLM provider probe")
+    except Exception as _probe_exc:  # broad catch is intentional at startup
+        from ..core.errors import NoProviderConfiguredError
+
+        if isinstance(_probe_exc, NoProviderConfiguredError):
+            logger.warning(
+                "No LLM provider configured — server starts in degraded mode. "
+                "Set a provider API key or AGENTIC_NO_LLM=1. See docs/NO_LLM_MODE.md"
+            )
+        else:
+            logger.warning("LLM provider probe failed (non-fatal): %s", _probe_exc)
+
+
+def _enforce_sanitization_init(app: FastAPI, init_error: Exception) -> None:
+    """Apply fail-open/fail-closed policy after a sanitization init failure.
+
+    When ``AGENTIC_SANITIZER_FAIL_OPEN=1`` the server starts with sanitization
+    disabled; otherwise a ``RuntimeError`` is raised to fail closed.
+    """
+    from .middleware import _fail_open_enabled
+
+    if _fail_open_enabled():
+        logger.critical(
+            "AGENTIC_SANITIZER_FAIL_OPEN=1 — starting WITHOUT sanitization. "
+            "Prompt injection and secret redaction are DISABLED. "
+            "Do not use this setting in production."
+        )
+        app.state.sanitization = None
+        return
+
+    # Bind to a BaseException|None-typed local so the exception-chain
+    # cause is always provably valid (python:S5707).
+    cause: BaseException | None = (
+        init_error if isinstance(init_error, BaseException) else None
+    )
+    raise RuntimeError(
+        "Sanitization middleware failed to initialize. "
+        "Set AGENTIC_SANITIZER_FAIL_OPEN=1 to bypass (insecure — not for production)."
+    ) from cause
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage server startup and shutdown lifecycle.
@@ -188,74 +269,15 @@ async def lifespan(app: FastAPI):
 
     # Eagerly validate the selected adapter at boot so misconfiguration is
     # surfaced with a clear error instead of an obscure mid-workflow traceback.
-    #
-    # AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as its
-    # selected engine at startup. Named YAML workflow requests default to
-    # "langchain" during the migration window because WorkflowRunRequest.adapter
-    # defaults to "langchain". Set to "native" to validate and run the
-    # dependency-light DAG/Pipeline adapter instead.
-    _selected_adapter = os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
-    logger.info("Default adapter: %s", _selected_adapter)
-    try:
-        get_registry().validate_selected(_selected_adapter)
-    except ConfigurationError:
-        logger.critical(
-            "Server startup aborted: LangChain engine is selected "
-            "(AGENTIC_DEFAULT_ADAPTER=%r) but extras are not installed. "
-            "Fix with: pip install -e '.[langchain]'  "
-            "or set AGENTIC_DEFAULT_ADAPTER=native to use the native engine.",
-            _selected_adapter,
-        )
-        raise
+    _validate_selected_adapter()
 
-    # Probe available LLM providers and update tier defaults for both engines.
-    # NoProviderConfiguredError is non-fatal at startup — the server starts in a
-    # degraded state; the error is surfaced per-request via the 503 handler.
-    try:
-        from ..langchain.models import probe_and_update_tier_defaults
-
-        summary = probe_and_update_tier_defaults()
-        logger.info(
-            "LLM providers: available=%s, unavailable=%s",
-            summary["available_providers"],
-            summary["unavailable_providers"],
-        )
-    except ImportError:
-        logger.warning("LangChain extras not installed — skipping LLM provider probe")
-    except Exception as _probe_exc:  # broad catch is intentional at startup
-        from ..core.errors import NoProviderConfiguredError
-
-        if isinstance(_probe_exc, NoProviderConfiguredError):
-            logger.warning(
-                "No LLM provider configured — server starts in degraded mode. "
-                "Set a provider API key or AGENTIC_NO_LLM=1. See docs/NO_LLM_MODE.md"
-            )
-        else:
-            logger.warning("LLM provider probe failed (non-fatal): %s", _probe_exc)
+    _probe_llm_providers()
 
     # Initialize sanitization middleware.
     # Enforcement mode: dry_run=False blocks/redacts unsafe content.
     init_error = _initialize_sanitization_state(app)
     if init_error is not None:
-        from .middleware import _fail_open_enabled
-
-        if _fail_open_enabled():
-            logger.critical(
-                "AGENTIC_SANITIZER_FAIL_OPEN=1 — starting WITHOUT sanitization. "
-                "Prompt injection and secret redaction are DISABLED. "
-                "Do not use this setting in production."
-            )
-            app.state.sanitization = None
-        else:
-            # Bind to a BaseException|None-typed local so the exception-chain
-            # cause is always provably valid (python:S5707).
-            cause: BaseException | None = (
-                init_error if isinstance(init_error, BaseException) else None
-            )
-            raise RuntimeError(
-                "Sanitization middleware failed to initialize. "
-                "Set AGENTIC_SANITIZER_FAIL_OPEN=1 to bypass (insecure — not for production)."
-            ) from cause
+        _enforce_sanitization_init(app, init_error)
 
     if is_tracing_enabled():
         logger.info("OpenTelemetry tracing is enabled")
@@ -348,16 +370,21 @@ def create_app() -> FastAPI:
     app.add_middleware(MetricsMiddleware)
 
     # Global rate limiting via slowapi (outermost — added last)
-    if _limiter is not None and _SLOWAPI_AVAILABLE:
-        app.state.limiter = _limiter
-        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-        app.add_middleware(SlowAPIMiddleware)
-        logger.info("Rate limiting enabled: %s per IP", _RATE_LIMIT_DEFAULT)
-    else:
-        if _RATE_LIMIT_DISABLED:
-            logger.info("Rate limiting disabled (AGENTIC_RATE_LIMIT_DISABLED=1)")
-        else:
-            logger.warning("slowapi not installed — rate limiting is inactive")
+    _configure_rate_limiting(app)
+
+    # Configure CORS (added last → outermost so it wraps the full chain and
+    # CORS preflight responses are always returned before any other middleware
+    # can short-circuit the request).
+    # expose_headers allows the browser to read traceparent/tracestate from
+    # CORS responses (same-origin requests can read all headers already).
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=get_allowed_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "X-API-Key", "Content-Type", "Accept"],
+        expose_headers=["traceparent", "tracestate", "Server-Timing"],
+    )
 
     # Configure CORS (added last → outermost so it wraps the full chain and
     # CORS preflight responses are always returned before any other middleware
@@ -408,30 +435,56 @@ def create_app() -> FastAPI:
 
     # Serve built frontend in production (after API routes so they take priority)
     if UI_DIST_DIR.exists():
-        # Serve static assets (JS, CSS, etc.)
-        app.mount(
-            "/assets", StaticFiles(directory=str(UI_DIST_DIR / "assets")), name="assets"
-        )
-
-        # SPA fallback: serve index.html for all non-API, non-asset routes
-        index_html = UI_DIST_DIR / "index.html"
-
-        @app.get("/{path:path}")
-        async def spa_fallback(request: Request, path: str):
-            # Serve actual files if they exist in dist/, but prevent directory traversal
-            if path:
-                candidate_path = (UI_DIST_DIR_RESOLVED / path).resolve()
-                # Ensure the resolved candidate path is within the UI_DIST_DIR_RESOLVED tree
-                if (
-                    candidate_path == UI_DIST_DIR_RESOLVED
-                    or UI_DIST_DIR_RESOLVED in candidate_path.parents
-                ) and candidate_path.is_file():
-                    return FileResponse(candidate_path)
-            return FileResponse(index_html)
-
-        logger.info("Serving UI from %s", UI_DIST_DIR)
+        _mount_spa(app)
 
     return app
+
+
+def _configure_rate_limiting(app: FastAPI) -> None:
+    """Register slowapi global rate-limiting middleware when available.
+
+    Logs an explanatory message in each of the three states: enabled,
+    explicitly disabled via env var, or unavailable (slowapi not installed).
+    """
+    if _limiter is not None and _SLOWAPI_AVAILABLE:
+        app.state.limiter = _limiter
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+        app.add_middleware(SlowAPIMiddleware)
+        logger.info("Rate limiting enabled: %s per IP", _RATE_LIMIT_DEFAULT)
+    elif _RATE_LIMIT_DISABLED:
+        logger.info("Rate limiting disabled (AGENTIC_RATE_LIMIT_DISABLED=1)")
+    else:
+        logger.warning("slowapi not installed — rate limiting is inactive")
+
+
+def _mount_spa(app: FastAPI) -> None:
+    """Mount static assets and the SPA fallback route for the built React UI."""
+    # Serve static assets (JS, CSS, etc.)
+    app.mount(
+        "/assets", StaticFiles(directory=str(UI_DIST_DIR / "assets")), name="assets"
+    )
+
+    # SPA fallback: serve index.html for all non-API, non-asset routes
+    index_html = UI_DIST_DIR / "index.html"
+
+    @app.get("/{path:path}")
+    async def spa_fallback(request: Request, path: str):
+        # Serve real files from dist/, but prevent directory traversal. Resolve
+        # the candidate and confirm it stays within the dist tree using
+        # os.path.commonpath — a sanitizer pattern CodeQL recognizes for
+        # py/path-injection (the prior `in .parents` check was equivalent but
+        # not recognized as a barrier).
+        if path:
+            base = os.path.realpath(UI_DIST_DIR_RESOLVED)
+            candidate = os.path.realpath(os.path.join(base, path))
+            if (
+                os.path.commonpath([base, candidate]) == base
+                and os.path.isfile(candidate)
+            ):
+                return FileResponse(candidate)
+        return FileResponse(index_html)
+
+    logger.info("Serving UI from %s", UI_DIST_DIR)
 
 
 # Create global app instance

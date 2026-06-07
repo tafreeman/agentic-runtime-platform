@@ -163,6 +163,67 @@ class AsyncStreamingRunner(Generic[T, R]):
         # Treat non-positive values as "sequential".
         self.max_concurrency = max(1, int(max_concurrency))
 
+    @staticmethod
+    async def _aiter_cases(
+        test_cases: AsyncIterator[T] | Iterator[T] | list[T],
+    ) -> AsyncIterator[T]:
+        """Yield test cases from either a sync or async iterable."""
+        if hasattr(test_cases, "__aiter__"):
+            async for tc in test_cases:
+                yield tc
+        else:
+            for tc in test_cases:
+                yield tc
+
+    async def _eval_one(
+        self,
+        tc: T,
+        semaphore: asyncio.Semaphore,
+    ) -> tuple[Literal[True], R] | tuple[Literal[False], Exception]:
+        """Evaluate a single case under the concurrency semaphore."""
+        async with semaphore:
+            try:
+                value = self.evaluator(tc)
+                if inspect.isawaitable(value):
+                    value = await value
+                # value is R here (the awaited result or sync result).
+                return (True, value)
+            except Exception as e:  # pragma: no cover (exercised via tests)
+                return (False, e)
+
+    @staticmethod
+    async def _drain_one(
+        pending: set[
+            asyncio.Task[tuple[Literal[True], R] | tuple[Literal[False], Exception]]
+        ],
+    ) -> AsyncIterator[tuple[Literal[True], R] | tuple[Literal[False], Exception]]:
+        """Wait for the first completed task(s) and yield their outcomes."""
+        if not pending:
+            return
+        done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            pending.remove(task)
+            yield task.result()
+
+    async def _drain_results(
+        self,
+        pending: set[
+            asyncio.Task[tuple[Literal[True], R] | tuple[Literal[False], Exception]]
+        ],
+    ) -> AsyncIterator[R]:
+        """Drain completed tasks, yielding successes and handling errors."""
+        async for outcome in self._drain_one(pending):
+            if outcome[0]:
+                result = outcome[1]
+                if self.on_result:
+                    self.on_result(result)
+                yield result
+            else:
+                err = outcome[1]
+                logger.warning(f"Async streaming error: {err}")
+                if not self.continue_on_error:
+                    raise err
+
     async def iter_results(
         self,
         test_cases: AsyncIterator[T] | Iterator[T] | list[T],
@@ -175,71 +236,20 @@ class AsyncStreamingRunner(Generic[T, R]):
         Yields:
             Results for successful evaluations.
         """
-
-        async def _aiter_cases() -> AsyncIterator[T]:
-            if hasattr(test_cases, "__aiter__"):
-                async for tc in test_cases:
-                    yield tc
-            else:
-                for tc in test_cases:
-                    yield tc
-
         semaphore = asyncio.Semaphore(self.max_concurrency)
-
-        async def _eval_one(
-            tc: T,
-        ) -> tuple[Literal[True], R] | tuple[Literal[False], Exception]:
-            async with semaphore:
-                try:
-                    value = self.evaluator(tc)
-                    if inspect.isawaitable(value):
-                        value = await value
-                    # value is R here (the awaited result or sync result).
-                    return (True, value)
-                except Exception as e:  # pragma: no cover (exercised via tests)
-                    return (False, e)
-
         pending: set[
             asyncio.Task[tuple[Literal[True], R] | tuple[Literal[False], Exception]]
         ] = set()
 
-        async def _drain_one() -> AsyncIterator[
-            tuple[Literal[True], R] | tuple[Literal[False], Exception]
-        ]:
-            if not pending:
-                return
-            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                pending.remove(task)
-                yield task.result()
-
-        async for test_case in _aiter_cases():
-            pending.add(asyncio.create_task(_eval_one(test_case)))
+        async for test_case in self._aiter_cases(test_cases):
+            pending.add(asyncio.create_task(self._eval_one(test_case, semaphore)))
             if len(pending) >= self.max_concurrency:
-                async for outcome in _drain_one():
-                    if outcome[0]:
-                        result = outcome[1]
-                        if self.on_result:
-                            self.on_result(result)
-                        yield result
-                    else:
-                        err = outcome[1]
-                        logger.warning(f"Async streaming error: {err}")
-                        if not self.continue_on_error:
-                            raise err
+                async for result in self._drain_results(pending):
+                    yield result
 
         while pending:
-            async for outcome in _drain_one():
-                if outcome[0]:
-                    result = outcome[1]
-                    if self.on_result:
-                        self.on_result(result)
-                    yield result
-                else:
-                    err = outcome[1]
-                    logger.warning(f"Async streaming error: {err}")
-                    if not self.continue_on_error:
-                        raise err
+            async for result in self._drain_results(pending):
+                yield result
 
 
 def run_streaming_evaluation(

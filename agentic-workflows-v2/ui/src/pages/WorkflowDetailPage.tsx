@@ -22,6 +22,88 @@ function defaultInputValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/** Parse object/array-typed inputs from JSON, falling back to the raw string. */
+function coerceInputValue(
+  type: string | undefined,
+  val: string,
+): unknown {
+  if (type === "object" || type === "array") {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}
+
+/** Label for the primary run button across batch/pending/eval/idle states. */
+function runButtonLabel(
+  batchProgress: { done: number; total: number } | null,
+  isPending: boolean,
+  evaluationEnabled: boolean,
+): string {
+  if (batchProgress) return `${batchProgress.done}/${batchProgress.total}`;
+  if (isPending) return "[…] starting";
+  if (evaluationEnabled) return "[▶] run + eval";
+  return "[▶] run";
+}
+
+/**
+ * Build the per-sample evaluation request payload, resolving which dataset
+ * source (eval-set repository, dataset repository/local, or none) applies.
+ */
+function buildEvalRequest(
+  evaluation: RunConfigValues["evaluation"],
+  rubricId: string,
+  sampleIndex: number,
+) {
+  if (!evaluation.enabled) return undefined;
+  if (evaluation.datasetSource === "eval_set" && evaluation.evalSetId) {
+    return {
+      enabled: true as const,
+      dataset_source: "repository" as const,
+      dataset_id: evaluation.evalSetId,
+      sample_index: sampleIndex,
+      rubric_id: rubricId || undefined,
+    };
+  }
+  if (evaluation.datasetSource !== "none" && evaluation.datasetId) {
+    return {
+      enabled: true as const,
+      dataset_source: evaluation.datasetSource as "repository" | "local",
+      dataset_id: evaluation.datasetId,
+      sample_index: sampleIndex,
+      rubric_id: rubricId || undefined,
+    };
+  }
+  return {
+    enabled: true as const,
+    dataset_source: "none" as const,
+    sample_index: sampleIndex,
+    rubric_id: rubricId || undefined,
+  };
+}
+
+/** Expand selected samples × runs-per-record into a flat job list. */
+function buildJobList(
+  evaluation: RunConfigValues["evaluation"],
+): Array<{ sampleIndex: number }> {
+  const samples =
+    evaluation.enabled && evaluation.selectedSamples.length > 0
+      ? evaluation.selectedSamples
+      : [0];
+  const runsPerRecord = evaluation.enabled ? (evaluation.runsPerRecord ?? 1) : 1;
+
+  const jobs: Array<{ sampleIndex: number }> = [];
+  for (const s of samples) {
+    for (let r = 0; r < runsPerRecord; r++) {
+      jobs.push({ sampleIndex: s });
+    }
+  }
+  return jobs;
+}
+
 export default function WorkflowDetailPage() {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
@@ -63,15 +145,7 @@ export default function WorkflowDetailPage() {
     for (const inp of dag.inputs) {
       const val = vals[inp.name] ?? defaultInputValue(inp.default);
       if (!val && !inp.required) continue;
-      if (inp.type === "object" || inp.type === "array") {
-        try {
-          data[inp.name] = JSON.parse(val);
-        } catch {
-          data[inp.name] = val;
-        }
-      } else {
-        data[inp.name] = val;
-      }
+      data[inp.name] = coerceInputValue(inp.type, val);
     }
     return data;
   };
@@ -82,52 +156,18 @@ export default function WorkflowDetailPage() {
     mutationFn: async () => {
       const { executionProfile, rubricId, evaluation } = configRef.current;
 
-      const buildEvalRequest = (sampleIndex: number) => {
-        if (!evaluation.enabled) return undefined;
-        if (evaluation.datasetSource === "eval_set" && evaluation.evalSetId) {
-          return {
-            enabled: true as const,
-            dataset_source: "repository" as const,
-            dataset_id: evaluation.evalSetId,
-            sample_index: sampleIndex,
-            rubric_id: rubricId || undefined,
-          };
-        }
-        if (evaluation.datasetSource !== "none" && evaluation.datasetId) {
-          return {
-            enabled: true as const,
-            dataset_source: evaluation.datasetSource as "repository" | "local",
-            dataset_id: evaluation.datasetId,
-            sample_index: sampleIndex,
-            rubric_id: rubricId || undefined,
-          };
-        }
-        return {
-          enabled: true as const,
-          dataset_source: "none" as const,
-          sample_index: sampleIndex,
-          rubric_id: rubricId || undefined,
-        };
-      };
-
-      const samples = evaluation.enabled && evaluation.selectedSamples.length > 0
-        ? evaluation.selectedSamples
-        : [0];
-      const runsPerRecord = evaluation.enabled ? (evaluation.runsPerRecord ?? 1) : 1;
-      const isBatch = samples.length > 1 || runsPerRecord > 1;
-
-      const jobs: Array<{ sampleIndex: number }> = [];
-      for (const s of samples) {
-        for (let r = 0; r < runsPerRecord; r++) {
-          jobs.push({ sampleIndex: s });
-        }
-      }
+      const jobs = buildJobList(evaluation);
+      const isBatch = jobs.length > 1;
 
       if (!isBatch) {
         return runWorkflow({
           workflow: name!,
           input_data: buildInputData(),
-          evaluation: buildEvalRequest(jobs[0] ? jobs[0].sampleIndex : 0),
+          evaluation: buildEvalRequest(
+            evaluation,
+            rubricId,
+            jobs[0] ? jobs[0].sampleIndex : 0,
+          ),
           execution_profile: executionProfile,
         });
       }
@@ -137,7 +177,11 @@ export default function WorkflowDetailPage() {
         await runWorkflow({
           workflow: name!,
           input_data: buildInputData(),
-          evaluation: buildEvalRequest(jobs[i]?.sampleIndex ?? 0),
+          evaluation: buildEvalRequest(
+            evaluation,
+            rubricId,
+            jobs[i]?.sampleIndex ?? 0,
+          ),
           execution_profile: executionProfile,
         });
         setBatchProgress({ done: i + 1, total: jobs.length });
@@ -157,13 +201,11 @@ export default function WorkflowDetailPage() {
     },
   });
 
-  const runLabel = batchProgress
-    ? `${batchProgress.done}/${batchProgress.total}`
-    : runMutation.isPending
-      ? "[…] starting"
-      : configRef.current.evaluation.enabled
-        ? "[▶] run + eval"
-        : "[▶] run";
+  const runLabel = runButtonLabel(
+    batchProgress,
+    runMutation.isPending,
+    configRef.current.evaluation.enabled,
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -235,23 +277,27 @@ export default function WorkflowDetailPage() {
           </div>
 
           {/* DAG canvas fills remaining height */}
-          {dagLoading ? (
+          {dagLoading && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
               $ loading workflow graph
             </div>
-          ) : dagError ? (
+          )}
+          {!dagLoading && dagError && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-red">
               [!] {dagErrorMessage}
             </div>
-          ) : dag && hasWorkflowSteps ? (
+          )}
+          {!dagLoading && !dagError && dag && hasWorkflowSteps && (
             <div className="flex-1 overflow-hidden">
               <WorkflowDAG dagNodes={dag.nodes} dagEdges={dag.edges} />
             </div>
-          ) : dag ? (
+          )}
+          {!dagLoading && !dagError && dag && !hasWorkflowSteps && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
               $ no workflow steps defined
             </div>
-          ) : (
+          )}
+          {!dagLoading && !dagError && !dag && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-red">
               $ failed to load dag
             </div>
@@ -271,7 +317,7 @@ export default function WorkflowDetailPage() {
           </div>
 
           <div className="flex-1">
-            {dag ? (
+            {dag && (
               <div className="p-3">
                 <RunConfigForm
                   inputs={dag.inputs ?? []}
@@ -281,11 +327,12 @@ export default function WorkflowDetailPage() {
                   }}
                 />
               </div>
-            ) : dagLoading ? (
+            )}
+            {!dag && dagLoading && (
               <div className="p-4 font-mono text-[11px] text-b-text-dim">
                 $ loading…
               </div>
-            ) : null}
+            )}
 
             {/* Run history */}
             <div className="border-t border-b-line">

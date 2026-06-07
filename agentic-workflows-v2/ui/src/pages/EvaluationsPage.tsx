@@ -1,11 +1,46 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
 import BBox from "../components/common/BBox";
-import BPill from "../components/common/BPill";
+import BPill, { type BPillTone } from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
+
+type BarColor = "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
+
+/** Pill tone for a run's pass/fail status, preferring grade over raw percent. */
+function passToneFor(
+  grade: string | null | undefined,
+  pct: number,
+): BPillTone {
+  if (grade) {
+    if (grade === "A" || grade === "B") return "ok";
+    if (grade === "C") return "warn";
+    return "err";
+  }
+  return pct >= 75 ? "ok" : "err";
+}
+
+/** Pass/warn/fail label for a run, preferring grade over raw percent. */
+function passLabelFor(
+  grade: string | null | undefined,
+  pct: number,
+): "pass" | "warn" | "fail" {
+  if (grade) {
+    if (grade === "A" || grade === "B") return "pass";
+    if (grade === "C") return "warn";
+    return "fail";
+  }
+  return pct >= 75 ? "pass" : "fail";
+}
+
+/** Threshold-based bar color: green ≥75%, amber ≥50%, else red. */
+function rateBarColor(ratio: number): BarColor {
+  if (ratio >= 0.75) return "b-green";
+  if (ratio >= 0.5) return "b-amber";
+  return "b-red";
+}
 
 export default function EvaluationsPage() {
   const { data: runs, isLoading } = useRuns();
@@ -18,7 +53,7 @@ export default function EvaluationsPage() {
 
   // Score histogram — 20 buckets 0..100
   const histogram = useMemo(() => {
-    const buckets = Array(20).fill(0);
+    const buckets = new Array(20).fill(0);
     evaluatedRuns.forEach((r) => {
       const score = r.evaluation_score ?? 0;
       const normalized = score <= 1 ? score * 100 : score;
@@ -50,36 +85,23 @@ export default function EvaluationsPage() {
     }));
   }, [evaluatedRuns]);
 
-  return (
-    <div className="flex h-full flex-col">
-      <BTopBar path="evaluations" />
-
-      <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-6xl space-y-3 p-6">
-          <div>
-            <h1
-              className="text-[24px] font-semibold text-b-text"
-              style={{ letterSpacing: "-0.5px" }}
-            >
-              Evaluations
-            </h1>
-            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ {evaluatedRuns.length} runs scored · automated grading across
-              workflows
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex justify-center p-12 font-mono text-[11px] text-b-text-dim">
-              Loading evaluations...
-            </div>
-          ) : evaluatedRuns.length === 0 ? (
-            <BBox>
-              <div className="p-8 text-center font-mono text-[11px] text-b-text-dim">
-                No evaluations found
-              </div>
-            </BBox>
-          ) : (
+  let mainContent: ReactNode;
+  if (isLoading) {
+    mainContent = (
+      <div className="flex justify-center p-12 font-mono text-[11px] text-b-text-dim">
+        Loading evaluations...
+      </div>
+    );
+  } else if (evaluatedRuns.length === 0) {
+    mainContent = (
+      <BBox>
+        <div className="p-8 text-center font-mono text-[11px] text-b-text-dim">
+          No evaluations found
+        </div>
+      </BBox>
+    );
+  } else {
+    mainContent = (
             <>
               {/* Top row: histogram + workflow pass rates */}
               <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-5">
@@ -90,15 +112,17 @@ export default function EvaluationsPage() {
                         {histogram.map((c, i) => {
                           const h = (c / maxBucket) * 100;
                           const mid = i * 5 + 2.5;
-                          const color =
-                            mid < 50
-                              ? "bg-b-red"
-                              : mid < 75
-                                ? "bg-b-clay"
-                                : "bg-b-green";
+                          let color: string;
+                          if (mid < 50) {
+                            color = "bg-b-red";
+                          } else if (mid < 75) {
+                            color = "bg-b-clay";
+                          } else {
+                            color = "bg-b-green";
+                          }
                           return (
                             <div
-                              key={i}
+                              key={`histogram-${i}-${c}`}
                               className="flex flex-1 flex-col justify-end"
                               title={`${i * 5}–${i * 5 + 5}: ${c} run${c === 1 ? "" : "s"}`}
                             >
@@ -144,13 +168,7 @@ export default function EvaluationsPage() {
                             <BAsciiBar
                               value={w.rate}
                               width={22}
-                              color={
-                                w.rate >= 0.75
-                                  ? "b-green"
-                                  : w.rate >= 0.5
-                                    ? "b-amber"
-                                    : "b-red"
-                              }
+                              color={rateBarColor(w.rate)}
                             />
                           </div>
                         </div>
@@ -182,27 +200,8 @@ export default function EvaluationsPage() {
                         const raw = run.evaluation_score ?? 0;
                         const pct = raw <= 1 ? raw * 100 : raw;
                         const grade = run.evaluation_grade;
-                        const passFromGrade =
-                          grade === "A" || grade === "B";
-                        const warnFromGrade = grade === "C";
-                        const passTone = grade
-                          ? passFromGrade
-                            ? "ok"
-                            : warnFromGrade
-                              ? "warn"
-                              : "err"
-                          : pct >= 75
-                            ? "ok"
-                            : "err";
-                        const passLabel = grade
-                          ? passFromGrade
-                            ? "pass"
-                            : warnFromGrade
-                              ? "warn"
-                              : "fail"
-                          : pct >= 75
-                            ? "pass"
-                            : "fail";
+                        const passTone = passToneFor(grade, pct);
+                        const passLabel = passLabelFor(grade, pct);
                         const isExpanded =
                           expandedFilename === run.filename;
 
@@ -226,13 +225,7 @@ export default function EvaluationsPage() {
                                 <BAsciiBar
                                   value={Math.max(0, Math.min(1, pct / 100))}
                                   width={20}
-                                  color={
-                                    pct >= 75
-                                      ? "b-green"
-                                      : pct >= 50
-                                        ? "b-amber"
-                                        : "b-red"
-                                  }
+                                  color={rateBarColor(pct / 100)}
                                 />
                               </td>
                               <td className="px-3 py-2 text-b-text-mid">
@@ -296,7 +289,29 @@ export default function EvaluationsPage() {
                 </div>
               </BBox>
             </>
-          )}
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <BTopBar path="evaluations" />
+
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-6xl space-y-3 p-6">
+          <div>
+            <h1
+              className="text-[24px] font-semibold text-b-text"
+              style={{ letterSpacing: "-0.5px" }}
+            >
+              Evaluations
+            </h1>
+            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
+              $ {evaluatedRuns.length} runs scored · automated grading across
+              workflows
+            </div>
+          </div>
+
+          {mainContent}
         </div>
       </div>
     </div>

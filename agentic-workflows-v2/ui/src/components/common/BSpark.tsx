@@ -10,7 +10,7 @@ export default function BSpark({
   color = "rgb(var(--b-green))",
   height = 24,
   className = "",
-}: BSparkProps) {
+}: Readonly<BSparkProps>) {
   if (values.length < 2) {
     return <svg height={height} className={className} />;
   }

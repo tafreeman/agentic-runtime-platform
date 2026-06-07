@@ -5,7 +5,7 @@ interface BTopBarProps {
   children?: ReactNode; // right-slot action buttons
 }
 
-export default function BTopBar({ path, children }: BTopBarProps) {
+export default function BTopBar({ path, children }: Readonly<BTopBarProps>) {
   return (
     <div className="flex h-9 items-center gap-2 border-b border-b-line bg-b-bg1 px-4 font-mono text-[11px]">
       <span className="font-bold text-b-clay">PROMPTS</span>

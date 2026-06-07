@@ -294,112 +294,145 @@ def _extract_last_ai_text(messages: list[Any]) -> str:
     return ""
 
 
+def _add_discovered_packages(data: Any, packages: list[PackageInfo]) -> None:
+    """Append ``discover_packages`` tool results to *packages*."""
+    if not isinstance(data, list):
+        return
+    for pkg in data:
+        packages.append(
+            PackageInfo(
+                name=pkg.get("name", ""),
+                path=pkg.get("path", ""),
+                description=pkg.get("description", ""),
+                build_backend=pkg.get("build_backend", ""),
+            )
+        )
+
+
+def _apply_package_tool_result(
+    tool_name: str,
+    data: dict[str, Any],
+    root: str,
+    msg: Any,
+    tool_call_args: dict[str, dict[str, Any]],
+    packages: list[PackageInfo],
+) -> None:
+    """Apply a package-scoped tool result onto its matching ``PackageInfo``."""
+    pkg = _package_from_tool_result(root, msg, tool_call_args, packages)
+    if pkg is None:
+        return
+
+    if tool_name == "count_lines_of_code":
+        total = data.get("total", {})
+        pkg.total_lines = total.get("lines", 0)
+        pkg.code_lines = total.get("code", 0)
+    elif tool_name == "list_test_files":
+        pkg.test_count = data.get("test_count", 0)
+        pkg.has_conftest = data.get("has_conftest", False)
+    elif tool_name == "find_key_patterns":
+        pkg.patterns = data
+
+
+def _parse_tool_message(msg: Any) -> tuple[str, Any] | None:
+    """Return ``(tool_name, parsed_json)`` for a tool message, or ``None``."""
+    import json
+
+    if getattr(msg, "type", None) != "tool":
+        return None
+    raw = getattr(msg, "content", "")
+    if not isinstance(raw, str):
+        return None
+    try:
+        return getattr(msg, "name", ""), json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+
+_PACKAGE_SCOPED_TOOLS = frozenset(
+    {"count_lines_of_code", "list_test_files", "find_key_patterns"}
+)
+
+
 async def _build_structured_report(
     root: str,
     messages: list[Any],
     agent_summary: str,
 ) -> RepoReport:
     """Build a ``RepoReport`` by replaying tool outputs from the message history."""
-    import json
-
     packages: list[PackageInfo] = []
     tool_call_args = _tool_call_args_by_id(messages)
-    top_contributors: list[dict[str, Any]] = []
-    recent_commits: list[dict[str, Any]] = []
-    branch = "unknown"
-    last_tag = "unknown"
+    git_info: dict[str, Any] = {}
 
     # Extract tool results from message history
     for msg in messages:
-        # ToolMessage carries tool results
-        if getattr(msg, "type", None) != "tool":
+        parsed = _parse_tool_message(msg)
+        if parsed is None:
             continue
-        tool_name = getattr(msg, "name", "")
-        raw = getattr(msg, "content", "")
-        if not isinstance(raw, str):
-            continue
+        tool_name, data = parsed
 
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            continue
-
-        if tool_name == "discover_packages" and isinstance(data, list):
-            for pkg in data:
-                packages.append(
-                    PackageInfo(
-                        name=pkg.get("name", ""),
-                        path=pkg.get("path", ""),
-                        description=pkg.get("description", ""),
-                        build_backend=pkg.get("build_backend", ""),
-                    )
-                )
-
+        if tool_name == "discover_packages":
+            _add_discovered_packages(data, packages)
         elif tool_name == "get_git_stats" and isinstance(data, dict):
-            branch = data.get("branch", "unknown")
-            last_tag = data.get("last_tag", "unknown")
-            top_contributors = data.get("contributors", [])[:5]
-            recent_commits = data.get("recent_commits", [])[:10]
-
-        elif tool_name == "count_lines_of_code" and isinstance(data, dict):
-            total = data.get("total", {})
-            pkg = _package_from_tool_result(root, msg, tool_call_args, packages)
-            if pkg is not None:
-                pkg.total_lines = total.get("lines", 0)
-                pkg.code_lines = total.get("code", 0)
-
-        elif tool_name == "list_test_files" and isinstance(data, dict):
-            pkg = _package_from_tool_result(root, msg, tool_call_args, packages)
-            if pkg is not None:
-                pkg.test_count = data.get("test_count", 0)
-                pkg.has_conftest = data.get("has_conftest", False)
-
-        elif tool_name == "find_key_patterns" and isinstance(data, dict):
-            pkg = _package_from_tool_result(root, msg, tool_call_args, packages)
-            if pkg is not None:
-                pkg.patterns = data
+            git_info = data
+        elif tool_name in _PACKAGE_SCOPED_TOOLS and isinstance(data, dict):
+            _apply_package_tool_result(
+                tool_name, data, root, msg, tool_call_args, packages
+            )
 
     return RepoReport(
         root=root,
-        branch=branch,
-        last_tag=last_tag,
+        branch=git_info.get("branch", "unknown"),
+        last_tag=git_info.get("last_tag", "unknown"),
         packages=packages,
-        top_contributors=top_contributors,
-        recent_commits=recent_commits,
+        top_contributors=git_info.get("contributors", [])[:5],
+        recent_commits=git_info.get("recent_commits", [])[:10],
         agent_summary=agent_summary,
         raw_messages=messages,
     )
 
 
-def _tool_call_args_by_id(messages: list[Any]) -> dict[str, dict[str, Any]]:
-    """Return normalized tool-call arguments keyed by tool call id."""
+def _collect_native_tool_calls(
+    msg: Any, calls: dict[str, dict[str, Any]]
+) -> None:
+    """Collect LangChain-native ``tool_calls`` from *msg* into *calls*."""
+    for call in getattr(msg, "tool_calls", []) or []:
+        if not isinstance(call, dict):
+            continue
+        call_id = call.get("id")
+        args = call.get("args", {})
+        if isinstance(call_id, str):
+            calls[call_id] = _coerce_tool_args(args)
+
+
+def _collect_openai_tool_calls(
+    msg: Any, calls: dict[str, dict[str, Any]]
+) -> None:
+    """Collect OpenAI-style ``additional_kwargs`` tool calls from *msg*."""
     import json
 
+    additional_kwargs = getattr(msg, "additional_kwargs", {}) or {}
+    for call in additional_kwargs.get("tool_calls", []) or []:
+        if not isinstance(call, dict):
+            continue
+        call_id = call.get("id")
+        function = call.get("function", {})
+        if not isinstance(call_id, str) or not isinstance(function, dict):
+            continue
+        args = function.get("arguments", {})
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except json.JSONDecodeError:
+                args = {}
+        calls[call_id] = _coerce_tool_args(args)
+
+
+def _tool_call_args_by_id(messages: list[Any]) -> dict[str, dict[str, Any]]:
+    """Return normalized tool-call arguments keyed by tool call id."""
     calls: dict[str, dict[str, Any]] = {}
     for msg in messages:
-        for call in getattr(msg, "tool_calls", []) or []:
-            if not isinstance(call, dict):
-                continue
-            call_id = call.get("id")
-            args = call.get("args", {})
-            if isinstance(call_id, str):
-                calls[call_id] = _coerce_tool_args(args)
-
-        additional_kwargs = getattr(msg, "additional_kwargs", {}) or {}
-        for call in additional_kwargs.get("tool_calls", []) or []:
-            if not isinstance(call, dict):
-                continue
-            call_id = call.get("id")
-            function = call.get("function", {})
-            if not isinstance(call_id, str) or not isinstance(function, dict):
-                continue
-            args = function.get("arguments", {})
-            if isinstance(args, str):
-                try:
-                    args = json.loads(args)
-                except json.JSONDecodeError:
-                    args = {}
-            calls[call_id] = _coerce_tool_args(args)
+        _collect_native_tool_calls(msg, calls)
+        _collect_openai_tool_calls(msg, calls)
     return calls
 
 

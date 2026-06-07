@@ -93,7 +93,7 @@ async def main():
     for tool in all_tools:
         # Find the client for this tool (match by server name)
         tool_server = tool.name.split("_")[1]  # Assumes "mcp_<server>_<tool>"
-        client = next((c for c in clients if True), clients[0])  # Simplified
+        client = clients[0]  # Simplified: example uses the first client
 
         adapter = McpToolAdapter(
             server_name=tool_server,
@@ -120,7 +120,7 @@ async def main():
             # Check token budget
             if guard.is_oversized(result):
                 logger.warning("Output exceeds budget, saving to disk...")
-                file_path, rel_path = storage.save_text_output(
+                _, rel_path = storage.save_text_output(
                     result,
                     server_name=adapter.server_name,
                     tool_name=adapter.tool_descriptor.name,

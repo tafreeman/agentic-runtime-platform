@@ -12,7 +12,7 @@ interface EmptyStateProps {
  * Terminal-style empty state: "$ no <entity> yet".
  * Shown when a list or page has no data to display.
  */
-export default function EmptyState({ entity, action }: EmptyStateProps) {
+export default function EmptyState({ entity, action }: Readonly<EmptyStateProps>) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 font-mono">
       <pre className="select-none text-center text-b-text-dim text-[12px] leading-tight">
@@ -32,7 +32,7 @@ export default function EmptyState({ entity, action }: EmptyStateProps) {
 }
 
 /** Convenience wrapper that renders a "go to dashboard" link as the action. */
-export function EmptyStateWithHome({ entity }: { entity: string }) {
+export function EmptyStateWithHome({ entity }: Readonly<{ entity: string }>) {
   return (
     <EmptyState
       entity={entity}

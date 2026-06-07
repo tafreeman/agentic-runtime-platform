@@ -81,7 +81,7 @@ class McpTransport(ABC):
                 self.on_message(message)
             except Exception as e:
                 # Prevent handler errors from crashing transport
-                self._emit_error(Exception(f"Message handler raised exception: {e}"))
+                self._emit_error(RuntimeError(f"Message handler raised exception: {e}"))
 
     def _emit_error(self, error: Exception) -> None:
         """Emit an error to the registered handler."""
@@ -101,4 +101,4 @@ class McpTransport(ABC):
                     self.on_close()
                 except Exception as e:
                     # Don't crash during cleanup
-                    self._emit_error(Exception(f"Close handler raised exception: {e}"))
+                    self._emit_error(RuntimeError(f"Close handler raised exception: {e}"))

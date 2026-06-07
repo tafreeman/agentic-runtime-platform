@@ -25,6 +25,8 @@ from typing import Any
 
 from ..base import BaseTool, ToolResult
 
+MEMORY_KEY_LABEL = "Memory key"
+
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
@@ -163,24 +165,29 @@ class _FileMemoryStore:
 
         hits: list[dict[str, Any]] = []
         for key, entry in data.items():
-            haystacks = [str(key)]
-            if isinstance(entry, dict) and "value" in entry:
-                try:
-                    haystacks.append(json.dumps(entry.get("value"), ensure_ascii=False))
-                except TypeError:
-                    haystacks.append(str(entry.get("value")))
-                tags = entry.get("tags")
-                if tags:
-                    haystacks.append(" ".join(str(t) for t in tags))
-            else:
-                haystacks.append(str(entry))
-
+            haystacks = self._entry_haystacks(key, entry)
             if any(q in h.lower() for h in haystacks):
                 hits.append({"key": key, "entry": entry})
                 if len(hits) >= limit:
                     break
 
         return {"query": q, "results": hits, "count": len(hits)}
+
+    @staticmethod
+    def _entry_haystacks(key: str, entry: Any) -> list[str]:
+        """Build the searchable text fragments for one stored entry."""
+        haystacks = [str(key)]
+        if isinstance(entry, dict) and "value" in entry:
+            try:
+                haystacks.append(json.dumps(entry.get("value"), ensure_ascii=False))
+            except TypeError:
+                haystacks.append(str(entry.get("value")))
+            tags = entry.get("tags")
+            if tags:
+                haystacks.append(" ".join(str(t) for t in tags))
+        else:
+            haystacks.append(str(entry))
+        return haystacks
 
 
 class _MemoryToolBase(BaseTool):
@@ -205,7 +212,7 @@ class MemoryUpsertTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
             "value": {
                 "type": "object",
                 "description": "JSON-serializable value",
@@ -251,7 +258,7 @@ class MemoryGetTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
         }
 
     async def execute(self, key: str) -> ToolResult:
@@ -350,7 +357,7 @@ class MemoryDeleteTool(_MemoryToolBase):
     @property
     def parameters(self) -> dict[str, Any]:
         return {
-            "key": {"type": "string", "description": "Memory key", "required": True},
+            "key": {"type": "string", "description": MEMORY_KEY_LABEL, "required": True},
         }
 
     async def execute(self, key: str) -> ToolResult:

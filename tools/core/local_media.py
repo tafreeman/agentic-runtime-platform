@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
+VERBOSE_OUTPUT_LABEL = "Verbose output"
+
 # AI Gallery cache path
 AI_GALLERY_PATH = Path.home() / ".cache" / "aigallery"
 
@@ -102,7 +104,8 @@ def generate_image(
     # Set seed for reproducibility
     generator = None
     if seed is not None:
-        generator = np.random.RandomState(seed)
+        rng = np.random.default_rng(seed=seed)
+        generator = rng
 
     if verbose:
         logger.debug("Generating image for: %s...", prompt[:50])
@@ -137,6 +140,110 @@ def generate_image(
 # =============================================================================
 
 
+def _resolve_whisper_model_path(
+    model_size: str, model_path: str | None, verbose: bool
+) -> Path:
+    """Resolve the Whisper ONNX model path, falling back to any available model."""
+    if model_path:
+        whisper_path = Path(model_path)
+    else:
+        whisper_base = (
+            AI_GALLERY_PATH / "khmyznikov--whisper-int8-cpu-ort.onnx" / "main"
+        )
+        model_file = f"whisper_{model_size}_int8_cpu_ort_1.18.0.onnx"
+        whisper_path = whisper_base / model_file
+
+    if whisper_path.exists():
+        return whisper_path
+
+    # Try alternative naming
+    whisper_base = whisper_path.parent
+    available = list(whisper_base.glob("whisper_*.onnx")) if whisper_base.exists() else []
+    if available:
+        whisper_path = available[0]  # Use first available
+        if verbose:
+            logger.debug("Using available model: %s", whisper_path.name)
+        return whisper_path
+
+    raise FileNotFoundError(
+        f"Whisper model not found at: {whisper_path}\n"
+        "Download from AI Gallery or HuggingFace."
+    )
+
+
+def _load_audio_16khz(audio_path: str, verbose: bool):
+    """Load audio as a mono 16kHz signal (resampling if librosa is available)."""
+    try:
+        import soundfile as sf
+    except ImportError:
+        raise ImportError(
+            "soundfile not installed. Install with:\n" "  pip install soundfile"
+        )
+
+    audio_data, sample_rate = sf.read(audio_path)
+
+    # Convert to mono if stereo
+    if len(audio_data.shape) > 1:
+        audio_data = audio_data.mean(axis=1)
+
+    # Resample to 16kHz if needed (Whisper expects 16kHz)
+    if sample_rate != 16000:
+        try:
+            import librosa
+            audio_data = librosa.resample(
+                audio_data, orig_sr=sample_rate, target_sr=16000
+            )
+        except ImportError:
+            if verbose:
+                logger.debug(
+                    "Warning: Audio is %dHz, Whisper expects 16kHz. "
+                    "Install librosa for resampling.",
+                    sample_rate,
+                )
+
+    if verbose:
+        logger.debug("Audio loaded: %.1f seconds", len(audio_data) / 16000)
+
+    return audio_data
+
+
+def _run_whisper_inference(audio_data, model_size: str, language: str | None) -> str:
+    """Run Whisper inference via the transformers library."""
+    # For now, use the transformers library for easier Whisper inference
+    # The raw ONNX model requires more complex preprocessing
+    try:
+        from transformers import WhisperForConditionalGeneration, WhisperProcessor
+
+        # Use HuggingFace Whisper as fallback (more reliable)
+        processor = WhisperProcessor.from_pretrained(f"openai/whisper-{model_size}")
+        model = WhisperForConditionalGeneration.from_pretrained(
+            f"openai/whisper-{model_size}"
+        )
+
+        # Process audio
+        input_features = processor(
+            audio_data, sampling_rate=16000, return_tensors="pt"
+        ).input_features
+
+        # Generate
+        forced_decoder_ids = None
+        if language:
+            forced_decoder_ids = processor.get_decoder_prompt_ids(
+                language=language, task="transcribe"
+            )
+
+        predicted_ids = model.generate(
+            input_features, forced_decoder_ids=forced_decoder_ids
+        )
+        return processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+
+    except ImportError:
+        raise ImportError(
+            "transformers and torch required for Whisper. Install with:\n"
+            "  pip install transformers torch"
+        )
+
+
 def transcribe_audio(
     audio_path: str,
     model_size: str = "small",
@@ -167,102 +274,13 @@ def transcribe_audio(
             "  pip install onnxruntime soundfile numpy"
         )
 
-    try:
-        import soundfile as sf
-    except ImportError:
-        raise ImportError(
-            "soundfile not installed. Install with:\n" "  pip install soundfile"
-        )
-
-    # Find model path
-    if model_path:
-        whisper_path = Path(model_path)
-    else:
-        whisper_base = (
-            AI_GALLERY_PATH / "khmyznikov--whisper-int8-cpu-ort.onnx" / "main"
-        )
-        model_file = f"whisper_{model_size}_int8_cpu_ort_1.18.0.onnx"
-        whisper_path = whisper_base / model_file
-
-    if not whisper_path.exists():
-        # Try alternative naming
-        available = (
-            list(whisper_base.glob("whisper_*.onnx")) if whisper_base.exists() else []
-        )
-        if available:
-            whisper_path = available[0]  # Use first available
-            if verbose:
-                logger.debug("Using available model: %s", whisper_path.name)
-        else:
-            raise FileNotFoundError(
-                f"Whisper model not found at: {whisper_path}\n"
-                "Download from AI Gallery or HuggingFace."
-            )
-
+    whisper_path = _resolve_whisper_model_path(model_size, model_path, verbose)
     if verbose:
         logger.debug("Loading Whisper from: %s", whisper_path)
 
-    # Load audio
-    audio_data, sample_rate = sf.read(audio_path)
+    audio_data = _load_audio_16khz(audio_path, verbose)
 
-    # Convert to mono if stereo
-    if len(audio_data.shape) > 1:
-        audio_data = audio_data.mean(axis=1)
-
-    # Resample to 16kHz if needed (Whisper expects 16kHz)
-    if sample_rate != 16000:
-        try:
-            import librosa
-
-            audio_data = librosa.resample(
-                audio_data, orig_sr=sample_rate, target_sr=16000
-            )
-        except ImportError:
-            if verbose:
-                logger.debug(
-                    "Warning: Audio is %dHz, Whisper expects 16kHz. "
-                    "Install librosa for resampling.",
-                    sample_rate,
-                )
-
-    if verbose:
-        logger.debug("Audio loaded: %.1f seconds", len(audio_data) / 16000)
-
-    # For now, use the transformers library for easier Whisper inference
-    # The raw ONNX model requires more complex preprocessing
-    try:
-        from transformers import WhisperForConditionalGeneration, WhisperProcessor
-
-        # Use HuggingFace Whisper as fallback (more reliable)
-        processor = WhisperProcessor.from_pretrained(f"openai/whisper-{model_size}")
-        model = WhisperForConditionalGeneration.from_pretrained(
-            f"openai/whisper-{model_size}"
-        )
-
-        # Process audio
-        input_features = processor(
-            audio_data, sampling_rate=16000, return_tensors="pt"
-        ).input_features
-
-        # Generate
-        forced_decoder_ids = None
-        if language:
-            forced_decoder_ids = processor.get_decoder_prompt_ids(
-                language=language, task="transcribe"
-            )
-
-        predicted_ids = model.generate(
-            input_features, forced_decoder_ids=forced_decoder_ids
-        )
-        transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[
-            0
-        ]
-
-    except ImportError:
-        raise ImportError(
-            "transformers and torch required for Whisper. Install with:\n"
-            "  pip install transformers torch"
-        )
+    transcription = _run_whisper_inference(audio_data, model_size, language)
 
     if verbose:
         logger.debug("Transcription: %s...", transcription[:100])
@@ -284,7 +302,7 @@ def transcribe_audio(
 def upscale_image(
     input_path: str,
     output_path: str | None = None,
-    scale: int = 4,
+    _scale: int = 4,
     model_path: str | None = None,
     verbose: bool = False,
 ) -> str:
@@ -405,7 +423,7 @@ Examples:
     img_parser.add_argument("--steps", type=int, default=50, help="Inference steps")
     img_parser.add_argument("--seed", type=int, help="Random seed")
     img_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     # Transcription
@@ -420,7 +438,7 @@ Examples:
     )
     trans_parser.add_argument("--language", help="Language code (e.g., en, es)")
     trans_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     # Upscaling
@@ -428,7 +446,7 @@ Examples:
     up_parser.add_argument("image", help="Input image path")
     up_parser.add_argument("-o", "--output", help="Output file path")
     up_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     args = parser.parse_args()

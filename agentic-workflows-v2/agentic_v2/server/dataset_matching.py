@@ -136,6 +136,115 @@ def _pick_first(sample: dict[str, Any], keys: list[str]) -> Any:
 # Heuristic field matching
 # ---------------------------------------------------------------------------
 
+# Ordered candidate field names per semantic input category.
+_FILE_FIELD_KEYS = [
+    "code_file",
+    "file_path",
+    "path",
+    "source_path",
+    "patch",
+    "code",
+    "body",
+    "prompt",
+    "task_description",
+    "instruction",
+    "input",
+]
+_BUG_FIELD_KEYS = [
+    "bug_report",
+    "problem_statement",
+    "issue_text",
+    "issue_body",
+    "description",
+    "prompt",
+    "task_description",
+    "body",
+    "instruction",
+    "input",
+    "question",
+    "query",
+    "request",
+]
+_SPEC_FIELD_KEYS = [
+    "feature_spec",
+    "task_description",
+    "prompt",
+    "description",
+    "instruction",
+    "input",
+    "question",
+    "query",
+    "request",
+    "body",
+]
+_GENERIC_FIELD_KEYS = [
+    "prompt",
+    "task_description",
+    "problem_statement",
+    "description",
+    "body",
+    "instruction",
+    "input",
+    "question",
+    "query",
+    "request",
+    "issue_text",
+    "content",
+    "text",
+    "code",
+]
+
+
+def _explicit_sample_value(input_name: str, dataset_sample: dict[str, Any]) -> Any:
+    """Return a directly-named sample value (top-level or nested ``inputs``)."""
+    explicit = dataset_sample.get(input_name)
+    if explicit not in (None, ""):
+        return explicit
+    nested_inputs = dataset_sample.get("inputs")
+    if isinstance(nested_inputs, dict):
+        nested_value = nested_inputs.get(input_name)
+        if nested_value not in (None, ""):
+            return nested_value
+    return None
+
+
+def _pick_first_or_message(dataset_sample: dict[str, Any], keys: list[str]) -> Any:
+    """Pick the first matching field, falling back to chat message text."""
+    value = _pick_first(dataset_sample, keys)
+    if value not in (None, ""):
+        return value
+    return _extract_message_text(dataset_sample)
+
+
+_NO_SEMANTIC_MATCH = object()
+
+
+def _semantic_dataset_value(
+    lowered: str,
+    input_def: WorkflowInput,
+    dataset_sample: dict[str, Any],
+) -> Any:
+    """Resolve a value via name-based semantic field matching.
+
+    Returns the :data:`_NO_SEMANTIC_MATCH` sentinel when no semantic category
+    matched so the caller can apply default/enum/generic fallbacks. A matched
+    category returns its resolved value directly (which may itself be empty,
+    mirroring the original early-return semantics).
+    """
+    if "file" in lowered or "patch" in lowered:
+        return _pick_first(dataset_sample, _FILE_FIELD_KEYS)
+    if "bug" in lowered or "report" in lowered or "issue" in lowered:
+        return _pick_first_or_message(dataset_sample, _BUG_FIELD_KEYS)
+    if "spec" in lowered or "requirement" in lowered:
+        return _pick_first_or_message(dataset_sample, _SPEC_FIELD_KEYS)
+    if "tech_stack" in lowered and input_def.type == "object":
+        stack = dataset_sample.get("tech_stack")
+        if stack not in (None, ""):
+            return stack
+        if input_def.default not in (None, ""):
+            return input_def.default
+    return _NO_SEMANTIC_MATCH
+
 
 def _dataset_value_for_input(
     input_name: str,
@@ -157,111 +266,67 @@ def _dataset_value_for_input(
     Returns:
         The resolved value, or None if no suitable match is found.
     """
-    lowered = input_name.lower()
-    explicit = dataset_sample.get(input_name)
-    if explicit not in (None, ""):
+    explicit = _explicit_sample_value(input_name, dataset_sample)
+    if explicit is not None:
         return explicit
-    nested_inputs = dataset_sample.get("inputs")
-    if isinstance(nested_inputs, dict):
-        nested_value = nested_inputs.get(input_name)
-        if nested_value not in (None, ""):
-            return nested_value
 
-    if "file" in lowered or "patch" in lowered:
-        return _pick_first(
-            dataset_sample,
-            [
-                "code_file",
-                "file_path",
-                "path",
-                "source_path",
-                "patch",
-                "code",
-                "body",
-                "prompt",
-                "task_description",
-                "instruction",
-                "input",
-            ],
-        )
-    if "bug" in lowered or "report" in lowered or "issue" in lowered:
-        value = _pick_first(
-            dataset_sample,
-            [
-                "bug_report",
-                "problem_statement",
-                "issue_text",
-                "issue_body",
-                "description",
-                "prompt",
-                "task_description",
-                "body",
-                "instruction",
-                "input",
-                "question",
-                "query",
-                "request",
-            ],
-        )
-        if value not in (None, ""):
-            return value
-        return _extract_message_text(dataset_sample)
-    if "spec" in lowered or "requirement" in lowered:
-        value = _pick_first(
-            dataset_sample,
-            [
-                "feature_spec",
-                "task_description",
-                "prompt",
-                "description",
-                "instruction",
-                "input",
-                "question",
-                "query",
-                "request",
-                "body",
-            ],
-        )
-        if value not in (None, ""):
-            return value
-        return _extract_message_text(dataset_sample)
-    if "tech_stack" in lowered and input_def.type == "object":
-        stack = dataset_sample.get("tech_stack")
-        if stack not in (None, ""):
-            return stack
-        if input_def.default not in (None, ""):
-            return input_def.default
+    lowered = input_name.lower()
+    semantic = _semantic_dataset_value(lowered, input_def, dataset_sample)
+    if semantic is not _NO_SEMANTIC_MATCH:
+        return semantic
 
     if input_def.enum or input_def.default not in (None, ""):
         return input_def.default
 
-    value = _pick_first(
-        dataset_sample,
-        [
-            "prompt",
-            "task_description",
-            "problem_statement",
-            "description",
-            "body",
-            "instruction",
-            "input",
-            "question",
-            "query",
-            "request",
-            "issue_text",
-            "content",
-            "text",
-            "code",
-        ],
-    )
-    if value not in (None, ""):
-        return value
-    return _extract_message_text(dataset_sample)
+    return _pick_first_or_message(dataset_sample, _GENERIC_FIELD_KEYS)
 
 
 # ---------------------------------------------------------------------------
 # Workflow compatibility checking
 # ---------------------------------------------------------------------------
+
+
+def _required_input_names(workflow_def: WorkflowDefinition) -> list[str]:
+    """Return names of required workflow inputs that have no usable default."""
+    names: list[str] = []
+    for name, input_def in workflow_def.inputs.items():
+        if not input_def.required:
+            continue
+        if input_def.default not in (None, ""):
+            continue
+        names.append(name)
+    return names
+
+
+def _capability_input_names(workflow_def: WorkflowDefinition) -> list[str]:
+    """Return the capability-declared input names from the workflow definition."""
+    caps = workflow_def.capabilities
+    return (
+        caps.get("inputs", [])
+        if isinstance(caps, dict)
+        else getattr(caps, "inputs", [])
+    )
+
+
+def _capability_input_missing(
+    capability_input: str,
+    workflow_def: WorkflowDefinition,
+    dataset_sample: dict[str, Any],
+) -> bool:
+    """Return True if a capability-declared input cannot be satisfied.
+
+    Inputs that declare a usable default are never considered missing.
+    """
+    input_def = workflow_def.inputs.get(capability_input)
+    if input_def is not None and input_def.default not in (None, ""):
+        return False
+
+    if input_def is not None:
+        value = _dataset_value_for_input(capability_input, input_def, dataset_sample)
+    else:
+        value = dataset_sample.get(capability_input)
+
+    return _is_empty_value(value)
 
 
 def match_workflow_dataset(
@@ -285,15 +350,7 @@ def match_workflow_dataset(
         return False, ["invalid_dataset_sample"]
 
     missing_reasons: list[str] = []
-    required_input_names = []
-    for name, input_def in workflow_def.inputs.items():
-        if not input_def.required:
-            continue
-        if input_def.default not in (None, ""):
-            continue
-        required_input_names.append(name)
-
-    for input_name in required_input_names:
+    for input_name in _required_input_names(workflow_def):
         value = _dataset_value_for_input(
             input_name,
             workflow_def.inputs[input_name],
@@ -302,27 +359,9 @@ def match_workflow_dataset(
         if _is_empty_value(value):
             missing_reasons.append(f"missing: {input_name}")
 
-    caps = workflow_def.capabilities
-    capability_inputs = (
-        caps.get("inputs", [])
-        if isinstance(caps, dict)
-        else getattr(caps, "inputs", [])
-    )
-    if capability_inputs:
-        for capability_input in capability_inputs:
-            input_def = workflow_def.inputs.get(capability_input)
-            if input_def is not None and input_def.default not in (None, ""):
-                continue
-
-            if input_def is not None:
-                value = _dataset_value_for_input(
-                    capability_input, input_def, dataset_sample
-                )
-            else:
-                value = dataset_sample.get(capability_input)
-
-            if _is_empty_value(value):
-                missing_reasons.append(f"missing: {capability_input}")
+    for capability_input in _capability_input_names(workflow_def):
+        if _capability_input_missing(capability_input, workflow_def, dataset_sample):
+            missing_reasons.append(f"missing: {capability_input}")
 
     return len(missing_reasons) == 0, sorted(set(missing_reasons))
 
@@ -417,6 +456,97 @@ def _materialize_file_input(
 # Sample adaptation
 # ---------------------------------------------------------------------------
 
+# Field-name candidate lists used during sample adaptation. These differ from
+# the matching lists above (e.g. the file list is shorter), so they are kept
+# separate to preserve exact behavior.
+_ADAPT_GENERIC_FIELD_KEYS = [
+    "prompt",
+    "task_description",
+    "problem_statement",
+    "description",
+    "body",
+    "instruction",
+    "input",
+    "question",
+    "query",
+    "request",
+    "issue_text",
+    "content",
+    "text",
+    "code",
+    "expected_output",
+]
+_ADAPT_FILE_FIELD_KEYS = [
+    "code_file",
+    "file_path",
+    "path",
+    "source_path",
+    "patch",
+    "code",
+    "body",
+    "prompt",
+    "task_description",
+]
+_DEFAULT_TECH_STACK = {
+    "frontend": "react",
+    "backend": "fastapi",
+    "database": "postgresql",
+}
+
+
+def _resolve_adapted_value(
+    lowered: str,
+    definition: WorkflowInput,
+    sample: dict[str, Any],
+    generic_text: Any,
+) -> Any:
+    """Resolve a value for one workflow input via name-based heuristics.
+
+    Mirrors the original if/elif fallback chain used when the sample has no
+    value directly keyed by the input name.
+    """
+    if "file" in lowered or "patch" in lowered:
+        return _pick_first(sample, _ADAPT_FILE_FIELD_KEYS)
+    if "bug" in lowered or "report" in lowered or "issue" in lowered:
+        return _pick_first_or_message(sample, _BUG_FIELD_KEYS)
+    if "spec" in lowered or "requirement" in lowered:
+        return _pick_first_or_message(sample, _SPEC_FIELD_KEYS)
+    if "tech_stack" in lowered and definition.type == "object":
+        return sample.get("tech_stack") or dict(_DEFAULT_TECH_STACK)
+    if definition.default not in (None, ""):
+        return definition.default
+    if definition.enum:
+        return definition.enum[0]
+    return generic_text
+
+
+def _coerce_adapted_value(
+    value: Any,
+    *,
+    lowered: str,
+    name: str,
+    definition: WorkflowInput,
+    run_id: str,
+    artifacts_dir: Path,
+) -> Any:
+    """Apply type coercion and file materialization to a resolved input value."""
+    if definition.type == "string":
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value)
+        if "file" in lowered:
+            value = _materialize_file_input(
+                value,
+                input_name=name,
+                run_id=run_id,
+                artifacts_dir=artifacts_dir,
+            )
+    elif definition.type in {"object", "array"} and isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            value = {"value": value}
+    return value
+
 
 def adapt_sample_to_workflow_inputs(
     workflow_inputs: dict[str, WorkflowInput],
@@ -445,121 +575,28 @@ def adapt_sample_to_workflow_inputs(
         return {}
 
     adapted: dict[str, Any] = {}
-    generic_text = _pick_first(
-        sample,
-        [
-            "prompt",
-            "task_description",
-            "problem_statement",
-            "description",
-            "body",
-            "instruction",
-            "input",
-            "question",
-            "query",
-            "request",
-            "issue_text",
-            "content",
-            "text",
-            "code",
-            "expected_output",
-        ],
-    )
+    generic_text = _pick_first(sample, _ADAPT_GENERIC_FIELD_KEYS)
     if generic_text in (None, ""):
         generic_text = _extract_message_text(sample)
     for name, definition in workflow_inputs.items():
         lowered = name.lower()
-        explicit = sample.get(name)
-        value = explicit
+        value = sample.get(name)
 
         if value in (None, ""):
-            if "file" in lowered or "patch" in lowered:
-                value = _pick_first(
-                    sample,
-                    [
-                        "code_file",
-                        "file_path",
-                        "path",
-                        "source_path",
-                        "patch",
-                        "code",
-                        "body",
-                        "prompt",
-                        "task_description",
-                    ],
-                )
-            elif "bug" in lowered or "report" in lowered or "issue" in lowered:
-                value = _pick_first(
-                    sample,
-                    [
-                        "bug_report",
-                        "problem_statement",
-                        "issue_text",
-                        "issue_body",
-                        "description",
-                        "prompt",
-                        "task_description",
-                        "body",
-                        "instruction",
-                        "input",
-                        "question",
-                        "query",
-                        "request",
-                    ],
-                )
-                if value in (None, ""):
-                    value = _extract_message_text(sample)
-            elif "spec" in lowered or "requirement" in lowered:
-                value = _pick_first(
-                    sample,
-                    [
-                        "feature_spec",
-                        "task_description",
-                        "prompt",
-                        "description",
-                        "instruction",
-                        "input",
-                        "question",
-                        "query",
-                        "request",
-                        "body",
-                    ],
-                )
-                if value in (None, ""):
-                    value = _extract_message_text(sample)
-            elif "tech_stack" in lowered and definition.type == "object":
-                value = sample.get("tech_stack") or {
-                    "frontend": "react",
-                    "backend": "fastapi",
-                    "database": "postgresql",
-                }
-            else:
-                if definition.default not in (None, ""):
-                    value = definition.default
-                elif definition.enum:
-                    value = definition.enum[0]
-                else:
-                    value = generic_text
+            value = _resolve_adapted_value(
+                lowered, definition, sample, generic_text
+            )
 
         if value in (None, ""):
             continue
 
-        if definition.type == "string":
-            if isinstance(value, (dict, list)):
-                value = json.dumps(value)
-            if "file" in lowered:
-                value = _materialize_file_input(
-                    value,
-                    input_name=name,
-                    run_id=run_id,
-                    artifacts_dir=artifacts_dir,
-                )
-        elif definition.type in {"object", "array"} and isinstance(value, str):
-            try:
-                value = json.loads(value)
-            except (json.JSONDecodeError, TypeError):
-                value = {"value": value}
-
-        adapted[name] = value
+        adapted[name] = _coerce_adapted_value(
+            value,
+            lowered=lowered,
+            name=name,
+            definition=definition,
+            run_id=run_id,
+            artifacts_dir=artifacts_dir,
+        )
 
     return adapted

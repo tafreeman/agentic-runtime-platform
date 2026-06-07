@@ -18,6 +18,7 @@ import json
 import logging
 import time
 from pathlib import Path
+from typing import Any
 
 # Load .env before the settings singleton initialises
 try:
@@ -56,6 +57,8 @@ from .helpers import (
 from .rag_commands import rag_group
 
 logger = logging.getLogger(__name__)
+
+YAML_EXTENSION = ".yaml"
 
 # LangChain imports — deferred so the CLI module loads even when
 # langchain extras are not installed.  Commands that need LangChain
@@ -110,6 +113,102 @@ def _get_runner():
     return _runner
 
 
+def _resolve_workflow_source(workflow: str) -> tuple[str, Path | None]:
+    """Resolve a workflow argument into ``(workflow_name, definitions_dir)``.
+
+    Exits with an error if a ``.yaml``/``.yml`` path is given but missing.
+    """
+    if workflow.endswith((YAML_EXTENSION, ".yml")):
+        workflow_path = Path(workflow)
+        if not workflow_path.exists():
+            console.print(f"[red]Error:[/red] Workflow file not found: {workflow}")
+            raise typer.Exit(1)
+        return workflow_path.stem, workflow_path.parent
+    return workflow, None
+
+
+def _load_run_input(input_file: Path | None) -> dict:
+    """Load and parse the JSON input file, or return an empty dict."""
+    if not input_file:
+        return {}
+    if not input_file.exists():
+        console.print(f"[red]Error:[/red] Input file not found: {input_file}")
+        raise typer.Exit(1)
+    return json.loads(input_file.read_text())
+
+
+def _execute_run(
+    adapter: str,
+    workflow_name: str,
+    workflow_def: Any,
+    definitions_dir: Path | None,
+    input_data: dict,
+) -> Any:
+    """Execute the workflow under a progress spinner and return the result."""
+    with Progress(
+        SpinnerColumn(spinner_name="line"),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"Executing {workflow_def.name}...", total=None)
+        start_time = time.perf_counter()
+        if adapter == "langchain":
+            # TODO(ADR-001): The LangChain path uses a separate
+            # WorkflowRunner (from ..langchain) that compiles workflows
+            # into LangGraph state machines via compile_workflow().  It
+            # relies on load_workflow_config() (not the native YAML
+            # loader) and produces a different result shape.  Unifying
+            # both paths through the AdapterRegistry requires the
+            # LangChain adapter to accept the same workflow-loading
+            # interface as the native path — tracked for Phase 2.
+            runner = WorkflowRunner(definitions_dir=definitions_dir)
+            raw_result = asyncio.run(
+                runner.run(
+                    workflow_name,
+                    thread_id=workflow_name,
+                    **input_data,
+                )
+            )
+            wall_clock = time.perf_counter() - start_time
+            result = _normalize_result(workflow_name, raw_result, wall_clock)
+        else:
+            # Non-langchain path: dispatch through the adapter registry
+            result = _run_via_adapter(adapter, workflow_name, input_data)
+        progress.update(task, completed=True)
+    return result
+
+
+def _write_run_output(result: Any, output_file: Path) -> None:
+    """Serialize *result* to *output_file* as JSON."""
+    output_data = {
+        "workflow_name": result.workflow_name,
+        "status": result.status,
+        "outputs": result.outputs,
+        "steps": result.steps,
+        "errors": result.errors,
+        "elapsed_seconds": result.elapsed_seconds,
+    }
+    output_file.write_text(json.dumps(output_data, indent=2, default=str))
+    console.print(f"\n[green]Results written to:[/green] {output_file}")
+
+
+def _report_run_error(e: Exception) -> None:
+    """Print a user-friendly error panel/message for a failed run."""
+    from ..core.errors import NoProviderConfiguredError
+
+    if isinstance(e, NoProviderConfiguredError):
+        console.print(
+            Panel(
+                str(e),
+                title="[bold red]⚠ Configuration Error[/bold red]",
+                border_style="red",
+                padding=(1, 2),
+            )
+        )
+    else:
+        console.print(f"[red]Error:[/red] {e}")
+
+
 @app.command()
 def run(
     workflow: str = typer.Argument(
@@ -157,15 +256,7 @@ def run(
         _require_langchain()
     try:
         # Resolve name from file path
-        workflow_name = workflow
-        definitions_dir: Path | None = None
-        if workflow.endswith((".yaml", ".yml")):
-            workflow_path = Path(workflow)
-            if not workflow_path.exists():
-                console.print(f"[red]Error:[/red] Workflow file not found: {workflow}")
-                raise typer.Exit(1)
-            workflow_name = workflow_path.stem
-            definitions_dir = workflow_path.parent
+        workflow_name, definitions_dir = _resolve_workflow_source(workflow)
 
         try:
             workflow_def = load_workflow_config(workflow_name, definitions_dir)
@@ -174,12 +265,7 @@ def run(
             raise typer.Exit(1)
 
         # Load input variables
-        input_data: dict = {}
-        if input_file:
-            if not input_file.exists():
-                console.print(f"[red]Error:[/red] Input file not found: {input_file}")
-                raise typer.Exit(1)
-            input_data = json.loads(input_file.read_text())
+        input_data = _load_run_input(input_file)
 
         # Display workflow info
         console.print(
@@ -198,52 +284,16 @@ def run(
             console.print("\n[yellow]Dry run - skipping execution[/yellow]")
             return
 
-        with Progress(
-            SpinnerColumn(spinner_name="line"),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-        ) as progress:
-            task = progress.add_task(f"Executing {workflow_def.name}...", total=None)
-            start_time = time.perf_counter()
-            if adapter == "langchain":
-                # TODO(ADR-001): The LangChain path uses a separate
-                # WorkflowRunner (from ..langchain) that compiles workflows
-                # into LangGraph state machines via compile_workflow().  It
-                # relies on load_workflow_config() (not the native YAML
-                # loader) and produces a different result shape.  Unifying
-                # both paths through the AdapterRegistry requires the
-                # LangChain adapter to accept the same workflow-loading
-                # interface as the native path — tracked for Phase 2.
-                runner = WorkflowRunner(definitions_dir=definitions_dir)
-                raw_result = asyncio.run(
-                    runner.run(
-                        workflow_name,
-                        thread_id=workflow_name,
-                        **input_data,
-                    )
-                )
-                wall_clock = time.perf_counter() - start_time
-                result = _normalize_result(workflow_name, raw_result, wall_clock)
-            else:
-                # Non-langchain path: dispatch through the adapter registry
-                result = _run_via_adapter(adapter, workflow_name, input_data)
-            progress.update(task, completed=True)
+        result = _execute_run(
+            adapter, workflow_name, workflow_def, definitions_dir, input_data
+        )
 
         # Display results
         _show_results(result, verbose)
 
         # Write output if requested
         if output_file:
-            output_data = {
-                "workflow_name": result.workflow_name,
-                "status": result.status,
-                "outputs": result.outputs,
-                "steps": result.steps,
-                "errors": result.errors,
-                "elapsed_seconds": result.elapsed_seconds,
-            }
-            output_file.write_text(json.dumps(output_data, indent=2, default=str))
-            console.print(f"\n[green]Results written to:[/green] {output_file}")
+            _write_run_output(result, output_file)
 
         if result.status == "failed":
             raise typer.Exit(1)
@@ -251,19 +301,7 @@ def run(
     except typer.Exit:
         raise
     except Exception as e:
-        from ..core.errors import NoProviderConfiguredError
-
-        if isinstance(e, NoProviderConfiguredError):
-            console.print(
-                Panel(
-                    str(e),
-                    title="[bold red]⚠ Configuration Error[/bold red]",
-                    border_style="red",
-                    padding=(1, 2),
-                )
-            )
-        else:
-            console.print(f"[red]Error:[/red] {e}")
+        _report_run_error(e)
         raise typer.Exit(1)
 
 
@@ -444,7 +482,7 @@ def validate(
     from ..devex.workflow_linter import lint_workflow_by_name, lint_workflow_file
 
     # Tier 1: fast structural lint (no extras required)
-    if workflow.endswith((".yaml", ".yml")):
+    if workflow.endswith((YAML_EXTENSION, ".yml")):
         lint_violations = lint_workflow_file(Path(workflow))
     else:
         lint_violations = lint_workflow_by_name(workflow)
@@ -460,7 +498,7 @@ def validate(
     try:
         definitions_dir: Path | None = None
         workflow_name = workflow
-        if workflow.endswith((".yaml", ".yml")):
+        if workflow.endswith((YAML_EXTENSION, ".yml")):
             workflow_path = Path(workflow)
             if not workflow_path.exists():
                 console.print(f"[red]Error:[/red] File not found: {workflow}")

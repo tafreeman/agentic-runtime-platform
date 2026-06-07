@@ -175,7 +175,8 @@ class McpProtocolClient:
 
             # Wait for response with timeout
             timeout_value = timeout or DEFAULT_REQUEST_TIMEOUT
-            result = await asyncio.wait_for(future, timeout=timeout_value)
+            async with asyncio.timeout(timeout_value):
+                result = await future
             return result
 
         except TimeoutError:
@@ -216,11 +217,12 @@ class McpProtocolClient:
             asyncio.TimeoutError: If the request exceeds ``timeout``.
             McpProtocolError: If the server returns an error.
         """
-        return await self.request(
-            "tools/call",
-            params={"name": name, "arguments": arguments},
-            timeout=timeout or TOOL_CALL_TIMEOUT,
-        )
+        effective_timeout = timeout or TOOL_CALL_TIMEOUT
+        async with asyncio.timeout(effective_timeout):
+            return await self.request(
+                "tools/call",
+                params={"name": name, "arguments": arguments},
+            )
 
     async def notify(
         self,

@@ -14,6 +14,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192)
+# ---------------------------------------------------------------------------
+METRIC_PASS_AT_1: str = "pass@1"
+ARXIV_SWEBENCH_URL: str = "https://arxiv.org/abs/2310.06770"
+SWEBENCH_URL: str = "https://www.swebench.com/"
+
 
 class BenchmarkType(Enum):
     """Category of coding benchmark by task granularity."""
@@ -76,7 +83,7 @@ class BenchmarkDefinition:
 
     # Evaluation info
     metrics: list[str] = field(default_factory=list)  # How results are measured
-    evaluation_method: str = "pass@1"  # Default evaluation approach
+    evaluation_method: str = METRIC_PASS_AT_1  # Default evaluation approach
 
     # Metadata
     paper_url: str | None = None  # Research paper
@@ -112,8 +119,8 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         },
         metrics=["resolved_rate", "patch_apply_rate"],
         evaluation_method="execution",
-        paper_url="https://arxiv.org/abs/2310.06770",
-        leaderboard_url="https://www.swebench.com/",
+        paper_url=ARXIV_SWEBENCH_URL,
+        leaderboard_url=SWEBENCH_URL,
         license="MIT",
         citation="@article{jimenez2024swebench, title={SWE-bench: Can Language Models Resolve Real-World GitHub Issues?}}",
         languages=["python"],
@@ -132,8 +139,8 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         },
         metrics=["resolved_rate"],
         evaluation_method="execution",
-        paper_url="https://arxiv.org/abs/2310.06770",
-        leaderboard_url="https://www.swebench.com/",
+        paper_url=ARXIV_SWEBENCH_URL,
+        leaderboard_url=SWEBENCH_URL,
         license="MIT",
         languages=["python"],
         tags=["github", "verified", "reliable"],
@@ -151,8 +158,8 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         },
         metrics=["resolved_rate"],
         evaluation_method="execution",
-        paper_url="https://arxiv.org/abs/2310.06770",
-        leaderboard_url="https://www.swebench.com/",
+        paper_url=ARXIV_SWEBENCH_URL,
+        leaderboard_url=SWEBENCH_URL,
         license="MIT",
         languages=["python"],
         tags=["github", "lite", "fast"],
@@ -171,7 +178,7 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         source_config={
             "split": "test",
         },
-        metrics=["pass@1", "pass@10", "pass@100"],
+        metrics=[METRIC_PASS_AT_1, "pass@10", "pass@100"],
         evaluation_method="unit_tests",
         paper_url="https://arxiv.org/abs/2107.03374",
         leaderboard_url="https://paperswithcode.com/sota/code-generation-on-humaneval",
@@ -191,7 +198,7 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         source_config={
             "split": "test",
         },
-        metrics=["pass@1"],
+        metrics=[METRIC_PASS_AT_1],
         evaluation_method="unit_tests",
         paper_url="https://arxiv.org/abs/2305.01210",
         license="Apache-2.0",
@@ -212,7 +219,7 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
         source_config={
             "split": "test",
         },
-        metrics=["pass@1", "pass@80"],
+        metrics=[METRIC_PASS_AT_1, "pass@80"],
         evaluation_method="unit_tests",
         paper_url="https://arxiv.org/abs/2108.07732",
         leaderboard_url="https://paperswithcode.com/sota/code-generation-on-mbpp",
@@ -233,7 +240,7 @@ BENCHMARK_DEFINITIONS: dict[str, BenchmarkDefinition] = {
             "split": "test",
             "sanitized": True,
         },
-        metrics=["pass@1"],
+        metrics=[METRIC_PASS_AT_1],
         evaluation_method="unit_tests",
         paper_url="https://arxiv.org/abs/2108.07732",
         license="CC-BY-4.0",

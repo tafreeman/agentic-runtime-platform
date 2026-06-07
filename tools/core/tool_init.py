@@ -43,7 +43,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from tools.core.errors import ErrorCode, classify_error
 from tools.core.model_availability import is_model_available
@@ -189,7 +189,7 @@ class ToolInit:
     """
 
     name: str
-    log_file: Path = None
+    log_file: Optional[Path] = None
     verbose: bool = False
 
     # Internal state

@@ -3,7 +3,7 @@ interface Props {
   className?: string;
 }
 
-export default function DurationDisplay({ ms, className = "" }: Props) {
+export default function DurationDisplay({ ms, className = "" }: Readonly<Props>) {
   if (ms == null) return <span className={className}>--</span>;
 
   let display: string;

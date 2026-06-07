@@ -181,24 +181,7 @@ class McpConnectionManager:
             ConnectionError: If connection fails
         """
         # Create transport based on transport_type field
-        if config.transport_type == TransportType.STDIO and config.stdio is not None:
-            transport = StdioTransport(
-                command=config.stdio.command,
-                args=config.stdio.args or [],
-                env=config.stdio.env or {},
-            )
-        elif (
-            config.transport_type == TransportType.WEBSOCKET
-            and config.websocket is not None
-        ):
-            transport = WebSocketTransport(
-                url=config.websocket.url,
-                headers=config.websocket.headers or {},
-            )
-        else:
-            raise ValueError(
-                f"Unsupported or misconfigured transport: {config.transport_type}"
-            )
+        transport = self._build_transport(config)
 
         # Create protocol client
         client = McpProtocolClient(transport)
@@ -218,30 +201,7 @@ class McpConnectionManager:
 
         while not backoff.is_exhausted:
             try:
-                # Start transport
-                await client.connect()
-
-                # Perform initialize handshake
-                init_response = await client.initialize()
-                if isinstance(init_response, dict):
-                    raw_info = init_response.get("serverInfo", {})
-                    server_info = (
-                        McpServerInfo.model_validate(raw_info) if raw_info else None
-                    )
-                else:
-                    server_info = init_response
-                metadata.server_info = server_info
-                metadata.state = McpConnectionState.CONNECTED
-                metadata.last_error = None
-                backoff.reset()
-
-                info_str = (
-                    f"{server_info.name} v{server_info.version}"
-                    if server_info
-                    else "unknown"
-                )
-                logger.info(f"Successfully connected to {name}: {info_str}")
-                return client
+                return await self._attempt_connect(client, metadata)
 
             except TimeoutError as e:
                 last_error = e
@@ -249,13 +209,13 @@ class McpConnectionManager:
                 metadata.state = McpConnectionState.RECONNECTING
 
                 delay = backoff.next_delay()
-                if delay:
-                    logger.warning(
-                        f"Connection timeout for {name}, retrying in {delay:.1f}s (attempt {backoff.attempt_count})"
-                    )
-                    await asyncio.sleep(delay)
-                else:
+                if not delay:
                     break
+                logger.warning(
+                    f"Connection timeout for {name}, retrying in {delay:.1f}s "
+                    f"(attempt {backoff.attempt_count})"
+                )
+                await asyncio.sleep(delay)
 
             except McpProtocolError as e:
                 last_error = e
@@ -269,13 +229,12 @@ class McpConnectionManager:
                 # Other protocol errors: retry with backoff
                 metadata.state = McpConnectionState.RECONNECTING
                 delay = backoff.next_delay()
-                if delay:
-                    logger.warning(
-                        f"Protocol error for {name}, retrying in {delay:.1f}s: {e}"
-                    )
-                    await asyncio.sleep(delay)
-                else:
+                if not delay:
                     break
+                logger.warning(
+                    f"Protocol error for {name}, retrying in {delay:.1f}s: {e}"
+                )
+                await asyncio.sleep(delay)
 
             except Exception as e:
                 last_error = e
@@ -290,6 +249,63 @@ class McpConnectionManager:
             f"Failed to connect to {name} after {backoff.attempt_count} attempts: {last_error}"
         )
 
+    @staticmethod
+    def _build_transport(
+        config: McpServerConfig,
+    ) -> "StdioTransport | WebSocketTransport":
+        """Create the transport for a server config based on its transport_type."""
+        if config.transport_type == TransportType.STDIO and config.stdio is not None:
+            return StdioTransport(
+                command=config.stdio.command,
+                args=config.stdio.args or [],
+                env=config.stdio.env or {},
+            )
+        if (
+            config.transport_type == TransportType.WEBSOCKET
+            and config.websocket is not None
+        ):
+            return WebSocketTransport(
+                url=config.websocket.url,
+                headers=config.websocket.headers or {},
+            )
+        raise ValueError(
+            f"Unsupported or misconfigured transport: {config.transport_type}"
+        )
+
+    @staticmethod
+    async def _attempt_connect(
+        client: McpProtocolClient,
+        metadata: ConnectionMetadata,
+    ) -> McpProtocolClient:
+        """Connect and perform the initialize handshake for a single attempt.
+
+        On success, updates metadata state and returns the connected client.
+        """
+        # Start transport
+        await client.connect()
+
+        # Perform initialize handshake
+        init_response = await client.initialize()
+        if isinstance(init_response, dict):
+            raw_info = init_response.get("serverInfo", {})
+            server_info = (
+                McpServerInfo.model_validate(raw_info) if raw_info else None
+            )
+        else:
+            server_info = init_response
+        metadata.server_info = server_info
+        metadata.state = McpConnectionState.CONNECTED
+        metadata.last_error = None
+        metadata.backoff.reset()
+
+        info_str = (
+            f"{server_info.name} v{server_info.version}"
+            if server_info
+            else "unknown"
+        )
+        logger.info(f"Successfully connected to {metadata.name}: {info_str}")
+        return client
+
     async def disconnect(self, name: str) -> None:
         """Disconnect from a server by name.
 
@@ -298,7 +314,7 @@ class McpConnectionManager:
         """
         async with self._lock:
             # Find connection by name
-            for signature, metadata in list(self._connections.items()):
+            for signature, metadata in self._connections.items():
                 if metadata.name == name:
                     logger.info(f"Disconnecting from {name}")
                     await metadata.client.close()

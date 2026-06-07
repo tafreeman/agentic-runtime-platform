@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useHotkeys } from "../hooks/useHotkeys";
 
 function fireKey(key: string, options: Partial<KeyboardEventInit> = {}) {
-  window.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...options }));
+  globalThis.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...options }));
 }
 
 describe("useHotkeys", () => {
@@ -64,7 +64,7 @@ describe("useHotkeys", () => {
     fireKey("f");
     expect(filter).not.toHaveBeenCalled();
 
-    document.body.removeChild(input);
+    input.remove();
   });
 
   it("DOES fire Escape even when input has focus", () => {
@@ -77,7 +77,7 @@ describe("useHotkeys", () => {
     fireKey("Escape");
     expect(escape).toHaveBeenCalledOnce();
 
-    document.body.removeChild(input);
+    input.remove();
   });
 
   it("does NOT fire hotkeys when modifier keys are held", () => {

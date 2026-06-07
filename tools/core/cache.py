@@ -70,7 +70,7 @@ def get_cached_response(
     model: str,
     prompt: str,
     system_instruction: str | None = None,
-    max_age_hours: float = 24.0,
+    _max_age_hours: float = 24.0,
     **kwargs,
 ) -> str | None:
     """Get a cached response if available and not expired.

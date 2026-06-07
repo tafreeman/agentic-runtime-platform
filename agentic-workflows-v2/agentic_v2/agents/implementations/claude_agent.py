@@ -119,12 +119,12 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
         system, anthropic_messages = self._convert_messages(messages)
         anthropic_tools = self._convert_tools(tools or [])
 
-        kwargs: dict[str, Any] = dict(
-            model=self._model,
-            max_tokens=4096,
-            messages=anthropic_messages,
-            thinking={"type": "adaptive"},
-        )
+        kwargs: dict[str, Any] = {
+            "model": self._model,
+            "max_tokens": 4096,
+            "messages": anthropic_messages,
+            "thinking": {"type": "adaptive"},
+        }
         if system:
             kwargs["system"] = system
         if anthropic_tools:

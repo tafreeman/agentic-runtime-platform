@@ -29,11 +29,11 @@ class Choice:
     """A discrete scoring option mapping a label to a normalized score.
 
     Attributes:
-        choice: Display label emitted by the LLM (e.g. ``"3"``).
+        label: Display label emitted by the LLM (e.g. ``"3"``).
         score: Normalized float in ``[0.0, 1.0]``.
     """
 
-    choice: str  # e.g., "1", "2", "poor", "excellent"
+    label: str  # e.g., "1", "2", "poor", "excellent"
     score: float  # Normalized 0.0-1.0
 
 
@@ -80,14 +80,14 @@ class LLMEvaluator(Evaluator):
 
         # Check for exact matches first
         for choice in self.choices:
-            if last_line == choice.choice.lower():
-                return (choice.choice, choice.score)
+            if last_line == choice.label.lower():
+                return (choice.label, choice.score)
 
         # Then check for containment in last few lines
         search_text = "\n".join(lines[-3:]) if len(lines) >= 3 else response_lower
         for choice in self.choices:
-            if choice.choice.lower() in search_text:
-                return (choice.choice, choice.score)
+            if choice.label.lower() in search_text:
+                return (choice.label, choice.score)
 
         return None
 

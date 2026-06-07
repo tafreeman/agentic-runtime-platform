@@ -150,35 +150,55 @@ class OtelTraceAdapter(TraceAdapter):
         sanitized = self._sanitize_data(event.data)
 
         if event.type == "workflow_start":
-            span = self._tracer.start_span(event.type, attributes=sanitized)
-            if run_id:
-                self._workflow_spans[run_id] = span
+            self._start_workflow_span(event, sanitized, run_id)
             return
 
         if event.type == "workflow_end":
-            if run_id and run_id in self._workflow_spans:
-                span = self._workflow_spans.pop(run_id)
-                span.end()
+            self._end_workflow_span(run_id)
             return
 
         if event.type == "step_start":
-            span = self._tracer.start_span(event.type, attributes=sanitized)
-            step_name = event.step_name or event.data.get("step_name")
-            if run_id and step_name:
-                self._workflow_spans[f"{run_id}:{step_name}"] = span
+            self._start_step_span(event, sanitized, run_id)
             return
 
         if event.type == "step_complete":
-            step_name = event.step_name or event.data.get("step_name")
-            key = f"{run_id}:{step_name}" if run_id and step_name else None
-            if key and key in self._workflow_spans:
-                span = self._workflow_spans.pop(key)
-                span.end()
+            self._end_step_span(event, run_id)
             return
 
         # Generic event — fire-and-forget span
         span = self._tracer.start_span(event.type, attributes=sanitized)
         span.end()
+
+    def _start_workflow_span(
+        self, event: CanonicalEvent, sanitized: dict[str, Any], run_id: Any
+    ) -> None:
+        """Start and register a span for a workflow_start event."""
+        span = self._tracer.start_span(event.type, attributes=sanitized)
+        if run_id:
+            self._workflow_spans[run_id] = span
+
+    def _end_workflow_span(self, run_id: Any) -> None:
+        """End and deregister the span for a workflow_end event."""
+        if run_id and run_id in self._workflow_spans:
+            span = self._workflow_spans.pop(run_id)
+            span.end()
+
+    def _start_step_span(
+        self, event: CanonicalEvent, sanitized: dict[str, Any], run_id: Any
+    ) -> None:
+        """Start and register a span for a step_start event."""
+        span = self._tracer.start_span(event.type, attributes=sanitized)
+        step_name = event.step_name or event.data.get("step_name")
+        if run_id and step_name:
+            self._workflow_spans[f"{run_id}:{step_name}"] = span
+
+    def _end_step_span(self, event: CanonicalEvent, run_id: Any) -> None:
+        """End and deregister the span for a step_complete event."""
+        step_name = event.step_name or event.data.get("step_name")
+        key = f"{run_id}:{step_name}" if run_id and step_name else None
+        if key and key in self._workflow_spans:
+            span = self._workflow_spans.pop(key)
+            span.end()
 
 
 class LangSmithTraceAdapter(TraceAdapter):

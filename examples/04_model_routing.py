@@ -33,6 +33,11 @@ from agentic_v2.models import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
+MODEL_OLLAMA_PHI4 = "ollama:phi4"
+MODEL_GH_GPT4O_MINI = "gh:openai/gpt-4o-mini"
+MODEL_GEMINI_FLASH_2 = "gemini:gemini-2.0-flash"
+MODEL_OPENAI_GPT4O_MINI = "openai:gpt-4o-mini"
+
 
 def demo_basic_routing() -> None:
     """Show basic ModelRouter with default chains."""
@@ -72,9 +77,9 @@ def demo_custom_chains() -> None:
     # Build a custom chain using the fluent DSL
     custom_chain = (
         FallbackChain.build("my-tier2")
-        .add("ollama:phi4")  # Local model first (free)
+        .add(MODEL_OLLAMA_PHI4)  # Local model first (free)
         .add("ollama:llama3.2:latest")  # Another local option
-        .add("gh:openai/gpt-4o-mini")  # GitHub Models fallback
+        .add(MODEL_GH_GPT4O_MINI)  # GitHub Models fallback
         .done()
     )
 
@@ -86,7 +91,7 @@ def demo_custom_chains() -> None:
     print(f"  Selected model: {model}")
 
     # Mark the first model as unavailable to trigger fallback
-    router.mark_unavailable("ollama:phi4")
+    router.mark_unavailable(MODEL_OLLAMA_PHI4)
     model = router.get_model_for_tier(ModelTier.TIER_2)
     print(f"  After phi4 unavailable: {model}")
 
@@ -104,7 +109,7 @@ def demo_scoped_routing() -> None:
     print(f"  Normal TIER_2 model: {normal_model}")
 
     # Scoped override — restrict to only local models for this operation
-    with router.scoped(ModelTier.TIER_2, ["ollama:phi4", "ollama:mistral"]) as scoped:
+    with router.scoped(ModelTier.TIER_2, [MODEL_OLLAMA_PHI4, "ollama:mistral"]) as scoped:
         scoped_model = scoped.get_model()
         all_available = scoped.get_all_available()
         print(f"  Scoped TIER_2 model: {scoped_model}")
@@ -126,18 +131,18 @@ def demo_smart_routing() -> None:
 
     # Simulate successful calls to build health scores
     print("\n  Simulating model performance...")
-    router.record_success("gemini:gemini-2.0-flash", latency_ms=120.0)
-    router.record_success("gemini:gemini-2.0-flash", latency_ms=150.0)
-    router.record_success("gemini:gemini-2.0-flash", latency_ms=130.0)
+    router.record_success(MODEL_GEMINI_FLASH_2, latency_ms=120.0)
+    router.record_success(MODEL_GEMINI_FLASH_2, latency_ms=150.0)
+    router.record_success(MODEL_GEMINI_FLASH_2, latency_ms=130.0)
     print("    gemini:gemini-2.0-flash — 3 successes (~130ms avg)")
 
-    router.record_success("gh:openai/gpt-4o-mini", latency_ms=450.0)
-    router.record_success("gh:openai/gpt-4o-mini", latency_ms=500.0)
+    router.record_success(MODEL_GH_GPT4O_MINI, latency_ms=450.0)
+    router.record_success(MODEL_GH_GPT4O_MINI, latency_ms=500.0)
     print("    gh:openai/gpt-4o-mini — 2 successes (~475ms avg)")
 
     # Simulate failures for one model
-    router.record_failure("openai:gpt-4o-mini", error_type="timeout")
-    router.record_failure("openai:gpt-4o-mini", error_type="timeout")
+    router.record_failure(MODEL_OPENAI_GPT4O_MINI, error_type="timeout")
+    router.record_failure(MODEL_OPENAI_GPT4O_MINI, error_type="timeout")
     print("    openai:gpt-4o-mini — 2 failures (timeout)")
 
     # Health-weighted selection prefers the healthy, fast model
@@ -145,7 +150,7 @@ def demo_smart_routing() -> None:
     print(f"\n  Health-weighted selection for TIER_2: {selected}")
 
     # Check model availability prediction
-    for model_name in ["gemini:gemini-2.0-flash", "openai:gpt-4o-mini"]:
+    for model_name in [MODEL_GEMINI_FLASH_2, MODEL_OPENAI_GPT4O_MINI]:
         prediction = router.predict_availability(model_name)
         print(f"\n  Availability prediction for {model_name}:")
         print(f"    Available: {prediction['available']}")
@@ -168,9 +173,9 @@ def demo_stats_summary() -> None:
     router = SmartModelRouter()
 
     # Build some stats
-    router.record_success("gemini:gemini-2.0-flash", latency_ms=100.0)
-    router.record_success("gh:openai/gpt-4o-mini", latency_ms=400.0)
-    router.record_failure("openai:gpt-4o-mini", error_type="rate_limit")
+    router.record_success(MODEL_GEMINI_FLASH_2, latency_ms=100.0)
+    router.record_success(MODEL_GH_GPT4O_MINI, latency_ms=400.0)
+    router.record_failure(MODEL_OPENAI_GPT4O_MINI, error_type="rate_limit")
 
     summary = router.get_stats_summary()
     print(f"  Total models tracked: {summary['total_models']}")

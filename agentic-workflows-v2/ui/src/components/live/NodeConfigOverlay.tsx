@@ -39,7 +39,7 @@ export default function NodeConfigOverlay({
     "ollama:llama3.2:latest",
   ],
   availableTools = [],
-}: NodeConfigOverlayProps) {
+}: Readonly<NodeConfigOverlayProps>) {
   const [config, setConfig] = useState<NodeConfig>(initialConfig);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -118,14 +118,14 @@ export default function NodeConfigOverlay({
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Model Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="node-config-model" className="block text-sm font-medium text-gray-900 mb-2">
               Model
             </label>
             <select
+              id="node-config-model"
               value={config.model || ""}
               onChange={(e) => handleConfigChange("model", e.target.value)}
               className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
-              aria-label="Model selection"
             >
               <option value="">Use Default (tier-based)</option>
               {availableModels.map((model) => (
@@ -142,7 +142,7 @@ export default function NodeConfigOverlay({
           {/* System Prompt */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-900">
+              <label htmlFor="node-config-system-prompt" className="block text-sm font-medium text-gray-900">
                 System Prompt / Instructions
               </label>
               {config.system_prompt && (
@@ -158,6 +158,7 @@ export default function NodeConfigOverlay({
               )}
             </div>
             <textarea
+              id="node-config-system-prompt"
               value={config.system_prompt || ""}
               onChange={(e) =>
                 handleConfigChange("system_prompt", e.target.value)
@@ -175,10 +176,11 @@ export default function NodeConfigOverlay({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Temperature */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-temperature" className="block text-sm font-medium text-gray-900 mb-2">
                 Temperature
               </label>
               <input
+                id="node-config-temperature"
                 type="number"
                 min="0"
                 max="2"
@@ -187,7 +189,7 @@ export default function NodeConfigOverlay({
                 onChange={(e) =>
                   handleConfigChange(
                     "temperature",
-                    e.target.value ? parseFloat(e.target.value) : undefined
+                    e.target.value ? Number.parseFloat(e.target.value) : undefined
                   )
                 }
                 placeholder="0.7"
@@ -211,7 +213,7 @@ export default function NodeConfigOverlay({
                 onChange={(e) =>
                   handleConfigChange(
                     "max_tokens",
-                    e.target.value ? parseInt(e.target.value, 10) : undefined
+                    e.target.value ? Number.parseInt(e.target.value, 10) : undefined
                   )
                 }
                 placeholder="4096"
@@ -234,7 +236,7 @@ export default function NodeConfigOverlay({
                 onChange={(e) =>
                   handleConfigChange(
                     "top_p",
-                    e.target.value ? parseFloat(e.target.value) : undefined
+                    e.target.value ? Number.parseFloat(e.target.value) : undefined
                   )
                 }
                 placeholder="1.0"

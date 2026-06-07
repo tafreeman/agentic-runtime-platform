@@ -199,6 +199,53 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _validate_one_file(yaml_path: Path, schema: dict) -> list[str]:
+    """Validate a single workflow YAML file and return its error list."""
+    try:
+        data = load_yaml(yaml_path)
+    except yaml.YAMLError as exc:
+        print(f"  FAIL  {yaml_path.name} (YAML parse error)")
+        return [f"{yaml_path.name}: YAML parse error — {exc}"]
+
+    if _JSONSCHEMA_AVAILABLE:
+        errors = _jsonschema_validate(data, schema, yaml_path)
+    else:
+        errors = _manual_validate(data, yaml_path)
+
+    if errors:
+        print(f"  FAIL  {yaml_path.name}")
+    else:
+        print(f"  OK    {yaml_path.name}")
+    return errors
+
+
+def _validate_all_files(
+    yaml_files: list[Path], schema: dict
+) -> dict[str, list[str]]:
+    """Validate each YAML file, returning a ``{filename: errors}`` mapping."""
+    all_errors: dict[str, list[str]] = {}
+    for yaml_path in yaml_files:
+        errors = _validate_one_file(yaml_path, schema)
+        if errors:
+            all_errors[yaml_path.name] = errors
+    return all_errors
+
+
+def _print_error_report(all_errors: dict[str, list[str]]) -> None:
+    """Print all validation errors grouped by file to stderr."""
+    total_errors = sum(len(v) for v in all_errors.values())
+    print(
+        f"VALIDATION FAILED — {total_errors} error(s) across "
+        f"{len(all_errors)} file(s):\n",
+        file=sys.stderr,
+    )
+    for filename, errors in all_errors.items():
+        print(f"  {filename}:", file=sys.stderr)
+        for err in errors:
+            print(f"    - {err}", file=sys.stderr)
+        print(file=sys.stderr)
+
+
 def main() -> int:
     """Run the workflow YAML validation.
 
@@ -242,7 +289,7 @@ def main() -> int:
         return 2
 
     if _JSONSCHEMA_AVAILABLE:
-        print(f"Validator: jsonschema (Draft 2020-12)")
+        print("Validator: jsonschema (Draft 2020-12)")
     else:
         print(
             "Validator: built-in structural check "
@@ -253,28 +300,7 @@ def main() -> int:
     print(f"Directory: {definitions_dir}")
     print(f"Files:     {len(yaml_files)} workflow(s) found\n")
 
-    all_errors: dict[str, list[str]] = {}
-
-    for yaml_path in yaml_files:
-        try:
-            data = load_yaml(yaml_path)
-        except yaml.YAMLError as exc:
-            all_errors[yaml_path.name] = [
-                f"{yaml_path.name}: YAML parse error — {exc}"
-            ]
-            print(f"  FAIL  {yaml_path.name} (YAML parse error)")
-            continue
-
-        if _JSONSCHEMA_AVAILABLE:
-            errors = _jsonschema_validate(data, schema, yaml_path)
-        else:
-            errors = _manual_validate(data, yaml_path)
-
-        if errors:
-            all_errors[yaml_path.name] = errors
-            print(f"  FAIL  {yaml_path.name}")
-        else:
-            print(f"  OK    {yaml_path.name}")
+    all_errors = _validate_all_files(yaml_files, schema)
 
     print()
 
@@ -282,19 +308,7 @@ def main() -> int:
         print(f"All {len(yaml_files)} workflow(s) passed schema validation.")
         return 0
 
-    # Print all errors grouped by file.
-    total_errors = sum(len(v) for v in all_errors.values())
-    print(
-        f"VALIDATION FAILED — {total_errors} error(s) across "
-        f"{len(all_errors)} file(s):\n",
-        file=sys.stderr,
-    )
-    for filename, errors in all_errors.items():
-        print(f"  {filename}:", file=sys.stderr)
-        for err in errors:
-            print(f"    - {err}", file=sys.stderr)
-        print(file=sys.stderr)
-
+    _print_error_report(all_errors)
     return 1
 
 

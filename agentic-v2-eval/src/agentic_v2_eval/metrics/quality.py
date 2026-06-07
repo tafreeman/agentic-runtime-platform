@@ -181,7 +181,7 @@ def _check_common_issues(code: str) -> float:
             score -= 0.3
 
     # Check for magic numbers (excluding 0, 1, 2)
-    magic_numbers = re.findall(r"[^0-9a-zA-Z_](\d{3,})[^0-9]", code)
+    magic_numbers = re.findall(r"\W(\d{3,})\D", code)
     if len(magic_numbers) > 3:
         score -= 0.1
 

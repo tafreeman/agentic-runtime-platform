@@ -71,6 +71,16 @@ from .model_utils import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192 — define once, reuse)
+# ---------------------------------------------------------------------------
+
+MODEL_GEMINI_FLASH = "gemini:gemini-2.5-flash"
+MODEL_GH_GPT4O = "gh:openai/gpt-4o"
+MODEL_OPENAI_GPT4O = "openai:gpt-4o"
+MODEL_ANTHROPIC_CLAUDE_SONNET = "anthropic:claude-sonnet-4-6-20260219"
+MODEL_OLLAMA_QWEN3 = "ollama:qwen3-coder:30b"
+
+# ---------------------------------------------------------------------------
 # Load .env so API keys are available when invoked via uvicorn directly
 # (the CLI entry point already does this, but server startup may bypass it)
 # ---------------------------------------------------------------------------
@@ -93,9 +103,9 @@ except ImportError:
 _TIER_DEFAULTS: dict[int, str] = {
     1: "gemini:gemini-2.0-flash-lite",
     2: "gemini:gemini-2.0-flash",
-    3: "gemini:gemini-2.5-flash",
-    4: "gemini:gemini-2.5-flash",
-    5: "gemini:gemini-2.5-flash",
+    3: MODEL_GEMINI_FLASH,
+    4: MODEL_GEMINI_FLASH,
+    5: MODEL_GEMINI_FLASH,
 }
 
 # Models ranked by reasoning capability per tier.
@@ -112,34 +122,34 @@ _TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
     # Tier 2: balanced -- code review, moderate reasoning
     2: [
         "gemini:gemini-2.0-flash",
-        "gh:openai/gpt-4o",
-        "openai:gpt-4o",
-        "anthropic:claude-sonnet-4-6-20260219",
+        MODEL_GH_GPT4O,
+        MODEL_OPENAI_GPT4O,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
         "ollama:qwen3:8b",
     ],
     # Tier 3: strong reasoning -- architecture, complex code gen
     3: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
     # Tier 4: top-tier -- hard problems, multi-step planning
     4: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
     # Tier 5: best available -- research, deep analysis
     5: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
 }
 
@@ -256,6 +266,56 @@ def _configure_native_router(availability: dict[str, bool]) -> None:
 # ---------------------------------------------------------------------------
 
 
+# Prefix -> builder dispatch table. Each builder receives the model name
+# (model_id with the prefix stripped) and the temperature.  Order matters
+# only for documentation; matching strips the leading ``prefix``.
+_PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
+    ("gh:", build_github_model),
+    ("ollama:", build_ollama_model),
+    ("openai:", build_openai_model),
+    ("anthropic:", build_anthropic_model),
+    ("claude:", build_anthropic_model),
+    ("gemini:", build_gemini_model),
+    ("notebooklm:", build_notebooklm_model),
+    # "local-api:" MUST precede "local:" — startswith() matches the first entry,
+    # and "local:" is a prefix of "local-api:", so the longer prefix must win.
+    ("local-api:", build_local_api_model),
+    ("local:", build_local_onnx_model),
+    ("lmstudio:", build_lmstudio_model),
+)
+
+# Prefixes that are recognized provider namespaces.  A bare name that does not
+# start with any of these is treated as an Ollama local model.
+_KNOWN_PREFIXES: tuple[str, ...] = (
+    "openai:",
+    "azure:",
+    "local:",
+    "windows-ai:",
+    "anthropic:",
+    "claude:",
+    "gemini:",
+    "notebooklm:",
+    "lmstudio:",
+    "local-api:",
+)
+
+
+def _build_model_by_prefix(model_id: str, temperature: float) -> Any | None:
+    """Dispatch a prefixed model ID to its builder, or return None if unmatched."""
+    if model_id == "notebooklm":
+        return build_notebooklm_model("", temperature)
+
+    for prefix, builder in _PREFIX_BUILDERS:
+        if model_id.startswith(prefix):
+            return builder(model_id[len(prefix) :], temperature)
+
+    # Bare name without prefix -- treat as Ollama local model
+    if not any(model_id.startswith(p) for p in _KNOWN_PREFIXES):
+        return build_ollama_model(model_id, temperature)
+
+    return None
+
+
 def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     """Resolve a model ID string to a LangChain ``BaseChatModel`` instance.
 
@@ -287,56 +347,9 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     if is_agentic_no_llm_enabled():
         return build_placeholder_model(temperature)
 
-    if model_id.startswith("gh:"):
-        return build_github_model(model_id[3:], temperature)
-
-    if model_id.startswith("ollama:"):
-        return build_ollama_model(model_id[7:], temperature)
-
-    if model_id.startswith("openai:"):
-        return build_openai_model(model_id[7:], temperature)
-
-    if model_id.startswith("anthropic:"):
-        return build_anthropic_model(model_id[10:], temperature)
-
-    if model_id.startswith("claude:"):
-        return build_anthropic_model(model_id[7:], temperature)
-
-    if model_id.startswith("gemini:"):
-        return build_gemini_model(model_id[7:], temperature)
-
-    if model_id == "notebooklm":
-        return build_notebooklm_model("", temperature)
-
-    if model_id.startswith("notebooklm:"):
-        return build_notebooklm_model(model_id[11:], temperature)
-
-    if model_id.startswith("local:"):
-        return build_local_onnx_model(model_id[6:], temperature)
-
-    if model_id.startswith("lmstudio:"):
-        return build_lmstudio_model(model_id[9:], temperature)
-
-    if model_id.startswith("local-api:"):
-        return build_local_api_model(model_id[10:], temperature)
-
-    # Bare name without prefix -- treat as Ollama local model
-    if not any(
-        model_id.startswith(p)
-        for p in (
-            "openai:",
-            "azure:",
-            "local:",
-            "windows-ai:",
-            "anthropic:",
-            "claude:",
-            "gemini:",
-            "notebooklm:",
-            "lmstudio:",
-            "local-api:",
-        )
-    ):
-        return build_ollama_model(model_id, temperature)
+    model = _build_model_by_prefix(model_id, temperature)
+    if model is not None:
+        return model
 
     raise ValueError(
         f"Unsupported model provider in '{model_id}'. "

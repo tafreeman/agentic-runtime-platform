@@ -24,7 +24,7 @@ from tools.agents.benchmarks.runner_ui import (
 )
 
 
-def cmd_list_benchmarks(args: argparse.Namespace) -> None:
+def cmd_list_benchmarks(_args: argparse.Namespace) -> None:
     """List available benchmarks."""
     print_header("AVAILABLE BENCHMARKS")
 
@@ -49,7 +49,7 @@ def cmd_list_benchmarks(args: argparse.Namespace) -> None:
     print("\nUse --benchmark <id> to run a specific benchmark")
 
 
-def cmd_list_presets(args: argparse.Namespace) -> None:
+def cmd_list_presets(_args: argparse.Namespace) -> None:
     """List preset configurations."""
     print_header("PRESET CONFIGURATIONS")
 
@@ -94,7 +94,7 @@ def cmd_clear_cache(args: argparse.Namespace) -> None:
     print(f"Cleared {deleted} cached files")
 
 
-def cmd_list_models(args: argparse.Namespace) -> None:
+def cmd_list_models(_args: argparse.Namespace) -> None:
     """List all available models from discovery."""
     print_header("AVAILABLE MODELS")
 
@@ -117,7 +117,7 @@ def cmd_list_models(args: argparse.Namespace) -> None:
     print(f"\n  {colorize(f'Total: {total} models available', 'green')}")
 
 
-def cmd_discover_models(args: argparse.Namespace) -> None:
+def cmd_discover_models(_args: argparse.Namespace) -> None:
     """Run model discovery and save results."""
     print_header("MODEL DISCOVERY")
     print("  Discovering available models...\n")

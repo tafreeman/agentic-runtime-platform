@@ -13,6 +13,7 @@ Key design decisions:
 
 import math
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -594,29 +595,59 @@ def _parse_duration(value: str | None) -> float | None:
     remaining = value.strip()
 
     # Minutes
-    if "m" in remaining and "ms" not in remaining:
-        parts = remaining.split("m", 1)
-        try:
-            total += float(parts[0]) * 60
-        except ValueError:
-            return None
-        remaining = parts[1]
+    minutes, remaining, minutes_failed = _consume_duration_minutes(remaining)
+    if minutes_failed:
+        return None
+    total += minutes
 
     # Seconds
-    if "s" in remaining and "ms" not in remaining:
-        parts = remaining.split("s", 1)
-        try:
-            total += float(parts[0])
-        except ValueError:
-            pass
-        remaining = parts[1] if len(parts) > 1 else ""
+    seconds, remaining = _consume_duration_seconds(remaining)
+    total += seconds
 
     # Milliseconds
+    total += _consume_duration_milliseconds(remaining)
+
+    return total if total > 0 else None
+
+
+def _consume_duration_minutes(remaining: str) -> tuple[float, str, bool]:
+    """Extract the minutes component from a duration string.
+
+    Returns ``(seconds_from_minutes, rest, failed)`` where ``failed`` is True
+    only when a minutes marker is present but its value is unparseable.
+    """
+    # Match a minutes marker ('m' NOT followed by 's') so a millisecond token
+    # like "500ms" elsewhere in the string does not block minute parsing
+    # (e.g. "1m500ms" -> 1 minute + 500 ms).
+    match = re.search(r"(\d+(?:\.\d+)?)m(?!s)", remaining)
+    if match:
+        try:
+            minutes = float(match.group(1))
+        except ValueError:
+            return 0.0, remaining, True
+        rest = remaining[: match.start()] + remaining[match.end() :]
+        return minutes * 60, rest, False
+    return 0.0, remaining, False
+
+
+def _consume_duration_seconds(remaining: str) -> tuple[float, str]:
+    """Extract the seconds component from a duration string."""
+    if "s" in remaining and "ms" not in remaining:
+        parts = remaining.split("s", 1)
+        rest = parts[1] if len(parts) > 1 else ""
+        try:
+            return float(parts[0]), rest
+        except ValueError:
+            return 0.0, rest
+    return 0.0, remaining
+
+
+def _consume_duration_milliseconds(remaining: str) -> float:
+    """Extract the milliseconds component from a duration string."""
     if "ms" in remaining:
         parts = remaining.split("ms", 1)
         try:
-            total += float(parts[0]) / 1000
+            return float(parts[0]) / 1000
         except ValueError:
-            pass
-
-    return total if total > 0 else None
+            return 0.0
+    return 0.0

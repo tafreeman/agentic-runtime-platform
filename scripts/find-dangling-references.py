@@ -77,36 +77,53 @@ def should_skip(path: pathlib.Path) -> bool:
     return any(part in SKIP_DIRS for part in path.parts)
 
 
-def main() -> None:
-    findings: list[tuple[str, str, int, str]] = []  # (name, file, line, text)
+def _scan_file(path: pathlib.Path) -> list[tuple[str, str, int, str]]:
+    """Return ``(name, rel_file, line_num, text)`` findings for one file."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except (OSError, UnicodeDecodeError):
+        return []
 
+    findings: list[tuple[str, str, int, str]] = []
+    rel = str(path.relative_to(ROOT))
+    for line_num, line in enumerate(text.splitlines(), 1):
+        for name, pattern in PATTERNS:
+            if pattern.search(line):
+                findings.append((name, rel, line_num, line.strip()))
+    return findings
+
+
+def _collect_findings() -> list[tuple[str, str, int, str]]:
+    """Scan all candidate files for dangling references."""
+    this_file = pathlib.Path(__file__).resolve()
+    findings: list[tuple[str, str, int, str]] = []
     for ext in EXTENSIONS:
         for path in ROOT.rglob(f"*{ext}"):
             if should_skip(path):
                 continue
             # Skip this script itself
-            if path.resolve() == pathlib.Path(__file__).resolve():
+            if path.resolve() == this_file:
                 continue
+            findings.extend(_scan_file(path))
+    return findings
 
-            try:
-                text = path.read_text(encoding="utf-8", errors="replace")
-            except (OSError, UnicodeDecodeError):
-                continue
 
-            for line_num, line in enumerate(text.splitlines(), 1):
-                for name, pattern in PATTERNS:
-                    if pattern.search(line):
-                        rel = path.relative_to(ROOT)
-                        findings.append((name, str(rel), line_num, line.strip()))
+def _report_findings(findings: list[tuple[str, str, int, str]]) -> None:
+    """Print grouped findings to stdout."""
+    print(f"Found {len(findings)} dangling reference(s):\n")
+    current_name = None
+    for name, file, line_num, text in sorted(findings):
+        if name != current_name:
+            print(f"\n  [{name}]")
+            current_name = name
+        print(f"    {file}:{line_num}  {text[:100]}")
+
+
+def main() -> None:
+    findings = _collect_findings()
 
     if findings:
-        print(f"Found {len(findings)} dangling reference(s):\n")
-        current_name = None
-        for name, file, line_num, text in sorted(findings):
-            if name != current_name:
-                print(f"\n  [{name}]")
-                current_name = name
-            print(f"    {file}:{line_num}  {text[:100]}")
+        _report_findings(findings)
         sys.exit(1)
     else:
         print("No dangling references found.")

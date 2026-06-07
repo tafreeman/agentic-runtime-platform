@@ -31,6 +31,62 @@ interface StepLiveState {
   error?: string | null;
 }
 
+/** True when no known step is still pending or running. */
+function areAllStepsDone(stepStates: Map<string, StepLiveState>): boolean {
+  for (const st of stepStates.values()) {
+    if (st.status === "pending" || st.status === "running") {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** A pending step becomes optimistically "running" once all its deps resolve. */
+function shouldOptimisticallyRun(
+  node: DAGNode,
+  stepStates: Map<string, StepLiveState>
+): boolean {
+  const currentStatus = stepStates.get(node.id)?.status ?? "pending";
+  if (currentStatus !== "pending") return false;
+  return node.depends_on.every((depId) => {
+    const ds = stepStates.get(depId)?.status;
+    return ds === "success" || ds === "skipped";
+  });
+}
+
+/**
+ * Layer optimistic "running" status onto pending nodes whose dependencies have
+ * all resolved, while the workflow is still in flight. Returns a new map.
+ */
+function computeEffectiveStepStates(
+  stepStates: Map<string, StepLiveState> | undefined,
+  dagNodes: DAGNode[]
+): Map<string, StepLiveState> {
+  const eff = new Map<string, StepLiveState>();
+  if (!stepStates) return eff;
+
+  // Start by copying all known states
+  for (const [id, st] of stepStates) {
+    eff.set(id, st);
+  }
+
+  const workflowStarted = stepStates.size > 0;
+  const allDone = areAllStepsDone(stepStates);
+
+  // Apply optimistic running status if workflow is running
+  if (workflowStarted && !allDone) {
+    for (const dn of dagNodes) {
+      if (shouldOptimisticallyRun(dn, stepStates)) {
+        eff.set(dn.id, {
+          ...stepStates.get(dn.id),
+          status: "running",
+        });
+      }
+    }
+  }
+  return eff;
+}
+
 interface Props {
   dagNodes: DAGNode[];
   dagEdges: DAGEdge[];
@@ -73,49 +129,10 @@ function WorkflowDAGInner({
     [dagNodes, dagEdges]
   );
 
-  const effectiveStepStates = useMemo(() => {
-    const eff = new Map<string, StepLiveState>();
-    if (!stepStates) return eff;
-    
-    // Start by copying all known states
-    for (const [id, st] of stepStates) {
-      eff.set(id, st);
-    }
-    
-    const workflowStarted = stepStates.size > 0;
-    
-    // Check if we're technically all done with known states
-    let allDone = true;
-    for (const st of stepStates.values()) {
-      if (st.status === "pending" || st.status === "running") {
-        allDone = false;
-        break;
-      }
-    }
-
-    // Apply optimistic running status if workflow is running
-    if (workflowStarted && !allDone) {
-      for (const dn of dagNodes) {
-        const currentLive = stepStates.get(dn.id);
-        const currentStatus = currentLive?.status ?? "pending";
-        
-        if (currentStatus === "pending") {
-          const depsResolved = dn.depends_on.every(depId => {
-            const ds = stepStates.get(depId)?.status;
-            return ds === "success" || ds === "skipped";
-          });
-          
-          if (depsResolved) {
-            eff.set(dn.id, {
-              ...currentLive,
-              status: "running",
-            });
-          }
-        }
-      }
-    }
-    return eff;
-  }, [stepStates, dagNodes]);
+  const effectiveStepStates = useMemo(
+    () => computeEffectiveStepStates(stepStates, dagNodes),
+    [stepStates, dagNodes]
+  );
 
   // Find all currently-running steps
   const runningStepIds = useMemo(() => {
@@ -239,7 +256,8 @@ function WorkflowDAGInner({
       const isKickback = kickbackEdges?.has(edgeId) ?? false;
 
       // Design token colors
-      let strokeColor = "#2c2c36"; // b-bg2 — pending/dark
+      const defaultColor = "#2c2c36"; // b-bg2 — pending/dark
+      let strokeColor = defaultColor;
       let animated = false;
       let strokeDasharray: string | undefined;
       const isActiveEdge =
@@ -251,7 +269,6 @@ function WorkflowDAGInner({
         strokeColor = "#c084fc"; // b-purple
         strokeDasharray = "3 3";
       } else if (sourceState?.status === "success" && targetState?.status === "running" && !disconnected) {
-        strokeColor = "#d97757"; // b-clay — active/running edge
         animated = true;
       } else if (sourceState?.status === "success") {
         strokeColor = "#4ade80"; // b-green — completed
@@ -259,8 +276,6 @@ function WorkflowDAGInner({
         strokeColor = "#d97757"; // b-clay — running source
       } else if (sourceState?.status === "failed") {
         strokeColor = "rgba(248,113,113,0.5)"; // b-red faint
-      } else if (!sourceState || sourceState.status === "pending") {
-        strokeColor = "#2c2c36"; // dark — not yet reached
       }
 
       return {
@@ -312,7 +327,7 @@ function WorkflowDAGInner({
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}
         minZoom={0.2}
-        maxZoom={2.0}
+        maxZoom={2}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1a1a28" />
         <Controls showInteractive={false} className="dag-controls" />

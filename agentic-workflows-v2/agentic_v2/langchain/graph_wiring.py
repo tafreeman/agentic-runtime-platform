@@ -279,6 +279,20 @@ def extract_agent_response_text(agent_result: dict[str, Any]) -> str:
     return coerce_message_content_to_text(ai_messages[-1].content)
 
 
+def _coerce_dict_content_to_text(content: dict[str, Any]) -> str:
+    """Normalize a dict message block (LangChain/OpenAI/Gemini shapes) to text."""
+    for key in ("text", "output_text", "content", "message"):
+        if key in content:
+            text = coerce_message_content_to_text(content.get(key))
+            if text:
+                return text
+    try:
+        return json.dumps(content, ensure_ascii=False, default=str)
+    except (TypeError, ValueError):
+        # ValueError covers circular references / out-of-range floats.
+        return str(content)
+
+
 def coerce_message_content_to_text(content: Any) -> str:
     """Normalize provider-specific message content into plain text."""
     if content is None:
@@ -291,16 +305,7 @@ def coerce_message_content_to_text(content: Any) -> str:
         parts = [coerce_message_content_to_text(item) for item in content]
         return "\n".join(part for part in parts if part and part.strip())
     if isinstance(content, dict):
-        # Common LangChain/OpenAI/Gemini message block shapes.
-        for key in ("text", "output_text", "content", "message"):
-            if key in content:
-                text = coerce_message_content_to_text(content.get(key))
-                if text:
-                    return text
-        try:
-            return json.dumps(content, ensure_ascii=False, default=str)
-        except TypeError:
-            return str(content)
+        return _coerce_dict_content_to_text(content)
     return str(content)
 
 
@@ -351,24 +356,49 @@ def parse_step_outputs(response_text: Any) -> dict[str, Any]:
     return step_outputs
 
 
+def _find_last_ai_message(messages: list[Any]) -> AIMessage | None:
+    """Return the last ``AIMessage`` in a message list, or None if absent."""
+    if not messages:
+        return None
+    last_msg = messages[-1]
+    if isinstance(last_msg, AIMessage):
+        return last_msg
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage):
+            return msg
+    return None
+
+
+def _extract_usage_from_response_metadata(
+    rm: dict[str, Any], metadata: dict[str, Any]
+) -> None:
+    """Populate token usage and model name from provider response_metadata."""
+    # OpenAI/Azure often put it in 'token_usage'
+    if "token_usage" in rm:
+        usage = rm["token_usage"]
+        metadata["input_tokens"] = usage.get("prompt_tokens")
+        metadata["output_tokens"] = usage.get("completion_tokens")
+        metadata["total_tokens"] = usage.get("total_tokens")
+    # Anthropic often puts it in 'usage'
+    elif "usage" in rm:
+        usage = rm["usage"]
+        metadata["input_tokens"] = usage.get("input_tokens")
+        metadata["output_tokens"] = usage.get("output_tokens")
+
+    # Model name
+    if "model_name" in rm:
+        metadata["model"] = rm["model_name"]
+    elif "model" in rm:
+        metadata["model"] = rm["model"]
+
+
 def extract_agent_metadata(agent_result: dict[str, Any]) -> dict[str, Any]:
     """Extract token usage and model info from agent response."""
     metadata: dict[str, Any] = {}
 
-    # Try to find the last AIMessage
-    messages = agent_result.get("messages", [])
-    if not messages:
+    last_msg = _find_last_ai_message(agent_result.get("messages", []))
+    if last_msg is None:
         return metadata
-
-    last_msg = messages[-1]
-    if not isinstance(last_msg, AIMessage):
-        # Look backwards for the last AIMessage
-        for msg in reversed(messages):
-            if isinstance(msg, AIMessage):
-                last_msg = msg
-                break
-        else:
-            return metadata
 
     # 1. Token usage from usage_metadata (standard LangChain)
     if hasattr(last_msg, "usage_metadata") and last_msg.usage_metadata:
@@ -379,24 +409,7 @@ def extract_agent_metadata(agent_result: dict[str, Any]) -> dict[str, Any]:
 
     # 2. Token usage from response_metadata (provider specific)
     elif hasattr(last_msg, "response_metadata"):
-        rm = last_msg.response_metadata
-        # OpenAI/Azure often put it in 'token_usage'
-        if "token_usage" in rm:
-            usage = rm["token_usage"]
-            metadata["input_tokens"] = usage.get("prompt_tokens")
-            metadata["output_tokens"] = usage.get("completion_tokens")
-            metadata["total_tokens"] = usage.get("total_tokens")
-        # Anthropic often puts it in 'usage'
-        elif "usage" in rm:
-            usage = rm["usage"]
-            metadata["input_tokens"] = usage.get("input_tokens")
-            metadata["output_tokens"] = usage.get("output_tokens")
-
-        # Model name
-        if "model_name" in rm:
-            metadata["model"] = rm["model_name"]
-        elif "model" in rm:
-            metadata["model"] = rm["model"]
+        _extract_usage_from_response_metadata(last_msg.response_metadata, metadata)
 
     return metadata
 
@@ -404,6 +417,305 @@ def extract_agent_metadata(agent_result: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Node factory
 # ---------------------------------------------------------------------------
+
+
+def _build_tier0_node(
+    step: StepConfig, trace: TraceAdapter
+) -> Any:
+    """Build the deterministic tier-0 node closure for *step*."""
+    deterministic_fn = _TIER0_REGISTRY.get(step.agent)
+
+    def _tier0_node(state: WorkflowState) -> dict[str, Any]:
+        run_id = state.get("context", {}).get("workflow_run_id", "")
+        start_time = datetime.now(UTC)
+
+        ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        trace.emit_step_start(step.name, run_id, resolved_inputs)
+
+        updated = {**state, "context": ctx}
+        if deterministic_fn:
+            result = deterministic_fn(updated)
+        else:
+            # Unknown tier0 agent — noop
+            result = {"context": ctx}
+
+        # Move step outputs from __current__ into named step
+        step_outputs = (
+            result.get("steps", {}).get("__current__", {}).get("outputs", {})
+        )
+        end_time = datetime.now(UTC)
+        steps = record_step_result(
+            state,
+            step.name,
+            "success",
+            step_outputs,
+            inputs=resolved_inputs,
+            start_time=start_time,
+            end_time=end_time,
+        )
+
+        # Map outputs to context
+        final_ctx = map_step_outputs_to_context(
+            step,
+            step_outputs,
+            dict(result.get("context", ctx)),
+        )
+
+        trace.emit_step_complete(step.name, run_id, "success", step_outputs)
+
+        return {
+            "context": final_ctx,
+            "steps": steps,
+            "current_step": step.name,
+        }
+
+    return _tier0_node
+
+
+def _build_validation_node(step: StepConfig) -> Any:
+    """Build a no-op validation node closure that records a 'validation' status."""
+
+    def _validation_noop(state: WorkflowState) -> dict[str, Any]:
+        return {
+            "context": dict(state.get("context", {})),
+            "steps": {
+                **state.get("steps", {}),
+                step.name: {
+                    "status": "validation",
+                    "outputs": {},
+                    "loop_iteration": next_iteration(state, step.name),
+                },
+            },
+            "current_step": step.name,
+        }
+
+    return _validation_noop
+
+
+def _invoke_with_failover(
+    step: StepConfig,
+    task_description: str,
+    model_candidates: list[str],
+    get_agent_for_model: Any,
+) -> dict[str, Any]:
+    """Invoke the agent across candidate models, returning the attempt outcome.
+
+    The returned dict always contains ``attempt_errors`` and
+    ``attempted_models``; on success it also contains ``agent_result``,
+    ``response_text`` and ``metadata``.
+    """
+    attempt_errors: list[dict[str, Any]] = []
+    attempted_models: list[str] = []
+
+    for model_id in model_candidates:
+        attempted_models.append(model_id)
+        try:
+            agent = get_agent_for_model(model_id)
+            agent_result = agent.invoke(
+                {"messages": [HumanMessage(content=task_description)]}
+            )
+            response_text = extract_agent_response_text(agent_result)
+            metadata = extract_agent_metadata(agent_result)
+            metadata.setdefault("model", model_id)
+            return {
+                "agent_result": agent_result,
+                "response_text": response_text,
+                "metadata": metadata,
+                "attempt_errors": attempt_errors,
+                "attempted_models": attempted_models,
+            }
+        except Exception as e:
+            retryable = is_retryable_model_error(e)
+            attempt_errors.append(
+                {
+                    "model": model_id,
+                    "error": str(e),
+                    "retryable": retryable,
+                }
+            )
+            logger.warning(
+                "Step %s model attempt failed (%s, retryable=%s): %s",
+                step.name,
+                model_id,
+                retryable,
+                e,
+            )
+
+    return {
+        "agent_result": None,
+        "response_text": "",
+        "metadata": {},
+        "attempt_errors": attempt_errors,
+        "attempted_models": attempted_models,
+    }
+
+
+def _build_failure_update(
+    step: StepConfig,
+    state: WorkflowState,
+    ctx: dict[str, Any],
+    resolved_inputs: dict[str, Any],
+    run_id: str,
+    start_time: datetime,
+    trace: TraceAdapter,
+    attempt_errors: list[dict[str, Any]],
+    attempted_models: list[str],
+) -> "_AwaitableStateUpdate":
+    """Record a failed step (all model attempts exhausted) and emit traces."""
+    err_text = "All model attempts failed"
+    if attempt_errors:
+        last = attempt_errors[-1]
+        err_text = (
+            f"{err_text} (last model={last.get('model')}: {last.get('error')})"
+        )
+    end_time = datetime.now(UTC)
+    steps = record_step_result(
+        state,
+        step.name,
+        "failed",
+        {},
+        error=err_text,
+        inputs=resolved_inputs,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    trace.emit_step_complete(
+        step.name,
+        run_id,
+        "failed",
+        {
+            "error": err_text,
+            "attempted_models": attempted_models,
+            "attempt_errors": attempt_errors,
+        },
+    )
+    return _AwaitableStateUpdate(
+        {
+            "context": ctx,
+            "steps": steps,
+            "current_step": step.name,
+            "errors": [f"Step {step.name} failed: {err_text}"],
+        }
+    )
+
+
+def _build_success_update(
+    step: StepConfig,
+    state: WorkflowState,
+    ctx: dict[str, Any],
+    resolved_inputs: dict[str, Any],
+    run_id: str,
+    start_time: datetime,
+    trace: TraceAdapter,
+    response_text: str,
+    metadata: dict[str, Any],
+    attempt_errors: list[dict[str, Any]],
+    attempted_models: list[str],
+) -> "_AwaitableStateUpdate":
+    """Record a successful step, mapping outputs to context and emitting traces."""
+    if attempt_errors:
+        metadata["attempted_models"] = attempted_models
+        metadata["attempt_errors"] = attempt_errors
+
+    step_outputs = parse_step_outputs(response_text)
+
+    # Map outputs to context
+    ctx = map_step_outputs_to_context(step, step_outputs, ctx)
+
+    end_time = datetime.now(UTC)
+    steps = record_step_result(
+        state,
+        step.name,
+        "success",
+        step_outputs,
+        inputs=resolved_inputs,
+        metadata=metadata,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+    trace.emit_step_complete(step.name, run_id, "success", step_outputs)
+
+    return _AwaitableStateUpdate(
+        {
+            "context": ctx,
+            "steps": steps,
+            "current_step": step.name,
+            "messages": [AIMessage(content=response_text)],
+            "metadata": metadata,
+        }
+    )
+
+
+def _build_llm_node(
+    step: StepConfig,
+    tier: int,
+    trace: TraceAdapter,
+    create_agent_fn: Any,
+    get_candidates_fn: Any,
+) -> Any:
+    """Build the tier-1+ LLM-backed node closure with runtime failover."""
+    model_candidates = get_candidates_fn(
+        tier,
+        step.model_override,
+        include_unavailable=False,
+        include_gh_backup=True,
+    )
+    agent_cache: dict[str, Any] = {}
+
+    def _get_agent_for_model(model_id: str) -> Any:
+        cached = agent_cache.get(model_id)
+        if cached is not None:
+            return cached
+        agent = create_agent_fn(
+            step.agent,
+            tool_names=step.tools,
+            prompt_file=step.prompt_file,
+            model_override=model_id,
+        )
+        agent_cache[model_id] = agent
+        return agent
+
+    def _llm_node(state: WorkflowState) -> dict[str, Any]:
+        run_id = state.get("context", {}).get("workflow_run_id", "")
+        start_time = datetime.now(UTC)
+        ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        trace.emit_step_start(step.name, run_id, resolved_inputs)
+
+        task_description = build_task_description(step, resolved_inputs)
+
+        outcome = _invoke_with_failover(
+            step, task_description, model_candidates, _get_agent_for_model
+        )
+
+        if outcome["agent_result"] is None:
+            return _build_failure_update(
+                step,
+                state,
+                ctx,
+                resolved_inputs,
+                run_id,
+                start_time,
+                trace,
+                outcome["attempt_errors"],
+                outcome["attempted_models"],
+            )
+
+        return _build_success_update(
+            step,
+            state,
+            ctx,
+            resolved_inputs,
+            run_id,
+            start_time,
+            trace,
+            outcome["response_text"],
+            outcome["metadata"],
+            outcome["attempt_errors"],
+            outcome["attempted_models"],
+        )
+
+    return _llm_node
 
 
 def make_step_node(
@@ -441,209 +753,14 @@ def make_step_node(
 
     # Tier 0: deterministic
     if tier == 0:
-        deterministic_fn = _TIER0_REGISTRY.get(step.agent)
-
-        def _tier0_node(state: WorkflowState) -> dict[str, Any]:
-            run_id = state.get("context", {}).get("workflow_run_id", "")
-            start_time = datetime.now(UTC)
-
-            ctx, resolved_inputs = resolve_inputs_into_context(step, state)
-            _trace.emit_step_start(step.name, run_id, resolved_inputs)
-
-            updated = {**state, "context": ctx}
-            if deterministic_fn:
-                result = deterministic_fn(updated)
-            else:
-                # Unknown tier0 agent — noop
-                result = {"context": ctx}
-
-            # Move step outputs from __current__ into named step
-            step_outputs = (
-                result.get("steps", {}).get("__current__", {}).get("outputs", {})
-            )
-            end_time = datetime.now(UTC)
-            steps = record_step_result(
-                state,
-                step.name,
-                "success",
-                step_outputs,
-                inputs=resolved_inputs,
-                start_time=start_time,
-                end_time=end_time,
-            )
-
-            # Map outputs to context
-            final_ctx = map_step_outputs_to_context(
-                step,
-                step_outputs,
-                dict(result.get("context", ctx)),
-            )
-
-            _trace.emit_step_complete(step.name, run_id, "success", step_outputs)
-
-            return {
-                "context": final_ctx,
-                "steps": steps,
-                "current_step": step.name,
-            }
-
-        return _tier0_node
+        return _build_tier0_node(step, _trace)
 
     # Validation mode: compile graph shape without requiring provider/model setup.
     if validate_only:
-
-        def _validation_noop(state: WorkflowState) -> dict[str, Any]:
-            return {
-                "context": dict(state.get("context", {})),
-                "steps": {
-                    **state.get("steps", {}),
-                    step.name: {
-                        "status": "validation",
-                        "outputs": {},
-                        "loop_iteration": next_iteration(state, step.name),
-                    },
-                },
-                "current_step": step.name,
-            }
-
-        return _validation_noop
+        return _build_validation_node(step)
 
     # Tier 1+: LLM-backed agent with runtime failover chain
-    model_candidates = _get_candidates(
-        tier,
-        step.model_override,
-        include_unavailable=False,
-        include_gh_backup=True,
-    )
-    agent_cache: dict[str, Any] = {}
-
-    def _get_agent_for_model(model_id: str) -> Any:
-        cached = agent_cache.get(model_id)
-        if cached is not None:
-            return cached
-        agent = _create_agent(
-            step.agent,
-            tool_names=step.tools,
-            prompt_file=step.prompt_file,
-            model_override=model_id,
-        )
-        agent_cache[model_id] = agent
-        return agent
-
-    def _llm_node(state: WorkflowState) -> dict[str, Any]:
-        run_id = state.get("context", {}).get("workflow_run_id", "")
-        start_time = datetime.now(UTC)
-        ctx, resolved_inputs = resolve_inputs_into_context(step, state)
-        _trace.emit_step_start(step.name, run_id, resolved_inputs)
-
-        task_description = build_task_description(step, resolved_inputs)
-
-        attempt_errors: list[dict[str, Any]] = []
-        attempted_models: list[str] = []
-        agent_result: dict[str, Any] | None = None
-        response_text = ""
-        metadata: dict[str, Any] = {}
-
-        # Invoke the react agent with failover across candidate models.
-        for model_id in model_candidates:
-            attempted_models.append(model_id)
-            try:
-                agent = _get_agent_for_model(model_id)
-                agent_result = agent.invoke(
-                    {"messages": [HumanMessage(content=task_description)]}
-                )
-                response_text = extract_agent_response_text(agent_result)
-                metadata = extract_agent_metadata(agent_result)
-                metadata.setdefault("model", model_id)
-                break
-            except Exception as e:
-                retryable = is_retryable_model_error(e)
-                attempt_errors.append(
-                    {
-                        "model": model_id,
-                        "error": str(e),
-                        "retryable": retryable,
-                    }
-                )
-                logger.warning(
-                    "Step %s model attempt failed (%s, retryable=%s): %s",
-                    step.name,
-                    model_id,
-                    retryable,
-                    e,
-                )
-
-        if agent_result is None:
-            err_text = "All model attempts failed"
-            if attempt_errors:
-                last = attempt_errors[-1]
-                err_text = (
-                    f"{err_text} (last model={last.get('model')}: {last.get('error')})"
-                )
-            end_time = datetime.now(UTC)
-            steps = record_step_result(
-                state,
-                step.name,
-                "failed",
-                {},
-                error=err_text,
-                inputs=resolved_inputs,
-                start_time=start_time,
-                end_time=end_time,
-            )
-            _trace.emit_step_complete(
-                step.name,
-                run_id,
-                "failed",
-                {
-                    "error": err_text,
-                    "attempted_models": attempted_models,
-                    "attempt_errors": attempt_errors,
-                },
-            )
-            return _AwaitableStateUpdate(
-                {
-                    "context": ctx,
-                    "steps": steps,
-                    "current_step": step.name,
-                    "errors": [f"Step {step.name} failed: {err_text}"],
-                }
-            )
-
-        if attempt_errors:
-            metadata["attempted_models"] = attempted_models
-            metadata["attempt_errors"] = attempt_errors
-
-        step_outputs = parse_step_outputs(response_text)
-
-        # Map outputs to context
-        ctx = map_step_outputs_to_context(step, step_outputs, ctx)
-
-        end_time = datetime.now(UTC)
-        steps = record_step_result(
-            state,
-            step.name,
-            "success",
-            step_outputs,
-            inputs=resolved_inputs,
-            metadata=metadata,
-            start_time=start_time,
-            end_time=end_time,
-        )
-
-        _trace.emit_step_complete(step.name, run_id, "success", step_outputs)
-
-        return _AwaitableStateUpdate(
-            {
-                "context": ctx,
-                "steps": steps,
-                "current_step": step.name,
-                "messages": [AIMessage(content=response_text)],
-                "metadata": metadata,
-            }
-        )
-
-    return _llm_node
+    return _build_llm_node(step, tier, _trace, _create_agent, _get_candidates)
 
 
 # ---------------------------------------------------------------------------

@@ -48,6 +48,38 @@ _FILE_BLOCK_RE = FILE_BLOCK_RE
 # ---------------------------------------------------------------------------
 
 
+def _strip_outer_fence(raw: str) -> str | None:
+    """Strip the outer markdown fence lines (first and last ```), if present.
+
+    Does NOT remove embedded backtick lines inside JSON string values. Returns
+    the fence-stripped text, or ``None`` when *raw* is not fenced/empty.
+    """
+    if not raw.startswith("```"):
+        return None
+    lines = raw.splitlines()
+    start = 1  # skip opening ```json / ``` line
+    end = len(lines)
+    # Only strip trailing fence if the last non-empty line is a fence marker
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip():
+            if lines[i].strip().startswith("```"):
+                end = i
+            break
+    fenced = "\n".join(lines[start:end]).strip()
+    return fenced or None
+
+
+def _bracket_span(raw: str, open_ch: str, close_ch: str) -> str | None:
+    """Return the substring spanning the first open to last close bracket."""
+    first = raw.find(open_ch)
+    last = raw.rfind(close_ch)
+    if first != -1 and last > first:
+        snippet = raw[first : last + 1].strip()
+        if snippet:
+            return snippet
+    return None
+
+
 def extract_json_candidates(text: str) -> list[str]:
     """Return increasingly permissive JSON candidates from model output.
 
@@ -60,36 +92,18 @@ def extract_json_candidates(text: str) -> list[str]:
     if raw:
         candidates.append(raw)
 
-    # Remove ONLY the outer markdown fence lines (first and last ```)
-    # Do NOT remove embedded backtick lines inside JSON string values.
-    if raw.startswith("```"):
-        lines = raw.splitlines()
-        start = 1  # skip opening ```json / ``` line
-        end = len(lines)
-        # Only strip trailing fence if the last non-empty line is a fence marker
-        for i in range(len(lines) - 1, -1, -1):
-            if lines[i].strip():
-                if lines[i].strip().startswith("```"):
-                    end = i
-                break
-        fenced = "\n".join(lines[start:end]).strip()
-        if fenced:
-            candidates.append(fenced)
+    fenced = _strip_outer_fence(raw)
+    if fenced:
+        candidates.append(fenced)
 
     # Extract first likely JSON object/array by bracket span
-    first_obj = raw.find("{")
-    last_obj = raw.rfind("}")
-    if first_obj != -1 and last_obj > first_obj:
-        snippet = raw[first_obj : last_obj + 1].strip()
-        if snippet:
-            candidates.append(snippet)
+    obj_snippet = _bracket_span(raw, "{", "}")
+    if obj_snippet:
+        candidates.append(obj_snippet)
 
-    first_arr = raw.find("[")
-    last_arr = raw.rfind("]")
-    if first_arr != -1 and last_arr > first_arr:
-        snippet = raw[first_arr : last_arr + 1].strip()
-        if snippet:
-            candidates.append(snippet)
+    arr_snippet = _bracket_span(raw, "[", "]")
+    if arr_snippet:
+        candidates.append(arr_snippet)
 
     # Deduplicate while preserving order
     seen: set[str] = set()
@@ -110,6 +124,137 @@ _extract_json_candidates = extract_json_candidates
 # ---------------------------------------------------------------------------
 
 
+def _recover_nested_review_report(raw_response: str) -> dict[str, Any] | None:
+    """Recover a nested review_report payload from a raw_response JSON blob.
+
+    Some model responses come wrapped as::
+
+        {"raw_response": "```json { \"review_report\": {...} } ```"}
+
+    Returns the recovered report dict, or ``None`` when none is found.
+    """
+    for candidate in extract_json_candidates(raw_response):
+        try:
+            nested_parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(nested_parsed, dict):
+            continue
+        if isinstance(nested_parsed.get("review_report"), dict):
+            return nested_parsed["review_report"]
+        if isinstance(nested_parsed.get("review"), dict):
+            return nested_parsed["review"]
+        if isinstance(nested_parsed.get("overall_status"), str):
+            return {"overall_status": nested_parsed["overall_status"]}
+    return None
+
+
+def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:
+    """Build a review_report by salvaging status from free-form raw text."""
+    from ..contracts import ReviewStatus
+
+    status_match = re.search(
+        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+        raw_text,
+        flags=re.IGNORECASE,
+    )
+    approved_match = re.search(
+        r'"?approved"?\s*[:=]\s*(true|false)',
+        raw_text,
+        flags=re.IGNORECASE,
+    )
+
+    if status_match:
+        raw_status = status_match.group(1).strip()
+    elif approved_match:
+        raw_status = (
+            "APPROVED"
+            if approved_match.group(1).lower() == "true"
+            else "NEEDS_FIXES"
+        )
+    else:
+        raw_status = None  # normalize() defaults to NEEDS_FIXES
+
+    return {"overall_status": ReviewStatus.normalize(raw_status).value}
+
+
+def _finalize_review_report_status(
+    parsed: dict[str, Any], rr: dict[str, Any]
+) -> None:
+    """Ensure rr has a normalized overall_status, promoting top-level if needed."""
+    from ..contracts import ReviewStatus
+
+    top_level_status = parsed.get("overall_status")
+    if isinstance(top_level_status, str) and "overall_status" not in rr:
+        rr["overall_status"] = top_level_status
+
+    if "overall_status" not in rr:
+        approved = rr.get("approved")
+        raw_status = "APPROVED" if approved is True else None
+        rr["overall_status"] = ReviewStatus.normalize(raw_status).value
+    else:
+        # Normalize whatever value is already present
+        rr["overall_status"] = ReviewStatus.normalize(rr["overall_status"]).value
+
+
+def _normalize_review_report_key(parsed: dict[str, Any]) -> None:
+    """Coerce variant reviewer shapes into a canonical review_report dict."""
+    rr = parsed.get("review_report")
+    if not isinstance(rr, dict) and isinstance(parsed.get("review"), dict):
+        rr = parsed.get("review")
+        parsed["review_report"] = rr
+
+    # Recover nested reviewer payload so when-conditions can resolve.
+    if not isinstance(rr, dict) and isinstance(parsed.get("raw_response"), str):
+        nested_report = _recover_nested_review_report(str(parsed.get("raw_response")))
+        if nested_report is not None:
+            rr = nested_report
+            parsed["review_report"] = rr
+
+    if not isinstance(rr, dict):
+        rr = _review_report_from_raw_text(str(parsed.get("raw_response", "")))
+        parsed["review_report"] = rr
+
+    if isinstance(rr, dict):
+        _finalize_review_report_status(parsed, rr)
+        parsed["review_report"] = rr
+
+
+def _promote_missing_keys_from_raw(
+    parsed: dict[str, Any], expected_output_keys: list[str]
+) -> None:
+    """Promote expected keys nested inside raw_response to the top level.
+
+    When the parsed dict only has ``raw_response`` (the outer parse succeeded
+    but all content is inside a nested JSON blob), try to extract the expected
+    keys from that nested JSON.
+    """
+    missing_keys = [
+        k
+        for k in expected_output_keys
+        if k not in parsed and k != "raw_response"
+    ]
+    if not (missing_keys and isinstance(parsed.get("raw_response"), str)):
+        return
+
+    nested_raw = str(parsed["raw_response"])
+    for candidate in extract_json_candidates(nested_raw):
+        try:
+            nested_parsed = json.loads(candidate, strict=False)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(nested_parsed, dict):
+            continue
+        # Only promote keys the caller expects — don't stomp existing keys
+        promoted = False
+        for key in missing_keys:
+            if key in nested_parsed and key not in parsed:
+                parsed[key] = nested_parsed[key]
+                promoted = True
+        if promoted:
+            break
+
+
 def normalize_expected_structure(
     parsed: dict[str, Any],
     expected_output_keys: list[str] | None,
@@ -123,116 +268,15 @@ def normalize_expected_structure(
     using :meth:`ReviewStatus.normalize` so that downstream ``when``-conditions
     can reliably gate on approval status.
     """
-    from ..contracts import ReviewStatus
-
     if not expected_output_keys:
         return parsed
 
     # Normalize legacy/variant reviewer output into review_report.
     if "review_report" in expected_output_keys:
-        rr = parsed.get("review_report")
-        if not isinstance(rr, dict) and isinstance(parsed.get("review"), dict):
-            rr = parsed.get("review")
-            parsed["review_report"] = rr
+        _normalize_review_report_key(parsed)
 
-        # Some model responses come wrapped as:
-        # {"raw_response": "```json { \"review_report\": {...} } ```"}
-        # Recover nested reviewer payload so when-conditions can resolve.
-        if not isinstance(rr, dict) and isinstance(parsed.get("raw_response"), str):
-            nested_raw = str(parsed.get("raw_response"))
-            nested_report: dict[str, Any] | None = None
-            for candidate in extract_json_candidates(nested_raw):
-                try:
-                    nested_parsed = json.loads(candidate)
-                    if isinstance(nested_parsed, dict):
-                        if isinstance(nested_parsed.get("review_report"), dict):
-                            nested_report = nested_parsed["review_report"]
-                            break
-                        if isinstance(nested_parsed.get("review"), dict):
-                            nested_report = nested_parsed["review"]
-                            break
-                        if isinstance(nested_parsed.get("overall_status"), str):
-                            nested_report = {
-                                "overall_status": nested_parsed["overall_status"]
-                            }
-                            break
-                except json.JSONDecodeError:
-                    continue
-
-            if nested_report is not None:
-                rr = nested_report
-                parsed["review_report"] = rr
-
-        if not isinstance(rr, dict):
-            raw_text = str(parsed.get("raw_response", ""))
-            status_match = re.search(
-                r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ -]+)"?',
-                raw_text,
-                flags=re.IGNORECASE,
-            )
-            approved_match = re.search(
-                r'"?approved"?\s*[:=]\s*(true|false)',
-                raw_text,
-                flags=re.IGNORECASE,
-            )
-
-            if status_match:
-                raw_status = status_match.group(1).strip()
-            elif approved_match:
-                raw_status = (
-                    "APPROVED"
-                    if approved_match.group(1).lower() == "true"
-                    else "NEEDS_FIXES"
-                )
-            else:
-                raw_status = None  # normalize() defaults to NEEDS_FIXES
-
-            rr = {"overall_status": ReviewStatus.normalize(raw_status).value}
-            parsed["review_report"] = rr
-
-        if isinstance(rr, dict):
-            top_level_status = parsed.get("overall_status")
-            if isinstance(top_level_status, str) and "overall_status" not in rr:
-                rr["overall_status"] = top_level_status
-
-            if "overall_status" not in rr:
-                approved = rr.get("approved")
-                raw_status = "APPROVED" if approved is True else None
-                rr["overall_status"] = ReviewStatus.normalize(raw_status).value
-            else:
-                # Normalize whatever value is already present
-                rr["overall_status"] = ReviewStatus.normalize(
-                    rr["overall_status"]
-                ).value
-
-            parsed["review_report"] = rr
-
-    # General recovery: when the parsed dict only has "raw_response" (parse
-    # succeeded at the outer level but all content is inside a nested JSON blob),
-    # and the step expects specific output keys that aren't present at top level,
-    # try to extract those keys from the nested JSON in raw_response.
-    missing_keys = [
-        k
-        for k in expected_output_keys
-        if k not in parsed and k != "raw_response"
-    ]
-    if missing_keys and isinstance(parsed.get("raw_response"), str):
-        nested_raw = str(parsed["raw_response"])
-        for candidate in extract_json_candidates(nested_raw):
-            try:
-                nested_parsed = json.loads(candidate, strict=False)
-                if not isinstance(nested_parsed, dict):
-                    continue
-                # Only promote keys the caller expects — don't stomp existing keys
-                promoted = False
-                for key in missing_keys:
-                    if key in nested_parsed and key not in parsed:
-                        parsed[key] = nested_parsed[key]
-                        promoted = True
-                if promoted:
-                    break
-            except json.JSONDecodeError:
-                continue
+    # General recovery: promote expected keys nested inside raw_response.
+    _promote_missing_keys_from_raw(parsed, expected_output_keys)
 
     return parsed
 
@@ -309,39 +353,39 @@ def parse_llm_json_output(
     # from JSON-like responses that are malformed/truncated.
     fallback.update(_salvage_expected_keys_from_jsonish(response, expected_output_keys))
 
-    # If this step expects review_report but the model returned malformed JSON,
-    # salvage status from raw text so when-conditions still work.
-    if expected_output_keys and "review_report" in expected_output_keys:
-        status_match = re.search(
-            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ -]+)"?',
-            response,
-            flags=re.IGNORECASE,
-        )
-        approved_match = re.search(
-            r'"?approved"?\s*[:=]\s*(true|false)',
-            response,
-            flags=re.IGNORECASE,
-        )
-
-        if status_match:
-            raw_status = status_match.group(1).strip()
-            normalized = raw_status.upper().replace(" ", "_")
-            fallback["review_report"] = {"overall_status": normalized}
-        elif approved_match:
-            is_approved = approved_match.group(1).lower() == "true"
-            fallback["review_report"] = {
-                "overall_status": "APPROVED" if is_approved else "NEEDS_FIXES"
-            }
-        else:
-            # Conservative default: if we cannot prove approval, force rework path.
-            fallback["review_report"] = {"overall_status": "NEEDS_FIXES"}
-
-    if expected_output_keys and "review_report" in expected_output_keys:
-        if "review_report" not in fallback:
-            return normalize_expected_structure(fallback, expected_output_keys)
+    if not (expected_output_keys and "review_report" in expected_output_keys):
         return fallback
 
+    # This step expects review_report but the model returned malformed JSON —
+    # salvage status from raw text so when-conditions still work.
+    fallback["review_report"] = _salvage_review_report_from_text(response)
     return fallback
+
+
+def _salvage_review_report_from_text(response: str) -> dict[str, Any]:
+    """Salvage a review_report dict from malformed/truncated model text.
+
+    Conservative default: if approval cannot be proven, force the rework path.
+    """
+    status_match = re.search(
+        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+        response,
+        flags=re.IGNORECASE,
+    )
+    approved_match = re.search(
+        r'"?approved"?\s*[:=]\s*(true|false)',
+        response,
+        flags=re.IGNORECASE,
+    )
+
+    if status_match:
+        raw_status = status_match.group(1).strip()
+        normalized = raw_status.upper().replace(" ", "_")
+        return {"overall_status": normalized}
+    if approved_match:
+        is_approved = approved_match.group(1).lower() == "true"
+        return {"overall_status": "APPROVED" if is_approved else "NEEDS_FIXES"}
+    return {"overall_status": "NEEDS_FIXES"}
 
 
 # Backward-compatibility alias

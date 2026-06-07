@@ -16,7 +16,7 @@ function gradeToTone(grade: string): BPillTone {
 
 export default function EvaluationRubricAccordion({
   filename,
-}: EvaluationRubricAccordionProps) {
+}: Readonly<EvaluationRubricAccordionProps>) {
   const { data, isLoading } = useRunEvaluationDetail(filename);
 
   if (isLoading) {
@@ -116,7 +116,7 @@ export default function EvaluationRubricAccordion({
                 key={gate}
                 className={passed ? "text-b-green" : "text-b-red"}
               >
-                {passed ? "[OK]" : "[FAIL]"} {gate.replace(/_/g, " ")}
+                {passed ? "[OK]" : "[FAIL]"} {gate.replaceAll("_", " ")}
               </div>
             ))}
           </div>

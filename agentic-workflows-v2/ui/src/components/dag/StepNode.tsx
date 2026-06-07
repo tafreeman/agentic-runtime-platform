@@ -160,36 +160,42 @@ function StepNodeComponent({ id, data }: NodeProps) {
         </div>
 
         {/* Row 3: tokens spaced or "queued" */}
-        {showTokens ? (
-          <div
-            data-testid="step-node-tokens"
-            style={{
-              marginTop: "4px",
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: "9px",
-              color: "#a4a494",
-              fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-            }}
-          >
-            {tokensIn != null || tokensOut != null ? (
-              <>
-                {tokensIn != null && (
-                  <span>↓<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
+        {(() => {
+          if (showTokens) {
+            return (
+              <div
+                data-testid="step-node-tokens"
+                style={{
+                  marginTop: "4px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "9px",
+                  color: "#a4a494",
+                  fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
+                }}
+              >
+                {tokensIn != null || tokensOut != null ? (
+                  <>
+                    {tokensIn != null && (
+                      <span>↓<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
+                    )}
+                    {tokensOut != null && (
+                      <span>↑<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
+                    )}
+                  </>
+                ) : (
+                  tokensUsed != null && (
+                    <span>↕<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
+                  )
                 )}
-                {tokensOut != null && (
-                  <span>↑<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
-                )}
-              </>
-            ) : (
-              tokensUsed != null && (
-                <span>↕<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
-              )
-            )}
-          </div>
-        ) : status === "pending" ? (
-          <div style={{ marginTop: "4px", fontSize: "9px", color: "#40403a" }}>queued</div>
-        ) : null}
+              </div>
+            );
+          }
+          if (status === "pending") {
+            return <div style={{ marginTop: "4px", fontSize: "9px", color: "#40403a" }}>queued</div>;
+          }
+          return null;
+        })()}
 
         {/* Row 4: running timer + streaming indicator */}
         {showStreamingBar && (

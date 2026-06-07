@@ -152,7 +152,7 @@ def load_benchmark(
     limit: int | None = None,
     language: str | None = None,
     difficulty: str | None = None,
-    cache_dir: str | None = None,
+    _cache_dir: str | None = None,
     force_refresh: bool = False,
 ) -> list[BenchmarkTask]:
     """Load tasks from a benchmark.

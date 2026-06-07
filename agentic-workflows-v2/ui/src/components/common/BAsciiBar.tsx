@@ -10,7 +10,7 @@ export default function BAsciiBar({
   width = 20,
   color = "b-green",
   className = "",
-}: BAsciiBarProps) {
+}: Readonly<BAsciiBarProps>) {
   const clamped = Math.max(0, Math.min(1, value));
   const filled = Math.round(clamped * width);
   const empty = width - filled;

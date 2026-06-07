@@ -154,18 +154,32 @@ class CodeExecutionTool(BaseTool):
         except SyntaxError:
             return None  # Let execution catch syntax errors
 
+        return self._check_imports(tree)
+
+    def _check_imports(self, tree: Any) -> str | None:
+        """Return an error message if any import targets a blocked module."""
+        import ast
+
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
-                for alias in node.names:
-                    top = alias.name.split(".")[0]
-                    if top in self._DANGEROUS_IMPORTS:
-                        return f"Blocked: import of restricted module '{top}'"
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    top = node.module.split(".")[0]
-                    if top in self._DANGEROUS_IMPORTS:
-                        return f"Blocked: import from restricted module '{top}'"
+                blocked = self._first_blocked_import(
+                    alias.name for alias in node.names
+                )
+                if blocked:
+                    return f"Blocked: import of restricted module '{blocked}'"
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                top = node.module.split(".")[0]
+                if top in self._DANGEROUS_IMPORTS:
+                    return f"Blocked: import from restricted module '{top}'"
 
+        return None
+
+    def _first_blocked_import(self, module_names: Any) -> str | None:
+        """Return the first top-level module name that is on the blocklist."""
+        for module_name in module_names:
+            top = module_name.split(".")[0]
+            if top in self._DANGEROUS_IMPORTS:
+                return top
         return None
 
     @classmethod

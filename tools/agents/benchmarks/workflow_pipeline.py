@@ -136,6 +136,150 @@ def evaluate_agent_output(
         }
 
 
+def _enum_value(value: Any) -> str:
+    """Return ``value.value`` for enum-like objects, else ``str(value)``."""
+    return value.value if hasattr(value, "value") else str(value)
+
+
+def _serialize_plan_task(task: Any) -> dict[str, Any]:
+    """Convert a single plan task into a serializable dict."""
+    return {
+        "task_id": task.id,
+        "description": task.description,
+        "agent_type": _enum_value(task.agent_type),
+        "status": _enum_value(task.status),
+        "priority": _enum_value(task.priority),
+        "dependencies": task.dependencies,
+        "expected_output": task.expected_output,
+        "inputs": task.inputs,
+    }
+
+
+def _extract_plan_phases(result: Any, workflow_data: dict[str, Any]) -> None:
+    """Populate ``workflow_data['phases']`` and integration strategy from the plan."""
+    if not (result.plan and result.plan.phases):
+        return
+
+    for phase_idx, phase_tasks in enumerate(result.plan.phases):
+        phase_data: dict[str, Any] = {"phase_number": phase_idx + 1, "tasks": []}
+        for task in phase_tasks:
+            phase_data["tasks"].append(_serialize_plan_task(task))
+        workflow_data["phases"].append(phase_data)
+
+    workflow_data["integration_strategy"] = result.plan.integration_strategy
+
+
+def _build_agent_data(task: Any, agent_type: str, agent_output: str) -> dict[str, Any]:
+    """Build the serializable agent-result dict for a completed agent task."""
+    return {
+        "task_id": task.id,
+        "description": task.description,
+        "agent_type": agent_type,
+        "status": _enum_value(task.status),
+        "output": agent_output,
+        "confidence": task.confidence,
+        "error": task.error,
+        "duration_seconds": task.duration_seconds,
+        "started_at": task.started_at.isoformat() if task.started_at else None,
+        "completed_at": (
+            task.completed_at.isoformat() if task.completed_at else None
+        ),
+    }
+
+
+def _evaluate_phase_for_agent(
+    task_id: str,
+    task: Any,
+    agent_type: str,
+    agent_output: str,
+    result: Any,
+    model: str,
+    benchmark_id: str | None,
+    original_prompt: str | None,
+    verbose: bool,
+) -> dict[str, Any] | None:
+    """Run per-agent evaluation and print progress when *verbose*."""
+    if verbose:
+        print(f"    [Eval] Scoring {task_id} ({agent_type})...")
+
+    eval_result = evaluate_agent_output(
+        agent_task_id=task_id,
+        agent_type=agent_type,
+        task_description=task.description,
+        agent_output=agent_output,
+        original_prompt=original_prompt or result.task_description,
+        model=model,
+        benchmark_id=benchmark_id,
+        evaluator_model=model,
+        verbose=verbose,
+    )
+
+    if eval_result and verbose:
+        score = eval_result.get("score", 0)
+        grade = eval_result.get("grade", "?")
+        print(f"           Score: {score:.1f}/10 (Grade: {grade})")
+
+    return eval_result
+
+
+def _extract_agent_results(
+    result: Any,
+    workflow_data: dict[str, Any],
+    evaluate_phases: bool,
+    model: str | None,
+    benchmark_id: str | None,
+    original_prompt: str | None,
+    verbose: bool,
+) -> None:
+    """Populate agent results and (optionally) phase evaluations."""
+    if not result.agent_results:
+        return
+
+    for task_id, task in result.agent_results.items():
+        agent_type = _enum_value(task.agent_type)
+        agent_output = task.result or ""
+
+        agent_data = _build_agent_data(task, agent_type, agent_output)
+        workflow_data["agent_results"][task_id] = agent_data
+
+        # Optionally evaluate this agent's output
+        if evaluate_phases and agent_output and model:
+            eval_result = _evaluate_phase_for_agent(
+                task_id,
+                task,
+                agent_type,
+                agent_output,
+                result,
+                model,
+                benchmark_id,
+                original_prompt,
+                verbose,
+            )
+            if eval_result:
+                workflow_data["phase_evaluations"][task_id] = eval_result
+                agent_data["evaluation"] = eval_result
+
+
+def _compute_phase_summary(workflow_data: dict[str, Any]) -> None:
+    """Add an aggregate ``phase_summary`` when phase evaluations exist."""
+    if not workflow_data["phase_evaluations"]:
+        return
+
+    scores: list[float] = [
+        e.get("score", 0) for e in workflow_data["phase_evaluations"].values()
+    ]
+    workflow_data["phase_summary"] = {
+        "total_agents": len(scores),
+        "average_score": sum(scores) / len(scores) if scores else 0,
+        "min_score": min(scores) if scores else 0,
+        "max_score": max(scores) if scores else 0,
+        "scores_by_agent": {
+            k: v.get("score", 0)
+            for k, v in workflow_data["phase_evaluations"].items()
+        },
+    }
+
+
 def extract_workflow_data(
     result: Any,
     evaluate_phases: bool = False,
@@ -159,112 +303,140 @@ def extract_workflow_data(
         "phase_evaluations": {},
     }
 
-    # Extract plan phases
-    if result.plan and result.plan.phases:
-        for phase_idx, phase_tasks in enumerate(result.plan.phases):
-            phase_data: dict[str, Any] = {"phase_number": phase_idx + 1, "tasks": []}
-            for task in phase_tasks:
-                phase_data["tasks"].append(
-                    {
-                        "task_id": task.id,
-                        "description": task.description,
-                        "agent_type": (
-                            task.agent_type.value
-                            if hasattr(task.agent_type, "value")
-                            else str(task.agent_type)
-                        ),
-                        "status": (
-                            task.status.value
-                            if hasattr(task.status, "value")
-                            else str(task.status)
-                        ),
-                        "priority": (
-                            task.priority.value
-                            if hasattr(task.priority, "value")
-                            else str(task.priority)
-                        ),
-                        "dependencies": task.dependencies,
-                        "expected_output": task.expected_output,
-                        "inputs": task.inputs,
-                    }
-                )
-            workflow_data["phases"].append(phase_data)
-
-        workflow_data["integration_strategy"] = result.plan.integration_strategy
-
-    # Extract individual agent results
-    if result.agent_results:
-        for task_id, task in result.agent_results.items():
-            agent_type = (
-                task.agent_type.value
-                if hasattr(task.agent_type, "value")
-                else str(task.agent_type)
-            )
-            agent_output = task.result or ""
-
-            agent_data: dict[str, Any] = {
-                "task_id": task.id,
-                "description": task.description,
-                "agent_type": agent_type,
-                "status": (
-                    task.status.value
-                    if hasattr(task.status, "value")
-                    else str(task.status)
-                ),
-                "output": agent_output,
-                "confidence": task.confidence,
-                "error": task.error,
-                "duration_seconds": task.duration_seconds,
-                "started_at": task.started_at.isoformat() if task.started_at else None,
-                "completed_at": (
-                    task.completed_at.isoformat() if task.completed_at else None
-                ),
-            }
-            workflow_data["agent_results"][task_id] = agent_data
-
-            # Optionally evaluate this agent's output
-            if evaluate_phases and agent_output and model:
-                if verbose:
-                    print(f"    [Eval] Scoring {task_id} ({agent_type})...")
-
-                eval_result = evaluate_agent_output(
-                    agent_task_id=task_id,
-                    agent_type=agent_type,
-                    task_description=task.description,
-                    agent_output=agent_output,
-                    original_prompt=original_prompt or result.task_description,
-                    model=model,
-                    benchmark_id=benchmark_id,
-                    evaluator_model=model,
-                    verbose=verbose,
-                )
-
-                if eval_result:
-                    workflow_data["phase_evaluations"][task_id] = eval_result
-                    agent_data["evaluation"] = eval_result
-
-                    if verbose:
-                        score = eval_result.get("score", 0)
-                        grade = eval_result.get("grade", "?")
-                        print(f"           Score: {score:.1f}/10 (Grade: {grade})")
-
-    # Phase summary scores
-    if workflow_data["phase_evaluations"]:
-        scores: list[float] = [
-            e.get("score", 0) for e in workflow_data["phase_evaluations"].values()
-        ]
-        workflow_data["phase_summary"] = {
-            "total_agents": len(scores),
-            "average_score": sum(scores) / len(scores) if scores else 0,
-            "min_score": min(scores) if scores else 0,
-            "max_score": max(scores) if scores else 0,
-            "scores_by_agent": {
-                k: v.get("score", 0)
-                for k, v in workflow_data["phase_evaluations"].items()
-            },
-        }
+    _extract_plan_phases(result, workflow_data)
+    _extract_agent_results(
+        result,
+        workflow_data,
+        evaluate_phases,
+        model,
+        benchmark_id,
+        original_prompt,
+        verbose,
+    )
+    _compute_phase_summary(workflow_data)
 
     return workflow_data
+
+
+def _grade_from_score(score: float) -> str:
+    """Map a 0-10 *score* to a letter grade."""
+    if score >= 9:
+        return "A"
+    if score >= 8:
+        return "B"
+    if score >= 7:
+        return "C"
+    if score >= 6:
+        return "D"
+    return "F"
+
+
+def _append_task_evaluation(lines: list[str], agent_eval: dict[str, Any]) -> None:
+    """Append a task's evaluation block (score, dimensions, strengths/weaknesses)."""
+    if not agent_eval:
+        return
+
+    score = agent_eval.get("score", 0)
+    grade = agent_eval.get("grade", "?")
+    lines.append(f"**Evaluation:** {score:.1f}/10 (Grade: {grade})")
+
+    dim_scores = agent_eval.get("dimension_scores", {})
+    if dim_scores:
+        dims_str = ", ".join(f"{k}: {v:.1f}" for k, v in dim_scores.items())
+        lines.append(f"  - Dimensions: {dims_str}")
+
+    strengths = agent_eval.get("strengths", [])
+    if strengths:
+        lines.append(f"  - Strengths: {'; '.join(strengths)}")
+    weaknesses = agent_eval.get("weaknesses", [])
+    if weaknesses:
+        lines.append(f"  - Weaknesses: {'; '.join(weaknesses)}")
+    lines.append("")
+
+
+def _append_task_output(lines: list[str], output: str) -> None:
+    """Append a task's (possibly truncated) output block."""
+    if not output:
+        lines.append("**Output:** (none)")
+        lines.append("")
+        return
+
+    lines.append("**Output:**")
+    lines.append("")
+    lines.append("```")
+    lines.append(output[:3000] if len(output) > 3000 else output)
+    if len(output) > 3000:
+        lines.append(f"... [truncated, {len(output)} chars total]")
+    lines.append("```")
+    lines.append("")
+
+
+def _append_phase_task(
+    lines: list[str],
+    task_info: dict[str, Any],
+    workflow_data: dict[str, Any],
+) -> None:
+    """Append a single task's heading, metadata, evaluation, and output."""
+    task_id_str = task_info.get("task_id", "unknown")
+    agent = task_info.get("agent_type", "unknown")
+    status = task_info.get("status", "unknown")
+    desc = task_info.get("description", "No description")
+
+    lines.append(f"### {task_id_str} ({agent}) - {status}")
+    lines.append("")
+    lines.append(f"**Task:** {desc}")
+    lines.append("")
+
+    agent_result = workflow_data.get("agent_results", {}).get(task_id_str, {})
+    output = agent_result.get("output", "")
+    duration = agent_result.get("duration_seconds")
+
+    if duration:
+        lines.append(f"**Duration:** {duration:.1f}s")
+        lines.append("")
+
+    agent_eval = workflow_data.get("phase_evaluations", {}).get(task_id_str, {})
+    _append_task_evaluation(lines, agent_eval)
+    _append_task_output(lines, output)
+
+
+def _append_phase_summary(lines: list[str], phase_summary: dict[str, Any]) -> None:
+    """Append the aggregate phase-evaluation summary section."""
+    if not phase_summary:
+        return
+
+    lines.append("## Phase Evaluation Summary")
+    lines.append("")
+    lines.append(f"**Total Agents Evaluated:** {phase_summary.get('total_agents', 0)}")
+    lines.append(f"**Average Score:** {phase_summary.get('average_score', 0):.1f}/10")
+    lines.append(
+        f"**Score Range:** "
+        f"{phase_summary.get('min_score', 0):.1f} - "
+        f"{phase_summary.get('max_score', 0):.1f}"
+    )
+    lines.append("")
+
+    scores_by_agent = phase_summary.get("scores_by_agent", {})
+    if scores_by_agent:
+        lines.append("| Agent | Score | Grade |")
+        lines.append("|-------|-------|-------|")
+        for agent_id, score in scores_by_agent.items():
+            grade = _grade_from_score(score)
+            lines.append(f"| {agent_id} | {score:.1f} | {grade} |")
+        lines.append("")
+    lines.append("---")
+    lines.append("")
+
+
+def _append_metadata(lines: list[str], metadata: dict[str, Any]) -> None:
+    """Append the workflow metadata JSON block when present."""
+    if not metadata:
+        return
+    lines.append("## Workflow Metadata")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(metadata, indent=2, default=str))
+    lines.append("```")
 
 
 def save_workflow_phases_md(
@@ -289,104 +461,14 @@ def save_workflow_phases_md(
         lines.append("")
 
         for task_info in phase.get("tasks", []):
-            task_id_str = task_info.get("task_id", "unknown")
-            agent = task_info.get("agent_type", "unknown")
-            status = task_info.get("status", "unknown")
-            desc = task_info.get("description", "No description")
-
-            lines.append(f"### {task_id_str} ({agent}) - {status}")
-            lines.append("")
-            lines.append(f"**Task:** {desc}")
-            lines.append("")
-
-            agent_result = workflow_data.get("agent_results", {}).get(task_id_str, {})
-            output = agent_result.get("output", "")
-            duration = agent_result.get("duration_seconds")
-
-            if duration:
-                lines.append(f"**Duration:** {duration:.1f}s")
-                lines.append("")
-
-            agent_eval = workflow_data.get("phase_evaluations", {}).get(task_id_str, {})
-            if agent_eval:
-                score = agent_eval.get("score", 0)
-                grade = agent_eval.get("grade", "?")
-                lines.append(f"**Evaluation:** {score:.1f}/10 (Grade: {grade})")
-
-                dim_scores = agent_eval.get("dimension_scores", {})
-                if dim_scores:
-                    dims_str = ", ".join(f"{k}: {v:.1f}" for k, v in dim_scores.items())
-                    lines.append(f"  - Dimensions: {dims_str}")
-
-                strengths = agent_eval.get("strengths", [])
-                if strengths:
-                    lines.append(f"  - Strengths: {'; '.join(strengths)}")
-                weaknesses = agent_eval.get("weaknesses", [])
-                if weaknesses:
-                    lines.append(f"  - Weaknesses: {'; '.join(weaknesses)}")
-                lines.append("")
-
-            if output:
-                lines.append("**Output:**")
-                lines.append("")
-                lines.append("```")
-                lines.append(output[:3000] if len(output) > 3000 else output)
-                if len(output) > 3000:
-                    lines.append(f"... [truncated, {len(output)} chars total]")
-                lines.append("```")
-                lines.append("")
-            else:
-                lines.append("**Output:** (none)")
-                lines.append("")
+            _append_phase_task(lines, task_info, workflow_data)
 
         lines.append("---")
         lines.append("")
 
     # Phase evaluation summary
-    phase_summary = workflow_data.get("phase_summary", {})
-    if phase_summary:
-        lines.append("## Phase Evaluation Summary")
-        lines.append("")
-        lines.append(
-            f"**Total Agents Evaluated:** {phase_summary.get('total_agents', 0)}"
-        )
-        lines.append(
-            f"**Average Score:** {phase_summary.get('average_score', 0):.1f}/10"
-        )
-        lines.append(
-            f"**Score Range:** "
-            f"{phase_summary.get('min_score', 0):.1f} - "
-            f"{phase_summary.get('max_score', 0):.1f}"
-        )
-        lines.append("")
-
-        scores_by_agent = phase_summary.get("scores_by_agent", {})
-        if scores_by_agent:
-            lines.append("| Agent | Score | Grade |")
-            lines.append("|-------|-------|-------|")
-            for agent_id, score in scores_by_agent.items():
-                if score >= 9:
-                    grade = "A"
-                elif score >= 8:
-                    grade = "B"
-                elif score >= 7:
-                    grade = "C"
-                elif score >= 6:
-                    grade = "D"
-                else:
-                    grade = "F"
-                lines.append(f"| {agent_id} | {score:.1f} | {grade} |")
-            lines.append("")
-        lines.append("---")
-        lines.append("")
-
-    metadata = workflow_data.get("metadata", {})
-    if metadata:
-        lines.append("## Workflow Metadata")
-        lines.append("")
-        lines.append("```json")
-        lines.append(json.dumps(metadata, indent=2, default=str))
-        lines.append("```")
+    _append_phase_summary(lines, workflow_data.get("phase_summary", {}))
+    _append_metadata(lines, workflow_data.get("metadata", {}))
 
     phases_file = output_dir / f"task_{task_id}_phases.md"
     phases_file.write_text("\n".join(lines), encoding="utf-8")

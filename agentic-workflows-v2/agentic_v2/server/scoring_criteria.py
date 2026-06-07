@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from ..contracts import StepStatus, WorkflowResult
@@ -46,7 +47,7 @@ def _tokenize(text: str) -> set[str]:
         Set of unique lowercase token strings.
     """
     return {
-        token for token in re.findall(r"[A-Za-z0-9_]+", text.lower()) if len(token) > 2
+        token for token in re.findall(r"\w+", text.lower()) if len(token) > 2
     }
 
 
@@ -182,6 +183,61 @@ def _compute_criterion_score(
     # Support both contract WorkflowResult and langchain runner WorkflowResult
     # Normalize both result shapes into the same scoring signals so the
     # formulas below stay deterministic across execution backends.
+    signals = _extract_scoring_signals(result)
+
+    if criterion in _CORRECTNESS_CRITERIA:
+        return _score_correctness(signals, expected_text)
+    if criterion in _QUALITY_CRITERIA:
+        return _score_quality(signals)
+    if criterion in _EFFICIENCY_CRITERIA:
+        return _score_efficiency(signals)
+    if criterion in _DOCUMENTATION_CRITERIA:
+        return _score_documentation(signals, result)
+
+    # For unknown criteria, start at a baseline of 50.0 (neutral)
+    # so that the LLM Judge (which scores 1-5) can truly dictate the output score.
+    baseline = 50.0
+    if signals.is_failed:
+        baseline -= 20.0
+    return _clamp(baseline)
+
+
+_CORRECTNESS_CRITERIA = (
+    "correctness",
+    "objective_tests",
+    "task_completion",
+    "correctness_rubric",
+    "faithfulness",
+    "relevance",
+)
+_QUALITY_CRITERIA = (
+    "code_quality",
+    "safety_validation",
+    "validation",
+    "safety",
+    "tool_selection_accuracy",
+)
+_EFFICIENCY_CRITERIA = ("efficiency", "performance")
+_DOCUMENTATION_CRITERIA = ("documentation", "citation_quality", "coherence")
+
+
+@dataclass(frozen=True)
+class _ScoringSignals:
+    """Normalized execution signals shared by all criterion-family scorers."""
+
+    success_rate: float
+    total_steps: int
+    failed_steps: int
+    retries: int
+    duration_ms: float
+    output_text: str
+    is_failed: bool
+    is_success: bool
+    has_code: bool
+
+
+def _extract_scoring_signals(result: WorkflowResult) -> _ScoringSignals:
+    """Normalize contract and langchain result shapes into common scoring signals."""
     if hasattr(result, "success_rate"):
         success_rate = float(result.success_rate)
         total_steps = max(len(result.steps), 1)
@@ -198,7 +254,6 @@ def _compute_criterion_score(
         retries = 0
         elapsed = getattr(result, "elapsed_seconds", 0.0)
         duration_ms = elapsed * 1000.0
-    output_text = _output_text(result)
 
     _overall = getattr(result, "overall_status", None)
     # Prefer the enum-based overall status when present; string statuses are a
@@ -212,77 +267,75 @@ def _compute_criterion_score(
         is_success = _overall == StepStatus.SUCCESS
 
     final_out = getattr(result, "final_output", None) or getattr(result, "outputs", {})
-    has_code = _has_code_content(final_out)
+    return _ScoringSignals(
+        success_rate=success_rate,
+        total_steps=total_steps,
+        failed_steps=failed_steps,
+        retries=retries,
+        duration_ms=duration_ms,
+        output_text=_output_text(result),
+        is_failed=is_failed,
+        is_success=is_success,
+        has_code=_has_code_content(final_out),
+    )
 
-    if criterion in (
-        "correctness",
-        "objective_tests",
-        "task_completion",
-        "correctness_rubric",
-        "faithfulness",
-        "relevance",
-    ):
-        if expected_text:
-            overlap = _text_overlap_score(expected_text, output_text)
-        elif has_code:
-            # No expected text but real output present — treat as pass at success_rate
-            overlap = success_rate
-        else:
-            # No expected text AND no real output — hollow run scores 0 on overlap
-            overlap = 0.0
-        blended = (success_rate * 0.7) + (overlap * 0.3)
-        if is_failed:
-            blended *= 0.75
-        if not has_code:
-            # Steps completed but produced nothing — cap at 30 regardless of success_rate
-            blended = min(blended, 30.0)
-        return _clamp(blended)
 
-    if criterion in (
-        "code_quality",
-        "safety_validation",
-        "validation",
-        "safety",
-        "tool_selection_accuracy",
-    ):
-        failure_penalty = (failed_steps / total_steps) * 45.0
-        retry_penalty = min(retries * 4.0, 20.0)
-        status_bonus = 8.0 if is_success else -12.0
-        score = 78.0 - failure_penalty - retry_penalty + status_bonus
-        if not has_code:
-            # No real code/content produced — quality cannot be above minimal
-            score = min(score, 5.0)
-        return _clamp(score)
+def _score_correctness(signals: _ScoringSignals, expected_text: str) -> float:
+    """Score correctness-family criteria: success rate blended with text overlap."""
+    if expected_text:
+        overlap = _text_overlap_score(expected_text, signals.output_text)
+    elif signals.has_code:
+        # No expected text but real output present — treat as pass at success_rate
+        overlap = signals.success_rate
+    else:
+        # No expected text AND no real output — hollow run scores 0 on overlap
+        overlap = 0.0
+    blended = (signals.success_rate * 0.7) + (overlap * 0.3)
+    if signals.is_failed:
+        blended *= 0.75
+    if not signals.has_code:
+        # Steps completed but produced nothing — cap at 30 regardless of success_rate
+        blended = min(blended, 30.0)
+    return _clamp(blended)
 
-    if criterion in ("efficiency", "performance"):
-        seconds = duration_ms / 1000.0
-        duration_penalty = min(seconds * 1.5, 55.0)
-        retry_penalty = min(retries * 5.0, 20.0)
-        score = 100.0 - duration_penalty - retry_penalty
-        return _clamp(score)
 
-    if criterion in ("documentation", "citation_quality", "coherence"):
-        if not output_text:
-            return 20.0
-        chars = len(output_text)
-        final_out = getattr(result, "final_output", None) or getattr(
-            result, "outputs", {}
-        )
-        key_count = len(final_out.keys()) if isinstance(final_out, dict) else 1
-        # Documentation-style criteria use output richness as a heuristic proxy,
-        # not as a guarantee of correctness.
-        richness = min(chars / 120.0, 45.0) + min(key_count * 6.0, 30.0)
-        base = 30.0 + richness
-        if is_failed:
-            base -= 15.0
-        return _clamp(base)
+def _score_quality(signals: _ScoringSignals) -> float:
+    """Score quality-family criteria: penalize failures/retries with a status bonus."""
+    failure_penalty = (signals.failed_steps / signals.total_steps) * 45.0
+    retry_penalty = min(signals.retries * 4.0, 20.0)
+    status_bonus = 8.0 if signals.is_success else -12.0
+    score = 78.0 - failure_penalty - retry_penalty + status_bonus
+    if not signals.has_code:
+        # No real code/content produced — quality cannot be above minimal
+        score = min(score, 5.0)
+    return _clamp(score)
 
-    # For unknown criteria, start at a baseline of 50.0 (neutral)
-    # so that the LLM Judge (which scores 1-5) can truly dictate the output score.
-    baseline = 50.0
-    if is_failed:
-        baseline -= 20.0
-    return _clamp(baseline)
+
+def _score_efficiency(signals: _ScoringSignals) -> float:
+    """Score efficiency-family criteria: penalize execution duration and retries."""
+    seconds = signals.duration_ms / 1000.0
+    duration_penalty = min(seconds * 1.5, 55.0)
+    retry_penalty = min(signals.retries * 5.0, 20.0)
+    score = 100.0 - duration_penalty - retry_penalty
+    return _clamp(score)
+
+
+def _score_documentation(signals: _ScoringSignals, result: WorkflowResult) -> float:
+    """Score documentation-family criteria: reward output richness."""
+    if not signals.output_text:
+        return 20.0
+    chars = len(signals.output_text)
+    final_out = getattr(result, "final_output", None) or getattr(
+        result, "outputs", {}
+    )
+    key_count = len(final_out.keys()) if isinstance(final_out, dict) else 1
+    # Documentation-style criteria use output richness as a heuristic proxy,
+    # not as a guarantee of correctness.
+    richness = min(chars / 120.0, 45.0) + min(key_count * 6.0, 30.0)
+    base = 30.0 + richness
+    if signals.is_failed:
+        base -= 15.0
+    return _clamp(base)
 
 
 # =============================================================================
@@ -331,6 +384,28 @@ def _default_judge_scale() -> dict[str, str]:
     }
 
 
+def _resolve_judge_scale(criterion: Any) -> dict[str, str]:
+    """Normalize the two supported workflow scale schema variants onto one map."""
+    scale_anchors = getattr(criterion, "scale_anchors", None)
+    if isinstance(scale_anchors, dict) and scale_anchors:
+        return {str(key): str(value) for key, value in scale_anchors.items()}
+
+    scale = getattr(criterion, "scale", None)
+    if isinstance(scale, dict) and scale:
+        return {str(key): str(value) for key, value in scale.items()}
+
+    return _default_judge_scale()
+
+
+def _generic_judge_criterion(criterion_name: str) -> JudgeCriterionDefinition:
+    """Build a generic judge criterion when no rich metadata is available."""
+    return JudgeCriterionDefinition(
+        name=criterion_name,
+        definition=f"Quality of the '{criterion_name}' aspect.",
+        scale=_default_judge_scale(),
+    )
+
+
 def _build_judge_criteria(
     *,
     weights: dict[str, float],
@@ -349,52 +424,26 @@ def _build_judge_criteria(
     Returns:
         List of :class:`JudgeCriterionDefinition` instances for the judge prompt.
     """
-
-    # Normalize the two supported workflow schema variants onto one scale map.
-    def _resolve_scale(criterion: Any) -> dict[str, str]:
-        scale_anchors = getattr(criterion, "scale_anchors", None)
-        if isinstance(scale_anchors, dict) and scale_anchors:
-            return {str(key): str(value) for key, value in scale_anchors.items()}
-
-        scale = getattr(criterion, "scale", None)
-        if isinstance(scale, dict) and scale:
-            return {str(key): str(value) for key, value in scale.items()}
-
-        return _default_judge_scale()
-
-    criteria: list[JudgeCriterionDefinition] = []
-    if criteria_by_name:
-        for criterion_name in weights:
-            criterion = criteria_by_name.get(criterion_name)
-            if criterion is None:
-                criteria.append(
-                    JudgeCriterionDefinition(
-                        name=criterion_name,
-                        definition=f"Quality of the '{criterion_name}' aspect.",
-                        scale=_default_judge_scale(),
-                    )
-                )
-                continue
-            criteria.append(
-                JudgeCriterionDefinition(
-                    name=criterion_name,
-                    definition=(
-                        criterion.definition or f"Quality of '{criterion_name}' aspect."
-                    ),
-                    scale=_resolve_scale(criterion),
-                )
-            )
-    else:
+    if not criteria_by_name:
         # Older workflows may define weights without rich criterion metadata;
         # keep the judge usable by synthesizing a generic definition.
-        for criterion_name in weights:
-            criteria.append(
-                JudgeCriterionDefinition(
-                    name=criterion_name,
-                    definition=f"Quality of the '{criterion_name}' aspect.",
-                    scale=_default_judge_scale(),
-                )
+        return [_generic_judge_criterion(criterion_name) for criterion_name in weights]
+
+    criteria: list[JudgeCriterionDefinition] = []
+    for criterion_name in weights:
+        criterion = criteria_by_name.get(criterion_name)
+        if criterion is None:
+            criteria.append(_generic_judge_criterion(criterion_name))
+            continue
+        criteria.append(
+            JudgeCriterionDefinition(
+                name=criterion_name,
+                definition=(
+                    criterion.definition or f"Quality of '{criterion_name}' aspect."
+                ),
+                scale=_resolve_judge_scale(criterion),
             )
+        )
     return criteria
 
 

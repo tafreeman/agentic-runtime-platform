@@ -211,42 +211,52 @@ def load_trusted_hashes(config_path: Path | None = None) -> list[TrustedModelHas
     entries: list[TrustedModelHash] = []
     seen_ids: set[str] = set()
     for index, item in enumerate(models):
-        if not isinstance(item, dict):
-            raise TrustedHashConfigError(f"models[{index}] must be a mapping")
-        unknown_keys = set(item) - {"id", "path", "sha256", "algorithm", "source", "notes"}
-        if unknown_keys:
-            raise TrustedHashConfigError(
-                f"models[{index}] has unknown keys: {', '.join(sorted(unknown_keys))}"
-            )
-
-        entry_id = _require_string(item, "id", index)
-        if entry_id in seen_ids:
-            raise TrustedHashConfigError(f"duplicate trusted model id: {entry_id}")
-        seen_ids.add(entry_id)
-
-        entry_path_raw = _require_string(item, "path", index)
-        sha256 = _require_string(item, "sha256", index).lower()
-        algorithm = str(item.get("algorithm", "sha256")).lower()
-        if algorithm != "sha256":
-            raise TrustedHashConfigError(
-                f"models[{index}].algorithm must be 'sha256'"
-            )
-        if not _SHA256_RE.fullmatch(sha256):
-            raise TrustedHashConfigError(
-                f"models[{index}].sha256 must be a 64-character SHA-256 hex digest"
-            )
-
-        entries.append(
-            TrustedModelHash(
-                id=entry_id,
-                path=_expand_config_path(entry_path_raw),
-                sha256=sha256,
-                algorithm=algorithm,
-                source=_optional_string(item, "source", index),
-                notes=_optional_string(item, "notes", index),
-            )
-        )
+        entries.append(_parse_trusted_hash_entry(item, index, seen_ids))
     return entries
+
+
+def _parse_trusted_hash_entry(
+    item: Any,
+    index: int,
+    seen_ids: set[str],
+) -> TrustedModelHash:
+    """Validate one ``models[index]`` mapping and build its entry.
+
+    Mutates ``seen_ids`` to enforce uniqueness across the configuration.
+    """
+    if not isinstance(item, dict):
+        raise TrustedHashConfigError(f"models[{index}] must be a mapping")
+    unknown_keys = set(item) - {"id", "path", "sha256", "algorithm", "source", "notes"}
+    if unknown_keys:
+        raise TrustedHashConfigError(
+            f"models[{index}] has unknown keys: {', '.join(sorted(unknown_keys))}"
+        )
+
+    entry_id = _require_string(item, "id", index)
+    if entry_id in seen_ids:
+        raise TrustedHashConfigError(f"duplicate trusted model id: {entry_id}")
+    seen_ids.add(entry_id)
+
+    entry_path_raw = _require_string(item, "path", index)
+    sha256 = _require_string(item, "sha256", index).lower()
+    algorithm = str(item.get("algorithm", "sha256")).lower()
+    if algorithm != "sha256":
+        raise TrustedHashConfigError(
+            f"models[{index}].algorithm must be 'sha256'"
+        )
+    if not _SHA256_RE.fullmatch(sha256):
+        raise TrustedHashConfigError(
+            f"models[{index}].sha256 must be a 64-character SHA-256 hex digest"
+        )
+
+    return TrustedModelHash(
+        id=entry_id,
+        path=_expand_config_path(entry_path_raw),
+        sha256=sha256,
+        algorithm=algorithm,
+        source=_optional_string(item, "source", index),
+        notes=_optional_string(item, "notes", index),
+    )
 
 
 def _file_sha256(path: Path) -> str:

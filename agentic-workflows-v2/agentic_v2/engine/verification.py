@@ -209,6 +209,64 @@ class VerificationLoop:
             )
 
         # --- Correction loop ------------------------------------------
+        step_result, status, failing, attempts, total_tokens = (
+            await self._run_correction_loop(
+                step_func, context, correction_func, step_result, status, failing
+            )
+        )
+
+        # --- Build final result ---------------------------------------
+        total_duration = time.monotonic() - loop_start
+        final_status = (
+            status
+            if status == VerificationStatus.PASSED
+            else VerificationStatus.MAX_RETRIES_EXCEEDED
+        )
+
+        escalated, escalation_reason = self._resolve_escalation(final_status, failing)
+
+        if final_status != VerificationStatus.PASSED:
+            self._logger.warning(
+                "Verification exhausted after %d attempts: %s",
+                len(attempts),
+                ", ".join(failing),
+            )
+
+        return step_result, VerificationResult(
+            final_status=final_status,
+            attempts=tuple(attempts),
+            total_tokens_used=total_tokens,
+            total_duration_seconds=total_duration,
+            escalated=escalated,
+            escalation_reason=escalation_reason,
+        )
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    async def _run_correction_loop(
+        self,
+        step_func: Callable[..., Awaitable[StepResult]],
+        context: ExecutionContext,
+        correction_func: (
+            Callable[[tuple[str, ...], ExecutionContext], Awaitable[StepResult]] | None
+        ),
+        step_result: StepResult,
+        status: VerificationStatus,
+        failing: tuple[str, ...],
+    ) -> tuple[
+        StepResult,
+        VerificationStatus,
+        tuple[str, ...],
+        list[CorrectionAttempt],
+        int,
+    ]:
+        """Run the bounded correction loop until pass/exhaustion/loop-detected.
+
+        Returns the final ``(step_result, status, failing, attempts,
+        total_tokens)`` tuple.
+        """
         attempts: list[CorrectionAttempt] = []
         total_tokens = 0
         previous_failing: tuple[str, ...] = ()
@@ -221,33 +279,11 @@ class VerificationLoop:
                 ", ".join(failing),
             )
 
-            # Duplicate-failure loop detection
-            if failing == previous_failing and attempt_num > 1:
-                self._logger.warning(
-                    "Duplicate failures detected — aborting correction loop"
-                )
-                attempts.append(
-                    CorrectionAttempt(
-                        attempt_number=attempt_num,
-                        verification_status=VerificationStatus.FAILED,
-                        failing_checks=failing,
-                        correction_outcome=CorrectionOutcome.NOT_FIXED,
-                        error_summary="Loop detected: same failures as previous attempt",
-                    )
-                )
-                break
-
-            # Budget check
-            if not self._can_afford_correction():
-                self._logger.warning("Token budget exhausted — stopping corrections")
-                attempts.append(
-                    CorrectionAttempt(
-                        attempt_number=attempt_num,
-                        verification_status=VerificationStatus.FAILED,
-                        failing_checks=failing,
-                        correction_outcome=CorrectionOutcome.BUDGET_EXHAUSTED,
-                    )
-                )
+            abort_attempt = self._check_abort_correction(
+                attempt_num, failing, previous_failing
+            )
+            if abort_attempt is not None:
+                attempts.append(abort_attempt)
                 break
 
             previous_failing = failing
@@ -289,35 +325,42 @@ class VerificationLoop:
             if status == VerificationStatus.PASSED:
                 break
 
-        # --- Build final result ---------------------------------------
-        total_duration = time.monotonic() - loop_start
-        final_status = (
-            status
-            if status == VerificationStatus.PASSED
-            else VerificationStatus.MAX_RETRIES_EXCEEDED
-        )
+        return step_result, status, failing, attempts, total_tokens
 
-        escalated, escalation_reason = self._resolve_escalation(final_status, failing)
+    def _check_abort_correction(
+        self,
+        attempt_num: int,
+        failing: tuple[str, ...],
+        previous_failing: tuple[str, ...],
+    ) -> CorrectionAttempt | None:
+        """Return an abort CorrectionAttempt if the loop should stop, else None.
 
-        if final_status != VerificationStatus.PASSED:
+        Aborts on duplicate-failure loops or token-budget exhaustion.
+        """
+        # Duplicate-failure loop detection
+        if failing == previous_failing and attempt_num > 1:
             self._logger.warning(
-                "Verification exhausted after %d attempts: %s",
-                len(attempts),
-                ", ".join(failing),
+                "Duplicate failures detected — aborting correction loop"
+            )
+            return CorrectionAttempt(
+                attempt_number=attempt_num,
+                verification_status=VerificationStatus.FAILED,
+                failing_checks=failing,
+                correction_outcome=CorrectionOutcome.NOT_FIXED,
+                error_summary="Loop detected: same failures as previous attempt",
             )
 
-        return step_result, VerificationResult(
-            final_status=final_status,
-            attempts=tuple(attempts),
-            total_tokens_used=total_tokens,
-            total_duration_seconds=total_duration,
-            escalated=escalated,
-            escalation_reason=escalation_reason,
-        )
+        # Budget check
+        if not self._can_afford_correction():
+            self._logger.warning("Token budget exhausted — stopping corrections")
+            return CorrectionAttempt(
+                attempt_number=attempt_num,
+                verification_status=VerificationStatus.FAILED,
+                failing_checks=failing,
+                correction_outcome=CorrectionOutcome.BUDGET_EXHAUSTED,
+            )
 
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
+        return None
 
     def _can_afford_correction(self) -> bool:
         """Return True if the token budget allows another correction."""

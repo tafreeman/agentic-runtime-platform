@@ -204,9 +204,29 @@ class WorkflowLoader:
         version = data.get("version", "1.0")
         experimental = bool(data.get("experimental", False))
 
-        # Parse inputs
-        inputs = {}
-        for input_name, input_def in data.get("inputs", {}).items():
+        inputs = self._parse_inputs(data.get("inputs", {}))
+        outputs = self._parse_outputs(data.get("outputs", {}))
+        capabilities = self._parse_capabilities(data.get("capabilities"))
+        workflow_evaluation = self._parse_evaluation(data.get("evaluation"), name)
+        dag = self._build_dag(data, name, description, experimental)
+
+        return WorkflowDefinition(
+            name=name,
+            description=description,
+            version=version,
+            inputs=inputs,
+            outputs=outputs,
+            capabilities=capabilities,
+            evaluation=workflow_evaluation,
+            experimental=experimental,
+            dag=dag,
+        )
+
+    @staticmethod
+    def _parse_inputs(raw_inputs: dict[str, Any]) -> dict[str, WorkflowInput]:
+        """Parse the ``inputs`` block into WorkflowInput objects."""
+        inputs: dict[str, WorkflowInput] = {}
+        for input_name, input_def in raw_inputs.items():
             if isinstance(input_def, dict):
                 inputs[input_name] = WorkflowInput(
                     name=input_name,
@@ -223,10 +243,13 @@ class WorkflowLoader:
                     default=input_def,
                     required=False,
                 )
+        return inputs
 
-        # Parse outputs
-        outputs = {}
-        for output_name, output_def in data.get("outputs", {}).items():
+    @staticmethod
+    def _parse_outputs(raw_outputs: dict[str, Any]) -> dict[str, WorkflowOutput]:
+        """Parse the ``outputs`` block into WorkflowOutput objects."""
+        outputs: dict[str, WorkflowOutput] = {}
+        for output_name, output_def in raw_outputs.items():
             if isinstance(output_def, dict):
                 outputs[output_name] = WorkflowOutput(
                     name=output_name,
@@ -238,10 +261,12 @@ class WorkflowLoader:
                     name=output_name,
                     from_expr=output_def,
                 )
+        return outputs
 
-        # Parse capabilities for workflow/dataset compatibility checks
+    @staticmethod
+    def _parse_capabilities(raw_capabilities: Any) -> WorkflowCapabilities:
+        """Parse the ``capabilities`` block for compatibility checks."""
         capabilities = WorkflowCapabilities()
-        raw_capabilities = data.get("capabilities")
         if isinstance(raw_capabilities, dict):
             raw_inputs = raw_capabilities.get("inputs", [])
             raw_outputs = raw_capabilities.get("outputs", [])
@@ -254,154 +279,224 @@ class WorkflowLoader:
                 capabilities.outputs = [
                     str(item) for item in raw_outputs if str(item).strip()
                 ]
+        return capabilities
 
-        # Parse optional workflow-level evaluation config
-        workflow_evaluation: WorkflowEvaluation | None = None
-        raw_evaluation = data.get("evaluation")
-        if raw_evaluation is not None:
-            if not isinstance(raw_evaluation, dict):
-                raise WorkflowLoadError(
-                    f"Workflow '{name}' has invalid 'evaluation' block (expected mapping)."
-                )
-
-            rubric_id = raw_evaluation.get("rubric_id")
-            scoring_profile = raw_evaluation.get("scoring_profile")
-            weights_raw = raw_evaluation.get("weights")
-            weights: dict[str, float] | None = None
-            criteria_raw = raw_evaluation.get("criteria")
-            criteria: list[WorkflowCriterion] = []
-
-            if criteria_raw is not None:
-                if not isinstance(criteria_raw, list):
-                    raise WorkflowLoadError(
-                        f"Workflow '{name}' has invalid evaluation.criteria (expected list)."
-                    )
-                for index, criterion_raw in enumerate(criteria_raw):
-                    if not isinstance(criterion_raw, dict):
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion #{index} is not a mapping."
-                        )
-                    criterion_name = criterion_raw.get("name")
-                    if not criterion_name:
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion #{index} missing required 'name'."
-                        )
-
-                    evidence_required = criterion_raw.get("evidence_required", [])
-                    if evidence_required is None:
-                        evidence_required = []
-                    if not isinstance(evidence_required, list):
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion '{criterion_name}' has invalid evidence_required."
-                        )
-                    evidence_required = [str(item) for item in evidence_required]
-
-                    scale = criterion_raw.get("scale", {})
-                    if scale is None:
-                        scale = {}
-                    if not isinstance(scale, dict) or not scale:
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion '{criterion_name}' must define anchored scale mapping."
-                        )
-                    scale_map = {str(k): str(v) for k, v in scale.items()}
-
-                    formula_id = str(criterion_raw.get("formula_id", "zero_one"))
-                    from ..evaluation.normalization import is_registered_formula
-
-                    if not is_registered_formula(formula_id):
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion '{criterion_name}' uses unknown formula_id '{formula_id}'."
-                        )
-
-                    weight_value = criterion_raw.get("weight")
-                    parsed_weight: float | None = None
-                    if weight_value is not None:
-                        try:
-                            parsed_weight = float(weight_value)
-                        except (TypeError, ValueError) as exc:
-                            raise WorkflowLoadError(
-                                f"Workflow '{name}' criterion '{criterion_name}' has non-numeric weight."
-                            ) from exc
-                        if parsed_weight <= 0:
-                            raise WorkflowLoadError(
-                                f"Workflow '{name}' criterion '{criterion_name}' must have positive weight."
-                            )
-
-                    critical_floor = criterion_raw.get("critical_floor")
-                    parsed_floor: float | None = None
-                    if critical_floor is not None:
-                        try:
-                            parsed_floor = float(critical_floor)
-                        except (TypeError, ValueError) as exc:
-                            raise WorkflowLoadError(
-                                f"Workflow '{name}' criterion '{criterion_name}' has non-numeric critical_floor."
-                            ) from exc
-                        if not (0.0 <= parsed_floor <= 1.0):
-                            raise WorkflowLoadError(
-                                f"Workflow '{name}' criterion '{criterion_name}' critical_floor must be in [0,1]."
-                            )
-
-                    criteria.append(
-                        WorkflowCriterion(
-                            name=str(criterion_name),
-                            definition=str(criterion_raw.get("definition", "")),
-                            evidence_required=evidence_required,
-                            scale=scale_map,
-                            weight=parsed_weight,
-                            critical_floor=parsed_floor,
-                            formula_id=formula_id,
-                        )
-                    )
-
-            if weights_raw is not None:
-                if not isinstance(weights_raw, dict):
-                    raise WorkflowLoadError(
-                        f"Workflow '{name}' has invalid evaluation.weights (expected mapping)."
-                    )
-                weights = {}
-                for key, value in weights_raw.items():
-                    try:
-                        weight = float(value)
-                    except (TypeError, ValueError) as exc:
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' has non-numeric weight for '{key}'."
-                        ) from exc
-                    if weight <= 0:
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' has non-positive weight for '{key}'."
-                        )
-                    weights[str(key)] = weight
-
-                total = sum(weights.values())
-                if abs(total - 1.0) > 0.01:
-                    raise WorkflowLoadError(
-                        f"Workflow '{name}' evaluation.weights must sum to 1.0 (+/-0.01), got {total:.4f}."
-                    )
-
-            if weights is None and criteria:
-                derived_weights = {
-                    criterion.name: criterion.weight
-                    for criterion in criteria
-                    if criterion.weight is not None
-                }
-                if derived_weights:
-                    total = sum(derived_weights.values())
-                    if abs(total - 1.0) > 0.01:
-                        raise WorkflowLoadError(
-                            f"Workflow '{name}' criterion weights must sum to 1.0 (+/-0.01), got {total:.4f}."
-                        )
-                    weights = {k: float(v) for k, v in derived_weights.items()}
-
-            workflow_evaluation = WorkflowEvaluation(
-                rubric_id=str(rubric_id) if rubric_id is not None else None,
-                weights=weights,
-                scoring_profile=(
-                    str(scoring_profile) if scoring_profile is not None else None
-                ),
-                criteria=criteria,
+    def _parse_evaluation(
+        self, raw_evaluation: Any, name: str
+    ) -> WorkflowEvaluation | None:
+        """Parse the optional workflow-level ``evaluation`` block."""
+        if raw_evaluation is None:
+            return None
+        if not isinstance(raw_evaluation, dict):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' has invalid 'evaluation' block (expected mapping)."
             )
 
-        # Parse steps into DAG
+        rubric_id = raw_evaluation.get("rubric_id")
+        scoring_profile = raw_evaluation.get("scoring_profile")
+        weights_raw = raw_evaluation.get("weights")
+        criteria_raw = raw_evaluation.get("criteria")
+
+        criteria = self._parse_criteria(criteria_raw, name)
+        weights = self._parse_weights(weights_raw, name)
+        if weights is None and criteria:
+            weights = self._derive_weights_from_criteria(criteria, name)
+
+        return WorkflowEvaluation(
+            rubric_id=str(rubric_id) if rubric_id is not None else None,
+            weights=weights,
+            scoring_profile=(
+                str(scoring_profile) if scoring_profile is not None else None
+            ),
+            criteria=criteria,
+        )
+
+    def _parse_criteria(
+        self, criteria_raw: Any, name: str
+    ) -> list[WorkflowCriterion]:
+        """Parse the ``evaluation.criteria`` list into WorkflowCriterion objects."""
+        criteria: list[WorkflowCriterion] = []
+        if criteria_raw is None:
+            return criteria
+        if not isinstance(criteria_raw, list):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' has invalid evaluation.criteria (expected list)."
+            )
+        for index, criterion_raw in enumerate(criteria_raw):
+            criteria.append(self._parse_criterion(criterion_raw, index, name))
+        return criteria
+
+    def _parse_criterion(
+        self, criterion_raw: Any, index: int, name: str
+    ) -> WorkflowCriterion:
+        """Parse and validate a single evaluation criterion."""
+        if not isinstance(criterion_raw, dict):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion #{index} is not a mapping."
+            )
+        criterion_name = criterion_raw.get("name")
+        if not criterion_name:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion #{index} missing required 'name'."
+            )
+
+        evidence_required = self._parse_evidence_required(
+            criterion_raw.get("evidence_required", []), criterion_name, name
+        )
+        scale_map = self._parse_scale(
+            criterion_raw.get("scale", {}), criterion_name, name
+        )
+        formula_id = self._parse_formula_id(
+            criterion_raw.get("formula_id", "zero_one"), criterion_name, name
+        )
+        parsed_weight = self._parse_criterion_weight(
+            criterion_raw.get("weight"), criterion_name, name
+        )
+        parsed_floor = self._parse_critical_floor(
+            criterion_raw.get("critical_floor"), criterion_name, name
+        )
+
+        return WorkflowCriterion(
+            name=str(criterion_name),
+            definition=str(criterion_raw.get("definition", "")),
+            evidence_required=evidence_required,
+            scale=scale_map,
+            weight=parsed_weight,
+            critical_floor=parsed_floor,
+            formula_id=formula_id,
+        )
+
+    @staticmethod
+    def _parse_evidence_required(
+        evidence_required: Any, criterion_name: Any, name: str
+    ) -> list[str]:
+        """Validate and normalize a criterion's ``evidence_required`` list."""
+        if evidence_required is None:
+            evidence_required = []
+        if not isinstance(evidence_required, list):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' has invalid evidence_required."
+            )
+        return [str(item) for item in evidence_required]
+
+    @staticmethod
+    def _parse_scale(scale: Any, criterion_name: Any, name: str) -> dict[str, str]:
+        """Validate and normalize a criterion's anchored ``scale`` mapping."""
+        if scale is None:
+            scale = {}
+        if not isinstance(scale, dict) or not scale:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' must define anchored scale mapping."
+            )
+        return {str(k): str(v) for k, v in scale.items()}
+
+    @staticmethod
+    def _parse_formula_id(formula_raw: Any, criterion_name: Any, name: str) -> str:
+        """Validate a criterion's ``formula_id`` against the registry."""
+        formula_id = str(formula_raw)
+        from ..evaluation.normalization import is_registered_formula
+
+        if not is_registered_formula(formula_id):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' uses unknown formula_id '{formula_id}'."
+            )
+        return formula_id
+
+    @staticmethod
+    def _parse_criterion_weight(
+        weight_value: Any, criterion_name: Any, name: str
+    ) -> float | None:
+        """Validate and coerce a criterion's optional ``weight``."""
+        if weight_value is None:
+            return None
+        try:
+            parsed_weight = float(weight_value)
+        except (TypeError, ValueError) as exc:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' has non-numeric weight."
+            ) from exc
+        if parsed_weight <= 0:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' must have positive weight."
+            )
+        return parsed_weight
+
+    @staticmethod
+    def _parse_critical_floor(
+        critical_floor: Any, criterion_name: Any, name: str
+    ) -> float | None:
+        """Validate and coerce a criterion's optional ``critical_floor``."""
+        if critical_floor is None:
+            return None
+        try:
+            parsed_floor = float(critical_floor)
+        except (TypeError, ValueError) as exc:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' has non-numeric critical_floor."
+            ) from exc
+        if not (0.0 <= parsed_floor <= 1.0):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion '{criterion_name}' critical_floor must be in [0,1]."
+            )
+        return parsed_floor
+
+    @staticmethod
+    def _parse_weights(weights_raw: Any, name: str) -> dict[str, float] | None:
+        """Validate and normalize the ``evaluation.weights`` mapping."""
+        if weights_raw is None:
+            return None
+        if not isinstance(weights_raw, dict):
+            raise WorkflowLoadError(
+                f"Workflow '{name}' has invalid evaluation.weights (expected mapping)."
+            )
+        weights: dict[str, float] = {}
+        for key, value in weights_raw.items():
+            try:
+                weight = float(value)
+            except (TypeError, ValueError) as exc:
+                raise WorkflowLoadError(
+                    f"Workflow '{name}' has non-numeric weight for '{key}'."
+                ) from exc
+            if weight <= 0:
+                raise WorkflowLoadError(
+                    f"Workflow '{name}' has non-positive weight for '{key}'."
+                )
+            weights[str(key)] = weight
+
+        total = sum(weights.values())
+        if abs(total - 1.0) > 0.01:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' evaluation.weights must sum to 1.0 (+/-0.01), got {total:.4f}."
+            )
+        return weights
+
+    @staticmethod
+    def _derive_weights_from_criteria(
+        criteria: list[WorkflowCriterion], name: str
+    ) -> dict[str, float] | None:
+        """Derive evaluation weights from per-criterion weights when present."""
+        derived_weights = {
+            criterion.name: criterion.weight
+            for criterion in criteria
+            if criterion.weight is not None
+        }
+        if not derived_weights:
+            return None
+        total = sum(derived_weights.values())
+        if abs(total - 1.0) > 0.01:
+            raise WorkflowLoadError(
+                f"Workflow '{name}' criterion weights must sum to 1.0 (+/-0.01), got {total:.4f}."
+            )
+        return {k: float(v) for k, v in derived_weights.items()}
+
+    def _build_dag(
+        self,
+        data: dict[str, Any],
+        name: str,
+        description: str,
+        experimental: bool,
+    ) -> DAG:
+        """Parse steps into a DAG, handling nested/experimental fallbacks."""
         dag = DAG(name=name, description=description)
 
         for step_data in data.get("steps", []):
@@ -410,53 +505,64 @@ class WorkflowLoader:
             dag.add(step)
 
         if len(dag.steps) == 0:
-            # Check if steps exist under a nested key (e.g., workflow.steps)
-            nested_steps = data.get("workflow", {})
-            if isinstance(nested_steps, dict) and nested_steps.get("steps"):
-                if experimental:
-                    # Experimental definitions may use non-runtime schemas.
-                    # Best-effort load only runtime-compatible steps.
-                    for step_data in nested_steps.get("steps", []):
-                        if not isinstance(step_data, dict):
-                            continue
-                        if "name" not in step_data or "agent" not in step_data:
-                            continue
-                        try:
-                            step = self._parse_step(step_data)
-                            resolve_agent(step)
-                            dag.add(step)
-                        except Exception:
-                            continue
-                else:
-                    raise WorkflowLoadError(
-                        f"Workflow '{name}' has steps nested under 'workflow.steps' "
-                        f"instead of top-level 'steps'. Restructure the YAML."
-                    )
-            if experimental:
-                # Keep experimental definitions loadable for inspection/testing
-                # even when they are not yet runnable in the stable DAG format.
-                if len(dag.steps) == 0:
-                    placeholder = StepDefinition(
-                        name="experimental_placeholder",
-                        description="Placeholder step for experimental workflow",
-                        metadata={"agent": "tier0_parser"},
-                    )
-                    resolve_agent(placeholder)
-                    dag.add(placeholder)
-            else:
-                raise WorkflowLoadError(f"Workflow '{name}' has no executable steps.")
+            self._handle_empty_dag(dag, data, name, experimental)
 
-        return WorkflowDefinition(
-            name=name,
-            description=description,
-            version=version,
-            inputs=inputs,
-            outputs=outputs,
-            capabilities=capabilities,
-            evaluation=workflow_evaluation,
-            experimental=experimental,
-            dag=dag,
+        return dag
+
+    def _handle_empty_dag(
+        self,
+        dag: DAG,
+        data: dict[str, Any],
+        name: str,
+        experimental: bool,
+    ) -> None:
+        """Resolve an empty DAG via nested steps or experimental placeholders."""
+        # Check if steps exist under a nested key (e.g., workflow.steps)
+        nested_steps = data.get("workflow", {})
+        if isinstance(nested_steps, dict) and nested_steps.get("steps"):
+            if experimental:
+                # Experimental definitions may use non-runtime schemas.
+                # Best-effort load only runtime-compatible steps.
+                self._load_experimental_nested_steps(dag, nested_steps)
+            else:
+                raise WorkflowLoadError(
+                    f"Workflow '{name}' has steps nested under 'workflow.steps' "
+                    f"instead of top-level 'steps'. Restructure the YAML."
+                )
+        if experimental:
+            # Keep experimental definitions loadable for inspection/testing
+            # even when they are not yet runnable in the stable DAG format.
+            if len(dag.steps) == 0:
+                self._add_experimental_placeholder(dag)
+        else:
+            raise WorkflowLoadError(f"Workflow '{name}' has no executable steps.")
+
+    def _load_experimental_nested_steps(
+        self, dag: DAG, nested_steps: dict[str, Any]
+    ) -> None:
+        """Best-effort load of runtime-compatible steps from a nested block."""
+        for step_data in nested_steps.get("steps", []):
+            if not isinstance(step_data, dict):
+                continue
+            if "name" not in step_data or "agent" not in step_data:
+                continue
+            try:
+                step = self._parse_step(step_data)
+                resolve_agent(step)
+                dag.add(step)
+            except Exception:
+                continue
+
+    @staticmethod
+    def _add_experimental_placeholder(dag: DAG) -> None:
+        """Add a placeholder step so an experimental workflow stays loadable."""
+        placeholder = StepDefinition(
+            name="experimental_placeholder",
+            description="Placeholder step for experimental workflow",
+            metadata={"agent": "tier0_parser"},
         )
+        resolve_agent(placeholder)
+        dag.add(placeholder)
 
     @staticmethod
     def _is_experimental_definition(path: Path) -> bool:
@@ -475,56 +581,10 @@ class WorkflowLoader:
         if not name:
             raise WorkflowLoadError("Step must have a 'name' field")
 
-        # Build input/output mappings
-        input_mapping = {}
-        raw_inputs = data.get("inputs", {})
-        if isinstance(raw_inputs, dict):
-            for key, value in raw_inputs.items():
-                input_mapping[key] = value
-
-        output_mapping = {}
-        raw_outputs = data.get("outputs", {})
-        if isinstance(raw_outputs, dict):
-            for key, value in raw_outputs.items():
-                if isinstance(value, str):
-                    output_mapping[key] = value
-
-        # Parse 'when' condition as string expression
-        when_expr = data.get("when")
-        when_func = None
-        if when_expr:
-            # Create a callable condition from the expression string.
-            # The ExpressionEvaluator is instantiated at runtime with the live
-            # ExecutionContext so that ${...} references are resolved.
-            raw_expr = when_expr
-
-            def _make_condition(expr: str):
-                def _condition(ctx) -> bool:
-                    from ..engine.expressions import ExpressionEvaluator
-
-                    evaluator = ExpressionEvaluator(ctx, {})
-                    return evaluator.evaluate(expr)
-
-                return _condition
-
-            when_func = _make_condition(raw_expr)
-
-        # Parse loop_max — must resolve to a positive integer.
-        # Values may be a literal int/str OR a ${...} expression that will be
-        # evaluated at run-time.  Expressions are stored as-is and resolved by
-        # the executor; literals are coerced immediately.
-        loop_max_raw = data.get("loop_max", 3)
-        loop_max_expr: str | None = None
-        if isinstance(loop_max_raw, str) and loop_max_raw.strip().startswith("${"):
-            # Runtime expression — defer resolution; store sentinel 0 as a
-            # signal for the executor to evaluate and clamp to >= 1.
-            loop_max = 0
-            loop_max_expr = loop_max_raw.strip()
-        else:
-            try:
-                loop_max = max(1, int(loop_max_raw))
-            except (TypeError, ValueError):
-                loop_max = 3
+        input_mapping = self._parse_step_input_mapping(data.get("inputs", {}))
+        output_mapping = self._parse_step_output_mapping(data.get("outputs", {}))
+        when_func = self._build_when_condition(data.get("when"))
+        loop_max, loop_max_expr = self._parse_loop_max(data.get("loop_max", 3))
 
         return StepDefinition(
             name=name,
@@ -537,7 +597,7 @@ class WorkflowLoader:
             loop_max=loop_max,
             metadata={
                 "agent": data.get("agent"),
-                "when_expr": when_expr,
+                "when_expr": data.get("when"),
                 # When loop_max was a ${...} expression, store it so the
                 # executor can resolve it at runtime (loop_max==0 is the signal).
                 "loop_max_expr": loop_max_expr,
@@ -559,6 +619,69 @@ class WorkflowLoader:
                 ),
             },
         )
+
+    @staticmethod
+    def _parse_step_input_mapping(raw_inputs: Any) -> dict[str, Any]:
+        """Build a step's input mapping from its ``inputs`` block."""
+        input_mapping: dict[str, Any] = {}
+        if isinstance(raw_inputs, dict):
+            for key, value in raw_inputs.items():
+                input_mapping[key] = value
+        return input_mapping
+
+    @staticmethod
+    def _parse_step_output_mapping(raw_outputs: Any) -> dict[str, str]:
+        """Build a step's output mapping from its ``outputs`` block."""
+        output_mapping: dict[str, str] = {}
+        if isinstance(raw_outputs, dict):
+            for key, value in raw_outputs.items():
+                if isinstance(value, str):
+                    output_mapping[key] = value
+        return output_mapping
+
+    @staticmethod
+    def _build_when_condition(when_expr: Any):
+        """Compile a ``when`` expression string into a runtime predicate."""
+        if not when_expr:
+            return None
+
+        # Create a callable condition from the expression string.
+        # The ExpressionEvaluator is instantiated at runtime with the live
+        # ExecutionContext so that ${...} references are resolved.
+        raw_expr = when_expr
+
+        def _make_condition(expr: str):
+            def _condition(ctx) -> bool:
+                from ..engine.expressions import ExpressionEvaluator
+
+                evaluator = ExpressionEvaluator(ctx, {})
+                return evaluator.evaluate(expr)
+
+            return _condition
+
+        return _make_condition(raw_expr)
+
+    @staticmethod
+    def _parse_loop_max(loop_max_raw: Any) -> tuple[int, str | None]:
+        """Resolve ``loop_max`` to a positive int or a deferred expression.
+
+        Values may be a literal int/str OR a ``${...}`` expression that will be
+        evaluated at run-time.  Expressions are stored as-is and resolved by the
+        executor; literals are coerced immediately.
+
+        Returns:
+            Tuple of (loop_max, loop_max_expr). When a runtime expression is
+            given, loop_max is the sentinel 0 and loop_max_expr holds the
+            expression string.
+        """
+        if isinstance(loop_max_raw, str) and loop_max_raw.strip().startswith("${"):
+            # Runtime expression — defer resolution; store sentinel 0 as a
+            # signal for the executor to evaluate and clamp to >= 1.
+            return 0, loop_max_raw.strip()
+        try:
+            return max(1, int(loop_max_raw)), None
+        except (TypeError, ValueError):
+            return 3, None
 
 
 def load_workflow(name: str, definitions_dir: Path | None = None) -> WorkflowDefinition:

@@ -61,7 +61,7 @@ def _noop_log(msg: str) -> None:
     """No-op logger used when no log callback is provided."""
 
 
-def probe_local(model: str, log: LogFn = None) -> ProbeResult:
+def probe_local(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe a local ONNX model."""
     start = time.time()
     model_key = model.replace(PREFIX_LOCAL, "")
@@ -120,47 +120,129 @@ def probe_local(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_windows_ai(model: str, log: LogFn = None) -> ProbeResult:
-    """Probe Windows AI (Phi Silica) via the .NET bridge --info."""
-    start = time.time()
+def _check_windows_ai_prereqs(
+    model: str, start: float
+) -> tuple[ProbeResult | None, Path | None]:
+    """Check platform/dotnet/bridge prerequisites for Windows AI probing.
 
+    Returns ``(error_result, bridge_proj)``; ``error_result`` is set when a
+    prerequisite is missing, otherwise ``bridge_proj`` is the bridge path.
+    """
     if sys.platform != PLATFORM_WINDOWS:
-        return ProbeResult(
-            model=model,
-            provider="windows_ai",
-            usable=False,
-            error_code=ErrorCode.UNAVAILABLE_MODEL.value,
-            error_message="Windows AI is only available on Windows",
-            probe_time=datetime.now().isoformat(),
-            duration_ms=int((time.time() - start) * 1000),
+        return (
+            ProbeResult(
+                model=model,
+                provider="windows_ai",
+                usable=False,
+                error_code=ErrorCode.UNAVAILABLE_MODEL.value,
+                error_message="Windows AI is only available on Windows",
+                probe_time=datetime.now().isoformat(),
+                duration_ms=int((time.time() - start) * 1000),
+            ),
+            None,
         )
 
     import shutil
 
     if not shutil.which("dotnet"):
-        return ProbeResult(
-            model=model,
-            provider="windows_ai",
-            usable=False,
-            error_code=ErrorCode.UNAVAILABLE_MODEL.value,
-            error_message="dotnet not found on PATH (install .NET SDK)",
-            probe_time=datetime.now().isoformat(),
-            duration_ms=int((time.time() - start) * 1000),
+        return (
+            ProbeResult(
+                model=model,
+                provider="windows_ai",
+                usable=False,
+                error_code=ErrorCode.UNAVAILABLE_MODEL.value,
+                error_message="dotnet not found on PATH (install .NET SDK)",
+                probe_time=datetime.now().isoformat(),
+                duration_ms=int((time.time() - start) * 1000),
+            ),
+            None,
         )
 
     bridge_proj = (
         Path(__file__).parent / WINDOWS_AI_BRIDGE_DIR / WINDOWS_AI_BRIDGE_PROJECT
     )
     if not bridge_proj.exists():
+        return (
+            ProbeResult(
+                model=model,
+                provider="windows_ai",
+                usable=False,
+                error_code=ErrorCode.FILE_NOT_FOUND.value,
+                error_message="Bridge project not found (tools/windows_ai_bridge/PhiSilicaBridge.csproj)",
+                probe_time=datetime.now().isoformat(),
+                duration_ms=int((time.time() - start) * 1000),
+            ),
+            None,
+        )
+
+    return None, bridge_proj
+
+
+def _windows_ai_error_context(err_msg: str) -> str:
+    """Append Phi Silica LAF/capability hints for common failure messages."""
+    msg_lower = str(err_msg).lower()
+    if "limited access feature" in msg_lower or "unauthorized" in msg_lower:
+        return (
+            f"{err_msg} | Phi Silica may require a Limited Access Feature (LAF) token "
+            f"and/or package identity + systemAIModels capability. "
+            f"See: https://learn.microsoft.com/windows/ai/apis/troubleshooting "
+            f"(unlock: https://aka.ms/phi-silica-unlock)"
+        )
+    return err_msg
+
+
+def _classify_windows_ai_output(
+    model: str, r: Any, start: float
+) -> ProbeResult:
+    """Interpret the bridge subprocess output into a ProbeResult."""
+    stdout = (r.stdout or "").strip()
+    stderr = (r.stderr or "").strip()
+    duration_ms = int((time.time() - start) * 1000)
+
+    info: dict[str, Any] = {}
+    if stdout:
+        try:
+            info = json.loads(stdout)
+        except Exception:
+            info = {}
+
+    available = bool(info.get("available")) if info else False
+    if available:
         return ProbeResult(
             model=model,
             provider="windows_ai",
-            usable=False,
-            error_code=ErrorCode.FILE_NOT_FOUND.value,
-            error_message="Bridge project not found (tools/windows_ai_bridge/PhiSilicaBridge.csproj)",
+            usable=True,
             probe_time=datetime.now().isoformat(),
-            duration_ms=int((time.time() - start) * 1000),
+            duration_ms=duration_ms,
         )
+
+    err_msg = None
+    if info:
+        err_msg = info.get("error")
+    err_msg = err_msg or stderr or stdout or "Windows AI not available"
+
+    # Add context for common Phi Silica failures.
+    err_msg = _windows_ai_error_context(str(err_msg))
+    code, retry = classify_error(str(err_msg), r.returncode)
+    return ProbeResult(
+        model=model,
+        provider="windows_ai",
+        usable=False,
+        error_code=code.value,
+        error_message=str(err_msg)[:500],
+        should_retry=retry,
+        probe_time=datetime.now().isoformat(),
+        duration_ms=duration_ms,
+    )
+
+
+def probe_windows_ai(model: str, _log: LogFn = None) -> ProbeResult:
+    """Probe Windows AI (Phi Silica) via the .NET bridge --info."""
+    start = time.time()
+
+    prereq_error, bridge_proj = _check_windows_ai_prereqs(model, start)
+    if prereq_error is not None:
+        return prereq_error
 
     try:
         r = subprocess.run(
@@ -177,53 +259,7 @@ def probe_windows_ai(model: str, log: LogFn = None) -> ProbeResult:
             timeout=TIMEOUT_WINDOWS_AI_BRIDGE,
             cwd=str(bridge_proj.parent),
         )
-
-        stdout = (r.stdout or "").strip()
-        stderr = (r.stderr or "").strip()
-        duration_ms = int((time.time() - start) * 1000)
-
-        info: dict[str, Any] = {}
-        if stdout:
-            try:
-                info = json.loads(stdout)
-            except Exception:
-                info = {}
-
-        available = bool(info.get("available")) if info else False
-        if available:
-            return ProbeResult(
-                model=model,
-                provider="windows_ai",
-                usable=True,
-                probe_time=datetime.now().isoformat(),
-                duration_ms=duration_ms,
-            )
-
-        err_msg = None
-        if info:
-            err_msg = info.get("error")
-        err_msg = err_msg or stderr or stdout or "Windows AI not available"
-
-        # Add context for common Phi Silica failures.
-        msg_lower = str(err_msg).lower()
-        if "limited access feature" in msg_lower or "unauthorized" in msg_lower:
-            err_msg = (
-                f"{err_msg} | Phi Silica may require a Limited Access Feature (LAF) token "
-                f"and/or package identity + systemAIModels capability. "
-                f"See: https://learn.microsoft.com/windows/ai/apis/troubleshooting "
-                f"(unlock: https://aka.ms/phi-silica-unlock)"
-            )
-        code, retry = classify_error(str(err_msg), r.returncode)
-        return ProbeResult(
-            model=model,
-            provider="windows_ai",
-            usable=False,
-            error_code=code.value,
-            error_message=str(err_msg)[:500],
-            should_retry=retry,
-            probe_time=datetime.now().isoformat(),
-            duration_ms=duration_ms,
-        )
+        return _classify_windows_ai_output(model, r, start)
 
     except subprocess.TimeoutExpired:
         return ProbeResult(
@@ -250,7 +286,7 @@ def probe_windows_ai(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_ollama(model: str, log: LogFn = None) -> ProbeResult:
+def probe_ollama(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an Ollama model."""
     import urllib.error
     import urllib.request
@@ -319,7 +355,7 @@ def probe_ollama(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_lmstudio(model: str, log: LogFn = None) -> ProbeResult:
+def probe_lmstudio(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe LM Studio via its OpenAI-compatible API.
 
     LM Studio serves on http://localhost:1234 by default.
@@ -384,7 +420,62 @@ def probe_local_api(model: str, log: LogFn = None) -> ProbeResult:
     )
 
 
-def probe_ai_toolkit(model: str, log: LogFn = None) -> ProbeResult:
+def _load_aitk_aliases(modelinfo_file: Path) -> list[str]:
+    """Load chat-completion model aliases from the AI Toolkit modelinfo file."""
+    available_aliases: list[str] = []
+    if not modelinfo_file.exists():
+        return available_aliases
+    try:
+        info = json.loads(modelinfo_file.read_text(encoding="utf-8"))
+        for m in info.get("models", []):
+            if m.get("task") == AITK_MODELS_TASK_TYPE:  # Only chat models
+                alias = m.get("alias", "")
+                if alias:
+                    available_aliases.append(alias)
+    except Exception:
+        pass
+    return available_aliases
+
+
+def _scan_aitk_models_dir(models_dir: Path) -> list[str]:
+    """Return names of downloaded AI Toolkit model directories."""
+    downloaded: list[str] = []
+    if not models_dir.exists():
+        return downloaded
+    for subdir in models_dir.iterdir():
+        if subdir.is_dir() and subdir.name != AITK_MS_SUBDIR:
+            downloaded.append(subdir.name)
+    # Also check Microsoft subdir
+    ms_dir = models_dir / AITK_MS_SUBDIR
+    if ms_dir.exists():
+        for subdir in ms_dir.iterdir():
+            if subdir.is_dir():
+                downloaded.append(subdir.name)
+    return downloaded
+
+
+def _aitk_model_matches(
+    model_id: str, available_aliases: list[str], downloaded: list[str]
+) -> bool:
+    """Return True if model_id matches an alias+download or a downloaded folder."""
+    model_lower = model_id.lower()
+
+    # Direct match against aliases
+    if model_lower in [a.lower() for a in available_aliases]:
+        for d in downloaded:
+            if model_lower in d.lower():
+                return True
+
+    # Fuzzy match against downloaded models
+    for d in downloaded:
+        d_lower = d.lower()
+        if model_lower in d_lower or d_lower.startswith(model_lower.replace("-", "")):
+            return True
+
+    return False
+
+
+def probe_ai_toolkit(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an AI Toolkit local model.
 
     AI Toolkit stores downloaded models in ~/.aitk/models/ with metadata
@@ -425,63 +516,19 @@ def probe_ai_toolkit(model: str, log: LogFn = None) -> ProbeResult:
             duration_ms=int((time.time() - start) * 1000),
         )
 
-    # Load model info to check available models
-    available_aliases = []
-    available_names = []
+    # Load model info and downloaded folders
+    available_aliases = _load_aitk_aliases(modelinfo_file)
+    downloaded = _scan_aitk_models_dir(models_dir)
 
-    if modelinfo_file.exists():
-        try:
-            info = json.loads(modelinfo_file.read_text(encoding="utf-8"))
-            for m in info.get("models", []):
-                if m.get("task") == AITK_MODELS_TASK_TYPE:  # Only chat models
-                    alias = m.get("alias", "")
-                    name = m.get("name", "")
-                    if alias:
-                        available_aliases.append(alias)
-                    if name:
-                        available_names.append(name)
-        except Exception:
-            pass
-
-    # Check downloaded models in the models directory
-    downloaded = []
-    if models_dir.exists():
-        for subdir in models_dir.iterdir():
-            if subdir.is_dir() and subdir.name != AITK_MS_SUBDIR:
-                downloaded.append(subdir.name)
-        # Also check Microsoft subdir
-        ms_dir = models_dir / AITK_MS_SUBDIR
-        if ms_dir.exists():
-            for subdir in ms_dir.iterdir():
-                if subdir.is_dir():
-                    downloaded.append(subdir.name)
-
-    # Match model_id against available aliases, names, and downloaded folders
-    model_lower = model_id.lower()
-
-    # Direct match against aliases
-    if model_lower in [a.lower() for a in available_aliases]:
-        for d in downloaded:
-            if model_lower in d.lower():
-                return ProbeResult(
-                    model=model,
-                    provider="ai_toolkit",
-                    usable=True,
-                    probe_time=datetime.now().isoformat(),
-                    duration_ms=int((time.time() - start) * 1000),
-                )
-
-    # Fuzzy match against downloaded models
-    for d in downloaded:
-        d_lower = d.lower()
-        if model_lower in d_lower or d_lower.startswith(model_lower.replace("-", "")):
-            return ProbeResult(
-                model=model,
-                provider="ai_toolkit",
-                usable=True,
-                probe_time=datetime.now().isoformat(),
-                duration_ms=int((time.time() - start) * 1000),
-            )
+    # Match model_id against available aliases and downloaded folders
+    if _aitk_model_matches(model_id, available_aliases, downloaded):
+        return ProbeResult(
+            model=model,
+            provider="ai_toolkit",
+            usable=True,
+            probe_time=datetime.now().isoformat(),
+            duration_ms=int((time.time() - start) * 1000),
+        )
 
     # Model not found
     return ProbeResult(

@@ -102,7 +102,7 @@ class WindowsAIModel:
             return f"[ERROR] Windows AI API error: {e!s}"
 
     def _call_phi_silica(
-        self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000
+        self, prompt: str, _temperature: float = 0.7, _max_tokens: int = 2000
     ) -> str:
         """Call Phi Silica model via C# bridge.
 

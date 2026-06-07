@@ -5,14 +5,16 @@ interface CriterionRowProps {
   criterion: EvaluationCriterionDetail;
 }
 
-export default function CriterionRow({ criterion }: CriterionRowProps) {
+export default function CriterionRow({ criterion }: Readonly<CriterionRowProps>) {
   const pct = (criterion.normalized_score * 100).toFixed(1);
-  const color =
-    criterion.normalized_score >= 0.75
-      ? "b-green"
-      : criterion.normalized_score >= 0.5
-        ? "b-amber"
-        : "b-red";
+  let color: "b-green" | "b-amber" | "b-red";
+  if (criterion.normalized_score >= 0.75) {
+    color = "b-green";
+  } else if (criterion.normalized_score >= 0.5) {
+    color = "b-amber";
+  } else {
+    color = "b-red";
+  }
 
   return (
     <tr className="border-b border-b-line-soft">

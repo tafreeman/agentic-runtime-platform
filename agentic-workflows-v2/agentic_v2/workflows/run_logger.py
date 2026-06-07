@@ -145,6 +145,38 @@ def build_step_record(step: Any) -> dict[str, Any]:
         ).model_dump(mode="json")
 
 
+def _extract_evaluation_score(extra: dict[str, Any] | None) -> float | None:
+    """Pull a numeric evaluation score from the ``extra`` metadata block."""
+    if not isinstance(extra, dict):
+        return None
+    evaluation = extra.get("evaluation")
+    if not isinstance(evaluation, dict):
+        return None
+    weighted = evaluation.get("weighted_score")
+    overall = evaluation.get("overall_score")
+    if isinstance(weighted, (int, float)):
+        return float(weighted)
+    if isinstance(overall, (int, float)):
+        return float(overall)
+    return None
+
+
+def _has_meaningful_content(final_out: dict[str, Any]) -> bool:
+    """Return True if final_output has at least one non-null leaf value."""
+    has_top_level = any(
+        v not in (None, "", {}, [])
+        for v in final_out.values()
+        if not isinstance(v, dict)
+    )
+    has_nested = any(
+        inner_v not in (None, "", {}, [])
+        for v in final_out.values()
+        if isinstance(v, dict)
+        for inner_v in v.values()
+    )
+    return has_top_level or has_nested
+
+
 def build_run_record(
     result: WorkflowResult,
     *,
@@ -160,16 +192,7 @@ def build_run_record(
         workflow_inputs: The raw inputs passed to the workflow.
         extra: Any additional metadata to attach.
     """
-    evaluation_score: float | None = None
-    if isinstance(extra, dict):
-        evaluation = extra.get("evaluation")
-        if isinstance(evaluation, dict):
-            weighted = evaluation.get("weighted_score")
-            overall = evaluation.get("overall_score")
-            if isinstance(weighted, (int, float)):
-                evaluation_score = float(weighted)
-            elif isinstance(overall, (int, float)):
-                evaluation_score = float(overall)
+    evaluation_score = _extract_evaluation_score(extra)
 
     # When no evaluation ran, fall back to success_rate only if final outputs
     # are non-trivially populated. A hollow completion (all outputs None/empty)
@@ -177,21 +200,10 @@ def build_run_record(
     # score reflects execution fidelity rather than output quality.
     fallback_score = result.success_rate
     if evaluation_score is None:
-        # Check whether final_output has at least one non-null leaf value
-        final_out = result.final_output or {}
-        has_content = any(
-            v not in (None, "", {}, [])
-            for v in final_out.values()
-            if not isinstance(v, dict)
-        ) or any(
-            inner_v not in (None, "", {}, [])
-            for v in final_out.values()
-            if isinstance(v, dict)
-            for inner_v in v.values()
-        )
         # If every output is null/empty, cap the score at 50 as a hollow-completion
         # signal — steps ran but produced nothing meaningful.
-        if final_out and not has_content:
+        final_out = result.final_output or {}
+        if final_out and not _has_meaningful_content(final_out):
             fallback_score = min(result.success_rate, 50.0)
 
     record: dict[str, Any] = {
@@ -323,6 +335,14 @@ class RunLogger:
         if requested_name != identifier:
             return None
 
+        direct = self._resolve_by_filename(requested_name)
+        if direct is not None:
+            return direct
+
+        return self._resolve_by_run_id(requested_name, identifier)
+
+    def _resolve_by_filename(self, requested_name: str) -> Path | None:
+        """Find a run file by exact (or .json-suffixed) filename in search dirs."""
         candidate_names = [requested_name]
         if not requested_name.endswith(_JSON_SUFFIX):
             candidate_names.append(f"{requested_name}{_JSON_SUFFIX}")
@@ -332,7 +352,12 @@ class RunLogger:
                 candidate_path = directory / candidate_name
                 if candidate_path.exists() and candidate_path.is_file():
                     return candidate_path
+        return None
 
+    def _resolve_by_run_id(
+        self, requested_name: str, identifier: str
+    ) -> Path | None:
+        """Find a run file whose stored ``run_id`` matches the identifier."""
         run_id_candidates = {requested_name}
         if requested_name.endswith(_JSON_SUFFIX):
             run_id_candidates.add(requested_name[: -len(_JSON_SUFFIX)])
@@ -361,6 +386,30 @@ class RunLogger:
         if not runs:
             return {"total_runs": 0}
 
+        records = self._load_valid_run_records(runs)
+        if not records:
+            return {"total_runs": 0}
+
+        statuses = [str(r.get("status", "")) for r in records]
+        durations = [
+            r.get("total_duration_ms")
+            for r in records
+            if isinstance(r.get("total_duration_ms"), (int, float))
+        ]
+
+        return {
+            "total_runs": len(records),
+            "success": statuses.count("success"),
+            "failed": statuses.count("failed"),
+            "avg_duration_ms": sum(durations) / len(durations) if durations else None,
+            "workflows": sorted({str(r.get("workflow_name")) for r in records}),
+            "tokens_30d": self._sum_tokens_last_30_days(records),
+        }
+
+    def _load_valid_run_records(
+        self, runs: list[Path]
+    ) -> list[dict[str, Any]]:
+        """Load run files, skipping unreadable files and non-run artifacts."""
         records: list[dict[str, Any]] = []
         for path in runs:
             try:
@@ -379,41 +428,33 @@ class RunLogger:
                 continue
 
             records.append(record)
+        return records
 
-        if not records:
-            return {"total_runs": 0}
-
-        statuses = [str(r.get("status", "")) for r in records]
-        durations = [
-            r.get("total_duration_ms")
-            for r in records
-            if isinstance(r.get("total_duration_ms"), (int, float))
-        ]
-
+    @classmethod
+    def _sum_tokens_last_30_days(cls, records: list[dict[str, Any]]) -> int:
+        """Sum ``tokens_used`` across steps of runs started within 30 days."""
         cutoff = datetime.now(UTC) - timedelta(days=30)
         tokens_30d = 0
         for r in records:
             try:
-                start_raw = r.get("start_time")
-                if not isinstance(start_raw, str):
-                    continue
-                start_dt = datetime.fromisoformat(start_raw)
-                if start_dt.tzinfo is None:
-                    start_dt = start_dt.replace(tzinfo=UTC)
-                if start_dt < cutoff:
-                    continue
-                for step in r.get("steps", []):
-                    t = step.get("tokens_used")
-                    if isinstance(t, int):
-                        tokens_30d += t
+                tokens_30d += cls._record_recent_tokens(r, cutoff)
             except Exception:
                 continue
+        return tokens_30d
 
-        return {
-            "total_runs": len(records),
-            "success": statuses.count("success"),
-            "failed": statuses.count("failed"),
-            "avg_duration_ms": sum(durations) / len(durations) if durations else None,
-            "workflows": sorted({str(r.get("workflow_name")) for r in records}),
-            "tokens_30d": tokens_30d,
-        }
+    @staticmethod
+    def _record_recent_tokens(record: dict[str, Any], cutoff: datetime) -> int:
+        """Return a run's total step tokens, or 0 if it started before cutoff."""
+        start_raw = record.get("start_time")
+        if not isinstance(start_raw, str):
+            return 0
+        start_dt = datetime.fromisoformat(start_raw)
+        if start_dt.tzinfo is None:
+            start_dt = start_dt.replace(tzinfo=UTC)
+        if start_dt < cutoff:
+            return 0
+        return sum(
+            t
+            for step in record.get("steps", [])
+            if isinstance((t := step.get("tokens_used")), int)
+        )

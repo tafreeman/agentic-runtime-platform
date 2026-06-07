@@ -127,12 +127,12 @@ class ClaudeSDKAgent:
     # ------------------------------------------------------------------
 
     def _build_options(self) -> ClaudeAgentOptions:
-        kwargs: dict[str, Any] = dict(
-            model=self._model,
-            allowed_tools=self._tools,
-            permission_mode=self._permission_mode,
-            max_turns=self._max_turns,
-        )
+        kwargs: dict[str, Any] = {
+            "model": self._model,
+            "allowed_tools": self._tools,
+            "permission_mode": self._permission_mode,
+            "max_turns": self._max_turns,
+        }
         if self._cwd:
             kwargs["cwd"] = self._cwd
         if self._system_prompt:

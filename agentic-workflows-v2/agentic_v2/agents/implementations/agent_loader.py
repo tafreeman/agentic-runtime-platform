@@ -73,6 +73,54 @@ def _parse_agent_file(path: Path) -> tuple[dict[str, Any], str]:
     return meta, body
 
 
+def _resolve_agent_dirs(directory: Path | str | None) -> list[Path]:
+    """Resolve the ordered list of directories to scan for agent files."""
+    if directory is not None:
+        # Explicit directory always wins for callers that need deterministic
+        # loading behavior (for tests or custom runtime setups).
+        return [Path(directory)]
+
+    # Default behavior: bundled definitions first, then optional external
+    # pack from env var for local overrides.
+    dirs = [_DEFAULT_AGENTS_DIR]
+    if _EXTERNAL_AGENTS_DIR is not None:
+        dirs.append(_EXTERNAL_AGENTS_DIR)
+    return dirs
+
+
+def _build_agent_definition(meta: dict[str, Any], body: str) -> AgentDefinition:
+    """Build an :class:`AgentDefinition` from parsed frontmatter and body."""
+    description = meta.get("description", "")
+    tools_raw = meta.get("tools", ["Read", "Glob", "Grep"])
+    # tools may be stored as a JSON-like list string or a real list
+    if isinstance(tools_raw, str):
+        import json
+
+        tools_raw = json.loads(tools_raw)
+    model_short = meta.get("model", "sonnet")
+    _ = _MODEL_MAP.get(str(model_short).lower(), "claude-sonnet-4-6")
+
+    return AgentDefinition(
+        description=description,
+        prompt=body,
+        tools=list(tools_raw),
+    )
+
+
+def _load_agents_from_dir(directory: Path) -> dict[str, AgentDefinition]:
+    """Load all valid agent definitions from a single *directory*."""
+    agents: dict[str, AgentDefinition] = {}
+    for md_file in sorted(directory.glob("*.md")):
+        try:
+            meta, body = _parse_agent_file(md_file)
+        except Exception:
+            continue  # skip malformed files
+
+        name = meta.get("name") or md_file.stem
+        agents[name] = _build_agent_definition(meta, body)
+    return agents
+
+
 def load_agents(directory: Path | str | None = None) -> dict[str, AgentDefinition]:
     """Load all .md agent definitions from *directory*.
 
@@ -84,45 +132,13 @@ def load_agents(directory: Path | str | None = None) -> dict[str, AgentDefinitio
     Returns:
         Dict mapping agent ``name`` → :class:`AgentDefinition`.
     """
-    if directory is not None:
-        # Explicit directory always wins for callers that need deterministic
-        # loading behavior (for tests or custom runtime setups).
-        dirs = [Path(directory)]
-    else:
-        # Default behavior: bundled definitions first, then optional external
-        # pack from env var for local overrides.
-        dirs = [_DEFAULT_AGENTS_DIR]
-        if _EXTERNAL_AGENTS_DIR is not None:
-            dirs.append(_EXTERNAL_AGENTS_DIR)
+    dirs = _resolve_agent_dirs(directory)
 
     agents: dict[str, AgentDefinition] = {}
-
     for d in dirs:
         if not d.exists():
             continue
-        for md_file in sorted(d.glob("*.md")):
-            try:
-                meta, body = _parse_agent_file(md_file)
-            except Exception:
-                continue  # skip malformed files
-
-            name = meta.get("name") or md_file.stem
-            description = meta.get("description", "")
-            tools_raw = meta.get("tools", ["Read", "Glob", "Grep"])
-            # tools may be stored as a JSON-like list string or a real list
-            if isinstance(tools_raw, str):
-                import json
-
-                tools_raw = json.loads(tools_raw)
-            model_short = meta.get("model", "sonnet")
-            model_id = _MODEL_MAP.get(str(model_short).lower(), "claude-sonnet-4-6")
-
-            agents[name] = AgentDefinition(
-                description=description,
-                prompt=body,
-                tools=list(tools_raw),
-            )
-
+        agents = _load_agents_from_dir(d)
         if agents:
             break  # stop once we found files in the first valid directory
 

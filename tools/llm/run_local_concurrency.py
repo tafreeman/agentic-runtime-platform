@@ -169,6 +169,99 @@ def _write_report(payload: dict[str, Any], out_dir: Path) -> Path:
     return out_path
 
 
+def _apply_arg_aliases(args: argparse.Namespace) -> None:
+    """Normalize alias/convenience flags into the canonical args in place."""
+    if args.parallel_only:
+        args.skip_sequential = True
+    if args.fast:
+        args.skip_sequential = True
+        args.rounds = 1
+        if args.max_tokens == 300:
+            args.max_tokens = 120
+
+
+def _run_rounds(args: argparse.Namespace, rounds: int) -> list[dict[str, Any]]:
+    """Run the configured number of sequential/parallel comparison rounds."""
+    records: list[dict[str, Any]] = []
+    for i in range(rounds):
+        round_rec: dict[str, Any] = {"round": i + 1}
+        if not args.skip_sequential:
+            round_rec["sequential"] = _run_sequential(
+                args.cpu_model,
+                args.gpu_model,
+                args.prompt,
+                args.temperature,
+                args.max_tokens,
+            )
+        round_rec["parallel"] = _run_parallel(
+            args.cpu_model,
+            args.gpu_model,
+            args.prompt,
+            args.temperature,
+            args.max_tokens,
+        )
+        records.append(round_rec)
+    return records
+
+
+def _collect_call_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Flatten per-round CPU/GPU call dicts across all modes."""
+    call_records: list[dict[str, Any]] = []
+    for rec in records:
+        for mode in ("sequential", "parallel"):
+            mode_data = rec.get(mode)
+            if not isinstance(mode_data, dict):
+                continue
+            cpu = mode_data.get("cpu")
+            gpu = mode_data.get("gpu")
+            if isinstance(cpu, dict):
+                call_records.append(cpu)
+            if isinstance(gpu, dict):
+                call_records.append(gpu)
+    return call_records
+
+
+def _build_summary(
+    args: argparse.Namespace, rounds: int, records: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Build the summary block (timings, call counts, speedup) for the report."""
+    seq_times = [
+        r["sequential"]["wall_s"]
+        for r in records
+        if isinstance(r.get("sequential"), dict)
+    ]
+    par_times = [
+        r["parallel"]["wall_s"] for r in records if isinstance(r.get("parallel"), dict)
+    ]
+    call_records = _collect_call_records(records)
+    success_count = sum(1 for call in call_records if bool(call.get("ok")))
+    failed_count = len(call_records) - success_count
+
+    summary: dict[str, Any] = {
+        "cpu_model": args.cpu_model,
+        "gpu_model": args.gpu_model,
+        "rounds": rounds,
+        "avg_parallel_wall_s": (
+            round(sum(par_times) / len(par_times), 3) if par_times else None
+        ),
+        "total_calls": len(call_records),
+        "successful_calls": success_count,
+        "failed_calls": failed_count,
+        "success_rate": (
+            round(success_count / len(call_records), 3) if call_records else None
+        ),
+    }
+    if seq_times:
+        avg_seq = sum(seq_times) / len(seq_times)
+        avg_par = sum(par_times) / len(par_times)
+        speedup = (avg_seq / avg_par) if avg_par > 0 else None
+        summary["avg_sequential_wall_s"] = round(avg_seq, 3)
+        summary["parallel_speedup_vs_sequential"] = (
+            round(speedup, 3) if speedup else None
+        )
+    return summary
+
+
 def main(argv: list[str]) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(
@@ -212,13 +305,7 @@ def main(argv: list[str]) -> int:
         help="Print selected config and exit.",
     )
     args = parser.parse_args(argv)
-    if args.parallel_only:
-        args.skip_sequential = True
-    if args.fast:
-        args.skip_sequential = True
-        args.rounds = 1
-        if args.max_tokens == 300:
-            args.max_tokens = 120
+    _apply_arg_aliases(args)
 
     _ensure_import_path()
     _load_dotenv(_repo_root() / ".env")
@@ -229,72 +316,8 @@ def main(argv: list[str]) -> int:
         return 0
 
     rounds = max(1, args.rounds)
-    records: list[dict[str, Any]] = []
-
-    for i in range(rounds):
-        round_rec: dict[str, Any] = {"round": i + 1}
-        if not args.skip_sequential:
-            round_rec["sequential"] = _run_sequential(
-                args.cpu_model,
-                args.gpu_model,
-                args.prompt,
-                args.temperature,
-                args.max_tokens,
-            )
-        round_rec["parallel"] = _run_parallel(
-            args.cpu_model,
-            args.gpu_model,
-            args.prompt,
-            args.temperature,
-            args.max_tokens,
-        )
-        records.append(round_rec)
-
-    seq_times = [
-        r["sequential"]["wall_s"]
-        for r in records
-        if isinstance(r.get("sequential"), dict)
-    ]
-    par_times = [
-        r["parallel"]["wall_s"] for r in records if isinstance(r.get("parallel"), dict)
-    ]
-    call_records: list[dict[str, Any]] = []
-    for rec in records:
-        for mode in ("sequential", "parallel"):
-            mode_data = rec.get(mode)
-            if not isinstance(mode_data, dict):
-                continue
-            cpu = mode_data.get("cpu")
-            gpu = mode_data.get("gpu")
-            if isinstance(cpu, dict):
-                call_records.append(cpu)
-            if isinstance(gpu, dict):
-                call_records.append(gpu)
-    success_count = sum(1 for call in call_records if bool(call.get("ok")))
-    failed_count = len(call_records) - success_count
-
-    summary: dict[str, Any] = {
-        "cpu_model": args.cpu_model,
-        "gpu_model": args.gpu_model,
-        "rounds": rounds,
-        "avg_parallel_wall_s": (
-            round(sum(par_times) / len(par_times), 3) if par_times else None
-        ),
-        "total_calls": len(call_records),
-        "successful_calls": success_count,
-        "failed_calls": failed_count,
-        "success_rate": (
-            round(success_count / len(call_records), 3) if call_records else None
-        ),
-    }
-    if seq_times:
-        avg_seq = sum(seq_times) / len(seq_times)
-        avg_par = sum(par_times) / len(par_times)
-        speedup = (avg_seq / avg_par) if avg_par > 0 else None
-        summary["avg_sequential_wall_s"] = round(avg_seq, 3)
-        summary["parallel_speedup_vs_sequential"] = (
-            round(speedup, 3) if speedup else None
-        )
+    records = _run_rounds(args, rounds)
+    summary = _build_summary(args, rounds, records)
 
     payload = {
         "timestamp_utc": datetime.now(UTC).isoformat(),
@@ -319,11 +342,13 @@ def main(argv: list[str]) -> int:
         f"Calls: {summary['successful_calls']}/{summary['total_calls']} successful "
         f"(failed={summary['failed_calls']})"
     )
+    logger.info(f"Report: {out_path}")
+
     if summary["failed_calls"] > 0:
         logger.warning(
             "One or more model calls failed; latency comparison may be invalid."
         )
-    logger.info(f"Report: {out_path}")
+        return 1
 
     return 0
 

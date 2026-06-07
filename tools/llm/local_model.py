@@ -194,21 +194,17 @@ Return ONLY valid JSON in this exact format:
 
         return self._parse_evaluation_response(response)
 
-    def _parse_evaluation_response(self, response: str) -> dict[str, Any]:
-        """Parse evaluation response with multiple fallback strategies.
+    # Guard against ReDoS on pathological LLM output (missing closing fence
+    # causes catastrophic backtracking in the DOTALL quantifier below).
+    _MAX_PARSE_LEN = 262144  # 256 KB
 
-        Handles various JSON formatting issues from LLM output.
-        """
-        original_response = response
-
-        # Step 1: Clean up the response
+    @classmethod
+    def _strip_markdown_fences(cls, response: str) -> str:
+        """Strip the response of leading/trailing whitespace and markdown fences."""
         response = response.strip()
 
-        # Guard against ReDoS on pathological LLM output (missing closing fence
-        # causes catastrophic backtracking in the DOTALL quantifier below).
-        _MAX_PARSE_LEN = 262144  # 256 KB
-        if len(response) > _MAX_PARSE_LEN:
-            response = response[:_MAX_PARSE_LEN]
+        if len(response) > cls._MAX_PARSE_LEN:
+            response = response[: cls._MAX_PARSE_LEN]
 
         # Remove markdown code blocks if present
         if "```json" in response:
@@ -219,135 +215,186 @@ Return ONLY valid JSON in this exact format:
             match = re.search(r"```\s*([\s\S]*?)\s*```", response)
             if match:
                 response = match.group(1)
+        return response
 
-        # Step 2: Try to unescape quoted JSON strings
+    @staticmethod
+    def _unwrap_outer_quotes(response: str) -> str:
+        """Decode a fully quoted JSON string literal into its inner JSON text."""
+        resp_strip = response.strip()
+        is_quoted = (resp_strip.startswith('"') and resp_strip.endswith('"')) or (
+            resp_strip.startswith("'") and resp_strip.endswith("'")
+        )
+        if not is_quoted:
+            return response
         try:
-            resp_strip = response.strip()
-            if (resp_strip.startswith('"') and resp_strip.endswith('"')) or (
-                resp_strip.startswith("'") and resp_strip.endswith("'")
-            ):
-                try:
-                    unquoted = json.loads(resp_strip)
-                    if isinstance(unquoted, str) and "{" in unquoted:
-                        response = unquoted
-                except Exception:
-                    pass
-
-            # Handle escaped quotes
-            if '\\"' in response or "\\n" in response:
-                try:
-                    unescaped = response.encode().decode("unicode_escape")
-                    if "{" in unescaped:
-                        response = unescaped
-                except Exception:
-                    pass
+            unquoted = json.loads(resp_strip)
+            if isinstance(unquoted, str) and "{" in unquoted:
+                return unquoted
         except Exception:
             pass
+        return response
 
-        # Step 3: Try multiple JSON extraction strategies
-        json_result = None
-
-        # Strategy 3a: Find outermost { } pair
+    @staticmethod
+    def _unescape_escape_sequences(response: str) -> str:
+        """Decode backslash escape sequences when they wrap JSON content."""
+        if '\\"' not in response and "\\n" not in response:
+            return response
         try:
-            # Find first { and last }
+            # Use escape_decode (not .decode("unicode_escape")) so multibyte
+            # UTF-8 content survives: unicode_escape misreads UTF-8 bytes as
+            # Latin-1 (e.g. "é" -> "Ã©"). escape_decode resolves backslash
+            # escapes on the raw bytes, then we decode as UTF-8.
+            import codecs
+
+            unescaped = codecs.escape_decode(response.encode("utf-8"))[0].decode(
+                "utf-8"
+            )
+            if "{" in unescaped:
+                return unescaped
+        except Exception:
+            pass
+        return response
+
+    @classmethod
+    def _unescape_quoted_json(cls, response: str) -> str:
+        """Unwrap quoted/escaped JSON strings into raw JSON text."""
+        try:
+            response = cls._unwrap_outer_quotes(response)
+            response = cls._unescape_escape_sequences(response)
+        except Exception:
+            pass
+        return response
+
+    def _extract_outermost_json(self, response: str) -> dict[str, Any] | None:
+        """Strategy: parse the substring from the first { to the last }."""
+        try:
             first_brace = response.find("{")
             last_brace = response.rfind("}")
             if first_brace != -1 and last_brace > first_brace:
                 json_str = response[first_brace : last_brace + 1]
-                json_result = self._try_parse_json(json_str)
+                return self._try_parse_json(json_str)
         except Exception:
             pass
+        return None
 
-        # Strategy 3b: Look for JSON with "scores" key specifically
-        if not json_result:
-            try:
+    def _extract_scores_object(self, response: str) -> dict[str, Any] | None:
+        """Strategy: locate a JSON object that contains a "scores" key."""
+        try:
+            match = re.search(
+                r'\{[^{}]*"scores"[^{}]*\{[^{}]*\}[^{}]*\}', response, re.IGNORECASE
+            )
+            if match:
+                return self._try_parse_json(match.group())
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _extract_scores_via_regex(response: str) -> dict[str, Any] | None:
+        """Strategy: extract individual score/overall/summary fields with regex."""
+        try:
+            scores = {}
+            # Look for patterns like "clarity": 9 or clarity: 9
+            for field in [
+                "clarity",
+                "specificity",
+                "actionability",
+                "structure",
+                "completeness",
+                "safety",
+            ]:
                 match = re.search(
-                    r'\{[^{}]*"scores"[^{}]*\{[^{}]*\}[^{}]*\}', response, re.IGNORECASE
+                    rf'["\']?{field}["\']?\s*:\s*(\d+(?:\.\d+)?)',
+                    response,
+                    re.IGNORECASE,
                 )
                 if match:
-                    json_result = self._try_parse_json(match.group())
-            except Exception:
-                pass
+                    scores[field] = float(match.group(1))
 
-        # Strategy 3c: Try to extract individual fields with regex
-        if not json_result:
-            try:
-                scores = {}
-                # Look for patterns like "clarity": 9 or clarity: 9
-                for field in [
-                    "clarity",
-                    "specificity",
-                    "actionability",
-                    "structure",
-                    "completeness",
-                    "safety",
-                ]:
-                    match = re.search(
-                        rf'["\']?{field}["\']?\s*:\s*(\d+(?:\.\d+)?)',
-                        response,
-                        re.IGNORECASE,
+            # Look for overall score
+            overall = 0
+            overall_match = re.search(
+                r'["\']?overall["\']?\s*:\s*(\d+(?:\.\d+)?)',
+                response,
+                re.IGNORECASE,
+            )
+            if overall_match:
+                overall = float(overall_match.group(1))
+            elif scores:
+                overall = sum(scores.values()) / len(scores)
+
+            # Look for summary
+            summary = ""
+            summary_match = re.search(
+                r'["\']?summary["\']?\s*:\s*["\']([^"\']+)["\']',
+                response,
+                re.IGNORECASE,
+            )
+            if summary_match:
+                summary = summary_match.group(1)
+
+            if scores or overall > 0:
+                return {
+                    "scores": scores,
+                    "overall": round(overall, 1),
+                    "summary": summary,
+                }
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _normalize_evaluation_result(json_result: dict[str, Any]) -> dict[str, Any]:
+        """Normalize result structure and ensure overall/summary keys exist."""
+        # Normalize the result structure
+        if "scores" in json_result and "overall" not in json_result:
+            scores = json_result.get("scores", {})
+            if "overall" in scores:
+                json_result["overall"] = scores.pop("overall")
+            if "summary" in scores:
+                json_result["summary"] = scores.pop("summary")
+
+        # Ensure overall exists
+        if "overall" not in json_result or json_result["overall"] == 0:
+            scores = json_result.get("scores", {})
+            if scores:
+                numeric_scores = [
+                    v for v in scores.values() if isinstance(v, (int, float))
+                ]
+                if numeric_scores:
+                    json_result["overall"] = round(
+                        sum(numeric_scores) / len(numeric_scores), 1
                     )
-                    if match:
-                        scores[field] = float(match.group(1))
 
-                # Look for overall score
-                overall = 0
-                overall_match = re.search(
-                    r'["\']?overall["\']?\s*:\s*(\d+(?:\.\d+)?)',
-                    response,
-                    re.IGNORECASE,
-                )
-                if overall_match:
-                    overall = float(overall_match.group(1))
-                elif scores:
-                    overall = sum(scores.values()) / len(scores)
+        # Ensure summary exists
+        if "summary" not in json_result:
+            json_result["summary"] = ""
 
-                # Look for summary
-                summary = ""
-                summary_match = re.search(
-                    r'["\']?summary["\']?\s*:\s*["\']([^"\']+)["\']',
-                    response,
-                    re.IGNORECASE,
-                )
-                if summary_match:
-                    summary = summary_match.group(1)
+        return json_result
 
-                if scores or overall > 0:
-                    json_result = {
-                        "scores": scores,
-                        "overall": round(overall, 1),
-                        "summary": summary,
-                    }
-            except Exception:
-                pass
+    def _parse_evaluation_response(self, response: str) -> dict[str, Any]:
+        """Parse evaluation response with multiple fallback strategies.
+
+        Handles various JSON formatting issues from LLM output.
+        """
+        original_response = response
+
+        # Step 1: Clean up the response (strip + markdown fences)
+        response = self._strip_markdown_fences(response)
+
+        # Step 2: Try to unescape quoted JSON strings
+        response = self._unescape_quoted_json(response)
+
+        # Step 3: Try multiple JSON extraction strategies
+        json_result = (
+            self._extract_outermost_json(response)
+            or self._extract_scores_object(response)
+            or self._extract_scores_via_regex(response)
+        )
 
         # Step 4: Validate and normalize the result
         if json_result:
-            # Normalize the result structure
-            if "scores" in json_result and "overall" not in json_result:
-                scores = json_result.get("scores", {})
-                if "overall" in scores:
-                    json_result["overall"] = scores.pop("overall")
-                if "summary" in scores:
-                    json_result["summary"] = scores.pop("summary")
-
-            # Ensure overall exists
-            if "overall" not in json_result or json_result["overall"] == 0:
-                scores = json_result.get("scores", {})
-                if scores:
-                    numeric_scores = [
-                        v for v in scores.values() if isinstance(v, (int, float))
-                    ]
-                    if numeric_scores:
-                        json_result["overall"] = round(
-                            sum(numeric_scores) / len(numeric_scores), 1
-                        )
-
-            # Ensure summary exists
-            if "summary" not in json_result:
-                json_result["summary"] = ""
-
-            return json_result
+            return self._normalize_evaluation_result(json_result)
 
         # Step 5: Return error with raw response for debugging
         return {
@@ -392,50 +439,9 @@ Return ONLY valid JSON in this exact format:
 
         return None
 
-    def _parse_geval_criterion(self, response: str) -> dict[str, Any] | None:
-        """Parse a G-Eval criterion response with fallback strategies.
-
-        Expected format: {"reasoning": [...], "score": N, "summary": "..."}
-        """
-        response = response.strip()
-
-        # Guard against ReDoS on pathological LLM output (missing closing fence
-        # causes catastrophic backtracking in the DOTALL quantifier below).
-        _MAX_PARSE_LEN = 262144  # 256 KB
-        if len(response) > _MAX_PARSE_LEN:
-            response = response[:_MAX_PARSE_LEN]
-
-        # Remove markdown code blocks
-        if "```json" in response:
-            match = re.search(r"```json\s*([\s\S]*?)\s*```", response)
-            if match:
-                response = match.group(1)
-        elif "```" in response:
-            match = re.search(r"```\s*([\s\S]*?)\s*```", response)
-            if match:
-                response = match.group(1)
-
-        # Try JSON parsing first
-        json_result = self._try_parse_json(response)
-
-        # If that didn't work, try extracting first { to last }
-        if not json_result:
-            first_brace = response.find("{")
-            last_brace = response.rfind("}")
-            if first_brace != -1 and last_brace > first_brace:
-                json_result = self._try_parse_json(
-                    response[first_brace : last_brace + 1]
-                )
-
-        # If we got a result, validate and return
-        if json_result:
-            return {
-                "score": _safe_float(json_result.get("score", 0), 0.0),
-                "reasoning": json_result.get("reasoning") or [],
-                "summary": json_result.get("summary") or "",
-            }
-
-        # Fallback: extract with regex
+    @staticmethod
+    def _extract_geval_via_regex(response: str) -> dict[str, Any] | None:
+        """Fallback: extract score/summary/reasoning for a G-Eval criterion."""
         try:
             # Extract score
             score = 0
@@ -468,8 +474,30 @@ Return ONLY valid JSON in this exact format:
                 return {"score": score, "reasoning": reasoning, "summary": summary}
         except Exception:
             pass
-
         return None
+
+    def _parse_geval_criterion(self, response: str) -> dict[str, Any] | None:
+        """Parse a G-Eval criterion response with fallback strategies.
+
+        Expected format: {"reasoning": [...], "score": N, "summary": "..."}
+        """
+        response = self._strip_markdown_fences(response)
+
+        # Try JSON parsing first, then extracting first { to last }
+        json_result = self._try_parse_json(response) or self._extract_outermost_json(
+            response
+        )
+
+        # If we got a result, validate and return
+        if json_result:
+            return {
+                "score": _safe_float(json_result.get("score", 0), 0.0),
+                "reasoning": json_result.get("reasoning") or [],
+                "summary": json_result.get("summary") or "",
+            }
+
+        # Fallback: extract with regex
+        return self._extract_geval_via_regex(response)
 
     def evaluate_prompt_geval(
         self, prompt_content: str, criteria: list[str] | None = None

@@ -11,7 +11,7 @@ export default function JsonViewer({
   data,
   defaultExpanded = false,
   maxDepth = 4,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div className="font-mono text-xs leading-relaxed">
       <JsonNode value={data} depth={0} expanded={defaultExpanded} maxDepth={maxDepth} />
@@ -24,12 +24,12 @@ function JsonNode({
   depth,
   expanded: initialExpanded,
   maxDepth,
-}: {
+}: Readonly<{
   value: unknown;
   depth: number;
   expanded: boolean;
   maxDepth: number;
-}) {
+}>) {
   const [expanded, setExpanded] = useState(initialExpanded && depth < maxDepth);
 
   if (value === null) return <span className="text-gray-500">null</span>;
@@ -65,7 +65,7 @@ function JsonNode({
         bracket={["[", "]"]}
       >
         {value.map((item, i) => (
-          <div key={i} className="pl-4">
+          <div key={`${typeof item === 'object' ? JSON.stringify(item) : String(item)}-${i}`} className="pl-4">
             <JsonNode value={item} depth={depth + 1} expanded={false} maxDepth={maxDepth} />
             {i < value.length - 1 && <span className="text-gray-600">,</span>}
           </div>

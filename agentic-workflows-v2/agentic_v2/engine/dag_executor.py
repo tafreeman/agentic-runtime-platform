@@ -212,6 +212,113 @@ class DAGExecutor:
 
         tasks: set[asyncio.Task] = set()
 
+        def _schedule_ready_steps() -> None:
+            """Schedule ready (in-degree 0) steps up to max_concurrency."""
+            while ready and len(running) < max_concurrency:
+                step_name = ready.popleft()
+                if step_name in completed or step_name in skipped:
+                    continue
+
+                running.add(step_name)
+                # Move state to READY before spawning task
+                state_manager.transition(step_name, StepState.READY)
+                tasks.add(
+                    asyncio.create_task(run_step(step_name), name=step_name)
+                )
+
+        def _record_task_exception(task: asyncio.Task, exc: Exception) -> None:
+            """Record an unhandled run_step exception as a FAILED step result."""
+            # Retrieve the step name from the task (set via name= in create_task).
+            failed_name = task.get_name()
+            logger.error(
+                "Unhandled exception in DAG task for step %r: %s",
+                failed_name,
+                exc,
+                exc_info=True,
+            )
+            running.discard(failed_name)
+            step_result = StepResult(
+                step_name=failed_name, status=StepStatus.FAILED
+            )
+            step_result.error = str(exc)
+            step_result.end_time = datetime.now(UTC)
+            results[failed_name] = step_result
+            result.add_step(step_result)
+            completed.add(failed_name)
+            result.overall_status = StepStatus.FAILED
+            cascade_skip(failed_name, "unhandled exception")
+
+        async def _emit_step_end(step_name: str, step_result: StepResult) -> None:
+            """Signal step completion to external observers (UI/WebSockets)."""
+            if on_update:
+                await on_update(
+                    {
+                        "type": "step_end",
+                        "run_id": result.workflow_id,
+                        "step": step_name,
+                        "status": step_result.status.value,
+                        "duration_ms": step_result.duration_ms,
+                        "model_used": step_result.model_used,
+                        "tokens_used": step_result.metadata.get("tokens_used"),
+                        "tier": step_result.tier,
+                        "input": step_result.input_data,
+                        "output": step_result.output_data,
+                        "error": step_result.error,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                )
+
+        def _transition_outcome_state(
+            step_name: str, step_result: StepResult
+        ) -> None:
+            """Move the step state machine based on the step's terminal status."""
+            if step_result.status == StepStatus.SUCCESS:
+                state_manager.transition(step_name, StepState.SUCCESS)
+            elif step_result.status == StepStatus.SKIPPED:
+                state_manager.transition(step_name, StepState.SKIPPED)
+                # Skipped via should_run() (condition not met).  Mark
+                # complete in ctx so downstream dependencies can proceed.
+                if step_name not in ctx.completed_steps:
+                    ctx.completed_steps.append(step_name)
+                skipped.add(step_name)
+            else:
+                state_manager.transition(step_name, StepState.FAILED)
+
+        def _unlock_downstream(step_name: str) -> None:
+            """Decrement dependents' in-degree; enqueue any that reach zero."""
+            for dependent in adjacency.get(step_name, []):
+                if dependent in completed or dependent in skipped:
+                    continue
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    ready.append(dependent)
+
+        async def _process_done_task(task: asyncio.Task) -> None:
+            """Handle a single completed task: record result and propagate."""
+            try:
+                step_name, step_result = task.result()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                _record_task_exception(task, exc)
+                return
+
+            running.discard(step_name)
+            results[step_name] = step_result
+            result.add_step(step_result)
+            completed.add(step_name)
+
+            await _emit_step_end(step_name, step_result)
+            _transition_outcome_state(step_name, step_result)
+
+            # Failure propagation: skip all steps that depend on a failed step.
+            if step_result.is_failed:
+                result.overall_status = StepStatus.FAILED
+                cascade_skip(step_name, "dependency failed")
+                return
+
+            _unlock_downstream(step_name)
+
         async def _scheduling_loop() -> None:
             """Inner coroutine containing the DAG scheduling loop.
 
@@ -226,19 +333,9 @@ class DAGExecutor:
             # skipped.
             while len(completed) < len(dag.steps):
 
-                # 1. Schedule all currently 'ready' steps (those with in-degree 0)
+                # 1. Schedule all currently 'ready' steps (in-degree 0)
                 # obeying the max_concurrency limit.
-                while ready and len(running) < max_concurrency:
-                    step_name = ready.popleft()
-                    if step_name in completed or step_name in skipped:
-                        continue
-
-                    running.add(step_name)
-                    # Move state to READY before spawning task
-                    state_manager.transition(step_name, StepState.READY)
-                    tasks.add(
-                        asyncio.create_task(run_step(step_name), name=step_name)
-                    )
+                _schedule_ready_steps()
 
                 # 2. Deadlock detection
                 # If no tasks are running but we aren't done, some steps are
@@ -256,98 +353,12 @@ class DAGExecutor:
                 tasks.clear()
                 tasks.update(pending)
 
+                # 4-6. Handle each completed task.
                 for task in done:
-                    try:
-                        step_name, step_result = task.result()
-                    except asyncio.CancelledError:
-                        raise
-                    except Exception as exc:
-                        # Unhandled programming error inside run_step — retrieve
-                        # the step name from the task (set via name= in
-                        # create_task).
-                        failed_name = task.get_name()
-                        logger.error(
-                            "Unhandled exception in DAG task for step %r: %s",
-                            failed_name,
-                            exc,
-                            exc_info=True,
-                        )
-                        running.discard(failed_name)
-                        step_result = StepResult(
-                            step_name=failed_name, status=StepStatus.FAILED
-                        )
-                        step_result.error = str(exc)
-                        step_result.end_time = datetime.now(UTC)
-                        results[failed_name] = step_result
-                        result.add_step(step_result)
-                        completed.add(failed_name)
-                        result.overall_status = StepStatus.FAILED
-                        cascade_skip(failed_name, "unhandled exception")
-                        continue
-                    running.discard(step_name)
-                    results[step_name] = step_result
-                    result.add_step(step_result)
-                    completed.add(step_name)
+                    await _process_done_task(task)
 
-                    # Signal step completion to external observers
-                    # (e.g., UI/WebSockets)
-                    if on_update:
-                        await on_update(
-                            {
-                                "type": "step_end",
-                                "run_id": result.workflow_id,
-                                "step": step_name,
-                                "status": step_result.status.value,
-                                "duration_ms": step_result.duration_ms,
-                                "model_used": step_result.model_used,
-                                "tokens_used": step_result.metadata.get(
-                                    "tokens_used"
-                                ),
-                                "tier": step_result.tier,
-                                "input": step_result.input_data,
-                                "output": step_result.output_data,
-                                "error": step_result.error,
-                                "timestamp": datetime.now(UTC).isoformat(),
-                            }
-                        )
-
-                    # 4. Handle step outcome
-                    if step_result.status == StepStatus.SUCCESS:
-                        state_manager.transition(step_name, StepState.SUCCESS)
-                    elif step_result.status == StepStatus.SKIPPED:
-                        state_manager.transition(step_name, StepState.SKIPPED)
-                        # Skipped via should_run() (condition not met).  Mark
-                        # complete in ctx so downstream dependencies can proceed.
-                        if step_name not in ctx.completed_steps:
-                            ctx.completed_steps.append(step_name)
-                        skipped.add(step_name)
-                    else:
-                        state_manager.transition(step_name, StepState.FAILED)
-
-                    # 5. Failure propagation
-                    # If a step fails, we must skip all steps that depend on it.
-                    if step_result.is_failed:
-                        result.overall_status = StepStatus.FAILED
-                        cascade_skip(step_name, "dependency failed")
-                        continue
-
-                    # 6. Unlock downstream steps
-                    # Decrement in-degree of all direct dependents.
-                    # If a dependent's in-degree reaches 0, it is now 'ready'.
-                    for dependent in adjacency.get(step_name, []):
-                        if dependent in completed or dependent in skipped:
-                            continue
-                        in_degree[dependent] -= 1
-                        if in_degree[dependent] == 0:
-                            ready.append(dependent)
-
-        try:
-            if timeout is not None:
-                await asyncio.wait_for(_scheduling_loop(), timeout=timeout)
-            else:
-                await _scheduling_loop()
-        except TimeoutError:
-            # --- Timeout handling ---------------------------------------------------
+        async def _handle_timeout() -> None:
+            """Recover from a workflow-level timeout: cancel, fail, skip."""
             # 1. Record the event on the active OTEL span (if any).
             if span is not None:
                 span.set_attribute("workflow.timeout_exceeded", True)
@@ -376,7 +387,7 @@ class DAGExecutor:
             # 3. Transition every step still in RUNNING state to FAILED and
             #    record a StepResult for it.
             now = datetime.now(UTC)
-            for step_name in list(running):
+            for step_name in running:
                 if step_name not in completed:
                     step_result = StepResult(
                         step_name=step_name, status=StepStatus.FAILED
@@ -399,6 +410,15 @@ class DAGExecutor:
             result.metadata["timeout_exceeded"] = True
             result.metadata["timeout_seconds"] = timeout
             result.metadata["error"] = timeout_msg
+
+        try:
+            if timeout is not None:
+                async with asyncio.timeout(timeout):
+                    await _scheduling_loop()
+            else:
+                await _scheduling_loop()
+        except TimeoutError:
+            await _handle_timeout()
 
         if result.overall_status == StepStatus.RUNNING:
             result.overall_status = StepStatus.SUCCESS

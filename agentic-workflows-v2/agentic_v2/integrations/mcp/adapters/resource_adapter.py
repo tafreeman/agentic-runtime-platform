@@ -55,55 +55,71 @@ class McpResourceAdapter:
             connections = self.connection_manager.list_connections()
 
             for name, (state, _) in connections.items():
-                # Filter by server if specified
-                if server_name and name != server_name:
+                if not self._is_connection_listable(name, state, server_name):
                     continue
 
-                # Skip if not connected
-                if state.value != "connected":
-                    continue
-
-                # Get client
                 client = self.connection_manager.get_connection(name)
                 if not client:
                     continue
 
-                try:
-                    resources = await self.resource_discovery.discover_resources(
-                        name, client
-                    )
-                    for resource in resources:
-                        all_resources.append(
-                            {
-                                "server": name,
-                                "uri": resource.uri,
-                                "name": resource.name or "(unnamed)",
-                                "description": resource.description or "",
-                                "mime_type": resource.mime_type or "unknown",
-                            }
-                        )
-                except Exception as e:
-                    logger.warning(f"Failed to list resources from {name}: {e}")
+                await self._collect_server_resources(name, client, all_resources)
 
-            # Format output
-            if not all_resources:
-                return "No resources available from connected MCP servers."
-
-            lines = [f"Found {len(all_resources)} resources:\n"]
-            for i, res in enumerate(all_resources, 1):
-                lines.append(
-                    f"{i}. [{res['server']}] {res['name']}\n"
-                    f"   URI: {res['uri']}\n"
-                    f"   Type: {res['mime_type']}\n"
-                    f"   Description: {res['description']}\n"
-                )
-
-            return "\n".join(lines)
+            return self._format_resource_list(all_resources)
 
         except Exception as e:
             error_msg = f"Failed to list resources: {e}"
             logger.error(error_msg)
             return f"Error: {error_msg}"
+
+    @staticmethod
+    def _is_connection_listable(
+        name: str, state: Any, server_name: str | None
+    ) -> bool:
+        """Return True if a connection should be included in resource listing."""
+        # Filter by server if specified
+        if server_name and name != server_name:
+            return False
+        # Skip if not connected
+        return state.value == "connected"
+
+    async def _collect_server_resources(
+        self,
+        name: str,
+        client: Any,
+        all_resources: list[dict[str, Any]],
+    ) -> None:
+        """Discover resources from one server and append them to all_resources."""
+        try:
+            resources = await self.resource_discovery.discover_resources(name, client)
+            for resource in resources:
+                all_resources.append(
+                    {
+                        "server": name,
+                        "uri": resource.uri,
+                        "name": resource.name or "(unnamed)",
+                        "description": resource.description or "",
+                        "mime_type": resource.mime_type or "unknown",
+                    }
+                )
+        except Exception as e:
+            logger.warning(f"Failed to list resources from {name}: {e}")
+
+    @staticmethod
+    def _format_resource_list(all_resources: list[dict[str, Any]]) -> str:
+        """Format collected resources into a human-readable string."""
+        if not all_resources:
+            return "No resources available from connected MCP servers."
+
+        lines = [f"Found {len(all_resources)} resources:\n"]
+        for i, res in enumerate(all_resources, 1):
+            lines.append(
+                f"{i}. [{res['server']}] {res['name']}\n"
+                f"   URI: {res['uri']}\n"
+                f"   Type: {res['mime_type']}\n"
+                f"   Description: {res['description']}\n"
+            )
+
+        return "\n".join(lines)
 
     async def read_resource(self, uri: str) -> str:
         """Read a specific resource by URI.

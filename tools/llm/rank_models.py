@@ -22,6 +22,183 @@ _DEFAULT_LIMITS_FILE = str(_REPO_ROOT / "runs" / "provider_limits.json")
 _DEFAULT_OUTPUT_FILE = str(_REPO_ROOT / "runs" / "model_ranking.json")
 
 
+def _rank_local_onnx(probe: dict, ranked: dict) -> None:
+    """Rank the local ONNX provider into ``ranked`` if present in probe data."""
+    if "local_onnx" not in probe["providers"]:
+        return
+    p = probe["providers"]["local_onnx"]
+    ranked["local_onnx"] = {
+        "score": 100,
+        "rank": 1,
+        "reason": "Local models available on disk; no external quota or billing; highest throughput.",
+        "available_count": p.get("count", 0),
+        "models": p.get("available", []),
+    }
+
+
+def _rank_lmstudio(probe: dict, limits: dict, ranked: dict) -> None:
+    """Rank LM Studio into ``ranked`` when reachable via probe or limits check."""
+    if "lmstudio" not in probe["providers"]:
+        return
+    p = probe["providers"]["lmstudio"]
+    # Check limits/status
+    check = limits["checked"].get("lmstudio", {})
+    is_ok = check.get("ok", False) or p.get("reachable", False)
+    if not is_ok:
+        return
+
+    # Prefer list from limits check if available, else probe
+    models = p.get("available", [])
+    if check.get("json") and "data" in check["json"]:
+        models = [m["id"] for m in check["json"]["data"]]
+
+    ranked["lmstudio"] = {
+        "score": 90,
+        "rank": 2,
+        "reason": "LM Studio reachable locally exposing OpenAI-compatible models.",
+        "available_count": len(models),
+        "models": models,
+    }
+
+
+def _rank_openai(probe: dict, limits: dict, ranked: dict) -> None:
+    """Rank OpenAI into ``ranked`` when models are returned by probe or check."""
+    # Probe might say 0 if it didn't use a key, but limits check might have succeeded
+    openai_check = limits["checked"].get("openai", {})
+    openai_models = []
+    if openai_check.get("ok"):
+        if "short" in openai_check and "data" in openai_check["short"]:
+            openai_models = [m["id"] for m in openai_check["short"]["data"]]
+
+    if not openai_models and "openai" in probe["providers"]:
+        openai_models = probe["providers"]["openai"].get("available", [])
+
+    if openai_models:
+        ranked["openai"] = {
+            "score": 80,
+            "rank": 3,
+            "reason": "OpenAI API validated and returning models. Billable usage.",
+            "available_count": len(openai_models),
+            "models": openai_models,
+            "evidence": {"models_returned": True},
+        }
+
+
+def _rank_github(probe: dict, limits: dict, ranked: dict) -> None:
+    """Rank GitHub Models into ``ranked`` if present in probe data."""
+    if "github_models" not in probe["providers"]:
+        return
+    p = probe["providers"]["github_models"]
+    gh_check = limits["checked"].get("github", {})
+
+    evidence = {}
+    if gh_check.get("ok") and "json" in gh_check:
+        res = gh_check["json"].get("resources", {}).get("core", {})
+        evidence = {
+            "rate_core_limit": res.get("limit"),
+            "rate_core_remaining": res.get("remaining"),
+        }
+
+    ranked["github_models"] = {
+        "score": 70,
+        "rank": 4,
+        "reason": "GitHub token valid. Good fallback for gh: models.",
+        "available_count": p.get("count", 0),
+        "models": p.get("available", []),
+        "evidence": evidence,
+    }
+
+
+def _rank_anthropic(probe: dict, limits: dict, ranked: dict) -> None:
+    """Rank Anthropic into ``ranked`` if present in probe data."""
+    if "anthropic" not in probe["providers"]:
+        return
+    p = probe["providers"]["anthropic"]
+    anth_check = limits["checked"].get("anthropic", {})
+
+    # Even if check failed (400), we know keys are present
+    ranked["anthropic"] = {
+        "score": 60,
+        "rank": 5,
+        "reason": "Anthropic keys present. Probe lists models.",
+        "available_count": p.get("count", 0),
+        "models": p.get("available", []),
+        "evidence": {
+            "http_status": anth_check.get("status_code"),
+            "error": anth_check.get("json") if not anth_check.get("ok") else None,
+        },
+    }
+
+
+def _rank_gemini(probe: dict, ranked: dict) -> None:
+    """Rank Gemini into ``ranked`` if present in probe data."""
+    if "gemini" not in probe["providers"]:
+        return
+    p = probe["providers"]["gemini"]
+    ranked["gemini"] = {
+        "score": 50,
+        "rank": 6,
+        "reason": "API keys present. Quota check requires GCP Console.",
+        "available_count": p.get("count", 0),
+        "models": p.get("available", []),
+        "rotation_keys": p.get("rotation_keys", []),
+    }
+
+
+def _rank_ai_toolkit(probe: dict, ranked: dict) -> None:
+    """Rank AI Toolkit (local) into ``ranked`` when models are available."""
+    if "ai_toolkit" not in probe["providers"]:
+        return
+    p = probe["providers"]["ai_toolkit"]
+    if p.get("count", 0) > 0:
+        ranked["ai_toolkit"] = {
+            "score": 95,  # High score if available locally
+            "rank": 1.5,
+            "reason": "VS Code AI Toolkit local models available.",
+            "available_count": p.get("count", 0),
+            "models": p.get("available", []),
+        }
+
+
+def _rank_ollama(probe: dict, limits: dict, ranked: dict) -> None:
+    """Rank Ollama into ``ranked`` if present in probe data."""
+    if "ollama" not in probe["providers"]:
+        return
+    p = probe["providers"]["ollama"]
+    oll_check = limits["checked"].get("ollama", {})
+    is_ok = oll_check.get("ok", False)
+
+    # If check ok, use check models, else probe
+    models = p.get("available", [])
+    if is_ok and oll_check.get("json") and "models" in oll_check["json"]:
+        models = [m["name"] for m in oll_check["json"]["models"]]
+
+    ranked["ollama"] = {
+        "score": 30 if not is_ok else 85,
+        "rank": 7 if not is_ok else 2.5,
+        "reason": (
+            "Ollama host returned 404" if not is_ok else "Ollama running locally."
+        ),
+        "available_count": len(models),
+        "models": models,
+        "evidence": {"http_status": oll_check.get("status_code")},
+    }
+
+
+def _build_ranked_providers(probe: dict, limits: dict) -> dict:
+    """Build the full ranked-providers mapping from probe and limits data."""
+    ranked_providers: dict = {}
+    _rank_local_onnx(probe, ranked_providers)
+    _rank_lmstudio(probe, limits, ranked_providers)
+    _rank_openai(probe, limits, ranked_providers)
+    _rank_github(probe, limits, ranked_providers)
+    _rank_anthropic(probe, limits, ranked_providers)
+    _rank_gemini(probe, ranked_providers)
+    _rank_ai_toolkit(probe, ranked_providers)
+    _rank_ollama(probe, limits, ranked_providers)
+    return ranked_providers
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     p = argparse.ArgumentParser(description="Rank models from probe and limits data")
@@ -54,146 +231,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.warning(f"Could not load {LIMITS_FILE}: {e}")
         limits = {"checked": {}}
 
-    ranked_providers = {}
-
-    # 1. Local ONNX
-    if "local_onnx" in probe["providers"]:
-        p = probe["providers"]["local_onnx"]
-        ranked_providers["local_onnx"] = {
-            "score": 100,
-            "rank": 1,
-            "reason": "Local models available on disk; no external quota or billing; highest throughput.",
-            "available_count": p.get("count", 0),
-            "models": p.get("available", []),
-        }
-
-    # 2. LM Studio
-    if "lmstudio" in probe["providers"]:
-        p = probe["providers"]["lmstudio"]
-        # Check limits/status
-        check = limits["checked"].get("lmstudio", {})
-        is_ok = check.get("ok", False) or p.get("reachable", False)
-
-        if is_ok:
-            # Prefer list from limits check if available, else probe
-            models = p.get("available", [])
-            if check.get("json") and "data" in check["json"]:
-                models = [m["id"] for m in check["json"]["data"]]
-
-            ranked_providers["lmstudio"] = {
-                "score": 90,
-                "rank": 2,
-                "reason": "LM Studio reachable locally exposing OpenAI-compatible models.",
-                "available_count": len(models),
-                "models": models,
-            }
-
-    # 3. OpenAI
-    # Probe might say 0 if it didn't use a key, but limits check might have succeeded
-    openai_check = limits["checked"].get("openai", {})
-    openai_models = []
-    if openai_check.get("ok"):
-        if "short" in openai_check and "data" in openai_check["short"]:
-            openai_models = [m["id"] for m in openai_check["short"]["data"]]
-
-    if not openai_models and "openai" in probe["providers"]:
-        openai_models = probe["providers"]["openai"].get("available", [])
-
-    if openai_models:
-        ranked_providers["openai"] = {
-            "score": 80,
-            "rank": 3,
-            "reason": "OpenAI API validated and returning models. Billable usage.",
-            "available_count": len(openai_models),
-            "models": openai_models,
-            "evidence": {"models_returned": True},
-        }
-
-    # 4. GitHub Models
-    if "github_models" in probe["providers"]:
-        p = probe["providers"]["github_models"]
-        gh_check = limits["checked"].get("github", {})
-
-        evidence = {}
-        if gh_check.get("ok") and "json" in gh_check:
-            res = gh_check["json"].get("resources", {}).get("core", {})
-            evidence = {
-                "rate_core_limit": res.get("limit"),
-                "rate_core_remaining": res.get("remaining"),
-            }
-
-        ranked_providers["github_models"] = {
-            "score": 70,
-            "rank": 4,
-            "reason": "GitHub token valid. Good fallback for gh: models.",
-            "available_count": p.get("count", 0),
-            "models": p.get("available", []),
-            "evidence": evidence,
-        }
-
-    # 5. Anthropic
-    if "anthropic" in probe["providers"]:
-        p = probe["providers"]["anthropic"]
-        anth_check = limits["checked"].get("anthropic", {})
-
-        # Even if check failed (400), we know keys are present
-        ranked_providers["anthropic"] = {
-            "score": 60,
-            "rank": 5,
-            "reason": "Anthropic keys present. Probe lists models.",
-            "available_count": p.get("count", 0),
-            "models": p.get("available", []),
-            "evidence": {
-                "http_status": anth_check.get("status_code"),
-                "error": anth_check.get("json") if not anth_check.get("ok") else None,
-            },
-        }
-
-    # 6. Gemini
-    if "gemini" in probe["providers"]:
-        p = probe["providers"]["gemini"]
-        ranked_providers["gemini"] = {
-            "score": 50,
-            "rank": 6,
-            "reason": "API keys present. Quota check requires GCP Console.",
-            "available_count": p.get("count", 0),
-            "models": p.get("available", []),
-            "rotation_keys": p.get("rotation_keys", []),
-        }
-
-    # 7. AI Toolkit (Local)
-    if "ai_toolkit" in probe["providers"]:
-        p = probe["providers"]["ai_toolkit"]
-        if p.get("count", 0) > 0:
-            ranked_providers["ai_toolkit"] = {
-                "score": 95,  # High score if available locally
-                "rank": 1.5,
-                "reason": "VS Code AI Toolkit local models available.",
-                "available_count": p.get("count", 0),
-                "models": p.get("available", []),
-            }
-
-    # 8. Ollama
-    if "ollama" in probe["providers"]:
-        p = probe["providers"]["ollama"]
-        oll_check = limits["checked"].get("ollama", {})
-        is_ok = oll_check.get("ok", False)
-
-        # If check ok, use check models, else probe
-        models = p.get("available", [])
-        if is_ok and oll_check.get("json") and "models" in oll_check["json"]:
-            models = [m["name"] for m in oll_check["json"]["models"]]
-
-        ranked_providers["ollama"] = {
-            "score": 30 if not is_ok else 85,
-            "rank": 7 if not is_ok else 2.5,
-            "reason": (
-                "Ollama host returned 404" if not is_ok else "Ollama running locally."
-            ),
-            "available_count": len(models),
-            "models": models,
-            "evidence": {"http_status": oll_check.get("status_code")},
-        }
+    ranked_providers = _build_ranked_providers(probe, limits)
 
     # Construct final output
     output = {

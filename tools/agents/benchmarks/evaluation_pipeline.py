@@ -131,6 +131,20 @@ def get_gold_standard_for_task(task: BenchmarkTask) -> dict[str, Any] | None:
     return None
 
 
+def _find_gold_task_for_id(task_id: str) -> Any | None:
+    """Return the matching gold-standard test task for *task_id*, or ``None``."""
+    for tt in TEST_TASKS:
+        tt_id_str = str(tt.id)
+        if task_id == tt_id_str or task_id == f"task_{tt.id:03d}":
+            return tt
+        try:
+            if int(task_id) == tt.id:
+                return tt
+        except ValueError:
+            pass
+    return None
+
+
 def evaluate_task_output_legacy(
     task: BenchmarkTask,
     output: str,
@@ -144,18 +158,7 @@ def evaluate_task_output_legacy(
     task_id = str(task.task_id)
 
     # Try to find matching gold standard
-    gold_task = None
-    for tt in TEST_TASKS:
-        tt_id_str = str(tt.id)
-        if task_id == tt_id_str or task_id == f"task_{tt.id:03d}":
-            gold_task = tt
-            break
-        try:
-            if int(task_id) == tt.id:
-                gold_task = tt
-                break
-        except ValueError:
-            pass
+    gold_task = _find_gold_task_for_id(task_id)
 
     if not gold_task:
         if verbose:
@@ -186,9 +189,58 @@ def evaluate_task_output_legacy(
     return eval_result
 
 
+def _print_missing_components(missing_components: list[str], output: str) -> bool:
+    """Print missing components with similar output lines; return True if any."""
+    if not missing_components:
+        return False
+    print("\n[!] MISSING COMPONENTS:")
+    for comp in missing_components:
+        print(f"    Expected: '{comp}'")
+        comp_lower = comp.lower()
+        for line in output.split("\n"):
+            line_lower = line.lower()
+            words = comp_lower.split()
+            if any(word in line_lower for word in words if len(word) > 3):
+                print(f"    Similar:  '{line.strip()[:80]}'")
+                break
+    return True
+
+
+def _print_missing_patterns(missing_patterns: list[str]) -> bool:
+    """Print missing regex patterns; return True if any were printed."""
+    if not missing_patterns:
+        return False
+    print("\n[!] MISSING PATTERNS:")
+    for pattern in missing_patterns:
+        print(f"    Expected regex: {pattern}")
+    return True
+
+
+def _print_missing_decisions(missing_decisions: list[str]) -> bool:
+    """Print missing key decisions with checked keywords; return True if any."""
+    if not missing_decisions:
+        return False
+    print("\n[!] MISSING KEY DECISIONS:")
+    for decision in missing_decisions:
+        print(f"    Expected mention of: '{decision}'")
+        keywords = [w for w in decision.lower().split() if len(w) > 3]
+        print(f"    Keywords checked: {keywords}")
+    return True
+
+
+def _print_missing_simple(missing: list[str], header: str) -> bool:
+    """Print a simple 'Expected: <item>' list under *header*; return True if any."""
+    if not missing:
+        return False
+    print(f"\n{header}")
+    for item in missing:
+        print(f"    Expected: '{item}'")
+    return True
+
+
 def print_mismatch_analysis(
     eval_result: dict[str, Any],
-    gold_data: dict[str, Any],
+    _gold_data: dict[str, Any],
     output: str,
 ) -> None:
     """Print a detailed analysis of why items did not match the gold standard."""
@@ -196,58 +248,23 @@ def print_mismatch_analysis(
     print("DETAILED MISMATCH ANALYSIS")
     print("-" * 60)
 
-    has_issues = False
+    checks = [
+        _print_missing_components(
+            eval_result.get("components", {}).get("missing", []), output
+        ),
+        _print_missing_patterns(eval_result.get("patterns", {}).get("missing", [])),
+        _print_missing_decisions(eval_result.get("decisions", {}).get("missing", [])),
+        _print_missing_simple(
+            eval_result.get("endpoints", {}).get("missing", []),
+            "[!] MISSING API ENDPOINTS:",
+        ),
+        _print_missing_simple(
+            eval_result.get("tables", {}).get("missing", []),
+            "[!] MISSING DATABASE TABLES:",
+        ),
+    ]
 
-    # Components
-    missing_components = eval_result.get("components", {}).get("missing", [])
-    if missing_components:
-        has_issues = True
-        print("\n[!] MISSING COMPONENTS:")
-        for comp in missing_components:
-            print(f"    Expected: '{comp}'")
-            comp_lower = comp.lower()
-            for line in output.split("\n"):
-                line_lower = line.lower()
-                words = comp_lower.split()
-                if any(word in line_lower for word in words if len(word) > 3):
-                    print(f"    Similar:  '{line.strip()[:80]}'")
-                    break
-
-    # Patterns
-    missing_patterns = eval_result.get("patterns", {}).get("missing", [])
-    if missing_patterns:
-        has_issues = True
-        print("\n[!] MISSING PATTERNS:")
-        for pattern in missing_patterns:
-            print(f"    Expected regex: {pattern}")
-
-    # Key Decisions
-    missing_decisions = eval_result.get("decisions", {}).get("missing", [])
-    if missing_decisions:
-        has_issues = True
-        print("\n[!] MISSING KEY DECISIONS:")
-        for decision in missing_decisions:
-            print(f"    Expected mention of: '{decision}'")
-            keywords = [w for w in decision.lower().split() if len(w) > 3]
-            print(f"    Keywords checked: {keywords}")
-
-    # Endpoints
-    missing_endpoints = eval_result.get("endpoints", {}).get("missing", [])
-    if missing_endpoints:
-        has_issues = True
-        print("\n[!] MISSING API ENDPOINTS:")
-        for ep in missing_endpoints:
-            print(f"    Expected: '{ep}'")
-
-    # Tables
-    missing_tables = eval_result.get("tables", {}).get("missing", [])
-    if missing_tables:
-        has_issues = True
-        print("\n[!] MISSING DATABASE TABLES:")
-        for table in missing_tables:
-            print(f"    Expected: '{table}'")
-
-    if not has_issues:
+    if not any(checks):
         print("\n  [+] All gold standard criteria met!")
     else:
         print("\n  TIP: Review the output file and gold standard to understand gaps.")

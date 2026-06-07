@@ -173,7 +173,7 @@ async def _parse_code_step(ctx: ExecutionContext) -> dict[str, Any]:
     return {"parsed_ast": parsed_ast, "code_metrics": metrics}
 
 
-async def _noop_step(ctx: ExecutionContext) -> dict[str, Any]:
+async def _noop_step(_ctx: ExecutionContext) -> dict[str, Any]:
     """Tier-0 fallback: return empty outputs."""
     return {}
 
@@ -182,6 +182,44 @@ async def _noop_step(ctx: ExecutionContext) -> dict[str, Any]:
 TIER0_REGISTRY: dict[str, StepFunction] = {
     "tier0_parser": _parse_code_step,
 }
+
+
+def _build_placeholder_output(
+    agent_name: str,
+    description: str,
+    expected_output_keys: list[str] | None,
+    error: Exception,
+) -> dict[str, Any]:
+    """Build deterministic placeholder output when the LLM call fails.
+
+    Preserves workflow handoff contracts by emitting all declared output keys
+    with placeholder payloads so downstream gating conditions still resolve.
+    """
+    placeholder_output: dict[str, Any] = {
+        "agent": agent_name,
+        "status": "llm_unavailable",
+        "description": description,
+        "note": str(error),
+    }
+
+    for key in expected_output_keys or []:
+        if key in placeholder_output:
+            continue
+        if key in {"review_report", "code_review"}:
+            placeholder_output[key] = {
+                "overall_status": "NEEDS_FIXES",
+                "reason": "llm_unavailable",
+            }
+        elif key == "overall_status":
+            placeholder_output[key] = "NEEDS_FIXES"
+        else:
+            placeholder_output[key] = {
+                "placeholder": True,
+                "key": key,
+                "reason": "llm_unavailable",
+            }
+
+    return placeholder_output
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +270,99 @@ def _make_llm_step(
         with _span_cm:
             return await _llm_step_inner(ctx)
 
+    async def _run_ek_tool_loop(
+        client: Any,
+        prompt: str,
+        tool_schemas: Any,
+        bound_tools: dict[str, Any],
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        """ADR-023 Phase 6b: drive the step's tool loop via EK react_loop."""
+        from .ek_step_delegation import run_tool_loop_via_ek
+
+        response, model_used, tokens_used, tool_call_count = (
+            await run_tool_loop_via_ek(
+                router=client.router,
+                backend=client.backend,
+                tier=tier,
+                prompt=prompt,
+                tool_schemas=tool_schemas,
+                bound_tools=bound_tools,
+                max_tokens=max_tokens,
+                budget=getattr(client, "budget", None),
+                max_rounds=MAX_TOOL_ROUNDS,
+                max_observation_chars=MAX_TOOL_RESULT_CHARS,
+            )
+        )
+        parsed = (
+            parse_sentinel_output(response, expected_output_keys)
+            or parse_llm_json_output(response, expected_output_keys)
+            or {}
+        )
+        parsed["_meta"] = {
+            "model_used": model_used,
+            "tokens_used": tokens_used,
+            "tool_calls": tool_call_count,
+        }
+        return parsed
+
+    async def _run_native_tool_loop(
+        client: Any,
+        messages: list[dict[str, Any]],
+        tool_schemas: Any,
+        bound_tools: dict[str, Any],
+        max_tokens: int,
+    ) -> tuple[str, str, int, int]:
+        """Legacy ``run_tool_calls`` multi-turn loop.
+
+        Returns ``(response, model_used, tokens_used, tool_call_count)``.
+        """
+        response = ""
+        model_used = ""
+        tokens_used = 0
+        tool_call_count = 0
+
+        for iteration in range(MAX_TOOL_ROUNDS + 1):
+            chat_response, model_used, turn_tokens = (
+                await complete_chat_with_fallback(
+                    client=client,
+                    tier=tier,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    tools=tool_schemas if bound_tools else None,
+                )
+            )
+            tokens_used += turn_tokens
+
+            response = str(chat_response.get("content", "") or "")
+            tool_calls = chat_response.get("tool_calls") or []
+
+            assistant_message: dict[str, Any] = {
+                "role": "assistant",
+                "content": response,
+            }
+            if tool_calls:
+                assistant_message["tool_calls"] = tool_calls
+            messages.append(assistant_message)
+
+            if not tool_calls:
+                break
+
+            if iteration >= MAX_TOOL_ROUNDS:
+                logger.warning(
+                    "Tool loop maxed out for agent '%s' after %s rounds.",
+                    agent_name,
+                    MAX_TOOL_ROUNDS,
+                )
+                break
+
+            executed = await run_tool_calls(tool_calls, bound_tools, messages)
+            tool_call_count += executed
+            if executed == 0:
+                break
+
+        return response, model_used, tokens_used, tool_call_count
+
     async def _llm_step_inner(ctx: ExecutionContext) -> dict[str, Any]:
         # Gather available context as step input
         all_vars = ctx.all_variables()
@@ -256,10 +387,6 @@ def _make_llm_step(
             client = get_client(auto_configure=True)
             max_tokens = _TIER_MAX_TOKENS.get(tier, 8192)
             messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
-            response = ""
-            model_used = ""
-            tokens_used = 0
-            tool_call_count = 0
 
             # ADR-023 Phase 6b: EK react_loop is the DEFAULT tool-calling loop.
             # DEFAULT OFF — only taken when AGENTIC_EK_PROVIDER is set AND the
@@ -275,72 +402,15 @@ def _make_llm_step(
                 and get_settings().agentic_ek_provider
             )
             if _use_ek_tool_loop:
-                from .ek_step_delegation import run_tool_loop_via_ek
-
-                response, model_used, tokens_used, tool_call_count = (
-                    await run_tool_loop_via_ek(
-                        router=client.router,
-                        backend=client.backend,
-                        tier=tier,
-                        prompt=prompt,
-                        tool_schemas=tool_schemas,
-                        bound_tools=bound_tools,
-                        max_tokens=max_tokens,
-                        budget=getattr(client, "budget", None),
-                        max_rounds=MAX_TOOL_ROUNDS,
-                        max_observation_chars=MAX_TOOL_RESULT_CHARS,
-                    )
+                return await _run_ek_tool_loop(
+                    client, prompt, tool_schemas, bound_tools, max_tokens
                 )
-                parsed = (
-                    parse_sentinel_output(response, expected_output_keys)
-                    or parse_llm_json_output(response, expected_output_keys)
-                    or {}
+
+            response, model_used, tokens_used, tool_call_count = (
+                await _run_native_tool_loop(
+                    client, messages, tool_schemas, bound_tools, max_tokens
                 )
-                parsed["_meta"] = {
-                    "model_used": model_used,
-                    "tokens_used": tokens_used,
-                    "tool_calls": tool_call_count,
-                }
-                return parsed
-
-            for iteration in range(MAX_TOOL_ROUNDS + 1):
-                chat_response, model_used, turn_tokens = (
-                    await complete_chat_with_fallback(
-                        client=client,
-                        tier=tier,
-                        messages=messages,
-                        max_tokens=max_tokens,
-                        tools=tool_schemas if bound_tools else None,
-                    )
-                )
-                tokens_used += turn_tokens
-
-                response = str(chat_response.get("content", "") or "")
-                tool_calls = chat_response.get("tool_calls") or []
-
-                assistant_message: dict[str, Any] = {
-                    "role": "assistant",
-                    "content": response,
-                }
-                if tool_calls:
-                    assistant_message["tool_calls"] = tool_calls
-                messages.append(assistant_message)
-
-                if not tool_calls:
-                    break
-
-                if iteration >= MAX_TOOL_ROUNDS:
-                    logger.warning(
-                        "Tool loop maxed out for agent '%s' after %s rounds.",
-                        agent_name,
-                        MAX_TOOL_ROUNDS,
-                    )
-                    break
-
-                executed = await run_tool_calls(tool_calls, bound_tools, messages)
-                tool_call_count += executed
-                if executed == 0:
-                    break
+            )
         except Exception as e:
             logger.warning(
                 "LLM call failed for agent '%s' (tier %s): %s. "
@@ -349,34 +419,9 @@ def _make_llm_step(
                 tier.name,
                 e,
             )
-            placeholder_output: dict[str, Any] = {
-                "agent": agent_name,
-                "status": "llm_unavailable",
-                "description": description,
-                "note": str(e),
-            }
-
-            # Preserve workflow handoff contracts even when the model call
-            # fails by emitting all declared output keys with deterministic
-            # placeholder payloads.
-            for key in expected_output_keys or []:
-                if key in placeholder_output:
-                    continue
-                if key in {"review_report", "code_review"}:
-                    placeholder_output[key] = {
-                        "overall_status": "NEEDS_FIXES",
-                        "reason": "llm_unavailable",
-                    }
-                elif key == "overall_status":
-                    placeholder_output[key] = "NEEDS_FIXES"
-                else:
-                    placeholder_output[key] = {
-                        "placeholder": True,
-                        "key": key,
-                        "reason": "llm_unavailable",
-                    }
-
-            return placeholder_output
+            return _build_placeholder_output(
+                agent_name, description, expected_output_keys, e
+            )
 
         parsed = parse_sentinel_output(
             response, expected_output_keys

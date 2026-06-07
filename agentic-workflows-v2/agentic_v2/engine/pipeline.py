@@ -194,7 +194,7 @@ class PipelineExecutor:
         self,
         workflow: Any,
         ctx: ExecutionContext | None = None,
-        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        _on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> WorkflowResult:
         """Execute a pipeline.
@@ -228,9 +228,9 @@ class PipelineExecutor:
             metadata=pipeline.metadata.copy(),
         )
 
-        completed_count = 0
         total_steps = pipeline.total_steps()
-        checkpoint_counter = 0
+        # Mutable counters shared with the per-element record helper.
+        counters = {"completed": 0, "checkpoint": 0}
 
         try:
             for element in pipeline.elements:
@@ -241,32 +241,13 @@ class PipelineExecutor:
 
                 step_results = await self._execute_element(element, ctx)
 
-                for step_result in step_results:
-                    result.add_step(step_result)
-                    completed_count += 1
+                failed_fast = self._record_step_results(
+                    step_results, result, pipeline, total_steps, counters
+                )
+                if failed_fast:
+                    return result
 
-                    # Progress callback
-                    if self._progress_callback:
-                        self._progress_callback(
-                            step_result.step_name,
-                            completed_count,
-                            total_steps,
-                            step_result,
-                        )
-
-                    # Check for failure
-                    if step_result.is_failed and pipeline.fail_fast:
-                        result.overall_status = StepStatus.FAILED
-                        self._status = PipelineStatus.FAILED
-                        result.mark_complete(success=False)
-                        return result
-
-                # Checkpointing
-                if pipeline.checkpoint_interval > 0:
-                    checkpoint_counter += len(step_results)
-                    if checkpoint_counter >= pipeline.checkpoint_interval:
-                        await ctx.save_checkpoint(f"pipeline_{completed_count}")
-                        checkpoint_counter = 0
+                await self._maybe_checkpoint(pipeline, ctx, step_results, counters)
 
             # All elements completed
             if result.overall_status == StepStatus.RUNNING:
@@ -285,6 +266,55 @@ class PipelineExecutor:
 
         result.mark_complete(result.overall_status == StepStatus.SUCCESS)
         return result
+
+    def _record_step_results(
+        self,
+        step_results: list[StepResult],
+        result: WorkflowResult,
+        pipeline: Pipeline,
+        total_steps: int,
+        counters: dict[str, int],
+    ) -> bool:
+        """Record step results and fire progress callbacks.
+
+        Returns True if fail-fast was triggered (caller should return *result*).
+        """
+        for step_result in step_results:
+            result.add_step(step_result)
+            counters["completed"] += 1
+
+            # Progress callback
+            if self._progress_callback:
+                self._progress_callback(
+                    step_result.step_name,
+                    counters["completed"],
+                    total_steps,
+                    step_result,
+                )
+
+            # Check for failure
+            if step_result.is_failed and pipeline.fail_fast:
+                result.overall_status = StepStatus.FAILED
+                self._status = PipelineStatus.FAILED
+                result.mark_complete(success=False)
+                return True
+
+        return False
+
+    @staticmethod
+    async def _maybe_checkpoint(
+        pipeline: Pipeline,
+        ctx: ExecutionContext,
+        step_results: list[StepResult],
+        counters: dict[str, int],
+    ) -> None:
+        """Save a checkpoint when the interval threshold has been reached."""
+        if pipeline.checkpoint_interval <= 0:
+            return
+        counters["checkpoint"] += len(step_results)
+        if counters["checkpoint"] >= pipeline.checkpoint_interval:
+            await ctx.save_checkpoint(f"pipeline_{counters['completed']}")
+            counters["checkpoint"] = 0
 
     async def _execute_element(
         self, element: PipelineElement, ctx: ExecutionContext
@@ -322,32 +352,37 @@ class PipelineExecutor:
             tasks = [self._step_executor.execute(step, ctx) for step in group.steps]
 
         if group.fail_fast:
-            # Return on first failure
-            results = []
-            pending = set(
-                asyncio.create_task(t) if not isinstance(t, asyncio.Task) else t
-                for t in tasks
+            return await self._gather_fail_fast(tasks)
+        # Wait for all
+        return await asyncio.gather(*tasks)
+
+    @staticmethod
+    async def _gather_fail_fast(
+        tasks: list[Any],
+    ) -> list[StepResult]:
+        """Gather parallel tasks, cancelling the rest on the first failure."""
+        results: list[StepResult] = []
+        pending = {
+            asyncio.create_task(t) if not isinstance(t, asyncio.Task) else t
+            for t in tasks
+        }
+
+        while pending:
+            done, pending = await asyncio.wait(
+                pending, return_when=asyncio.FIRST_COMPLETED
             )
 
-            while pending:
-                done, pending = await asyncio.wait(
-                    pending, return_when=asyncio.FIRST_COMPLETED
-                )
+            for task in done:
+                result = task.result()
+                results.append(result)
 
-                for task in done:
-                    result = task.result()
-                    results.append(result)
+                if result.is_failed:
+                    # Cancel remaining tasks
+                    for p in pending:
+                        p.cancel()
+                    return results
 
-                    if result.is_failed:
-                        # Cancel remaining tasks
-                        for p in pending:
-                            p.cancel()
-                        return results
-
-            return results
-        else:
-            # Wait for all
-            return await asyncio.gather(*tasks)
+        return results
 
     async def _execute_branch(
         self, branch: ConditionalBranch, ctx: ExecutionContext

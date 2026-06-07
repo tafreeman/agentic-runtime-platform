@@ -50,6 +50,26 @@ def _load_dotenv() -> None:
         search = search.parent
 
 
+def _apply_dotenv_manual_line(line: str) -> None:
+    """Parse one .env line and set the env var if not already present."""
+    line = line.strip()
+    if not line or line.startswith("#"):
+        return
+    if "=" not in line:
+        return
+    key, _, value = line.partition("=")
+    key = key.strip()
+    value = value.strip()
+    if not key or key.startswith(" "):
+        return
+    # Only set if not already present (don't override real env)
+    if key not in os.environ:
+        # Strip surrounding quotes (python-dotenv does this automatically)
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
 def _load_dotenv_manual() -> None:
     """Minimal .env loader when python-dotenv is not installed."""
     search = Path(__file__).resolve().parent
@@ -59,26 +79,7 @@ def _load_dotenv_manual() -> None:
             for line in candidate.read_text(
                 encoding="utf-8", errors="replace"
             ).splitlines():
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" not in line:
-                    continue
-                key, _, value = line.partition("=")
-                key = key.strip()
-                value = value.strip()
-                if not key or key.startswith(" "):
-                    continue
-                # Only set if not already present (don't override real env)
-                if key not in os.environ:
-                    # Strip surrounding quotes (python-dotenv does this automatically)
-                    if (
-                        len(value) >= 2
-                        and value[0] == value[-1]
-                        and value[0] in ('"', "'")
-                    ):
-                        value = value[1:-1]
-                    os.environ[key] = value
+                _apply_dotenv_manual_line(line)
             return
         if search.parent == search:
             break

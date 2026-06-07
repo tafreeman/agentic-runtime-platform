@@ -18,6 +18,11 @@ from typing import Any
 
 from .datasets import BENCHMARK_DEFINITIONS, BenchmarkDefinition, BenchmarkType
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192)
+# ---------------------------------------------------------------------------
+MODEL_GH_GPT4O_MINI: str = "gh:gpt-4o-mini"
+
 
 @dataclass
 class BenchmarkConfig:
@@ -60,7 +65,7 @@ class BenchmarkConfig:
     tags: list[str] = field(default_factory=list)  # Filter by tags
 
     # Model configuration
-    model: str = "gh:gpt-4o-mini"  # Default model
+    model: str = MODEL_GH_GPT4O_MINI  # Default model
     fallback_models: list[str] = field(default_factory=list)  # Fallback chain
 
     # Agent workflow
@@ -177,7 +182,7 @@ class BenchmarkRegistry:
     def create_config(
         cls,
         benchmark_id: str,
-        model: str = "gh:gpt-4o-mini",
+        model: str = MODEL_GH_GPT4O_MINI,
         limit: int | None = None,
         **kwargs,
     ) -> BenchmarkConfig:
@@ -220,7 +225,7 @@ class BenchmarkRegistry:
 PRESET_CONFIGS: dict[str, BenchmarkConfig] = {
     "quick-test": BenchmarkConfig(
         benchmark_id="humaneval",
-        model="gh:gpt-4o-mini",
+        model=MODEL_GH_GPT4O_MINI,
         limit=5,
         workflow="multi-agent",
         verbose=True,

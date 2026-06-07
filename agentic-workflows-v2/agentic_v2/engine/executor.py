@@ -192,7 +192,7 @@ class WorkflowExecutor:
         self,
         workflow: Any,
         ctx: ExecutionContext | None = None,
-        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        _on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> WorkflowResult:
         """Execute a workflow.
@@ -268,27 +268,37 @@ class WorkflowExecutor:
             self._history.record("error", data={"type": "timeout"})
 
         except asyncio.CancelledError:
+            # Perform synchronous finalization FIRST so it is guaranteed to run
+            # even if the awaited _emit calls below raise CancelledError again
+            # (re-cancellation would otherwise skip the terminal bookkeeping).
             result.overall_status = StepStatus.FAILED
             result.metadata["cancelled"] = True
-            self._history.record("cancelled")
-            await self._emit(ExecutorEvent.CANCELLED, {})
-            # Finalize before propagating cancellation so subscribers (e.g. the
-            # WebSocket run stream) receive a terminal WORKFLOW_END event instead
-            # of hanging when the task is cancelled externally (e.g. shutdown).
             result.mark_complete(False)
             result.metadata["history_entries"] = len(self._history.entries)
+            self._history.record("cancelled")
             self._history.record(
                 "workflow_end", data={"status": result.overall_status.value}
             )
-            await self._emit(
-                ExecutorEvent.WORKFLOW_END,
-                {
-                    "status": result.overall_status.value,
-                    "duration_ms": result.total_duration_ms,
-                },
-            )
             if self.config.cleanup_on_complete:
                 self._current_ctx = None
+
+            # Best-effort terminal events so subscribers (e.g. the WebSocket run
+            # stream) receive WORKFLOW_END instead of hanging. Guard each emit:
+            # a second cancellation must not abort the remaining cleanup/raise.
+            try:
+                await self._emit(ExecutorEvent.CANCELLED, {})
+            except asyncio.CancelledError:
+                pass
+            try:
+                await self._emit(
+                    ExecutorEvent.WORKFLOW_END,
+                    {
+                        "status": result.overall_status.value,
+                        "duration_ms": result.total_duration_ms,
+                    },
+                )
+            except asyncio.CancelledError:
+                pass
             raise
 
         except Exception as e:
@@ -500,33 +510,44 @@ class WorkflowExecutor:
             return
 
         if isinstance(element, ParallelGroup):
-            if not element.steps:
-                raise ValueError(f"{path} parallel group has no steps")
-            for index, step_def in enumerate(element.steps):
-                if not isinstance(step_def, StepDefinition):
-                    raise TypeError(
-                        f"{path} parallel step {index} must be StepDefinition, "
-                        f"got {type(step_def).__name__}"
-                    )
+            self._validate_parallel_group(element, path)
             return
 
         if isinstance(element, ConditionalBranch):
-            if not callable(element.condition):
-                raise TypeError(f"{path} branch condition must be callable")
-            if not isinstance(element.then_steps, list):
-                raise TypeError(f"{path} then_steps must be a list")
-            if not isinstance(element.else_steps, list):
-                raise TypeError(f"{path} else_steps must be a list")
-
-            for index, child in enumerate(element.then_steps):
-                self._validate_pipeline_element(child, f"{path}.then[{index}]")
-            for index, child in enumerate(element.else_steps):
-                self._validate_pipeline_element(child, f"{path}.else[{index}]")
+            self._validate_conditional_branch(element, path)
             return
 
         raise TypeError(
             f"{path} must be a Pipeline element, got {type(element).__name__}"
         )
+
+    @staticmethod
+    def _validate_parallel_group(element: ParallelGroup, path: str) -> None:
+        """Validate a ParallelGroup element and its steps."""
+        if not element.steps:
+            raise ValueError(f"{path} parallel group has no steps")
+        for index, step_def in enumerate(element.steps):
+            if not isinstance(step_def, StepDefinition):
+                raise TypeError(
+                    f"{path} parallel step {index} must be StepDefinition, "
+                    f"got {type(step_def).__name__}"
+                )
+
+    def _validate_conditional_branch(
+        self, element: ConditionalBranch, path: str
+    ) -> None:
+        """Validate a ConditionalBranch element and its nested children."""
+        if not callable(element.condition):
+            raise TypeError(f"{path} branch condition must be callable")
+        if not isinstance(element.then_steps, list):
+            raise TypeError(f"{path} then_steps must be a list")
+        if not isinstance(element.else_steps, list):
+            raise TypeError(f"{path} else_steps must be a list")
+
+        for index, child in enumerate(element.then_steps):
+            self._validate_pipeline_element(child, f"{path}.then[{index}]")
+        for index, child in enumerate(element.else_steps):
+            self._validate_pipeline_element(child, f"{path}.else[{index}]")
 
     @property
     def history(self) -> ExecutionHistory:

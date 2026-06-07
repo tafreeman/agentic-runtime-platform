@@ -375,6 +375,16 @@ class ExpressionEvaluator:
         return view
 
     @staticmethod
+    def _coerce_index_token(index_text: str) -> Any:
+        """Coerce a bracket index into a str (quoted), int, or raw fallback."""
+        if index_text.startswith(("'", '"')) and index_text.endswith(("'", '"')):
+            return index_text[1:-1]
+        try:
+            return int(index_text)
+        except ValueError:
+            return index_text
+
+    @staticmethod
     def _parse_path(path: str) -> list[Any]:
         """Parse a dotted path with optional list indexes (e.g. a.b[0].c)."""
         tokens: list[Any] = []
@@ -398,15 +408,7 @@ class ExpressionEvaluator:
                 if end == -1:
                     return []
                 index_text = path[i + 1 : end].strip()
-                if index_text.startswith(("'", '"')) and index_text.endswith(
-                    ("'", '"')
-                ):
-                    tokens.append(index_text[1:-1])
-                else:
-                    try:
-                        tokens.append(int(index_text))
-                    except ValueError:
-                        tokens.append(index_text)
+                tokens.append(ExpressionEvaluator._coerce_index_token(index_text))
                 i = end + 1
                 continue
 

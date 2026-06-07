@@ -247,7 +247,8 @@ class ConnectionManager:
             )
 
         # Snapshot the connection list before iterating so that concurrent
-        # connect/disconnect calls cannot modify the list mid-loop.
+        # connect/disconnect calls cannot modify the list mid-loop (send_json
+        # awaits, yielding control to other coroutines that may mutate it).
         dead: list[WebSocket] = []
         for connection in list(self.connections.get(run_id, [])):
             try:
@@ -347,35 +348,7 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
     """
     client_host = websocket.client.host if websocket.client else "unknown"
 
-    if not is_websocket_origin_allowed(websocket):
-        await websocket.close(code=1008, reason="Origin not allowed")
-        logger.warning(
-            "Rejected WebSocket origin %r for run %s from %s",
-            websocket.headers.get("origin"),
-            run_id,
-            client_host,
-        )
-        return
-
-    if websocket_uses_query_token(websocket):
-        await websocket.close(
-            code=1008,
-            reason="Query-string API keys are not supported for WebSocket auth",
-        )
-        logger.warning(
-            "Rejected WebSocket query-token auth for run %s from %s",
-            run_id,
-            client_host,
-        )
-        return
-
-    api_key = _get_api_key()
-    token = extract_websocket_token(websocket)
-    if api_key is not None and not is_token_authorized(
-        token.value if token is not None else None, api_key
-    ):
-        await websocket.close(code=1008, reason="Invalid or missing API key")
-        logger.warning("WebSocket auth failed for run %s from %s", run_id, client_host)
+    if await _reject_websocket_connection(websocket, run_id, client_host):
         return
 
     await manager.connect(websocket, run_id)
@@ -383,21 +356,7 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
         # Inject W3C trace context as the first message when tracing is enabled.
         # The UI uses this to correlate WebSocket events with backend spans.
         if is_tracing_enabled():
-            try:
-                trace_result = build_traceparent()
-                if trace_result is not None:
-                    traceparent, tracestate = trace_result
-                    trace_ctx_msg: dict[str, Any] = {
-                        "type": "trace_context",
-                        "traceparent": traceparent,
-                    }
-                    if tracestate:
-                        trace_ctx_msg["tracestate"] = tracestate
-                    await websocket.send_json(trace_ctx_msg)
-            except Exception:
-                logger.debug(
-                    "WebSocket: failed to send trace_context for run %s", run_id, exc_info=True
-                )
+            await _send_trace_context(websocket, run_id)
 
         # Replay buffered events for late joiners
         await manager.replay(websocket, run_id)
@@ -412,3 +371,63 @@ async def websocket_endpoint(websocket: WebSocket, run_id: str):
     except Exception as e:
         logger.error("WebSocket error for %s: %s", run_id, e)
         manager.disconnect(websocket, run_id)
+
+
+async def _reject_websocket_connection(
+    websocket: WebSocket, run_id: str, client_host: str
+) -> bool:
+    """Validate origin, query-token, and API key; close and return True if rejected.
+
+    Returns False when the connection passes all checks and may proceed.
+    """
+    if not is_websocket_origin_allowed(websocket):
+        await websocket.close(code=1008, reason="Origin not allowed")
+        logger.warning(
+            "Rejected WebSocket origin %r for run %s from %s",
+            websocket.headers.get("origin"),
+            run_id,
+            client_host,
+        )
+        return True
+
+    if websocket_uses_query_token(websocket):
+        await websocket.close(
+            code=1008,
+            reason="Query-string API keys are not supported for WebSocket auth",
+        )
+        logger.warning(
+            "Rejected WebSocket query-token auth for run %s from %s",
+            run_id,
+            client_host,
+        )
+        return True
+
+    api_key = _get_api_key()
+    token = extract_websocket_token(websocket)
+    if api_key is not None and not is_token_authorized(
+        token.value if token is not None else None, api_key
+    ):
+        await websocket.close(code=1008, reason="Invalid or missing API key")
+        logger.warning("WebSocket auth failed for run %s from %s", run_id, client_host)
+        return True
+
+    return False
+
+
+async def _send_trace_context(websocket: WebSocket, run_id: str) -> None:
+    """Send the W3C trace-context message; best-effort (failures are logged)."""
+    try:
+        trace_result = build_traceparent()
+        if trace_result is not None:
+            traceparent, tracestate = trace_result
+            trace_ctx_msg: dict[str, Any] = {
+                "type": "trace_context",
+                "traceparent": traceparent,
+            }
+            if tracestate:
+                trace_ctx_msg["tracestate"] = tracestate
+            await websocket.send_json(trace_ctx_msg)
+    except Exception:
+        logger.debug(
+            "WebSocket: failed to send trace_context for run %s", run_id, exc_info=True
+        )

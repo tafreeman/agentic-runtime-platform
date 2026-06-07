@@ -163,6 +163,55 @@ class ContextBudgetGuard:
 
         return result, True
 
+    def _append_block_within_budget(
+        self,
+        block: dict[str, Any],
+        result_blocks: list[dict[str, Any]],
+        current_tokens: int,
+    ) -> tuple[int, bool]:
+        """Try to append a single block while respecting the token budget.
+
+        Returns:
+            Tuple of (updated_current_tokens, stop) where ``stop`` is True when
+            the budget is exhausted and iteration should halt (truncation).
+        """
+        block_type = block.get("type")
+
+        if block_type == "text":
+            return self._append_text_block_within_budget(
+                block, result_blocks, current_tokens
+            )
+
+        block_tokens = 1600 if block_type == "image" else 100
+        if current_tokens + block_tokens > self.max_tokens:
+            return current_tokens, True
+
+        result_blocks.append(block)
+        return current_tokens + block_tokens, False
+
+    def _append_text_block_within_budget(
+        self,
+        block: dict[str, Any],
+        result_blocks: list[dict[str, Any]],
+        current_tokens: int,
+    ) -> tuple[int, bool]:
+        """Append a text block, truncating it if it exceeds the remaining budget."""
+        text = block.get("text", "")
+        block_tokens = estimate_token_count(text)
+
+        if current_tokens + block_tokens <= self.max_tokens:
+            result_blocks.append(block)
+            return current_tokens + block_tokens, False
+
+        # This block pushes us over - truncate it
+        remaining_tokens = self.max_tokens - current_tokens
+        if remaining_tokens > 100:  # Only include if meaningful space left
+            remaining_chars = remaining_tokens * 4
+            truncated_text = text[:remaining_chars]
+            result_blocks.append({"type": "text", "text": truncated_text})
+            current_tokens += remaining_tokens
+        return current_tokens, True
+
     def check_and_truncate_content_blocks(
         self,
         content_blocks: list[dict[str, Any]],
@@ -186,50 +235,17 @@ class ContextBudgetGuard:
             return content_blocks, False
 
         # Truncate block by block until under budget
-        result_blocks = []
+        result_blocks: list[dict[str, Any]] = []
         current_tokens = 0
         was_truncated = False
 
         for block in content_blocks:
-            block_type = block.get("type")
-            block_tokens = 0
-
-            if block_type == "text":
-                text = block.get("text", "")
-                block_tokens = estimate_token_count(text)
-
-                if current_tokens + block_tokens > self.max_tokens:
-                    # This block pushes us over - truncate it
-                    remaining_tokens = self.max_tokens - current_tokens
-                    if remaining_tokens > 100:  # Only include if meaningful space left
-                        remaining_chars = remaining_tokens * 4
-                        truncated_text = text[:remaining_chars]
-                        result_blocks.append(
-                            {"type": "text", "text": truncated_text}
-                        )
-                        current_tokens += remaining_tokens
-                    was_truncated = True
-                    break
-                else:
-                    result_blocks.append(block)
-                    current_tokens += block_tokens
-
-            elif block_type == "image":
-                block_tokens = 1600
-                if current_tokens + block_tokens > self.max_tokens:
-                    was_truncated = True
-                    break
-                result_blocks.append(block)
-                current_tokens += block_tokens
-
-            else:
-                # Other block types
-                block_tokens = 100
-                if current_tokens + block_tokens > self.max_tokens:
-                    was_truncated = True
-                    break
-                result_blocks.append(block)
-                current_tokens += block_tokens
+            current_tokens, stop = self._append_block_within_budget(
+                block, result_blocks, current_tokens
+            )
+            if stop:
+                was_truncated = True
+                break
 
         if was_truncated:
             # Add truncation notice as final text block

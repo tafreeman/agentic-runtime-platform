@@ -13,6 +13,24 @@ import BPill from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
+type RunTone = "ok" | "err" | "clay" | "dim";
+type EvalBarColor = "b-green" | "b-amber" | "b-red";
+
+/** Map a run's status string to a pill tone. */
+function runStatusTone(status: string): RunTone {
+  if (status === "success") return "ok";
+  if (status === "failed" || status === "error") return "err";
+  if (status === "running" || status === "in_progress") return "clay";
+  return "dim";
+}
+
+/** Choose the evaluation bar color from a normalized 0..1 score. */
+function evalBarColorFor(evalPct: number | null): EvalBarColor {
+  if (evalPct !== null && evalPct > 0.75) return "b-green";
+  if (evalPct !== null && evalPct > 0.5) return "b-amber";
+  return "b-red";
+}
+
 export default function RunDetailPage() {
   const { filename } = useParams<{ filename: string }>();
   const navigate = useNavigate();
@@ -89,20 +107,15 @@ export default function RunDetailPage() {
   const successPercent =
     run.success_rate <= 1 ? run.success_rate * 100 : run.success_rate;
 
-  const runTone =
-    run.status === "success"
-      ? ("ok" as const)
-      : run.status === "failed" || run.status === "error"
-        ? ("err" as const)
-        : run.status === "running" || run.status === "in_progress"
-          ? ("clay" as const)
-          : ("dim" as const);
+  const runTone = runStatusTone(run.status);
 
   const evalData = run.extra?.evaluation;
   const evalPct =
     evalData?.weighted_score !== undefined
       ? Math.max(0, Math.min(1, evalData.weighted_score / 100))
       : null;
+
+  const evalBarColor = evalBarColorFor(evalPct);
 
   return (
     <div className="flex h-full flex-col">
@@ -208,13 +221,7 @@ export default function RunDetailPage() {
                 <div className="mt-3">
                   <BAsciiBar
                     value={evalPct}
-                    color={
-                      evalPct > 0.75
-                        ? "b-green"
-                        : evalPct > 0.5
-                          ? "b-amber"
-                          : "b-red"
-                    }
+                    color={evalBarColor}
                   />
                 </div>
               </div>

@@ -9,7 +9,7 @@ interface DatasetDetailPaneProps {
   sampleIndex: number;
 }
 
-function FieldValue({ value }: { value: unknown }) {
+function FieldValue({ value }: Readonly<{ value: unknown }>) {
   if (typeof value === "string") {
     return (
       <span>{value.length > 200 ? `${value.slice(0, 200)}…` : value}</span>
@@ -21,7 +21,7 @@ function FieldValue({ value }: { value: unknown }) {
   return <span>{String(value)}</span>;
 }
 
-function WorkflowPreviewBadge({ preview }: { preview: Record<string, unknown> }) {
+function WorkflowPreviewBadge({ preview }: Readonly<{ preview: Record<string, unknown> }>) {
   const compatible = Boolean(preview.compatible);
   return (
     <div>
@@ -41,7 +41,7 @@ export default function DatasetDetailPane({
   datasetSource,
   datasetId,
   sampleIndex,
-}: DatasetDetailPaneProps) {
+}: Readonly<DatasetDetailPaneProps>) {
   const [metaOpen, setMetaOpen] = useState(false);
   const { data, isLoading, error } = useDatasetSampleDetail(
     datasetSource,
