@@ -67,17 +67,24 @@ export default function StepScoreDetails({
               >
                 <span className="min-w-0 truncate text-b-text">{step.step_name}</span>
                 <span className="text-right tabular-nums text-b-text">{scoreLabel}</span>
-                <BAsciiBar
-                  value={scoreFraction}
-                  width={10}
-                  color={
-                    scoreTone(step.score) === "ok"
-                      ? "b-green"
-                      : scoreTone(step.score) === "warn"
-                        ? "b-amber"
-                        : "b-red"
+                {(() => {
+                  const tone = scoreTone(step.score);
+                  let barColor: string;
+                  if (tone === "ok") {
+                    barColor = "b-green";
+                  } else if (tone === "warn") {
+                    barColor = "b-amber";
+                  } else {
+                    barColor = "b-red";
                   }
-                />
+                  return (
+                    <BAsciiBar
+                      value={scoreFraction}
+                      width={10}
+                      color={barColor}
+                    />
+                  );
+                })()}
                 <BPill tone={statusTone(step.status)}>{step.status}</BPill>
               </button>
               {isExpanded && (

@@ -56,7 +56,7 @@ _LM_STUDIO_PORT = 12340
 _LM_STUDIO_BASE_URL = f"http://{_LM_STUDIO_HOST}:{_LM_STUDIO_PORT}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Registry
+# Registry definition
 # ─────────────────────────────────────────────────────────────────────────────
 
 REGISTRY: dict[str, ProviderEntry] = {

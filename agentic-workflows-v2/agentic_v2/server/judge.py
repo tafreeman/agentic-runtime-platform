@@ -549,7 +549,7 @@ class LLMJudge:
             client = self._client or get_client(auto_configure=False)
             if client.backend is None:
                 raise RuntimeError("No LLM backend configured for judge")
-            response, model_used, tokens = _run_coro_sync(
+            response, _, _ = _run_coro_sync(
                 client.complete_chat(
                     model=self.model,
                     messages=[

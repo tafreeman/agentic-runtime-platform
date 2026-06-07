@@ -136,23 +136,30 @@ export default function WorkflowEditorPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 border-r border-white/5">
-          {isLoading ? (
-            <div className="flex h-full items-center justify-center text-sm text-gray-600">Loading workflow editor...</div>
-          ) : isError ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-red-400">
-              <TriangleAlert className="h-5 w-5" />
-              <div>Unable to load workflow editor.</div>
-              <div className="text-xs text-red-300/80">{error.message}</div>
-            </div>
-          ) : data ? (
-            <WorkflowDAG
-              dagNodes={data.nodes}
-              dagEdges={data.edges}
-              onNodeClick={setSelectedStepId}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-gray-600">No workflow editor data available.</div>
-          )}
+          {(() => {
+            if (isLoading) {
+              return <div className="flex h-full items-center justify-center text-sm text-gray-600">Loading workflow editor...</div>;
+            }
+            if (isError) {
+              return (
+                <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-red-400">
+                  <TriangleAlert className="h-5 w-5" />
+                  <div>Unable to load workflow editor.</div>
+                  <div className="text-xs text-red-300/80">{error.message}</div>
+                </div>
+              );
+            }
+            if (data) {
+              return (
+                <WorkflowDAG
+                  dagNodes={data.nodes}
+                  dagEdges={data.edges}
+                  onNodeClick={setSelectedStepId}
+                />
+              );
+            }
+            return <div className="flex h-full items-center justify-center text-sm text-gray-600">No workflow editor data available.</div>;
+          })()}
         </div>
 
         <aside className="flex w-[420px] flex-col overflow-hidden bg-surface-1">
@@ -284,7 +291,11 @@ function StepInspector({
         <div>
           <dt className="mb-1 text-gray-500">Loop</dt>
           <dd className="font-mono text-gray-200">
-            {step?.loop_until ? `${step.loop_until}${step.loop_max ? ` (max ${step.loop_max})` : ""}` : "No loop"}
+            {(() => {
+              if (!step?.loop_until) return "No loop";
+              if (step.loop_max) return `${step.loop_until} (max ${step.loop_max})`;
+              return step.loop_until;
+            })()}
           </dd>
         </div>
       </dl>

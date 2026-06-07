@@ -86,7 +86,7 @@ class ChainBuilder:
         self._models.append(model)
         return self
 
-    def add_tier(self, tier: ModelTier, models: Sequence[str]) -> "ChainBuilder":
+    def add_tier(self, _tier: ModelTier, models: Sequence[str]) -> "ChainBuilder":
         """Add multiple models for a tier."""
         self._models.extend(models)
         return self

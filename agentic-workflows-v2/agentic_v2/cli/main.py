@@ -57,6 +57,8 @@ from .rag_commands import rag_group
 
 logger = logging.getLogger(__name__)
 
+YAML_EXTENSION = ".yaml"
+
 # LangChain imports — deferred so the CLI module loads even when
 # langchain extras are not installed.  Commands that need LangChain
 # call _get_runner() and catch the error at that point.
@@ -159,7 +161,7 @@ def run(
         # Resolve name from file path
         workflow_name = workflow
         definitions_dir: Path | None = None
-        if workflow.endswith((".yaml", ".yml")):
+        if workflow.endswith((YAML_EXTENSION, ".yml")):
             workflow_path = Path(workflow)
             if not workflow_path.exists():
                 console.print(f"[red]Error:[/red] Workflow file not found: {workflow}")
@@ -444,7 +446,7 @@ def validate(
     from ..devex.workflow_linter import lint_workflow_by_name, lint_workflow_file
 
     # Tier 1: fast structural lint (no extras required)
-    if workflow.endswith((".yaml", ".yml")):
+    if workflow.endswith((YAML_EXTENSION, ".yml")):
         lint_violations = lint_workflow_file(Path(workflow))
     else:
         lint_violations = lint_workflow_by_name(workflow)
@@ -460,7 +462,7 @@ def validate(
     try:
         definitions_dir: Path | None = None
         workflow_name = workflow
-        if workflow.endswith((".yaml", ".yml")):
+        if workflow.endswith((YAML_EXTENSION, ".yml")):
             workflow_path = Path(workflow)
             if not workflow_path.exists():
                 console.print(f"[red]Error:[/red] File not found: {workflow}")

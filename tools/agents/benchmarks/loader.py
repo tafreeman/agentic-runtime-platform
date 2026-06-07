@@ -526,7 +526,7 @@ def load_benchmark(
     offset: int = 0,
     use_cache: bool = True,
     cache_ttl_hours: int = 24,
-    config: BenchmarkConfig | None = None,
+    _config: BenchmarkConfig | None = None,
 ) -> list[BenchmarkTask]:
     """Load tasks from a benchmark.
 

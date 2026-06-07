@@ -14,6 +14,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+# ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192)
+# ---------------------------------------------------------------------------
+METRIC_PASS_AT_1: str = "pass@1"
+ARXIV_SWEBENCH_URL: str = "https://arxiv.org/abs/2310.06770"
+SWEBENCH_URL: str = "https://www.swebench.com/"
+
 
 class BenchmarkType(Enum):
     """Category of coding benchmark by task granularity."""
@@ -76,7 +83,7 @@ class BenchmarkDefinition:
 
     # Evaluation info
     metrics: list[str] = field(default_factory=list)  # How results are measured
-    evaluation_method: str = "pass@1"  # Default evaluation approach
+    evaluation_method: str = METRIC_PASS_AT_1  # Default evaluation approach
 
     # Metadata
     paper_url: str | None = None  # Research paper

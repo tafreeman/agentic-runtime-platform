@@ -6,7 +6,7 @@ interface ConsoleStatusProps {
   noLlmMode?: boolean;
 }
 
-export default function ConsoleStatus({ noLlmMode = false }: ConsoleStatusProps) {
+export default function ConsoleStatus({ noLlmMode = false }: Readonly<ConsoleStatusProps>) {
   const health = useQuery({
     queryKey: ["backend-health"],
     queryFn: healthCheck,

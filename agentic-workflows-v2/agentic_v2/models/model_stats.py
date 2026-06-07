@@ -215,11 +215,11 @@ class ModelStats:
                 self.circuit_state = CircuitState.CLOSED
                 self._half_open_successes = 0
 
-    def record_failure(self, error_type: str = "unknown") -> None:
+    def record_failure(self, _error_type: str = "unknown") -> None:
         """Record a failed call.
 
         Args:
-            error_type: Type of error encountered
+            _error_type: Type of error encountered
         """
         now_utc = datetime.now(UTC)
         self.failure_count += 1

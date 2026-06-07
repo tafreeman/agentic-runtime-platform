@@ -61,7 +61,7 @@ def _noop_log(msg: str) -> None:
     """No-op logger used when no log callback is provided."""
 
 
-def probe_local(model: str, log: LogFn = None) -> ProbeResult:
+def probe_local(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe a local ONNX model."""
     start = time.time()
     model_key = model.replace(PREFIX_LOCAL, "")
@@ -120,7 +120,7 @@ def probe_local(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_windows_ai(model: str, log: LogFn = None) -> ProbeResult:
+def probe_windows_ai(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe Windows AI (Phi Silica) via the .NET bridge --info."""
     start = time.time()
 
@@ -250,7 +250,7 @@ def probe_windows_ai(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_ollama(model: str, log: LogFn = None) -> ProbeResult:
+def probe_ollama(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an Ollama model."""
     import urllib.error
     import urllib.request
@@ -319,7 +319,7 @@ def probe_ollama(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_lmstudio(model: str, log: LogFn = None) -> ProbeResult:
+def probe_lmstudio(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe LM Studio via its OpenAI-compatible API.
 
     LM Studio serves on http://localhost:1234 by default.
@@ -338,7 +338,7 @@ def probe_local_api(model: str, log: LogFn = None) -> ProbeResult:
     """
     import urllib.request
 
-    _log = log or _noop_log
+    _log = log or _noop_log  # noqa: F841
 
     base_url = (
         os.getenv(ENV_OPENAI_BASE_URL)
@@ -384,7 +384,7 @@ def probe_local_api(model: str, log: LogFn = None) -> ProbeResult:
     )
 
 
-def probe_ai_toolkit(model: str, log: LogFn = None) -> ProbeResult:
+def probe_ai_toolkit(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an AI Toolkit local model.
 
     AI Toolkit stores downloaded models in ~/.aitk/models/ with metadata

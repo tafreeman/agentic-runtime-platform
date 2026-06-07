@@ -33,7 +33,7 @@ function formatWhen(iso: string | null | undefined): string {
 function shortId(run: RunSummary): string {
   const id = run.run_id ?? run.filename;
   const parts = id.split(/[-_/]/);
-  return (parts[parts.length - 1] ?? id).slice(0, 10);
+  return (parts.at(-1) ?? id).slice(0, 10);
 }
 
 export default function RunsPage() {
@@ -137,7 +137,7 @@ export default function RunsPage() {
             <div className="space-y-[2px]">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
-                  key={i}
+                  key={`loading-${i}`}
                   className="h-[48px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}

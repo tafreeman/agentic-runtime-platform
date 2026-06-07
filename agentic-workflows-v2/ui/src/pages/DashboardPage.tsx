@@ -328,7 +328,7 @@ export default function DashboardPage() {
                         const errH = (b.err / maxBucket) * 100;
                         return (
                           <div
-                            key={i}
+                            key={`bucket-${i}`}
                             className="flex flex-1 flex-col justify-end gap-[1px]"
                             title={`${total} run${total === 1 ? "" : "s"}`}
                           >

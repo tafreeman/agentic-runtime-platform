@@ -115,7 +115,7 @@ def load_agents(directory: Path | str | None = None) -> dict[str, AgentDefinitio
 
                 tools_raw = json.loads(tools_raw)
             model_short = meta.get("model", "sonnet")
-            model_id = _MODEL_MAP.get(str(model_short).lower(), "claude-sonnet-4-6")
+            _ = _MODEL_MAP.get(str(model_short).lower(), "claude-sonnet-4-6")
 
             agents[name] = AgentDefinition(
                 description=description,

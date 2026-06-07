@@ -242,7 +242,7 @@ def main() -> int:
         return 2
 
     if _JSONSCHEMA_AVAILABLE:
-        print(f"Validator: jsonschema (Draft 2020-12)")
+        print("Validator: jsonschema (Draft 2020-12)")
     else:
         print(
             "Validator: built-in structural check "

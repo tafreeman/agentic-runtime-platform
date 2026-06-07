@@ -33,7 +33,7 @@ class NoOpReranker:
 
     async def rerank(
         self,
-        query: str,
+        _query: str,
         results: list[RetrievalResult],
         *,
         top_k: int = 5,

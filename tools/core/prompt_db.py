@@ -53,8 +53,6 @@ class PromptDatabase:
 
     def add_prompt(self, name: str, content: str, metadata: dict | None = None) -> str:
         """Add a new prompt or a new version of an existing prompt."""
-        prompt_id = str(uuid.uuid4())
-
         # Check if prompt with same name exists to group versions?
         # For simplicity, let's treat name as unique identifier for a "Prompt Family"
         # But here we might just store flat list of versions or structured.

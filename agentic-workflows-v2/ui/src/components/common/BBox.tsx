@@ -14,7 +14,7 @@ export default function BBox({
   children,
   className = "",
   bodyClassName = "",
-}: BBoxProps) {
+}: Readonly<BBoxProps>) {
   return (
     <div
       className={`rounded-[4px] border border-b-line bg-b-bg1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] ${className}`}

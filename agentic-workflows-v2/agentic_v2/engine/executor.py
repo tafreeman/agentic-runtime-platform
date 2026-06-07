@@ -192,7 +192,7 @@ class WorkflowExecutor:
         self,
         workflow: Any,
         ctx: ExecutionContext | None = None,
-        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        _on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> WorkflowResult:
         """Execute a workflow.

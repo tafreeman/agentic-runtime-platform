@@ -278,7 +278,7 @@ class OrchestratorAgent(
             }
 
         # Use real LLM client
-        result_dict, model_used, tokens = await self.llm_client.complete_chat(
+        result_dict, _, _ = await self.llm_client.complete_chat(
             messages=messages,
             tier=self.config.default_tier,
             temperature=0.2,  # Lower temp for structural task planning
@@ -357,7 +357,7 @@ class OrchestratorAgent(
                         return st.id, result
                     except Exception as e:
                         logger.warning(
-                            "Agent %s failed for subtask %s: %s, " "trying fallback",
+                            "Agent %s failed for subtask %s: %s, trying fallback",
                             agent_name,
                             st.id,
                             e,

@@ -26,23 +26,34 @@ export default function DatasetsPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
-            Loading datasets...
-          </div>
-        ) : error ? (
-          <div className="rounded-sm border border-b-red bg-b-red/10 p-4 font-mono text-[11px] text-b-red">
-            [!] failed to load datasets
-          </div>
-        ) : !datasets ? (
-          <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
-            No datasets available.
-          </div>
-        ) : (
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <DatasetBrowser datasets={datasets} />
-          </div>
-        )}
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
+                Loading datasets...
+              </div>
+            );
+          }
+          if (error) {
+            return (
+              <div className="rounded-sm border border-b-red bg-b-red/10 p-4 font-mono text-[11px] text-b-red">
+                [!] failed to load datasets
+              </div>
+            );
+          }
+          if (datasets) {
+            return (
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <DatasetBrowser datasets={datasets} />
+              </div>
+            );
+          }
+          return (
+            <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
+              No datasets available.
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

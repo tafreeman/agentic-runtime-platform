@@ -49,7 +49,7 @@ from tools.llm.probe_config import (
 LogFn = Callable[[str], None] | None
 
 
-def probe_github(model: str, log: LogFn = None) -> ProbeResult:
+def probe_github(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe a GitHub Models model with a lightweight test."""
     start = time.time()
     model_id = model.replace(PREFIX_GITHUB, "").replace(PREFIX_GITHUB_ALT, "")
@@ -182,7 +182,7 @@ def probe_github(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_azure_foundry(model: str, log: LogFn = None) -> ProbeResult:
+def probe_azure_foundry(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an Azure Foundry model."""
     start = time.time()
     _ = model.replace(PREFIX_AZURE_FOUNDRY, "")
@@ -228,7 +228,7 @@ def probe_azure_foundry(model: str, log: LogFn = None) -> ProbeResult:
     )
 
 
-def probe_azure_openai(model: str, log: LogFn = None) -> ProbeResult:
+def probe_azure_openai(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an Azure OpenAI model."""
     start = time.time()
     _ = model.replace(PREFIX_AZURE_OPENAI, "")
@@ -267,7 +267,7 @@ def probe_azure_openai(model: str, log: LogFn = None) -> ProbeResult:
     )
 
 
-def probe_openai(model: str, log: LogFn = None) -> ProbeResult:
+def probe_openai(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an OpenAI model."""
     start = time.time()
     _ = model.replace(PREFIX_OPENAI, "")
@@ -293,7 +293,7 @@ def probe_openai(model: str, log: LogFn = None) -> ProbeResult:
     )
 
 
-def probe_gemini(model: str, log: LogFn = None) -> ProbeResult:
+def probe_gemini(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe a Google Gemini model.
 
     Checks for GEMINI_API_KEY or GOOGLE_API_KEY, then optionally hits
@@ -371,7 +371,7 @@ def probe_gemini(model: str, log: LogFn = None) -> ProbeResult:
         )
 
 
-def probe_claude(model: str, log: LogFn = None) -> ProbeResult:
+def probe_claude(model: str, _log: LogFn = None) -> ProbeResult:
     """Probe an Anthropic Claude model.
 
     Checks for ANTHROPIC_API_KEY, then hits the Anthropic models

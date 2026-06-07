@@ -75,7 +75,7 @@ export default function Sidebar() {
                 key={t}
                 type="button"
                 onClick={() => setTheme(t)}
-                aria-pressed={active ? true : false}
+                aria-pressed={active}
                 className={`font-mono text-[9px] uppercase tracking-[0.5px] transition-colors focus:outline-none focus:ring-1 focus:ring-b-clay/50 ${
                   active
                     ? "text-b-clay"

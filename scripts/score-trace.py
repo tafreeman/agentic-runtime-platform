@@ -277,7 +277,7 @@ def resolve_rubric_name(agent_type: str, override: str | None) -> str:
 
 
 def _score_text_heuristic(
-    output_text: str, rubric_name: str, duration_seconds: float | None
+    output_text: str, _rubric_name: str, duration_seconds: float | None
 ) -> dict[str, float]:
     """Produce a heuristic ``{criterion_name: score}`` dict from text features.
 
@@ -294,7 +294,7 @@ def _score_text_heuristic(
     """
     text = output_text.strip()
     word_count = len(text.split())
-    char_count = len(text)
+    _char_count = len(text)
     line_count = len(text.splitlines())
 
     # --- Generic sub-scores ---
@@ -379,7 +379,7 @@ def _score_text_heuristic(
 def score_step(
     record: StepRecord,
     rubric_name: str,
-    rubric_override: str | None,
+    _rubric_override: str | None,
 ) -> StepScore:
     """Score a single step using the ``Scorer`` class.
 

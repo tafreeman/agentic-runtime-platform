@@ -135,7 +135,7 @@ if LANGCHAIN_AVAILABLE:
             if model_name is None:
                 raise RuntimeError(f"No model available for tier {tier}")
             try:
-                result, model_used, tokens = await client.complete_chat(
+                result, _, _ = await client.complete_chat(
                     messages=msg_dicts,
                     tier=tier,
                     model=model_name,
@@ -143,7 +143,7 @@ if LANGCHAIN_AVAILABLE:
                 )
             except asyncio.CancelledError:
                 raise
-            except Exception as exc:
+            except Exception:
                 raise
 
             content = result.get("content", "")
@@ -218,7 +218,7 @@ if LANGCHAIN_AVAILABLE:
             self._agent = agent
 
         async def ainvoke(
-            self, input_data: dict[str, Any], config: Any | None = None
+            self, input_data: dict[str, Any], _config: Any | None = None
         ) -> dict[str, Any]:
             """Run the V2 agent and return output as dict."""
             # Build typed input from the agent's input class
@@ -230,12 +230,12 @@ if LANGCHAIN_AVAILABLE:
             return {"result": str(result)}
 
         def invoke(
-            self, input_data: dict[str, Any], config: Any | None = None
+            self, input_data: dict[str, Any], _config: Any | None = None
         ) -> dict[str, Any]:
             """Sync wrapper."""
             loop = asyncio.new_event_loop()
             try:
-                return loop.run_until_complete(self.ainvoke(input_data, config))
+                return loop.run_until_complete(self.ainvoke(input_data, _config))
             finally:
                 loop.close()
 

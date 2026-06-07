@@ -33,6 +33,11 @@ from agentic_v2.models import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
+MODEL_OLLAMA_PHI4 = "ollama:phi4"
+MODEL_GH_GPT4O_MINI = "gh:openai/gpt-4o-mini"
+MODEL_GEMINI_FLASH_2 = "gemini:gemini-2.0-flash"
+MODEL_OPENAI_GPT4O_MINI = "openai:gpt-4o-mini"
+
 
 def demo_basic_routing() -> None:
     """Show basic ModelRouter with default chains."""
@@ -72,9 +77,9 @@ def demo_custom_chains() -> None:
     # Build a custom chain using the fluent DSL
     custom_chain = (
         FallbackChain.build("my-tier2")
-        .add("ollama:phi4")  # Local model first (free)
+        .add(MODEL_OLLAMA_PHI4)  # Local model first (free)
         .add("ollama:llama3.2:latest")  # Another local option
-        .add("gh:openai/gpt-4o-mini")  # GitHub Models fallback
+        .add(MODEL_GH_GPT4O_MINI)  # GitHub Models fallback
         .done()
     )
 
@@ -86,7 +91,7 @@ def demo_custom_chains() -> None:
     print(f"  Selected model: {model}")
 
     # Mark the first model as unavailable to trigger fallback
-    router.mark_unavailable("ollama:phi4")
+    router.mark_unavailable(MODEL_OLLAMA_PHI4)
     model = router.get_model_for_tier(ModelTier.TIER_2)
     print(f"  After phi4 unavailable: {model}")
 

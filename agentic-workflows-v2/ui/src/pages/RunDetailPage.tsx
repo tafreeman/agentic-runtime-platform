@@ -89,20 +89,22 @@ export default function RunDetailPage() {
   const successPercent =
     run.success_rate <= 1 ? run.success_rate * 100 : run.success_rate;
 
-  const runTone =
-    run.status === "success"
-      ? ("ok" as const)
-      : run.status === "failed" || run.status === "error"
-        ? ("err" as const)
-        : run.status === "running" || run.status === "in_progress"
-          ? ("clay" as const)
-          : ("dim" as const);
+  let runTone: "ok" | "err" | "clay" | "dim";
+  if (run.status === "success") {
+    runTone = "ok";
+  } else if (run.status === "failed" || run.status === "error") {
+    runTone = "err";
+  } else if (run.status === "running" || run.status === "in_progress") {
+    runTone = "clay";
+  } else {
+    runTone = "dim";
+  }
 
   const evalData = run.extra?.evaluation;
   const evalPct =
-    evalData?.weighted_score !== undefined
-      ? Math.max(0, Math.min(1, evalData.weighted_score / 100))
-      : null;
+    evalData?.weighted_score === undefined
+      ? null
+      : Math.max(0, Math.min(1, evalData.weighted_score / 100));
 
   return (
     <div className="flex h-full flex-col">

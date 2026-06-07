@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 
@@ -179,7 +179,9 @@ async def list_adapters():
     return {"adapters": names}
 
 
-@router.get("/workflows/{name}/dag")
+@router.get("/workflows/{name}/dag", responses={
+    404: {"description": "Not Found"},
+})
 async def get_workflow_dag(name: str):
     """Return the DAG structure for visualization."""
     try:
@@ -225,7 +227,9 @@ async def get_workflow_dag(name: str):
     }
 
 
-@router.get("/workflows/{name}/capabilities")
+@router.get("/workflows/{name}/capabilities", responses={
+    404: {"description": "Not Found"},
+})
 async def get_workflow_capabilities(name: str):
     """Return workflow capability declarations (inputs/outputs)."""
     try:
@@ -306,7 +310,7 @@ async def run_workflow(
     request: WorkflowRunRequest,
     background_tasks: BackgroundTasks,
     http_request: Request,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Execute a workflow asynchronously."""
     # Sanitize inputs

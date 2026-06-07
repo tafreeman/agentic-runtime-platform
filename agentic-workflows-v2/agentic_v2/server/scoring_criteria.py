@@ -46,7 +46,7 @@ def _tokenize(text: str) -> set[str]:
         Set of unique lowercase token strings.
     """
     return {
-        token for token in re.findall(r"[A-Za-z0-9_]+", text.lower()) if len(token) > 2
+        token for token in re.findall(r"\w+", text.lower()) if len(token) > 2
     }
 
 

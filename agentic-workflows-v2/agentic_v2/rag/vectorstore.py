@@ -322,7 +322,7 @@ if _LANCEDB_AVAILABLE:
             self,
             query_embedding: list[float],
             top_k: int = 5,
-            metadata_filter: dict[str, Any] | None = None,  # protocol-required
+            _metadata_filter: dict[str, Any] | None = None,  # protocol-required
             **kwargs: Any,
         ) -> list[RetrievalResult]:
             """Search for similar chunks using cosine distance.

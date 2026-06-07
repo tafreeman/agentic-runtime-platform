@@ -231,7 +231,7 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
         <div data-testid="step-scores" className="text-xs text-gray-300">
           {hasScores ? (
             <JsonViewer
-              data={step.scores as Record<string, unknown>}
+              data={step.scores}
               defaultExpanded
               maxDepth={2}
             />
@@ -251,7 +251,7 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
         >
           {hasInput ? (
             <JsonViewer
-              data={step.input as Record<string, unknown>}
+              data={step.input}
               defaultExpanded
               maxDepth={3}
             />
@@ -269,19 +269,24 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
           data-testid="step-output"
           className="max-h-60 overflow-y-auto rounded-md bg-surface-0 p-3 text-xs"
         >
-          {hasOutput ? (
-            <JsonViewer
-              data={step.output as Record<string, unknown>}
-              defaultExpanded
-              maxDepth={3}
-            />
-          ) : isRunning ? (
-            <span className="text-gray-500 italic">streaming...</span>
-          ) : isFailed ? (
-            <span className="text-gray-600">No output (step failed).</span>
-          ) : (
-            <span className="text-gray-600">No output captured yet.</span>
-          )}
+          {(() => {
+            if (hasOutput) {
+              return (
+                <JsonViewer
+                  data={step.output}
+                  defaultExpanded
+                  maxDepth={3}
+                />
+              );
+            }
+            if (isRunning) {
+              return <span className="text-gray-500 italic">streaming...</span>;
+            }
+            if (isFailed) {
+              return <span className="text-gray-600">No output (step failed).</span>;
+            }
+            return <span className="text-gray-600">No output captured yet.</span>;
+          })()}
         </div>
       </div>
     </div>

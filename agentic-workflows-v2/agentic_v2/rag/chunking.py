@@ -119,7 +119,6 @@ class RecursiveChunker:
 
                 # Overlap: keep last portion of current for context
                 if overlap > 0 and current:
-                    overlap_text = separator.join(current)
                     overlap_parts = []
                     olen = 0
                     for p in reversed(current):

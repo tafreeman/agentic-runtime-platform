@@ -7,7 +7,7 @@ __version__ = "0.1.0"
 # Phase 3: Agents
 from .agents import (
     AgentConfig,
-    AgentEvent,  # Base; Capabilities; Agents
+    AgentEvent,
     AgentState,
     BaseAgent,
     Capability,
@@ -34,7 +34,7 @@ from .agents import (
 # Phase 1: Contracts
 from .contracts import (
     AgentMessage,
-    CodeGenerationInput,  # Messages; Schemas
+    CodeGenerationInput,
     CodeGenerationOutput,
     CodeIssue,
     CodeReviewInput,
@@ -55,7 +55,7 @@ from .contracts import (
 
 # Phase 2: Engine
 from .engine import (
-    DAG,  # Context; Steps; Pipeline; DAG; Executor
+    DAG,
     ConditionalBranch,
     CycleDetectedError,
     DAGExecutor,
@@ -93,7 +93,7 @@ from .engine import (
 # Phase 1: Models
 from .models import (
     CircuitState,
-    FallbackChain,  # Stats; Router; Client
+    FallbackChain,
     LLMClientWrapper,
     ModelRouter,
     ModelStats,

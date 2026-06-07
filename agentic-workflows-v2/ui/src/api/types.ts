@@ -37,16 +37,13 @@ export type { RunsSummaryResponse } from "./runs_summary.generated";
 // ---------------------------------------------------------------------------
 
 // DAGNode / DAGEdge were the old hand-written names for DAGNodeModel / DAGEdgeModel.
-import type { DAGNodeModel as DAGNode, DAGEdgeModel as DAGEdge } from "./dag_response.generated";
-export type { DAGNode, DAGEdge };
+export type { DAGNodeModel as DAGNode, DAGEdgeModel as DAGEdge } from "./dag_response.generated";
 
 // WorkflowInputSchema was the old hand-written name for WorkflowInputSchemaItem.
-import type { WorkflowInputSchemaItem as WorkflowInputSchema } from "./dag_response.generated";
-export type { WorkflowInputSchema };
+export type { WorkflowInputSchemaItem as WorkflowInputSchema } from "./dag_response.generated";
 
 // RunsSummary was the old hand-written name for RunsSummaryResponse.
-import type { RunsSummaryResponse as RunsSummary } from "./runs_summary.generated";
-export type { RunsSummary };
+export type { RunsSummaryResponse as RunsSummary } from "./runs_summary.generated";
 
 /** Mirrors server StepStatus enum. */
 export type StepStatus =

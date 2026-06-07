@@ -32,7 +32,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import deque
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Final, Protocol, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Key constants
 # ---------------------------------------------------------------------------
+REPLAY_DB_FILENAME: Final[str] = ".agentic_replay.db"
 _REDIS_KEY_PREFIX = "agentic:replay:"
 _DEFAULT_MAX_EVENTS: int = 500
 _DEFAULT_TTL_SECONDS: int = 14400  # 4 hours
@@ -409,7 +410,7 @@ class SqliteReplayStore:
 
     def __init__(
         self,
-        db_path: str = ".agentic_replay.db",
+        db_path: str = REPLAY_DB_FILENAME,
         max_events: int = _DEFAULT_MAX_EVENTS,
     ) -> None:
         """Initialise the store.  Call :meth:`initialize` before use.
@@ -425,7 +426,7 @@ class SqliteReplayStore:
     @classmethod
     async def connect(
         cls,
-        db_path: str = ".agentic_replay.db",
+        db_path: str = REPLAY_DB_FILENAME,
         max_events: int = _DEFAULT_MAX_EVENTS,
     ) -> SqliteReplayStore:
         """Create and initialise the SQLite store.
@@ -596,7 +597,7 @@ async def build_replay_store(settings: Any) -> ReplayStore:
     backend: str = getattr(settings, "replay_store_backend", "auto")
     max_events: int = getattr(settings, "replay_store_max_events", _DEFAULT_MAX_EVENTS)
     ttl: int = getattr(settings, "replay_store_ttl", _DEFAULT_TTL_SECONDS)
-    sqlite_path: str = getattr(settings, "replay_sqlite_path", ".agentic_replay.db")
+    sqlite_path: str = getattr(settings, "replay_sqlite_path", REPLAY_DB_FILENAME)
     redis_url: str | None = getattr(settings, "redis_url", None)
 
     if backend == "redis":

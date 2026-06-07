@@ -1,6 +1,6 @@
-import { readFileSync, writeFileSync } from 'fs';
-import { execSync } from 'child_process';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { resolve } from 'node:path';
 
 interface FlakeRecord {
   timestamp: string;

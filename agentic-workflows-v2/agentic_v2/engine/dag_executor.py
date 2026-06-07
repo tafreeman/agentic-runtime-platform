@@ -376,7 +376,7 @@ class DAGExecutor:
             # 3. Transition every step still in RUNNING state to FAILED and
             #    record a StepResult for it.
             now = datetime.now(UTC)
-            for step_name in list(running):
+            for step_name in running:
                 if step_name not in completed:
                     step_result = StepResult(
                         step_name=step_name, status=StepStatus.FAILED

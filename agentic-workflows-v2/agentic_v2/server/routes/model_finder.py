@@ -16,7 +16,7 @@ import subprocess
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Final, Literal
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -467,13 +467,13 @@ def sorted_candidates(
     return sorted(candidates, key=key, reverse=True)
 
 
-@router.get("/profile", response_model=SystemProfile)
+@router.get("/profile")
 def profile() -> SystemProfile:
     """Return the detected local system resource profile."""
     return get_system_profile()
 
 
-@router.get("/recommendations", response_model=RecommendationResponse)
+@router.get("/recommendations")
 def recommendations(
     category: TaskCategory | Literal["all"] = Query("all"),
     sort_by: SortField = Query("downloads"),

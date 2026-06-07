@@ -89,7 +89,7 @@ class UnicodeSanitizer:
                     location="full_text",
                     matched_pattern="dangerous_unicode_removed",
                     redacted_preview=(
-                        f"Removed {removed_count} dangerous Unicode " f"character(s)"
+                        f"Removed {removed_count} dangerous Unicode character(s)"
                     ),
                 )
             )

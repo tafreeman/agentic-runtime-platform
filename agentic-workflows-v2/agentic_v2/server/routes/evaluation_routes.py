@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import inspect
 import logging
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -90,7 +90,7 @@ def _encode_dataset_path(dataset_source: str, dataset_id: str) -> str:
 
 
 def _make_sample_summary(
-    sample: dict[str, Any], sample_index: int, meta: dict[str, Any]
+    sample: dict[str, Any], sample_index: int, _meta: dict[str, Any]
 ) -> DatasetSampleSummary:
     """Build a compact summary from a raw dataset sample."""
     field_names = list(sample.keys())
@@ -134,10 +134,17 @@ def _require_langchain() -> None:
         )
 
 
-@router.get("/eval/datasets", response_model=ListEvaluationDatasetsResponse)
+@router.get(
+    "/eval/datasets",
+    response_model=ListEvaluationDatasetsResponse,
+    responses={
+        404: {"description": "Workflow not found"},
+        501: {"description": "Not Implemented — LangChain extras not installed"},
+    },
+)
 async def list_evaluation_datasets(
     workflow: str | None = None,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """List repository and local dataset options for workflow evaluation."""
     if workflow:
@@ -192,14 +199,21 @@ async def list_evaluation_datasets(
     )
 
 
-@router.get("/workflows/{workflow_name}/preview-dataset-inputs")
+@router.get(
+    "/workflows/{workflow_name}/preview-dataset-inputs",
+    responses={
+        404: {"description": "Workflow not found"},
+        422: {"description": "Unprocessable Entity — invalid dataset_source or sample value"},
+        501: {"description": "Not Implemented — LangChain extras not installed"},
+    },
+)
 async def preview_dataset_inputs(
     request: Request,
     workflow_name: str,
     dataset_source: str,
     dataset_id: str,
     sample_index: int = 0,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Preview how dataset sample fields will map to workflow inputs."""
     _require_langchain()
@@ -332,6 +346,10 @@ async def get_dataset_sample_detail(
 @router.get(
     "/eval/datasets/{source}/{dataset_id:path}/samples",
     response_model=DatasetSampleListResponse,
+    responses={
+        422: {"description": "Unprocessable Entity — invalid source, limit, or offset"},
+        500: {"description": "Internal Server Error — failed to load dataset"},
+    },
 )
 async def list_dataset_samples_path_based(
     request: Request,
@@ -340,7 +358,7 @@ async def list_dataset_samples_path_based(
     offset: int = 0,
     limit: int = 20,
     workflow: str | None = None,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """List paginated dataset sample summaries (path-based URL).
 
@@ -415,6 +433,10 @@ async def list_dataset_samples_path_based(
 @router.get(
     "/eval/datasets/{source}/{dataset_id:path}/samples/{sample_index}",
     response_model=DatasetSampleDetailResponse,
+    responses={
+        422: {"description": "Unprocessable Entity — invalid source or sample value"},
+        500: {"description": "Internal Server Error — failed to load sample"},
+    },
 )
 async def get_dataset_sample_detail_path_based(
     request: Request,
@@ -422,7 +444,7 @@ async def get_dataset_sample_detail_path_based(
     dataset_id: str,
     sample_index: int,
     workflow: str | None = None,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Get full detail for a single dataset sample (path-based URL).
 

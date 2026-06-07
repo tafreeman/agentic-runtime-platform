@@ -297,7 +297,7 @@ def _parse_loop_max(
     if isinstance(raw_value, str):
         stripped = raw_value.strip()
         input_ref = re.fullmatch(
-            r"\$\{\s*inputs\.([A-Za-z_][A-Za-z0-9_]*)\s*\}", stripped
+            r"\$\{\s*inputs\.([A-Za-z_][\w]*)\s*\}", stripped
         )
         if input_ref:
             input_name = input_ref.group(1)

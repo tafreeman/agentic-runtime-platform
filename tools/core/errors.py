@@ -57,7 +57,7 @@ TRANSIENT_ERRORS: set[ErrorCode] = {
 
 
 def classify_error(
-    error_message: str, return_code: int | None = None
+    error_message: str, _return_code: int | None = None
 ) -> tuple[ErrorCode, bool]:
     """Classify an error message into a standard error code.
 

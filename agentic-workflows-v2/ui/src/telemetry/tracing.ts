@@ -165,7 +165,7 @@ export function parseTraceparentId(
   }
   const traceId = parts[1];
   // Trace ID must be 32 hex chars and non-zero
-  if (!traceId || traceId.length !== 32 || /^0+$/.test(traceId)) {
+  if (traceId?.length !== 32 || /^0+$/.test(traceId)) {
     return null;
   }
   return traceId;

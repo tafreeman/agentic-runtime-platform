@@ -173,7 +173,7 @@ async def _parse_code_step(ctx: ExecutionContext) -> dict[str, Any]:
     return {"parsed_ast": parsed_ast, "code_metrics": metrics}
 
 
-async def _noop_step(ctx: ExecutionContext) -> dict[str, Any]:
+async def _noop_step(_ctx: ExecutionContext) -> dict[str, Any]:
     """Tier-0 fallback: return empty outputs."""
     return {}
 

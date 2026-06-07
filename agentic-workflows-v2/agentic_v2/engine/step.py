@@ -278,7 +278,6 @@ class StepExecutor:
 
         # Execute with retry
         attempt = 0
-        last_error: Exception | None = None
 
         while attempt <= step_def.retry.max_retries:
             attempt += 1
@@ -309,7 +308,7 @@ class StepExecutor:
                 ) and "review_report" not in result.output_data:
                     raw_text = str(result.output_data.get("raw_response", ""))
                     status_match = re.search(
-                        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ -]+)"?',
+                        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
                         raw_text,
                         flags=re.IGNORECASE,
                     )
@@ -431,14 +430,12 @@ class StepExecutor:
                 result.status = StepStatus.FAILED
                 result.error = f"Step timed out after {step_def.timeout_seconds}s"
                 result.error_type = "TimeoutError"
-                last_error = TimeoutError(result.error)
 
                 # Timeout typically shouldn't retry
                 await ctx.mark_step_failed(step_def.name, result.error)
                 break
 
             except Exception as e:
-                last_error = e
                 result.error = str(e)
                 result.error_type = type(e).__name__
 
@@ -497,7 +494,7 @@ class StepExecutor:
     async def cancel_all(self) -> int:
         """Cancel all running steps (returns count of cancelled tasks)."""
         count = 0
-        for name in list(self._running_tasks.keys()):
+        for name in self._running_tasks.keys():
             if await self.cancel(name):
                 count += 1
         return count

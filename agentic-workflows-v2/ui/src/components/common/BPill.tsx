@@ -17,7 +17,7 @@ interface BPillProps {
   className?: string;
 }
 
-export default function BPill({ tone = "dim", children, className = "" }: BPillProps) {
+export default function BPill({ tone = "dim", children, className = "" }: Readonly<BPillProps>) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-sm border px-[7px] py-[2px] font-mono text-[10px] uppercase tracking-[0.5px] ${TONE_CLASSES[tone]} ${className}`}

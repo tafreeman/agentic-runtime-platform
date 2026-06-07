@@ -39,7 +39,7 @@ export default function StepLogPanel({ events, className = "" }: Props) {
             </div>
           )}
           {displayEvents.map((event, i) => (
-            <EventLine key={i} event={event} />
+            <EventLine key={`${event.type ?? "event"}-${i}`} event={event} />
           ))}
         </div>
       )}

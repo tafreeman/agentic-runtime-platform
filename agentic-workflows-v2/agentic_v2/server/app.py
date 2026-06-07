@@ -102,7 +102,7 @@ try:
         else Limiter(key_func=_public_exempt_key, default_limits=[_RATE_LIMIT_DEFAULT])
     )
 
-    def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    def _rate_limit_exceeded_handler(_request: Request, exc: RateLimitExceeded) -> JSONResponse:
         """Convert a slowapi ``RateLimitExceeded`` exception to a 429 JSON response."""
         retry_after = getattr(exc, "retry_after", None)
         headers = {}
@@ -121,7 +121,7 @@ except ImportError:
     SlowAPIMiddleware = None  # type: ignore[assignment,misc]
     RateLimitExceeded = None  # type: ignore[assignment,misc]
 
-    def _rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:  # type: ignore[misc]
+    def _rate_limit_exceeded_handler(_request: Request, _exc: Exception) -> JSONResponse:  # type: ignore[misc]
         return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
 
 

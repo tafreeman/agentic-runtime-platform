@@ -157,13 +157,16 @@ export default function WorkflowDetailPage() {
     },
   });
 
-  const runLabel = batchProgress
-    ? `${batchProgress.done}/${batchProgress.total}`
-    : runMutation.isPending
-      ? "[…] starting"
-      : configRef.current.evaluation.enabled
-        ? "[▶] run + eval"
-        : "[▶] run";
+  let runLabel: string;
+  if (batchProgress) {
+    runLabel = `${batchProgress.done}/${batchProgress.total}`;
+  } else if (runMutation.isPending) {
+    runLabel = "[…] starting";
+  } else if (configRef.current.evaluation.enabled) {
+    runLabel = "[▶] run + eval";
+  } else {
+    runLabel = "[▶] run";
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -235,23 +238,27 @@ export default function WorkflowDetailPage() {
           </div>
 
           {/* DAG canvas fills remaining height */}
-          {dagLoading ? (
+          {dagLoading && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
               $ loading workflow graph
             </div>
-          ) : dagError ? (
+          )}
+          {!dagLoading && dagError && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-red">
               [!] {dagErrorMessage}
             </div>
-          ) : dag && hasWorkflowSteps ? (
+          )}
+          {!dagLoading && !dagError && dag && hasWorkflowSteps && (
             <div className="flex-1 overflow-hidden">
               <WorkflowDAG dagNodes={dag.nodes} dagEdges={dag.edges} />
             </div>
-          ) : dag ? (
+          )}
+          {!dagLoading && !dagError && dag && !hasWorkflowSteps && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-text-dim">
               $ no workflow steps defined
             </div>
-          ) : (
+          )}
+          {!dagLoading && !dagError && !dag && (
             <div className="flex flex-1 items-center justify-center font-mono text-[11px] text-b-red">
               $ failed to load dag
             </div>
@@ -271,7 +278,7 @@ export default function WorkflowDetailPage() {
           </div>
 
           <div className="flex-1">
-            {dag ? (
+            {dag && (
               <div className="p-3">
                 <RunConfigForm
                   inputs={dag.inputs ?? []}
@@ -281,11 +288,12 @@ export default function WorkflowDetailPage() {
                   }}
                 />
               </div>
-            ) : dagLoading ? (
+            )}
+            {!dag && dagLoading && (
               <div className="p-4 font-mono text-[11px] text-b-text-dim">
                 $ loading…
               </div>
-            ) : null}
+            )}
 
             {/* Run history */}
             <div className="border-t border-b-line">

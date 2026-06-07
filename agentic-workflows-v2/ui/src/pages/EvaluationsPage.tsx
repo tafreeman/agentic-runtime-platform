@@ -18,7 +18,7 @@ export default function EvaluationsPage() {
 
   // Score histogram — 20 buckets 0..100
   const histogram = useMemo(() => {
-    const buckets = Array(20).fill(0);
+    const buckets = new Array(20).fill(0);
     evaluatedRuns.forEach((r) => {
       const score = r.evaluation_score ?? 0;
       const normalized = score <= 1 ? score * 100 : score;
@@ -90,15 +90,17 @@ export default function EvaluationsPage() {
                         {histogram.map((c, i) => {
                           const h = (c / maxBucket) * 100;
                           const mid = i * 5 + 2.5;
-                          const color =
-                            mid < 50
-                              ? "bg-b-red"
-                              : mid < 75
-                                ? "bg-b-clay"
-                                : "bg-b-green";
+                          let color: string;
+                          if (mid < 50) {
+                            color = "bg-b-red";
+                          } else if (mid < 75) {
+                            color = "bg-b-clay";
+                          } else {
+                            color = "bg-b-green";
+                          }
                           return (
                             <div
-                              key={i}
+                              key={`histogram-${i}`}
                               className="flex flex-1 flex-col justify-end"
                               title={`${i * 5}–${i * 5 + 5}: ${c} run${c === 1 ? "" : "s"}`}
                             >
@@ -141,17 +143,23 @@ export default function EvaluationsPage() {
                             </span>
                           </div>
                           <div className="mt-0.5">
-                            <BAsciiBar
-                              value={w.rate}
-                              width={22}
-                              color={
-                                w.rate >= 0.75
-                                  ? "b-green"
-                                  : w.rate >= 0.5
-                                    ? "b-amber"
-                                    : "b-red"
+                            {(() => {
+                              let workflowBarColor: string;
+                              if (w.rate >= 0.75) {
+                                workflowBarColor = "b-green";
+                              } else if (w.rate >= 0.5) {
+                                workflowBarColor = "b-amber";
+                              } else {
+                                workflowBarColor = "b-red";
                               }
-                            />
+                              return (
+                                <BAsciiBar
+                                  value={w.rate}
+                                  width={22}
+                                  color={workflowBarColor}
+                                />
+                              );
+                            })()}
                           </div>
                         </div>
                       ))}

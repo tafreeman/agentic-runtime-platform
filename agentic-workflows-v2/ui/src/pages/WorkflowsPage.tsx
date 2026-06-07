@@ -34,8 +34,8 @@ export default function WorkflowsPage() {
         inputRef.current?.focus();
       }
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, []);
 
   const filtered = useMemo(() => {
@@ -91,7 +91,7 @@ export default function WorkflowsPage() {
             <div className="space-y-[2px]">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
-                  key={i}
+                  key={`workflow-skeleton-${i}`}
                   className="h-[52px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}
@@ -136,7 +136,7 @@ export default function WorkflowsPage() {
                         {name}
                       </div>
                       <div className="mt-0.5 truncate font-mono text-[10px] text-b-text-dim">
-                        #{name.replace(/_/g, "-")}
+                        #{name.replaceAll("_", "-")}
                       </div>
                     </div>
                     {latest && (
@@ -151,8 +151,7 @@ export default function WorkflowsPage() {
 
               {filtered.length === 0 && !isLoading && (
                 <div className="rounded-sm border border-dashed border-b-line py-10 text-center font-mono text-[11px] text-b-text-dim">
-                  no workflows match "
-                  <span className="text-b-text">{query}</span>"
+                  {`no workflows match "`}<span className="text-b-text">{query}</span>{'"'}
                 </div>
               )}
             </div>

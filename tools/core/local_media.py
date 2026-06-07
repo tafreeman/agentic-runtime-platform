@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
+VERBOSE_OUTPUT_LABEL = "Verbose output"
+
 # AI Gallery cache path
 AI_GALLERY_PATH = Path.home() / ".cache" / "aigallery"
 
@@ -213,7 +215,6 @@ def transcribe_audio(
     if sample_rate != 16000:
         try:
             import librosa
-
             audio_data = librosa.resample(
                 audio_data, orig_sr=sample_rate, target_sr=16000
             )
@@ -284,7 +285,7 @@ def transcribe_audio(
 def upscale_image(
     input_path: str,
     output_path: str | None = None,
-    scale: int = 4,
+    _scale: int = 4,
     model_path: str | None = None,
     verbose: bool = False,
 ) -> str:
@@ -405,7 +406,7 @@ Examples:
     img_parser.add_argument("--steps", type=int, default=50, help="Inference steps")
     img_parser.add_argument("--seed", type=int, help="Random seed")
     img_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     # Transcription
@@ -420,7 +421,7 @@ Examples:
     )
     trans_parser.add_argument("--language", help="Language code (e.g., en, es)")
     trans_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     # Upscaling
@@ -428,7 +429,7 @@ Examples:
     up_parser.add_argument("image", help="Input image path")
     up_parser.add_argument("-o", "--output", help="Output file path")
     up_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Verbose output"
+        "-v", "--verbose", action="store_true", help=VERBOSE_OUTPUT_LABEL
     )
 
     args = parser.parse_args()

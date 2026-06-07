@@ -608,7 +608,7 @@ def _get_placeholder_chat_model_cls() -> Any:
     return _PLACEHOLDER_CHAT_MODEL_CLS
 
 
-def build_placeholder_model(temperature: float = 0.0) -> Any:
+def build_placeholder_model(_temperature: float = 0.0) -> Any:
     """Build a LangChain chat model that returns a fixed placeholder.
 
     Used when ``AGENTIC_NO_LLM=1``.  No API calls, no provider package

@@ -171,10 +171,8 @@ class CoderAgent(
         # Check if we have a configured backend
         if self.llm_client.backend is None:
             # Fall back to mock response for testing
-            last_user_msg = ""
             for msg in reversed(messages):
                 if msg.get("role") == "user":
-                    last_user_msg = msg.get("content", "")
                     break
 
             return {"content": """Here's the code you requested:
@@ -189,7 +187,7 @@ This is a placeholder implementation."""}
 
         # Use the real LLM client with smart routing
         try:
-            result_dict, model_used, tokens = await self.llm_client.complete_chat(
+            result_dict, _, _ = await self.llm_client.complete_chat(
                 tier=self.config.default_tier,
                 messages=messages,
                 max_tokens=self.config.max_iterations * 1000,

@@ -14,7 +14,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -69,7 +69,7 @@ async def list_runs(
     request: Request,
     workflow: str | None = None,
     limit: int = 50,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """List past workflow runs with summary data."""
     tenant_logger = _tenant_run_logger(tenant)
@@ -132,7 +132,7 @@ async def list_runs(
 @router.get("/runs/summary", response_model=RunsSummaryResponse)
 async def runs_summary(
     workflow: str | None = None,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Aggregate stats across runs."""
     return _tenant_run_logger(tenant).summary(workflow_name=workflow)
@@ -142,7 +142,7 @@ async def runs_summary(
 async def get_run(
     request: Request,
     filename: str,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Get full run detail including all step data.
 
@@ -244,7 +244,7 @@ async def get_run(
 async def get_run_evaluation(
     request: Request,
     filename: str,
-    tenant: TenantContext = Depends(get_tenant_context),
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
 ):
     """Get full rubric evaluation detail for a scored workflow run."""
     tenant_logger = _tenant_run_logger(tenant)

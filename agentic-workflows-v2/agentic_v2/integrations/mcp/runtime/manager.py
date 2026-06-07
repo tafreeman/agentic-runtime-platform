@@ -298,7 +298,7 @@ class McpConnectionManager:
         """
         async with self._lock:
             # Find connection by name
-            for signature, metadata in list(self._connections.items()):
+            for signature, metadata in self._connections.items():
                 if metadata.name == name:
                     logger.info(f"Disconnecting from {name}")
                     await metadata.client.close()

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # Pattern for variable expansion: ${input:var_name} or ${env:var_name} or ${VAR_NAME}
 VAR_EXPANSION_PATTERN = re.compile(
-    r"\$\{(?:input:)?(?:env:)?([A-Za-z_][A-Za-z0-9_]*)\}"
+    r"\$\{(?:input:)?(?:env:)?([A-Za-z_]\w*)\}"
 )
 
 

@@ -284,7 +284,7 @@ class DockerRuntime(IsolatedTaskRuntime):
 
     async def cleanup(self) -> None:
         # Kill any still-running containers
-        for name in list(self._active_containers):
+        for name in self._active_containers:
             await self._kill_container(name)
         self._active_containers.clear()
 

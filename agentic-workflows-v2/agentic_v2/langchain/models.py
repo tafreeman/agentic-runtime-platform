@@ -71,6 +71,16 @@ from .model_utils import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# String constants (extracted to satisfy python:S1192 — define once, reuse)
+# ---------------------------------------------------------------------------
+
+MODEL_GEMINI_FLASH = "gemini:gemini-2.5-flash"
+MODEL_GH_GPT4O = "gh:openai/gpt-4o"
+MODEL_OPENAI_GPT4O = "openai:gpt-4o"
+MODEL_ANTHROPIC_CLAUDE_SONNET = "anthropic:claude-sonnet-4-6-20260219"
+MODEL_OLLAMA_QWEN3 = "ollama:qwen3-coder:30b"
+
+# ---------------------------------------------------------------------------
 # Load .env so API keys are available when invoked via uvicorn directly
 # (the CLI entry point already does this, but server startup may bypass it)
 # ---------------------------------------------------------------------------
@@ -93,9 +103,9 @@ except ImportError:
 _TIER_DEFAULTS: dict[int, str] = {
     1: "gemini:gemini-2.0-flash-lite",
     2: "gemini:gemini-2.0-flash",
-    3: "gemini:gemini-2.5-flash",
-    4: "gemini:gemini-2.5-flash",
-    5: "gemini:gemini-2.5-flash",
+    3: MODEL_GEMINI_FLASH,
+    4: MODEL_GEMINI_FLASH,
+    5: MODEL_GEMINI_FLASH,
 }
 
 # Models ranked by reasoning capability per tier.
@@ -112,34 +122,34 @@ _TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
     # Tier 2: balanced -- code review, moderate reasoning
     2: [
         "gemini:gemini-2.0-flash",
-        "gh:openai/gpt-4o",
-        "openai:gpt-4o",
-        "anthropic:claude-sonnet-4-6-20260219",
+        MODEL_GH_GPT4O,
+        MODEL_OPENAI_GPT4O,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
         "ollama:qwen3:8b",
     ],
     # Tier 3: strong reasoning -- architecture, complex code gen
     3: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
     # Tier 4: top-tier -- hard problems, multi-step planning
     4: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
     # Tier 5: best available -- research, deep analysis
     5: [
-        "gemini:gemini-2.5-flash",
-        "anthropic:claude-sonnet-4-6-20260219",
-        "openai:gpt-4o",
-        "gh:openai/gpt-4o",
-        "ollama:qwen3-coder:30b",
+        MODEL_GEMINI_FLASH,
+        MODEL_ANTHROPIC_CLAUDE_SONNET,
+        MODEL_OPENAI_GPT4O,
+        MODEL_GH_GPT4O,
+        MODEL_OLLAMA_QWEN3,
     ],
 }
 

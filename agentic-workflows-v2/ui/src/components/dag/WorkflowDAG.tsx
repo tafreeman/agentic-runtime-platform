@@ -251,7 +251,6 @@ function WorkflowDAGInner({
         strokeColor = "#c084fc"; // b-purple
         strokeDasharray = "3 3";
       } else if (sourceState?.status === "success" && targetState?.status === "running" && !disconnected) {
-        strokeColor = "#d97757"; // b-clay — active/running edge
         animated = true;
       } else if (sourceState?.status === "success") {
         strokeColor = "#4ade80"; // b-green — completed
@@ -312,7 +311,7 @@ function WorkflowDAGInner({
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}
         minZoom={0.2}
-        maxZoom={2.0}
+        maxZoom={2}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1a1a28" />
         <Controls showInteractive={false} className="dag-controls" />

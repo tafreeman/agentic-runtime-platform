@@ -116,7 +116,7 @@ export default function EvaluationRubricAccordion({
                 key={gate}
                 className={passed ? "text-b-green" : "text-b-red"}
               >
-                {passed ? "[OK]" : "[FAIL]"} {gate.replace(/_/g, " ")}
+                {passed ? "[OK]" : "[FAIL]"} {gate.replaceAll("_", " ")}
               </div>
             ))}
           </div>

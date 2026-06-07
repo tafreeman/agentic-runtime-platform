@@ -230,7 +230,7 @@ class ArchitectAgent(BaseAgent[ArchitectureInput, ArchitectureOutput]):
             }
 
         # Use real LLM client
-        result_dict, model_used, tokens = await self.llm_client.complete_chat(
+        result_dict, _, _ = await self.llm_client.complete_chat(
             messages=messages,
             tier=self.config.default_tier,
             temperature=0.3,  # Lower temp for architecture consistency

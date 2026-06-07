@@ -188,7 +188,7 @@ def evaluate_task_output_legacy(
 
 def print_mismatch_analysis(
     eval_result: dict[str, Any],
-    gold_data: dict[str, Any],
+    _gold_data: dict[str, Any],
     output: str,
 ) -> None:
     """Print a detailed analysis of why items did not match the gold standard."""

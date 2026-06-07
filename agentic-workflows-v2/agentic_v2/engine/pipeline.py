@@ -194,7 +194,7 @@ class PipelineExecutor:
         self,
         workflow: Any,
         ctx: ExecutionContext | None = None,
-        on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
+        _on_update: Callable[[dict[str, Any]], Awaitable[None]] | None = None,
         **kwargs: Any,
     ) -> WorkflowResult:
         """Execute a pipeline.
@@ -324,10 +324,10 @@ class PipelineExecutor:
         if group.fail_fast:
             # Return on first failure
             results = []
-            pending = set(
+            pending = {
                 asyncio.create_task(t) if not isinstance(t, asyncio.Task) else t
                 for t in tasks
-            )
+            }
 
             while pending:
                 done, pending = await asyncio.wait(
