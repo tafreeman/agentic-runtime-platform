@@ -18,16 +18,16 @@ class TestChoice:
 
     def test_create(self):
         """Test creating a Choice."""
-        choice = Choice(choice="1", score=0.0)
-        assert choice.choice == "1"
+        choice = Choice(label="1", score=0.0)
+        assert choice.label == "1"
         assert choice.score == 0.0
 
     def test_standard_choices(self):
         """Test STANDARD_CHOICES has 5 levels."""
         assert len(STANDARD_CHOICES) == 5
-        assert STANDARD_CHOICES[0].choice == "1"
+        assert STANDARD_CHOICES[0].label == "1"
         assert STANDARD_CHOICES[0].score == 0.0
-        assert STANDARD_CHOICES[4].choice == "5"
+        assert STANDARD_CHOICES[4].label == "5"
         assert STANDARD_CHOICES[4].score == 1.0
 
 

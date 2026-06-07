@@ -98,13 +98,13 @@ class QualityEvaluator:
 
         # Exact match on last line
         for choice in choices:
-            if last_line == choice.choice.lower():
+            if last_line == choice.label.lower():
                 return choice.score
 
         # Containment in last few lines
         search_text = "\n".join(lines[-3:]) if len(lines) >= 3 else response_lower
         for choice in choices:
-            if choice.choice.lower() in search_text:
+            if choice.label.lower() in search_text:
                 return choice.score
 
         return 0.0

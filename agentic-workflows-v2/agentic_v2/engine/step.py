@@ -412,7 +412,10 @@ class StepExecutor:
 
         raw_text = str(result.output_data.get("raw_response", ""))
         status_match = re.search(
-            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+            # Allow spaces so multi-word variants survive (e.g.
+            # "APPROVED WITH NOTES", "CONDITIONAL APPROVAL") before
+            # ReviewStatus.normalize() maps them.
+            r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_ -]+)"?',
             raw_text,
             flags=re.IGNORECASE,
         )

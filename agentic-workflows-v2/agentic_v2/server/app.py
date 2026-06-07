@@ -469,15 +469,19 @@ def _mount_spa(app: FastAPI) -> None:
 
     @app.get("/{path:path}")
     async def spa_fallback(request: Request, path: str):
-        # Serve actual files if they exist in dist/, but prevent directory traversal
+        # Serve real files from dist/, but prevent directory traversal. Resolve
+        # the candidate and confirm it stays within the dist tree using
+        # os.path.commonpath — a sanitizer pattern CodeQL recognizes for
+        # py/path-injection (the prior `in .parents` check was equivalent but
+        # not recognized as a barrier).
         if path:
-            candidate_path = (UI_DIST_DIR_RESOLVED / path).resolve()
-            # Ensure the resolved candidate path is within the UI_DIST_DIR_RESOLVED tree
+            base = os.path.realpath(UI_DIST_DIR_RESOLVED)
+            candidate = os.path.realpath(os.path.join(base, path))
             if (
-                candidate_path == UI_DIST_DIR_RESOLVED
-                or UI_DIST_DIR_RESOLVED in candidate_path.parents
-            ) and candidate_path.is_file():
-                return FileResponse(candidate_path)
+                os.path.commonpath([base, candidate]) == base
+                and os.path.isfile(candidate)
+            ):
+                return FileResponse(candidate)
         return FileResponse(index_html)
 
     logger.info("Serving UI from %s", UI_DIST_DIR)
