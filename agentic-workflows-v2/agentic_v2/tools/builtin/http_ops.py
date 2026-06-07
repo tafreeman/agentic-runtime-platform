@@ -15,10 +15,14 @@ from ..base import BaseTool, ToolResult
 # ---------------------------------------------------------------------------
 
 _ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
-# NOSONAR(python:S1313): the link-local IP 169.254.169.254 is the cloud metadata
-# endpoint we deliberately blocklist here for SSRF defense — it must stay hardcoded.
+
+# Link-local cloud metadata endpoint (AWS/GCP/Azure instance metadata service).
+# This address is intentionally blocklisted to prevent SSRF attacks that could
+# expose cloud credentials via the instance metadata API.
+_CLOUD_METADATA_IP = "169.254.169.254"
+
 _METADATA_HOSTS = frozenset(
-    {"metadata.google.internal", "metadata", "169.254.169.254"}  # NOSONAR
+    {"metadata.google.internal", "metadata", _CLOUD_METADATA_IP}
 )
 
 

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StepStatus } from "../../api/types";
 
@@ -162,6 +162,23 @@ function StepNodeComponent({ id, data }: NodeProps) {
         {/* Row 3: tokens spaced or "queued" */}
         {(() => {
           if (showTokens) {
+            let tokenContent: ReactNode;
+            if (tokensIn != null || tokensOut != null) {
+              tokenContent = (
+                <>
+                  {tokensIn != null && (
+                    <span>↓<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
+                  )}
+                  {tokensOut != null && (
+                    <span>↑<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
+                  )}
+                </>
+              );
+            } else if (tokensUsed != null) {
+              tokenContent = (
+                <span>↕<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
+              );
+            }
             return (
               <div
                 data-testid="step-node-tokens"
@@ -174,20 +191,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
                   fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
                 }}
               >
-                {tokensIn != null || tokensOut != null ? (
-                  <>
-                    {tokensIn != null && (
-                      <span>↓<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
-                    )}
-                    {tokensOut != null && (
-                      <span>↑<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
-                    )}
-                  </>
-                ) : (
-                  tokensUsed != null && (
-                    <span>↕<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
-                  )
-                )}
+                {tokenContent}
               </div>
             );
           }

@@ -89,9 +89,9 @@ export default function WorkflowsPage() {
           {/* Loading */}
           {isLoading && (
             <div className="space-y-[2px]">
-              {Array.from({ length: 3 }).map((_, i) => (
+              {(["sk-0", "sk-1", "sk-2"] as const).map((sk) => (
                 <div
-                  key={`workflow-skeleton-${i}`}
+                  key={sk}
                   className="h-[52px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}
