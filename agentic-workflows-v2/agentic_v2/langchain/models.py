@@ -277,9 +277,11 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
     ("notebooklm:", build_notebooklm_model),
+    # "local-api:" MUST precede "local:" — startswith() matches the first entry,
+    # and "local:" is a prefix of "local-api:", so the longer prefix must win.
+    ("local-api:", build_local_api_model),
     ("local:", build_local_onnx_model),
     ("lmstudio:", build_lmstudio_model),
-    ("local-api:", build_local_api_model),
 )
 
 # Prefixes that are recognized provider namespaces.  A bare name that does not

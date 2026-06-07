@@ -288,7 +288,8 @@ def _coerce_dict_content_to_text(content: dict[str, Any]) -> str:
                 return text
     try:
         return json.dumps(content, ensure_ascii=False, default=str)
-    except TypeError:
+    except (TypeError, ValueError):
+        # ValueError covers circular references / out-of-range floats.
         return str(content)
 
 

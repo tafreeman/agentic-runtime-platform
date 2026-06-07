@@ -247,9 +247,10 @@ class ConnectionManager:
             )
 
         # Snapshot the connection list before iterating so that concurrent
-        # connect/disconnect calls cannot modify the list mid-loop.
+        # connect/disconnect calls cannot modify the list mid-loop (send_json
+        # awaits, yielding control to other coroutines that may mutate it).
         dead: list[WebSocket] = []
-        for connection in self.connections.get(run_id, []):
+        for connection in list(self.connections.get(run_id, [])):
             try:
                 await connection.send_json(message)
             except Exception:

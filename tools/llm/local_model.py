@@ -240,7 +240,15 @@ Return ONLY valid JSON in this exact format:
         if '\\"' not in response and "\\n" not in response:
             return response
         try:
-            unescaped = response.encode().decode("unicode_escape")
+            # Use escape_decode (not .decode("unicode_escape")) so multibyte
+            # UTF-8 content survives: unicode_escape misreads UTF-8 bytes as
+            # Latin-1 (e.g. "é" -> "Ã©"). escape_decode resolves backslash
+            # escapes on the raw bytes, then we decode as UTF-8.
+            import codecs
+
+            unescaped = codecs.escape_decode(response.encode("utf-8"))[0].decode(
+                "utf-8"
+            )
             if "{" in unescaped:
                 return unescaped
         except Exception:

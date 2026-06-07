@@ -13,6 +13,7 @@ Key design decisions:
 
 import math
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -615,12 +616,17 @@ def _consume_duration_minutes(remaining: str) -> tuple[float, str, bool]:
     Returns ``(seconds_from_minutes, rest, failed)`` where ``failed`` is True
     only when a minutes marker is present but its value is unparseable.
     """
-    if "m" in remaining and "ms" not in remaining:
-        parts = remaining.split("m", 1)
+    # Match a minutes marker ('m' NOT followed by 's') so a millisecond token
+    # like "500ms" elsewhere in the string does not block minute parsing
+    # (e.g. "1m500ms" -> 1 minute + 500 ms).
+    match = re.search(r"(\d+(?:\.\d+)?)m(?!s)", remaining)
+    if match:
         try:
-            return float(parts[0]) * 60, parts[1], False
+            minutes = float(match.group(1))
         except ValueError:
             return 0.0, remaining, True
+        rest = remaining[: match.start()] + remaining[match.end() :]
+        return minutes * 60, rest, False
     return 0.0, remaining, False
 
 
