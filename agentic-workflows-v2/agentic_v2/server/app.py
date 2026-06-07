@@ -386,6 +386,20 @@ def create_app() -> FastAPI:
         expose_headers=["traceparent", "tracestate", "Server-Timing"],
     )
 
+    # Configure CORS (added last → outermost so it wraps the full chain and
+    # CORS preflight responses are always returned before any other middleware
+    # can short-circuit the request).
+    # expose_headers allows the browser to read traceparent/tracestate from
+    # CORS responses (same-origin requests can read all headers already).
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=get_allowed_origins(),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "X-API-Key", "Content-Type", "Accept"],
+        expose_headers=["traceparent", "tracestate", "Server-Timing"],
+    )
+
     # E7-3: Map NoProviderConfiguredError to 503 Service Unavailable
     from ..core.errors import NoProviderConfiguredError
 
