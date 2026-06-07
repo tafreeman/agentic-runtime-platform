@@ -215,7 +215,7 @@ async def run_analysis(
     final_text = _extract_last_ai_text(messages)
 
     # Best-effort: re-run tool results to populate structured report fields
-    report = await _build_structured_report(root, messages, final_text)
+    report = _build_structured_report(root, messages, final_text)
     return report
 
 
@@ -353,7 +353,7 @@ _PACKAGE_SCOPED_TOOLS = frozenset(
 )
 
 
-async def _build_structured_report(
+def _build_structured_report(
     root: str,
     messages: list[Any],
     agent_summary: str,

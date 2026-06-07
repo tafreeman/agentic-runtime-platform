@@ -111,9 +111,9 @@ export default function RunDetailPage() {
 
   const evalData = run.extra?.evaluation;
   const evalPct =
-    evalData?.weighted_score !== undefined
-      ? Math.max(0, Math.min(1, evalData.weighted_score / 100))
-      : null;
+    evalData?.weighted_score === undefined
+      ? null
+      : Math.max(0, Math.min(1, evalData.weighted_score / 100));
 
   const evalBarColor = evalBarColorFor(evalPct);
 
