@@ -61,8 +61,7 @@ export default function WorkflowsPage() {
               Workflows
             </h1>
             <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ {workflows?.length ?? 0} definitions · filter with{" "}
-              <span className="text-b-clay">/</span>
+              $ {workflows?.length ?? 0} definitions · filter with <span className="text-b-clay">/</span>
             </div>
           </div>
 
@@ -89,9 +88,9 @@ export default function WorkflowsPage() {
           {/* Loading */}
           {isLoading && (
             <div className="space-y-[2px]">
-              {Array.from({ length: 3 }).map((_, i) => (
+              {(["sk-0", "sk-1", "sk-2"] as const).map((skId) => (
                 <div
-                  key={`workflow-skeleton-${i}`}
+                  key={skId}
                   className="h-[52px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}

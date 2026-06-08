@@ -154,7 +154,7 @@ def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:
     from ..contracts import ReviewStatus
 
     status_match = re.search(
-        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+        r'"?overall_status"?\s*[:=]\s*"?([A-Z_\-]+)"?',
         raw_text,
         flags=re.IGNORECASE,
     )
@@ -220,6 +220,38 @@ def _normalize_review_report_key(parsed: dict[str, Any]) -> None:
         parsed["review_report"] = rr
 
 
+def _compute_missing_keys(
+    parsed: dict[str, Any], expected_output_keys: list[str]
+) -> list[str]:
+    """Return expected keys absent from *parsed* (ignoring ``raw_response``).
+
+    Preserves the order of *expected_output_keys* so promotion is deterministic.
+    """
+    return [
+        k
+        for k in expected_output_keys
+        if k not in parsed and k != "raw_response"
+    ]
+
+
+def _promote_keys_from_candidate(
+    parsed: dict[str, Any],
+    nested_parsed: dict[str, Any],
+    missing_keys: list[str],
+) -> bool:
+    """Copy any *missing_keys* found in *nested_parsed* up into *parsed*.
+
+    Only promotes keys the caller expects and never stomps existing keys.
+    Returns ``True`` if at least one key was promoted.
+    """
+    promoted = False
+    for key in missing_keys:
+        if key in nested_parsed and key not in parsed:
+            parsed[key] = nested_parsed[key]
+            promoted = True
+    return promoted
+
+
 def _promote_missing_keys_from_raw(
     parsed: dict[str, Any], expected_output_keys: list[str]
 ) -> None:
@@ -229,11 +261,7 @@ def _promote_missing_keys_from_raw(
     but all content is inside a nested JSON blob), try to extract the expected
     keys from that nested JSON.
     """
-    missing_keys = [
-        k
-        for k in expected_output_keys
-        if k not in parsed and k != "raw_response"
-    ]
+    missing_keys = _compute_missing_keys(parsed, expected_output_keys)
     if not (missing_keys and isinstance(parsed.get("raw_response"), str)):
         return
 
@@ -245,13 +273,7 @@ def _promote_missing_keys_from_raw(
             continue
         if not isinstance(nested_parsed, dict):
             continue
-        # Only promote keys the caller expects — don't stomp existing keys
-        promoted = False
-        for key in missing_keys:
-            if key in nested_parsed and key not in parsed:
-                parsed[key] = nested_parsed[key]
-                promoted = True
-        if promoted:
+        if _promote_keys_from_candidate(parsed, nested_parsed, missing_keys):
             break
 
 
@@ -368,7 +390,7 @@ def _salvage_review_report_from_text(response: str) -> dict[str, Any]:
     Conservative default: if approval cannot be proven, force the rework path.
     """
     status_match = re.search(
-        r'"?overall_status"?\s*[:=]\s*"?([A-Za-z_\-]+)"?',
+        r'"?overall_status"?\s*[:=]\s*"?([A-Z_\-]+)"?',
         response,
         flags=re.IGNORECASE,
     )

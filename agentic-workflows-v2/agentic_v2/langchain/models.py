@@ -42,8 +42,12 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from ..models.router import FallbackChain, ModelRouter, ModelTier
 
 from .model_builders import (
     _resolve_notebooklm_model_name,
@@ -225,6 +229,59 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     return summary
 
 
+def _make_env_health_checker(
+    availability: dict[str, bool],
+) -> Callable[[str], bool]:
+    """Build a router health-checker closing over the probed availability map.
+
+    The returned callable resolves a model ID to its provider prefix and reports
+    availability from ``availability``, falling back to a live env-var probe for
+    providers not present in the map.
+    """
+
+    def _env_health_checker(model_id: str) -> bool:
+        p = provider_prefix(model_id)
+        return availability.get(p, is_provider_available(p))
+
+    return _env_health_checker
+
+
+def _iter_default_chain_models(
+    model_tier_enum: type[ModelTier],
+    default_chains: dict[ModelTier, FallbackChain],
+) -> Iterator[str]:
+    """Yield every model ID in the default chains, skipping the no-LLM tier.
+
+    Iterates tiers in enum order and each chain in priority order so the yield
+    sequence matches the original nested-loop traversal.
+    """
+    for tier_enum in model_tier_enum:
+        if tier_enum == model_tier_enum.TIER_0:
+            continue
+        chain = default_chains.get(tier_enum)
+        if chain:
+            yield from chain
+
+
+def _premark_unavailable_models(
+    router: ModelRouter,
+    availability: dict[str, bool],
+    model_tier_enum: type[ModelTier],
+    default_chains: dict[ModelTier, FallbackChain],
+) -> None:
+    """Mark every default-chain model from an unavailable provider as unavailable.
+
+    Lets the native router skip providers with no configured credentials instead
+    of probing them at request time.
+    """
+    for provider, available in availability.items():
+        if available:
+            continue
+        for model in _iter_default_chain_models(model_tier_enum, default_chains):
+            if provider_prefix(model) == provider:
+                router.mark_unavailable(model)
+
+
 def _configure_native_router(availability: dict[str, bool]) -> None:
     """Set a health-checker on the native ModelRouter so it skips unavailable
     providers."""
@@ -234,12 +291,7 @@ def _configure_native_router(availability: dict[str, bool]) -> None:
         return
 
     router = get_router()
-
-    def _env_health_checker(model_id: str) -> bool:
-        p = provider_prefix(model_id)
-        return availability.get(p, is_provider_available(p))
-
-    router.set_health_checker(_env_health_checker)
+    router.set_health_checker(_make_env_health_checker(availability))
 
     # Pre-mark unavailable models so the router doesn't try them
     try:
@@ -247,16 +299,7 @@ def _configure_native_router(availability: dict[str, bool]) -> None:
     except ImportError:
         return
 
-    for p, available in availability.items():
-        if not available:
-            for tier_enum in ModelTier:
-                if tier_enum == ModelTier.TIER_0:
-                    continue
-                chain = DEFAULT_CHAINS.get(tier_enum)
-                if chain:
-                    for m in chain:
-                        if provider_prefix(m) == p:
-                            router.mark_unavailable(m)
+    _premark_unavailable_models(router, availability, ModelTier, DEFAULT_CHAINS)
 
     logger.debug("Native ModelRouter configured with env-var health checker")
 

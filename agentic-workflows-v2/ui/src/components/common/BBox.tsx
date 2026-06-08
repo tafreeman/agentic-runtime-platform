@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 interface BBoxProps {
-  title?: string;
-  right?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  bodyClassName?: string;
+  readonly title?: string;
+  readonly right?: ReactNode;
+  readonly children: ReactNode;
+  readonly className?: string;
+  readonly bodyClassName?: string;
 }
 
 export default function BBox({

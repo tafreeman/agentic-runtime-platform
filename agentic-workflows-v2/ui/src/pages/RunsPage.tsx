@@ -135,9 +135,9 @@ export default function RunsPage() {
           {/* Loading */}
           {isLoading && (
             <div className="space-y-[2px]">
-              {Array.from({ length: 5 }).map((_, i) => (
+              {["sk-0", "sk-1", "sk-2", "sk-3", "sk-4"].map((skKey) => (
                 <div
-                  key={`loading-skeleton-${i}`}
+                  key={skKey}
                   className="h-[48px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
                 />
               ))}

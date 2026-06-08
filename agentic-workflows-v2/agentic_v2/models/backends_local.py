@@ -42,7 +42,7 @@ class OllamaBackend(LLMBackend):
     timeout: float = 300.0  # Local models can be slower
     _client: httpx.AsyncClient | None = field(default=None, repr=False)
 
-    async def _get_client(self) -> httpx.AsyncClient:
+    def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 base_url=self.base_url,
@@ -59,7 +59,7 @@ class OllamaBackend(LLMBackend):
         **kwargs: Any,
     ) -> str:
         """Send completion request to Ollama."""
-        client = await self._get_client()
+        client = self._get_client()
 
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
@@ -96,7 +96,7 @@ class OllamaBackend(LLMBackend):
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Send chat completion request to Ollama."""
-        client = await self._get_client()
+        client = self._get_client()
 
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")

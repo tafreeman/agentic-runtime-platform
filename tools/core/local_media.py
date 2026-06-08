@@ -177,7 +177,7 @@ def _load_audio_16khz(audio_path: str, verbose: bool):
         import soundfile as sf
     except ImportError:
         raise ImportError(
-            "soundfile not installed. Install with:\n" "  pip install soundfile"
+            "soundfile not installed. Install with:\n  pip install soundfile"
         )
 
     audio_data, sample_rate = sf.read(audio_path)

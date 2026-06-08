@@ -297,7 +297,7 @@ def _validate_workflow_name(name: str) -> str:
     if (
         not isinstance(name, str)
         or not name
-        or not re.fullmatch(r"[A-Za-z0-9_.-]+", name)
+        or not re.fullmatch(r"[\w.-]+", name, flags=re.ASCII)
     ):
         raise ValueError(f"Invalid workflow name: {name}")
     return name

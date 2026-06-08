@@ -167,10 +167,8 @@ class CodeExecutionTool(BaseTool):
                 )
                 if blocked:
                     return f"Blocked: import of restricted module '{blocked}'"
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                top = node.module.split(".")[0]
-                if top in self._DANGEROUS_IMPORTS:
-                    return f"Blocked: import from restricted module '{top}'"
+            elif isinstance(node, ast.ImportFrom) and node.module and (top := node.module.split(".")[0]) in self._DANGEROUS_IMPORTS:
+                return f"Blocked: import from restricted module '{top}'"
 
         return None
 

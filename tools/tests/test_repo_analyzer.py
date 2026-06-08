@@ -520,7 +520,7 @@ class TestRunAnalysis:
             ),
         ]
 
-        report = await _build_structured_report(str(tmp_repo), messages, "summary")
+        report = _build_structured_report(str(tmp_repo), messages, "summary")
 
         by_name = {pkg.name: pkg for pkg in report.packages}
         assert by_name["pkg-a"].total_lines == 12

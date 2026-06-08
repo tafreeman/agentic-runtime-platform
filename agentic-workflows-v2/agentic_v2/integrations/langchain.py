@@ -134,17 +134,12 @@ if LANGCHAIN_AVAILABLE:
             model_name = client.router.get_model_for_tier(tier)
             if model_name is None:
                 raise RuntimeError(f"No model available for tier {tier}")
-            try:
-                result, _, _ = await client.complete_chat(
-                    messages=msg_dicts,
-                    tier=tier,
-                    model=model_name,
-                    **kwargs,
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception:
-                raise
+            result, _, _ = await client.complete_chat(
+                messages=msg_dicts,
+                tier=tier,
+                model=model_name,
+                **kwargs,
+            )
 
             content = result.get("content", "")
             message = AIMessage(content=content)

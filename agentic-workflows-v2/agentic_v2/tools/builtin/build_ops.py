@@ -17,6 +17,10 @@ from typing import Any
 from ..base import BaseTool, ToolResult
 from ..subprocess_utils import minimal_subprocess_env
 
+_PYPROJECT_TOML = "pyproject.toml"
+_REQUIREMENTS_TXT = "requirements.txt"
+_PACKAGE_JSON = "package.json"
+
 
 def _truncate(text: str, limit: int = 8000) -> str:
     if len(text) <= limit:
@@ -207,9 +211,9 @@ class BuildAppTool(BaseTool):
         hint = (stack_hint or "auto").lower()
         has_py = any(
             (root / name).exists()
-            for name in ["pyproject.toml", "requirements.txt", "setup.py"]
+            for name in [_PYPROJECT_TOML, _REQUIREMENTS_TXT, "setup.py"]
         )
-        has_node = (root / "package.json").exists()
+        has_node = (root / _PACKAGE_JSON).exists()
 
         if hint in {"python", "node", "fullstack"}:
             detected = hint
@@ -249,9 +253,9 @@ class BuildAppTool(BaseTool):
     @staticmethod
     def _apply_python_commands(commands: dict[str, str | None], root: Path) -> None:
         """Populate install/build/test commands for a Python project."""
-        if (root / "requirements.txt").exists():
-            commands["install"] = "python -m pip install -r requirements.txt"
-        elif (root / "pyproject.toml").exists():
+        if (root / _REQUIREMENTS_TXT).exists():
+            commands["install"] = f"python -m pip install -r {_REQUIREMENTS_TXT}"
+        elif (root / _PYPROJECT_TOML).exists():
             commands["install"] = "python -m pip install -e ."
         commands["build"] = "python -m compileall -q ."
         if (root / "tests").exists() or (root / "test").exists():
@@ -260,7 +264,7 @@ class BuildAppTool(BaseTool):
     @staticmethod
     def _read_npm_scripts(root: Path) -> dict[str, Any]:
         """Read the ``scripts`` table from package.json, tolerating errors."""
-        pkg_path = root / "package.json"
+        pkg_path = root / _PACKAGE_JSON
         if not pkg_path.exists():
             return {}
         try:
@@ -401,17 +405,17 @@ class BuildAppTool(BaseTool):
         required_files: list[str] = []
         missing_files: list[str] = []
         if detected_stack in {"python", "fullstack"}:
-            required_files.append("requirements.txt|pyproject.toml|setup.py")
+            required_files.append(f"{_REQUIREMENTS_TXT}|{_PYPROJECT_TOML}|setup.py")
             if not (
-                (root / "requirements.txt").exists()
-                or (root / "pyproject.toml").exists()
+                (root / _REQUIREMENTS_TXT).exists()
+                or (root / _PYPROJECT_TOML).exists()
                 or (root / "setup.py").exists()
             ):
                 missing_files.append("python manifest")
         if detected_stack in {"node", "fullstack"}:
-            required_files.append("package.json")
-            if not (root / "package.json").exists():
-                missing_files.append("package.json")
+            required_files.append(_PACKAGE_JSON)
+            if not (root / _PACKAGE_JSON).exists():
+                missing_files.append(_PACKAGE_JSON)
         return required_files, missing_files
 
     @staticmethod

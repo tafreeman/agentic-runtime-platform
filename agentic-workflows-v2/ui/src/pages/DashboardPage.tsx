@@ -178,7 +178,7 @@ export default function DashboardPage() {
   // Bucket runs/day by success vs failed for the bar chart
   const dailyBuckets = useMemo(() => {
     const n = 14;
-    const buckets = Array.from({ length: n }, () => ({ ok: 0, err: 0 }));
+    const buckets = Array.from({ length: n }, (_, idx) => ({ day: n - 1 - idx, ok: 0, err: 0 }));
     const now = Date.now();
     (runs ?? []).forEach((r) => {
       if (!r.start_time) return;
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                         const errH = (b.err / maxBucket) * 100;
                         return (
                           <div
-                            key={`bucket-${i}-${b.ok}-${b.err}`}
+                            key={`bucket-day-${b.day}`}
                             className="flex flex-1 flex-col justify-end gap-[1px]"
                             title={`${total} run${total === 1 ? "" : "s"}`}
                           >

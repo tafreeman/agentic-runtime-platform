@@ -85,7 +85,6 @@ class LangChainEngine:
                 :class:`~agentic_v2.engine.context.ExecutionContext`),
                 its variables are merged into the LangGraph state before
                 execution begins.
-            on_update: Async progress callback (reserved for future use).
             **kwargs: Forwarded as keyword inputs to
                 :meth:`WorkflowRunner.run`.
 

@@ -9,6 +9,7 @@ import asyncio
 import hashlib
 import logging
 import time
+from collections.abc import Callable
 
 from agentic_v2.integrations.mcp.protocol.client import (
     McpProtocolClient,
@@ -206,35 +207,30 @@ class McpConnectionManager:
             except TimeoutError as e:
                 last_error = e
                 metadata.last_error = f"Timeout: {e}"
-                metadata.state = McpConnectionState.RECONNECTING
-
-                delay = backoff.next_delay()
-                if not delay:
-                    break
-                logger.warning(
-                    f"Connection timeout for {name}, retrying in {delay:.1f}s "
-                    f"(attempt {backoff.attempt_count})"
+                retried = await self._schedule_retry(
+                    metadata,
+                    lambda delay: (
+                        f"Connection timeout for {name}, retrying in {delay:.1f}s "
+                        f"(attempt {backoff.attempt_count})"
+                    ),
                 )
-                await asyncio.sleep(delay)
+                if not retried:
+                    break
 
             except McpProtocolError as e:
                 last_error = e
                 metadata.last_error = f"Protocol error: {e}"
-
-                # Check if auth error (401)
-                if "401" in str(e) or "Unauthorized" in str(e):
-                    metadata.record_auth_failure()
-                    raise RuntimeError(f"Auth failure for {name}: {e}") from e
+                self._raise_if_auth_failure(metadata, e)
 
                 # Other protocol errors: retry with backoff
-                metadata.state = McpConnectionState.RECONNECTING
-                delay = backoff.next_delay()
-                if not delay:
-                    break
-                logger.warning(
-                    f"Protocol error for {name}, retrying in {delay:.1f}s: {e}"
+                retried = await self._schedule_retry(
+                    metadata,
+                    lambda delay, exc=e: (
+                        f"Protocol error for {name}, retrying in {delay:.1f}s: {exc}"
+                    ),
                 )
-                await asyncio.sleep(delay)
+                if not retried:
+                    break
 
             except Exception as e:
                 last_error = e
@@ -248,6 +244,48 @@ class McpConnectionManager:
         raise ConnectionError(
             f"Failed to connect to {name} after {backoff.attempt_count} attempts: {last_error}"
         )
+
+    @staticmethod
+    def _raise_if_auth_failure(
+        metadata: ConnectionMetadata,
+        error: McpProtocolError,
+    ) -> None:
+        """Record and re-raise as RuntimeError when the error is a 401.
+
+        No-op for non-auth protocol errors, allowing the caller to retry.
+
+        Raises:
+            RuntimeError: If the error indicates an authentication failure.
+        """
+        if "401" in str(error) or "Unauthorized" in str(error):
+            metadata.record_auth_failure()
+            raise RuntimeError(
+                f"Auth failure for {metadata.name}: {error}"
+            ) from error
+
+    @staticmethod
+    async def _schedule_retry(
+        metadata: ConnectionMetadata,
+        build_log_message: Callable[[float], str],
+    ) -> bool:
+        """Transition to RECONNECTING and wait for the next backoff delay.
+
+        Args:
+            metadata: Connection metadata holding the backoff schedule.
+            build_log_message: Factory invoked with the computed delay to
+                produce the warning message logged before sleeping.
+
+        Returns:
+            ``True`` if a retry was scheduled (delay applied), ``False`` when
+            the backoff is exhausted and the caller should stop retrying.
+        """
+        metadata.state = McpConnectionState.RECONNECTING
+        delay = metadata.backoff.next_delay()
+        if not delay:
+            return False
+        logger.warning(build_log_message(delay))
+        await asyncio.sleep(delay)
+        return True
 
     @staticmethod
     def _build_transport(
