@@ -365,6 +365,40 @@ class LLMClientWrapper:
             return san_result.sanitized_text
         return prompt
 
+    async def _sanitize_messages(
+        self,
+        messages: list[dict[str, Any]],
+        source: str,
+        tier: ModelTier,
+    ) -> list[dict[str, Any]]:
+        """Run inbound sanitization over each chat message's content.
+
+        A no-op pass-through when no sanitization middleware is attached.
+        This is the chat-path analogue of :meth:`_sanitize_prompt` and closes
+        the indirect prompt-injection vector: tool outputs and retrieved
+        content fed back into the agent loop as chat messages. Fails closed —
+        an unsafe message raises ``ValueError`` (parity with the text path).
+
+        Returns a new message list; input messages are not mutated.
+
+        Raises:
+            ValueError: If any message content is classified as unsafe.
+        """
+        if self.sanitization is None:
+            return messages
+        sanitized: list[dict[str, Any]] = []
+        for msg in messages:
+            content = msg.get("content")
+            if not isinstance(content, str) or not content:
+                sanitized.append(msg)
+                continue
+            cleaned = await self._sanitize_prompt(content, source, tier)
+            if cleaned == content:
+                sanitized.append(msg)
+            else:
+                sanitized.append({**msg, "content": cleaned})
+        return sanitized
+
     async def _sanitize_response_text(self, response: str) -> str:
         """Run the outbound response sanitizer, returning the effective text.
 
@@ -767,6 +801,13 @@ class LLMClientWrapper:
         if not hasattr(self.backend, "complete_chat"):
             raise RuntimeError("Backend does not support complete_chat")
 
+        # Inbound sanitization of message content (parity with complete()).
+        # Guards tool outputs / retrieved content fed back into the agent loop
+        # — the indirect prompt-injection vector. No-op when no sanitizer is
+        # attached; fails closed (raises) on unsafe content before any backend
+        # call or cache lookup.
+        messages = await self._sanitize_messages(messages, "llm_chat", tier)
+
         # Check cache
         cache_key: str | None = None
         if use_cache and self.enable_cache:
@@ -847,6 +888,16 @@ class LLMClientWrapper:
         response_dict = await self.router._execute_call(
             call_model, selected_model, prompt_str
         )
+
+        # Post-receive response sanitization (parity with the text path).
+        # Runs before token counting so the budget reflects sanitized output.
+        if isinstance(response_dict.get("content"), str):
+            response_dict = {
+                **response_dict,
+                "content": await self._sanitize_response_text(
+                    response_dict["content"]
+                ),
+            }
 
         # Count tokens of response
         response_text = response_dict.get("content", "") or ""
@@ -955,7 +1006,42 @@ def get_client(auto_configure: bool = False) -> LLMClientWrapper:
                 _client.set_backend(auto_configure_backend())
             except RuntimeError:
                 pass  # No backends available — will fail at call time
+
+        _maybe_attach_agent_loop_sanitization(_client)
     return _client
+
+
+def _maybe_attach_agent_loop_sanitization(client: LLMClientWrapper) -> None:
+    """Attach default sanitization to the shared agent-loop client.
+
+    Closes the indirect-prompt-injection vector by ensuring per-step LLM calls
+    inside the agent loop — not just the HTTP request boundary — run inbound
+    prompt sanitization and outbound response sanitization. Controlled by
+    ``AGENTIC_SANITIZE_AGENT_LOOP`` (default on).
+
+    Skipped under ``AGENTIC_NO_LLM`` (placeholder/demo mode), when the flag is
+    off, or when a sanitizer is already attached (idempotent).
+    """
+    from ..settings import get_settings, is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        return
+    if not get_settings().agentic_sanitize_agent_loop:
+        return
+    if client.sanitization is not None or client.response_sanitizer is not None:
+        return
+
+    from ..middleware.response_sanitizer import ResponseSanitizer
+    from ..middleware.sanitization import SanitizationMiddleware
+
+    client.with_sanitization(
+        sanitization=SanitizationMiddleware.default(),
+        response_sanitizer=ResponseSanitizer(),
+    )
+    logger.info(
+        "Agent-loop sanitization attached to the shared LLM client "
+        "(AGENTIC_SANITIZE_AGENT_LOOP on)."
+    )
 
 
 def reset_client() -> None:
