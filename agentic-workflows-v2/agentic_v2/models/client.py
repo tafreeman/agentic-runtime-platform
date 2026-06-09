@@ -891,7 +891,10 @@ class LLMClientWrapper:
 
         # Post-receive response sanitization (parity with the text path).
         # Runs before token counting so the budget reflects sanitized output.
-        if isinstance(response_dict.get("content"), str):
+        # Guarded on response_sanitizer so the no-op path avoids a dict copy.
+        if self.response_sanitizer is not None and isinstance(
+            response_dict.get("content"), str
+        ):
             response_dict = {
                 **response_dict,
                 "content": await self._sanitize_response_text(
