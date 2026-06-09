@@ -389,15 +389,59 @@ class LLMClientWrapper:
         sanitized: list[dict[str, Any]] = []
         for msg in messages:
             content = msg.get("content")
-            if not isinstance(content, str) or not content:
-                sanitized.append(msg)
-                continue
-            cleaned = await self._sanitize_prompt(content, source, tier)
-            if cleaned == content:
-                sanitized.append(msg)
+            if isinstance(content, str) and content:
+                cleaned = await self._sanitize_prompt(content, source, tier)
+                if cleaned == content:
+                    sanitized.append(msg)
+                else:
+                    sanitized.append({**msg, "content": cleaned})
+            elif isinstance(content, list):
+                cleaned_blocks, mutated = await self._sanitize_content_blocks(
+                    content, source, tier
+                )
+                if mutated:
+                    sanitized.append({**msg, "content": cleaned_blocks})
+                else:
+                    sanitized.append(msg)
             else:
-                sanitized.append({**msg, "content": cleaned})
+                sanitized.append(msg)
         return sanitized
+
+    async def _sanitize_content_blocks(
+        self,
+        blocks: list[Any],
+        source: str,
+        tier: ModelTier,
+    ) -> tuple[list[Any], bool]:
+        """Sanitize text within a list-of-blocks content value.
+
+        LLM APIs (OpenAI, Anthropic) allow message content to be a list of
+        typed content blocks, e.g. ``[{"type": "text", "text": "..."}]``.
+        This method iterates through those blocks and sanitizes any text
+        blocks, closing the bypass vector where an attacker wraps a prompt
+        injection payload inside a non-string content structure.
+
+        Returns ``(cleaned_blocks, mutated)`` — the caller only copies the
+        message dict when ``mutated`` is ``True``.
+        """
+        cleaned: list[Any] = []
+        mutated = False
+        for block in blocks:
+            if (
+                isinstance(block, dict)
+                and block.get("type") == "text"
+                and isinstance(block.get("text"), str)
+            ):
+                text = block["text"]
+                cleaned_text = await self._sanitize_prompt(text, source, tier)
+                if cleaned_text != text:
+                    cleaned.append({**block, "text": cleaned_text})
+                    mutated = True
+                else:
+                    cleaned.append(block)
+            else:
+                cleaned.append(block)
+        return cleaned, mutated
 
     async def _sanitize_response_text(self, response: str) -> str:
         """Run the outbound response sanitizer, returning the effective text.
@@ -410,6 +454,30 @@ class LLMClientWrapper:
         if resp_result.sanitized_text is not None:
             return resp_result.sanitized_text
         return response
+
+    async def _sanitize_response_content_blocks(
+        self, blocks: list[Any]
+    ) -> list[Any]:
+        """Sanitize text within a list-of-blocks response content value.
+
+        Outbound counterpart of :meth:`_sanitize_content_blocks`.  Iterates
+        through content blocks returned by the LLM and runs the response
+        sanitizer over any ``{"type": "text", "text": "..."}`` blocks.  This
+        closes the bypass vector where model output structured as a list of
+        content blocks would skip outbound secret/PII scrubbing.
+        """
+        cleaned: list[Any] = []
+        for block in blocks:
+            if (
+                isinstance(block, dict)
+                and block.get("type") == "text"
+                and isinstance(block.get("text"), str)
+            ):
+                cleaned_text = await self._sanitize_response_text(block["text"])
+                cleaned.append({**block, "text": cleaned_text})
+            else:
+                cleaned.append(block)
+        return cleaned
 
     @retry_with_jitter(max_retries=3)
     async def complete(
@@ -892,15 +960,18 @@ class LLMClientWrapper:
         # Post-receive response sanitization (parity with the text path).
         # Runs before token counting so the budget reflects sanitized output.
         # Guarded on response_sanitizer so the no-op path avoids a dict copy.
-        if self.response_sanitizer is not None and isinstance(
-            response_dict.get("content"), str
-        ):
-            response_dict = {
-                **response_dict,
-                "content": await self._sanitize_response_text(
-                    response_dict["content"]
-                ),
-            }
+        if self.response_sanitizer is not None:
+            content = response_dict.get("content")
+            if isinstance(content, str):
+                response_dict = {
+                    **response_dict,
+                    "content": await self._sanitize_response_text(content),
+                }
+            elif isinstance(content, list):
+                cleaned_blocks = await self._sanitize_response_content_blocks(
+                    content
+                )
+                response_dict = {**response_dict, "content": cleaned_blocks}
 
         # Count tokens of response
         response_text = response_dict.get("content", "") or ""
@@ -937,6 +1008,35 @@ class LLMClientWrapper:
         """
         self.sanitization = sanitization
         self.response_sanitizer = response_sanitizer
+
+    async def sanitize_inbound_messages(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        source: str,
+        tier: ModelTier,
+    ) -> list[dict[str, Any]]:
+        """Public inbound message sanitizer for non-``complete_chat`` callers.
+
+        Agents that bypass :meth:`complete_chat` and call a provider SDK
+        directly (e.g. ``ClaudeAgent``) use this to inherit the exact same
+        inbound sanitization, gating, and fail-closed contract as the native
+        chat path — closing the indirect-prompt-injection vector for tool
+        outputs / retrieved content carried in ``messages``.
+
+        A no-op pass-through when no sanitizer is attached.
+
+        Raises:
+            ValueError: If any message content is classified as unsafe.
+        """
+        return await self._sanitize_messages(messages, source, tier)
+
+    async def sanitize_outbound_text(self, text: str) -> str:
+        """Public outbound response sanitizer for non-``complete_chat`` callers.
+
+        A no-op pass-through when no response sanitizer is attached.
+        """
+        return await self._sanitize_response_text(text)
 
     def clear_cache(self) -> int:
         """Clear response cache.

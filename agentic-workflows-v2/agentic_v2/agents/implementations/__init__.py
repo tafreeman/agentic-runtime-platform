@@ -20,17 +20,25 @@ This subpackage provides two production-ready agent implementations:
 
 from __future__ import annotations
 
-from .agent_loader import agents as AGENTS
-from .agent_loader import load_agents
+# ClaudeAgent uses only the `anthropic` SDK and must always be importable.
 from .claude_agent import ClaudeAgent, SimpleOutput, SimpleTask
-from .claude_sdk_agent import BUILTIN_TOOLS, ClaudeSDKAgent
+
+# The remaining exports depend on the optional `claude-agent-sdk` ([claude]
+# extra). Guard them so importing this package — and ClaudeAgent — does not
+# hard-require the SDK; the names are simply absent (clear ImportError on use)
+# when the extra is not installed.
+try:
+    from .agent_loader import agents as AGENTS
+    from .agent_loader import load_agents
+    from .claude_sdk_agent import BUILTIN_TOOLS, ClaudeSDKAgent
+
+    _CLAUDE_SDK_EXPORTS = ["AGENTS", "BUILTIN_TOOLS", "ClaudeSDKAgent", "load_agents"]
+except ImportError:  # pragma: no cover - exercised only without the [claude] extra
+    _CLAUDE_SDK_EXPORTS = []
 
 __all__ = [
-    "AGENTS",
-    "BUILTIN_TOOLS",
     "ClaudeAgent",
-    "ClaudeSDKAgent",
     "SimpleOutput",
     "SimpleTask",
-    "load_agents",
+    *_CLAUDE_SDK_EXPORTS,
 ]

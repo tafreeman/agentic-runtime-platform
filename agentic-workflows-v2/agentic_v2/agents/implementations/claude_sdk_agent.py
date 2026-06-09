@@ -106,6 +106,7 @@ class ClaudeSDKAgent:
 
     async def run(self, prompt: str) -> str:
         """Run the agent and return the final result string."""
+        prompt = await self._sanitize_prompt(prompt)
         options = self._build_options()
         result = ""
 
@@ -117,6 +118,7 @@ class ClaudeSDKAgent:
 
     async def stream(self, prompt: str):
         """Async-iterate over (type, content) tuples from the agent."""
+        prompt = await self._sanitize_prompt(prompt)
         options = self._build_options()
 
         async for message in query(prompt=prompt, options=options):
@@ -125,6 +127,31 @@ class ClaudeSDKAgent:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    async def _sanitize_prompt(prompt: str) -> str:
+        """Run inbound sanitization over the task prompt before the SDK loop.
+
+        Unlike :class:`ClaudeAgent`, this wrapper delegates to the
+        ``claude-agent-sdk``'s own sandboxed agentic loop, so untrusted tool
+        *outputs* never pass back through this process — there is no
+        tool-result-into-memory vector here. The one untrusted entry point is
+        the inbound prompt, sanitized here as defense-in-depth before the SDK
+        may act on it with built-in Bash/Write/Edit tools.
+
+        Reuses the shared client's gated sanitizer (attached by ``get_client``
+        per ``AGENTIC_SANITIZE_AGENT_LOOP``; a no-op under ``AGENTIC_NO_LLM``
+        or when the flag is off). Fails closed — an unsafe prompt raises
+        ``ValueError`` before the SDK runs.
+        """
+        from ...models import ModelTier, get_client
+
+        sanitized = await get_client().sanitize_inbound_messages(
+            [{"role": "user", "content": prompt}],
+            source="claude_sdk_agent",
+            tier=ModelTier.TIER_2,
+        )
+        return str(sanitized[0]["content"])
 
     def _build_options(self) -> ClaudeAgentOptions:
         kwargs: dict[str, Any] = {
