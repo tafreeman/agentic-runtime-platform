@@ -289,6 +289,17 @@ class StepExecutor:
 
             outcome = await self._run_attempt(step_def, ctx, child_ctx, result, attempt)
             if outcome is _AttemptOutcome.RETRY:
+                # A loop_until refinement round (status left RUNNING by
+                # _should_loop_again) is distinct from an error retry (status
+                # RETRYING set by _handle_exception):
+                #   * re-resolve inputs so feedback the step just produced —
+                #     e.g. coalesce() over its own prior outputs — flows into
+                #     the next round instead of going stale; and
+                #   * don't spend the error-retry budget on it, so loop_max
+                #     (not retry.max_retries) bounds the number of rounds.
+                if step_def.loop_until and result.status == StepStatus.RUNNING:
+                    child_ctx = await self._prepare_inputs(step_def, ctx, result)
+                    attempt -= 1
                 continue  # re-run the step body
             if outcome is _AttemptOutcome.RETURN:
                 return result  # verification gate aborted; skip mark_complete
