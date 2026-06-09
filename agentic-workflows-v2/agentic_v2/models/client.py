@@ -834,7 +834,6 @@ class LLMClientWrapper:
             self.router._classify_and_record_error(model, e)
             raise
 
-    @retry_with_jitter(max_retries=3)
     async def complete_chat(
         self,
         messages: list[dict[str, Any]],
@@ -846,6 +845,10 @@ class LLMClientWrapper:
         **kwargs: Any,
     ) -> tuple[dict[str, Any], str, int]:
         """Send chat completion request with smart routing.
+
+        Sanitization runs *outside* the retry boundary so that a
+        ``ValueError`` from blocked content fails immediately instead of
+        being retried with backoff.
 
         Args:
             messages: Chat messages to send
@@ -861,7 +864,7 @@ class LLMClientWrapper:
 
         Raises:
             RuntimeError: If no backend configured or all models fail
-            ValueError: If budget exceeded
+            ValueError: If budget exceeded or content blocked by sanitizer
         """
         if self.backend is None:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
@@ -869,12 +872,26 @@ class LLMClientWrapper:
         if not hasattr(self.backend, "complete_chat"):
             raise RuntimeError("Backend does not support complete_chat")
 
-        # Inbound sanitization of message content (parity with complete()).
-        # Guards tool outputs / retrieved content fed back into the agent loop
-        # — the indirect prompt-injection vector. No-op when no sanitizer is
-        # attached; fails closed (raises) on unsafe content before any backend
-        # call or cache lookup.
+        # Inbound sanitization runs OUTSIDE the retry boundary so blocked
+        # content fails closed immediately (no backoff retries on ValueError).
         messages = await self._sanitize_messages(messages, "llm_chat", tier)
+
+        return await self._complete_chat_with_retry(
+            messages, tier, max_retries, use_cache, tools, model, **kwargs
+        )
+
+    @retry_with_jitter(max_retries=3)
+    async def _complete_chat_with_retry(
+        self,
+        messages: list[dict[str, Any]],
+        tier: ModelTier = ModelTier.TIER_2,
+        max_retries: int = 3,
+        use_cache: bool = True,
+        tools: list[dict[str, Any]] | None = None,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], str, int]:
+        """Inner chat completion with retry — called after sanitization."""
 
         # Check cache
         cache_key: str | None = None
