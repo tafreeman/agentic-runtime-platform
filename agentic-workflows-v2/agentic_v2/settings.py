@@ -345,7 +345,13 @@ class Settings(BaseSettings):
 
     # --- Tool: HTTP operations ---
     agentic_block_private_ips: bool = Field(
-        default=False, description="Block HTTP requests to private/loopback IPs"
+        default=True,
+        description=(
+            "Block HTTP requests to private/loopback IPs (SSRF protection). "
+            "Default ON — set AGENTIC_BLOCK_PRIVATE_IPS=0 to opt out (not recommended "
+            "unless workflows legitimately reach internal services and you have applied "
+            "compensating network-layer controls)."
+        ),
     )
 
     # --- Tool: memory operations ---

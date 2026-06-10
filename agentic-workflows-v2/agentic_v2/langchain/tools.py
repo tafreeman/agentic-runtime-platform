@@ -8,16 +8,21 @@ LangChain agent or ``ToolNode``.
 from __future__ import annotations
 
 import ast
-import ipaddress
 import json
 import os
 import shlex
 import subprocess
 from pathlib import Path
-from urllib.parse import urlparse
+from typing import TYPE_CHECKING
+from urllib.parse import urljoin
 
 from langchain_core.tools import tool
 
+if TYPE_CHECKING:
+    import httpx
+
+from ..security.url_guard import validate_url
+from ..settings import get_settings
 from ..utils.path_safety import ensure_within_base
 
 # ---------------------------------------------------------------------------
@@ -38,11 +43,11 @@ _SHELL_BLOCKLIST = frozenset(
     }
 )
 
-# Allowed URL schemes for HTTP tools.
-_ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
+# Maximum redirects to follow before giving up.
+_MAX_REDIRECTS = 5
 
-# AWS/Azure/GCP instance metadata service endpoint — blocked for SSRF safety.
-_IMDS_IP = "169.254.169.254"
+# HTTP status codes that carry a redirect Location header.
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
 def _is_dangerous_command(command: str) -> bool:
@@ -51,50 +56,60 @@ def _is_dangerous_command(command: str) -> bool:
     return any(pattern in cmd_lower for pattern in _SHELL_BLOCKLIST)
 
 
-def _is_private_ip(hostname: str) -> bool:
-    """Return True if *hostname* resolves to a private/reserved IP address.
+def _http_get_with_redirect_guard(
+    url: str,
+    *,
+    timeout: float = 15,
+    headers: dict[str, str] | None = None,
+) -> "httpx.Response":
+    """Perform an HTTP GET following redirects with SSRF re-validation.
 
-    Only active when ``AGENTIC_BLOCK_PRIVATE_IPS=1``.
+    Args:
+        url: Initial URL to fetch.
+        timeout: Request timeout in seconds.
+        headers: Optional extra request headers (sent on the first hop only).
+
+    Returns:
+        The final ``httpx.Response``.
+
+    Raises:
+        ValueError: When a redirect target is blocked or the limit is exceeded.
     """
-    if os.environ.get("AGENTIC_BLOCK_PRIVATE_IPS", "").strip() != "1":
-        return False
-    try:
-        addr = ipaddress.ip_address(hostname)
-        return (
-            addr.is_private
-            or addr.is_loopback
-            or addr.is_link_local
-            or addr.is_reserved
+    import httpx
+
+    block_private = get_settings().agentic_block_private_ips
+    current_url = url
+
+    for hop in range(_MAX_REDIRECTS + 1):
+        err = validate_url(current_url, block_private=block_private)
+        if err:
+            raise ValueError(err)
+
+        # Only send custom headers on the first hop.
+        hop_headers = headers if hop == 0 else None
+        resp = httpx.get(
+            current_url,
+            timeout=timeout,
+            follow_redirects=False,
+            headers=hop_headers,
         )
-    except ValueError:
-        return False
 
+        if resp.status_code not in _REDIRECT_STATUSES:
+            return resp
 
-def _validate_url(url: str) -> str | None:
-    """Validate a URL for SSRF safety.
+        if hop == _MAX_REDIRECTS:
+            raise ValueError(
+                f"Redirect limit ({_MAX_REDIRECTS}) exceeded. "
+                "Request blocked to prevent redirect loops."
+            )
 
-    Returns error string or None.
-    """
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return "Invalid URL"
+        location = resp.headers.get("location", "")
+        if not location:
+            raise ValueError("Redirect response missing Location header.")
 
-    if parsed.scheme not in _ALLOWED_URL_SCHEMES:
-        return f"URL scheme '{parsed.scheme}' not allowed. Only http/https permitted."
+        current_url = urljoin(current_url, location)
 
-    hostname = parsed.hostname or ""
-
-    # Block cloud metadata endpoints and private IPs
-    if _is_private_ip(hostname):
-        return f"Access to private/reserved IP address '{hostname}' is blocked."
-
-    # Block well-known metadata hostnames (including IMDS link-local IP).
-    metadata_hosts = {"metadata.google.internal", "metadata", _IMDS_IP}
-    if hostname.lower() in metadata_hosts:
-        return f"Access to metadata endpoint '{hostname}' is blocked."
-
-    return None
+    raise ValueError("Unexpected exit from redirect loop.")  # pragma: no cover
 
 
 # ---------------------------------------------------------------------------
@@ -349,17 +364,14 @@ def http_get(url: str) -> str:
     Args:
         url: The URL to fetch (http/https only, no private IPs).
     """
-    url_error = _validate_url(url)
-    if url_error:
-        return f"ERROR: {url_error}"
     try:
-        import httpx
-
-        resp = httpx.get(url, timeout=15, follow_redirects=True)
+        resp = _http_get_with_redirect_guard(url, timeout=15)
         text = resp.text
         if len(text) > 12000:
             text = text[:12000] + "\n... (truncated)"
         return text
+    except ValueError as e:
+        return f"ERROR: {e}"
     except Exception as e:
         return f"ERROR: {e}"
 
@@ -389,15 +401,17 @@ def _domain_matches(hostname: str, patterns: list[str]) -> bool:
 def _fetch_ddg_results(query: str) -> tuple[list, list]:
     """Fetch DuckDuckGo HTML for *query* and return (links, snippets) matches."""
     import re
-
-    import httpx
+    from urllib.parse import urlencode
 
     # DuckDuckGo HTML endpoint avoids API-key dependencies.
-    response = httpx.get(
-        "https://duckduckgo.com/html/",
-        params={"q": query},
+    # Redirects from duckduckgo.com are re-validated by _http_get_with_redirect_guard.
+    # Note: result URLs extracted from the HTML are NOT individually fetched here —
+    # they are returned as strings for the caller to use; only the DDG page itself
+    # (and any DDG-originated redirects) goes through the guard.
+    ddg_url = "https://duckduckgo.com/html/?" + urlencode({"q": query})
+    response = _http_get_with_redirect_guard(
+        ddg_url,
         timeout=20,
-        follow_redirects=True,
         headers={
             "User-Agent": (
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "

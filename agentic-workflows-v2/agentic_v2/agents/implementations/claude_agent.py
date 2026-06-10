@@ -77,7 +77,17 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
     - :meth:`_convert_tools` -- maps OpenAI function-tool schemas to
       Anthropic tool schemas.
     - :meth:`_convert_response` -- maps Anthropic response content blocks
-      back to the internal ``{"content", "tool_calls"}`` dict format.
+      back to the internal ``{"content", "tool_calls", "stop_reason"}`` dict.
+
+    Multi-turn completion:
+        :meth:`_is_task_complete` is the override point that decides whether a
+        text response is a *final* answer. It reads the Anthropic ``stop_reason``
+        captured on the last response (``self._last_stop_reason``): ``end_turn``
+        / ``stop_sequence`` mean done, ``max_tokens`` means the output was
+        truncated and the loop should continue. When the stop reason is
+        unavailable (``None``) it defaults to ``True`` (single-turn) for
+        backward compatibility. The ``tool_use`` stop reason never reaches this
+        method — :class:`BaseAgent` branches on ``tool_calls`` first.
 
     Args:
         model: Claude model identifier (default ``"claude-opus-4-6"``).
@@ -106,6 +116,9 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
         self._client = anthropic.AsyncAnthropic(
             api_key=api_key
         )  # uses ANTHROPIC_API_KEY if None
+        # Anthropic stop_reason from the most recent response; drives
+        # _is_task_complete. None until the first model call returns.
+        self._last_stop_reason: str | None = None
 
     # ------------------------------------------------------------------
     # _call_model — translate formats and call Anthropic
@@ -143,6 +156,9 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
 
         response = await self._client.messages.create(**kwargs)
         result = self._convert_response(response)
+        # Stash the Anthropic stop_reason so _is_task_complete can decide
+        # whether the loop is done or the output was truncated.
+        self._last_stop_reason = result.get("stop_reason")
         if isinstance(result.get("content"), str):
             result["content"] = await self.llm_client.sanitize_outbound_text(
                 result["content"]
@@ -210,7 +226,13 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
 
     @staticmethod
     def _convert_response(response: Any) -> dict[str, Any]:
-        """Anthropic response → internal {content, tool_calls} dict."""
+        """Anthropic response → internal {content, tool_calls, stop_reason} dict.
+
+        ``stop_reason`` is carried through verbatim from the Anthropic response
+        (e.g. ``"end_turn"``, ``"tool_use"``, ``"max_tokens"``) so the agent can
+        distinguish a final answer from a truncated one. It is ``None`` when the
+        response object does not expose it (defensive against mocks/older SDKs).
+        """
         text = ""
         tool_calls: list[dict[str, Any]] = []
 
@@ -228,7 +250,11 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
                     }
                 )
 
-        return {"content": text, "tool_calls": tool_calls or None}
+        return {
+            "content": text,
+            "tool_calls": tool_calls or None,
+            "stop_reason": getattr(response, "stop_reason", None),
+        }
 
     # ------------------------------------------------------------------
     # BaseAgent abstract methods
@@ -237,8 +263,24 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
     def _format_task_message(self, task: SimpleTask) -> str:
         return task.prompt
 
+    #: Anthropic stop_reason values that mean the model produced a final answer.
+    _FINAL_STOP_REASONS = frozenset({"end_turn", "stop_sequence"})
+
     async def _is_task_complete(self, task: SimpleTask, response: str) -> bool:
-        return True  # single-turn by default; override for multi-turn
+        """Decide whether the last text response is a final answer.
+
+        Driven by the Anthropic ``stop_reason`` captured in :meth:`_call_model`:
+
+        - ``end_turn`` / ``stop_sequence`` → ``True`` (final answer).
+        - ``max_tokens`` (and any other non-final reason) → ``False`` (output
+          was truncated; the loop should continue for another turn).
+        - ``None`` (stop reason unavailable) → ``True`` for backward
+          compatibility (single-turn default).
+        """
+        stop_reason = self._last_stop_reason
+        if stop_reason is None:
+            return True
+        return stop_reason in self._FINAL_STOP_REASONS
 
     async def _parse_output(self, task: SimpleTask, response: str) -> SimpleOutput:
         return SimpleOutput(response=response)

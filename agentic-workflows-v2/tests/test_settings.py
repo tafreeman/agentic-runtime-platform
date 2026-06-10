@@ -18,6 +18,32 @@ def test_settings_defaults_load_without_env(monkeypatch):
     assert s.shell == "/bin/bash"
 
 
+def test_block_private_ips_default_on(monkeypatch):
+    """SSRF guard is ON by default (P1 #13 — default flipped from False to True)."""
+    monkeypatch.delenv("AGENTIC_BLOCK_PRIVATE_IPS", raising=False)
+
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    try:
+        assert settings_mod.get_settings().agentic_block_private_ips is True
+    finally:
+        settings_mod.get_settings.cache_clear()
+
+
+def test_block_private_ips_can_be_opted_out(monkeypatch):
+    """Setting AGENTIC_BLOCK_PRIVATE_IPS=0 disables the guard (opt-out path)."""
+    monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "0")
+
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    try:
+        assert settings_mod.get_settings().agentic_block_private_ips is False
+    finally:
+        settings_mod.get_settings.cache_clear()
+
+
 def test_settings_reads_env_vars(monkeypatch):
     """Settings picks up values from environment variables."""
     monkeypatch.setenv("AGENTIC_TRACING", "1")
