@@ -574,29 +574,39 @@ connections.
 
 ---
 
-## 10. HTTP tool private-IP block
+## 10. HTTP tool SSRF protection
 
 ### AGENTIC_BLOCK_PRIVATE_IPS
 
-The `http_ops` built-in tool makes outbound HTTP requests during workflow execution.
-Setting `AGENTIC_BLOCK_PRIVATE_IPS=1` prevents the tool from targeting private IP ranges
-(RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and link-local addresses
-(169.254.0.0/16).
+The `http_ops` built-in tool (and `langchain/tools.py`) make outbound HTTP requests
+during workflow execution. As of P1 #13, **SSRF protection is enabled by default** and
+covers:
+
+- Private/loopback/link-local/reserved IP literals (RFC 1918, RFC 4193, etc.)
+- DNS names: all returned addresses are resolved and checked — a hostname that resolves to
+  a private address is blocked even if it looks public.
+- Cloud metadata endpoints: `169.254.169.254`, `fd00:ec2::254`, `100.100.100.200`,
+  `metadata.google.internal` are always blocked regardless of the flag.
+- Redirect re-validation: each redirect hop is validated before following (max 5 hops).
+- IPv4-mapped IPv6 (`::ffff:127.0.0.1`) is normalised before checking.
 
 !!! warning "SSRF defense"
     In environments where the server process has network access to internal services
     (databases, metadata APIs, internal dashboards), an unauthenticated or malicious
-    workflow could exploit the HTTP tool to make requests to those services. Enabling
-    `AGENTIC_BLOCK_PRIVATE_IPS=1` closes this Server-Side Request Forgery (SSRF) vector.
+    workflow could exploit the HTTP tool to make requests to those services. The SSRF guard
+    is **on by default** — this is a security-critical default. Do not disable it without
+    applying compensating controls.
 
 ```bash
-# Strongly recommended for production
-AGENTIC_BLOCK_PRIVATE_IPS=1
+# On by default — opt out only with explicit justification
+# AGENTIC_BLOCK_PRIVATE_IPS=0  # disables private-IP blocking (NOT recommended)
 ```
 
-Leave unset only when workflows legitimately need to reach internal network endpoints and
-you have applied other controls (network policy, service mesh authorization) to restrict
-which internal addresses the server can reach.
+Set `AGENTIC_BLOCK_PRIVATE_IPS=0` only when workflows legitimately need to reach internal
+network endpoints and you have applied other controls (network policy, service mesh
+authorization) to restrict which internal addresses the server can reach. Note that
+cloud metadata endpoints (`169.254.169.254` etc.) remain blocked even when the flag
+is set to `0`.
 
 ---
 
@@ -625,8 +635,11 @@ AGENTIC_SHELL_ALLOWED_COMMANDS=
 # Remove or set to langchain if LangChain extras are installed.
 AGENTIC_DEFAULT_ADAPTER=native
 
-# ── SSRF defense ─────────────────────────────────────────────────────────────
-AGENTIC_BLOCK_PRIVATE_IPS=1
+# ── SSRF defense (default ON — no action required for production) ────────────
+# AGENTIC_BLOCK_PRIVATE_IPS is True by default. Unset or set to 1 to keep the
+# default. Set to 0 only if workflows must reach internal services and
+# compensating network controls are in place.
+# AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 # Tune based on expected traffic. Lower for higher-security, lower-traffic
