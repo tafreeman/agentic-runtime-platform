@@ -68,3 +68,26 @@ def test_get_settings_returns_singleton():
     a = get_settings()
     b = get_settings()
     assert a is b
+
+
+def test_require_tool_approval_default_off(monkeypatch):
+    """Global human-approval override is OFF by default (P1 #12)."""
+    monkeypatch.delenv("AGENTIC_REQUIRE_TOOL_APPROVAL", raising=False)
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_require_tool_approval is False
+    assert s.agentic_approval_required_tools == ""
+
+
+def test_require_tool_approval_parses_from_env(monkeypatch):
+    """The global approval override and per-name list parse from env vars."""
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    monkeypatch.setenv("AGENTIC_APPROVAL_REQUIRED_TOOLS", "git_commit, deploy")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_require_tool_approval is True
+    assert s.agentic_approval_required_tools == "git_commit, deploy"

@@ -610,6 +610,93 @@ is set to `0`.
 
 ---
 
+## 11. Human approval gates
+
+As of P1 #12, high-impact tools no longer execute the instant the LLM emits a call: the
+tool-execution hot path consults an injectable **approval gate** first, at *both* dispatch
+points (the engine tool loop and the agent loop). The gate is implemented in
+`agentic_v2/governance/approval.py`.
+
+### Contract
+
+A tool requires approval when **any** of these is true (the triggers are OR'd):
+
+1. The tool opts in via `requires_approval = True` on its class.
+2. The global override `AGENTIC_REQUIRE_TOOL_APPROVAL=1` is set (gates **every** tool).
+3. The tool's name appears in `AGENTIC_APPROVAL_REQUIRED_TOOLS` (comma-separated).
+
+When a tool requires approval, the registered `ApprovalProvider` decides. The decision is
+returned to the model as a normal (failed) tool result, so a denied call does not crash the
+run — the model sees the denial and can adapt.
+
+### Fail-closed rule
+
+**If a tool requires approval and no provider is registered, the call is DENIED and never
+executes.** There is no implicit "allow when unconfigured" path. To run gated tools you must
+either register a provider or remove the requirement. The denial error tells the operator
+exactly that.
+
+### Default posture change
+
+The global override defaults **OFF** so existing flows are not broken. The real default
+posture change is the per-tool flag: the following high-impact builtins are gated **by
+default**, so a deployment that registers no provider will have these tools fail closed until
+one is wired:
+
+| Tool name | Why gated |
+|-----------|-----------|
+| `shell`, `shell_exec` | Arbitrary command execution |
+| `execute_python` | Arbitrary code execution |
+| `file_write`, `file_delete`, `file_move`, `file_copy`, `directory_create` | Filesystem mutation |
+| `http`, `http_post` | State-changing network requests |
+
+Read-only tools (`file_read`, `http_get`, search/transform/context ops) are **not** gated.
+
+### Provider examples
+
+```python
+from agentic_v2.governance import (
+    AutoApproveProvider,
+    AutoDenyProvider,
+    CallbackApprovalProvider,
+    PolicyApprovalProvider,
+    set_approval_provider,
+)
+
+# Trusted, non-interactive environment: approve everything (use with care).
+set_approval_provider(AutoApproveProvider())
+
+# Hard kill-switch: deny every gated call.
+set_approval_provider(AutoDenyProvider())
+
+# Allowlist by tool name.
+set_approval_provider(PolicyApprovalProvider(frozenset({"file_write"})))
+
+# Interactive / custom: a sync-or-async callable decides per request.
+async def decide(request):
+    from agentic_v2.governance import ApprovalDecision
+    # request.tool_name, request.call_id, request.agent_or_step are available;
+    # request.tool_args values longer than ~200 chars are redacted in its repr.
+    return ApprovalDecision.APPROVED if request.tool_name == "file_write" else ApprovalDecision.DENIED
+
+set_approval_provider(CallbackApprovalProvider(decide))
+```
+
+The provider is a **process-wide** module global — set it once at process start. Approval
+policy is an application-level posture decision; it is not bound per-task.
+
+!!! note "UI-driven pause/resume is a follow-on, not built yet"
+    This release ships the **programmatic** gate: an injectable provider consulted
+    synchronously on the hot path. A full UI-driven *pause-and-resume* flow — where a run
+    suspends, surfaces an approval prompt to a human operator in the web UI, and resumes on
+    their click — is an explicit follow-on. The wire-format events
+    (`approval_required`, `approval_decision` in `contracts/events.py`) already exist so the
+    server/UI can build on them, but the engine tool loop currently surfaces approval activity
+    via the logger and the serialized result metadata rather than streaming those events. See
+    [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md) §4.3.
+
+---
+
 ## Reference deployment posture
 
 The following block represents the minimum recommended configuration for a hardened,
@@ -640,6 +727,14 @@ AGENTIC_DEFAULT_ADAPTER=native
 # default. Set to 0 only if workflows must reach internal services and
 # compensating network controls are in place.
 # AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended
+
+# ── Human approval gates (§11) ───────────────────────────────────────────────
+# High-impact builtins (shell/exec, file writes/deletes, http/post) are gated by
+# default and FAIL CLOSED with no provider registered. Register an
+# ApprovalProvider at process start (see §11) before relying on those tools.
+# Optionally gate EVERYTHING, or extra tools by name:
+# AGENTIC_REQUIRE_TOOL_APPROVAL=1            # gate every tool call
+# AGENTIC_APPROVAL_REQUIRED_TOOLS=git_commit,deploy   # extra tools by name
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 # Tune based on expected traffic. Lower for higher-security, lower-traffic

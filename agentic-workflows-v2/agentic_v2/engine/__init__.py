@@ -9,6 +9,12 @@ Exports:
 - Utilities: execute, run, get_executor
 """
 
+from .consensus import (
+    ConsensusResult,
+    canonical_key,
+    majority_vote,
+    self_consistency,
+)
 from .context import (
     EventType,
     ExecutionContext,
@@ -92,6 +98,11 @@ __all__ = [
     "DAGExecutor",
     # Expressions
     "ExpressionEvaluator",
+    # Consensus / voting
+    "ConsensusResult",
+    "canonical_key",
+    "majority_vote",
+    "self_consistency",
     # Step State
     "StepState",
     "StepStateManager",

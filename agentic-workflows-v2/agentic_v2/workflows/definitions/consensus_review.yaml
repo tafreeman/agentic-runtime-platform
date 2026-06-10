@@ -1,0 +1,87 @@
+name: consensus_review
+description: >-
+  Self-consistency / ensemble review pattern. Three independent reviewers answer
+  the SAME prompt in parallel; a deterministic tier-0 aggregator majority-votes
+  their verdicts; a final summary step runs only when the vote clears the
+  agreement threshold. This is a usable production pattern, not a demo — point
+  any verdict-producing reviewer agents at it and tune ``min_agreement``.
+version: "1.0"
+
+capabilities:
+  inputs: [code_file]
+  outputs: [verdict, agreement, summary]
+
+# Workflow inputs
+inputs:
+  code_file:
+    type: string
+    description: Path to the code/artifact under review
+  min_agreement:
+    type: string
+    description: Minimum fraction of reviewers that must agree (0..1)
+    default: "0.66"
+
+# DAG steps
+steps:
+  # --- Ensemble: three independent reviewers, same prompt, run in parallel ---
+  - name: reviewer_a
+    agent: tier2_reviewer
+    description: Independent reviewer A — emit a single-word verdict.
+    inputs:
+      code_file: ${inputs.code_file}
+    outputs:
+      verdict: verdict_a
+
+  - name: reviewer_b
+    agent: tier2_reviewer
+    description: Independent reviewer B — emit a single-word verdict.
+    inputs:
+      code_file: ${inputs.code_file}
+    outputs:
+      verdict: verdict_b
+
+  - name: reviewer_c
+    agent: tier2_reviewer
+    description: Independent reviewer C — emit a single-word verdict.
+    inputs:
+      code_file: ${inputs.code_file}
+    outputs:
+      verdict: verdict_c
+
+  # --- Aggregate: deterministic majority vote over the three verdicts ---
+  - name: vote
+    agent: tier0_consensus
+    description: Majority-vote the three reviewer verdicts.
+    depends_on: [reviewer_a, reviewer_b, reviewer_c]
+    inputs:
+      samples:
+        - ${steps.reviewer_a.outputs.verdict}
+        - ${steps.reviewer_b.outputs.verdict}
+        - ${steps.reviewer_c.outputs.verdict}
+      min_agreement: ${inputs.min_agreement}
+    outputs:
+      winner: consensus_verdict
+      agreement: consensus_agreement
+      meets_threshold: consensus_met
+
+  # --- Gate: only summarize when the vote cleared the agreement threshold ---
+  - name: summarize
+    agent: tier2_summarizer
+    description: Summarize the agreed verdict (skipped when agreement too low).
+    depends_on: [vote]
+    when: ${steps.vote.outputs.meets_threshold}
+    inputs:
+      verdict: ${steps.vote.outputs.winner}
+      agreement: ${steps.vote.outputs.agreement}
+    outputs:
+      summary: review_summary
+
+# Workflow outputs
+outputs:
+  verdict:
+    from: ${steps.vote.outputs.winner}
+  agreement:
+    from: ${steps.vote.outputs.agreement}
+  summary:
+    from: ${steps.summarize.outputs.summary}
+    optional: true

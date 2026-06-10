@@ -105,6 +105,19 @@ The `slowapi` global rate limiter and the `AuthThrottle` per-IP auth throttle (b
 - **Status:** Accepted for Sprint 1. Sprint 2's T1-2 covered the circuit-breaker Redis backend only; `AuthThrottle` remains in-process.
 - **Upstream fix:** Future sprint — shared Redis store for `AuthThrottle`. See [ADR-018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md).
 
+### 4.3 Human approval gates are programmatic only (no UI pause/resume yet)
+
+P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`) are gated by default.
+
+What is **not** built yet is the full UI-driven *pause-and-resume* flow — suspending a run, surfacing an approval prompt to a human operator in the web UI, and resuming on their click.
+
+- **Surface:** `agentic_v2/governance/approval.py` (gate + providers), `agentic_v2/engine/tool_execution.py` and `agentic_v2/agents/base.py` (dispatch-point wiring), `agentic_v2/contracts/events.py` (`approval_required` / `approval_decision` events).
+- **Current behavior:** approval is decided synchronously by the registered provider. The agent loop emits the contract events on its event bus; the engine tool loop surfaces approval request/decision via the logger (WARNING for request, INFO for decision) and in the serialized result metadata rather than streaming the new events — the engine dispatch point has no clean event channel without threading an emitter through the tool loop.
+- **Risk:** Operators must wire a provider programmatically (`set_approval_provider(...)`) at process start; there is no web-UI approval queue. Gated tools fail closed until a provider is registered, which is the intended safe default but will block runs that expected those tools to execute unattended.
+- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [security-hardening.md §11](operations/security-hardening.md).
+- **Status:** Programmatic gate shipped and tested (`tests/test_approval_gates.py`). UI pause/resume is an explicit follow-on; the wire events exist so the server/UI can build on them.
+- **Upstream fix:** Future sprint — server-side approval queue + WebSocket-driven pause/resume in the UI, streaming the `approval_required`/`approval_decision` events from the engine path.
+
 ---
 
 ## 5. Documentation and process

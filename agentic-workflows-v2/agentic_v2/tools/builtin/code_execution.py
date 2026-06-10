@@ -34,6 +34,11 @@ class CodeExecutionTool(BaseTool):
         return "execute_python"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: arbitrary Python code execution. Gated by default.
+        return True
+
+    @property
     def description(self) -> str:
         return (
             "Execute Python code and capture stdout, stderr, and return value. "

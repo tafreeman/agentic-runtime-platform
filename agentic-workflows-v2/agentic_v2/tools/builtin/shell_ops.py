@@ -95,6 +95,11 @@ class ShellTool(BaseTool):
         return "shell"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: arbitrary command execution. Gated by default.
+        return True
+
+    @property
     def description(self) -> str:
         return "Execute shell commands with security controls and output capture"
 
@@ -264,6 +269,11 @@ class ShellExecTool(BaseTool):
     @property
     def name(self) -> str:
         return "shell_exec"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: arbitrary program execution. Gated by default.
+        return True
 
     @property
     def description(self) -> str:

@@ -174,6 +174,33 @@ class Settings(BaseSettings):
         )
         return False
 
+    # --- Governance: human approval gates (P1 #12) ---
+    agentic_require_tool_approval: bool = Field(
+        default=False,
+        description=(
+            "Global human-approval override. When TRUE, EVERY tool call is "
+            "gated by the registered ApprovalProvider before it executes "
+            "(see agentic_v2.governance.approval). DEFAULT OFF so existing "
+            "flows are unaffected — the real default posture change comes from "
+            "the per-tool requires_approval=True flags on high-impact builtins "
+            "(shell/shell_exec/execute_python, file_write/file_delete/"
+            "file_move/file_copy/directory_create, http/http_post), which gate "
+            "those tools regardless of this flag. FAIL-CLOSED: a gated tool "
+            "with no provider registered is DENIED, never executed."
+        ),
+    )
+    agentic_approval_required_tools: str = Field(
+        default="",
+        description=(
+            "Comma-separated extra tool names to gate behind human approval, "
+            "in addition to the per-tool requires_approval flags. Example: "
+            "'git_commit,deploy'. Empty by default (no extra tools gated). "
+            "Whitespace around names is ignored. Like all approval triggers, "
+            "this is OR'd with the per-tool flag and the global "
+            "AGENTIC_REQUIRE_TOOL_APPROVAL override."
+        ),
+    )
+
     # --- Security: agent-loop sanitization ---
     agentic_sanitize_agent_loop: bool = Field(
         default=True,

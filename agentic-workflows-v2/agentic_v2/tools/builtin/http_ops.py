@@ -88,6 +88,11 @@ class HttpTool(BaseTool):
         return "http"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: can issue mutating requests (POST/PUT/DELETE). Gated.
+        return True
+
+    @property
     def description(self) -> str:
         return "Execute HTTP requests with support for various methods and headers"
 
@@ -276,6 +281,11 @@ class HttpPostTool(BaseTool):
     @property
     def name(self) -> str:
         return "http_post"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: state-changing HTTP POST. Gated by default.
+        return True
 
     @property
     def description(self) -> str:

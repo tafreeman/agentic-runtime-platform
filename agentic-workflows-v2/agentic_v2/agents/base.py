@@ -430,12 +430,49 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         """
         # Imported here for the same circular-import constraint as the caller.
         from ..engine.tool_execution import (
+            _call_id_for,
             serialize_tool_result,
             truncate_tool_result,
         )
 
         if tool is None:
             return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
+
+        # Human-approval gate (P1 #12): consult before validation/execution.
+        # Denied (incl. fail-closed no-provider) returns a serialized error and
+        # the tool never runs. The agent event bus is reachable here, so we emit
+        # the contract events for any server/UI follow-on.
+        from ..governance.approval import evaluate_tool_approval
+
+        call_id = _call_id_for(tool_name, tool_args)
+        approval = await evaluate_tool_approval(
+            tool=tool,
+            tool_name=tool_name,
+            tool_args=tool_args,
+            call_id=call_id,
+            agent_or_step=self.config.name,
+        )
+        if not approval.allowed:
+            self._emit(
+                AgentEvent.TOOL_RESULT,
+                {
+                    "tool": tool_name,
+                    "call_id": call_id,
+                    "approval_decision": approval.decision.value,
+                    "approval_provider": approval.provider_label,
+                },
+            )
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": approval.error_message,
+                    "metadata": {
+                        "approval_required": True,
+                        "approval_decision": approval.decision.value,
+                        "approval_provider": approval.provider_label,
+                    },
+                }
+            )
 
         validate = getattr(tool, "validate_parameters", None)
         if callable(validate):

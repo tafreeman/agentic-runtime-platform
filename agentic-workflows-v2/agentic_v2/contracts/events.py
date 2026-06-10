@@ -108,6 +108,35 @@ class EvaluationCompleteEvent(BaseModel):
     timestamp: str
 
 
+class ApprovalRequiredEvent(BaseModel):
+    """Emitted when a tool call is gated and approval is being requested.
+
+    Surfaced so a server/UI follow-on can drive an interactive pause/resume
+    flow. ``tool_args`` are intentionally omitted from the wire shape — they may
+    carry payloads and should not be broadcast unredacted.
+    """
+
+    type: Literal["approval_required"] = "approval_required"
+    run_id: str
+    tool_name: str
+    call_id: str
+    agent_or_step: str | None = None
+    timestamp: str
+
+
+class ApprovalDecisionEvent(BaseModel):
+    """Emitted once an approval request has been resolved (approved/denied)."""
+
+    type: Literal["approval_decision"] = "approval_decision"
+    run_id: str
+    tool_name: str
+    call_id: str
+    decision: str
+    provider: str | None = None
+    agent_or_step: str | None = None
+    timestamp: str
+
+
 ExecutionEvent = Annotated[
     Union[
         WorkflowStartEvent,
@@ -119,6 +148,8 @@ ExecutionEvent = Annotated[
         ErrorEvent,
         EvaluationStartEvent,
         EvaluationCompleteEvent,
+        ApprovalRequiredEvent,
+        ApprovalDecisionEvent,
     ],
     Field(discriminator="type"),
 ]
