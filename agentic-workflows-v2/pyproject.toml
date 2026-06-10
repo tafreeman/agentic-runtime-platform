@@ -331,6 +331,9 @@ ignore = [
 # Tests legitimately use assert statements (S101), hardcoded credential strings
 # in fixtures (S105), and occasionally hardcoded passwords for mock objects (S106).
 "tests/**/*.py" = ["S101", "S104", "S105", "S106", "S108"]
+# Re-exports inside try/except are flagged as unused by ruff ≥0.15.16 even when
+# listed in __all__. Scoped to the specific __init__.py that uses this pattern.
+"agentic_v2/agents/implementations/__init__.py" = ["F401"]
 
 # ---------------------------------------------------------------------------
 # isort configuration (via ruff's I rule set)

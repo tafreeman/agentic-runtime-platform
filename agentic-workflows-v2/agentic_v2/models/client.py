@@ -365,6 +365,84 @@ class LLMClientWrapper:
             return san_result.sanitized_text
         return prompt
 
+    async def _sanitize_messages(
+        self,
+        messages: list[dict[str, Any]],
+        source: str,
+        tier: ModelTier,
+    ) -> list[dict[str, Any]]:
+        """Run inbound sanitization over each chat message's content.
+
+        A no-op pass-through when no sanitization middleware is attached.
+        This is the chat-path analogue of :meth:`_sanitize_prompt` and closes
+        the indirect prompt-injection vector: tool outputs and retrieved
+        content fed back into the agent loop as chat messages. Fails closed —
+        an unsafe message raises ``ValueError`` (parity with the text path).
+
+        Returns a new message list; input messages are not mutated.
+
+        Raises:
+            ValueError: If any message content is classified as unsafe.
+        """
+        if self.sanitization is None:
+            return messages
+        sanitized: list[dict[str, Any]] = []
+        for msg in messages:
+            content = msg.get("content")
+            if isinstance(content, str) and content:
+                cleaned = await self._sanitize_prompt(content, source, tier)
+                if cleaned == content:
+                    sanitized.append(msg)
+                else:
+                    sanitized.append({**msg, "content": cleaned})
+            elif isinstance(content, list):
+                cleaned_blocks, mutated = await self._sanitize_content_blocks(
+                    content, source, tier
+                )
+                if mutated:
+                    sanitized.append({**msg, "content": cleaned_blocks})
+                else:
+                    sanitized.append(msg)
+            else:
+                sanitized.append(msg)
+        return sanitized
+
+    async def _sanitize_content_blocks(
+        self,
+        blocks: list[Any],
+        source: str,
+        tier: ModelTier,
+    ) -> tuple[list[Any], bool]:
+        """Sanitize text within a list-of-blocks content value.
+
+        LLM APIs (OpenAI, Anthropic) allow message content to be a list of
+        typed content blocks, e.g. ``[{"type": "text", "text": "..."}]``.
+        This method iterates through those blocks and sanitizes any text
+        blocks, closing the bypass vector where an attacker wraps a prompt
+        injection payload inside a non-string content structure.
+
+        Returns ``(cleaned_blocks, mutated)`` — the caller only copies the
+        message dict when ``mutated`` is ``True``.
+        """
+        cleaned: list[Any] = []
+        mutated = False
+        for block in blocks:
+            if (
+                isinstance(block, dict)
+                and block.get("type") == "text"
+                and isinstance(block.get("text"), str)
+            ):
+                text = block["text"]
+                cleaned_text = await self._sanitize_prompt(text, source, tier)
+                if cleaned_text != text:
+                    cleaned.append({**block, "text": cleaned_text})
+                    mutated = True
+                else:
+                    cleaned.append(block)
+            else:
+                cleaned.append(block)
+        return cleaned, mutated
+
     async def _sanitize_response_text(self, response: str) -> str:
         """Run the outbound response sanitizer, returning the effective text.
 
@@ -376,6 +454,30 @@ class LLMClientWrapper:
         if resp_result.sanitized_text is not None:
             return resp_result.sanitized_text
         return response
+
+    async def _sanitize_response_content_blocks(
+        self, blocks: list[Any]
+    ) -> list[Any]:
+        """Sanitize text within a list-of-blocks response content value.
+
+        Outbound counterpart of :meth:`_sanitize_content_blocks`.  Iterates
+        through content blocks returned by the LLM and runs the response
+        sanitizer over any ``{"type": "text", "text": "..."}`` blocks.  This
+        closes the bypass vector where model output structured as a list of
+        content blocks would skip outbound secret/PII scrubbing.
+        """
+        cleaned: list[Any] = []
+        for block in blocks:
+            if (
+                isinstance(block, dict)
+                and block.get("type") == "text"
+                and isinstance(block.get("text"), str)
+            ):
+                cleaned_text = await self._sanitize_response_text(block["text"])
+                cleaned.append({**block, "text": cleaned_text})
+            else:
+                cleaned.append(block)
+        return cleaned
 
     @retry_with_jitter(max_retries=3)
     async def complete(
@@ -732,7 +834,6 @@ class LLMClientWrapper:
             self.router._classify_and_record_error(model, e)
             raise
 
-    @retry_with_jitter(max_retries=3)
     async def complete_chat(
         self,
         messages: list[dict[str, Any]],
@@ -744,6 +845,10 @@ class LLMClientWrapper:
         **kwargs: Any,
     ) -> tuple[dict[str, Any], str, int]:
         """Send chat completion request with smart routing.
+
+        Sanitization runs *outside* the retry boundary so that a
+        ``ValueError`` from blocked content fails immediately instead of
+        being retried with backoff.
 
         Args:
             messages: Chat messages to send
@@ -759,13 +864,34 @@ class LLMClientWrapper:
 
         Raises:
             RuntimeError: If no backend configured or all models fail
-            ValueError: If budget exceeded
+            ValueError: If budget exceeded or content blocked by sanitizer
         """
         if self.backend is None:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         if not hasattr(self.backend, "complete_chat"):
             raise RuntimeError("Backend does not support complete_chat")
+
+        # Inbound sanitization runs OUTSIDE the retry boundary so blocked
+        # content fails closed immediately (no backoff retries on ValueError).
+        messages = await self._sanitize_messages(messages, "llm_chat", tier)
+
+        return await self._complete_chat_with_retry(
+            messages, tier, max_retries, use_cache, tools, model, **kwargs
+        )
+
+    @retry_with_jitter(max_retries=3)
+    async def _complete_chat_with_retry(
+        self,
+        messages: list[dict[str, Any]],
+        tier: ModelTier = ModelTier.TIER_2,
+        max_retries: int = 3,
+        use_cache: bool = True,
+        tools: list[dict[str, Any]] | None = None,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> tuple[dict[str, Any], str, int]:
+        """Inner chat completion with retry — called after sanitization."""
 
         # Check cache
         cache_key: str | None = None
@@ -848,6 +974,22 @@ class LLMClientWrapper:
             call_model, selected_model, prompt_str
         )
 
+        # Post-receive response sanitization (parity with the text path).
+        # Runs before token counting so the budget reflects sanitized output.
+        # Guarded on response_sanitizer so the no-op path avoids a dict copy.
+        if self.response_sanitizer is not None:
+            content = response_dict.get("content")
+            if isinstance(content, str):
+                response_dict = {
+                    **response_dict,
+                    "content": await self._sanitize_response_text(content),
+                }
+            elif isinstance(content, list):
+                cleaned_blocks = await self._sanitize_response_content_blocks(
+                    content
+                )
+                response_dict = {**response_dict, "content": cleaned_blocks}
+
         # Count tokens of response
         response_text = response_dict.get("content", "") or ""
         if response_dict.get("tool_calls"):
@@ -883,6 +1025,35 @@ class LLMClientWrapper:
         """
         self.sanitization = sanitization
         self.response_sanitizer = response_sanitizer
+
+    async def sanitize_inbound_messages(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        source: str,
+        tier: ModelTier,
+    ) -> list[dict[str, Any]]:
+        """Public inbound message sanitizer for non-``complete_chat`` callers.
+
+        Agents that bypass :meth:`complete_chat` and call a provider SDK
+        directly (e.g. ``ClaudeAgent``) use this to inherit the exact same
+        inbound sanitization, gating, and fail-closed contract as the native
+        chat path — closing the indirect-prompt-injection vector for tool
+        outputs / retrieved content carried in ``messages``.
+
+        A no-op pass-through when no sanitizer is attached.
+
+        Raises:
+            ValueError: If any message content is classified as unsafe.
+        """
+        return await self._sanitize_messages(messages, source, tier)
+
+    async def sanitize_outbound_text(self, text: str) -> str:
+        """Public outbound response sanitizer for non-``complete_chat`` callers.
+
+        A no-op pass-through when no response sanitizer is attached.
+        """
+        return await self._sanitize_response_text(text)
 
     def clear_cache(self) -> int:
         """Clear response cache.
@@ -955,7 +1126,42 @@ def get_client(auto_configure: bool = False) -> LLMClientWrapper:
                 _client.set_backend(auto_configure_backend())
             except RuntimeError:
                 pass  # No backends available — will fail at call time
+
+        _maybe_attach_agent_loop_sanitization(_client)
     return _client
+
+
+def _maybe_attach_agent_loop_sanitization(client: LLMClientWrapper) -> None:
+    """Attach default sanitization to the shared agent-loop client.
+
+    Closes the indirect-prompt-injection vector by ensuring per-step LLM calls
+    inside the agent loop — not just the HTTP request boundary — run inbound
+    prompt sanitization and outbound response sanitization. Controlled by
+    ``AGENTIC_SANITIZE_AGENT_LOOP`` (default on).
+
+    Skipped under ``AGENTIC_NO_LLM`` (placeholder/demo mode), when the flag is
+    off, or when a sanitizer is already attached (idempotent).
+    """
+    from ..settings import get_settings, is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        return
+    if not get_settings().agentic_sanitize_agent_loop:
+        return
+    if client.sanitization is not None or client.response_sanitizer is not None:
+        return
+
+    from ..middleware.response_sanitizer import ResponseSanitizer
+    from ..middleware.sanitization import SanitizationMiddleware
+
+    client.with_sanitization(
+        sanitization=SanitizationMiddleware.default(),
+        response_sanitizer=ResponseSanitizer(),
+    )
+    logger.info(
+        "Agent-loop sanitization attached to the shared LLM client "
+        "(AGENTIC_SANITIZE_AGENT_LOOP on)."
+    )
 
 
 def reset_client() -> None:

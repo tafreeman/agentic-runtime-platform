@@ -116,6 +116,17 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
+        # This agent calls the Anthropic SDK directly instead of routing
+        # through LLMClientWrapper.complete_chat, so it must run the same
+        # inbound/outbound sanitization itself to close the indirect-prompt-
+        # injection vector — tool outputs and retrieved content carried in
+        # `messages` reach the model here. Reuse the shared client's gated
+        # sanitizers (attached by get_client per AGENTIC_SANITIZE_AGENT_LOOP;
+        # no-op under AGENTIC_NO_LLM / when the flag is off). Fails closed.
+        messages = await self.llm_client.sanitize_inbound_messages(
+            messages, source="claude_agent", tier=self.config.default_tier
+        )
+
         system, anthropic_messages = self._convert_messages(messages)
         anthropic_tools = self._convert_tools(tools or [])
 
@@ -131,7 +142,12 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
             kwargs["tools"] = anthropic_tools
 
         response = await self._client.messages.create(**kwargs)
-        return self._convert_response(response)
+        result = self._convert_response(response)
+        if isinstance(result.get("content"), str):
+            result["content"] = await self.llm_client.sanitize_outbound_text(
+                result["content"]
+            )
+        return result
 
     # ------------------------------------------------------------------
     # Format conversions

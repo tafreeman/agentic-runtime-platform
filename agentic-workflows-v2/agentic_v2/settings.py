@@ -174,6 +174,50 @@ class Settings(BaseSettings):
         )
         return False
 
+    # --- Security: agent-loop sanitization ---
+    agentic_sanitize_agent_loop: bool = Field(
+        default=True,
+        description=(
+            "Attach inbound/outbound sanitization to the shared LLM client "
+            "returned by models.get_client(), so per-step agent-loop calls — "
+            "including tool outputs and retrieved content fed back to the "
+            "model (the indirect prompt-injection vector) — are guarded, not "
+            "just the HTTP request boundary. DEFAULT ON. Skipped automatically "
+            "under AGENTIC_NO_LLM (placeholder mode). Set "
+            "AGENTIC_SANITIZE_AGENT_LOOP=0 to disable. Accepted string values "
+            "mirror AGENTIC_NO_LLM; unrecognised values fail safe to True so "
+            "sanitization stays on."
+        ),
+    )
+
+    @field_validator("agentic_sanitize_agent_loop", mode="before")
+    @classmethod
+    def _coerce_sanitize_agent_loop_flag(cls, v: Any) -> bool:
+        """Normalise ``AGENTIC_SANITIZE_AGENT_LOOP``, failing safe to True.
+
+        Unlike the other bool flags this defaults to ON, so an unset or
+        unrecognised value must resolve to ``True`` (keep sanitization on)
+        rather than the ``False`` that :func:`_coerce_env_flag` returns.
+        """
+        if isinstance(v, bool):
+            return v
+        if v is None:
+            return True
+        s = str(v).strip().lower()
+        if s in _TRUE_LITERALS:
+            return True
+        if s in _FALSE_LITERALS:
+            return False
+        logger.warning(
+            "AGENTIC_SANITIZE_AGENT_LOOP=%r not recognised; treating as True "
+            "(fail-safe — sanitization stays on). Accepted: %s (True) or %s "
+            "(False).",
+            v,
+            sorted(_TRUE_LITERALS),
+            sorted(_FALSE_LITERALS),
+        )
+        return True
+
     @field_validator("agentic_no_llm", mode="before")
     @classmethod
     def _coerce_no_llm_flag(cls, v: Any) -> bool:
