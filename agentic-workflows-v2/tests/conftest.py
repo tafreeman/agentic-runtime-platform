@@ -113,6 +113,33 @@ def _reset_global_routers():
 
 
 @pytest.fixture(autouse=True)
+def _reset_approval_provider():
+    """Snapshot and restore the process-global approval provider around every test.
+
+    ``governance.approval`` binds the human-approval policy to a module global
+    (an application-level posture, set once at process start in production). In
+    the test suite that global is mutated by approval-gate tests; a leaked
+    provider (or a leaked ``None`` where a test primed one) makes later tests'
+    tool dispatch order-dependent. Import is lazy and best-effort, mirroring
+    ``_reset_global_routers``.
+    """
+
+    try:
+        from agentic_v2.governance import approval as _approval_mod
+
+        saved = _approval_mod.get_approval_provider()
+    except Exception:
+        saved = None
+        _approval_mod = None  # type: ignore[assignment]
+    yield
+    if _approval_mod is not None:
+        try:
+            _approval_mod.set_approval_provider(saved)
+        except Exception:
+            pass
+
+
+@pytest.fixture(autouse=True)
 def _reset_llm_client():
     """Pre-create a backend-less global client for each test.
 
