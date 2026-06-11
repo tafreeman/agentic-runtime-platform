@@ -47,6 +47,11 @@ class FileCopyTool(BaseTool):
         return "file_copy"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: creates/overwrites a destination file. Gated by default.
+        return True
+
+    @property
     def description(self) -> str:
         return "Copy a file from source path to destination path"
 
@@ -119,6 +124,11 @@ class FileMoveTool(BaseTool):
         return "file_move"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: moves/renames (removes the source). Gated by default.
+        return True
+
+    @property
     def description(self) -> str:
         return "Move or rename a file from source to destination"
 
@@ -189,6 +199,11 @@ class FileDeleteTool(BaseTool):
         return "file_delete"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: irreversible deletion. Gated by default.
+        return True
+
+    @property
     def description(self) -> str:
         return "Delete a file"
 
@@ -240,6 +255,11 @@ class DirectoryCreateTool(BaseTool):
     @property
     def name(self) -> str:
         return "directory_create"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: mutates the filesystem tree. Gated by default.
+        return True
 
     @property
     def description(self) -> str:
@@ -340,6 +360,11 @@ class FileWriteTool(BaseTool):
     @property
     def name(self) -> str:
         return "file_write"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: writes/overwrites filesystem content. Gated by default.
+        return True
 
     @property
     def description(self) -> str:

@@ -152,7 +152,7 @@ Set these in your deployment environment (Kubernetes secrets, cloud provider sec
 | `AGENTIC_API_KEY` | Bearer token for all `/api/` routes. Both `Authorization: Bearer <key>` and `X-API-Key: <key>` headers are accepted. Token comparison uses `secrets.compare_digest` to prevent timing attacks. | **Mandatory** |
 | `AGENTIC_CORS_ORIGINS` | Comma-separated list of allowed CORS origins. Example: `https://app.example.com,https://admin.example.com` | **Mandatory** — restrict to actual frontend origins |
 | `AGENTIC_FILE_BASE_DIR` | Base directory for all file operations via the `file_ops` built-in tool. When set, all file paths are resolved relative to this directory and any attempt to traverse outside it is rejected. Example: `/app/data` | **Strongly recommended** — prevents path traversal |
-| `AGENTIC_BLOCK_PRIVATE_IPS` | Set to `1` to block the `http_ops` tool from making requests to private IP ranges (RFC 1918). Prevents SSRF attacks. | **Strongly recommended** |
+| `AGENTIC_BLOCK_PRIVATE_IPS` | Default **ON** (`1`). Blocks HTTP tool requests to private/loopback/link-local/reserved IPs, performs DNS resolution to catch hostname-based SSRF, and re-validates each redirect hop. Set to `0` only when workflows need internal network access and you have applied compensating controls. | Default ON — opt out with `0` only with explicit justification |
 
 ### Agent Configuration
 

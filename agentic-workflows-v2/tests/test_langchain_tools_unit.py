@@ -4,6 +4,13 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
+from agentic_v2.governance.approval import (
+    AutoApproveProvider,
+    AutoDenyProvider,
+    set_approval_provider,
+)
 from agentic_v2.langchain.tools import (
     ALL_TOOLS,
     TIER_TOOLS,
@@ -13,7 +20,24 @@ from agentic_v2.langchain.tools import (
     file_write,
     get_tools_by_name,
     get_tools_for_tier,
+    shell_run,
 )
+
+
+@pytest.fixture(autouse=True)
+def _auto_approve_provider():
+    """Default to auto-approve so happy-path tests of gated tools execute.
+
+    The native ``shell_run`` / ``file_write`` ``@tool`` functions now consult the
+    human-approval gate (HIGH-1); without a provider they fail closed. Most tests
+    here exercise behavior other than the gate, so register an auto-approver and
+    reset around every test. Gate-specific tests override the provider locally.
+    """
+    set_approval_provider(AutoApproveProvider())
+    try:
+        yield
+    finally:
+        set_approval_provider(None)
 
 
 class TestFileReadTool:
@@ -50,6 +74,45 @@ class TestFileWriteTool:
         f.write_text("old")
         file_write.invoke({"path": str(f), "content": "new"})
         assert f.read_text() == "new"
+
+
+class TestNativeToolApprovalGate:
+    """HIGH-1: native shell_run/file_write @tool functions consult the gate."""
+
+    def test_file_write_denied_does_not_write(self, tmp_path) -> None:
+        """A denied file_write returns ERROR and creates no file."""
+        set_approval_provider(AutoDenyProvider())
+        f = tmp_path / "blocked.txt"
+        result = file_write.invoke({"path": str(f), "content": "secret"})
+        assert result.startswith("ERROR")
+        assert "approval" in result.lower()
+        assert not f.exists()
+
+    def test_file_write_no_provider_fails_closed(self, tmp_path) -> None:
+        """No provider registered → file_write fails closed, writes nothing."""
+        set_approval_provider(None)
+        f = tmp_path / "blocked.txt"
+        result = file_write.invoke({"path": str(f), "content": "secret"})
+        assert result.startswith("ERROR")
+        assert "no provider" in result.lower()
+        assert not f.exists()
+
+    def test_shell_run_denied_does_not_execute(self) -> None:
+        """A denied shell_run returns ERROR without running the command."""
+        set_approval_provider(AutoDenyProvider())
+        # A command that would clearly produce output if it ran.
+        result = shell_run.invoke({"command": "echo approval-bypass"})
+        assert result.startswith("ERROR")
+        assert "approval" in result.lower()
+        assert "approval-bypass" not in result
+
+    def test_shell_run_no_provider_fails_closed(self) -> None:
+        """No provider registered → shell_run fails closed."""
+        set_approval_provider(None)
+        result = shell_run.invoke({"command": "echo approval-bypass"})
+        assert result.startswith("ERROR")
+        assert "no provider" in result.lower()
+        assert "approval-bypass" not in result
 
 
 class TestFileListTool:

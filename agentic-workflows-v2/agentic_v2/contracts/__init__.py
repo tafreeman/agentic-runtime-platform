@@ -23,6 +23,8 @@ Exports by category:
 """
 
 from .events import (
+    ApprovalDecisionEvent,
+    ApprovalRequiredEvent,
     ErrorEvent,
     EvaluationCompleteEvent,
     EvaluationStartEvent,
@@ -105,5 +107,7 @@ __all__ = [
     "ErrorEvent",
     "EvaluationStartEvent",
     "EvaluationCompleteEvent",
+    "ApprovalRequiredEvent",
+    "ApprovalDecisionEvent",
     "validate_event",
 ]

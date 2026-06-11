@@ -130,8 +130,25 @@ async def test_git_diff_tool():
 # ============================================================================
 
 
+@pytest.fixture
+def _disable_ssrf_guard_for_localhost(monkeypatch: pytest.MonkeyPatch):
+    """Disable the SSRF private-IP guard so tests can reach a local test server.
+
+    These tests intentionally use a 127.0.0.1 server; real SSRF protection is
+    exercised by tests/test_ssrf_guard.py.
+    """
+    import agentic_v2.settings as settings_mod
+
+    monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "0")
+    settings_mod.get_settings.cache_clear()
+    yield
+    settings_mod.get_settings.cache_clear()
+
+
 @pytest_asyncio.fixture
-async def http_test_server_base_url() -> str:
+async def http_test_server_base_url(
+    _disable_ssrf_guard_for_localhost: None,
+) -> str:
     """Start a small local HTTP server for offline-safe tests."""
 
     async def status_handler(request: web.Request) -> web.Response:

@@ -2,71 +2,144 @@
 
 from __future__ import annotations
 
-import ipaddress
+import socket
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin
 
 import aiohttp
+from aiohttp.abc import AbstractResolver
+from aiohttp.resolver import DefaultResolver
 
+from ...settings import get_settings
+from ...security.url_guard import check_resolved_address, validate_url_async
 from ..base import BaseTool, ToolResult
 
-# ---------------------------------------------------------------------------
-# URL validation for SSRF prevention
-# ---------------------------------------------------------------------------
+# Maximum number of redirects to follow manually before giving up.
+_MAX_REDIRECTS = 5
 
-_ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
+# HTTP status codes that carry a redirect Location header.
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
-# Link-local cloud metadata endpoint (AWS/GCP/Azure instance metadata service).
-# This address is intentionally blocklisted to prevent SSRF attacks that could
-# expose cloud credentials via the instance metadata API.
-_CLOUD_METADATA_IP = "169.254.169.254"
-
-_METADATA_HOSTS = frozenset(
-    {"metadata.google.internal", "metadata", _CLOUD_METADATA_IP}
-)
+# RFC 7538 / RFC 9110: 307 and 308 MUST preserve the original request method
+# and body. 301/302/303 historically degrade to GET and drop the body — this is
+# what browsers and HTTP clients do in practice.
+_METHOD_PRESERVING_REDIRECTS = frozenset({307, 308})
 
 
-def _validate_url(url: str) -> str | None:
-    """Validate a URL for SSRF safety. Returns error string or None.
+class GuardedResolver(AbstractResolver):
+    """DNS resolver that re-applies the SSRF guard at connect time.
 
-    Always blocks:
-      - Non http/https schemes
-      - Cloud metadata endpoints (169.254.169.254, metadata.google.internal)
+    The pre-request ``validate_url_async`` check resolves the hostname in a
+    separate ``getaddrinfo`` call; a DNS-rebinding domain can return a public
+    address there and a private/metadata address when the HTTP client
+    resolves again to connect.  Wrapping the connector's resolver closes that
+    TOCTOU window: every address aiohttp is about to dial is validated here,
+    and a restricted result aborts the connection (surfacing as a
+    ``ClientConnectorError``).
 
-    When ``AGENTIC_BLOCK_PRIVATE_IPS=1`` is set:
-      - Also blocks RFC 1918 private IPs, loopback, and link-local addresses
+    IP-literal hosts never reach the resolver — they are validated by the
+    pre-request check and involve no DNS, so rebinding does not apply.
+    Metadata endpoint IPs are blocked unconditionally; private/loopback/
+    link-local/etc. only when *block_private* is on (so the localhost opt-out
+    used by dev/test environments keeps working).
     """
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return "Invalid URL"
 
-    if parsed.scheme not in _ALLOWED_URL_SCHEMES:
-        return f"URL scheme '{parsed.scheme}' not allowed. Only http/https permitted."
+    def __init__(self, block_private: bool) -> None:
+        self._inner = DefaultResolver()
+        self._block_private = block_private
 
-    hostname = parsed.hostname or ""
+    async def resolve(
+        self, host: str, port: int = 0, family: int = socket.AF_INET
+    ) -> list[dict[str, Any]]:
+        infos = await self._inner.resolve(host, port, family)
+        for info in infos:
+            err = check_resolved_address(
+                str(info["host"]), block_private=self._block_private
+            )
+            if err:
+                raise OSError(f"SSRF guard blocked connection to '{host}': {err}")
+        return infos
 
-    # Always block well-known metadata hostnames
-    if hostname.lower() in _METADATA_HOSTS:
-        return f"Access to metadata endpoint '{hostname}' is blocked."
+    async def close(self) -> None:
+        await self._inner.close()
 
-    # Block private/reserved IP addresses when strict mode is enabled
-    from ...settings import get_settings
-    block_private = get_settings().agentic_block_private_ips
-    if block_private:
-        try:
-            addr = ipaddress.ip_address(hostname)
-            if (
-                addr.is_private
-                or addr.is_loopback
-                or addr.is_link_local
-                or addr.is_reserved
-            ):
-                return f"Access to private/reserved IP address '{hostname}' is blocked."
-        except ValueError:
-            pass  # hostname is not an IP literal — allowed
 
-    return None
+async def _guarded_request(
+    session: aiohttp.ClientSession,
+    method: str,
+    url: str,
+    *,
+    headers: dict[str, str],
+    json_body: Any,
+    params: dict[str, str],
+    timeout_obj: aiohttp.ClientTimeout,
+    block_private: bool,
+) -> tuple[aiohttp.ClientResponse, str]:
+    """Execute *method* on *url* following redirects with SSRF re-validation.
+
+    Returns ``(response, final_url)`` where the response is from the last hop.
+    The caller is responsible for closing the response (use ``async with``).
+
+    Raises ``ValueError`` with a human-readable message on SSRF block or
+    when the redirect limit is exceeded.
+    """
+    current_url = url
+    # Per-hop method/body/params evolve as we follow redirects. RFC 7538/9110:
+    # 307/308 preserve the original method and body; 301/302/303 degrade to GET
+    # and drop the body. These start as the caller's values and are updated from
+    # each redirect's status before the next hop.
+    current_method = method
+    current_body = json_body
+    current_params = params
+    for hop in range(_MAX_REDIRECTS + 1):
+        err = await validate_url_async(current_url, block_private=block_private)
+        if err:
+            raise ValueError(err)
+
+        # Custom headers are sent on the FIRST hop only — re-sending caller
+        # headers (Authorization, API keys) to a redirect target would leak
+        # credentials to whatever host the original server chose to redirect to.
+        send_headers = headers if hop == 0 else {}
+
+        response = await session.request(
+            method=current_method,
+            url=current_url,
+            headers=send_headers,
+            json=current_body if current_body is not None else None,
+            params=current_params,
+            timeout=timeout_obj,
+            allow_redirects=False,
+        )
+
+        if response.status not in _REDIRECT_STATUSES:
+            return response, current_url
+
+        if hop == _MAX_REDIRECTS:
+            # ClientResponse.release() is synchronous in aiohttp 3.x.
+            response.release()
+            raise ValueError(
+                f"Redirect limit ({_MAX_REDIRECTS}) exceeded. "
+                "Request blocked to prevent redirect loops."
+            )
+
+        # Decide how the NEXT hop is issued based on THIS redirect's status.
+        if response.status not in _METHOD_PRESERVING_REDIRECTS:
+            # 301/302/303 → GET, drop the body and the original query params.
+            current_method = "GET"
+            current_body = None
+            current_params = {}
+        # else 307/308 → keep current_method / current_body / current_params.
+
+        location = response.headers.get("Location", "")
+        response.release()
+        if not location:
+            raise ValueError("Redirect response missing Location header.")
+
+        # Resolve relative redirects against the current URL.
+        current_url = urljoin(current_url, location)
+
+    # Unreachable, but satisfies the type checker.
+    raise ValueError("Unexpected exit from redirect loop.")  # pragma: no cover
 
 
 class HttpTool(BaseTool):
@@ -75,6 +148,11 @@ class HttpTool(BaseTool):
     @property
     def name(self) -> str:
         return "http"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: can issue mutating requests (POST/PUT/DELETE). Gated.
+        return True
 
     @property
     def description(self) -> str:
@@ -139,12 +217,6 @@ class HttpTool(BaseTool):
     ) -> ToolResult:
         """Execute HTTP request."""
         try:
-            # Validate URL for SSRF
-            url_error = _validate_url(url)
-            if url_error:
-                return ToolResult(success=False, error=url_error)
-
-            # Validate method
             allowed_methods = {
                 "GET",
                 "POST",
@@ -161,28 +233,36 @@ class HttpTool(BaseTool):
                     error=f"Method '{method}' not allowed. Allowed: {', '.join(sorted(allowed_methods))}",
                 )
 
-            # Prepare request
             headers = headers or {}
-            params = params or {}
+            params_map: dict[str, str] = params or {}
 
-            # Add default content-type for JSON body
             if body is not None and "Content-Type" not in headers:
                 headers["Content-Type"] = "application/json"
 
-            async with aiohttp.ClientSession() as session:
+            block_private = get_settings().agentic_block_private_ips
+
+            # GuardedResolver re-validates every DNS answer at connect time so
+            # a rebinding domain cannot serve a public address to the pre-check
+            # and a private/metadata one to the actual connection.
+            connector = aiohttp.TCPConnector(resolver=GuardedResolver(block_private))
+            async with aiohttp.ClientSession(connector=connector) as session:
                 timeout_obj = aiohttp.ClientTimeout(total=timeout)
+                try:
+                    response, final_url = await _guarded_request(
+                        session,
+                        method,
+                        url,
+                        headers=headers,
+                        json_body=body,
+                        params=params_map,
+                        timeout_obj=timeout_obj,
+                        block_private=block_private,
+                    )
+                except ValueError as guard_err:
+                    return ToolResult(success=False, error=str(guard_err))
 
-                async with session.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    json=body if body is not None else None,
-                    params=params,
-                    timeout=timeout_obj,
-                ) as response:
-                    # Read response
+                async with response:
                     content_type = response.headers.get("Content-Type", "")
-
                     if "application/json" in content_type:
                         response_data = await response.json()
                     else:
@@ -194,7 +274,7 @@ class HttpTool(BaseTool):
                             "status": response.status,
                             "headers": dict(response.headers),
                             "body": response_data,
-                            "url": str(response.url),
+                            "url": final_url,
                         },
                         metadata={
                             "method": method,
@@ -267,6 +347,11 @@ class HttpPostTool(BaseTool):
     @property
     def name(self) -> str:
         return "http_post"
+
+    @property
+    def requires_approval(self) -> bool:
+        # High-impact: state-changing HTTP POST. Gated by default.
+        return True
 
     @property
     def description(self) -> str:

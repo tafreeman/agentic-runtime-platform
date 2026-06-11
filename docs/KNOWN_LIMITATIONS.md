@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-05-21
+> **Last verified:** 2026-06-10
 
 This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.
 
@@ -104,6 +104,30 @@ The `slowapi` global rate limiter and the `AuthThrottle` per-IP auth throttle (b
 - **Workaround:** Same as §4.1 — single replica or ingress-level throttling.
 - **Status:** Accepted for Sprint 1. Sprint 2's T1-2 covered the circuit-breaker Redis backend only; `AuthThrottle` remains in-process.
 - **Upstream fix:** Future sprint — shared Redis store for `AuthThrottle`. See [ADR-018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md).
+
+### 4.3 Human approval gates are programmatic only (no UI pause/resume yet)
+
+P1 #12 added real, tested human-approval gates on the tool-execution hot path: an injectable `ApprovalProvider` (`agentic_v2/governance/approval.py`) is consulted at **both** dispatch points before any high-impact tool runs, and the gate **fails closed** (a gated tool with no provider registered is denied, never executed). High-impact builtins (`shell`/`shell_exec`/`execute_python`, `file_write`/`file_delete`/`file_move`/`file_copy`/`directory_create`, `http`/`http_post`) are gated by default.
+
+What is **not** built yet is the full UI-driven *pause-and-resume* flow — suspending a run, surfacing an approval prompt to a human operator in the web UI, and resuming on their click.
+
+- **Surface:** `agentic_v2/governance/approval.py` (gate + providers), `agentic_v2/engine/tool_execution.py` and `agentic_v2/agents/base.py` (dispatch-point wiring), `agentic_v2/contracts/events.py` (`approval_required` / `approval_decision` events).
+- **Current behavior:** approval is decided synchronously by the registered provider. The agent loop emits the contract events on its event bus; the engine tool loop surfaces approval request/decision via the logger (WARNING for request, INFO for decision) and in the serialized result metadata rather than streaming the new events — the engine dispatch point has no clean event channel without threading an emitter through the tool loop.
+- **Risk:** Operators must wire a provider programmatically (`set_approval_provider(...)`) at process start; there is no web-UI approval queue. Gated tools fail closed until a provider is registered, which is the intended safe default but will block runs that expected those tools to execute unattended.
+- **Workaround:** Register an `ApprovalProvider` at startup (`AutoApproveProvider` for trusted environments, `CallbackApprovalProvider`/`PolicyApprovalProvider` for selective approval), or disable the requirement per tool/globally. See [security-hardening.md §11](operations/security-hardening.md).
+- **Status:** Programmatic gate shipped and tested (`tests/test_approval_gates.py`). UI pause/resume is an explicit follow-on; the wire events exist so the server/UI can build on them.
+- **Upstream fix:** Future sprint — server-side approval queue + WebSocket-driven pause/resume in the UI, streaming the `approval_required`/`approval_decision` events from the engine path.
+
+### 4.4 SSRF guard cannot fully close DNS rebinding without network-layer egress control
+
+The SSRF guard (`agentic_v2/security/url_guard.py`) validates a URL's resolved addresses before each request and re-validates every redirect hop. To resist DNS rebinding it also **pins the connection** to a validated address: the aiohttp path wraps the connector in a `GuardedResolver` that re-checks each address at connect time, and the httpx (LangChain) path rewrites the request URL to the validated IP while carrying the real hostname in the `Host` header / `sni_hostname` extension.
+
+- **Surface:** `agentic_v2/security/url_guard.py` (`validate_url_pinned`, `check_resolved_address`), `agentic_v2/tools/builtin/http_ops.py` (`GuardedResolver`), `agentic_v2/langchain/tools.py` (`_pin_request_target`).
+- **Residual risk:** Pinning relies on the resolver returning the same answer the guard validated, and OS-level resolver caching is outside the application's control. A hostile authoritative DNS server with a near-zero TTL is a real threat model that application-layer checks alone cannot fully defeat. The guard is **defense-in-depth**, not a complete boundary.
+- **Risk:** In an environment where the server has network reachability to internal services, an attacker controlling DNS for a hostname a workflow fetches could, in principle, steer a connection to a private/metadata address on any code path not covered by pinning.
+- **Workaround:** For hostile-DNS threat models, add a **network-layer egress control** — an egress firewall, service-mesh authorization policy, or Kubernetes `NetworkPolicy` — restricting which addresses the server process may reach. Keep `AGENTIC_BLOCK_PRIVATE_IPS` on (the default).
+- **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented in [security-hardening.md §10](operations/security-hardening.md).
+- **Upstream fix:** None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.
 
 ---
 

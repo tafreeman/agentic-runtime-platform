@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
@@ -376,39 +377,125 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         return schemas
 
     async def _handle_tool_calls(self, tool_calls: list[dict[str, Any]]) -> None:
-        """Handle tool calls from model response."""
+        """Handle tool calls from a model response.
+
+        Delegates shape normalization and result serialization to the shared,
+        tested helpers in :mod:`agentic_v2.engine.tool_execution` so the agent
+        loop and the DAG/step tool loop agree on call parsing (OpenAI *and*
+        Anthropic shapes), parameter validation, and the compact-JSON tool
+        result contract (with size truncation).
+        """
+        # Imported inside the method: ``agentic_v2.engine`` imports from
+        # ``agentic_v2.agents`` (base re-exports via ``agent_to_step``), so a
+        # module-level import here would create a circular import.
+        from ..engine.tool_execution import normalize_tool_call
+
         for call in tool_calls[: self.config.max_tool_calls_per_turn]:
+            if not isinstance(call, dict):
+                continue
             self._tool_call_count += 1
 
-            tool_name = call.get("function", {}).get("name", "")
-            tool_args = call.get("function", {}).get("arguments", {})
-            call_id = call.get("id", str(uuid.uuid4()))
+            call_id, tool_name, tool_args = normalize_tool_call(call)
+            if not tool_name:
+                continue
 
             self._emit(
                 AgentEvent.TOOL_CALLED,
                 {"tool": tool_name, "args": tool_args, "call_id": call_id},
             )
 
-            # Execute tool
             tool = self._bound_tools.get(tool_name)
-            if tool:
-                try:
-                    result = await tool.execute(**tool_args)
-                    result_str = (
-                        str(result.data) if result.success else f"Error: {result.error}"
-                    )
-                except Exception as e:
-                    result_str = f"Error executing tool: {e}"
-            else:
-                result_str = f"Unknown tool: {tool_name}"
+            result_str = await self._dispatch_tool(
+                tool, tool_name, tool_args, call_id
+            )
 
             self._emit(
                 AgentEvent.TOOL_RESULT,
                 {"tool": tool_name, "result": result_str, "call_id": call_id},
             )
 
-            # Add to memory
+            # Add to memory as a tool-role message.
             self._memory.add_tool_result(tool_name, result_str, call_id)
+
+    async def _dispatch_tool(
+        self,
+        tool: BaseTool | None,
+        tool_name: str,
+        tool_args: dict[str, Any],
+        call_id: str,
+    ) -> str:
+        """Validate and execute one tool call, returning its serialized result.
+
+        Mirrors :func:`agentic_v2.engine.tool_execution._dispatch_single_tool_call`:
+        unknown tools, invalid parameters, and execution errors are returned as
+        a serialized ``{"success": False, "error": ...}`` payload rather than
+        raised, so the model receives feedback on the next turn.
+
+        ``call_id`` is the normalized id produced by ``normalize_tool_call`` in
+        the caller; it is threaded through so the approval request, the returned
+        payload, and the caller's ``TOOL_RESULT`` event all agree on one id.
+        """
+        # Imported here for the same circular-import constraint as the caller.
+        from ..engine.tool_execution import (
+            serialize_tool_result,
+            truncate_tool_result,
+        )
+
+        if tool is None:
+            return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
+
+        # Human-approval gate (P1 #12): consult before validation/execution.
+        # Denied (incl. fail-closed no-provider) returns a serialized error and
+        # the tool never runs. The denial detail (decision/provider) rides in the
+        # returned payload's metadata; ``_handle_tool_calls`` emits the single
+        # canonical TOOL_RESULT event from that payload, so we do NOT emit here.
+        from ..governance.approval import evaluate_tool_approval
+
+        approval = await evaluate_tool_approval(
+            tool=tool,
+            tool_name=tool_name,
+            tool_args=tool_args,
+            call_id=call_id,
+            agent_or_step=self.config.name,
+        )
+        if not approval.allowed:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": approval.error_message,
+                    "metadata": {
+                        "approval_required": True,
+                        "approval_decision": approval.decision.value,
+                        "approval_provider": approval.provider_label,
+                    },
+                }
+            )
+
+        validate = getattr(tool, "validate_parameters", None)
+        if callable(validate):
+            is_valid, validation_error = validate(**tool_args)
+            if not is_valid:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": (
+                            f"Invalid parameters for {tool_name}: {validation_error}"
+                        ),
+                    }
+                )
+
+        try:
+            tool_result = await tool.execute(**tool_args)
+            return serialize_tool_result(tool_result)
+        except Exception as exc:
+            return truncate_tool_result(
+                json.dumps(
+                    {
+                        "success": False,
+                        "error": f"Tool execution error for {tool_name}: {exc}",
+                    }
+                )
+            )
 
     # -------------------------------------------------------------------------
     # Abstract Methods

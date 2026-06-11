@@ -56,6 +56,7 @@ Hard constraints (ADR-023 functionality-preservation + accepted decisions):
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
 
 from executionkit.cost import CostTracker
@@ -312,9 +313,35 @@ def wrap_runtime_tool(
     """
     # Local import keeps this module import-light and avoids any import cycle
     # with the engine package at module load.
-    from .tool_execution import serialize_tool_result
+    from .tool_execution import call_id_for, serialize_tool_result
 
     async def _execute(**kwargs: Any) -> str:
+        # Human-approval gate (P1 #12): consult before execution, mirroring the
+        # native engine tool loop (``_dispatch_single_tool_call``). A denied call
+        # (including the fail-closed no-provider case) returns the same serialized
+        # error payload and the wrapped tool is never executed.
+        from ..governance.approval import evaluate_tool_approval
+
+        approval = await evaluate_tool_approval(
+            tool=tool,
+            tool_name=tool.name,
+            tool_args=kwargs,
+            call_id=call_id_for(tool.name, kwargs),
+            agent_or_step=None,
+        )
+        if not approval.allowed:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": approval.error_message,
+                    "metadata": {
+                        "approval_required": True,
+                        "approval_decision": approval.decision.value,
+                        "approval_provider": approval.provider_label,
+                    },
+                }
+            )
+
         tool_result = await tool.execute(**kwargs)
         return serialize_tool_result(tool_result)
 

@@ -102,6 +102,19 @@ class BaseTool(ABC):
         """Return usage examples (optional)."""
         return []
 
+    @property
+    def requires_approval(self) -> bool:
+        """Whether this tool needs human approval before each execution.
+
+        Default ``False`` (read-only and low-impact tools execute freely).
+        High-impact builtins (shell/exec, file writes/deletes, HTTP POST)
+        override this to ``True`` so the approval gate in
+        :mod:`agentic_v2.governance.approval` consults the registered
+        :class:`~agentic_v2.governance.approval.ApprovalProvider` before they
+        run. Settings can also force approval globally or per tool name.
+        """
+        return False
+
     def get_schema(self) -> ToolSchema:
         """Get the tool schema for agent consumption."""
         if self._schema is None:

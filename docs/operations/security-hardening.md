@@ -26,7 +26,7 @@ index see the [Configuration Reference](../configuration.md).
 | Shell tool allowlist | `AGENTIC_SHELL_ALLOWED_COMMANDS` | Not set — all shell commands disabled | — |
 | Sanitization fail-closed | `AGENTIC_SANITIZER_FAIL_OPEN` | Not set — 503 returned when layer unavailable | — |
 | CORS origins | `AGENTIC_CORS_ORIGINS` | localhost dev ports (5173, 8000, 8010) | — |
-| Block private IPs in HTTP tool | `AGENTIC_BLOCK_PRIVATE_IPS` | Not set — private IPs allowed | — |
+| Block private IPs in HTTP tool | `AGENTIC_BLOCK_PRIVATE_IPS` | Not set — private IPs **blocked** (default ON; set to `0` to opt out) | P1 #13 |
 
 ---
 
@@ -574,29 +574,153 @@ connections.
 
 ---
 
-## 10. HTTP tool private-IP block
+## 10. HTTP tool SSRF protection
 
 ### AGENTIC_BLOCK_PRIVATE_IPS
 
-The `http_ops` built-in tool makes outbound HTTP requests during workflow execution.
-Setting `AGENTIC_BLOCK_PRIVATE_IPS=1` prevents the tool from targeting private IP ranges
-(RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and link-local addresses
-(169.254.0.0/16).
+The `http_ops` built-in tool (and `langchain/tools.py`) make outbound HTTP requests
+during workflow execution. As of P1 #13, **SSRF protection is enabled by default** and
+covers:
+
+- Private/loopback/link-local/reserved IP literals (RFC 1918, RFC 4193, etc.)
+- DNS names: all returned addresses are resolved and checked — a hostname that resolves to
+  a private address is blocked even if it looks public.
+- Cloud metadata endpoints: `169.254.169.254`, `fd00:ec2::254`, `100.100.100.200`,
+  `metadata.google.internal` are always blocked regardless of the flag.
+- Redirect re-validation: each redirect hop is validated before following (max 5 hops).
+  Per RFC 7538/9110, `307`/`308` hops preserve the original method and body; `301`/`302`/`303`
+  degrade to a bodyless `GET`. Caller headers (e.g. `Authorization`) are sent on the first hop
+  only, so credentials are never replayed to a redirect target.
+- IPv4-mapped IPv6 (`::ffff:127.0.0.1`) is normalised before checking.
+- Legacy IPv4 literal forms the OS resolver accepts (decimal `2130706433`, hex `0x7f000001`,
+  octal `0177.0.0.1`, short `127.1`) are parsed and blocked — they cannot bypass the
+  string-based check.
+
+### DNS-rebinding residual risk
+
+The guard validates the hostname's resolved addresses *and* pins the connection to a
+validated address so the HTTP client cannot independently re-resolve to a different
+(private/metadata) IP between the check and the connect:
+
+- **aiohttp path** (`http_ops`): a `GuardedResolver` re-validates every address aiohttp is
+  about to dial at connect time.
+- **httpx path** (`langchain/tools`): `validate_url_pinned` rewrites the request URL to the
+  validated IP, carrying the real hostname in the `Host` header (and `sni_hostname` extension
+  for TLS), so the connection goes to the address that was checked.
+
+**Residual:** both mitigations rely on `getaddrinfo`/the resolver returning the same answer the
+guard validated. A sufficiently hostile authoritative DNS server with a near-zero TTL could, in
+principle, return a different address to the connect-time lookup than to the validation lookup on
+a path not covered by pinning, and OS-level resolver caching is not under the application's
+control. For threat models that include attacker-controlled DNS, treat the application guard as
+defense-in-depth and add a **network-layer egress control** (egress firewall / service-mesh
+authorization / network policy) restricting which addresses the server process may reach. See
+`docs/KNOWN_LIMITATIONS.md`.
 
 !!! warning "SSRF defense"
     In environments where the server process has network access to internal services
     (databases, metadata APIs, internal dashboards), an unauthenticated or malicious
-    workflow could exploit the HTTP tool to make requests to those services. Enabling
-    `AGENTIC_BLOCK_PRIVATE_IPS=1` closes this Server-Side Request Forgery (SSRF) vector.
+    workflow could exploit the HTTP tool to make requests to those services. The SSRF guard
+    is **on by default** — this is a security-critical default. Do not disable it without
+    applying compensating controls.
 
 ```bash
-# Strongly recommended for production
-AGENTIC_BLOCK_PRIVATE_IPS=1
+# On by default — opt out only with explicit justification
+# AGENTIC_BLOCK_PRIVATE_IPS=0  # disables private-IP blocking (NOT recommended)
 ```
 
-Leave unset only when workflows legitimately need to reach internal network endpoints and
-you have applied other controls (network policy, service mesh authorization) to restrict
-which internal addresses the server can reach.
+Set `AGENTIC_BLOCK_PRIVATE_IPS=0` only when workflows legitimately need to reach internal
+network endpoints and you have applied other controls (network policy, service mesh
+authorization) to restrict which internal addresses the server can reach. Note that
+cloud metadata endpoints (`169.254.169.254` etc.) remain blocked even when the flag
+is set to `0`.
+
+---
+
+## 11. Human approval gates
+
+As of P1 #12, high-impact tools no longer execute the instant the LLM emits a call: the
+tool-execution hot path consults an injectable **approval gate** first, at *both* dispatch
+points (the engine tool loop and the agent loop). The gate is implemented in
+`agentic_v2/governance/approval.py`.
+
+### Contract
+
+A tool requires approval when **any** of these is true (the triggers are OR'd):
+
+1. The tool opts in via `requires_approval = True` on its class.
+2. The global override `AGENTIC_REQUIRE_TOOL_APPROVAL=1` is set (gates **every** tool).
+3. The tool's name appears in `AGENTIC_APPROVAL_REQUIRED_TOOLS` (comma-separated).
+
+When a tool requires approval, the registered `ApprovalProvider` decides. The decision is
+returned to the model as a normal (failed) tool result, so a denied call does not crash the
+run — the model sees the denial and can adapt.
+
+### Fail-closed rule
+
+**If a tool requires approval and no provider is registered, the call is DENIED and never
+executes.** There is no implicit "allow when unconfigured" path. To run gated tools you must
+either register a provider or remove the requirement. The denial error tells the operator
+exactly that.
+
+### Default posture change
+
+The global override defaults **OFF** so existing flows are not broken. The real default
+posture change is the per-tool flag: the following high-impact builtins are gated **by
+default**, so a deployment that registers no provider will have these tools fail closed until
+one is wired:
+
+| Tool name | Why gated |
+|-----------|-----------|
+| `shell`, `shell_exec` | Arbitrary command execution |
+| `execute_python` | Arbitrary code execution |
+| `file_write`, `file_delete`, `file_move`, `file_copy`, `directory_create` | Filesystem mutation |
+| `http`, `http_post` | State-changing network requests |
+
+Read-only tools (`file_read`, `http_get`, search/transform/context ops) are **not** gated.
+
+### Provider examples
+
+```python
+from agentic_v2.governance import (
+    AutoApproveProvider,
+    AutoDenyProvider,
+    CallbackApprovalProvider,
+    PolicyApprovalProvider,
+    set_approval_provider,
+)
+
+# Trusted, non-interactive environment: approve everything (use with care).
+set_approval_provider(AutoApproveProvider())
+
+# Hard kill-switch: deny every gated call.
+set_approval_provider(AutoDenyProvider())
+
+# Allowlist by tool name.
+set_approval_provider(PolicyApprovalProvider(frozenset({"file_write"})))
+
+# Interactive / custom: a sync-or-async callable decides per request.
+async def decide(request):
+    from agentic_v2.governance import ApprovalDecision
+    # request.tool_name, request.call_id, request.agent_or_step are available;
+    # request.tool_args values longer than ~200 chars are redacted in its repr.
+    return ApprovalDecision.APPROVED if request.tool_name == "file_write" else ApprovalDecision.DENIED
+
+set_approval_provider(CallbackApprovalProvider(decide))
+```
+
+The provider is a **process-wide** module global — set it once at process start. Approval
+policy is an application-level posture decision; it is not bound per-task.
+
+!!! note "UI-driven pause/resume is a follow-on, not built yet"
+    This release ships the **programmatic** gate: an injectable provider consulted
+    synchronously on the hot path. A full UI-driven *pause-and-resume* flow — where a run
+    suspends, surfaces an approval prompt to a human operator in the web UI, and resumes on
+    their click — is an explicit follow-on. The wire-format events
+    (`approval_required`, `approval_decision` in `contracts/events.py`) already exist so the
+    server/UI can build on them, but the engine tool loop currently surfaces approval activity
+    via the logger and the serialized result metadata rather than streaming those events. See
+    [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md) §4.3.
 
 ---
 
@@ -625,8 +749,19 @@ AGENTIC_SHELL_ALLOWED_COMMANDS=
 # Remove or set to langchain if LangChain extras are installed.
 AGENTIC_DEFAULT_ADAPTER=native
 
-# ── SSRF defense ─────────────────────────────────────────────────────────────
-AGENTIC_BLOCK_PRIVATE_IPS=1
+# ── SSRF defense (default ON — no action required for production) ────────────
+# AGENTIC_BLOCK_PRIVATE_IPS is True by default. Unset or set to 1 to keep the
+# default. Set to 0 only if workflows must reach internal services and
+# compensating network controls are in place.
+# AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended
+
+# ── Human approval gates (§11) ───────────────────────────────────────────────
+# High-impact builtins (shell/exec, file writes/deletes, http/post) are gated by
+# default and FAIL CLOSED with no provider registered. Register an
+# ApprovalProvider at process start (see §11) before relying on those tools.
+# Optionally gate EVERYTHING, or extra tools by name:
+# AGENTIC_REQUIRE_TOOL_APPROVAL=1            # gate every tool call
+# AGENTIC_APPROVAL_REQUIRED_TOOLS=git_commit,deploy   # extra tools by name
 
 # ── Rate limiting ─────────────────────────────────────────────────────────────
 # Tune based on expected traffic. Lower for higher-security, lower-traffic

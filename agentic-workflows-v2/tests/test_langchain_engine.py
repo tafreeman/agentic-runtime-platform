@@ -110,7 +110,13 @@ class TestLangChainTooling:
         <a class="result__snippet">example snippet</a>
         """
 
-        monkeypatch.setattr("httpx.get", lambda *args, **kwargs: _Resp(html))
+        # Patch the guard helper directly: it owns transport details (client
+        # reuse, SSRF validation, IP pinning), keeping this test offline and
+        # focused on the domain-filter behavior.
+        monkeypatch.setattr(
+            "agentic_v2.langchain.tools._http_get_with_redirect_guard",
+            lambda url, **kwargs: _Resp(html),
+        )
 
         raw = web_search.invoke(
             {
@@ -136,7 +142,10 @@ class TestLangChainTooling:
         <a class="result__snippet">example snippet</a>
         """
 
-        monkeypatch.setattr("httpx.get", lambda *args, **kwargs: _Resp(html))
+        monkeypatch.setattr(
+            "agentic_v2.langchain.tools._http_get_with_redirect_guard",
+            lambda url, **kwargs: _Resp(html),
+        )
 
         raw = web_search.invoke(
             {

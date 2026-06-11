@@ -18,7 +18,9 @@ export type ExecutionEvent =
   | WorkflowEndEvent
   | ErrorEvent
   | EvaluationStartEvent
-  | EvaluationCompleteEvent;
+  | EvaluationCompleteEvent
+  | ApprovalRequiredEvent
+  | ApprovalDecisionEvent;
 
 export interface WorkflowStartEvent {
   run_id: string;
@@ -125,4 +127,32 @@ export interface EvaluationCompleteEvent {
   timestamp: string;
   type?: 'evaluation_complete';
   weighted_score: number;
+}
+/**
+ * Emitted when a tool call is gated and approval is being requested.
+ *
+ * Surfaced so a server/UI follow-on can drive an interactive pause/resume
+ * flow. ``tool_args`` are intentionally omitted from the wire shape — they may
+ * carry payloads and should not be broadcast unredacted.
+ */
+export interface ApprovalRequiredEvent {
+  agent_or_step?: string | null;
+  call_id: string;
+  run_id: string;
+  timestamp: string;
+  tool_name: string;
+  type?: 'approval_required';
+}
+/**
+ * Emitted once an approval request has been resolved (approved/denied).
+ */
+export interface ApprovalDecisionEvent {
+  agent_or_step?: string | null;
+  call_id: string;
+  decision: string;
+  provider?: string | null;
+  run_id: string;
+  timestamp: string;
+  tool_name: string;
+  type?: 'approval_decision';
 }

@@ -8,17 +8,78 @@ LangChain agent or ``ToolNode``.
 from __future__ import annotations
 
 import ast
-import ipaddress
+import asyncio
 import json
 import os
 import shlex
 import subprocess
 from pathlib import Path
-from urllib.parse import urlparse
+from typing import TYPE_CHECKING, Any
+from urllib.parse import urljoin
 
 from langchain_core.tools import tool
 
+if TYPE_CHECKING:
+    import httpx
+
+from ..security.url_guard import validate_url_pinned
+from ..settings import get_settings
 from ..utils.path_safety import ensure_within_base
+
+
+class _ApprovalGated:
+    """Marker tool exposing ``requires_approval=True`` to the shared gate.
+
+    The native ``@tool`` functions in this module are plain callables with no
+    runtime ``BaseTool`` instance, so we hand the approval gate a tiny stand-in
+    whose ``requires_approval`` flag forces the per-tool trigger. ``shell_run``
+    and ``file_write`` are shell-exec / filesystem-write tools and are always
+    treated as high-impact regardless of settings.
+    """
+
+    requires_approval = True
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+def _check_tool_approval(tool_name: str, tool_args: dict[str, Any]) -> str | None:
+    """Consult the human-approval gate from a synchronous ``@tool`` function.
+
+    Returns an error string (the adapter's ``ERROR: ...`` contract) when the
+    call is denied — including the fail-closed no-provider case — or ``None``
+    when execution may proceed. Mirrors the engine/agent dispatch points but
+    runs the async gate to completion from a sync caller.
+    """
+    from ..engine.tool_execution import call_id_for
+    from ..governance.approval import evaluate_tool_approval
+
+    async def _run() -> Any:
+        return await evaluate_tool_approval(
+            tool=_ApprovalGated(tool_name),
+            tool_name=tool_name,
+            tool_args=tool_args,
+            call_id=call_id_for(tool_name, tool_args),
+            agent_or_step=None,
+        )
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        # Inside an event loop (e.g. async LangGraph node) — run on a worker.
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            outcome = pool.submit(asyncio.run, _run()).result()
+    else:
+        outcome = asyncio.run(_run())
+
+    if not outcome.allowed:
+        return f"ERROR: {outcome.error_message}"
+    return None
 
 # ---------------------------------------------------------------------------
 # Security helpers
@@ -38,11 +99,11 @@ _SHELL_BLOCKLIST = frozenset(
     }
 )
 
-# Allowed URL schemes for HTTP tools.
-_ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
+# Maximum redirects to follow before giving up.
+_MAX_REDIRECTS = 5
 
-# AWS/Azure/GCP instance metadata service endpoint — blocked for SSRF safety.
-_IMDS_IP = "169.254.169.254"
+# HTTP status codes that carry a redirect Location header.
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 
 def _is_dangerous_command(command: str) -> bool:
@@ -51,50 +112,109 @@ def _is_dangerous_command(command: str) -> bool:
     return any(pattern in cmd_lower for pattern in _SHELL_BLOCKLIST)
 
 
-def _is_private_ip(hostname: str) -> bool:
-    """Return True if *hostname* resolves to a private/reserved IP address.
+def _http_get_with_redirect_guard(
+    url: str,
+    *,
+    timeout: float = 15,
+    headers: dict[str, str] | None = None,
+) -> "httpx.Response":
+    """Perform an HTTP GET following redirects with SSRF re-validation.
 
-    Only active when ``AGENTIC_BLOCK_PRIVATE_IPS=1``.
+    Args:
+        url: Initial URL to fetch.
+        timeout: Request timeout in seconds.
+        headers: Optional extra request headers (sent on the first hop only).
+
+    Returns:
+        The final ``httpx.Response``.
+
+    Raises:
+        ValueError: When a redirect target is blocked or the limit is exceeded.
     """
-    if os.environ.get("AGENTIC_BLOCK_PRIVATE_IPS", "").strip() != "1":
-        return False
-    try:
-        addr = ipaddress.ip_address(hostname)
-        return (
-            addr.is_private
-            or addr.is_loopback
-            or addr.is_link_local
-            or addr.is_reserved
-        )
-    except ValueError:
-        return False
+    import httpx
+
+    block_private = get_settings().agentic_block_private_ips
+    current_url = url
+
+    # One Client for all hops: reuses the connection pool instead of paying
+    # client + pool setup/teardown per redirect.
+    with httpx.Client(timeout=timeout) as client:
+        for hop in range(_MAX_REDIRECTS + 1):
+            request_url, host_header, extensions = _pin_request_target(
+                current_url, block_private=block_private
+            )
+
+            # Only send custom headers on the first hop — re-sending caller
+            # headers (Authorization, API keys) to a redirect target would
+            # leak credentials to whatever host the server redirects to.
+            hop_headers: dict[str, str] = dict(headers) if headers and hop == 0 else {}
+            if host_header:
+                hop_headers["Host"] = host_header
+
+            resp = client.get(
+                request_url,
+                follow_redirects=False,
+                headers=hop_headers or None,
+                extensions=extensions,
+            )
+
+            if resp.status_code not in _REDIRECT_STATUSES:
+                return resp
+
+            if hop == _MAX_REDIRECTS:
+                raise ValueError(
+                    f"Redirect limit ({_MAX_REDIRECTS}) exceeded. "
+                    "Request blocked to prevent redirect loops."
+                )
+
+            location = resp.headers.get("location", "")
+            if not location:
+                raise ValueError("Redirect response missing Location header.")
+
+            # Resolve relative redirects against the LOGICAL hostname URL,
+            # not the IP-pinned request URL.
+            current_url = urljoin(current_url, location)
+
+    raise ValueError("Unexpected exit from redirect loop.")  # pragma: no cover
 
 
-def _validate_url(url: str) -> str | None:
-    """Validate a URL for SSRF safety.
+def _pin_request_target(
+    current_url: str, *, block_private: bool
+) -> tuple[str, str | None, dict[str, Any] | None]:
+    """Validate *current_url* and pin the connection to the validated IP.
 
-    Returns error string or None.
+    The guard's pre-request DNS check and the HTTP client's own resolution are
+    otherwise two separate lookups — a rebinding domain can pass the first and
+    serve a private/metadata address to the second.  When the guard resolved a
+    DNS name, we connect to that exact address: the URL host is rewritten to
+    the pinned IP, the original hostname travels in the ``Host`` header, and
+    (for https) in the ``sni_hostname`` extension so TLS handshake + cert
+    verification still use the real hostname.
+
+    Returns ``(request_url, host_header, extensions)``; the last two are
+    ``None`` when no pinning applies (IP-literal host or guard flag off).
+
+    Raises:
+        ValueError: When the guard blocks the URL.
     """
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return "Invalid URL"
+    from urllib.parse import urlparse
 
-    if parsed.scheme not in _ALLOWED_URL_SCHEMES:
-        return f"URL scheme '{parsed.scheme}' not allowed. Only http/https permitted."
+    err, pinned_ip = validate_url_pinned(current_url, block_private=block_private)
+    if err:
+        raise ValueError(err)
+    if pinned_ip is None:
+        return current_url, None, None
+
+    parsed = urlparse(current_url)
+    ip_netloc = f"[{pinned_ip}]" if ":" in pinned_ip else pinned_ip
+    if parsed.port:
+        ip_netloc += f":{parsed.port}"
+    request_url = parsed._replace(netloc=ip_netloc).geturl()
 
     hostname = parsed.hostname or ""
-
-    # Block cloud metadata endpoints and private IPs
-    if _is_private_ip(hostname):
-        return f"Access to private/reserved IP address '{hostname}' is blocked."
-
-    # Block well-known metadata hostnames (including IMDS link-local IP).
-    metadata_hosts = {"metadata.google.internal", "metadata", _IMDS_IP}
-    if hostname.lower() in metadata_hosts:
-        return f"Access to metadata endpoint '{hostname}' is blocked."
-
-    return None
+    host_header = f"{hostname}:{parsed.port}" if parsed.port else hostname
+    extensions = {"sni_hostname": hostname} if parsed.scheme == "https" else None
+    return request_url, host_header, extensions
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +252,9 @@ def file_write(path: str, content: str) -> str:
         path: Destination file path.
         content: Text content to write.
     """
+    denied = _check_tool_approval("file_write", {"path": path, "content": content})
+    if denied:
+        return denied
     base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
     if base_dir:
         try:
@@ -226,6 +349,11 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
         cwd: Working directory (optional).
         timeout: Max seconds to wait (default 30).
     """
+    denied = _check_tool_approval(
+        "shell_run", {"command": command, "cwd": cwd, "timeout": timeout}
+    )
+    if denied:
+        return denied
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
     try:
@@ -349,17 +477,14 @@ def http_get(url: str) -> str:
     Args:
         url: The URL to fetch (http/https only, no private IPs).
     """
-    url_error = _validate_url(url)
-    if url_error:
-        return f"ERROR: {url_error}"
     try:
-        import httpx
-
-        resp = httpx.get(url, timeout=15, follow_redirects=True)
+        resp = _http_get_with_redirect_guard(url, timeout=15)
         text = resp.text
         if len(text) > 12000:
             text = text[:12000] + "\n... (truncated)"
         return text
+    except ValueError as e:
+        return f"ERROR: {e}"
     except Exception as e:
         return f"ERROR: {e}"
 
@@ -389,15 +514,17 @@ def _domain_matches(hostname: str, patterns: list[str]) -> bool:
 def _fetch_ddg_results(query: str) -> tuple[list, list]:
     """Fetch DuckDuckGo HTML for *query* and return (links, snippets) matches."""
     import re
-
-    import httpx
+    from urllib.parse import urlencode
 
     # DuckDuckGo HTML endpoint avoids API-key dependencies.
-    response = httpx.get(
-        "https://duckduckgo.com/html/",
-        params={"q": query},
+    # Redirects from duckduckgo.com are re-validated by _http_get_with_redirect_guard.
+    # Note: result URLs extracted from the HTML are NOT individually fetched here —
+    # they are returned as strings for the caller to use; only the DDG page itself
+    # (and any DDG-originated redirects) goes through the guard.
+    ddg_url = "https://duckduckgo.com/html/?" + urlencode({"q": query})
+    response = _http_get_with_redirect_guard(
+        ddg_url,
         timeout=20,
-        follow_redirects=True,
         headers={
             "User-Agent": (
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "

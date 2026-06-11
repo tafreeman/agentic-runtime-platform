@@ -178,9 +178,74 @@ async def _noop_step(_ctx: ExecutionContext) -> dict[str, Any]:
     return {}
 
 
+def _resolve_sample_item(ctx: ExecutionContext, item: Any) -> Any:
+    """Resolve a single ``samples`` entry, expanding ``${...}`` expressions.
+
+    List-valued step inputs are stored unresolved by the engine (only scalar
+    ``${...}`` strings are resolved during input preparation), so the consensus
+    step resolves each entry itself against the live context.
+    """
+    if isinstance(item, str):
+        expr = item.strip()
+        if expr.startswith("${") and expr.endswith("}"):
+            from .expressions import ExpressionEvaluator
+
+            return ExpressionEvaluator(ctx).resolve_variable(expr[2:-1].strip())
+    return item
+
+
+async def _gather_consensus_samples(ctx: ExecutionContext) -> list[Any]:
+    """Read and resolve the ``samples`` input for the consensus aggregator."""
+    raw_samples = await ctx.get("samples")
+    if raw_samples is None:
+        return []
+    if not isinstance(raw_samples, (list, tuple)):
+        raw_samples = [raw_samples]
+    return [_resolve_sample_item(ctx, item) for item in raw_samples]
+
+
+async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """Tier-0: majority-vote over ``samples`` and expose the winner for gating.
+
+    Reads from the child context:
+    - ``samples`` (required): a list of candidate values to vote on.  Entries
+      that are ``${...}`` expressions are resolved against the live context.
+    - ``min_agreement`` (optional, default ``0.0``): threshold for
+      ``meets_threshold``.
+    - ``mode`` (optional, default ``"majority"``): voting strategy.
+
+    Returns the consensus fields downstream steps and ``when:`` conditions can
+    branch on (e.g. ``when: ${steps.vote.outputs.meets_threshold}``).
+    """
+    from .consensus import majority_vote
+
+    samples = await _gather_consensus_samples(ctx)
+
+    min_agreement_raw = await ctx.get("min_agreement")
+    try:
+        min_agreement = float(min_agreement_raw) if min_agreement_raw is not None else 0.0
+    except (TypeError, ValueError):
+        min_agreement = 0.0
+
+    mode = await ctx.get("mode") or "majority"
+    if mode != "majority":
+        logger.warning("Unknown consensus mode '%s'; using majority vote.", mode)
+
+    result = majority_vote(samples, min_agreement=min_agreement)
+    return {
+        "winner": result.winner,
+        "agreement": result.agreement,
+        "votes": result.votes,
+        "tied": result.tied,
+        "meets_threshold": result.meets_threshold,
+        "total_samples": result.total_samples,
+    }
+
+
 # Registry of known tier-0 deterministic step implementations
 TIER0_REGISTRY: dict[str, StepFunction] = {
     "tier0_parser": _parse_code_step,
+    "tier0_consensus": _consensus_step,
 }
 
 

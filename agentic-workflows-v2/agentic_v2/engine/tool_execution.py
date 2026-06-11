@@ -21,6 +21,7 @@ Provides the full machinery for multi-turn tool-use inside LLM step functions:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from typing import Any
@@ -233,6 +234,22 @@ def parse_tool_args(raw_args: Any) -> dict[str, Any]:
 _parse_tool_args = parse_tool_args
 
 
+def call_id_for(tool_name: str, tool_args: dict[str, Any]) -> str:
+    """Deterministic, process-stable call id for a tool call.
+
+    Used as the fallback identifier when a provider omits a tool-call ``id``.
+    Derived with :mod:`hashlib` (not the builtin ``hash``) so the value is
+    stable across processes regardless of ``PYTHONHASHSEED``.
+    """
+    material = f"{tool_name}\x00{json.dumps(tool_args, sort_keys=True, default=str)}"
+    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+    return f"tool-{digest}"
+
+
+# Backward-compatibility / internal alias (kept for existing imports).
+_call_id_for = call_id_for
+
+
 def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
     """Normalize provider-specific tool call shape.
 
@@ -255,9 +272,7 @@ def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]
         call_id = str(call.get("id", "")).strip()
 
     if not call_id:
-        call_id = (
-            f"tool-{abs(hash((name, json.dumps(args, sort_keys=True, default=str)))):x}"
-        )
+        call_id = call_id_for(name, args)
 
     return call_id, name, args
 
@@ -431,10 +446,40 @@ async def _dispatch_single_tool_call(
     Errors (unknown tool, invalid params, execution failure) are returned as a
     serialized ``{"success": False, "error": ...}`` payload rather than raised,
     so the LLM receives feedback in the next turn.
+
+    Before validation/execution the human-approval gate
+    (:func:`agentic_v2.governance.approval.evaluate_tool_approval`) is consulted.
+    A gated tool that is denied (including the fail-closed no-provider case)
+    returns a serialized error and is never executed. This engine path has no
+    clean event channel here, so approval request/decision are surfaced via the
+    module logger (WARNING/INFO) and recorded in the serialized result metadata
+    rather than threading an event emitter through the tool loop.
     """
     if tool is None:
         return json.dumps(
             {"success": False, "error": f"Unknown tool: {tool_name}"}
+        )
+
+    from ..governance.approval import evaluate_tool_approval
+
+    approval = await evaluate_tool_approval(
+        tool=tool,
+        tool_name=tool_name,
+        tool_args=tool_args,
+        call_id=call_id_for(tool_name, tool_args),
+        agent_or_step=None,
+    )
+    if not approval.allowed:
+        return json.dumps(
+            {
+                "success": False,
+                "error": approval.error_message,
+                "metadata": {
+                    "approval_required": True,
+                    "approval_decision": approval.decision.value,
+                    "approval_provider": approval.provider_label,
+                },
+            }
         )
 
     is_valid, validation_error = tool.validate_parameters(**tool_args)
