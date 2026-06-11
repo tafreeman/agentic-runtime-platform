@@ -1,5 +1,116 @@
 {
   "$defs": {
+    "ApprovalDecisionEvent": {
+      "description": "Emitted once an approval request has been resolved (approved/denied).",
+      "properties": {
+        "agent_or_step": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Or Step"
+        },
+        "call_id": {
+          "title": "Call Id",
+          "type": "string"
+        },
+        "decision": {
+          "title": "Decision",
+          "type": "string"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "approval_decision",
+          "default": "approval_decision",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "tool_name",
+        "call_id",
+        "decision",
+        "timestamp"
+      ],
+      "title": "ApprovalDecisionEvent",
+      "type": "object"
+    },
+    "ApprovalRequiredEvent": {
+      "description": "Emitted when a tool call is gated and approval is being requested.\n\nSurfaced so a server/UI follow-on can drive an interactive pause/resume\nflow. ``tool_args`` are intentionally omitted from the wire shape \u2014 they may\ncarry payloads and should not be broadcast unredacted.",
+      "properties": {
+        "agent_or_step": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Or Step"
+        },
+        "call_id": {
+          "title": "Call Id",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "type": {
+          "const": "approval_required",
+          "default": "approval_required",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "tool_name",
+        "call_id",
+        "timestamp"
+      ],
+      "title": "ApprovalRequiredEvent",
+      "type": "object"
+    },
     "ErrorEvent": {
       "properties": {
         "error": {
@@ -591,6 +702,8 @@
   },
   "discriminator": {
     "mapping": {
+      "approval_decision": "#/$defs/ApprovalDecisionEvent",
+      "approval_required": "#/$defs/ApprovalRequiredEvent",
       "error": "#/$defs/ErrorEvent",
       "evaluation_complete": "#/$defs/EvaluationCompleteEvent",
       "evaluation_start": "#/$defs/EvaluationStartEvent",
@@ -630,6 +743,12 @@
     },
     {
       "$ref": "#/$defs/EvaluationCompleteEvent"
+    },
+    {
+      "$ref": "#/$defs/ApprovalRequiredEvent"
+    },
+    {
+      "$ref": "#/$defs/ApprovalDecisionEvent"
     }
   ]
 }
