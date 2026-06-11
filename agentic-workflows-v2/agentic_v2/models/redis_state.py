@@ -109,7 +109,10 @@ def _merge_stats_dicts(
     """
     merged = dict(local)
     for counter_field in _COUNTER_FIELDS:
-        delta = local.get(counter_field, 0) - baseline.get(counter_field, 0)
+        # Clamp at 0: a worker whose local counters were reset (restart,
+        # explicit stats reset) would otherwise produce a negative delta and
+        # incorrectly decrease the monotonic counters in Redis.
+        delta = max(0, local.get(counter_field, 0) - baseline.get(counter_field, 0))
         merged[counter_field] = redis_current.get(counter_field, 0) + delta
     return merged
 
@@ -439,10 +442,14 @@ class RedisCircuitBreakerStore:
                 so the full local counts are applied as the delta).
 
         Returns:
-            The new baseline (the merged counter values just written) on
-            success, or ``None`` if Redis is unavailable or every retry
-            conflicted. Callers should keep their old baseline when ``None``
-            is returned so the unpersisted delta is retried on the next save.
+            The new baseline (this worker's *local* counter snapshot whose
+            delta was just persisted — NOT the merged Redis value, which may
+            include other workers' counts; using the merged value as the
+            baseline would make the next ``local - baseline`` delta lose this
+            worker's subsequent increments) on success, or ``None`` if Redis
+            is unavailable or every retry conflicted. Callers should keep
+            their old baseline when ``None`` is returned so the unpersisted
+            delta is retried on the next save.
         """
         if not self._connected or self._client is None:
             return None
@@ -452,13 +459,24 @@ class RedisCircuitBreakerStore:
 
         for _ in range(_CAS_MAX_RETRIES):
             expected_json = await self._read_raw(model)
-            redis_current = (
-                json.loads(expected_json) if expected_json is not None else {}
-            )
+            try:
+                redis_current = (
+                    json.loads(expected_json) if expected_json is not None else {}
+                )
+            except json.JSONDecodeError:
+                # Corrupt value in Redis: treat as empty so the merged (valid)
+                # stats overwrite it. The CAS compare still uses the corrupt
+                # raw string, so the overwrite remains race-safe.
+                logger.warning(
+                    "Corrupt JSON in Redis for model=%s; overwriting with "
+                    "merged stats",
+                    model,
+                )
+                redis_current = {}
             merged = _merge_stats_dicts(redis_current, local_dict, effective_baseline)
 
             if await self.cas(model, expected_json, merged):
-                return {f: merged.get(f, 0) for f in _COUNTER_FIELDS}
+                return {f: local_dict.get(f, 0) for f in _COUNTER_FIELDS}
             # CAS conflict: another worker wrote between our read and write.
             # Loop to re-read and re-merge our delta on top of their value.
 

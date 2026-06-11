@@ -17,7 +17,9 @@ in :mod:`~agentic_v2.server.auth`).
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Response, status
 
@@ -25,9 +27,20 @@ from ...models.model_stats import CircuitState
 from ...settings import get_settings
 from ..models import DependencyStatus, HealthResponse, ReadinessResponse
 
+if TYPE_CHECKING:
+    from ...models.redis_state import RedisCircuitBreakerStore
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["health"])
+
+# Cached Redis store for the readiness probe. Creating and closing a fresh
+# connection pool on every probe would churn sockets (TIME_WAIT exhaustion
+# under frequent orchestrator health checks); instead the probe keeps one
+# store alive and only reconnects when the URL changes or the connection
+# drops. Guarded by a lock so concurrent probes don't race the (re)connect.
+_redis_probe_store: RedisCircuitBreakerStore | None = None
+_redis_probe_lock = asyncio.Lock()
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -54,17 +67,27 @@ async def _check_redis(redis_url: str | None) -> DependencyStatus:
     # Imported lazily so the endpoint works even without the redis extra.
     from ...models.redis_state import RedisCircuitBreakerStore
 
-    store = await RedisCircuitBreakerStore.connect(redis_url=redis_url)
-    try:
+    global _redis_probe_store
+    async with _redis_probe_lock:
+        store = _redis_probe_store
+        # (Re)connect only when there is no usable cached store: first probe,
+        # URL changed, or the previous connection was lost. A healthy cached
+        # store costs zero new connections per probe.
+        if store is None or store.redis_url != redis_url or not store.is_connected:
+            if store is not None:
+                await store.close()
+            store = await RedisCircuitBreakerStore.connect(redis_url=redis_url)
+            _redis_probe_store = store
+
         if store.is_connected and await store.health_check():
             return DependencyStatus(name="redis", status="ok")
+        # health_check marks the store disconnected on connection errors, so
+        # the next probe reconnects rather than reusing a dead pool.
         return DependencyStatus(
             name="redis",
             status="down",
             detail="Redis is configured but did not respond to PING",
         )
-    finally:
-        await store.close()
 
 
 def _routing_health() -> tuple[int, list[str]]:

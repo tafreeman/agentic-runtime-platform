@@ -61,6 +61,15 @@ class TestLivenessProbe:
 class TestReadinessProbe:
     """GET /api/health/ready inspects dependencies and routing health."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_probe_cache(self):
+        """Isolate the module-level cached Redis probe store between tests."""
+        import agentic_v2.server.routes.health as health_mod
+
+        health_mod._redis_probe_store = None
+        yield
+        health_mod._redis_probe_store = None
+
     def test_ready_200_when_redis_not_configured(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -101,6 +110,52 @@ class TestReadinessProbe:
         # The failed dependency is named, and no secret/URL is leaked in detail.
         assert redis_dep["name"] == "redis"
         assert "127.0.0.1" not in (redis_dep["detail"] or "")
+
+    def test_redis_probe_reuses_cached_connection(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Repeated probes reuse one Redis store instead of reconnecting.
+
+        PR #73 review (Gemini): a fresh connection pool per probe churns
+        sockets under frequent orchestrator health checks; the probe must
+        connect once and reuse the store while it stays healthy.
+        """
+        url = "redis://127.0.0.1:6399/0"
+        monkeypatch.setenv("REDIS_URL", url)
+        _settings_module.get_settings.cache_clear()
+
+        connect_calls = {"count": 0}
+
+        class _FakeStore:
+            redis_url = url
+            is_connected = True
+
+            async def health_check(self) -> bool:
+                return True
+
+            async def close(self) -> None:
+                pass
+
+        async def _fake_connect(redis_url: str, **_kwargs: object) -> _FakeStore:
+            connect_calls["count"] += 1
+            return _FakeStore()
+
+        from agentic_v2.models.redis_state import RedisCircuitBreakerStore
+
+        monkeypatch.setattr(RedisCircuitBreakerStore, "connect", _fake_connect)
+
+        for _ in range(3):
+            resp = client.get("/api/health/ready")
+            assert resp.status_code == 200
+            redis_dep = next(
+                d for d in resp.json()["dependencies"] if d["name"] == "redis"
+            )
+            assert redis_dep["status"] == "ok"
+
+        assert connect_calls["count"] == 1, (
+            f"Expected a single cached connection across probes, got "
+            f"{connect_calls['count']} connects — pool churn regression"
+        )
 
     def test_ready_surfaces_open_circuit_breakers(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch

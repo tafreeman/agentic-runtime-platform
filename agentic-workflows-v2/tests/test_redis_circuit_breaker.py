@@ -615,6 +615,110 @@ class TestConcurrentCircuitBreakerPersistence:
         await store_a.close()
         await store_b.close()
 
+    async def test_baseline_stays_local_after_cross_worker_merge(self):
+        """A worker's CAS baseline must be its LOCAL snapshot, not the merge.
+
+        PR #73 review (Codex): A persists 1 failure; B persists its first
+        failure on top (Redis == 2). If B's baseline were the merged value
+        (2) while its local count is 1, B's next failure (local == 2) would
+        produce a zero delta and that failure would never persist. With the
+        local-snapshot baseline the delta is 1 and Redis reaches 3.
+        """
+        server = fakeredis.FakeServer()
+        store_a = await _make_store_on_server(server)
+        store_b = await _make_store_on_server(server)
+        model = "gh:gpt-4o"
+
+        worker_a = SmartModelRouter(_redis_store=store_a, _auto_save=False)
+        worker_b = SmartModelRouter(_redis_store=store_b, _auto_save=False)
+
+        worker_a.record_failure(model, "error")
+        await worker_a._save_stats_to_redis()  # Redis: 1
+
+        worker_b.record_failure(model, "error")
+        await worker_b._save_stats_to_redis()  # Redis: 2 (A's 1 + B's 1)
+
+        worker_b.record_failure(model, "error")
+        await worker_b._save_stats_to_redis()  # B's new delta of 1 → Redis: 3
+
+        persisted = await self._persisted_failure_count(store_a, model)
+        assert persisted == 3, (
+            f"Expected 3 persisted failures, got {persisted} — merged-value "
+            f"baseline regression (worker's later increments lost)"
+        )
+
+        await store_a.close()
+        await store_b.close()
+
+    async def test_concurrent_saves_from_same_router_do_not_double_count(self):
+        """Two in-flight saves from one router must not re-apply the delta.
+
+        record_success/record_failure spawn fire-and-forget save tasks;
+        without the per-router save lock, both tasks read the same baseline,
+        compute the same delta, and the CAS retry path applies it twice.
+        """
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+        worker = SmartModelRouter(_redis_store=store, _auto_save=False)
+
+        worker.record_failure(model, "error")
+        worker.record_failure(model, "error")
+        await asyncio.gather(
+            worker._save_stats_to_redis(),
+            worker._save_stats_to_redis(),
+        )
+
+        loaded = await store.get(model)
+        assert loaded["failure_count"] == 2, (
+            f"Expected 2, got {loaded['failure_count']} — concurrent saves "
+            f"re-applied the same delta (missing save serialization)"
+        )
+
+        await store.close()
+
+    async def test_corrupt_redis_json_is_overwritten_not_fatal(self):
+        """Corrupt JSON in Redis is replaced by merged stats, not a crash."""
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+        await store._client.set(store._make_key(model), "{not-valid-json")
+
+        stats = ModelStats(model_id=model)
+        stats.record_failure("error")
+
+        new_baseline = await store.save_stats_cas(model, stats, None)
+        assert new_baseline is not None, "save must succeed despite corruption"
+
+        loaded = await store.get(model)
+        assert loaded is not None
+        assert loaded["failure_count"] == 1
+
+        await store.close()
+
+    async def test_negative_delta_clamped_after_local_reset(self):
+        """A reset worker (local < baseline) must not decrease Redis counters."""
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+
+        seeded = ModelStats(model_id=model)
+        for _ in range(5):
+            seeded.record_failure("error")
+        assert await store.save_stats_cas(model, seeded, None) is not None
+
+        # Worker restarts: local stats reset to 1 failure, but its stale
+        # baseline still claims 5 were persisted → raw delta would be -4.
+        fresh = ModelStats(model_id=model)
+        fresh.record_failure("error")
+        stale_baseline = {"failure_count": 5}
+        assert await store.save_stats_cas(model, fresh, stale_baseline) is not None
+
+        loaded = await store.get(model)
+        assert loaded["failure_count"] == 5, (
+            f"Expected monotonic counter to stay at 5, got "
+            f"{loaded['failure_count']} — negative delta was applied"
+        )
+
+        await store.close()
+
 
 # ============================================================================
 # Unit Tests — ModelStats serialization through Redis

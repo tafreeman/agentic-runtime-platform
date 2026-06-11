@@ -148,6 +148,15 @@ class SmartModelRouter(ModelRouter):
         default_factory=set, repr=False
     )
 
+    # Serializes _save_stats_to_redis: record_success/record_failure spawn a
+    # fire-and-forget save task each, and two concurrent saves for the same
+    # model would read the same baseline, compute the same delta, and CAS it
+    # twice (over-counting). The lock makes the second save wait, so it sees
+    # the updated baseline and persists only the genuinely new delta.
+    _redis_save_lock: asyncio.Lock = field(
+        default_factory=asyncio.Lock, repr=False
+    )
+
     # Last model selection result (for degraded-mode inspection)
     _last_selection: ModelSelection | None = field(default=None, repr=False)
 
@@ -612,16 +621,20 @@ class SmartModelRouter(ModelRouter):
         if self._redis_store is None:
             return
 
-        all_persisted = True
-        for model, stats in self.model_stats.items():
-            baseline = self._redis_counter_baselines.get(model)
-            new_baseline = await self._redis_store.save_stats_cas(
-                model, stats, baseline
-            )
-            if new_baseline is None:
-                all_persisted = False
-            else:
-                self._redis_counter_baselines[model] = new_baseline
+        # Serialize saves from this router: without the lock, two in-flight
+        # save tasks would both compute deltas from the same baseline and
+        # apply them twice (see _redis_save_lock).
+        async with self._redis_save_lock:
+            all_persisted = True
+            for model, stats in self.model_stats.items():
+                baseline = self._redis_counter_baselines.get(model)
+                new_baseline = await self._redis_store.save_stats_cas(
+                    model, stats, baseline
+                )
+                if new_baseline is None:
+                    all_persisted = False
+                else:
+                    self._redis_counter_baselines[model] = new_baseline
 
         if not all_persisted:
             logger.debug("Redis CAS save incomplete; local file fallback will be used")
