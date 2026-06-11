@@ -2730,15 +2730,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-http-tool-private-ip-block" class="md-nav__link">
+  <a href="#10-http-tool-ssrf-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. HTTP tool private-IP block
+        10. HTTP tool SSRF protection
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="10. HTTP tool private-IP block">
+    <nav class="md-nav" aria-label="10. HTTP tool SSRF protection">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2746,6 +2746,78 @@
     <span class="md-ellipsis">
       
         AGENTIC_BLOCK_PRIVATE_IPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dns-rebinding-residual-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS-rebinding residual risk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-human-approval-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Human approval gates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Human approval gates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fail-closed-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-posture-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default posture change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider examples
       
     </span>
   </a>
@@ -3804,15 +3876,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-http-tool-private-ip-block" class="md-nav__link">
+  <a href="#10-http-tool-ssrf-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. HTTP tool private-IP block
+        10. HTTP tool SSRF protection
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="10. HTTP tool private-IP block">
+    <nav class="md-nav" aria-label="10. HTTP tool SSRF protection">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3820,6 +3892,78 @@
     <span class="md-ellipsis">
       
         AGENTIC_BLOCK_PRIVATE_IPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dns-rebinding-residual-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DNS-rebinding residual risk
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-human-approval-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Human approval gates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Human approval gates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contract
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fail-closed-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fail-closed rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-posture-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default posture change
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#provider-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider examples
       
     </span>
   </a>
@@ -3975,8 +4119,8 @@ index see the <a href="../../configuration/">Configuration Reference</a>.</p>
 <tr>
 <td>Block private IPs in HTTP tool</td>
 <td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
-<td>Not set — private IPs allowed</td>
-<td>—</td>
+<td>Not set — private IPs <strong>blocked</strong> (default ON; set to <code>0</code> to opt out)</td>
+<td>P1 #13</td>
 </tr>
 </tbody>
 </table>
@@ -4433,75 +4577,215 @@ always allowed for WebSocket connections — the Vite dev server starts on dynam
 <p>Non-browser clients that omit the <code>Origin</code> header are always allowed for WebSocket
 connections.</p>
 <hr />
-<h2 id="10-http-tool-private-ip-block">10. HTTP tool private-IP block<a class="headerlink" href="#10-http-tool-private-ip-block" title="Permanent link">&para;</a></h2>
+<h2 id="10-http-tool-ssrf-protection">10. HTTP tool SSRF protection<a class="headerlink" href="#10-http-tool-ssrf-protection" title="Permanent link">&para;</a></h2>
 <h3 id="agentic_block_private_ips">AGENTIC_BLOCK_PRIVATE_IPS<a class="headerlink" href="#agentic_block_private_ips" title="Permanent link">&para;</a></h3>
-<p>The <code>http_ops</code> built-in tool makes outbound HTTP requests during workflow execution.
-Setting <code>AGENTIC_BLOCK_PRIVATE_IPS=1</code> prevents the tool from targeting private IP ranges
-(RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) and link-local addresses
-(169.254.0.0/16).</p>
+<p>The <code>http_ops</code> built-in tool (and <code>langchain/tools.py</code>) make outbound HTTP requests
+during workflow execution. As of P1 #13, <strong>SSRF protection is enabled by default</strong> and
+covers:</p>
+<ul>
+<li>Private/loopback/link-local/reserved IP literals (RFC 1918, RFC 4193, etc.)</li>
+<li>DNS names: all returned addresses are resolved and checked — a hostname that resolves to
+  a private address is blocked even if it looks public.</li>
+<li>Cloud metadata endpoints: <code>169.254.169.254</code>, <code>fd00:ec2::254</code>, <code>100.100.100.200</code>,
+  <code>metadata.google.internal</code> are always blocked regardless of the flag.</li>
+<li>Redirect re-validation: each redirect hop is validated before following (max 5 hops).
+  Per RFC 7538/9110, <code>307</code>/<code>308</code> hops preserve the original method and body; <code>301</code>/<code>302</code>/<code>303</code>
+  degrade to a bodyless <code>GET</code>. Caller headers (e.g. <code>Authorization</code>) are sent on the first hop
+  only, so credentials are never replayed to a redirect target.</li>
+<li>IPv4-mapped IPv6 (<code>::ffff:127.0.0.1</code>) is normalised before checking.</li>
+<li>Legacy IPv4 literal forms the OS resolver accepts (decimal <code>2130706433</code>, hex <code>0x7f000001</code>,
+  octal <code>0177.0.0.1</code>, short <code>127.1</code>) are parsed and blocked — they cannot bypass the
+  string-based check.</li>
+</ul>
+<h3 id="dns-rebinding-residual-risk">DNS-rebinding residual risk<a class="headerlink" href="#dns-rebinding-residual-risk" title="Permanent link">&para;</a></h3>
+<p>The guard validates the hostname's resolved addresses <em>and</em> pins the connection to a
+validated address so the HTTP client cannot independently re-resolve to a different
+(private/metadata) IP between the check and the connect:</p>
+<ul>
+<li><strong>aiohttp path</strong> (<code>http_ops</code>): a <code>GuardedResolver</code> re-validates every address aiohttp is
+  about to dial at connect time.</li>
+<li><strong>httpx path</strong> (<code>langchain/tools</code>): <code>validate_url_pinned</code> rewrites the request URL to the
+  validated IP, carrying the real hostname in the <code>Host</code> header (and <code>sni_hostname</code> extension
+  for TLS), so the connection goes to the address that was checked.</li>
+</ul>
+<p><strong>Residual:</strong> both mitigations rely on <code>getaddrinfo</code>/the resolver returning the same answer the
+guard validated. A sufficiently hostile authoritative DNS server with a near-zero TTL could, in
+principle, return a different address to the connect-time lookup than to the validation lookup on
+a path not covered by pinning, and OS-level resolver caching is not under the application's
+control. For threat models that include attacker-controlled DNS, treat the application guard as
+defense-in-depth and add a <strong>network-layer egress control</strong> (egress firewall / service-mesh
+authorization / network policy) restricting which addresses the server process may reach. See
+<code>docs/KNOWN_LIMITATIONS.md</code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">SSRF defense</p>
 <p>In environments where the server process has network access to internal services
 (databases, metadata APIs, internal dashboards), an unauthenticated or malicious
-workflow could exploit the HTTP tool to make requests to those services. Enabling
-<code>AGENTIC_BLOCK_PRIVATE_IPS=1</code> closes this Server-Side Request Forgery (SSRF) vector.</p>
+workflow could exploit the HTTP tool to make requests to those services. The SSRF guard
+is <strong>on by default</strong> — this is a security-critical default. Do not disable it without
+applying compensating controls.</p>
 </div>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Strongly recommended for production</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># On by default — opt out only with explicit justification</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS=0  # disables private-IP blocking (NOT recommended)</span>
 </span></code></pre></div>
-<p>Leave unset only when workflows legitimately need to reach internal network endpoints and
-you have applied other controls (network policy, service mesh authorization) to restrict
-which internal addresses the server can reach.</p>
+<p>Set <code>AGENTIC_BLOCK_PRIVATE_IPS=0</code> only when workflows legitimately need to reach internal
+network endpoints and you have applied other controls (network policy, service mesh
+authorization) to restrict which internal addresses the server can reach. Note that
+cloud metadata endpoints (<code>169.254.169.254</code> etc.) remain blocked even when the flag
+is set to <code>0</code>.</p>
+<hr />
+<h2 id="11-human-approval-gates">11. Human approval gates<a class="headerlink" href="#11-human-approval-gates" title="Permanent link">&para;</a></h2>
+<p>As of P1 #12, high-impact tools no longer execute the instant the LLM emits a call: the
+tool-execution hot path consults an injectable <strong>approval gate</strong> first, at <em>both</em> dispatch
+points (the engine tool loop and the agent loop). The gate is implemented in
+<code>agentic_v2/governance/approval.py</code>.</p>
+<h3 id="contract">Contract<a class="headerlink" href="#contract" title="Permanent link">&para;</a></h3>
+<p>A tool requires approval when <strong>any</strong> of these is true (the triggers are OR'd):</p>
+<ol>
+<li>The tool opts in via <code>requires_approval = True</code> on its class.</li>
+<li>The global override <code>AGENTIC_REQUIRE_TOOL_APPROVAL=1</code> is set (gates <strong>every</strong> tool).</li>
+<li>The tool's name appears in <code>AGENTIC_APPROVAL_REQUIRED_TOOLS</code> (comma-separated).</li>
+</ol>
+<p>When a tool requires approval, the registered <code>ApprovalProvider</code> decides. The decision is
+returned to the model as a normal (failed) tool result, so a denied call does not crash the
+run — the model sees the denial and can adapt.</p>
+<h3 id="fail-closed-rule">Fail-closed rule<a class="headerlink" href="#fail-closed-rule" title="Permanent link">&para;</a></h3>
+<p><strong>If a tool requires approval and no provider is registered, the call is DENIED and never
+executes.</strong> There is no implicit "allow when unconfigured" path. To run gated tools you must
+either register a provider or remove the requirement. The denial error tells the operator
+exactly that.</p>
+<h3 id="default-posture-change">Default posture change<a class="headerlink" href="#default-posture-change" title="Permanent link">&para;</a></h3>
+<p>The global override defaults <strong>OFF</strong> so existing flows are not broken. The real default
+posture change is the per-tool flag: the following high-impact builtins are gated <strong>by
+default</strong>, so a deployment that registers no provider will have these tools fail closed until
+one is wired:</p>
+<table>
+<thead>
+<tr>
+<th>Tool name</th>
+<th>Why gated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shell</code>, <code>shell_exec</code></td>
+<td>Arbitrary command execution</td>
+</tr>
+<tr>
+<td><code>execute_python</code></td>
+<td>Arbitrary code execution</td>
+</tr>
+<tr>
+<td><code>file_write</code>, <code>file_delete</code>, <code>file_move</code>, <code>file_copy</code>, <code>directory_create</code></td>
+<td>Filesystem mutation</td>
+</tr>
+<tr>
+<td><code>http</code>, <code>http_post</code></td>
+<td>State-changing network requests</td>
+</tr>
+</tbody>
+</table>
+<p>Read-only tools (<code>file_read</code>, <code>http_get</code>, search/transform/context ops) are <strong>not</strong> gated.</p>
+<h3 id="provider-examples">Provider examples<a class="headerlink" href="#provider-examples" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">AutoApproveProvider</span><span class="p">,</span>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">AutoDenyProvider</span><span class="p">,</span>
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">CallbackApprovalProvider</span><span class="p">,</span>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="n">PolicyApprovalProvider</span><span class="p">,</span>
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">set_approval_provider</span><span class="p">,</span>
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="p">)</span>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="c1"># Trusted, non-interactive environment: approve everything (use with care).</span>
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">AutoApproveProvider</span><span class="p">())</span>
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Hard kill-switch: deny every gated call.</span>
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">AutoDenyProvider</span><span class="p">())</span>
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
+</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="c1"># Allowlist by tool name.</span>
+</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">PolicyApprovalProvider</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;file_write&quot;</span><span class="p">})))</span>
+</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>
+</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="c1"># Interactive / custom: a sync-or-async callable decides per request.</span>
+</span><span id="__span-26-19"><a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+</span><span id="__span-26-20"><a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApprovalDecision</span>
+</span><span id="__span-26-21"><a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>    <span class="c1"># request.tool_name, request.call_id, request.agent_or_step are available;</span>
+</span><span id="__span-26-22"><a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>    <span class="c1"># request.tool_args values longer than ~200 chars are redacted in its repr.</span>
+</span><span id="__span-26-23"><a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a>    <span class="k">return</span> <span class="n">ApprovalDecision</span><span class="o">.</span><span class="n">APPROVED</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">tool_name</span> <span class="o">==</span> <span class="s2">&quot;file_write&quot;</span> <span class="k">else</span> <span class="n">ApprovalDecision</span><span class="o">.</span><span class="n">DENIED</span>
+</span><span id="__span-26-24"><a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a>
+</span><span id="__span-26-25"><a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">CallbackApprovalProvider</span><span class="p">(</span><span class="n">decide</span><span class="p">))</span>
+</span></code></pre></div>
+<p>The provider is a <strong>process-wide</strong> module global — set it once at process start. Approval
+policy is an application-level posture decision; it is not bound per-task.</p>
+<div class="admonition note">
+<p class="admonition-title">UI-driven pause/resume is a follow-on, not built yet</p>
+<p>This release ships the <strong>programmatic</strong> gate: an injectable provider consulted
+synchronously on the hot path. A full UI-driven <em>pause-and-resume</em> flow — where a run
+suspends, surfaces an approval prompt to a human operator in the web UI, and resumes on
+their click — is an explicit follow-on. The wire-format events
+(<code>approval_required</code>, <code>approval_decision</code> in <code>contracts/events.py</code>) already exist so the
+server/UI can build on them, but the engine tool loop currently surfaces approval activity
+via the logger and the serialized result metadata rather than streaming those events. See
+<a href="../../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> §4.3.</p>
+</div>
 <hr />
 <h2 id="reference-deployment-posture">Reference deployment posture<a class="headerlink" href="#reference-deployment-posture" title="Permanent link">&para;</a></h2>
 <p>The following block represents the minimum recommended configuration for a hardened,
 internet-exposed production instance. Copy and adapt it to your environment.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># ── Authentication ────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="c1"># Generate with: openssl rand -hex 32</span>
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;<span class="m">32</span>-byte-random-hex&gt;
-</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>
-</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="c1"># ── CORS ─────────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
-</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>
-</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a><span class="c1"># ── Filesystem sandbox ────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
-</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>
-</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a><span class="c1"># ── Shell tool ────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Empty = all shell commands disabled (recommended unless workflows require shell)</span>
-</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
-</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
-</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="c1"># ── Engine ───────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="c1"># Use native engine to avoid LangChain extras requirement.</span>
-</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="c1"># Remove or set to langchain if LangChain extras are installed.</span>
-</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
-</span><span id="__span-26-19"><a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>
-</span><span id="__span-26-20"><a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a><span class="c1"># ── SSRF defense ─────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-21"><a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-26-22"><a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>
-</span><span id="__span-26-23"><a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a><span class="c1"># ── Rate limiting ─────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-24"><a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a><span class="c1"># Tune based on expected traffic. Lower for higher-security, lower-traffic</span>
-</span><span id="__span-26-25"><a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a><span class="c1"># environments. Raise with caution — in-process only, see §2.</span>
-</span><span id="__span-26-26"><a id="__codelineno-26-26" name="__codelineno-26-26" href="#__codelineno-26-26"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">30</span>/minute
-</span><span id="__span-26-27"><a id="__codelineno-26-27" name="__codelineno-26-27" href="#__codelineno-26-27"></a>
-</span><span id="__span-26-28"><a id="__codelineno-26-28" name="__codelineno-26-28" href="#__codelineno-26-28"></a><span class="c1"># ── Auth brute-force throttle ─────────────────────────────────────────────────</span>
-</span><span id="__span-26-29"><a id="__codelineno-26-29" name="__codelineno-26-29" href="#__codelineno-26-29"></a><span class="c1"># Window (seconds), threshold (failures), lockout (seconds)</span>
-</span><span id="__span-26-30"><a id="__codelineno-26-30" name="__codelineno-26-30" href="#__codelineno-26-30"></a><span class="c1"># Defaults are 60 / 5 / 300; values below are more aggressive for production.</span>
-</span><span id="__span-26-31"><a id="__codelineno-26-31" name="__codelineno-26-31" href="#__codelineno-26-31"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">60</span>
-</span><span id="__span-26-32"><a id="__codelineno-26-32" name="__codelineno-26-32" href="#__codelineno-26-32"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">5</span>
-</span><span id="__span-26-33"><a id="__codelineno-26-33" name="__codelineno-26-33" href="#__codelineno-26-33"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">600</span>
-</span><span id="__span-26-34"><a id="__codelineno-26-34" name="__codelineno-26-34" href="#__codelineno-26-34"></a>
-</span><span id="__span-26-35"><a id="__codelineno-26-35" name="__codelineno-26-35" href="#__codelineno-26-35"></a><span class="c1"># ── Sanitization ──────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-36"><a id="__codelineno-26-36" name="__codelineno-26-36" href="#__codelineno-26-36"></a><span class="c1"># Leave AGENTIC_SANITIZER_FAIL_OPEN unset (fail-closed is the safe default).</span>
-</span><span id="__span-26-37"><a id="__codelineno-26-37" name="__codelineno-26-37" href="#__codelineno-26-37"></a><span class="c1"># AGENTIC_SANITIZER_FAIL_OPEN=   # do not set</span>
-</span><span id="__span-26-38"><a id="__codelineno-26-38" name="__codelineno-26-38" href="#__codelineno-26-38"></a>
-</span><span id="__span-26-39"><a id="__codelineno-26-39" name="__codelineno-26-39" href="#__codelineno-26-39"></a><span class="c1"># ── Observability ─────────────────────────────────────────────────────────────</span>
-</span><span id="__span-26-40"><a id="__codelineno-26-40" name="__codelineno-26-40" href="#__codelineno-26-40"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-26-41"><a id="__codelineno-26-41" name="__codelineno-26-41" href="#__codelineno-26-41"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://otel-collector:4317
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># ── Authentication ────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="c1"># Generate with: openssl rand -hex 32</span>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;<span class="m">32</span>-byte-random-hex&gt;
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1"># ── CORS ─────────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
+</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>
+</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1"># ── Filesystem sandbox ────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-9"><a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
+</span><span id="__span-27-10"><a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>
+</span><span id="__span-27-11"><a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="c1"># ── Shell tool ────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-12"><a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Empty = all shell commands disabled (recommended unless workflows require shell)</span>
+</span><span id="__span-27-13"><a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
+</span><span id="__span-27-14"><a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>
+</span><span id="__span-27-15"><a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a><span class="c1"># ── Engine ───────────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-16"><a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="c1"># Use native engine to avoid LangChain extras requirement.</span>
+</span><span id="__span-27-17"><a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a><span class="c1"># Remove or set to langchain if LangChain extras are installed.</span>
+</span><span id="__span-27-18"><a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
+</span><span id="__span-27-19"><a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a>
+</span><span id="__span-27-20"><a id="__codelineno-27-20" name="__codelineno-27-20" href="#__codelineno-27-20"></a><span class="c1"># ── SSRF defense (default ON — no action required for production) ────────────</span>
+</span><span id="__span-27-21"><a id="__codelineno-27-21" name="__codelineno-27-21" href="#__codelineno-27-21"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS is True by default. Unset or set to 1 to keep the</span>
+</span><span id="__span-27-22"><a id="__codelineno-27-22" name="__codelineno-27-22" href="#__codelineno-27-22"></a><span class="c1"># default. Set to 0 only if workflows must reach internal services and</span>
+</span><span id="__span-27-23"><a id="__codelineno-27-23" name="__codelineno-27-23" href="#__codelineno-27-23"></a><span class="c1"># compensating network controls are in place.</span>
+</span><span id="__span-27-24"><a id="__codelineno-27-24" name="__codelineno-27-24" href="#__codelineno-27-24"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended</span>
+</span><span id="__span-27-25"><a id="__codelineno-27-25" name="__codelineno-27-25" href="#__codelineno-27-25"></a>
+</span><span id="__span-27-26"><a id="__codelineno-27-26" name="__codelineno-27-26" href="#__codelineno-27-26"></a><span class="c1"># ── Human approval gates (§11) ───────────────────────────────────────────────</span>
+</span><span id="__span-27-27"><a id="__codelineno-27-27" name="__codelineno-27-27" href="#__codelineno-27-27"></a><span class="c1"># High-impact builtins (shell/exec, file writes/deletes, http/post) are gated by</span>
+</span><span id="__span-27-28"><a id="__codelineno-27-28" name="__codelineno-27-28" href="#__codelineno-27-28"></a><span class="c1"># default and FAIL CLOSED with no provider registered. Register an</span>
+</span><span id="__span-27-29"><a id="__codelineno-27-29" name="__codelineno-27-29" href="#__codelineno-27-29"></a><span class="c1"># ApprovalProvider at process start (see §11) before relying on those tools.</span>
+</span><span id="__span-27-30"><a id="__codelineno-27-30" name="__codelineno-27-30" href="#__codelineno-27-30"></a><span class="c1"># Optionally gate EVERYTHING, or extra tools by name:</span>
+</span><span id="__span-27-31"><a id="__codelineno-27-31" name="__codelineno-27-31" href="#__codelineno-27-31"></a><span class="c1"># AGENTIC_REQUIRE_TOOL_APPROVAL=1            # gate every tool call</span>
+</span><span id="__span-27-32"><a id="__codelineno-27-32" name="__codelineno-27-32" href="#__codelineno-27-32"></a><span class="c1"># AGENTIC_APPROVAL_REQUIRED_TOOLS=git_commit,deploy   # extra tools by name</span>
+</span><span id="__span-27-33"><a id="__codelineno-27-33" name="__codelineno-27-33" href="#__codelineno-27-33"></a>
+</span><span id="__span-27-34"><a id="__codelineno-27-34" name="__codelineno-27-34" href="#__codelineno-27-34"></a><span class="c1"># ── Rate limiting ─────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-35"><a id="__codelineno-27-35" name="__codelineno-27-35" href="#__codelineno-27-35"></a><span class="c1"># Tune based on expected traffic. Lower for higher-security, lower-traffic</span>
+</span><span id="__span-27-36"><a id="__codelineno-27-36" name="__codelineno-27-36" href="#__codelineno-27-36"></a><span class="c1"># environments. Raise with caution — in-process only, see §2.</span>
+</span><span id="__span-27-37"><a id="__codelineno-27-37" name="__codelineno-27-37" href="#__codelineno-27-37"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">30</span>/minute
+</span><span id="__span-27-38"><a id="__codelineno-27-38" name="__codelineno-27-38" href="#__codelineno-27-38"></a>
+</span><span id="__span-27-39"><a id="__codelineno-27-39" name="__codelineno-27-39" href="#__codelineno-27-39"></a><span class="c1"># ── Auth brute-force throttle ─────────────────────────────────────────────────</span>
+</span><span id="__span-27-40"><a id="__codelineno-27-40" name="__codelineno-27-40" href="#__codelineno-27-40"></a><span class="c1"># Window (seconds), threshold (failures), lockout (seconds)</span>
+</span><span id="__span-27-41"><a id="__codelineno-27-41" name="__codelineno-27-41" href="#__codelineno-27-41"></a><span class="c1"># Defaults are 60 / 5 / 300; values below are more aggressive for production.</span>
+</span><span id="__span-27-42"><a id="__codelineno-27-42" name="__codelineno-27-42" href="#__codelineno-27-42"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">60</span>
+</span><span id="__span-27-43"><a id="__codelineno-27-43" name="__codelineno-27-43" href="#__codelineno-27-43"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">5</span>
+</span><span id="__span-27-44"><a id="__codelineno-27-44" name="__codelineno-27-44" href="#__codelineno-27-44"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">600</span>
+</span><span id="__span-27-45"><a id="__codelineno-27-45" name="__codelineno-27-45" href="#__codelineno-27-45"></a>
+</span><span id="__span-27-46"><a id="__codelineno-27-46" name="__codelineno-27-46" href="#__codelineno-27-46"></a><span class="c1"># ── Sanitization ──────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-47"><a id="__codelineno-27-47" name="__codelineno-27-47" href="#__codelineno-27-47"></a><span class="c1"># Leave AGENTIC_SANITIZER_FAIL_OPEN unset (fail-closed is the safe default).</span>
+</span><span id="__span-27-48"><a id="__codelineno-27-48" name="__codelineno-27-48" href="#__codelineno-27-48"></a><span class="c1"># AGENTIC_SANITIZER_FAIL_OPEN=   # do not set</span>
+</span><span id="__span-27-49"><a id="__codelineno-27-49" name="__codelineno-27-49" href="#__codelineno-27-49"></a>
+</span><span id="__span-27-50"><a id="__codelineno-27-50" name="__codelineno-27-50" href="#__codelineno-27-50"></a><span class="c1"># ── Observability ─────────────────────────────────────────────────────────────</span>
+</span><span id="__span-27-51"><a id="__codelineno-27-51" name="__codelineno-27-51" href="#__codelineno-27-51"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-27-52"><a id="__codelineno-27-52" name="__codelineno-27-52" href="#__codelineno-27-52"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://otel-collector:4317
 </span></code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Secret generation</p>
 <p>Use a cryptographically strong random value for <code>AGENTIC_API_KEY</code>:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
 </span></code></pre></div>
 Store it in your secret manager (AWS Secrets Manager, Vault, Kubernetes Secret) and
 inject it at runtime — never commit it to the repository.</p>
@@ -4545,7 +4829,7 @@ inject it at runtime — never commit it to the repository.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 12:30:55 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2026 02:12:49 UTC">June 11, 2026</span>
   </span>
 
     
