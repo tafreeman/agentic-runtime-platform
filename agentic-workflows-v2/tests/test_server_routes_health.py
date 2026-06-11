@@ -1,8 +1,24 @@
-"""Tests for health check route."""
+"""Tests for the health (liveness) and readiness routes.
+
+Covers:
+  * ``HealthResponse`` model defaults (liveness contract).
+  * ``GET /api/health`` -- cheap liveness probe, always 200.
+  * ``GET /api/health/ready`` -- readiness probe:
+      - 200 "ready" when no critical dependency is down.
+      - 503 "not_ready" naming the failed dependency when Redis is
+        configured but unreachable.
+      - degraded-selection count and open circuit breakers surfaced.
+"""
 
 from __future__ import annotations
 
+import pytest
+from fastapi.testclient import TestClient
+
+import agentic_v2.settings as _settings_module
+from agentic_v2.models.model_stats import CircuitState, ModelStats
 from agentic_v2.server.models import HealthResponse
+from tests._server_test_helpers import make_configured_app
 
 
 class TestHealthResponse:
@@ -25,3 +41,88 @@ class TestHealthResponse:
         resp = HealthResponse()
         assert isinstance(resp.version, str)
         assert len(resp.version) > 0
+
+
+@pytest.fixture()
+def client() -> TestClient:
+    """A TestClient over a sanitizer-configured app (all /api routes mounted)."""
+    return TestClient(make_configured_app())
+
+
+class TestLivenessProbe:
+    """GET /api/health stays a cheap, dependency-free liveness probe."""
+
+    def test_health_returns_200_ok(self, client: TestClient) -> None:
+        resp = client.get("/api/health")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
+
+
+class TestReadinessProbe:
+    """GET /api/health/ready inspects dependencies and routing health."""
+
+    def test_ready_200_when_redis_not_configured(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With no redis_url, Redis is 'skipped' and readiness is 200/ready."""
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("AGENTIC_REDIS_URL", raising=False)
+        _settings_module.get_settings.cache_clear()
+
+        resp = client.get("/api/health/ready")
+        assert resp.status_code == 200
+
+        body = resp.json()
+        assert body["status"] == "ready"
+        redis_dep = next(d for d in body["dependencies"] if d["name"] == "redis")
+        assert redis_dep["status"] == "skipped"
+        # Routing health fields are present for visibility.
+        assert "degraded_selection_count" in body
+        assert "open_circuit_breakers" in body
+
+    def test_not_ready_503_when_redis_configured_but_down(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Redis configured but unreachable → 503 naming redis as down."""
+        # Point at a closed port so connect() fails fast and stays disconnected.
+        monkeypatch.setenv("REDIS_URL", "redis://127.0.0.1:1/0")
+        _settings_module.get_settings.cache_clear()
+
+        # Sanity: the setting actually took effect.
+        assert _settings_module.get_settings().redis_url == "redis://127.0.0.1:1/0"
+
+        resp = client.get("/api/health/ready")
+        assert resp.status_code == 503
+
+        body = resp.json()
+        assert body["status"] == "not_ready"
+        redis_dep = next(d for d in body["dependencies"] if d["name"] == "redis")
+        assert redis_dep["status"] == "down"
+        # The failed dependency is named, and no secret/URL is leaked in detail.
+        assert redis_dep["name"] == "redis"
+        assert "127.0.0.1" not in (redis_dep["detail"] or "")
+
+    def test_ready_surfaces_open_circuit_breakers(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An OPEN circuit breaker on a model is reported in the readiness body."""
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        _settings_module.get_settings.cache_clear()
+
+        # Trip a breaker on the process-global router the route inspects.
+        from agentic_v2.models.smart_router import get_smart_router
+
+        router = get_smart_router()
+        tripped = ModelStats(model_id="ollama:phi4")
+        for _ in range(5):
+            tripped.record_failure("error")
+        assert tripped.circuit_state == CircuitState.OPEN
+        router.model_stats["ollama:phi4"] = tripped
+        router.degraded_selection_count = 3
+
+        resp = client.get("/api/health/ready")
+        assert resp.status_code == 200  # open breaker alone does not fail readiness
+
+        body = resp.json()
+        assert "ollama:phi4" in body["open_circuit_breakers"]
+        assert body["degraded_selection_count"] == 3
