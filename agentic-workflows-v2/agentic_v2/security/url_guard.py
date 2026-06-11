@@ -257,6 +257,25 @@ def _validate_url_core(
         return metadata_err, None
 
     if not block_private:
+        # Metadata endpoints are blocked even when the private-IP guard is
+        # opted out — but a DNS name pointing at a metadata IP would otherwise
+        # sail through, since the string/literal checks above never resolve.
+        # Resolve and screen against the metadata list only.  Best-effort:
+        # resolution failure falls through (the operator explicitly disabled
+        # the guard; the request itself will fail on an unresolvable host).
+        if _parse_ip_literal(hostname) is None:
+            try:
+                infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+            except (socket.gaierror, OSError):
+                return None, None
+            for info in infos:
+                resolved = _parse_ip_literal(str(info[4][0]))
+                if resolved is not None and _is_metadata_address(resolved):
+                    return (
+                        f"Host '{hostname}' resolves to a metadata endpoint "
+                        "and is blocked.",
+                        None,
+                    )
         return None, None
 
     # IP literal path — client dials the literal directly, no DNS to pin.

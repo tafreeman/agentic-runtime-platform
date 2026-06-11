@@ -101,6 +101,62 @@ class TestFlagRespected:
         result = validate_url("http://100.100.100.200/latest/meta-data/", block_private=False)
         assert result is not None
 
+    def test_dns_name_resolving_to_metadata_blocked_when_flag_off(self, monkeypatch):
+        """A DNS name pointing at a metadata IP is blocked even with the flag off.
+
+        Without resolving, ``http://evil.example/`` -> 169.254.169.254 would
+        bypass the always-on metadata block on paths that do not pin at
+        connect time (the httpx/langchain path).
+        """
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("169.254.169.254", 0))
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = validate_url("http://innocent-looking.example/", block_private=False)
+        assert result is not None
+        assert "metadata" in result.lower()
+
+    def test_dns_failure_allowed_when_flag_off(self, monkeypatch):
+        """With the flag off, the metadata resolution screen is best-effort.
+
+        Resolution failure must NOT block (the operator explicitly disabled
+        the guard; an unresolvable host fails at request time anyway).
+        """
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise socket_mod.gaierror("name resolution failed")
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = validate_url("http://unresolvable.example/", block_private=False)
+        assert result is None
+
+    def test_public_dns_name_allowed_when_flag_off(self, monkeypatch):
+        """A DNS name resolving to a public address passes with the flag off."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = validate_url("http://public.example/", block_private=False)
+        assert result is None
+
 
 # ---------------------------------------------------------------------------
 # c. IP literals
