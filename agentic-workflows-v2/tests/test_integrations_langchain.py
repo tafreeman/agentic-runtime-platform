@@ -268,6 +268,9 @@ class TestAgenticLangChainTool:
         v2_tool = MagicMock(spec=BaseTool)
         v2_tool.name = "noop"
         v2_tool.description = "noop"
+        # Mirror the BaseTool production default — a bare spec'd MagicMock
+        # attribute is truthy and would trip the _arun human-approval gate.
+        v2_tool.requires_approval = False
         v2_tool.execute = AsyncMock(return_value=ToolResult(success=True, data=None))
         lc_tool = AgenticLangChainTool.from_v2_tool(v2_tool)
         assert await lc_tool._arun() == "OK"

@@ -576,3 +576,73 @@ async def test_flag_off_uses_legacy_fallback_loop(ek_flag_off: None) -> None:
     # Legacy path consumed the runtime budget directly (no EK tracker involved).
     stats = router.model_stats[_MODEL]
     assert stats.success_count == 1
+
+
+# ---------------------------------------------------------------------------
+# CRITICAL-2: wrap_runtime_tool consults the approval gate before execution.
+#
+# Isolated unit test of wrap_runtime_tool's inner _execute — does NOT exercise
+# the EK react_loop or the hanging EK provider test file.
+# ---------------------------------------------------------------------------
+
+
+class _GatedSpyTool:
+    """Minimal runtime-tool stub: requires approval and records executions."""
+
+    name = "gated_runtime_tool"
+    description = "Records calls; requires approval."
+    requires_approval = True
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    async def execute(self, **kwargs: Any):
+        from agentic_v2.tools.base import ToolResult
+
+        self.calls.append(dict(kwargs))
+        return ToolResult(success=True, data={"echo": kwargs}, tool_name=self.name)
+
+
+async def test_wrap_runtime_tool_denied_never_executes() -> None:
+    """A gated tool wrapped via wrap_runtime_tool is never executed under deny."""
+    import json as _json
+
+    from agentic_v2.engine.ek_step_delegation import wrap_runtime_tool
+    from agentic_v2.governance.approval import (
+        AutoDenyProvider,
+        set_approval_provider,
+    )
+
+    set_approval_provider(AutoDenyProvider())
+    try:
+        tool = _GatedSpyTool()
+        ek_tool = wrap_runtime_tool(tool, {"type": "object"})
+
+        observation = await ek_tool.execute(text="hi")
+
+        assert tool.calls == []  # execute NEVER reached
+        payload = _json.loads(observation)
+        assert payload["success"] is False
+        assert "approval" in payload["error"].lower()
+        assert payload["metadata"]["approval_decision"] == "denied"
+    finally:
+        set_approval_provider(None)
+
+
+async def test_wrap_runtime_tool_no_provider_fails_closed() -> None:
+    """No provider registered → gated tool fails closed and never executes."""
+    import json as _json
+
+    from agentic_v2.engine.ek_step_delegation import wrap_runtime_tool
+    from agentic_v2.governance.approval import set_approval_provider
+
+    set_approval_provider(None)
+    tool = _GatedSpyTool()
+    ek_tool = wrap_runtime_tool(tool, {"type": "object"})
+
+    observation = await ek_tool.execute(text="hi")
+
+    assert tool.calls == []
+    payload = _json.loads(observation)
+    assert payload["success"] is False
+    assert "no provider" in payload["error"].lower()

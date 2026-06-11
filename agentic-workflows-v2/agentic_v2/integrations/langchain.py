@@ -189,6 +189,24 @@ if LANGCHAIN_AVAILABLE:
             """Async execution via V2 tool."""
             if self._v2_tool is None:
                 return "Error: No V2 tool bound"
+
+            # Human-approval gate (P1 #12): consult before execution, mirroring
+            # the engine and agent dispatch points. A denied call (including the
+            # fail-closed no-provider case) returns the adapter's error-string
+            # contract and the wrapped tool is never executed.
+            from ..engine.tool_execution import call_id_for
+            from ..governance.approval import evaluate_tool_approval
+
+            approval = await evaluate_tool_approval(
+                tool=self._v2_tool,
+                tool_name=self._v2_tool.name,
+                tool_args=kwargs,
+                call_id=call_id_for(self._v2_tool.name, kwargs),
+                agent_or_step=None,
+            )
+            if not approval.allowed:
+                return f"Error: {approval.error_message}"
+
             result: ToolResult = await self._v2_tool.execute(**kwargs)
             if result.success:
                 return json.dumps(result.data, default=str) if result.data else "OK"

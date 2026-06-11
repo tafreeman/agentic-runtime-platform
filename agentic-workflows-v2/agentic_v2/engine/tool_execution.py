@@ -21,6 +21,7 @@ Provides the full machinery for multi-turn tool-use inside LLM step functions:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 from typing import Any
@@ -233,6 +234,22 @@ def parse_tool_args(raw_args: Any) -> dict[str, Any]:
 _parse_tool_args = parse_tool_args
 
 
+def call_id_for(tool_name: str, tool_args: dict[str, Any]) -> str:
+    """Deterministic, process-stable call id for a tool call.
+
+    Used as the fallback identifier when a provider omits a tool-call ``id``.
+    Derived with :mod:`hashlib` (not the builtin ``hash``) so the value is
+    stable across processes regardless of ``PYTHONHASHSEED``.
+    """
+    material = f"{tool_name}\x00{json.dumps(tool_args, sort_keys=True, default=str)}"
+    digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+    return f"tool-{digest}"
+
+
+# Backward-compatibility / internal alias (kept for existing imports).
+_call_id_for = call_id_for
+
+
 def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
     """Normalize provider-specific tool call shape.
 
@@ -255,9 +272,7 @@ def normalize_tool_call(call: dict[str, Any]) -> tuple[str, str, dict[str, Any]]
         call_id = str(call.get("id", "")).strip()
 
     if not call_id:
-        call_id = (
-            f"tool-{abs(hash((name, json.dumps(args, sort_keys=True, default=str)))):x}"
-        )
+        call_id = call_id_for(name, args)
 
     return call_id, name, args
 
@@ -421,19 +436,6 @@ async def run_tool_calls(
     return executed
 
 
-def _call_id_for(tool_name: str, tool_args: dict[str, Any]) -> str:
-    """Deterministic call id for the approval request at this dispatch point.
-
-    ``_dispatch_single_tool_call`` is not handed the normalized call id (it is
-    derived one layer up in ``run_tool_calls``), and changing its signature
-    would break callers/tests that assert on it. The approval request only
-    needs a stable identifier for logging/metadata, so we derive one the same
-    way :func:`normalize_tool_call` does for id-less calls.
-    """
-    digest = abs(hash((tool_name, json.dumps(tool_args, sort_keys=True, default=str))))
-    return f"tool-{digest:x}"
-
-
 async def _dispatch_single_tool_call(
     tool: Any,
     tool_name: str,
@@ -464,7 +466,7 @@ async def _dispatch_single_tool_call(
         tool=tool,
         tool_name=tool_name,
         tool_args=tool_args,
-        call_id=_call_id_for(tool_name, tool_args),
+        call_id=call_id_for(tool_name, tool_args),
         agent_or_step=None,
     )
     if not approval.allowed:

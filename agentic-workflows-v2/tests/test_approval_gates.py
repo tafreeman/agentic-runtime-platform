@@ -149,7 +149,7 @@ async def _agent_dispatch(tool: BaseTool, args: dict[str, Any]) -> dict[str, Any
     agent = _ScriptedAgent([_final("done")])
     await agent.initialize()
     agent.bind_tool(tool)
-    result_str = await agent._dispatch_tool(tool, tool.name, args)
+    result_str = await agent._dispatch_tool(tool, tool.name, args, "call-test")
     return json.loads(result_str)
 
 
@@ -393,6 +393,113 @@ def test_tool_requires_approval_helper() -> None:
 # ---------------------------------------------------------------------------
 # ApprovalRequest redaction
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# LangChain adapter dispatch is gated (CRITICAL-1)
+# ---------------------------------------------------------------------------
+
+
+async def test_langchain_adapter_gated_tool_denied_never_executes() -> None:
+    """A gated V2 tool wrapped via AgenticLangChainTool is denied, never runs."""
+    from agentic_v2.integrations.langchain import (
+        LANGCHAIN_AVAILABLE,
+        AgenticLangChainTool,
+    )
+
+    if not LANGCHAIN_AVAILABLE:  # pragma: no cover — langchain-core is a dep
+        pytest.skip("langchain-core not installed")
+
+    set_approval_provider(AutoDenyProvider())
+    tool = _SpyTool(name="gated", requires_approval=True)
+    lc_tool = AgenticLangChainTool.from_v2_tool(tool)
+
+    result = await lc_tool._arun(text="hi")
+
+    assert tool.calls == []  # execute NEVER called
+    assert result.startswith("Error:")
+    assert "approval" in result.lower()
+
+
+async def test_langchain_adapter_gated_tool_no_provider_fails_closed() -> None:
+    """No provider registered → wrapped gated tool fails closed, never runs."""
+    from agentic_v2.integrations.langchain import (
+        LANGCHAIN_AVAILABLE,
+        AgenticLangChainTool,
+    )
+
+    if not LANGCHAIN_AVAILABLE:  # pragma: no cover
+        pytest.skip("langchain-core not installed")
+
+    set_approval_provider(None)
+    tool = _SpyTool(name="gated", requires_approval=True)
+    lc_tool = AgenticLangChainTool.from_v2_tool(tool)
+
+    result = await lc_tool._arun(text="hi")
+
+    assert tool.calls == []
+    assert result.startswith("Error:")
+    assert "no provider" in result.lower()
+
+
+async def test_langchain_adapter_ungated_tool_unaffected() -> None:
+    """An ungated wrapped tool executes normally even with no provider."""
+    from agentic_v2.integrations.langchain import (
+        LANGCHAIN_AVAILABLE,
+        AgenticLangChainTool,
+    )
+
+    if not LANGCHAIN_AVAILABLE:  # pragma: no cover
+        pytest.skip("langchain-core not installed")
+
+    set_approval_provider(None)
+    tool = _SpyTool(name="ungated", requires_approval=False)
+    lc_tool = AgenticLangChainTool.from_v2_tool(tool)
+
+    result = await lc_tool._arun(text="hi")
+
+    assert tool.calls == [{"text": "hi"}]
+    assert not result.startswith("Error:")
+
+
+# ---------------------------------------------------------------------------
+# Denied call emits exactly one TOOL_RESULT through _handle_tool_calls (HIGH-2)
+# ---------------------------------------------------------------------------
+
+
+async def test_denied_call_emits_single_tool_result_event() -> None:
+    """A denied tool call yields exactly one TOOL_RESULT via _handle_tool_calls.
+
+    Regression: ``_dispatch_tool`` previously emitted its own TOOL_RESULT on
+    denial in addition to the canonical one emitted by ``_handle_tool_calls``,
+    producing two events per denied call.
+    """
+    set_approval_provider(AutoDenyProvider())
+    tool = _SpyTool(name="gated", requires_approval=True)
+
+    agent = _ScriptedAgent([_final("done")])
+    await agent.initialize()
+    agent.bind_tool(tool)
+
+    events: list[tuple[str, dict[str, Any]]] = []
+
+    def _record(_agent: Any, event: Any, data: dict[str, Any]) -> None:
+        events.append((event.value, data))
+
+    agent.on_event(_record)
+
+    await agent._handle_tool_calls(
+        [_openai_tool_call("gated", {"text": "hi"}, "call-1")["tool_calls"][0]]
+    )
+
+    tool_result_events = [d for name, d in events if name == "tool_result"]
+    assert len(tool_result_events) == 1
+    assert tool.calls == []  # tool never executed
+    # The denial metadata travels in the serialized result string.
+    payload = json.loads(tool_result_events[0]["result"])
+    assert payload["success"] is False
+    assert payload["metadata"]["approval_decision"] == "denied"
+    assert tool_result_events[0]["call_id"] == "call-1"
 
 
 def test_approval_request_redacts_long_args() -> None:

@@ -405,7 +405,9 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
             )
 
             tool = self._bound_tools.get(tool_name)
-            result_str = await self._dispatch_tool(tool, tool_name, tool_args)
+            result_str = await self._dispatch_tool(
+                tool, tool_name, tool_args, call_id
+            )
 
             self._emit(
                 AgentEvent.TOOL_RESULT,
@@ -420,6 +422,7 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         tool: BaseTool | None,
         tool_name: str,
         tool_args: dict[str, Any],
+        call_id: str,
     ) -> str:
         """Validate and execute one tool call, returning its serialized result.
 
@@ -427,10 +430,13 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         unknown tools, invalid parameters, and execution errors are returned as
         a serialized ``{"success": False, "error": ...}`` payload rather than
         raised, so the model receives feedback on the next turn.
+
+        ``call_id`` is the normalized id produced by ``normalize_tool_call`` in
+        the caller; it is threaded through so the approval request, the returned
+        payload, and the caller's ``TOOL_RESULT`` event all agree on one id.
         """
         # Imported here for the same circular-import constraint as the caller.
         from ..engine.tool_execution import (
-            _call_id_for,
             serialize_tool_result,
             truncate_tool_result,
         )
@@ -440,11 +446,11 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
 
         # Human-approval gate (P1 #12): consult before validation/execution.
         # Denied (incl. fail-closed no-provider) returns a serialized error and
-        # the tool never runs. The agent event bus is reachable here, so we emit
-        # the contract events for any server/UI follow-on.
+        # the tool never runs. The denial detail (decision/provider) rides in the
+        # returned payload's metadata; ``_handle_tool_calls`` emits the single
+        # canonical TOOL_RESULT event from that payload, so we do NOT emit here.
         from ..governance.approval import evaluate_tool_approval
 
-        call_id = _call_id_for(tool_name, tool_args)
         approval = await evaluate_tool_approval(
             tool=tool,
             tool_name=tool_name,
@@ -453,15 +459,6 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
             agent_or_step=self.config.name,
         )
         if not approval.allowed:
-            self._emit(
-                AgentEvent.TOOL_RESULT,
-                {
-                    "tool": tool_name,
-                    "call_id": call_id,
-                    "approval_decision": approval.decision.value,
-                    "approval_provider": approval.provider_label,
-                },
-            )
             return json.dumps(
                 {
                     "success": False,
