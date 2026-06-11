@@ -11,6 +11,27 @@ from .base import CanonicalEvent, TraceAdapter
 
 logger = logging.getLogger(__name__)
 
+# OpenTelemetry status APIs — optional (bundled in the `tracing` extra).
+# Guarded so the module imports cleanly when OTel is not installed; the
+# OtelTraceAdapter is only ever constructed when a real tracer is available.
+try:
+    from opentelemetry.trace import (
+        Status,
+        StatusCode,
+        set_span_in_context,
+    )
+
+    _OTEL_STATUS_AVAILABLE = True
+except ImportError:  # pragma: no cover — exercised only without the extra
+    _OTEL_STATUS_AVAILABLE = False
+    Status = None  # type: ignore[assignment,misc]
+    StatusCode = None  # type: ignore[assignment,misc]
+    set_span_in_context = None  # type: ignore[assignment]
+
+# Status strings (from StepStatus / workflow result) that denote failure and
+# must surface as an ERROR span — otherwise failed workflows render green.
+_FAILURE_STATUSES: frozenset[str] = frozenset({"failed", "error"})
+
 
 class ConsoleTraceAdapter(TraceAdapter):
     """Trace adapter that emits events to console/logging.
@@ -154,7 +175,7 @@ class OtelTraceAdapter(TraceAdapter):
             return
 
         if event.type == "workflow_end":
-            self._end_workflow_span(run_id)
+            self._end_workflow_span(event, run_id)
             return
 
         if event.type == "step_start":
@@ -177,28 +198,79 @@ class OtelTraceAdapter(TraceAdapter):
         if run_id:
             self._workflow_spans[run_id] = span
 
-    def _end_workflow_span(self, run_id: Any) -> None:
-        """End and deregister the span for a workflow_end event."""
+    def _end_workflow_span(self, event: CanonicalEvent, run_id: Any) -> None:
+        """End and deregister the span for a workflow_end event.
+
+        Records an ERROR status (and an exception event) when the workflow
+        completed in a failed state, so failed runs do not render green.
+        """
         if run_id and run_id in self._workflow_spans:
             span = self._workflow_spans.pop(run_id)
+            self._record_outcome(span, event.data)
             span.end()
 
     def _start_step_span(
         self, event: CanonicalEvent, sanitized: dict[str, Any], run_id: Any
     ) -> None:
-        """Start and register a span for a step_start event."""
-        span = self._tracer.start_span(event.type, attributes=sanitized)
+        """Start and register a span for a step_start event.
+
+        The step span is parented to its workflow span (when one is active)
+        so the exported trace forms a proper tree rather than a flat list of
+        sibling spans. Because start and end arrive in separate ``emit``
+        calls, the parent is set explicitly via ``set_span_in_context`` rather
+        than relying on an active (current) span.
+        """
+        parent_ctx = None
+        workflow_span = self._workflow_spans.get(run_id) if run_id else None
+        if workflow_span is not None and set_span_in_context is not None:
+            parent_ctx = set_span_in_context(workflow_span)
+
+        span = self._tracer.start_span(
+            event.type, context=parent_ctx, attributes=sanitized
+        )
         step_name = event.step_name or event.data.get("step_name")
         if run_id and step_name:
             self._workflow_spans[f"{run_id}:{step_name}"] = span
 
     def _end_step_span(self, event: CanonicalEvent, run_id: Any) -> None:
-        """End and deregister the span for a step_complete event."""
+        """End and deregister the span for a step_complete event.
+
+        Records an ERROR status (and an exception event) when the step
+        completed in a failed state.
+        """
         step_name = event.step_name or event.data.get("step_name")
         key = f"{run_id}:{step_name}" if run_id and step_name else None
         if key and key in self._workflow_spans:
             span = self._workflow_spans.pop(key)
+            self._record_outcome(span, event.data)
             span.end()
+
+    @staticmethod
+    def _record_outcome(span: Any, data: dict[str, Any]) -> None:
+        """Set ERROR status / record an exception when the event failed.
+
+        Inspects the canonical event's ``status`` field. On a failure status
+        (``failed`` / ``error``) the span is marked ``StatusCode.ERROR`` and an
+        exception event is recorded carrying the error message, so downstream
+        backends (Jaeger, Tempo, etc.) surface the failure instead of showing
+        a green, statusless span.
+        """
+        if not _OTEL_STATUS_AVAILABLE:
+            return
+        status = data.get("status")
+        if not (isinstance(status, str) and status.lower() in _FAILURE_STATUSES):
+            return
+
+        error_message = (
+            data.get("error")
+            or data.get("error_message")
+            or f"workflow step reported status={status}"
+        )
+        try:
+            span.set_status(Status(StatusCode.ERROR, str(error_message)))
+            span.record_exception(RuntimeError(str(error_message)))
+        except Exception as exc:  # pragma: no cover — defensive, span impls vary
+            logger.debug("Failed to record OTEL error status: %s", exc)
 
 
 class LangSmithTraceAdapter(TraceAdapter):

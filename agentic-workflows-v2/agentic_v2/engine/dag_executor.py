@@ -31,6 +31,32 @@ from .step_state import StepState, StepStateManager
 
 logger = logging.getLogger(__name__)
 
+# OpenTelemetry status APIs — optional (bundled in the `tracing` extra).
+# Guarded so the engine imports cleanly without OTel installed.
+try:
+    from opentelemetry.trace import Status, StatusCode
+
+    _OTEL_STATUS_AVAILABLE = True
+except ImportError:  # pragma: no cover — exercised only without the extra
+    _OTEL_STATUS_AVAILABLE = False
+    Status = None  # type: ignore[assignment,misc]
+    StatusCode = None  # type: ignore[assignment,misc]
+
+
+def _mark_span_error(span: Any, message: str) -> None:
+    """Mark an OTEL span as ERROR and record an exception event.
+
+    No-op when OTel is unavailable or no span is active, so failure paths
+    stay safe in local/no-tracing runs.
+    """
+    if span is None or not _OTEL_STATUS_AVAILABLE:
+        return
+    try:
+        span.set_status(Status(StatusCode.ERROR, message))
+        span.record_exception(RuntimeError(message))
+    except Exception as exc:  # pragma: no cover — defensive, span impls vary
+        logger.debug("Failed to set OTEL error status on engine span: %s", exc)
+
 
 @dataclass
 class _RunState:
@@ -286,17 +312,19 @@ async def _scheduling_loop(state: _RunState) -> None:
 
 async def _handle_timeout(state: _RunState) -> None:
     """Recover from a workflow-level timeout: cancel, fail, skip."""
-    # 1. Record the event on the active OTEL span (if any).
+    timeout_msg = (
+        f"Workflow '{state.dag.name}' exceeded the {state.timeout}s timeout. "
+        "In-flight steps were cancelled."
+    )
+    # 1. Record the event on the active OTEL span (if any) and mark it ERROR so
+    #    a timed-out workflow does not render green in the exported trace.
     if state.span is not None:
         state.span.set_attribute("workflow.timeout_exceeded", True)
         state.span.add_event(
             "workflow.timeout",
             {"workflow.timeout_seconds": state.timeout},
         )
-    timeout_msg = (
-        f"Workflow '{state.dag.name}' exceeded the {state.timeout}s timeout. "
-        "In-flight steps were cancelled."
-    )
+        _mark_span_error(state.span, timeout_msg)
     logger.warning(
         "DAG timeout: workflow=%r timeout_seconds=%s",
         state.dag.name,
@@ -498,6 +526,18 @@ class DAGExecutor:
 
         if result.overall_status == StepStatus.RUNNING:
             result.overall_status = StepStatus.SUCCESS
+
+        # Surface a failed workflow on the engine.execute span. The timeout
+        # path already marked the span ERROR with a timeout-specific message
+        # (metadata flag set in _handle_timeout); only mark here for the
+        # non-timeout failure paths (a step failed and cascaded).
+        if (
+            result.overall_status == StepStatus.FAILED
+            and not result.metadata.get("timeout_exceeded")
+        ):
+            _mark_span_error(
+                span, f"Workflow '{dag.name}' failed: one or more steps errored."
+            )
 
         result.steps = [
             state.results[step_name]
