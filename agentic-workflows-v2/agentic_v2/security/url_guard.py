@@ -21,6 +21,20 @@ Design decisions
 Async callers: use ``validate_url_async`` which runs the blocking
 ``getaddrinfo`` call in a thread via ``asyncio.to_thread``.
 Sync callers: use ``validate_url`` which calls ``getaddrinfo`` directly.
+
+Residual DNS-rebinding risk
+---------------------------
+This guard resolves names in userspace and pins connections to a validated
+address (``validate_url_pinned`` + the aiohttp ``GuardedResolver`` and the
+httpx request-target rewrite in the tool layers) so the HTTP client cannot
+re-resolve to a different IP between the check and the connect. That closes the
+common rebinding window, but it is **defense-in-depth, not a complete
+boundary**: pinning depends on the resolver returning the same answer the guard
+validated, and OS-level resolver caching is outside this module's control. For
+threat models that include attacker-controlled DNS, pair this guard with a
+network-layer egress control (egress firewall / service-mesh authorization /
+``NetworkPolicy``). See ``docs/KNOWN_LIMITATIONS.md`` §4.4 and
+``docs/operations/security-hardening.md`` §10.
 """
 
 from __future__ import annotations
@@ -66,7 +80,43 @@ def _is_restricted_address(addr: ipaddress.IPv4Address | ipaddress.IPv6Address) 
         or addr.is_link_local
         or addr.is_reserved
         or addr.is_unspecified
+        or addr.is_multicast
     )
+
+
+def _parse_ip_literal(
+    hostname: str,
+) -> ipaddress.IPv4Address | ipaddress.IPv6Address | None:
+    """Parse *hostname* as an IP literal, including legacy IPv4 forms.
+
+    ``ipaddress.ip_address`` rejects the alternative IPv4 representations the
+    OS resolver happily accepts (decimal ``2852039166``, octal, hex, short
+    forms) — an attacker can use those to slip past string-based IP checks
+    while the HTTP client still connects to the intended address.  Fall back
+    to ``socket.inet_aton``, which implements the same legacy parsing as the
+    platform resolver, so every form normalises to the same address object.
+
+    Returns ``None`` when *hostname* is not an IP literal in any form.
+    """
+    try:
+        return ipaddress.ip_address(hostname)
+    except ValueError:
+        pass
+    try:
+        return ipaddress.IPv4Address(socket.inet_aton(hostname))
+    except (OSError, ValueError):
+        return None
+
+
+def _is_metadata_address(
+    addr: ipaddress.IPv4Address | ipaddress.IPv6Address,
+) -> bool:
+    """Return True if *addr* (canonicalised) is a known metadata endpoint IP."""
+    if str(addr) in _METADATA_HOSTS:
+        return True
+    if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped is not None:
+        return str(addr.ipv4_mapped) in _METADATA_HOSTS
+    return False
 
 
 def _check_always_blocked(hostname: str) -> str | None:
@@ -77,13 +127,11 @@ def _check_always_blocked(hostname: str) -> str | None:
     if hn in _METADATA_HOSTS:
         return f"Access to metadata endpoint '{hostname}' is blocked."
 
-    # Metadata IPs expressed as literals
-    try:
-        addr = ipaddress.ip_address(hn)
-        if hn in _METADATA_HOSTS or str(addr) in _METADATA_HOSTS:
-            return f"Access to metadata endpoint '{hostname}' is blocked."
-    except ValueError:
-        pass  # not an IP literal
+    # Metadata IPs expressed as literals — including legacy decimal/octal/hex
+    # forms (e.g. 2852039166 == 169.254.169.254) which the OS resolver accepts.
+    addr = _parse_ip_literal(hn)
+    if addr is not None and _is_metadata_address(addr):
+        return f"Access to metadata endpoint '{hostname}' is blocked."
 
     return None
 
@@ -93,9 +141,8 @@ def _check_ip_literal(hostname: str) -> str | None:
 
     Returns ``None`` when the hostname is not an IP literal (caller must do DNS).
     """
-    try:
-        addr = ipaddress.ip_address(hostname)
-    except ValueError:
+    addr = _parse_ip_literal(hostname)
+    if addr is None:
         return None  # not an IP literal — caller handles DNS
 
     if _is_restricted_address(addr):
@@ -105,36 +152,134 @@ def _check_ip_literal(hostname: str) -> str | None:
     return ""  # empty string = "is an IP literal, and it passed"
 
 
-def _resolve_and_check(hostname: str) -> str | None:
-    """Resolve *hostname* via DNS; block if ANY address is restricted.
+def check_resolved_address(ip_str: str, *, block_private: bool) -> str | None:
+    """Check one RESOLVED IP address against the guard rules.
 
-    Returns error string on block/failure, or None when all addresses pass.
+    Used at connect time (e.g. by the aiohttp guarded resolver) so the address
+    the HTTP client actually dials is validated — not just the one seen during
+    pre-request validation.  This is what defeats DNS rebinding: a domain that
+    returns a public address to the pre-check and a private/metadata address
+    at connect time is caught here.
+
+    Metadata endpoint IPs are blocked unconditionally; private/loopback/
+    link-local/reserved/multicast/unspecified are blocked when *block_private*.
+
+    Returns an error string if blocked, else ``None``.
+    """
+    try:
+        addr = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return f"Unparseable resolved address '{ip_str}' is blocked."
+
+    if _is_metadata_address(addr):
+        return f"Resolved address '{ip_str}' is a metadata endpoint and is blocked."
+    if block_private and _is_restricted_address(addr):
+        return (
+            f"Resolved address '{ip_str}' is a private/reserved address "
+            f"and is blocked."
+        )
+    return None
+
+
+def _resolve_and_collect(
+    hostname: str, *, block_private: bool
+) -> tuple[str | None, list[str]]:
+    """Resolve *hostname* via DNS; block if ANY address fails the guard.
+
+    Returns ``(error, validated_ips)``.  ``error`` is set (and the list empty)
+    on block or resolution failure; otherwise the deduplicated resolved
+    addresses are returned so callers can PIN the connection to one of them
+    instead of letting the HTTP client re-resolve (DNS-rebinding defence).
     """
     try:
         results = socket.getaddrinfo(hostname, None)
     except socket.gaierror as exc:
         return (
             f"Host '{hostname}' could not be resolved "
-            f"(DNS lookup failed: {exc.strerror}). Request blocked (fail-closed)."
+            f"(DNS lookup failed: {exc.strerror}). Request blocked (fail-closed).",
+            [],
         )
 
+    ips: list[str] = []
     for _family, _type, _proto, _canonname, sockaddr in results:
-        raw_ip = sockaddr[0]
-        try:
-            addr = ipaddress.ip_address(raw_ip)
-        except ValueError:
-            continue
-        if _is_restricted_address(addr):
+        raw_ip = str(sockaddr[0])
+        err = check_resolved_address(raw_ip, block_private=block_private)
+        if err:
             return (
                 f"Host '{hostname}' resolves to a private/reserved address "
-                f"and is blocked."
+                f"and is blocked.",
+                [],
             )
-    return None
+        if raw_ip not in ips:
+            ips.append(raw_ip)
+    return None, ips
+
+
+def _resolve_and_check(hostname: str) -> str | None:
+    """Resolve *hostname* via DNS; block if ANY address is restricted."""
+    err, _ips = _resolve_and_collect(hostname, block_private=True)
+    return err
 
 
 # ---------------------------------------------------------------------------
 # Public sync API
 # ---------------------------------------------------------------------------
+
+
+def _validate_url_core(
+    url: str, *, block_private: bool
+) -> tuple[str | None, str | None]:
+    """Shared validation core returning ``(error, pinned_ip)``.
+
+    ``pinned_ip`` is only set when the hostname is a DNS name that was
+    resolved (i.e. *block_private* on): the validated address the caller
+    should dial instead of re-resolving in the HTTP client.
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return "Invalid URL: could not be parsed.", None
+
+    if parsed.scheme not in _ALLOWED_SCHEMES:
+        return (
+            f"URL scheme '{parsed.scheme}' is not allowed. "
+            "Only http and https are permitted.",
+            None,
+        )
+
+    hostname = parsed.hostname or ""
+    if not hostname:
+        return "Invalid URL: no hostname.", None
+
+    # Always-blocked metadata endpoints
+    metadata_err = _check_always_blocked(hostname)
+    if metadata_err:
+        return metadata_err, None
+
+    if not block_private:
+        return None, None
+
+    # IP literal path — client dials the literal directly, no DNS to pin.
+    ip_result = _check_ip_literal(hostname)
+    if ip_result == "":
+        return None, None  # literal IP, passed
+    if ip_result:
+        return ip_result, None  # literal IP, blocked
+
+    # Hostname is a DNS name — resolve once, validate every address, and
+    # return one for the caller to pin the connection to.
+    err, ips = _resolve_and_collect(hostname, block_private=block_private)
+    if err:
+        return err, None
+    if not ips:
+        return (
+            f"Host '{hostname}' yielded no usable addresses. "
+            "Request blocked (fail-closed).",
+            None,
+        )
+    # Prefer IPv4 to minimise breakage on hosts without a routable IPv6 path.
+    pinned = sorted(ips, key=lambda ip: ":" in ip)[0]
+    return None, pinned
 
 
 def validate_url(url: str, *, block_private: bool) -> str | None:
@@ -148,39 +293,28 @@ def validate_url(url: str, *, block_private: bool) -> str | None:
     Returns:
         An error string if the URL is blocked, or ``None`` if it is allowed.
     """
-    try:
-        parsed = urlparse(url)
-    except Exception:
-        return "Invalid URL: could not be parsed."
+    error, _pinned = _validate_url_core(url, block_private=block_private)
+    return error
 
-    if parsed.scheme not in _ALLOWED_SCHEMES:
-        return (
-            f"URL scheme '{parsed.scheme}' is not allowed. "
-            "Only http and https are permitted."
-        )
 
-    hostname = parsed.hostname or ""
-    if not hostname:
-        return "Invalid URL: no hostname."
+def validate_url_pinned(
+    url: str, *, block_private: bool
+) -> tuple[str | None, str | None]:
+    """Validate *url* and return a pinned IP for the connection (synchronous).
 
-    # Always-blocked metadata endpoints
-    metadata_err = _check_always_blocked(hostname)
-    if metadata_err:
-        return metadata_err
+    Same checks as :func:`validate_url`, but when the hostname is a DNS name
+    and *block_private* is on, the address validated here is also the one the
+    caller should CONNECT to.  Re-resolving in the HTTP client would let a
+    rebinding domain serve a public address to the check and a private one to
+    the connect — pinning closes that gap (single ``getaddrinfo`` per hop).
 
-    if not block_private:
-        return None
-
-    # IP literal path
-    ip_result = _check_ip_literal(hostname)
-    if ip_result is None:
-        # Hostname is a DNS name — resolve and check
-        return _resolve_and_check(hostname)
-    if ip_result:
-        # Non-empty string = blocked
-        return ip_result
-    # ip_result == "" → literal IP, passed
-    return None
+    Returns:
+        ``(error, pinned_ip)``.  ``error`` is an error string when blocked
+        (``pinned_ip`` is ``None``).  ``pinned_ip`` is a validated address to
+        dial when the host is a DNS name and pinning applies; ``None`` when no
+        pinning is needed (IP-literal host, or *block_private* off).
+    """
+    return _validate_url_core(url, block_private=block_private)
 
 
 # ---------------------------------------------------------------------------

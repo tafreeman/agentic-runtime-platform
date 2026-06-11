@@ -8,12 +8,13 @@ LangChain agent or ``ToolNode``.
 from __future__ import annotations
 
 import ast
+import asyncio
 import json
 import os
 import shlex
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 from langchain_core.tools import tool
@@ -21,9 +22,64 @@ from langchain_core.tools import tool
 if TYPE_CHECKING:
     import httpx
 
-from ..security.url_guard import validate_url
+from ..security.url_guard import validate_url_pinned
 from ..settings import get_settings
 from ..utils.path_safety import ensure_within_base
+
+
+class _ApprovalGated:
+    """Marker tool exposing ``requires_approval=True`` to the shared gate.
+
+    The native ``@tool`` functions in this module are plain callables with no
+    runtime ``BaseTool`` instance, so we hand the approval gate a tiny stand-in
+    whose ``requires_approval`` flag forces the per-tool trigger. ``shell_run``
+    and ``file_write`` are shell-exec / filesystem-write tools and are always
+    treated as high-impact regardless of settings.
+    """
+
+    requires_approval = True
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+
+def _check_tool_approval(tool_name: str, tool_args: dict[str, Any]) -> str | None:
+    """Consult the human-approval gate from a synchronous ``@tool`` function.
+
+    Returns an error string (the adapter's ``ERROR: ...`` contract) when the
+    call is denied — including the fail-closed no-provider case — or ``None``
+    when execution may proceed. Mirrors the engine/agent dispatch points but
+    runs the async gate to completion from a sync caller.
+    """
+    from ..engine.tool_execution import call_id_for
+    from ..governance.approval import evaluate_tool_approval
+
+    async def _run() -> Any:
+        return await evaluate_tool_approval(
+            tool=_ApprovalGated(tool_name),
+            tool_name=tool_name,
+            tool_args=tool_args,
+            call_id=call_id_for(tool_name, tool_args),
+            agent_or_step=None,
+        )
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop is not None and loop.is_running():
+        # Inside an event loop (e.g. async LangGraph node) — run on a worker.
+        import concurrent.futures
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            outcome = pool.submit(asyncio.run, _run()).result()
+    else:
+        outcome = asyncio.run(_run())
+
+    if not outcome.allowed:
+        return f"ERROR: {outcome.error_message}"
+    return None
 
 # ---------------------------------------------------------------------------
 # Security helpers
@@ -80,36 +136,85 @@ def _http_get_with_redirect_guard(
     block_private = get_settings().agentic_block_private_ips
     current_url = url
 
-    for hop in range(_MAX_REDIRECTS + 1):
-        err = validate_url(current_url, block_private=block_private)
-        if err:
-            raise ValueError(err)
-
-        # Only send custom headers on the first hop.
-        hop_headers = headers if hop == 0 else None
-        resp = httpx.get(
-            current_url,
-            timeout=timeout,
-            follow_redirects=False,
-            headers=hop_headers,
-        )
-
-        if resp.status_code not in _REDIRECT_STATUSES:
-            return resp
-
-        if hop == _MAX_REDIRECTS:
-            raise ValueError(
-                f"Redirect limit ({_MAX_REDIRECTS}) exceeded. "
-                "Request blocked to prevent redirect loops."
+    # One Client for all hops: reuses the connection pool instead of paying
+    # client + pool setup/teardown per redirect.
+    with httpx.Client(timeout=timeout) as client:
+        for hop in range(_MAX_REDIRECTS + 1):
+            request_url, host_header, extensions = _pin_request_target(
+                current_url, block_private=block_private
             )
 
-        location = resp.headers.get("location", "")
-        if not location:
-            raise ValueError("Redirect response missing Location header.")
+            # Only send custom headers on the first hop — re-sending caller
+            # headers (Authorization, API keys) to a redirect target would
+            # leak credentials to whatever host the server redirects to.
+            hop_headers: dict[str, str] = dict(headers) if headers and hop == 0 else {}
+            if host_header:
+                hop_headers["Host"] = host_header
 
-        current_url = urljoin(current_url, location)
+            resp = client.get(
+                request_url,
+                follow_redirects=False,
+                headers=hop_headers or None,
+                extensions=extensions,
+            )
+
+            if resp.status_code not in _REDIRECT_STATUSES:
+                return resp
+
+            if hop == _MAX_REDIRECTS:
+                raise ValueError(
+                    f"Redirect limit ({_MAX_REDIRECTS}) exceeded. "
+                    "Request blocked to prevent redirect loops."
+                )
+
+            location = resp.headers.get("location", "")
+            if not location:
+                raise ValueError("Redirect response missing Location header.")
+
+            # Resolve relative redirects against the LOGICAL hostname URL,
+            # not the IP-pinned request URL.
+            current_url = urljoin(current_url, location)
 
     raise ValueError("Unexpected exit from redirect loop.")  # pragma: no cover
+
+
+def _pin_request_target(
+    current_url: str, *, block_private: bool
+) -> tuple[str, str | None, dict[str, Any] | None]:
+    """Validate *current_url* and pin the connection to the validated IP.
+
+    The guard's pre-request DNS check and the HTTP client's own resolution are
+    otherwise two separate lookups — a rebinding domain can pass the first and
+    serve a private/metadata address to the second.  When the guard resolved a
+    DNS name, we connect to that exact address: the URL host is rewritten to
+    the pinned IP, the original hostname travels in the ``Host`` header, and
+    (for https) in the ``sni_hostname`` extension so TLS handshake + cert
+    verification still use the real hostname.
+
+    Returns ``(request_url, host_header, extensions)``; the last two are
+    ``None`` when no pinning applies (IP-literal host or guard flag off).
+
+    Raises:
+        ValueError: When the guard blocks the URL.
+    """
+    from urllib.parse import urlparse
+
+    err, pinned_ip = validate_url_pinned(current_url, block_private=block_private)
+    if err:
+        raise ValueError(err)
+    if pinned_ip is None:
+        return current_url, None, None
+
+    parsed = urlparse(current_url)
+    ip_netloc = f"[{pinned_ip}]" if ":" in pinned_ip else pinned_ip
+    if parsed.port:
+        ip_netloc += f":{parsed.port}"
+    request_url = parsed._replace(netloc=ip_netloc).geturl()
+
+    hostname = parsed.hostname or ""
+    host_header = f"{hostname}:{parsed.port}" if parsed.port else hostname
+    extensions = {"sni_hostname": hostname} if parsed.scheme == "https" else None
+    return request_url, host_header, extensions
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +252,9 @@ def file_write(path: str, content: str) -> str:
         path: Destination file path.
         content: Text content to write.
     """
+    denied = _check_tool_approval("file_write", {"path": path, "content": content})
+    if denied:
+        return denied
     base_dir = os.environ.get("AGENTIC_FILE_BASE_DIR")
     if base_dir:
         try:
@@ -241,6 +349,11 @@ def shell_run(command: str, cwd: str | None = None, timeout: int = 30) -> str:
         cwd: Working directory (optional).
         timeout: Max seconds to wait (default 30).
     """
+    denied = _check_tool_approval(
+        "shell_run", {"command": command, "cwd": cwd, "timeout": timeout}
+    )
+    if denied:
+        return denied
     if _is_dangerous_command(command):
         return "ERROR: Command blocked by security policy."
     try:

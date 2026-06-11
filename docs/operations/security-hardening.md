@@ -26,7 +26,7 @@ index see the [Configuration Reference](../configuration.md).
 | Shell tool allowlist | `AGENTIC_SHELL_ALLOWED_COMMANDS` | Not set — all shell commands disabled | — |
 | Sanitization fail-closed | `AGENTIC_SANITIZER_FAIL_OPEN` | Not set — 503 returned when layer unavailable | — |
 | CORS origins | `AGENTIC_CORS_ORIGINS` | localhost dev ports (5173, 8000, 8010) | — |
-| Block private IPs in HTTP tool | `AGENTIC_BLOCK_PRIVATE_IPS` | Not set — private IPs allowed | — |
+| Block private IPs in HTTP tool | `AGENTIC_BLOCK_PRIVATE_IPS` | Not set — private IPs **blocked** (default ON; set to `0` to opt out) | P1 #13 |
 
 ---
 
@@ -588,7 +588,34 @@ covers:
 - Cloud metadata endpoints: `169.254.169.254`, `fd00:ec2::254`, `100.100.100.200`,
   `metadata.google.internal` are always blocked regardless of the flag.
 - Redirect re-validation: each redirect hop is validated before following (max 5 hops).
+  Per RFC 7538/9110, `307`/`308` hops preserve the original method and body; `301`/`302`/`303`
+  degrade to a bodyless `GET`. Caller headers (e.g. `Authorization`) are sent on the first hop
+  only, so credentials are never replayed to a redirect target.
 - IPv4-mapped IPv6 (`::ffff:127.0.0.1`) is normalised before checking.
+- Legacy IPv4 literal forms the OS resolver accepts (decimal `2130706433`, hex `0x7f000001`,
+  octal `0177.0.0.1`, short `127.1`) are parsed and blocked — they cannot bypass the
+  string-based check.
+
+### DNS-rebinding residual risk
+
+The guard validates the hostname's resolved addresses *and* pins the connection to a
+validated address so the HTTP client cannot independently re-resolve to a different
+(private/metadata) IP between the check and the connect:
+
+- **aiohttp path** (`http_ops`): a `GuardedResolver` re-validates every address aiohttp is
+  about to dial at connect time.
+- **httpx path** (`langchain/tools`): `validate_url_pinned` rewrites the request URL to the
+  validated IP, carrying the real hostname in the `Host` header (and `sni_hostname` extension
+  for TLS), so the connection goes to the address that was checked.
+
+**Residual:** both mitigations rely on `getaddrinfo`/the resolver returning the same answer the
+guard validated. A sufficiently hostile authoritative DNS server with a near-zero TTL could, in
+principle, return a different address to the connect-time lookup than to the validation lookup on
+a path not covered by pinning, and OS-level resolver caching is not under the application's
+control. For threat models that include attacker-controlled DNS, treat the application guard as
+defense-in-depth and add a **network-layer egress control** (egress firewall / service-mesh
+authorization / network policy) restricting which addresses the server process may reach. See
+`docs/KNOWN_LIMITATIONS.md`.
 
 !!! warning "SSRF defense"
     In environments where the server process has network access to internal services
