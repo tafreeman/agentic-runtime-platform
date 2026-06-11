@@ -377,6 +377,53 @@ async def test_claude_call_model_stashes_stop_reason(
     assert await agent._is_task_complete(SimpleTask(prompt="q"), "the answer") is False
 
 
+async def test_claude_max_tokens_continuation_aggregates_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A response split across max_tokens turns is reassembled in the output.
+
+    BaseAgent._execute_loop hands only the LAST turn's content to
+    _parse_output; without buffering, the earlier truncated segments would be
+    silently dropped from the final SimpleOutput.
+    """
+    agent = _claude_agent()
+    await agent.initialize()
+
+    script = [
+        _anthropic_text_response("part one, ", "max_tokens"),
+        _anthropic_text_response("part two, ", "max_tokens"),
+        _anthropic_text_response("the end.", "end_turn"),
+    ]
+
+    async def _fake_create(**_kwargs: Any) -> Any:
+        return script.pop(0)
+
+    monkeypatch.setattr(agent._client.messages, "create", _fake_create)
+
+    output = await agent.run(SimpleTask(prompt="write something long"))
+
+    assert output.response == "part one, part two, the end."
+    assert script == []  # all three turns consumed
+    # Buffer is reset so a reused agent does not leak chunks into the next run.
+    assert agent._continuation_chunks == []
+
+
+async def test_claude_single_turn_output_unchanged(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A plain end_turn answer is returned verbatim (no aggregation involved)."""
+    agent = _claude_agent()
+    await agent.initialize()
+
+    async def _fake_create(**_kwargs: Any) -> Any:
+        return _anthropic_text_response("just the answer", "end_turn")
+
+    monkeypatch.setattr(agent._client.messages, "create", _fake_create)
+
+    output = await agent.run(SimpleTask(prompt="quick question"))
+    assert output.response == "just the answer"
+
+
 # ---------------------------------------------------------------------------
 # 7. ClaudeAgent inbound sanitization over a malicious tool result
 # ---------------------------------------------------------------------------

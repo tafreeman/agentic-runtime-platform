@@ -119,6 +119,10 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
         # Anthropic stop_reason from the most recent response; drives
         # _is_task_complete. None until the first model call returns.
         self._last_stop_reason: str | None = None
+        # Text segments from max_tokens continuation turns. BaseAgent's loop
+        # only hands the LAST turn's content to _parse_output, so earlier
+        # truncated segments must be buffered here and re-joined on parse.
+        self._continuation_chunks: list[str] = []
 
     # ------------------------------------------------------------------
     # _call_model — translate formats and call Anthropic
@@ -261,6 +265,9 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
     # ------------------------------------------------------------------
 
     def _format_task_message(self, task: SimpleTask) -> str:
+        # Called once at the start of each run — reset continuation state so a
+        # reused agent instance does not leak chunks across runs.
+        self._continuation_chunks = []
         return task.prompt
 
     #: Anthropic stop_reason values that mean the model produced a final answer.
@@ -280,7 +287,18 @@ class ClaudeAgent(BaseAgent[SimpleTask, SimpleOutput]):
         stop_reason = self._last_stop_reason
         if stop_reason is None:
             return True
-        return stop_reason in self._FINAL_STOP_REASONS
+        done = stop_reason in self._FINAL_STOP_REASONS
+        if not done:
+            # Truncated turn (e.g. max_tokens): keep this segment so the final
+            # parse can reassemble the full answer across continuation turns.
+            self._continuation_chunks.append(response)
+        return done
 
     async def _parse_output(self, task: SimpleTask, response: str) -> SimpleOutput:
-        return SimpleOutput(response=response)
+        # Reassemble max_tokens continuations: earlier truncated segments plus
+        # the final turn. Joined with "" because max_tokens cuts mid-text and
+        # the continuation resumes exactly where the previous turn stopped.
+        if self._continuation_chunks:
+            response = "".join([*self._continuation_chunks, response])
+            self._continuation_chunks = []
+        return SimpleOutput(success=True, response=response)
