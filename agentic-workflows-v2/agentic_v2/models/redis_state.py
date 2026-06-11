@@ -65,6 +65,54 @@ return 1
 # Default TTL: 1 hour
 DEFAULT_TTL_SECONDS: int = 3600
 
+# Maximum CAS read-modify-write retries before falling back. Concurrent
+# writers contending on the same key resolve in O(writers) attempts; this
+# bound prevents an unbounded spin under pathological contention.
+_CAS_MAX_RETRIES: int = 8
+
+# Monotonic counter fields on ModelStats that must SUM across concurrent
+# workers rather than being clobbered last-writer-wins. Each worker persists
+# only the delta it produced since its last successful persist, added to the
+# value another worker may have concurrently written.
+_COUNTER_FIELDS: tuple[str, ...] = (
+    "success_count",
+    "failure_count",
+    "rate_limit_count",
+    "timeout_count",
+)
+
+
+def _merge_stats_dicts(
+    redis_current: dict[str, Any],
+    local: dict[str, Any],
+    baseline: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge a worker's local stats into the concurrently-persisted value.
+
+    Monotonic counters are summed by applying the delta this worker produced
+    since ``baseline`` (its last persisted snapshot) on top of whatever value
+    is currently in Redis (which may include another worker's increments).
+    This guarantees concurrent ``record_failure`` calls do not clobber each
+    other — the persisted count reflects every worker's contribution.
+
+    Non-counter fields (circuit_state, timestamps, latency) take the local
+    worker's value: the most recent writer reflects the freshest circuit
+    assessment, which is the correct semantics for breaker state.
+
+    Args:
+        redis_current: The stats dict currently stored in Redis.
+        local: This worker's in-memory stats dict (``ModelStats.to_dict()``).
+        baseline: This worker's counter values as of its last persist.
+
+    Returns:
+        A merged stats dict to write back via CAS.
+    """
+    merged = dict(local)
+    for counter_field in _COUNTER_FIELDS:
+        delta = local.get(counter_field, 0) - baseline.get(counter_field, 0)
+        merged[counter_field] = redis_current.get(counter_field, 0) + delta
+    return merged
+
 
 @dataclass
 class RedisCircuitBreakerStore:
@@ -338,7 +386,16 @@ class RedisCircuitBreakerStore:
         self,
         model_stats: dict[str, ModelStats],
     ) -> bool:
-        """Save all model stats to Redis atomically via pipeline.
+        """Bulk-write all model stats to Redis via a non-transactional pipeline.
+
+        .. warning::
+            This is **last-writer-wins** and is NOT the production circuit-
+            breaker save path. Concurrent workers using this method clobber
+            each other's counters. The production router persists through
+            :meth:`save_stats_cas` (per-model CAS read-modify-write) instead.
+            ``save_all_stats`` is retained only as a bulk seed/restore helper
+            (e.g. one-shot warm-up or test setup) where no concurrent writers
+            contend on the same keys.
 
         Args:
             model_stats: Mapping of model name to ``ModelStats`` instance.
@@ -360,6 +417,69 @@ class RedisCircuitBreakerStore:
             logger.warning("Redis save_all_stats failed: %s", exc)
             self._handle_connection_loss(exc)
             return False
+
+    async def save_stats_cas(
+        self,
+        model: str,
+        stats: ModelStats,
+        baseline: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        """Persist one model's stats via Compare-And-Swap read-modify-write.
+
+        Re-reads the current Redis value, merges this worker's counter deltas
+        on top of it (so concurrent writers cannot clobber each other's
+        circuit-breaker counters), and CAS-writes the result. Retries on
+        conflict up to :data:`_CAS_MAX_RETRIES` times.
+
+        Args:
+            model: Model identifier.
+            stats: This worker's in-memory ``ModelStats``.
+            baseline: This worker's counter snapshot as of its last successful
+                persist (``None`` for the first persist — treated as all-zero
+                so the full local counts are applied as the delta).
+
+        Returns:
+            The new baseline (the merged counter values just written) on
+            success, or ``None`` if Redis is unavailable or every retry
+            conflicted. Callers should keep their old baseline when ``None``
+            is returned so the unpersisted delta is retried on the next save.
+        """
+        if not self._connected or self._client is None:
+            return None
+
+        local_dict = stats.to_dict()
+        effective_baseline = baseline if baseline is not None else {}
+
+        for _ in range(_CAS_MAX_RETRIES):
+            expected_json = await self._read_raw(model)
+            redis_current = (
+                json.loads(expected_json) if expected_json is not None else {}
+            )
+            merged = _merge_stats_dicts(redis_current, local_dict, effective_baseline)
+
+            if await self.cas(model, expected_json, merged):
+                return {f: merged.get(f, 0) for f in _COUNTER_FIELDS}
+            # CAS conflict: another worker wrote between our read and write.
+            # Loop to re-read and re-merge our delta on top of their value.
+
+        logger.warning(
+            "Redis CAS save exhausted %d retries for model=%s; "
+            "delta will be retried on next save",
+            _CAS_MAX_RETRIES,
+            model,
+        )
+        return None
+
+    async def _read_raw(self, model: str) -> str | None:
+        """Read the raw JSON string stored for a model (or None if absent)."""
+        if not self._connected or self._client is None:
+            return None
+        try:
+            return await self._client.get(self._make_key(model))
+        except (RedisError, OSError) as exc:
+            logger.warning("Redis GET (raw) failed for model=%s: %s", model, exc)
+            self._handle_connection_loss(exc)
+            return None
 
     async def load_all_stats(self) -> dict[str, ModelStats]:
         """Load all model stats from Redis.

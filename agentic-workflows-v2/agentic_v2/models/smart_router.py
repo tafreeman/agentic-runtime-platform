@@ -16,10 +16,16 @@ from filelock import FileLock
 
 from .model_stats import CircuitState, ModelStats
 from .rate_limit_tracker import RateLimitTracker, _extract_provider
-from .redis_state import RedisCircuitBreakerStore
+from .redis_state import _COUNTER_FIELDS, RedisCircuitBreakerStore
 from .router import ModelRouter, ModelTier
 
 logger = logging.getLogger(__name__)
+
+
+def _counter_snapshot(stats: ModelStats) -> dict[str, int]:
+    """Capture the monotonic counter values used as a CAS persist baseline."""
+    stats_dict = stats.to_dict()
+    return {field_name: stats_dict.get(field_name, 0) for field_name in _COUNTER_FIELDS}
 
 
 # Metrics instrumentation — all calls are no-ops when metrics are not enabled
@@ -127,6 +133,15 @@ class SmartModelRouter(ModelRouter):
 
     # Redis-backed shared state (None = local-only mode)
     _redis_store: RedisCircuitBreakerStore | None = field(default=None, repr=False)
+
+    # Per-model counter baselines for CAS read-modify-write persistence.
+    # Tracks the monotonic-counter values this worker last successfully wrote
+    # to Redis, so each save persists only the delta produced since then —
+    # preventing concurrent workers from clobbering each other's circuit
+    # breaker counters (last-writer-wins). Keyed by model name.
+    _redis_counter_baselines: dict[str, dict[str, int]] = field(
+        default_factory=dict, repr=False
+    )
 
     # Background save tasks — prevent GC of fire-and-forget Redis writes
     _background_tasks: set[asyncio.Task[None]] = field(
@@ -585,12 +600,31 @@ class SmartModelRouter(ModelRouter):
             temp_file.replace(self.stats_file)
 
     async def _save_stats_to_redis(self) -> None:
-        """Save all model stats to Redis via pipeline."""
+        """Persist model stats to Redis via per-model CAS read-modify-write.
+
+        Each model is saved with :meth:`RedisCircuitBreakerStore.save_stats_cas`,
+        which re-reads the current value and merges this worker's counter
+        deltas on top of it. This prevents concurrent workers from clobbering
+        each other's circuit-breaker counters (the old ``save_all_stats``
+        pipeline was blind last-writer-wins). Falls back to local file
+        persistence if any model fails to persist.
+        """
         if self._redis_store is None:
             return
-        success = await self._redis_store.save_all_stats(self.model_stats)
-        if not success:
-            logger.debug("Redis save failed; local file fallback will be used")
+
+        all_persisted = True
+        for model, stats in self.model_stats.items():
+            baseline = self._redis_counter_baselines.get(model)
+            new_baseline = await self._redis_store.save_stats_cas(
+                model, stats, baseline
+            )
+            if new_baseline is None:
+                all_persisted = False
+            else:
+                self._redis_counter_baselines[model] = new_baseline
+
+        if not all_persisted:
+            logger.debug("Redis CAS save incomplete; local file fallback will be used")
             self._save_stats_to_file()
 
     def _load_stats(self) -> None:
@@ -615,6 +649,11 @@ class SmartModelRouter(ModelRouter):
             loaded = await self._redis_store.load_all_stats()
             if loaded:
                 self.model_stats.update(loaded)
+                # Seed CAS baselines from the loaded counts so the next save
+                # persists only deltas produced after this load (not the full
+                # already-persisted counts, which would double-count).
+                for model, stats in loaded.items():
+                    self._redis_counter_baselines[model] = _counter_snapshot(stats)
                 logger.info(
                     "Loaded %d model stats from Redis", len(loaded)
                 )
