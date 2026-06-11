@@ -7,6 +7,8 @@ Redis instance at localhost:6379.
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from agentic_v2.models.model_stats import CircuitState, ModelStats
@@ -64,6 +66,32 @@ async def _make_fake_store(
     store._client = fake_client
     store._connected = True
     # Register the CAS Lua script
+    from agentic_v2.models.redis_state import _CAS_LUA_SCRIPT
+
+    store._cas_sha = await fake_client.script_load(_CAS_LUA_SCRIPT)
+    return store
+
+
+async def _make_store_on_server(
+    fake_server: "fakeredis.FakeServer",
+    prefix: str = "test:cb:",
+    ttl_seconds: int = 3600,
+) -> RedisCircuitBreakerStore:
+    """Create a store bound to an existing fakeredis server.
+
+    Two stores sharing one ``FakeServer`` model two worker processes talking
+    to the same Redis — the setup required to exercise concurrent CAS writes.
+    """
+    fake_client = fakeredis.FakeAsyncRedis(
+        server=fake_server, decode_responses=True
+    )
+    store = RedisCircuitBreakerStore(
+        redis_url="redis://fake",
+        prefix=prefix,
+        ttl_seconds=ttl_seconds,
+    )
+    store._client = fake_client
+    store._connected = True
     from agentic_v2.models.redis_state import _CAS_LUA_SCRIPT
 
     store._cas_sha = await fake_client.script_load(_CAS_LUA_SCRIPT)
@@ -451,6 +479,245 @@ class TestSmartModelRouterRedisIntegration:
         """__repr__ shows redis=none when no store is attached."""
         router = SmartModelRouter()
         assert "redis=none" in repr(router)
+
+
+# ============================================================================
+# Unit Tests — Concurrent CAS persistence (lost-update prevention)
+# ============================================================================
+
+
+@skip_no_fakeredis
+@skip_no_redis_lib
+class TestConcurrentCircuitBreakerPersistence:
+    """Two-worker concurrency tests for the production CAS save path.
+
+    These are the literal acceptance tests for the circuit-breaker
+    lost-update fix: two workers sharing one Redis both record a failure on
+    the same model, and the persisted failure count must equal 2 — not 1.
+    """
+
+    @staticmethod
+    def _persisted_failure_count(store: RedisCircuitBreakerStore, model: str):
+        """Return the failure_count currently persisted in Redis."""
+
+        async def _read():
+            loaded = await store.get(model)
+            assert loaded is not None, "expected persisted stats in Redis"
+            return loaded["failure_count"]
+
+        return _read()
+
+    async def test_two_workers_record_failure_no_lost_update(self):
+        """Both workers record_failure on the same model → persisted count == 2.
+
+        This is the regression test for the blind last-writer-wins save path.
+        With the old ``save_all_stats`` pipeline each worker wrote its whole
+        object (failure_count=1), so whichever wrote last won and the count
+        was stuck at 1. The CAS read-modify-write path must sum both deltas.
+        """
+        server = fakeredis.FakeServer()
+        store_a = await _make_store_on_server(server)
+        store_b = await _make_store_on_server(server)
+
+        model = "ollama:phi4"
+
+        # Two independent routers (one per worker), each with its own store
+        # but sharing the same backing Redis server.
+        worker_a = SmartModelRouter(_redis_store=store_a, _auto_save=False)
+        worker_b = SmartModelRouter(_redis_store=store_b, _auto_save=False)
+
+        # Both workers observe a failure for the same model.
+        worker_a.record_failure(model, "timeout")
+        worker_b.record_failure(model, "timeout")
+
+        # Persist concurrently — interleave the two CAS read-modify-write
+        # cycles. CAS conflict on whichever loses the race forces a re-read
+        # and re-merge, so the surviving value reflects BOTH increments.
+        await asyncio.gather(
+            worker_a._save_stats_to_redis(),
+            worker_b._save_stats_to_redis(),
+        )
+
+        persisted = await self._persisted_failure_count(store_a, model)
+        assert persisted == 2, (
+            f"Expected both workers' failures to persist (count==2), "
+            f"got {persisted} — lost update / last-writer-wins regression"
+        )
+
+        await store_a.close()
+        await store_b.close()
+
+    async def test_sequential_workers_accumulate_failures(self):
+        """Serial saves from two workers also accumulate (no double-count)."""
+        server = fakeredis.FakeServer()
+        store_a = await _make_store_on_server(server)
+        store_b = await _make_store_on_server(server)
+        model = "gh:gpt-4o"
+
+        worker_a = SmartModelRouter(_redis_store=store_a, _auto_save=False)
+        worker_b = SmartModelRouter(_redis_store=store_b, _auto_save=False)
+
+        worker_a.record_failure(model, "error")
+        await worker_a._save_stats_to_redis()
+
+        worker_b.record_failure(model, "error")
+        await worker_b._save_stats_to_redis()
+
+        persisted = await self._persisted_failure_count(store_a, model)
+        assert persisted == 2
+
+        await store_a.close()
+        await store_b.close()
+
+    async def test_repeated_saves_do_not_double_count(self):
+        """Re-saving without new failures keeps the persisted count stable.
+
+        Guards the baseline bookkeeping: once a worker's delta is persisted,
+        a second save with no new local activity must be a no-op delta (0),
+        not a re-application of the full local count.
+        """
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+        worker = SmartModelRouter(_redis_store=store, _auto_save=False)
+
+        worker.record_failure(model, "error")
+        await worker._save_stats_to_redis()
+        await worker._save_stats_to_redis()  # no new failures
+        await worker._save_stats_to_redis()
+
+        loaded = await store.get(model)
+        assert loaded["failure_count"] == 1
+
+        await store.close()
+
+    async def test_mixed_success_and_failure_counters_merge(self):
+        """Concurrent workers recording different counters both survive."""
+        server = fakeredis.FakeServer()
+        store_a = await _make_store_on_server(server)
+        store_b = await _make_store_on_server(server)
+        model = "ollama:phi4"
+
+        worker_a = SmartModelRouter(_redis_store=store_a, _auto_save=False)
+        worker_b = SmartModelRouter(_redis_store=store_b, _auto_save=False)
+
+        worker_a.record_failure(model, "timeout")
+        worker_b.record_success(model, latency_ms=120.0)
+
+        await asyncio.gather(
+            worker_a._save_stats_to_redis(),
+            worker_b._save_stats_to_redis(),
+        )
+
+        loaded = await store_a.get(model)
+        assert loaded["failure_count"] == 1
+        assert loaded["success_count"] == 1
+
+        await store_a.close()
+        await store_b.close()
+
+    async def test_baseline_stays_local_after_cross_worker_merge(self):
+        """A worker's CAS baseline must be its LOCAL snapshot, not the merge.
+
+        PR #73 review (Codex): A persists 1 failure; B persists its first
+        failure on top (Redis == 2). If B's baseline were the merged value
+        (2) while its local count is 1, B's next failure (local == 2) would
+        produce a zero delta and that failure would never persist. With the
+        local-snapshot baseline the delta is 1 and Redis reaches 3.
+        """
+        server = fakeredis.FakeServer()
+        store_a = await _make_store_on_server(server)
+        store_b = await _make_store_on_server(server)
+        model = "gh:gpt-4o"
+
+        worker_a = SmartModelRouter(_redis_store=store_a, _auto_save=False)
+        worker_b = SmartModelRouter(_redis_store=store_b, _auto_save=False)
+
+        worker_a.record_failure(model, "error")
+        await worker_a._save_stats_to_redis()  # Redis: 1
+
+        worker_b.record_failure(model, "error")
+        await worker_b._save_stats_to_redis()  # Redis: 2 (A's 1 + B's 1)
+
+        worker_b.record_failure(model, "error")
+        await worker_b._save_stats_to_redis()  # B's new delta of 1 → Redis: 3
+
+        persisted = await self._persisted_failure_count(store_a, model)
+        assert persisted == 3, (
+            f"Expected 3 persisted failures, got {persisted} — merged-value "
+            f"baseline regression (worker's later increments lost)"
+        )
+
+        await store_a.close()
+        await store_b.close()
+
+    async def test_concurrent_saves_from_same_router_do_not_double_count(self):
+        """Two in-flight saves from one router must not re-apply the delta.
+
+        record_success/record_failure spawn fire-and-forget save tasks;
+        without the per-router save lock, both tasks read the same baseline,
+        compute the same delta, and the CAS retry path applies it twice.
+        """
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+        worker = SmartModelRouter(_redis_store=store, _auto_save=False)
+
+        worker.record_failure(model, "error")
+        worker.record_failure(model, "error")
+        await asyncio.gather(
+            worker._save_stats_to_redis(),
+            worker._save_stats_to_redis(),
+        )
+
+        loaded = await store.get(model)
+        assert loaded["failure_count"] == 2, (
+            f"Expected 2, got {loaded['failure_count']} — concurrent saves "
+            f"re-applied the same delta (missing save serialization)"
+        )
+
+        await store.close()
+
+    async def test_corrupt_redis_json_is_overwritten_not_fatal(self):
+        """Corrupt JSON in Redis is replaced by merged stats, not a crash."""
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+        await store._client.set(store._make_key(model), "{not-valid-json")
+
+        stats = ModelStats(model_id=model)
+        stats.record_failure("error")
+
+        new_baseline = await store.save_stats_cas(model, stats, None)
+        assert new_baseline is not None, "save must succeed despite corruption"
+
+        loaded = await store.get(model)
+        assert loaded is not None
+        assert loaded["failure_count"] == 1
+
+        await store.close()
+
+    async def test_negative_delta_clamped_after_local_reset(self):
+        """A reset worker (local < baseline) must not decrease Redis counters."""
+        store = await _make_fake_store()
+        model = "ollama:phi4"
+
+        seeded = ModelStats(model_id=model)
+        for _ in range(5):
+            seeded.record_failure("error")
+        assert await store.save_stats_cas(model, seeded, None) is not None
+
+        # Worker restarts: local stats reset to 1 failure, but its stale
+        # baseline still claims 5 were persisted → raw delta would be -4.
+        fresh = ModelStats(model_id=model)
+        fresh.record_failure("error")
+        stale_baseline = {"failure_count": 5}
+        assert await store.save_stats_cas(model, fresh, stale_baseline) is not None
+
+        loaded = await store.get(model)
+        assert loaded["failure_count"] == 5, (
+            f"Expected monotonic counter to stay at 5, got "
+            f"{loaded['failure_count']} — negative delta was applied"
+        )
+
+        await store.close()
 
 
 # ============================================================================

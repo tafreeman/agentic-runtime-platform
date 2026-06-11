@@ -55,6 +55,11 @@ async def fast_step(ctx: ExecutionContext) -> dict[str, Any]:
     return {"value": 42}
 
 
+async def raising_step(ctx: ExecutionContext) -> dict[str, Any]:
+    """A step that raises — drives the non-timeout failure path."""
+    raise RuntimeError("step exploded")
+
+
 # ---------------------------------------------------------------------------
 # Core timeout tests
 # ---------------------------------------------------------------------------
@@ -268,3 +273,105 @@ class TestDAGExecutorTimeoutMixed:
         # hung should be failed or skipped
         assert "hung" in step_map
         assert step_map["hung"].status in (StepStatus.FAILED, StepStatus.SKIPPED)
+
+
+# ---------------------------------------------------------------------------
+# engine.execute span error-status tests (OTEL observability)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def engine_span_exporter(monkeypatch):
+    """Inject an in-memory-exporter-backed tracer for engine.execute spans.
+
+    Mirrors the fixture in test_otel_trace_chain.py: installs a TracerProvider
+    with an InMemorySpanExporter and patches the otel module singleton so
+    DAGExecutor's ``_get_tracer()`` returns this test tracer (and therefore
+    actually creates the ``engine.execute`` span).
+    """
+    pytest.importorskip("opentelemetry.sdk.trace")
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+        InMemorySpanExporter,
+    )
+
+    import agentic_v2.integrations.otel as otel_module
+
+    monkeypatch.setenv("AGENTIC_TRACING", "1")
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    test_tracer = provider.get_tracer("agentic-engine-span-test")
+    monkeypatch.setattr(otel_module, "_tracer_instance", test_tracer)
+
+    yield exporter
+
+    exporter.clear()
+
+
+def _engine_span(exporter):
+    for span in exporter.get_finished_spans():
+        if span.name == "engine.execute":
+            return span
+    return None
+
+
+class TestEngineExecuteSpanErrorStatus:
+    """The engine.execute span must reflect workflow failure as ERROR."""
+
+    async def test_failing_step_marks_engine_span_error(
+        self, engine_span_exporter
+    ) -> None:
+        """A workflow whose step raises yields an ERROR engine.execute span."""
+        from opentelemetry.trace import StatusCode
+
+        dag = _make_dag("engine-fail")
+        dag.add(StepDefinition(name="boom", func=raising_step))
+
+        executor = DAGExecutor()
+        result = await executor.execute(dag)
+
+        assert result.overall_status == StepStatus.FAILED
+        span = _engine_span(engine_span_exporter)
+        assert span is not None, "engine.execute span was not exported"
+        assert span.status.status_code is StatusCode.ERROR
+        assert "exception" in [e.name for e in span.events]
+
+    async def test_timeout_marks_engine_span_error(
+        self, engine_span_exporter
+    ) -> None:
+        """A timed-out workflow yields an ERROR engine.execute span."""
+        from opentelemetry.trace import StatusCode
+
+        dag = _make_dag("engine-timeout")
+        dag.add(StepDefinition(name="hung", func=hung_step))
+
+        executor = DAGExecutor()
+        result = await executor.execute(dag, timeout=0.1)
+
+        assert result.overall_status == StepStatus.FAILED
+        span = _engine_span(engine_span_exporter)
+        assert span is not None
+        assert span.status.status_code is StatusCode.ERROR
+        # The timeout path records both the timeout event and the error.
+        event_names = [e.name for e in span.events]
+        assert "workflow.timeout" in event_names
+        assert "exception" in event_names
+
+    async def test_successful_workflow_engine_span_not_error(
+        self, engine_span_exporter
+    ) -> None:
+        """A successful workflow leaves the engine.execute span un-errored."""
+        from opentelemetry.trace import StatusCode
+
+        dag = _make_dag("engine-ok")
+        dag.add(StepDefinition(name="compute", func=instant_step))
+
+        executor = DAGExecutor()
+        result = await executor.execute(dag)
+
+        assert result.overall_status == StepStatus.SUCCESS
+        span = _engine_span(engine_span_exporter)
+        assert span is not None
+        assert span.status.status_code is not StatusCode.ERROR

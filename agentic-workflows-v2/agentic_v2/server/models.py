@@ -49,6 +49,47 @@ class HealthResponse(BaseModel):
     version: str = "0.1.0"
 
 
+class DependencyStatus(BaseModel):
+    """Health of a single external dependency for the readiness probe."""
+
+    name: str = Field(description="Dependency identifier, e.g. 'redis'.")
+    status: Literal["ok", "down", "skipped"] = Field(
+        description=(
+            "'ok' = reachable; 'down' = configured but unreachable "
+            "(critical); 'skipped' = not configured, not checked."
+        )
+    )
+    detail: str | None = Field(
+        default=None, description="Human-readable detail (no secrets)."
+    )
+
+
+class ReadinessResponse(BaseModel):
+    """Readiness probe response (GET ``/api/health/ready``).
+
+    Unlike the cheap liveness probe (``/health``), this inspects critical
+    dependencies and routing health. Served with HTTP 503 when a configured
+    critical dependency (e.g. Redis) is unreachable, so orchestrators can stop
+    routing traffic to a process that is alive but cannot serve correctly.
+    """
+
+    status: Literal["ready", "not_ready"] = Field(
+        description="'ready' (HTTP 200) or 'not_ready' (HTTP 503)."
+    )
+    dependencies: list[DependencyStatus] = Field(default_factory=list)
+    degraded_selection_count: int = Field(
+        default=0,
+        description=(
+            "Cumulative count of cross-tier degraded model selections "
+            "(from SmartModelRouter)."
+        ),
+    )
+    open_circuit_breakers: list[str] = Field(
+        default_factory=list,
+        description="Models whose circuit breaker is currently OPEN.",
+    )
+
+
 class StepResultRecord(BaseModel):
     """HTTP wire shape for a single step in ``GET /api/runs/{filename}``.
 
