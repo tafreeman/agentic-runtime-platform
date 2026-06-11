@@ -111,7 +111,7 @@ class BudgetEnforcingProvider:
     @property
     def supports_tools(self) -> bool:
         """Delegate capability to the inner provider (never hardcode)."""
-        return self._inner.supports_tools
+        return bool(self._inner.supports_tools)
 
     async def complete(
         self,

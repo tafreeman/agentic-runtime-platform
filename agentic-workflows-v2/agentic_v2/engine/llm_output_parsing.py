@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 
 # ---------------------------------------------------------------------------
 # Sentinel regex constants (shared with tool_execution.py callers)
@@ -140,10 +140,12 @@ def _recover_nested_review_report(raw_response: str) -> dict[str, Any] | None:
             continue
         if not isinstance(nested_parsed, dict):
             continue
-        if isinstance(nested_parsed.get("review_report"), dict):
-            return nested_parsed["review_report"]
-        if isinstance(nested_parsed.get("review"), dict):
-            return nested_parsed["review"]
+        review_report = nested_parsed.get("review_report")
+        if isinstance(review_report, dict):
+            return cast("dict[str, Any]", review_report)
+        review = nested_parsed.get("review")
+        if isinstance(review, dict):
+            return cast("dict[str, Any]", review)
         if isinstance(nested_parsed.get("overall_status"), str):
             return {"overall_status": nested_parsed["overall_status"]}
     return None

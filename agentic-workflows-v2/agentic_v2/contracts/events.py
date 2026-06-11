@@ -8,7 +8,7 @@ frontend a single source of truth: the client TypeScript union in
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Literal, Union, cast
 
 from pydantic import BaseModel, Field, TypeAdapter
 
@@ -162,4 +162,4 @@ def validate_event(payload: dict[str, Any]) -> ExecutionEvent:
 
     Raises pydantic.ValidationError (a ValueError subclass) on mismatch.
     """
-    return _adapter.validate_python(payload)
+    return cast("ExecutionEvent", _adapter.validate_python(payload))

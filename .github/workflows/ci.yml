@@ -1,6 +1,7 @@
 name: CI
 
-# CI: verifies Python imports + smoke tests, frontend build, ruff lint, and 80% coverage gate.
+# CI: verifies Python imports + smoke tests, frontend build, ruff lint, strict
+# mypy on the core runtime surface, and the 80% coverage gate.
 # Integration and slow tests are excluded from the fast CI pass.
 
 on:
@@ -82,6 +83,30 @@ jobs:
             echo "::error::Ruff applied autofixes. Run 'ruff check --fix agentic_v2/ tests/' locally and commit the result."
             exit 1
           fi
+
+  typecheck-core-contracts:
+    name: Mypy (strict engine + contracts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "agentic-workflows-v2/[dev]"
+      - name: Run strict mypy ratchet
+        run: |
+          cd agentic-workflows-v2
+          python -m mypy agentic_v2/engine agentic_v2/contracts \
+            --config-file pyproject.toml \
+            --follow-imports=skip \
+            --disallow-untyped-defs \
+            --warn-return-any \
+            --show-error-codes \
+            --no-incremental
 
   test-coverage:
     runs-on: ubuntu-latest
