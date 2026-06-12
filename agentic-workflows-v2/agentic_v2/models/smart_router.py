@@ -22,6 +22,23 @@ from .router import ModelRouter, ModelTier
 logger = logging.getLogger(__name__)
 
 
+class _CircuitResolvedError(Exception):
+    """Internal signal: a preceding probe resolved the HALF_OPEN circuit.
+
+    Raised inside ``execute_with_bulkhead`` when a caller acquires the probe
+    lock but finds the circuit no longer HALF_OPEN (a prior probe closed or
+    re-opened it).  The caller should treat this model as unavailable and
+    re-route to the next candidate.  Never surfaces to end-callers.
+    """
+
+    def __init__(self, model: str, new_state: CircuitState) -> None:
+        super().__init__(
+            f"Circuit for {model!r} resolved to {new_state.value} before probe ran"
+        )
+        self.model = model
+        self.new_state = new_state
+
+
 def _counter_snapshot(stats: ModelStats) -> dict[str, int]:
     """Capture the monotonic counter values used as a CAS persist baseline."""
     stats_dict = stats.to_dict()
@@ -697,20 +714,61 @@ class SmartModelRouter(ModelRouter):
         breaker probe lock serialises concurrent callers correctly.  Callers
         that bypass this guard will race on the probe and may submit multiple
         simultaneous probes, defeating the half-open serialisation invariant.
+
+        Half-open single-probe invariant:
+          Only one coroutine should reach the provider as a probe. We enforce
+          this with a non-blocking probe-lock pattern:
+
+          1. If ``probe_lock.locked()`` is True, another coroutine already owns
+             the probe slot.  We raise ``_CircuitResolvedError`` immediately
+             (no waiting) so ``call_with_fallback`` can skip this model.
+
+          2. If the lock appears free, we call ``await probe_lock.acquire()``
+             which returns synchronously in asyncio when the lock is not
+             contended — no yield point between the ``locked()`` check and the
+             acquire, so no other coroutine can interleave and steal the slot.
+
+          3. Once we hold the lock we re-read ``circuit_state``: a probe that
+             completed *just before* our acquire may have closed or re-opened
+             the circuit, in which case we release and raise.
+
+          4. ``probe_in_progress`` is set under the lock so that concurrent
+             callers that haven't checked yet see the flag and skip via
+             ``check_circuit()``.
         """
         stats = self._get_stats(model)
         semaphore = self._get_semaphore(model)
         async with semaphore:
             if stats.circuit_state == CircuitState.HALF_OPEN:
-                async with self._get_probe_lock(model):
+                probe_lock = self._get_probe_lock(model)
+                # Non-blocking gate: if a probe is already in-flight, bail out
+                # immediately rather than queuing behind the lock.
+                if probe_lock.locked():
+                    raise _CircuitResolvedError(model, stats.circuit_state)
+                # Acquire synchronously (no yield on an uncontested Lock in asyncio).
+                await probe_lock.acquire()
+                # Re-read state under the lock: the winning probe may have resolved
+                # the circuit between our locked() check and acquire().
+                if stats.circuit_state != CircuitState.HALF_OPEN:
+                    probe_lock.release()
+                    raise _CircuitResolvedError(model, stats.circuit_state)
+                stats.probe_in_progress = True
+                try:
                     yield
+                finally:
+                    stats.probe_in_progress = False
+                    probe_lock.release()
             else:
                 yield
 
     async def _execute_call(
         self, caller: Callable[[str, str], Awaitable[Any]], model: str, prompt: str
     ) -> Any:
-        """Execute a model call with bulkhead and probe-lock guards."""
+        """Execute a model call with bulkhead and probe-lock guards.
+
+        Re-raises ``_CircuitResolvedError`` so that ``call_with_fallback``
+        can skip this model and route to the next candidate.
+        """
         async with self.execute_with_bulkhead(model):
             return await caller(model, prompt)
 
@@ -777,6 +835,14 @@ class SmartModelRouter(ModelRouter):
                 return model, response
             except asyncio.CancelledError:
                 raise
+            except _CircuitResolvedError:
+                # A prior probe already resolved the HALF_OPEN circuit before
+                # this caller could run its probe.  Skip this model without
+                # recording a failure and try the next candidate.
+                logger.debug(
+                    "Skipping model %r: circuit resolved by a prior probe", model
+                )
+                continue
             except Exception as e:
                 self._classify_and_record_error(model, e)
                 last_error = e

@@ -86,6 +86,12 @@ class ModelStats:
     _half_open_success_required: int = 2
     _half_open_successes: int = 0
 
+    # HALF_OPEN single-probe gate: set True while a probe is in-flight so that
+    # concurrent callers see the circuit as effectively OPEN and back off.
+    # Managed exclusively by SmartModelRouter.execute_with_bulkhead under the
+    # per-model probe lock — never modified directly from outside that context.
+    probe_in_progress: bool = False
+
     # Timestamps (wall clock — for logging/serialization only)
     last_success: datetime | None = None
     last_failure: datetime | None = None
@@ -304,8 +310,10 @@ class ModelStats:
                     return True
             return False
 
-        # HALF_OPEN: allow limited requests
-        return True
+        # HALF_OPEN: allow ONLY the single in-flight probe.
+        # If probe_in_progress is True, another caller already owns the probe
+        # slot — treat this as OPEN so non-probe callers back off.
+        return not self.probe_in_progress
 
     def to_dict(self) -> dict:
         """Serialize to dictionary for persistence."""
