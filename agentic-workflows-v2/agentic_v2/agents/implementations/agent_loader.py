@@ -29,8 +29,6 @@ from __future__ import annotations
 
 import logging
 import re
-
-logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +40,10 @@ except ImportError as e:
     raise ImportError(
         "claude-agent-sdk is required: pip install 'agentic-workflows-v2[claude]'"
     ) from e
+
+from agentic_v2.settings import get_settings as _get_settings
+
+logger = logging.getLogger(__name__)
 
 # Map short model names used in .md files to full Claude model IDs
 _MODEL_MAP = {
@@ -55,8 +57,6 @@ _DEFAULT_AGENTS_DIR = Path(__file__).parent / "definitions"
 
 # Optional external directory for local agent packs.
 # Keep this configurable to avoid machine-specific absolute paths in source.
-from agentic_v2.settings import get_settings as _get_settings
-
 _EXTERNAL_AGENTS_DIR_RAW = _get_settings().agentic_external_agents_dir
 _EXTERNAL_AGENTS_DIR: Path | None = (
     Path(_EXTERNAL_AGENTS_DIR_RAW) if _EXTERNAL_AGENTS_DIR_RAW else None

@@ -13,7 +13,7 @@ import pytest
 
 from agentic_v2.models.model_stats import CircuitState, ModelStats
 from agentic_v2.models.router import FallbackChain, ModelTier
-from agentic_v2.models.smart_router import SmartModelRouter, _CircuitResolvedError
+from agentic_v2.models.smart_router import SmartModelRouter, CircuitResolvedError
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ async def test_exactly_one_probe_reaches_provider() -> None:
         await barrier.wait()
         try:
             await router._execute_call(fake_provider, model, "hello")
-        except _CircuitResolvedError:
+        except CircuitResolvedError:
             # Expected: probe was already taken by another caller
             pass
 
@@ -164,7 +164,7 @@ async def test_probe_in_progress_cleared_on_probe_failure() -> None:
 
 @pytest.mark.asyncio
 async def test_circuit_resolved_error_not_raised_for_closed_circuit() -> None:
-    """execute_with_bulkhead does not raise _CircuitResolvedError for CLOSED circuit."""
+    """execute_with_bulkhead does not raise CircuitResolvedError for CLOSED circuit."""
     router = SmartModelRouter()
     model = "test:model"
     router._available_models.add(model)
@@ -185,7 +185,7 @@ async def test_circuit_resolved_error_not_raised_for_closed_circuit() -> None:
 
 @pytest.mark.asyncio
 async def test_call_with_fallback_does_not_record_failure_on_circuit_resolved() -> None:
-    """call_with_fallback skips _CircuitResolvedError without recording a failure.
+    """call_with_fallback skips CircuitResolvedError without recording a failure.
 
     When a probe slot is already taken, the call is not a failure — it's a
     routing signal. The failure_count should not increase.
