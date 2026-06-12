@@ -2899,12 +2899,12 @@
 <p>Add an optional <code>timeout: float | None</code> parameter to <code>DAGExecutor.execute()</code>.</p>
 <p>When <code>timeout</code> is not <code>None</code>:</p>
 <ol>
-<li>The entire scheduling loop is wrapped with <code>asyncio.wait_for(scheduling_loop(), timeout=timeout)</code>.</li>
-<li>On <code>asyncio.TimeoutError</code>: all in-flight step tasks are structurally cancelled via <code>task.cancel()</code> for each running <code>asyncio.Task</code>.</li>
-<li>Every step still in <code>RUNNING</code> state is transitioned to <code>FAILED</code> with reason <code>"workflow timeout exceeded"</code>.</li>
+<li>The entire scheduling loop is wrapped with <code>async with asyncio.timeout(timeout):</code> (the Python 3.11+ context-manager API, not <code>asyncio.wait_for</code>).</li>
+<li>On <code>TimeoutError</code>: all in-flight step tasks are structurally cancelled via <code>task.cancel()</code> for each running <code>asyncio.Task</code>, then awaited via <code>asyncio.gather(..., return_exceptions=True)</code> to prevent "Task was destroyed but it is pending" warnings.</li>
+<li>Every step still in <code>RUNNING</code> state is transitioned to <code>FAILED</code> with <code>error_type="TimeoutError"</code> and a descriptive error message.</li>
 <li>All transitive dependents of those failed steps are cascade-skipped via the same BFS skip propagation used for step-level failures — no dependent is left in <code>PENDING</code> or <code>RUNNING</code>.</li>
-<li>The top-level OTEL span for the workflow execution receives two attributes: <code>workflow.timeout_exceeded=True</code> and <code>workflow.timeout_seconds=&lt;n&gt;</code>.</li>
-<li><code>DAGExecutor.execute()</code> raises <code>WorkflowTimeoutError</code> (a subclass of <code>WorkflowError</code>) so callers can distinguish timeout from other failure modes.</li>
+<li>The top-level OTEL span for the workflow execution receives the attribute <code>workflow.timeout_exceeded=True</code> and a span event <code>"workflow.timeout"</code> carrying <code>workflow.timeout_seconds=&lt;n&gt;</code>.  The span is also marked <code>ERROR</code> so a timed-out workflow does not render green in exported traces.</li>
+<li><code>DAGExecutor.execute()</code> <strong>returns</strong> a <code>WorkflowResult</code> with <code>overall_status=FAILED</code> and <code>metadata["timeout_exceeded"]=True</code> (plus <code>metadata["timeout_seconds"]</code> and <code>metadata["error"]</code>). It does <strong>not</strong> raise an exception — the timeout is handled internally and reflected in the return value so callers can inspect <code>result.metadata.get("timeout_exceeded")</code> to distinguish a timeout from an ordinary step failure.</li>
 </ol>
 <p>When <code>timeout</code> is <code>None</code> (the default), behavior is unchanged. Per-step timeouts in <code>StepExecutor</code> remain active regardless of whether a top-level timeout is set — both can be active simultaneously and are additive, not exclusive.</p>
 <hr />
@@ -2915,11 +2915,11 @@
 <li>Composes additively with existing per-step timeouts. Operators can set both a tight per-step budget for individual agent calls and a looser whole-workflow ceiling as a backstop.</li>
 <li>Structural cancellation ensures the server's event loop is not blocked after timeout — all cancelled tasks are drained, no dangling coroutines remain.</li>
 <li>OTEL attribute emission provides a queryable signal for timeout events in Jaeger/Tempo dashboards.</li>
-<li><code>WorkflowTimeoutError</code> gives the route handler a typed exception for emitting an appropriate <code>workflow_end</code> event with <code>status: "timeout"</code> rather than <code>"failed"</code>.</li>
+<li><code>result.metadata["timeout_exceeded"]</code> gives the route handler a reliable signal for emitting an appropriate <code>workflow_end</code> event with <code>status: "timeout"</code> rather than <code>"failed"</code>, without requiring exception handling at the call site.</li>
 </ul>
 <h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>asyncio.wait_for</code> wraps the scheduling loop as a whole, not individual tasks within it. Cancellation propagation to in-flight coroutines depends on their cooperative <code>await</code> points; a tightly-looping synchronous step body may not cancel promptly. This is the same constraint that affects all <code>asyncio</code>-based cooperative cancellation.</li>
+<li><code>asyncio.timeout</code> wraps the scheduling loop as a whole, not individual tasks within it. Cancellation propagation to in-flight coroutines depends on their cooperative <code>await</code> points; a tightly-looping synchronous step body may not cancel promptly. This is the same constraint that affects all <code>asyncio</code>-based cooperative cancellation.</li>
 <li>The <code>timeout</code> parameter is passed at the call site (<code>engine.execute(..., timeout=N)</code>). Exposing this via the HTTP API (e.g., <code>execution_profile.max_duration_seconds</code>) is a follow-on task not included in S1-3.</li>
 </ul>
 <hr />
@@ -2934,7 +2934,7 @@
 <tbody>
 <tr>
 <td><strong>Watchdog task with explicit deadline polling</strong></td>
-<td>A separate <code>asyncio.Task</code> that periodically checks wall-clock time and calls <code>executor.cancel()</code> when the deadline passes. Rejected — introduces a race between the watchdog and the scheduler; <code>asyncio.wait_for</code> provides the same semantics more cleanly as a language primitive.</td>
+<td>A separate <code>asyncio.Task</code> that periodically checks wall-clock time and calls <code>executor.cancel()</code> when the deadline passes. Rejected — introduces a race between the watchdog and the scheduler; <code>asyncio.timeout</code> provides the same semantics more cleanly as a language primitive.</td>
 </tr>
 <tr>
 <td><strong>Per-step timeout only (existing behavior)</strong></td>
@@ -2953,9 +2953,8 @@
 <hr />
 <h2 id="implementation-references">Implementation References<a class="headerlink" href="#implementation-references" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Timeout parameter and cancellation logic: <code>agentic_v2/engine/dag_executor.py</code> (<code>DAGExecutor.execute</code>)</li>
-<li>OTEL attribute emission: <code>agentic_v2/integrations/otel.py</code></li>
-<li>Exception type: <code>agentic_v2/core/errors.py</code> (<code>WorkflowTimeoutError</code>)</li>
+<li>Timeout parameter and scheduling loop: <code>agentic_v2/engine/dag_executor.py</code> (<code>DAGExecutor.execute</code>, <code>_run_dag</code>, <code>_scheduling_loop</code>, <code>_handle_timeout</code>)</li>
+<li>OTEL span attribute and event emission: <code>agentic_v2/engine/dag_executor.py</code> (<code>_handle_timeout</code>, <code>_mark_span_error</code>)</li>
 <li>Existing per-step timeout (composes with this): <code>agentic_v2/engine/step_executor.py</code></li>
 </ul>
 <hr />
@@ -2988,7 +2987,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 12, 2026 05:34:05 UTC">June 12, 2026</span>
   </span>
 
     
