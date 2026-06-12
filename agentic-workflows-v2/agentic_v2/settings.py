@@ -76,6 +76,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        env_ignore_empty=True,
     )
 
     # --- OTEL / tracing ---
@@ -335,7 +336,7 @@ class Settings(BaseSettings):
         default=None,
         description="OIDC JWKS URL used to resolve JWT signing keys",
     )
-    agentic_oidc_algorithms: list[str] = Field(
+    agentic_oidc_algorithms: list[str] | str = Field(
         default_factory=lambda: ["RS256"],
         description="Comma-separated JWT signing algorithm allowlist",
     )

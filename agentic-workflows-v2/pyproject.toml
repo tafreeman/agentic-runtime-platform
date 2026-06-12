@@ -160,6 +160,9 @@ omit = [
     "agentic_v2/models/backends_base.py",
     "agentic_v2/models/backends_cloud.py",
     "agentic_v2/models/backends_local.py",
+    # client.py decomposed (FIX #5) — pure helpers now in testable sub-modules:
+    #   cache_budget.py, fallback_selector.py, retry_utils.py, sanitization_dispatch.py
+    # The main client.py glue still omitted (backend-wiring requires live providers).
     "agentic_v2/models/client.py",
     "agentic_v2/models/llm.py",
     "agentic_v2/prompts/*",

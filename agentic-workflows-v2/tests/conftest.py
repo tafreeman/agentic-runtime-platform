@@ -174,7 +174,7 @@ def _reset_llm_client():
 @pytest.fixture(autouse=True)
 def _default_shell_allowlist(monkeypatch: pytest.MonkeyPatch):
     """Keep legacy shell tests runnable while production remains fail-closed."""
-    if "AGENTIC_SHELL_ALLOWED_COMMANDS" not in os.environ:
+    if not os.environ.get("AGENTIC_SHELL_ALLOWED_COMMANDS"):
         monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "echo,python")
     yield
 
