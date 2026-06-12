@@ -63,7 +63,7 @@ class InMemoryVectorStore:
                 f"chunks and embeddings must have the same length, "
                 f"got {len(chunks)} chunks and {len(embeddings)} embeddings"
             )
-        for chunk, embedding in zip(chunks, embeddings):
+        for chunk, embedding in zip(chunks, embeddings, strict=True):
             if self._expected_dimensions is None and embedding:
                 self._expected_dimensions = len(embedding)
             if (
@@ -171,7 +171,7 @@ def _cosine_similarity(vec_a: Sequence[float], vec_b: Sequence[float]) -> float:
     """
     if len(vec_a) != len(vec_b):
         raise ValueError(f"Vector dimension mismatch: {len(vec_a)} vs {len(vec_b)}")
-    dot = sum(a * b for a, b in zip(vec_a, vec_b))
+    dot = sum(a * b for a, b in zip(vec_a, vec_b, strict=True))
     norm_a = math.sqrt(sum(a * a for a in vec_a))
     norm_b = math.sqrt(sum(b * b for b in vec_b))
     if math.isclose(norm_a, 0.0, abs_tol=1e-10) or math.isclose(norm_b, 0.0, abs_tol=1e-10):
@@ -289,7 +289,7 @@ if _LANCEDB_AVAILABLE:
 
             existing = await asyncio.to_thread(self._existing_hashes)
             records: list[dict[str, Any]] = []
-            for chunk, emb in zip(chunks, embeddings):
+            for chunk, emb in zip(chunks, embeddings, strict=True):
                 if chunk.content_hash in existing:
                     logger.debug(
                         "Skipping duplicate content_hash=%s",

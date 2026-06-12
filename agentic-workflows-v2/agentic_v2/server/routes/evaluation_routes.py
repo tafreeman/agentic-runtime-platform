@@ -154,7 +154,8 @@ def _filter_datasets_for_workflow(
     for dataset in datasets:
         try:
             sample, _ = load_first_sample(dataset["id"])
-        except Exception:
+        except Exception as exc:
+            logger.debug("Skipping dataset %r (load failed): %s", dataset.get("id"), exc)
             continue
         compatible, _ = match_workflow_dataset(workflow_def, sample)
         if compatible:

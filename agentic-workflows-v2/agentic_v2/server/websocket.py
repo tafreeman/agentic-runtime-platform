@@ -159,8 +159,8 @@ class ConnectionManager:
 
         try:
             await self._replay_store.close()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Error closing replay store during reinit: %s", exc)
 
         try:
             self._replay_store = await build_replay_store(settings)

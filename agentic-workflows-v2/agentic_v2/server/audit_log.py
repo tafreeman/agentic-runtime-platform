@@ -253,14 +253,14 @@ class RedisAuditStore:
         if self._client is not None:
             try:
                 await self._client.aclose()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Error closing audit_log Redis client: %s", exc)
             self._client = None
         if self._pool is not None:
             try:
                 await self._pool.disconnect()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Error disconnecting audit_log Redis pool: %s", exc)
             self._pool = None
         self._connected = False
 

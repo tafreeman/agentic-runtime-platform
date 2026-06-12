@@ -215,7 +215,8 @@ class McpResourceAdapter:
                 )
                 if any(r.uri == uri for r in resources):
                     return name
-            except Exception:
+            except Exception as exc:
+                logger.debug("Resource discovery failed for client %r: %s", name, exc)
                 continue
 
         return None

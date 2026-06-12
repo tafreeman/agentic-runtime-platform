@@ -319,7 +319,7 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
         parsed = json.loads(raw)
         if isinstance(parsed, dict):
             return parsed
-    except Exception:
+    except json.JSONDecodeError:
         pass
 
     fenced = re.findall(
@@ -330,7 +330,7 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
             parsed = json.loads(candidate)
             if isinstance(parsed, dict):
                 return parsed
-        except Exception:
+        except json.JSONDecodeError:
             continue
 
     start = raw.find("{")
@@ -340,7 +340,7 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
             parsed = json.loads(raw[start : end + 1])
             if isinstance(parsed, dict):
                 return parsed
-        except Exception:
+        except json.JSONDecodeError:
             pass
 
     return None

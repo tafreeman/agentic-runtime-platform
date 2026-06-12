@@ -16,11 +16,14 @@ Supports caching, ``experimental`` flag for draft workflows, and
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from ..engine.agent_resolver import resolve_agent
 from ..engine.dag import DAG
@@ -188,7 +191,7 @@ class WorkflowLoader:
             with open(path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            raise WorkflowLoadError(f"Invalid YAML in {path}: {e}")
+            raise WorkflowLoadError(f"Invalid YAML in {path}: {e}") from e
 
         if not isinstance(data, dict):
             raise WorkflowLoadError(f"Workflow must be a YAML mapping: {path}")
@@ -550,7 +553,8 @@ class WorkflowLoader:
                 step = self._parse_step(step_data)
                 resolve_agent(step)
                 dag.add(step)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Skipping invalid DAG step %r: %s", step_data.get("name"), exc)
                 continue
 
     @staticmethod

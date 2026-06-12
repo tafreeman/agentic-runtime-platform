@@ -26,10 +26,13 @@ Core abstractions:
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .base import BaseAgent
@@ -376,7 +379,7 @@ def get_agent_capabilities(agent: "BaseAgent") -> CapabilitySet:
                 mixin_caps = base.get_capabilities(agent)
                 for cap in mixin_caps.capabilities.values():
                     cap_set.add(cap)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Skipping capability mixin %s: %s", base.__name__, exc)
 
     return cap_set

@@ -68,7 +68,7 @@ def _validate_provider_dimensions(
     if any(dimension != expected for dimension in dimensions):
         formatted = ", ".join(
             f"{_provider_label(provider)}={dimension}"
-            for provider, dimension in zip(providers, dimensions)
+            for provider, dimension in zip(providers, dimensions, strict=True)
         )
         raise ValueError(
             "FallbackEmbedder providers must share the same dimensions; "
@@ -89,7 +89,7 @@ def _validate_provider_identities(
 
     missing = [
         _provider_label(provider)
-        for provider, identity in zip(providers, identities)
+        for provider, identity in zip(providers, identities, strict=True)
         if identity is None
     ]
     if missing:

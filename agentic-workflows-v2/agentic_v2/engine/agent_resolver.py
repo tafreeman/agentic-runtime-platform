@@ -112,16 +112,16 @@ async def _parse_code_step(ctx: ExecutionContext) -> dict[str, Any]:
             file_path = await ctx.get(key)
             if file_path:
                 break
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Could not retrieve context key %r: %s", key, exc)
 
     # Also check parent context
     if not file_path:
         try:
             all_vars = ctx.all_variables()
             file_path = all_vars.get("file_path") or all_vars.get("code_file")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Could not retrieve all_variables from context: %s", exc)
 
     source = ""
     if file_path:

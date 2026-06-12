@@ -438,7 +438,8 @@ class RunLogger:
         for r in records:
             try:
                 tokens_30d += cls._record_recent_tokens(r, cutoff)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Skipping malformed run record in token sum: %s", exc)
                 continue
         return tokens_30d
 

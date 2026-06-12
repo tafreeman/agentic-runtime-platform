@@ -1,6 +1,7 @@
 """Tests for Architect and Test agents."""
 
 import pytest
+from pydantic import ValidationError
 
 from agentic_v2.agents import (
     ArchitectAgent,
@@ -33,7 +34,7 @@ class TestArchitectureInput:
 
     def test_empty_requirements_raises(self):
         """Test that empty requirements raises validation error."""
-        with pytest.raises(Exception):  # Pydantic ValidationError for min_length
+        with pytest.raises(ValidationError):
             ArchitectureInput(requirements="")
 
     def test_optional_fields_default(self):

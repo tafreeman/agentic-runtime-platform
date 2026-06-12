@@ -18,6 +18,7 @@ from __future__ import annotations
 import math
 
 import pytest
+from pydantic import ValidationError
 
 from agentic_v2.core.memory import MemoryStoreProtocol
 from agentic_v2.rag.embeddings import InMemoryEmbedder
@@ -678,7 +679,7 @@ class TestEdgeCases:
         validation."""
         store = _make_store()
         # Chunk.content has min_length=1; empty string should trigger a Pydantic error
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             await store.store("empty", "")
 
     @pytest.mark.asyncio

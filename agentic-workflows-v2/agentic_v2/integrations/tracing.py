@@ -97,12 +97,12 @@ class FileTraceAdapter(TraceAdapter):
 
         self._buffer.clear()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure buffer is flushed on cleanup."""
         try:
             self._flush()
-        except Exception:
-            pass  # Suppress errors during cleanup
+        except Exception as exc:
+            logger.debug("FileTraceAdapter flush on cleanup failed: %s", exc)
 
 
 class CompositeTraceAdapter(TraceAdapter):
