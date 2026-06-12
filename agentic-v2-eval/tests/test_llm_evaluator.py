@@ -95,6 +95,9 @@ def test_evaluate_returns_invalid_response_details() -> None:
     assert client.calls[0]["temperature"] == 0.0
     assert "System: Choose the best label." in client.calls[0]["prompt"]
     assert "Completion: completion" in client.calls[0]["prompt"]
+    # Judge fingerprint must be present
+    assert result["judge_model_id"] == "judge-model"
+    assert result["judge_seed"] == 0
 
 
 def test_evaluate_returns_exception_details() -> None:
@@ -102,10 +105,60 @@ def test_evaluate_returns_exception_details() -> None:
 
     result = evaluator.evaluate("completion", input="question")
 
-    assert result == {
-        "score": 0.0,
-        "passed": False,
-        "error": "provider unavailable",
-        "details": "Exception during execution",
-    }
+    assert result["score"] == 0.0
+    assert result["passed"] is False
+    assert result["error"] == "provider unavailable"
+    assert result["details"] == "Exception during execution"
+    # Judge fingerprint still present on exception path
+    assert result["judge_model_id"] == "judge-model"
+    assert result["judge_seed"] == 0
+
+
+def test_evaluate_includes_judge_fingerprint_on_success() -> None:
+    """Successful evaluation result carries judge_model_id and judge_seed."""
+    client = FakeLLMClient("excellent")
+    evaluator = make_evaluator(client)
+
+    result = evaluator.evaluate("great answer", input="question")
+
+    assert result["score"] == 1.0
+    assert result["passed"] is True
+    assert result["judge_model_id"] == "judge-model"
+    assert result["judge_seed"] == 0
+
+
+def test_evaluate_passes_seed_to_client() -> None:
+    """seed= kwarg is forwarded to the LLM client's generate_text call."""
+    client = FakeLLMClient("ok")
+    evaluator = LLMEvaluator(
+        model_id="judge-model",
+        system_prompt="Pick a label.",
+        prompt_template="{{completion}}",
+        choices=[Choice("ok", 0.5)],
+        llm_client=client,
+        seed=42,
+    )
+
+    result = evaluator.evaluate("answer")
+
+    assert result["judge_seed"] == 42
+    assert client.calls[0]["kwargs"].get("seed") == 42
+
+
+def test_evaluate_custom_seed_in_fingerprint() -> None:
+    """A non-default seed is reflected in judge_seed in the result."""
+    client = FakeLLMClient("poor")
+    evaluator = LLMEvaluator(
+        model_id="gpt-4o-mini",
+        system_prompt="Rate this.",
+        prompt_template="{{completion}}",
+        choices=[Choice("poor", 0.0), Choice("good", 1.0)],
+        llm_client=client,
+        seed=99,
+    )
+
+    result = evaluator.evaluate("answer")
+
+    assert result["judge_model_id"] == "gpt-4o-mini"
+    assert result["judge_seed"] == 99
 
