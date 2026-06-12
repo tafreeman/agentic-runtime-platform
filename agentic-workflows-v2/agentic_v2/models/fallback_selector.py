@@ -17,7 +17,7 @@ import logging
 from typing import Any, Awaitable, Callable, TypeVar
 
 from .router import ModelTier
-from .smart_router import SmartModelRouter
+from .smart_router import SmartModelRouter, _CircuitResolvedError
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +82,16 @@ async def run_with_fallback(
             return await attempt(selected_model)
         except asyncio.CancelledError:
             raise
+        except _CircuitResolvedError:
+            # A prior probe already resolved the HALF_OPEN circuit before
+            # this caller could run its probe. The model is healthy (or
+            # freshly re-opened) — skip it without recording a failure and
+            # try the next candidate, mirroring call_with_fallback.
+            logger.debug(
+                "Skipping model %r: circuit resolved by a prior probe",
+                selected_model,
+            )
+            continue
         except Exception as e:
             on_error(selected_model, e)
             last_error = e
