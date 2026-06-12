@@ -252,7 +252,7 @@ class TestRunWithFallback:
 
     @pytest.mark.asyncio
     async def test_circuit_resolved_skips_without_recording_failure(self) -> None:
-        """_CircuitResolvedError must not be treated as a model failure.
+        """CircuitResolvedError must not be treated as a model failure.
 
         PR #74 review: a prior probe resolving the HALF_OPEN circuit means
         the model is healthy (or freshly re-opened) — on_error must not run
@@ -260,7 +260,7 @@ class TestRunWithFallback:
         the next candidate, mirroring call_with_fallback.
         """
         from agentic_v2.models.model_stats import CircuitState
-        from agentic_v2.models.smart_router import _CircuitResolvedError
+        from agentic_v2.models.smart_router import CircuitResolvedError
 
         router = SmartModelRouter()
         candidates = iter(["m1", "m2"])
@@ -270,7 +270,7 @@ class TestRunWithFallback:
 
         async def attempt(m: str) -> str:
             if m == "m1":
-                raise _CircuitResolvedError("m1", CircuitState.CLOSED)
+                raise CircuitResolvedError("m1", CircuitState.CLOSED)
             return f"ok-{m}"
 
         result = await run_with_fallback(

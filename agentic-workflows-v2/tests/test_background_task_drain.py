@@ -55,18 +55,42 @@ async def _make_fake_store() -> RedisCircuitBreakerStore:
 @skip_no_fakeredis
 @pytest.mark.asyncio
 async def test_no_pending_tasks_after_drain() -> None:
-    """After drain_background_tasks(), _background_tasks is empty."""
+    """drain_background_tasks() empties _background_tasks after real saves are queued.
+
+    This test verifies the non-trivial pre/post contract:
+    - recording events schedules at least one background save task (non-empty set),
+    - drain awaits those tasks and leaves the set empty.
+    """
     store = await _make_fake_store()
+
+    # Use a barrier to hold save tasks in-flight until we are ready to drain,
+    # ensuring the set is provably non-empty when we assert it.
+    save_started = asyncio.Event()
+    drain_allowed = asyncio.Event()
+    original_save = store.save_stats_cas
+
+    async def gated_save(*args: object, **kwargs: object) -> object:
+        save_started.set()
+        await drain_allowed.wait()
+        return await original_save(*args, **kwargs)
+
+    store.save_stats_cas = gated_save  # type: ignore[method-assign]
+
     router = SmartModelRouter(_redis_store=store, _auto_save=True)
     router._available_models.add("ollama:phi4")
 
-    # Trigger fire-and-forget saves
+    # Trigger fire-and-forget saves — these will block inside gated_save
     router.record_success("ollama:phi4", latency_ms=100.0)
     router.record_success("ollama:phi4", latency_ms=120.0)
 
-    # There should be background tasks queued
-    assert len(router._background_tasks) >= 0  # may be 0 if tasks complete fast
+    # Wait until at least one save task has started so the set is non-empty
+    await save_started.wait()
+    assert len(router._background_tasks) > 0, (
+        "_background_tasks must be non-empty before drain (proves the test is non-trivial)"
+    )
 
+    # Release the gated saves and drain
+    drain_allowed.set()
     await router.drain_background_tasks()
 
     assert len(router._background_tasks) == 0

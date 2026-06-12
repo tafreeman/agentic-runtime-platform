@@ -92,7 +92,7 @@ Execution Kernel Domain:
 | 016 | Yes | 100% (GITHUB_TOKEN wiring, fork-skip guards) | CI workflow invariants | 2026-04-22 |
 | 017 | Yes | 100% (shape already live; ADR ratifies) | Sample-list route tests in `tests/server/` | 2026-04-22 |
 | 018 | Yes | 100% (slowapi middleware + AuthThrottle) | Rate-limit + throttle unit tests | 2026-05-14 |
-| 019 | Yes | 100% (asyncio.wait_for + BFS cascade) | DAG executor timeout tests | 2026-05-14 |
+| 019 | Yes | 100% (asyncio.timeout + BFS cascade) | DAG executor timeout tests | 2026-05-14 |
 | 020 | Yes | 100% (validate_selected + lifespan hook) | Adapter registry startup tests | 2026-05-14 |
 | 021 | Yes | 100% (OIDC JWT middleware + API-key fallback) | OIDC auth middleware tests | 2026-05-18 |
 | 022 | Yes | 100% (tenant context + scoped runs/datasets) | Tenant isolation + OIDC claim tests | 2026-05-18 |
