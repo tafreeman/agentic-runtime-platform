@@ -98,13 +98,13 @@ def _reset_global_routers():
             from agentic_v2.models.smart_router import reset_smart_router
 
             reset_smart_router()
-        except Exception:
+        except (ImportError, AttributeError):
             pass
         try:
             import agentic_v2.models.router as _router_mod
 
             _router_mod._default_router = None
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
     _reset()
@@ -128,14 +128,14 @@ def _reset_approval_provider():
         from agentic_v2.governance import approval as _approval_mod
 
         saved = _approval_mod.get_approval_provider()
-    except Exception:
+    except (ImportError, AttributeError):
         saved = None
         _approval_mod = None  # type: ignore[assignment]
     yield
     if _approval_mod is not None:
         try:
             _approval_mod.set_approval_provider(saved)
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
 
@@ -174,7 +174,7 @@ def _reset_llm_client():
 @pytest.fixture(autouse=True)
 def _default_shell_allowlist(monkeypatch: pytest.MonkeyPatch):
     """Keep legacy shell tests runnable while production remains fail-closed."""
-    if "AGENTIC_SHELL_ALLOWED_COMMANDS" not in os.environ:
+    if not os.environ.get("AGENTIC_SHELL_ALLOWED_COMMANDS"):
         monkeypatch.setenv("AGENTIC_SHELL_ALLOWED_COMMANDS", "echo,python")
     yield
 

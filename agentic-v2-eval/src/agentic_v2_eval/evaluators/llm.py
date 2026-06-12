@@ -56,12 +56,19 @@ class LLMEvaluator(Evaluator):
     response to a normalized ``[0.0, 1.0]`` score using the ``choices``
     list.
 
+    The judge model id and seed are recorded in every result dict under
+    ``judge_model_id`` and ``judge_seed`` so that consecutive eval runs
+    can be compared for judge drift and results are reproducible.
+
     Attributes:
         model_id: LLM model identifier for the judge.
         system_prompt: System-level instruction for the judge.
         prompt_template: User prompt with ``{{variable}}`` placeholders.
         choices: Ordered list of :class:`Choice` labels and scores.
         llm_client: Client satisfying :class:`LLMClientProtocol`.
+        seed: Fixed RNG seed passed to the provider for deterministic
+            sampling.  Defaults to ``0``.  Providers that do not support
+            a seed parameter silently ignore the kwarg.
     """
 
     model_id: str
@@ -69,6 +76,7 @@ class LLMEvaluator(Evaluator):
     prompt_template: str
     choices: list[Choice]
     llm_client: LLMClientProtocol
+    seed: int = 0
 
     def get_score_from_response(self, response: str) -> tuple[str, float] | None:
         """Extract score from LLM response using choice matching."""
@@ -120,11 +128,19 @@ class LLMEvaluator(Evaluator):
             full_prompt += f"System: {self.system_prompt}\n\n"
         full_prompt += f"{prompt}"
 
+        # Judge fingerprint included in every result for reproducibility
+        # and judge-drift comparison across runs.
+        judge_fingerprint: dict[str, Any] = {
+            "judge_model_id": self.model_id,
+            "judge_seed": self.seed,
+        }
+
         try:
             response = self.llm_client.generate_text(
                 model_name=self.model_id,
                 prompt=full_prompt,
                 temperature=0.0,
+                seed=self.seed,
             )
 
             result = self.get_score_from_response(response)
@@ -136,6 +152,7 @@ class LLMEvaluator(Evaluator):
                     "label": choice_label,
                     "details": f"Matched choice: {choice_label}",
                     "raw_response": response,
+                    **judge_fingerprint,
                 }
             else:
                 return {
@@ -143,6 +160,7 @@ class LLMEvaluator(Evaluator):
                     "passed": False,
                     "details": "No valid choice found in response",
                     "raw_response": response,
+                    **judge_fingerprint,
                 }
 
         except Exception as e:
@@ -152,4 +170,5 @@ class LLMEvaluator(Evaluator):
                 "passed": False,
                 "error": str(e),
                 "details": "Exception during execution",
+                **judge_fingerprint,
             }

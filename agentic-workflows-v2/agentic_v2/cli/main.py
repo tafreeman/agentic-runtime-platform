@@ -262,7 +262,7 @@ def run(
             workflow_def = load_workflow_config(workflow_name, definitions_dir)
         except FileNotFoundError as e:
             console.print(f"[red]Error:[/red] {e}")
-            raise typer.Exit(1)
+            raise typer.Exit(1) from e
 
         # Load input variables
         input_data = _load_run_input(input_file)
@@ -302,7 +302,7 @@ def run(
         raise
     except Exception as e:
         _report_run_error(e)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -387,7 +387,7 @@ def compare(
         raise
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -526,10 +526,10 @@ def validate(
 
     except FileNotFoundError as e:
         console.print(f"[red]FAIL[/red] Workflow not found: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
     except Exception as e:
         console.print(f"[red]FAIL[/red] Validation error: {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -552,7 +552,7 @@ def serve(
         console.print(
             "[red]Error:[/red] uvicorn not installed. Run: pip install uvicorn"
         )
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     if not no_open:
         import webbrowser

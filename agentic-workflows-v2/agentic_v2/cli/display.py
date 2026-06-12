@@ -168,7 +168,7 @@ def _list_workflows() -> None:
             "[red]LangChain extras not installed.[/red]\n"
             "Install with: pip install -e '.[langchain]'"
         )
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
 
     workflows = lc_list_workflows()
 

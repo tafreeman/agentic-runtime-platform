@@ -14,7 +14,10 @@ diff-based review comparing original versus modified code.
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from ..contracts import (
     CodeIssue,
@@ -175,7 +178,8 @@ class ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixi
                     code_suggestion=issue_data.get("code_suggestion"),
                 )
                 issues.append(issue)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Skipping malformed review issue: %s", exc)
                 continue
 
         # Calculate approval based on issues

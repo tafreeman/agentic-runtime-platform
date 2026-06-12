@@ -12,11 +12,11 @@ import logging
 try:
     import websockets
     from websockets.client import WebSocketClientProtocol
-except ImportError:
+except ImportError as _ws_import_err:
     raise ImportError(
         "websockets library required for WebSocket transport. "
         "Install with: pip install websockets"
-    )
+    ) from _ws_import_err
 
 from agentic_v2.integrations.mcp.transports.base import McpTransport
 from agentic_v2.integrations.mcp.types import (

@@ -443,8 +443,8 @@ class StepExecutor:
         for hook in step_def.error_hooks:
             try:
                 await hook(ctx, step_def)
-            except Exception:
-                pass  # Don't fail on error hook failure
+            except Exception as exc:
+                logger.debug("Error hook %r failed (ignored): %s", hook, exc)
 
     async def _run_pre_hooks(
         self,

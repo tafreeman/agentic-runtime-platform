@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
     "pydantic>=2.0,<3",
-    "pydantic-settings>=2.0,<3",
+    "pydantic-settings>=2.6,<3",
     "httpx>=0.25,<1",
     "jinja2>=3.0,<4",
     "jmespath>=1.0,<2",
@@ -160,6 +160,9 @@ omit = [
     "agentic_v2/models/backends_base.py",
     "agentic_v2/models/backends_cloud.py",
     "agentic_v2/models/backends_local.py",
+    # client.py decomposed (FIX #5) — pure helpers now in testable sub-modules:
+    #   cache_budget.py, fallback_selector.py, retry_utils.py, sanitization_dispatch.py
+    # The main client.py glue still omitted (backend-wiring requires live providers).
     "agentic_v2/models/client.py",
     "agentic_v2/models/llm.py",
     "agentic_v2/prompts/*",
@@ -286,13 +289,11 @@ ignore = [
     "UP042",   # replace-str-enum (20 hits)
     "E402",    # module-import-not-at-top-of-file (16 hits)
     "TC003",   # typing-only-standard-library-import (12 hits)
-    "B904",    # raise-without-from-inside-except (11 hits)
-    "S110",    # try-except-pass (10 hits) — review each for intent
-    "S112",    # try-except-continue (9 hits) — review each for intent
+    # B904 removed — all raise-without-from sites fixed (Wave 3)
     "SIM105",  # suppressible-exception (8 hits)
     "RUF002",  # ambiguous-unicode-character-docstring (6 hits)
     "S311",    # suspicious-non-cryptographic-random-usage (6 hits) — non-security random
-    "B905",    # zip-without-explicit-strict (5 hits)
+    # B905 removed — all zip() sites given explicit strict= (Wave 3)
     "SIM103",  # needless-bool (5 hits)
     "SIM108",  # if-else-block-instead-of-if-exp (5 hits)
     "B008",    # function-call-in-default-argument (4 hits)
@@ -318,9 +319,9 @@ ignore = [
     "RUF059",  # unused-unpacked-variable (6 hits) — `_` unpacking in for-loops
     "A001",    # builtin-variable-shadowing (4 hits) — `input` parameter name
     "RUF043",  # pytest-raises-ambiguous-pattern (3 hits) — match= string patterns
-    "B017",    # assert-raises-exception (2 hits) — overly broad exception assertions
+    # B017 removed — all assertRaises(Exception) sites narrowed (Wave 3)
     "RUF015",  # unnecessary-iterable-allocation-for-first-element (2 hits)
-    "E711",    # none-comparison (1 hit) — `== None` vs `is None`
+    # E711 removed — intentional == None site carries inline noqa (Wave 3)
     "N818",    # error-suffix-on-exception-name (1 hit)
     "SIM115",  # open-file-with-context-handler (1 hit)
 ]

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 from typing import Any
 
 from ..base import BaseTool, ToolResult
+
+logger = logging.getLogger(__name__)
 
 
 class SearchTool(BaseTool):
@@ -128,8 +131,8 @@ class SearchTool(BaseTool):
                             error=f"Invalid mode: {mode}. Use 'regex', 'fuzzy', or 'semantic'",
                         )
 
-                except Exception:
-                    # Skip files that can't be read
+                except Exception as exc:
+                    logger.debug("Skipping unreadable file: %s", exc)
                     continue
 
             # Limit results

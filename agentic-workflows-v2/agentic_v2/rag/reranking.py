@@ -110,7 +110,7 @@ class CrossEncoderReranker:
 
         # Pair results with their new scores and sort descending
         scored = sorted(
-            zip(scores, results),
+            zip(scores, results, strict=True),
             key=lambda pair: pair[0],
             reverse=True,
         )
@@ -181,7 +181,7 @@ class LLMReranker:
 
         # Pair results with scores and sort descending
         scored = sorted(
-            zip(scores, results),
+            zip(scores, results, strict=True),
             key=lambda pair: pair[0],
             reverse=True,
         )

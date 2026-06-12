@@ -5,10 +5,13 @@ follow. Strictly separates byte-stream management from JSON-RPC protocol
 logic.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Callable
 
 from agentic_v2.integrations.mcp.types import JsonRpcMessage
+
+logger = logging.getLogger(__name__)
 
 
 class McpTransport(ABC):
@@ -88,9 +91,9 @@ class McpTransport(ABC):
         if self.on_error:
             try:
                 self.on_error(error)
-            except Exception:
+            except Exception as exc:
                 # Last-ditch: don't crash if error handler crashes
-                pass
+                logger.debug("Error handler raised (ignored): %s", exc)
 
     def _emit_close(self) -> None:
         """Emit a close event to the registered handler (once)."""

@@ -563,7 +563,7 @@ def _resolve_result_url(href: str) -> str:
             qs = parse_qs(parsed.query)
             if qs.get("uddg"):
                 url = unquote(qs["uddg"][0])
-        except Exception:
+        except ValueError:
             pass
     return url
 

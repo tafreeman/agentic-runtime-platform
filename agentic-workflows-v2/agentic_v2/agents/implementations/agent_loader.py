@@ -27,7 +27,10 @@ mapped to full Claude model identifiers via ``_MODEL_MAP``.
 
 from __future__ import annotations
 
+import logging
 import re
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Any
 
@@ -113,8 +116,9 @@ def _load_agents_from_dir(directory: Path) -> dict[str, AgentDefinition]:
     for md_file in sorted(directory.glob("*.md")):
         try:
             meta, body = _parse_agent_file(md_file)
-        except Exception:
-            continue  # skip malformed files
+        except Exception as exc:
+            logger.debug("Skipping malformed agent file %s: %s", md_file, exc)
+            continue
 
         name = meta.get("name") or md_file.stem
         agents[name] = _build_agent_definition(meta, body)

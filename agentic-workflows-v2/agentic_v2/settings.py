@@ -24,10 +24,10 @@ from __future__ import annotations
 import logging
 import os
 from functools import lru_cache
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +76,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        env_ignore_empty=True,
     )
 
     # --- OTEL / tracing ---
@@ -335,7 +336,11 @@ class Settings(BaseSettings):
         default=None,
         description="OIDC JWKS URL used to resolve JWT signing keys",
     )
-    agentic_oidc_algorithms: list[str] = Field(
+    # NoDecode keeps pydantic-settings from JSON-decoding the env value (a
+    # bare "RS256,HS256" is not JSON); the before-validator below does the
+    # comma split instead. The declared type stays list[str] so downstream
+    # consumers (e.g. PyJWT's algorithms=...) never see a raw string.
+    agentic_oidc_algorithms: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["RS256"],
         description="Comma-separated JWT signing algorithm allowlist",
     )

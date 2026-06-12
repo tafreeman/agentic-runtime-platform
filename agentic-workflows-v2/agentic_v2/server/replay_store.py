@@ -368,14 +368,14 @@ class RedisReplayStore:
         if self._client is not None:
             try:
                 await self._client.aclose()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Error closing replay_store Redis client: %s", exc)
             self._client = None
         if self._pool is not None:
             try:
                 await self._pool.disconnect()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Error disconnecting replay_store Redis pool: %s", exc)
             self._pool = None
         self._connected = False
 
@@ -566,8 +566,8 @@ class SqliteReplayStore:
         if self._db is not None:
             try:
                 await self._db.close()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("Error closing replay_store SQLite connection: %s", exc)
             self._db = None
 
 

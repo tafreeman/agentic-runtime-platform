@@ -105,6 +105,25 @@ def test_settings_helpers_cover_env_coercion_and_cached_settings(
     assert first is second
 
 
+def test_oidc_algorithms_env_comma_string(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A bare comma-separated env value parses to a list via the env source.
+
+    PR #74 review: the field is ``Annotated[list[str], NoDecode]`` so
+    pydantic-settings does not try (and fail) to JSON-decode the raw env
+    string; the before-validator performs the comma split. The declared type
+    stays ``list[str]`` so consumers (e.g. PyJWT) never receive a raw string.
+    """
+    monkeypatch.setenv("AGENTIC_OIDC_ALGORITHMS", "RS256,HS256")
+    settings = Settings()
+    assert settings.agentic_oidc_algorithms == ["RS256", "HS256"]
+
+    monkeypatch.setenv("AGENTIC_OIDC_ALGORITHMS", "ES256")
+    single = Settings()
+    assert single.agentic_oidc_algorithms == ["ES256"]
+
+
 def test_tenant_helpers_cover_claims_and_dry_run(tmp_path: Path) -> None:
     request = Request(
         {

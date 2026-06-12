@@ -17,9 +17,12 @@ Key abstractions:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -145,9 +148,9 @@ class ConversationMemory:
         if self.token_counter is not None:
             try:
                 return max(0, int(self.token_counter(text)))
-            except Exception:
+            except Exception as exc:
                 # Fall back to heuristic if the counter fails.
-                pass
+                logger.debug("token_counter failed; using heuristic: %s", exc)
         return max(1, len(text) // 4)
 
     @property

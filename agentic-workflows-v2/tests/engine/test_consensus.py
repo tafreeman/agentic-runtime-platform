@@ -105,7 +105,7 @@ class TestMajorityVote:
     def test_result_is_frozen(self):
         """ConsensusResult is immutable."""
         result = majority_vote(["a"])
-        with pytest.raises(Exception):
+        with pytest.raises((AttributeError, TypeError)):
             result.winner = "b"  # type: ignore[misc]
 
 

@@ -25,19 +25,27 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
-import random
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from functools import wraps
-from typing import TYPE_CHECKING, Any, AsyncIterator, Awaitable, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, AsyncIterator, Callable
 
 if TYPE_CHECKING:
     from ..middleware.response_sanitizer import ResponseSanitizer
     from ..middleware.sanitization import SanitizationMiddleware
 
 from .backends_base import LLMBackend
+from .cache_budget import CachedResponse, TokenBudget
+from .fallback_selector import run_with_fallback
+from .retry_utils import retry_with_jitter
 from .router import ModelTier
+from .sanitization_dispatch import (
+    sanitize_content_blocks as _sd_content_blocks,
+    sanitize_messages as _sd_messages,
+    sanitize_prompt as _sd_prompt,
+    sanitize_response_blocks as _sd_response_blocks,
+    sanitize_response_text as _sd_response_text,
+)
 from .smart_router import SmartModelRouter, get_smart_router
 
 logger = logging.getLogger(__name__)
@@ -58,168 +66,8 @@ ERR_NO_LLM_BACKEND = "No LLM backend configured"
 __all_reexports__ = ("LLMBackend",)
 
 
-T = TypeVar("T")
-
-
-def retry_with_jitter(
-    max_retries: int = 3,
-    base_delay: float = 1.0,
-    max_delay: float = 30.0,
-    jitter: float = 0.5,
-) -> Callable:
-    """Decorator for retrying with exponential backoff and jitter.
-
-    Honours Retry-After headers for rate limits and avoids retrying
-    permanent errors.
-
-    Args:
-        max_retries: Maximum retry attempts
-        base_delay: Base delay in seconds
-        max_delay: Maximum delay in seconds
-        jitter: Jitter factor (0-1)
-    """
-
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            last_error = None
-            for attempt in range(max_retries):
-                try:
-                    return await func(*args, **kwargs)
-                except Exception as e:
-                    last_error = e
-                    if attempt >= max_retries - 1:
-                        break
-                    # Classify, compute the (possibly rate-limit-aware) delay,
-                    # and re-raise permanent errors. Returns seconds to sleep.
-                    sleep_seconds = _next_retry_sleep_seconds(
-                        e,
-                        attempt=attempt,
-                        max_retries=max_retries,
-                        base_delay=base_delay,
-                        max_delay=max_delay,
-                        jitter=jitter,
-                        func_name=func.__name__,
-                    )
-                    await asyncio.sleep(sleep_seconds)
-
-            if last_error:
-                raise last_error
-            raise RuntimeError("Exhausted retries")
-
-        return wrapper
-
-    return decorator
-
-
-def _next_retry_sleep_seconds(
-    error: Exception,
-    *,
-    attempt: int,
-    max_retries: int,
-    base_delay: float,
-    max_delay: float,
-    jitter: float,
-    func_name: str,
-) -> float:
-    """Compute the jittered backoff delay before the next retry attempt.
-
-    Re-raises ``error`` for permanent (non-retryable) failures so the caller
-    aborts the retry loop. Honours a parsed ``Retry-After`` for rate limits.
-    """
-    from ..core.errors import ErrorCode, classify_error
-
-    code, should_retry = classify_error(str(error))
-    if not should_retry:
-        raise error  # Permanent error, do not retry
-
-    delay = min(base_delay * (2**attempt), max_delay)
-
-    # If rate limited, try to extract specific Retry-After delay
-    if code == ErrorCode.RATE_LIMITED:
-        delay = _rate_limited_retry_delay(error, delay)
-
-    jittered = delay + (delay * random.uniform(0, jitter))
-    logger.debug(
-        f"Retry {attempt + 1}/{max_retries} for {func_name} "
-        f"in {jittered:.2f}s due to {code}"
-    )
-    return jittered
-
-
-def _rate_limited_retry_delay(error: Exception, default_delay: float) -> float:
-    """Resolve the backoff delay for a rate-limited error.
-
-    Prefers a provider ``Retry-After`` value parsed from the error headers;
-    otherwise floors the delay at the router's default rate-limit cooldown so
-    the caller does not wake up too early.
-    """
-    # Lazy import to avoid circular dependency
-    from .smart_router import get_smart_router
-
-    router = get_smart_router()
-    headers = router._headers_from_error(error)
-    parsed_delay = None
-    if headers:
-        parsed_delay = router.rate_limit_tracker.parse_retry_after(headers)
-
-    if parsed_delay is not None:
-        return float(parsed_delay)
-    # Match the router's default rate limit cooldown so we don't wake up too early
-    return max(
-        default_delay,
-        float(router.cooldown_config.base_rate_limit_cooldown_seconds),
-    )
-
-
-@dataclass
-class TokenBudget:
-    """Track token usage against a budget."""
-
-    max_tokens: int
-    used_tokens: int = 0
-
-    @property
-    def remaining(self) -> int:
-        """Get remaining tokens."""
-        return max(0, self.max_tokens - self.used_tokens)
-
-    @property
-    def percentage_used(self) -> float:
-        """Get percentage of budget used."""
-        if self.max_tokens == 0:
-            return 100.0
-        return (self.used_tokens / self.max_tokens) * 100
-
-    def consume(self, tokens: int) -> bool:
-        """Consume tokens from budget.
-
-        Returns:
-            True if tokens were available, False if budget exceeded
-        """
-        if self.used_tokens + tokens > self.max_tokens:
-            return False
-        self.used_tokens += tokens
-        return True
-
-    def can_afford(self, tokens: int) -> bool:
-        """Check if budget can afford tokens."""
-        return self.used_tokens + tokens <= self.max_tokens
-
-
-@dataclass
-class CachedResponse:
-    """Cached LLM response."""
-
-    response: str
-    model: str
-    timestamp: datetime
-    tokens_used: int
-
-    @property
-    def age_seconds(self) -> float:
-        """Get age of cached response in seconds."""
-        return (datetime.now(UTC) - self.timestamp).total_seconds()
+# TokenBudget and CachedResponse are defined in cache_budget.py and
+# re-imported above.  retry_with_jitter is imported from retry_utils.
 
 
 @dataclass
@@ -271,37 +119,20 @@ class LLMClientWrapper:
         return self.router.get_model_for_tier(ModelTier.TIER_2)
 
     def set_backend(self, backend: LLMBackend) -> None:
-        """Set the LLM backend.
-
-        Args:
-            backend: Backend implementation
-        """
+        """Attach a concrete LLM backend."""
         self.backend = backend
 
     def set_budget(self, max_tokens: int) -> None:
-        """Set token budget.
-
-        Args:
-            max_tokens: Maximum tokens to use
-        """
+        """Install a per-run token budget cap."""
         self.budget = TokenBudget(max_tokens=max_tokens)
 
     def _cache_key(self, prompt: str, tier: ModelTier, **kwargs: Any) -> str:
-        """Generate cache key for request.
-
-        The key is a stable hash of the prompt, model tier, and sorted
-        kwargs. This ensures that identical requests produce the same
-        key regardless of dictionary ordering.
-        """
+        """SHA-256 cache key from prompt, tier, and sorted kwargs (first 16 hex chars)."""
         key_data = f"{prompt}:{tier.value}:{sorted(kwargs.items())}"
         return hashlib.sha256(key_data.encode()).hexdigest()[:16]
 
     def _get_cached(self, key: str) -> CachedResponse | None:
-        """Get cached response if valid.
-
-        Checks for presence and ensures the entry has not exceeded the
-        TTL.
-        """
+        """Return the cached response for *key* if present and not TTL-expired."""
         if not self.enable_cache:
             return None
 
@@ -342,142 +173,37 @@ class LLMClientWrapper:
             for k in sorted_keys[:100]:
                 del self.cache[k]
 
-    async def _sanitize_prompt(
-        self, prompt: str, source: str, tier: ModelTier
-    ) -> str:
-        """Run the inbound prompt sanitizer, returning the effective prompt.
-
-        A no-op pass-through when no sanitization middleware is attached.
-
-        Raises:
-            ValueError: If the sanitizer classifies the prompt as unsafe.
-        """
-        if self.sanitization is None:
-            return prompt
-        san_result = await self.sanitization.process(
-            prompt, {"source": source, "tier": tier.name}
+    async def _sanitize_prompt(self, prompt: str, source: str, tier: ModelTier) -> str:
+        """Inbound prompt sanitizer — no-op when no sanitizer is attached."""
+        return await _sd_prompt(
+            prompt, source=source, tier=tier, sanitization=self.sanitization
         )
-        if not san_result.is_safe:
-            raise ValueError(
-                f"Prompt blocked by sanitization: {san_result.classification.value}"
-            )
-        if san_result.sanitized_text is not None:
-            return san_result.sanitized_text
-        return prompt
 
     async def _sanitize_messages(
-        self,
-        messages: list[dict[str, Any]],
-        source: str,
-        tier: ModelTier,
+        self, messages: list[dict[str, Any]], source: str, tier: ModelTier
     ) -> list[dict[str, Any]]:
-        """Run inbound sanitization over each chat message's content.
-
-        A no-op pass-through when no sanitization middleware is attached.
-        This is the chat-path analogue of :meth:`_sanitize_prompt` and closes
-        the indirect prompt-injection vector: tool outputs and retrieved
-        content fed back into the agent loop as chat messages. Fails closed —
-        an unsafe message raises ``ValueError`` (parity with the text path).
-
-        Returns a new message list; input messages are not mutated.
-
-        Raises:
-            ValueError: If any message content is classified as unsafe.
-        """
-        if self.sanitization is None:
-            return messages
-        sanitized: list[dict[str, Any]] = []
-        for msg in messages:
-            content = msg.get("content")
-            if isinstance(content, str) and content:
-                cleaned = await self._sanitize_prompt(content, source, tier)
-                if cleaned == content:
-                    sanitized.append(msg)
-                else:
-                    sanitized.append({**msg, "content": cleaned})
-            elif isinstance(content, list):
-                cleaned_blocks, mutated = await self._sanitize_content_blocks(
-                    content, source, tier
-                )
-                if mutated:
-                    sanitized.append({**msg, "content": cleaned_blocks})
-                else:
-                    sanitized.append(msg)
-            else:
-                sanitized.append(msg)
-        return sanitized
+        """Inbound chat-message sanitizer — no-op when no sanitizer is attached."""
+        return await _sd_messages(
+            messages, source=source, tier=tier, sanitization=self.sanitization
+        )
 
     async def _sanitize_content_blocks(
-        self,
-        blocks: list[Any],
-        source: str,
-        tier: ModelTier,
+        self, blocks: list[Any], source: str, tier: ModelTier
     ) -> tuple[list[Any], bool]:
-        """Sanitize text within a list-of-blocks content value.
-
-        LLM APIs (OpenAI, Anthropic) allow message content to be a list of
-        typed content blocks, e.g. ``[{"type": "text", "text": "..."}]``.
-        This method iterates through those blocks and sanitizes any text
-        blocks, closing the bypass vector where an attacker wraps a prompt
-        injection payload inside a non-string content structure.
-
-        Returns ``(cleaned_blocks, mutated)`` — the caller only copies the
-        message dict when ``mutated`` is ``True``.
-        """
-        cleaned: list[Any] = []
-        mutated = False
-        for block in blocks:
-            if (
-                isinstance(block, dict)
-                and block.get("type") == "text"
-                and isinstance(block.get("text"), str)
-            ):
-                text = block["text"]
-                cleaned_text = await self._sanitize_prompt(text, source, tier)
-                if cleaned_text != text:
-                    cleaned.append({**block, "text": cleaned_text})
-                    mutated = True
-                else:
-                    cleaned.append(block)
-            else:
-                cleaned.append(block)
-        return cleaned, mutated
+        """Inbound list-of-blocks sanitizer — no-op when no sanitizer is attached."""
+        return await _sd_content_blocks(
+            blocks, source=source, tier=tier, sanitization=self.sanitization
+        )
 
     async def _sanitize_response_text(self, response: str) -> str:
-        """Run the outbound response sanitizer, returning the effective text.
+        """Outbound response sanitizer — no-op when no response sanitizer attached."""
+        return await _sd_response_text(response, response_sanitizer=self.response_sanitizer)
 
-        A no-op pass-through when no response sanitizer is attached.
-        """
-        if self.response_sanitizer is None:
-            return response
-        resp_result = await self.response_sanitizer.sanitize_response(response)
-        if resp_result.sanitized_text is not None:
-            return resp_result.sanitized_text
-        return response
-
-    async def _sanitize_response_content_blocks(
-        self, blocks: list[Any]
-    ) -> list[Any]:
-        """Sanitize text within a list-of-blocks response content value.
-
-        Outbound counterpart of :meth:`_sanitize_content_blocks`.  Iterates
-        through content blocks returned by the LLM and runs the response
-        sanitizer over any ``{"type": "text", "text": "..."}`` blocks.  This
-        closes the bypass vector where model output structured as a list of
-        content blocks would skip outbound secret/PII scrubbing.
-        """
-        cleaned: list[Any] = []
-        for block in blocks:
-            if (
-                isinstance(block, dict)
-                and block.get("type") == "text"
-                and isinstance(block.get("text"), str)
-            ):
-                cleaned_text = await self._sanitize_response_text(block["text"])
-                cleaned.append({**block, "text": cleaned_text})
-            else:
-                cleaned.append(block)
-        return cleaned
+    async def _sanitize_response_content_blocks(self, blocks: list[Any]) -> list[Any]:
+        """Outbound list-of-blocks response sanitizer."""
+        return await _sd_response_blocks(
+            blocks, response_sanitizer=self.response_sanitizer
+        )
 
     @retry_with_jitter(max_retries=3)
     async def complete(
@@ -566,62 +292,14 @@ class LLMClientWrapper:
             logger.warning(f"Model {selected_model} failed: {error}")
             logger.warning(f"Model {model} failed: {error}")
 
-        return await self._run_with_fallback(
+        return await run_with_fallback(
+            self.router,
             tier=tier,
             model=model,
             max_retries=max_retries,
             pre_attempt=pre_attempt,
             attempt=attempt,
             on_error=on_error,
-        )
-
-    async def _run_with_fallback(
-        self,
-        *,
-        tier: ModelTier,
-        model: str | None,
-        max_retries: int,
-        pre_attempt: Callable[[str], None],
-        attempt: Callable[[str], Awaitable[T]],
-        on_error: Callable[[str, Exception], None],
-    ) -> T:
-        """Drive the router's model-selection + fallback retry loop.
-
-        Selects up to ``max_retries`` distinct models for ``tier`` (or the
-        forced ``model``), invoking ``attempt`` per candidate and returning its
-        first success. ``pre_attempt`` runs (outside the try/except) before each
-        attempt so its failures — e.g. budget exhaustion — propagate directly
-        rather than being treated as a model failure. ``on_error`` runs the
-        call-site-specific bookkeeping for each failed candidate before the next
-        is tried.
-
-        Raises:
-            The last attempt error if every candidate failed, else RuntimeError
-            when no candidate could be selected.
-        """
-        tried: list[str] = []
-        last_error: Exception | None = None
-
-        for _ in range(max_retries):
-            selected_model = model or self.router.get_model_for_tier(tier)
-            if selected_model is None or selected_model in tried:
-                break
-
-            tried.append(selected_model)
-            pre_attempt(selected_model)
-
-            try:
-                return await attempt(selected_model)
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:
-                on_error(selected_model, e)
-                last_error = e
-
-        if last_error:
-            raise last_error
-        raise RuntimeError(
-            f"All models failed. Tried: {tried}. No further information available."
         )
 
     def _check_prompt_budget(self, effective_prompt: str, selected_model: str) -> None:
@@ -688,33 +366,11 @@ class LLMClientWrapper:
         model: str | None = None,
         **kwargs: Any,
     ) -> tuple[str, str, int]:
-        """ADR-023 Phase 5b EK provider path for :meth:`complete`.
+        """ADR-023 Phase 5b EK provider path (``AGENTIC_EK_PROVIDER=1``).
 
-        Routes through the ExecutionKit ``LLMProvider`` shim
-        (:class:`SmartRouterProvider` -> ``backend.complete_chat``) instead of
-        the legacy text ``backend.complete``. Reached ONLY when
-        ``settings.agentic_ek_provider`` is true; otherwise the legacy branch
-        in :meth:`complete` runs unchanged.
-
-        Ordering is preserved end-to-end (matches the legacy path's observable
-        sequence):
-
-        1. cache lookup (a hit short-circuits before any provider call);
-        2. pre-send sanitization (may raise / rewrite the prompt);
-        3. ``SmartRouterProvider(...).complete(messages)`` — the provider owns
-           bulkhead, circuit breaker, rate-limit cooldown, cross-tier
-           fallback, HTTP->EK error translation, and record-once bookkeeping;
-        4. post-receive response sanitization;
-        5. ``TokenBudget.consume(total_tokens)`` — runtime budget owns the
-           token-sum ceiling and raises BEFORE returning when the cap is hit
-           (mirrors the legacy ``ValueError`` contract; no new exception type);
-        6. cache store.
-
-        Retry/record-once is NOT layered with ``retry_with_jitter`` here: the
-        router + EK already retry and record exactly once per physical call.
-
-        Returns:
-            ``(response.content, model_used, response.total_tokens)``.
+        Sequence: cache → sanitize → SmartRouterProvider.complete → sanitize
+        response → budget → cache store.  Retry/record-once is owned by the
+        router + EK; ``retry_with_jitter`` is NOT applied here.
         """
         from .ek_provider import SmartRouterProvider
 
@@ -844,27 +500,11 @@ class LLMClientWrapper:
         model: str | None = None,
         **kwargs: Any,
     ) -> tuple[dict[str, Any], str, int]:
-        """Send chat completion request with smart routing.
+        """Send a chat completion with smart routing.
 
-        Sanitization runs *outside* the retry boundary so that a
-        ``ValueError`` from blocked content fails immediately instead of
-        being retried with backoff.
-
-        Args:
-            messages: Chat messages to send
-            tier: Model tier to use
-            max_retries: Maximum models to try
-            use_cache: Whether to use response cache
-            tools: Optional tool definitions
-            model: Optional explicit model override to bypass router selection
-            **kwargs: Additional arguments for backend
-
-        Returns:
-            Tuple of (response_dict, model_used, tokens_used)
-
-        Raises:
-            RuntimeError: If no backend configured or all models fail
-            ValueError: If budget exceeded or content blocked by sanitizer
+        Sanitization runs outside the retry boundary so blocked content
+        raises ``ValueError`` immediately without backoff.  Returns
+        ``(response_dict, model_used, tokens_used)``.
         """
         if self.backend is None:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
@@ -929,7 +569,8 @@ class LLMClientWrapper:
             self.router._classify_and_record_error(selected_model, error)
             logger.warning(f"Model {selected_model} failed: {error}")
 
-        return await self._run_with_fallback(
+        return await run_with_fallback(
+            self.router,
             tier=tier,
             model=model,
             max_retries=max_retries,
@@ -1017,12 +658,7 @@ class LLMClientWrapper:
         sanitization: SanitizationMiddleware | None = None,
         response_sanitizer: ResponseSanitizer | None = None,
     ) -> None:
-        """Attach sanitization middleware to the client.
-
-        Args:
-            sanitization: Inbound prompt sanitizer.
-            response_sanitizer: Outbound response sanitizer.
-        """
+        """Attach inbound and/or outbound sanitization middleware."""
         self.sanitization = sanitization
         self.response_sanitizer = response_sanitizer
 
@@ -1035,13 +671,8 @@ class LLMClientWrapper:
     ) -> list[dict[str, Any]]:
         """Public inbound message sanitizer for non-``complete_chat`` callers.
 
-        Agents that bypass :meth:`complete_chat` and call a provider SDK
-        directly (e.g. ``ClaudeAgent``) use this to inherit the exact same
-        inbound sanitization, gating, and fail-closed contract as the native
-        chat path — closing the indirect-prompt-injection vector for tool
-        outputs / retrieved content carried in ``messages``.
-
-        A no-op pass-through when no sanitizer is attached.
+        Closes the indirect-prompt-injection vector for agents that call a
+        provider SDK directly.  No-op when no sanitizer is attached.
 
         Raises:
             ValueError: If any message content is classified as unsafe.
@@ -1049,18 +680,11 @@ class LLMClientWrapper:
         return await self._sanitize_messages(messages, source, tier)
 
     async def sanitize_outbound_text(self, text: str) -> str:
-        """Public outbound response sanitizer for non-``complete_chat`` callers.
-
-        A no-op pass-through when no response sanitizer is attached.
-        """
+        """Public outbound response sanitizer — no-op when no sanitizer attached."""
         return await self._sanitize_response_text(text)
 
     def clear_cache(self) -> int:
-        """Clear response cache.
-
-        Returns:
-            Number of entries cleared
-        """
+        """Clear the response cache; returns the number of entries removed."""
         count = len(self.cache)
         self.cache.clear()
         return count
