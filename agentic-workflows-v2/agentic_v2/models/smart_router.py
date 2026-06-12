@@ -605,6 +605,41 @@ class SmartModelRouter(ModelRouter):
         # File fallback
         self._save_stats_to_file()
 
+    async def drain_background_tasks(self) -> None:
+        """Await all outstanding fire-and-forget Redis save tasks.
+
+        Call this during graceful shutdown (e.g. lifespan teardown) to
+        ensure no circuit-breaker state writes are silently abandoned.
+        After this coroutine returns, ``_background_tasks`` is empty.
+
+        Example::
+
+            # FastAPI / Starlette lifespan
+            @asynccontextmanager
+            async def lifespan(app):
+                yield
+                await router.drain_background_tasks()
+        """
+        pending = set(self._background_tasks)
+        if not pending:
+            return
+        logger.debug("Draining %d background Redis save task(s)", len(pending))
+        results = await asyncio.gather(*pending, return_exceptions=True)
+        for exc in results:
+            if isinstance(exc, Exception):
+                logger.warning("Background Redis save task raised: %s", exc)
+        # Tasks remove themselves via done_callback; ensure the set is clear
+        # even if a task was already done before gather started.
+        self._background_tasks.difference_update(pending)
+
+    async def aclose(self) -> None:
+        """Flush pending background tasks and release resources.
+
+        Convenience alias for shutdown sequences that follow the
+        standard ``async with`` / ``aclose()`` convention.
+        """
+        await self.drain_background_tasks()
+
     def _save_stats_to_file(self) -> None:
         """Save stats to file atomically with cross-process file locking."""
         if not self.stats_file:
