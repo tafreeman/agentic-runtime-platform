@@ -631,12 +631,16 @@ class LLMClientWrapper:
                 )
                 response_dict = {**response_dict, "content": cleaned_blocks}
 
-        # Count tokens of response
-        response_text = response_dict.get("content", "") or ""
-        if response_dict.get("tool_calls"):
-            response_text += str(response_dict.get("tool_calls"))
-
-        tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
+        # Prefer real usage from the provider; fall back to char estimate.
+        usage = response_dict.get("usage") or {}
+        reported = (usage.get("prompt_tokens") or 0) + (usage.get("completion_tokens") or 0)
+        if reported > 0:
+            tokens = reported
+        else:
+            response_text = response_dict.get("content", "") or ""
+            if response_dict.get("tool_calls"):
+                response_text += str(response_dict.get("tool_calls"))
+            tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
         latency = (time.monotonic() - start) * 1000
 
         # Record success
