@@ -79,7 +79,17 @@ async def _check_redis(redis_url: str | None) -> DependencyStatus:
             store = await RedisCircuitBreakerStore.connect(redis_url=redis_url)
             _redis_probe_store = store
 
-        if store.is_connected and await store.health_check():
+        try:
+            alive = store.is_connected and await asyncio.wait_for(
+                store.health_check(), timeout=2.0
+            )
+        except TimeoutError:
+            return DependencyStatus(
+                name="redis",
+                status="down",
+                detail="health check timed out",
+            )
+        if alive:
             return DependencyStatus(name="redis", status="ok")
         # health_check marks the store disconnected on connection errors, so
         # the next probe reconnects rather than reusing a dead pool.

@@ -240,3 +240,15 @@ Copy into your PR description:
 - [ ] No secrets, no `.env` committed
 - [ ] Commit message follows conventional format
 ```
+
+---
+
+## Development Provenance & Verification
+
+This repository is built solo with AI-assisted tooling. Because there is no second human reviewer, correctness is gated by **automated evidence**, not peer sign-off:
+
+- **CI gates (every push / PR):** ruff, `mypy --strict` (engine + contracts), the 80% coverage gate, the Pydantic↔TypeScript wire-format drift check, Playwright E2E (×5), CodeQL, SBOM generation, and dependency-audit. Merges block on a red pipeline.
+- **Behavioral verification:** the `agentic-v2-eval` evaluation package runs in CI, and the nightly job runs the E2E suite 50× against a 0.5% rolling flake-rate budget.
+- **Provenance:** AI-assisted changes are verified against these gates before merge; the CI and evaluation output is the verification artifact of record.
+
+Contributions are welcome via PR; CI must pass and changes should add or update tests.

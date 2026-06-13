@@ -52,6 +52,7 @@ from .smart_router import (
     SmartModelRouter,
     get_smart_router,
     reset_smart_router,
+    set_smart_router,
 )
 
 if TYPE_CHECKING:
@@ -93,6 +94,7 @@ __all__ = [
     "SmartModelRouter",
     "get_smart_router",
     "reset_smart_router",
+    "set_smart_router",
     # Client
     "LLMBackend",
     "TokenBudget",

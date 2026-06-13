@@ -12,6 +12,8 @@ Covers:
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -181,3 +183,46 @@ class TestReadinessProbe:
         body = resp.json()
         assert "ollama:phi4" in body["open_circuit_breakers"]
         assert body["degraded_selection_count"] == 3
+
+    def test_not_ready_503_when_redis_health_check_hangs(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A hanging Redis health_check is aborted after 2 s and returns 503.
+
+        Regression guard for the ``asyncio.wait_for`` timeout wrapping
+        ``store.health_check()``.  The fake store never resolves its ping, so
+        without the timeout the probe would block for the OS TCP timeout
+        (minutes); with the fix it returns ``down`` promptly.
+        """
+        url = "redis://127.0.0.1:6399/0"
+        monkeypatch.setenv("REDIS_URL", url)
+        _settings_module.get_settings.cache_clear()
+
+        class _HangingStore:
+            redis_url = url
+            is_connected = True
+
+            async def health_check(self) -> bool:
+                # Simulate a hung TCP connection — sleep longer than the probe
+                # timeout so asyncio.wait_for raises TimeoutError.
+                await asyncio.sleep(60)
+                return True  # pragma: no cover — never reached under timeout
+
+            async def close(self) -> None:
+                pass
+
+        async def _fake_connect(redis_url: str, **_kwargs: object) -> _HangingStore:
+            return _HangingStore()
+
+        from agentic_v2.models.redis_state import RedisCircuitBreakerStore
+
+        monkeypatch.setattr(RedisCircuitBreakerStore, "connect", _fake_connect)
+
+        resp = client.get("/api/health/ready")
+        assert resp.status_code == 503
+
+        body = resp.json()
+        assert body["status"] == "not_ready"
+        redis_dep = next(d for d in body["dependencies"] if d["name"] == "redis")
+        assert redis_dep["status"] == "down"
+        assert redis_dep["detail"] == "health check timed out"

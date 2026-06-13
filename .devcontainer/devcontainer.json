@@ -1,5 +1,9 @@
 {
   "name": "prompts-dev",
+  // appuser is created with `useradd --system`; the dev-container CLI's UID/GID
+  // remap (the post-build updateUID step) fails on CI runners and host-UID
+  // alignment is unnecessary for a CI smoke build, so skip it.
+  "updateRemoteUserUID": false,
   "build": {
     "dockerfile": "../Dockerfile",
     "context": "..",

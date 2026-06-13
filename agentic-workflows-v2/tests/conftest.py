@@ -214,6 +214,66 @@ def _reset_adapter_registry():
     _register_builtin_adapters()
 
 
+@pytest.fixture(autouse=True)
+def _reset_websocket_manager():
+    """Reset the WebSocket ``manager`` singleton's replay store after each test.
+
+    ``agentic_v2.server.websocket.manager`` is a process global, just like the
+    routers reset by ``_reset_global_routers``. The hazard it carries is subtler
+    than accumulated state: every ``TestClient(app)`` lifespan calls
+    ``manager.initialize_store()``, which (with the default ``auto`` backend and
+    ``aiosqlite`` installed) binds a :class:`SqliteReplayStore` — an
+    ``aiosqlite`` connection driven by a per-connection worker thread whose
+    awaited futures resolve on *the event loop that opened it* — to the
+    singleton. Under ``asyncio_mode = "auto"`` pytest-asyncio gives each test a
+    fresh function-scoped loop and tears the previous one down, but the
+    singleton (and its loop-bound connection) outlive that loop.
+
+    The next ``TestClient(app)`` lifespan then runs ``initialize_store()``,
+    whose first action is ``await self._replay_store.close()`` on the *stale*
+    connection. Closing/awaiting an ``aiosqlite`` future whose originating loop
+    is already closed deadlocks — the symptom seen on CI was a sync
+    ``TestClient`` WebSocket test blocking past the pytest-timeout with
+    ``RuntimeError: Event loop is closed`` surfacing in teardown.
+
+    Restoring a fresh :class:`InMemoryReplayStore` after every test breaks that
+    chain: the next ``initialize_store().close()`` becomes a no-op, and the
+    stale ``aiosqlite`` connection is dropped for GC instead of being awaited
+    across a dead loop. In production the loop lives for the whole process, so
+    a single long-lived store on the singleton is correct — this hazard is
+    purely an artifact of the per-test loop lifecycle. We also clear the
+    in-process connection/buffer/SSE maps so leaked sockets never bleed across
+    tests. Import is lazy and best-effort, mirroring ``_reset_global_routers``.
+    """
+
+    def _reset() -> None:
+        try:
+            from agentic_v2.server import websocket as _ws_mod
+            from agentic_v2.server.replay_store import InMemoryReplayStore
+        except (ImportError, AttributeError):
+            return
+
+        manager = getattr(_ws_mod, "manager", None)
+        if manager is None:
+            return
+
+        # Drop the (possibly loop-bound) replay store without awaiting it; a
+        # fresh InMemoryReplayStore makes the next initialize_store().close()
+        # a no-op. ``_max_buffer_size`` is the private size the manager was
+        # built with — fall back to the module default if it is ever absent.
+        max_events = getattr(manager, "_max_buffer_size", 500)
+        manager._replay_store = InMemoryReplayStore(max_events=max_events)
+
+        # Clear in-process state so leaked sockets / buffers / SSE listeners
+        # from one test cannot affect the next.
+        manager.connections.clear()
+        manager.event_buffers.clear()
+        manager._sse_listeners.clear()
+
+    yield
+    _reset()
+
+
 @pytest.fixture
 def mock_backend() -> MagicMock:
     """Return a mock LLM backend that echoes its prompt."""

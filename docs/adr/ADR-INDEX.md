@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
-> **Last updated:** 2026-06-01
-> **Total ADRs:** 19 (14 Accepted, 4 Proposed, 1 Superseded)
+> **Last updated:** 2026-06-13
+> **Total ADRs:** 20 (15 Accepted, 4 Proposed, 1 Superseded)
 
 ---
 
@@ -28,8 +28,9 @@
 | **021** | JWT OIDC Authentication for API Routes | Accepted | [ADR-021](ADR-021-jwt-oidc-authentication.md) |
 | **022** | Tenant-Scoped Run and Dataset Isolation | Accepted | [ADR-022](ADR-022-tenant-isolation.md) |
 | **023** | ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single `executionkit` package) | Accepted | [ADR-023](ADR-023-executionkit-runtime-contract-relationship.md) · [plan](ADR-023-migration-plan.md) · [matrix](ADR-023-preservation-matrix.md) · [notes](ADR-023-migration-notes.md) · [finish-plan](ADR-023-finish-plan.md) |
+| **024** | Expression Evaluation via AST Interpreter (eliminate `eval()`) | Accepted | [ADR-024](ADR-024-expression-evaluator-ast-sandbox.md) |
 
-**Note:** ADRs 004-006 and 013 were never created or were withdrawn. The numbering gaps are intentional and should not be reclaimed.
+**Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed.
 
 ---
 
@@ -67,6 +68,7 @@ Security / Reliability Domain (Sprint 1):
   ADR-020 (Adapter Eager Validation) ─── standalone; narrows ADR-001 startup behavior
   ADR-021 (JWT OIDC Auth) ─── extends ADR-018 auth boundary; preserves API-key fallback
   ADR-022 (Tenant Isolation) ─── extends ADR-021 identity boundary with data scoping
+  ADR-024 (AST Expression Interpreter) ─── standalone; eliminates eval() in the engine condition evaluator
 
 Execution Kernel Domain:
   ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
@@ -97,6 +99,7 @@ Execution Kernel Domain:
 | 021 | Yes | 100% (OIDC JWT middleware + API-key fallback) | OIDC auth middleware tests | 2026-05-18 |
 | 022 | Yes | 100% (tenant context + scoped runs/datasets) | Tenant isolation + OIDC claim tests | 2026-05-18 |
 | 023 | Yes | F0–F5 landed (Option A′: single `executionkit` package; `executionkit-contracts` retired; B-1/B-2 fixed; `AGENTIC_EK_PROVIDER` opt-in) | 81 EK bridge tests green; flag-OFF floor held | 2026-06-01 |
+| 024 | Yes | 100% (AST interpreter replaces eval() in the engine condition evaluator) | test_expressions.py (128 cases incl. dunder/DoS vectors) | 2026-06-13 |
 
 ---
 
