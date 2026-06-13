@@ -34,6 +34,30 @@ EXPOSE 8010
 CMD ["python", "-m", "uvicorn", "agentic_v2.server.app:app", "--host", "0.0.0.0", "--port", "8010", "--reload"]
 
 
+FROM python-base AS production
+
+COPY . /workspace
+
+# Install only runtime extras — no dev/test tooling (pytest, mypy, black, etc.)
+RUN python -m pip install --upgrade pip \
+    && pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[server,tracing]"
+
+# Run as non-root user (S6471) — mirrors the dev stage setup
+RUN groupadd --system appgroup \
+    && useradd --system --gid appgroup --no-create-home appuser \
+    && chown -R appuser:appgroup /workspace
+USER appuser
+
+WORKDIR /workspace/agentic-workflows-v2
+EXPOSE 8010
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8010/api/health || exit 1
+
+CMD ["uvicorn", "agentic_v2.server.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8010"]
+
+
 FROM python-base AS devcontainer
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
