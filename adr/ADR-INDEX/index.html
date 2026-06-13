@@ -2932,8 +2932,8 @@
 
 <h1 id="adr-index-agentic-workflows-v2">ADR Index — agentic-workflows-v2<a class="headerlink" href="#adr-index-agentic-workflows-v2" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Last updated:</strong> 2026-06-01
-<strong>Total ADRs:</strong> 19 (14 Accepted, 4 Proposed, 1 Superseded)</p>
+<p><strong>Last updated:</strong> 2026-06-13
+<strong>Total ADRs:</strong> 20 (15 Accepted, 4 Proposed, 1 Superseded)</p>
 </blockquote>
 <hr />
 <h2 id="quick-access-deck">Quick-Access Deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
@@ -3061,9 +3061,15 @@
 <td>Accepted</td>
 <td><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> · <a href="../ADR-023-migration-plan/">plan</a> · <a href="../ADR-023-preservation-matrix/">matrix</a> · <a href="../ADR-023-migration-notes/">notes</a> · <a href="../ADR-023-finish-plan/">finish-plan</a></td>
 </tr>
+<tr>
+<td><strong>024</strong></td>
+<td>Expression Evaluation via AST Interpreter (eliminate <code>eval()</code>)</td>
+<td>Accepted</td>
+<td><a href="../ADR-024-expression-evaluator-ast-sandbox/">ADR-024</a></td>
+</tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn. The numbering gaps are intentional and should not be reclaimed.</p>
+<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed.</p>
 <hr />
 <h2 id="lineage-chains">Lineage Chains<a class="headerlink" href="#lineage-chains" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Engine Domain:
@@ -3097,9 +3103,10 @@
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  ADR-020 (Adapter Eager Validation) ─── standalone; narrows ADR-001 startup behavior
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  ADR-021 (JWT OIDC Auth) ─── extends ADR-018 auth boundary; preserves API-key fallback
 </span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  ADR-022 (Tenant Isolation) ─── extends ADR-021 identity boundary with data scoping
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>Execution Kernel Domain:
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>  ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  ADR-024 (AST Expression Interpreter) ─── standalone; eliminates eval() in the engine condition evaluator
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>Execution Kernel Domain:
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>  ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
 </span></code></pre></div>
 <hr />
 <h2 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
@@ -3247,6 +3254,13 @@
 <td style="text-align: center;">81 EK bridge tests green; flag-OFF floor held</td>
 <td>2026-06-01</td>
 </tr>
+<tr>
+<td>024</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">100% (AST interpreter replaces eval() in the engine condition evaluator)</td>
+<td style="text-align: center;">test_expressions.py (128 cases incl. dunder/DoS vectors)</td>
+<td>2026-06-13</td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -3288,7 +3302,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 12, 2026 13:43:25 UTC">June 12, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 13, 2026 16:04:36 UTC">June 13, 2026</span>
   </span>
 
     
