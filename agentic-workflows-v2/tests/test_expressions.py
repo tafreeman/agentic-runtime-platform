@@ -866,11 +866,34 @@ class TestWave2SequenceMultiplyDoS:
         with pytest.raises(ValueError, match="Sequence multiply"):
             evaluator._safe_eval("[0] * 100001")
 
+    def test_string_mult_chained_under_raw_cap_rejected(self) -> None:
+        """'a' * 9999 * 9999 — each raw multiplier is under the cap, but the
+        resulting allocation (~100 MB) is not. The guard must reject based on
+        the *resulting* size (len(seq) * n), closing the chained bypass."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Sequence multiply"):
+            evaluator._safe_eval("'a' * 9999 * 9999")
+
+    def test_string_mult_chained_5000_rejected(self) -> None:
+        """'a' * 5000 * 5000 — inner result is 5000 chars; 5000 * 5000 = 25M
+        exceeds the cap and must be rejected."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Sequence multiply"):
+            evaluator._safe_eval("'a' * 5000 * 5000")
+
     def test_string_mult_small_allowed(self) -> None:
         """'ab' * 5 — small sequence multiply must still be allowed."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         assert evaluator._safe_eval("'ab' * 5") == "ababababab"
+
+    def test_string_mult_ten_allowed(self) -> None:
+        """'ab' * 10 — legitimate small multiply must still evaluate."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        assert evaluator._safe_eval("'ab' * 10") == "ab" * 10
 
     def test_numeric_mult_large_allowed(self) -> None:
         """10000 * 10000 — large numeric multiply must NOT be rejected."""

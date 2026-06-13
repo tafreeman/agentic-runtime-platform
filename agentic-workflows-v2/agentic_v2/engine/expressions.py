@@ -386,23 +386,28 @@ class ExpressionEvaluator:
             left = self._eval_node(node.left, env)
             right = self._eval_node(node.right, env)
             # Guard sequence-multiply DoS: reject if a str/bytes/list/tuple is
-            # being multiplied by an int that would create an oversized sequence.
+            # multiplied by an int and the *resulting* allocation would exceed
+            # the cap. Checking the resulting size (len(seq) * n) rather than the
+            # raw multiplier closes the chained-multiply bypass, e.g.
+            # ``"a" * 9999 * 9999`` — the inner result is a 9999-char str, so the
+            # outer multiply sees len(seq)=9999 * 9999 > cap and is rejected.
             if isinstance(node.op, ast.Mult):
+                seq: str | bytes | list | tuple | None = None
+                count: int | None = None
                 if isinstance(left, (str, bytes, list, tuple)) and isinstance(
                     right, int
                 ):
-                    if right > _MAX_SEQUENCE_MULTIPLY:
-                        raise ValueError(
-                            f"Sequence multiply exceeds maximum allowed size "
-                            f"({right} > {_MAX_SEQUENCE_MULTIPLY})"
-                        )
+                    seq, count = left, right
                 elif isinstance(right, (str, bytes, list, tuple)) and isinstance(
                     left, int
                 ):
-                    if left > _MAX_SEQUENCE_MULTIPLY:
+                    seq, count = right, left
+                if seq is not None and count is not None:
+                    result_size = len(seq) * count
+                    if result_size > _MAX_SEQUENCE_MULTIPLY:
                         raise ValueError(
                             f"Sequence multiply exceeds maximum allowed size "
-                            f"({left} > {_MAX_SEQUENCE_MULTIPLY})"
+                            f"({result_size} > {_MAX_SEQUENCE_MULTIPLY})"
                         )
             return op_fn(left, right)
 
