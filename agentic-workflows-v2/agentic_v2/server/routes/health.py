@@ -83,7 +83,7 @@ async def _check_redis(redis_url: str | None) -> DependencyStatus:
             alive = store.is_connected and await asyncio.wait_for(
                 store.health_check(), timeout=2.0
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return DependencyStatus(
                 name="redis",
                 status="down",
