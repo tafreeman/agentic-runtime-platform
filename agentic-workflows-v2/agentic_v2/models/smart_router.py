@@ -926,6 +926,23 @@ def get_smart_router(stats_file: Path | None = None) -> SmartModelRouter:
     return _smart_router
 
 
+def set_smart_router(router: SmartModelRouter) -> None:
+    """Install *router* as the process-wide smart-router singleton.
+
+    All consumers that resolve the router lazily via :func:`get_smart_router`
+    (``models.client``, ``agents.base``, ``engine.executor``, the server
+    health route, etc.) will use *router* on their next call. This is the
+    seam the FastAPI lifespan uses to swap in a Redis-backed router built by
+    :meth:`SmartModelRouter.create_with_redis` at startup, replacing the
+    default in-process router instantiated on first access.
+
+    Args:
+        router: The router instance to install as the global singleton.
+    """
+    global _smart_router
+    _smart_router = router
+
+
 def reset_smart_router() -> None:
     """Reset the global smart router (for testing)."""
     global _smart_router

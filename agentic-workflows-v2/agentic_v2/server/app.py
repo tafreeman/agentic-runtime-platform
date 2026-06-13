@@ -41,7 +41,12 @@ from ..core.errors import ConfigurationError
 from ..integrations.metrics import get_metrics_app, is_metrics_enabled, shutdown_metrics
 from ..integrations.otel import is_tracing_enabled, shutdown_tracing
 from ..logging_config import configure_logging
-from ..settings import get_settings
+from ..models import (
+    SmartModelRouter,
+    get_smart_router,
+    set_smart_router,
+)
+from ..settings import Settings, get_settings
 from . import websocket
 from .audit_log import AuditLogger, NullAuditStore, build_audit_logger
 from .auth import (
@@ -212,6 +217,69 @@ def _probe_llm_providers() -> None:
             logger.warning("LLM provider probe failed (non-fatal): %s", _probe_exc)
 
 
+async def _install_smart_router(settings: Settings) -> SmartModelRouter:
+    """Install the process-wide :class:`SmartModelRouter`, Redis-backed if configured.
+
+    When ``settings.redis_url`` is set, build a router whose circuit-breaker
+    state is shared across workers via a :class:`RedisCircuitBreakerStore`
+    (``SmartModelRouter.create_with_redis``) and install it as the global
+    singleton consumed by ``get_smart_router()``. This is what activates the
+    Redis CAS persistence path (``redis_state.py``) on a real app run.
+
+    Graceful degradation (never crashes startup):
+    - ``redis_url`` unset → keep the existing in-process router.
+    - ``redis_url`` set but the Redis connection fails, the ``redis`` package
+      is not installed, or construction raises → log a warning and fall back
+      to the in-process router.
+
+    Args:
+        settings: Resolved application settings.
+
+    Returns:
+        The active router (Redis-backed when the connection succeeded,
+        otherwise the in-process router). Callers should keep a reference so
+        the lifespan can ``aclose()`` it on shutdown to drain background CAS
+        save tasks.
+    """
+    if not settings.redis_url:
+        # No Redis configured — in-process router with local file persistence.
+        return get_smart_router()
+
+    try:
+        router = await SmartModelRouter.create_with_redis(
+            redis_url=settings.redis_url,
+            prefix=settings.redis_circuit_breaker_prefix,
+            ttl_seconds=settings.redis_circuit_breaker_ttl,
+        )
+    except Exception as exc:  # graceful degradation — never crash startup
+        logger.warning(
+            "SmartModelRouter Redis init failed (%s); "
+            "falling back to in-process circuit-breaker state",
+            exc,
+        )
+        return get_smart_router()
+
+    store = router._redis_store
+    if store is not None and store.is_connected:
+        set_smart_router(router)
+        logger.info(
+            "SmartModelRouter using Redis-backed circuit-breaker state: %s",
+            settings.redis_url,
+        )
+        return router
+
+    # create_with_redis returned a router whose store could not connect (the
+    # factory degrades internally rather than raising). Drain its empty task
+    # set for tidiness and keep the in-process router as the installed one.
+    logger.warning(
+        "REDIS_URL is set (%s) but the Redis circuit-breaker store is not "
+        "connected; falling back to in-process state",
+        settings.redis_url,
+    )
+    await router.aclose()
+    return get_smart_router()
+
+
 def _enforce_sanitization_init(app: FastAPI, init_error: Exception) -> None:
     """Apply fail-open/fail-closed policy after a sanitization init failure.
 
@@ -284,6 +352,13 @@ async def lifespan(app: FastAPI):
     if is_metrics_enabled():
         logger.info("OpenTelemetry metrics (Prometheus scrape) is enabled at /metrics")
 
+    # Install the SmartModelRouter — Redis-backed (shared circuit-breaker state
+    # across workers) when REDIS_URL is set, otherwise the in-process router.
+    # Graceful: a missing/unreachable Redis falls back without crashing startup.
+    # Stored on app.state so the shutdown block can drain its background CAS
+    # save tasks via aclose().
+    app.state.smart_router = await _install_smart_router(settings)
+
     # Initialize the durable WebSocket replay store (Redis / SQLite / in-memory).
     # Must happen after settings are loaded so build_replay_store() can read
     # REDIS_URL and replay_store_backend from the resolved settings object.
@@ -303,6 +378,11 @@ async def lifespan(app: FastAPI):
     audit_logger = getattr(app.state, "audit_logger", None)
     if isinstance(audit_logger, AuditLogger):
         await audit_logger.close()
+    # Drain the router's fire-and-forget Redis CAS save tasks before tearing
+    # down tracing, so no circuit-breaker state write is silently abandoned.
+    smart_router = getattr(app.state, "smart_router", None)
+    if isinstance(smart_router, SmartModelRouter):
+        await smart_router.aclose()
     shutdown_tracing()
     shutdown_metrics()
 
