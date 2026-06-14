@@ -37,6 +37,7 @@ from .transform import (
     YamlDumpTool,
     YamlLoadTool,
 )
+from .verify_fact import VerifyFactTool
 
 __all__ = [
     # Context utilities
@@ -85,4 +86,6 @@ __all__ = [
     "YamlDumpTool",
     "TemplateRenderTool",
     "ConfigMergeTool",
+    # Cross-role verification (shared tool, all tiers)
+    "VerifyFactTool",
 ]

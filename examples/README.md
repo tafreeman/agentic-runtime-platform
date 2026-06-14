@@ -24,6 +24,9 @@ pip install -e ".[dev]"
 | 04 | [04_model_routing.py](04_model_routing.py) | `ModelRouter` default chains, custom `FallbackChain` via fluent DSL, `ScopedRouter` temporary overrides, `SmartModelRouter` with health tracking / circuit breakers / adaptive cooldowns, and `call_with_fallback` automatic failover. |
 | 05 | [05_evaluation.py](05_evaluation.py) | `Scorer` with inline rubric dicts, `ScoringResult` inspection, handling missing criteria, discovering built-in rubrics with `list_rubrics`/`load_rubric`, and comparing two workflow runs. |
 | 06 | [06_adapter_switching.py](06_adapter_switching.py) | `AdapterRegistry` engine discovery, `DAG` with dependency-driven parallelism via `DAGExecutor` (Kahn's algorithm), `Pipeline` with sequential stages via `PipelineExecutor`, and comparing execution semantics. |
+| 07 | [sdk_task_orchestrator.py](sdk_task_orchestrator.py) | **SDK-native** `Task`-tool coordinator using the real Claude Agent SDK (`AgentDefinition`, `allowed_tools=["Task", ...]`, dynamic subagent selection, explicit per-spawn context, and parallel `Task` calls in one turn). The SDK-native counterpart to `OrchestratorAgent` — see [ADR-025](../docs/adr/ADR-025-sdk-task-orchestration.md). **Requires `ANTHROPIC_API_KEY`** (no-ops with a clear message when unset). |
+| 08 | [resume_and_fork.py](resume_and_fork.py) | `ExecutionContext` checkpoint **`--resume <name>`** rehydration, **`fork_session(name)`** branching a divergent run off a shared baseline via `context.child()`, and on-resume changed-file detection that surfaces a "these files changed" notice for the caller to prepend to a resumed prompt. See [ADR-026](../docs/adr/ADR-026-resume-vs-summary-session.md). |
+| 09 | [forced_tool_choice.py](forced_tool_choice.py) | **Forced / `any` / `auto` `tool_choice`** threaded through `build_tool_contracts` and the cloud backends so a step can force a specific tool (`{"type":"tool","name":...}`) or require *some* tool, plus the tier-0 cross-role **`verify_fact`** shared tool. Deterministic walkthrough needs no key; `--live` drives a real forced-tool step. See [ADR-027](../docs/adr/ADR-027-forced-tool-choice.md). |
 
 ## Running
 
@@ -34,6 +37,18 @@ python examples/03_custom_agent.py
 python examples/04_model_routing.py
 python examples/05_evaluation.py
 python examples/06_adapter_switching.py
+
+# Claude Agent SDK Task-tool coordinator (needs ANTHROPIC_API_KEY)
+python examples/sdk_task_orchestrator.py "Audit the orchestrator for risks"
+
+# Checkpoint resume / fork-session demo (no API key required)
+python examples/resume_and_fork.py demo
+python examples/resume_and_fork.py --resume my_checkpoint
+python examples/resume_and_fork.py --fork my_checkpoint   # resume, then fork it
+
+# Forced/any/auto tool_choice + cross-role verify_fact (no API key required)
+python examples/forced_tool_choice.py
+ANTHROPIC_API_KEY=sk-ant-... python examples/forced_tool_choice.py --live
 ```
 
 ## Key Packages Used

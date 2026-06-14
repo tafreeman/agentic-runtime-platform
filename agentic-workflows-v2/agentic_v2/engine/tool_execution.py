@@ -82,22 +82,128 @@ def parameter_spec_to_json_schema(spec: Any) -> dict[str, Any]:
     return normalized
 
 
+def normalize_tool_choice(
+    tool_choice: str | dict[str, Any] | None,
+    available_tool_names: set[str] | None = None,
+) -> str | dict[str, Any]:
+    """Validate and normalize a ``tool_choice`` into the OpenAI wire shape.
+
+    Accepts:
+        - ``None`` or ``"auto"`` → ``"auto"`` (model decides).
+        - ``"any"`` / ``"required"`` → ``"required"`` (model must call a tool).
+        - ``"none"`` → ``"none"`` (model may not call a tool).
+        - A tool name string → forced ``{"type": "function", "function":
+          {"name": <name>}}``.
+        - A dict in either OpenAI (``{"type": "function", ...}``) or Anthropic
+          (``{"type": "tool", "name": ...}``) shape → normalized to OpenAI.
+
+    Args:
+        tool_choice: The requested choice (see accepted forms above).
+        available_tool_names: When provided, a forced tool name not in this set
+            raises ``ValueError`` (fail-fast on a typo'd tool name).
+
+    Returns:
+        The normalized choice. ``"auto"`` / ``"required"`` / ``"none"`` are
+        returned as bare strings; a forced tool is an OpenAI ``tool_choice`` dict.
+    """
+    if tool_choice is None:
+        return "auto"
+
+    if isinstance(tool_choice, str):
+        lowered = tool_choice.strip().lower()
+        if lowered in ("auto", ""):
+            return "auto"
+        if lowered in ("any", "required"):
+            return "required"
+        if lowered == "none":
+            return "none"
+        # Treat any other string as a forced tool name.
+        forced_name = tool_choice.strip()
+        _validate_forced_tool(forced_name, available_tool_names)
+        return {"type": "function", "function": {"name": forced_name}}
+
+    if isinstance(tool_choice, dict):
+        # OpenAI shape: {"type": "function", "function": {"name": ...}}
+        func = tool_choice.get("function")
+        if isinstance(func, dict) and func.get("name"):
+            _validate_forced_tool(str(func["name"]), available_tool_names)
+            return {"type": "function", "function": {"name": str(func["name"])}}
+        # Anthropic shape: {"type": "tool", "name": ...}
+        name = tool_choice.get("name")
+        if tool_choice.get("type") == "tool" and name:
+            _validate_forced_tool(str(name), available_tool_names)
+            return {"type": "function", "function": {"name": str(name)}}
+        # Bare-mode dicts ({"type": "auto"|"any"|"none"}) → normalize via type.
+        type_value = str(tool_choice.get("type", "auto")).lower()
+        return normalize_tool_choice(type_value, available_tool_names)
+
+    raise ValueError(f"Unsupported tool_choice: {tool_choice!r}")
+
+
+def _validate_forced_tool(
+    name: str, available_tool_names: set[str] | None
+) -> None:
+    """Raise ``ValueError`` if *name* is forced but not in the available set."""
+    if available_tool_names is not None and name not in available_tool_names:
+        raise ValueError(
+            f"Forced tool_choice '{name}' is not in the available tool set "
+            f"{sorted(available_tool_names)}"
+        )
+
+
+def _is_forced_tool_choice(tool_choice: str | dict[str, Any] | None) -> bool:
+    """Return True when *tool_choice* genuinely forces a tool call.
+
+    Forced means the model is compelled to call (some or a specific) tool:
+        - the strings ``"required"`` / ``"any"`` (model MUST call a tool), or
+        - a dict naming a specific tool (OpenAI ``{"type": "function", ...}`` or
+          Anthropic ``{"type": "tool", "name": ...}``), including a bare
+          ``{"type": "any"|"required"}``.
+
+    NOT forced (model still decides whether/which tool, or no tool at all):
+        - ``None`` / ``"auto"`` / ``""`` (model-decided), and
+        - ``"none"`` (model may NOT call a tool — a constraint, but not a forced
+          tool selection the EK path must honor).
+    """
+    if tool_choice is None:
+        return False
+    if isinstance(tool_choice, str):
+        return tool_choice.strip().lower() in ("required", "any")
+    if isinstance(tool_choice, dict):
+        # A dict that names a tool, or a bare-mode dict requiring a call.
+        func = tool_choice.get("function")
+        if isinstance(func, dict) and func.get("name"):
+            return True
+        if tool_choice.get("type") == "tool" and tool_choice.get("name"):
+            return True
+        return str(tool_choice.get("type", "")).lower() in ("required", "any")
+    return False
+
+
 def build_tool_contracts(
     tier: ModelTier,
     requested_tools: list[str] | None,
-) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Return OpenAI-compatible tool schemas and bound tool instances.
+    tool_choice: str | dict[str, Any] | None = "auto",
+) -> tuple[list[dict[str, Any]], dict[str, Any], str | dict[str, Any]]:
+    """Return OpenAI-compatible tool schemas, bound tools, and a tool choice.
 
     Args:
         tier: The model tier for this step — tools with a higher tier are
             excluded unless explicitly requested.
         requested_tools: Explicit allowlist of tool names, or ``None`` to
             include all tools whose tier does not exceed *tier*.
+        tool_choice: How the model should select among the contracts. Defaults
+            to ``"auto"``. ``"any"``/``"required"`` forces *some* tool; a tool
+            name (or forced dict) forces that specific tool. Validated against
+            the resolved tool set — forcing a tool that was not selected raises
+            ``ValueError``.
 
     Returns:
-        A ``(tool_schemas, bound_tools)`` tuple where *tool_schemas* is a list
-        of OpenAI function-calling schema dicts and *bound_tools* maps each
-        tool name to its registry instance.
+        A ``(tool_schemas, bound_tools, normalized_tool_choice)`` triple.
+        *tool_schemas* is a list of OpenAI function-calling schema dicts,
+        *bound_tools* maps each tool name to its registry instance, and
+        *normalized_tool_choice* is the validated choice ready to pass to a
+        backend ``complete_chat``.
     """
     from ..tools import get_registry
 
@@ -155,7 +261,8 @@ def build_tool_contracts(
         )
         bound_tools[tool.name] = tool
 
-    return tool_schemas, bound_tools
+    normalized_choice = normalize_tool_choice(tool_choice, set(bound_tools.keys()))
+    return tool_schemas, bound_tools, normalized_choice
 
 
 # Backward-compatibility aliases
@@ -325,12 +432,24 @@ async def complete_chat_with_fallback(
     messages: list[dict[str, Any]],
     max_tokens: int,
     tools: list[dict[str, Any]] | None,
+    tool_choice: str | dict[str, Any] = "auto",
 ) -> tuple[dict[str, Any], str, int]:
     """Call backend.complete_chat with router-based model fallback.
 
     Iterates through available models for *tier* (up to 6 attempts), recording
     successes, rate-limits, timeouts, and permanent failures on the router so
     that subsequent calls benefit from learned health state.
+
+    Args:
+        client: The model client exposing ``complete_chat`` and a ``router``.
+        tier: Model tier to route within.
+        messages: The running chat thread.
+        max_tokens: Per-turn completion ceiling.
+        tools: OpenAI-format tool schemas, or ``None`` to disable tool use.
+        tool_choice: Normalized tool choice (``"auto"`` / ``"required"`` /
+            ``"none"`` / a forced ``{"type": "function", ...}`` dict). Forwarded
+            to ``backend.complete_chat`` only when *tools* is provided; ignored
+            otherwise. Defaults to ``"auto"`` so existing callers are unaffected.
 
     Returns:
         A ``(response_dict, model_name, tokens_used)`` triple.
@@ -354,6 +473,20 @@ async def complete_chat_with_fallback(
     from ..settings import get_settings
 
     if get_settings().agentic_ek_provider:
+        # The EK provider stack does not thread a tool_choice; a genuinely
+        # FORCED choice cannot be honored on this opt-in path. Silently
+        # downgrading it to model-decided would let a step that REQUIRES a tool
+        # quietly skip it, so raise instead (before importing the optional EK
+        # dependency). A plain 'auto'/None (and 'none', which forces *no* tool)
+        # passes through unchanged.
+        if tools and _is_forced_tool_choice(tool_choice):
+            raise NotImplementedError(
+                f"tool_choice={tool_choice!r} forces tool selection, but the EK "
+                "completion path (AGENTIC_EK_PROVIDER) does not thread tool_choice "
+                "and cannot honor a forced choice. Unset AGENTIC_EK_PROVIDER for "
+                "steps that force a tool, or use the default completion path."
+            )
+
         from executionkit.cost import CostTracker
 
         from .ek_step_delegation import complete_turn_via_ek
@@ -370,12 +503,17 @@ async def complete_chat_with_fallback(
             metadata={},
         )
 
+    # Only forward tool_choice when there are tools to choose among; otherwise
+    # leave it off so providers that reject a tool_choice without tools are not
+    # tripped.
+    extra: dict[str, Any] = {"tool_choice": tool_choice} if tools else {}
     result: tuple[dict[str, Any], str, int] = await client.complete_chat(
         messages=messages,
         tier=tier,
         max_retries=6,
         tools=tools,
         max_tokens=max_tokens,
+        **extra,
     )
     return result
 

@@ -156,7 +156,18 @@ class HttpTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute HTTP requests with support for various methods and headers"
+        return (
+            "General HTTP client for ANY method (GET/POST/PUT/DELETE/PATCH/"
+            "HEAD/OPTIONS). Takes a `url`, a `method` (default GET), optional "
+            "`headers`, `params` (query string), `body` (a dict that is "
+            "JSON-encoded), and a `timeout` in seconds (default 30). Returns "
+            "status code, response headers, and decoded body. Requires approval "
+            "because it can issue mutating requests. Edge cases: non-2xx status "
+            "codes are returned, not raised; a timeout yields a failure result. "
+            "PREFER the `http_get` wrapper for a plain read and `http_post` for "
+            "a JSON create; reach for this generic tool when you need PUT, "
+            "DELETE, PATCH, a custom timeout, or full method control."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -304,7 +315,16 @@ class HttpGetTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute HTTP GET request"
+        return (
+            "Read-only HTTP GET convenience wrapper: fetch a `url` with optional "
+            "query `params` and `headers`. Sends NO request body and is "
+            "ungated, so use it for safe idempotent reads (fetch a page, hit a "
+            "read API, poll a status endpoint). Returns status, headers, and "
+            "decoded body; non-2xx codes are returned rather than raised. PREFER "
+            "`http_get` for safe reads; for a state-changing call prefer "
+            "`http_post`; for PUT/DELETE/PATCH or a custom timeout use the "
+            "generic `http` tool."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -355,7 +375,16 @@ class HttpPostTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute HTTP POST request with JSON body"
+        return (
+            "HTTP POST convenience wrapper: send a `body` dict (JSON-encoded) to "
+            "a `url` with optional `headers`. Use it for state-changing creates "
+            "/submits (create a resource, submit a form, call a write API). "
+            "Requires approval because it mutates server state. Returns status, "
+            "headers, and decoded body; non-2xx codes are returned, not raised. "
+            "PREFER `http_post` for a JSON create/submit; for a read prefer "
+            "`http_get`; for PUT/DELETE/PATCH or a custom timeout use the "
+            "generic `http` tool."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:

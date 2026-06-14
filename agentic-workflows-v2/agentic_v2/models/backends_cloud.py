@@ -29,6 +29,40 @@ from .secrets import get_first_secret, get_secret
 CONTENT_TYPE_JSON = "application/json"
 CHAT_COMPLETIONS_PATH = "/chat/completions"
 
+
+def _to_anthropic_tool_choice(
+    tool_choice: str | dict[str, Any],
+) -> dict[str, Any] | None:
+    """Map an OpenAI-normalized ``tool_choice`` to Anthropic's wire shape.
+
+    The engine normalizes choices to OpenAI form via
+    :func:`agentic_v2.engine.tool_execution.normalize_tool_choice` before they
+    reach a backend, so the inputs here are: ``"auto"`` / ``"required"`` /
+    ``"none"`` (bare strings) or a forced ``{"type": "function", "function":
+    {"name": ...}}`` dict.
+
+    Returns the Anthropic ``tool_choice`` dict, or ``None`` for plain ``"auto"``
+    so the default path leaves the payload untouched (preserving prior
+    behavior where Anthropic was never sent an explicit ``tool_choice``).
+    """
+    if isinstance(tool_choice, str):
+        lowered = tool_choice.strip().lower()
+        if lowered in ("required", "any"):
+            return {"type": "any"}
+        if lowered == "none":
+            return {"type": "none"}
+        # "auto" / "" / unknown → omit (Anthropic defaults to auto).
+        return None
+
+    func = tool_choice.get("function")
+    if isinstance(func, dict) and func.get("name"):
+        return {"type": "tool", "name": str(func["name"])}
+    # Already-Anthropic-shaped forced dict {"type": "tool", "name": ...}.
+    name = tool_choice.get("name")
+    if tool_choice.get("type") == "tool" and name:
+        return {"type": "tool", "name": str(name)}
+    return None
+
 # ---------------------------------------------------------------------------
 # GitHub Models
 # ---------------------------------------------------------------------------
@@ -91,6 +125,7 @@ class GitHubModelsBackend(LLMBackend):
         max_tokens: int = 4096,
         temperature: float = 0.7,
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] = "auto",
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Send chat completion request."""
@@ -111,7 +146,7 @@ class GitHubModelsBackend(LLMBackend):
 
         if tools:
             payload["tools"] = tools
-            payload["tool_choice"] = "auto"
+            payload["tool_choice"] = tool_choice
 
         response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
         response.raise_for_status()
@@ -188,6 +223,7 @@ class OpenAIBackend(LLMBackend):
         max_tokens: int = 4096,
         temperature: float = 0.7,
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] = "auto",
         **kwargs: Any,
     ) -> dict[str, Any]:
         client = await self._get_client()
@@ -204,7 +240,7 @@ class OpenAIBackend(LLMBackend):
 
         if tools:
             payload["tools"] = tools
-            payload["tool_choice"] = "auto"
+            payload["tool_choice"] = tool_choice
 
         response = await client.post(CHAT_COMPLETIONS_PATH, json=payload)
         response.raise_for_status()
@@ -282,6 +318,7 @@ class AnthropicBackend(LLMBackend):
         max_tokens: int = 4096,
         temperature: float = 0.7,
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] = "auto",
         **kwargs: Any,
     ) -> dict[str, Any]:
         client = await self._get_client()
@@ -309,6 +346,9 @@ class AnthropicBackend(LLMBackend):
                     }
                 )
             payload["tools"] = anthropic_tools
+            anthropic_choice = _to_anthropic_tool_choice(tool_choice)
+            if anthropic_choice is not None:
+                payload["tool_choice"] = anthropic_choice
 
         response = await client.post("/v1/messages", json=payload)
         response.raise_for_status()
@@ -585,6 +625,7 @@ class AzureOpenAIBackend(LLMBackend):
         max_tokens: int = 4096,
         temperature: float = 0.7,
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] = "auto",
         **kwargs: Any,
     ) -> dict[str, Any]:
         client = await self._get_client()
@@ -601,7 +642,7 @@ class AzureOpenAIBackend(LLMBackend):
 
         if tools:
             payload["tools"] = tools
-            payload["tool_choice"] = "auto"
+            payload["tool_choice"] = tool_choice
 
         response = await client.post(
             f"/openai/deployments/{deployment}/chat/completions",
@@ -682,6 +723,7 @@ class AzureFoundryBackend(LLMBackend):
         max_tokens: int = 4096,
         temperature: float = 0.7,
         tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | dict[str, Any] = "auto",
         **kwargs: Any,
     ) -> dict[str, Any]:
         client = await self._get_client()
@@ -698,7 +740,7 @@ class AzureFoundryBackend(LLMBackend):
 
         if tools:
             payload["tools"] = tools
-            payload["tool_choice"] = "auto"
+            payload["tool_choice"] = tool_choice
 
         response = await client.post(
             CHAT_COMPLETIONS_PATH,

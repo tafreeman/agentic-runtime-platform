@@ -19,7 +19,18 @@ class CodeAnalysisTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Analyze Python code for structure, complexity, and metrics using AST"
+        return (
+            "Compute SUMMARY metrics for Python code via AST parsing: cyclomatic "
+            "complexity, line counts, and inventories of functions, classes, and "
+            "imports. `source` is code text by default, or a file path when "
+            "`from_file=True`. Narrow the work with `metrics` (any of "
+            "complexity, lines, functions, classes, imports; default ['all']). "
+            "Python-only — non-Python or syntactically invalid source returns a "
+            "failure with the SyntaxError. PREFER `code_analysis` for "
+            "quantitative answers ('how complex is this?', 'what does it "
+            "import?'); use `ast_dump` instead when you need the raw node-by-"
+            "node tree rather than aggregated numbers."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -220,7 +231,16 @@ class AstDumpTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Generate AST dump of Python code for detailed structure analysis"
+        return (
+            "Emit the RAW Python AST as a pretty-printed node tree (via "
+            "`ast.dump`) for a `source` string, with a configurable `indent`. "
+            "This is the low-level, node-by-node structure — every expression, "
+            "name, and constant — not aggregated metrics. Python-only; invalid "
+            "syntax returns a failure with the SyntaxError. Always takes inline "
+            "source (no from_file flag). PREFER `ast_dump` when you must inspect "
+            "or transform exact AST nodes; use `code_analysis` instead for "
+            "complexity/line/function/class/import summaries."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:

@@ -53,7 +53,16 @@ class FileCopyTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Copy a file from source path to destination path"
+        return (
+            "Copy a single file from `source` to `destination`, LEAVING the "
+            "source in place (this is the non-destructive duplicate). Both are "
+            "filesystem paths; `destination` is created or overwritten. Edge "
+            "cases: a missing source fails fast; paths are containment-checked, "
+            "so escaping the workspace is rejected; directories are not "
+            "supported (file-only). Requires approval (writes a new file). "
+            "PREFER `file_copy` when the original must survive; use `file_move` "
+            "instead to relocate/rename (which DELETES the source)."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -130,7 +139,15 @@ class FileMoveTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Move or rename a file from source to destination"
+        return (
+            "Move or rename a file from `source` to `destination`, REMOVING the "
+            "source (destructive — the original no longer exists afterward). "
+            "Use the same path with a new filename to rename in place. Edge "
+            "cases: a missing source fails fast; both paths are "
+            "containment-checked; an existing destination is overwritten. "
+            "Requires approval. PREFER `file_move` to relocate or rename; use "
+            "`file_copy` instead when the original must be preserved."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -205,7 +222,15 @@ class FileDeleteTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Delete a file"
+        return (
+            "Permanently delete a single file at `path` (irreversible — there "
+            "is no trash/undo). Set `missing_ok=True` to treat an absent file "
+            "as success (returns deleted=False) instead of an error; with the "
+            "default `missing_ok=False` a nonexistent path fails. The path is "
+            "containment-checked; directories are not deleted (file-only). "
+            "Requires approval. This removes a file outright — use `file_move` "
+            "to relocate one without losing it."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -263,7 +288,14 @@ class DirectoryCreateTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Create a directory and all parent directories"
+        return (
+            "Create a directory at `path`, creating any missing parent "
+            "directories along the way (like `mkdir -p`). Idempotent: an "
+            "already-existing directory is a no-op success, not an error. The "
+            "path is containment-checked. Requires approval (mutates the "
+            "filesystem tree). Creates empty folders only; to create a file "
+            "use `file_write` (which already makes any missing parent dirs)."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -308,7 +340,15 @@ class FileReadTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Read the contents of a file"
+        return (
+            "Read the full text contents of one file at `path` into memory, "
+            "returning the content plus size_bytes and line count. `encoding` "
+            "defaults to utf-8. Read-only and ungated. Edge cases: a missing "
+            "path fails fast; the path is containment-checked; the whole file "
+            "is loaded (no range/streaming), so avoid very large files. This "
+            "returns a file's CONTENT — use `grep`/`search` to find WHERE a "
+            "string occurs across many files, or `file_write` to modify one."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -368,7 +408,15 @@ class FileWriteTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Write content to a file"
+        return (
+            "Write `content` to a file at `path`, creating any missing parent "
+            "directories automatically. By default (`overwrite=True`) it "
+            "replaces the whole file; set `overwrite=False` to refuse and fail "
+            "if the file already exists (safe create-only). `encoding` defaults "
+            "to utf-8. This is a FULL-content write, not an append or patch — "
+            "to keep existing text, `file_read` it first and write the merged "
+            "result. The path is containment-checked. Requires approval."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:

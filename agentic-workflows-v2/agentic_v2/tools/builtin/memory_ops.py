@@ -207,7 +207,15 @@ class MemoryUpsertTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "Create or update a persistent memory entry (key -> value)."
+        return (
+            "WRITE side of persistent key-value memory: create a new entry or "
+            "overwrite an existing one at `key` with a JSON-serializable "
+            "`value` (and optional `tags`). Upsert semantics — same key "
+            "replaces, so it is idempotent. Use this to durably record a fact "
+            "for later runs (a repo root, a known error). PREFER `memory_get` "
+            "to read one key back, `memory_search` to find entries by content, "
+            "and `memory_delete` to remove a single key."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -253,7 +261,14 @@ class MemoryGetTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "Get a persistent memory entry by key."
+        return (
+            "READ one persistent memory entry by its EXACT `key`, returning its "
+            "stored value (or a not-found result if the key is absent). This is "
+            "a point lookup — you must already know the key. PREFER `memory_get` "
+            "when you have the exact key; use `memory_search` to find entries by "
+            "substring across keys/values, or `memory_list` to enumerate keys "
+            "by prefix when you do not know the exact key."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -280,7 +295,15 @@ class MemoryListTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "List persistent memory keys (optionally filtered by prefix)."
+        return (
+            "ENUMERATE persistent memory KEYS (names only, not values), "
+            "optionally narrowed to those starting with `prefix` and capped by "
+            "`limit` (default 100). Use this to discover what keys exist before "
+            "reading or to browse a namespace like 'repo.*'. PREFER "
+            "`memory_list` for key discovery by prefix; use `memory_search` to "
+            "match against stored VALUES, and `memory_get` once you know the "
+            "exact key you want."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -316,7 +339,14 @@ class MemorySearchTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "Search persistent memory by substring match over keys/values."
+        return (
+            "FULL-TEXT lookup over persistent memory: case-insensitive substring "
+            "match of `query` against both keys AND serialized values, returning "
+            "up to `limit` matching entries (default 10). Use this when you "
+            "remember some content but not the exact key. PREFER `memory_search` "
+            "for content discovery; use `memory_list` to browse keys by prefix, "
+            "or `memory_get` for a direct exact-key read."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -352,7 +382,13 @@ class MemoryDeleteTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "Delete a persistent memory entry by key."
+        return (
+            "Remove ONE persistent memory entry by its exact `key` "
+            "(irreversible for that single key; absent keys are a no-op "
+            "success). Scope is exactly one key — it never touches others. "
+            "PREFER `memory_delete` to forget a single fact; use `memory_clear` "
+            "(which demands confirm=true) only to wipe ALL entries at once."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -379,7 +415,13 @@ class MemoryClearTool(_MemoryToolBase):
 
     @property
     def description(self) -> str:
-        return "Clear all persistent memory entries (requires confirm=true)."
+        return (
+            "DESTRUCTIVE bulk wipe: delete EVERY persistent memory entry. A "
+            "guard requires `confirm=true`; any other value refuses and changes "
+            "nothing. This empties the whole store and cannot be undone. PREFER "
+            "`memory_delete` to remove a single key; reach for `memory_clear` "
+            "only for a deliberate full reset."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:

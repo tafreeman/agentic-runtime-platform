@@ -14,6 +14,11 @@ Architecture:
 """
 
 from agentic_v2.integrations.mcp.config import McpConfigLoader
+from agentic_v2.integrations.mcp.error_envelope import (
+    ErrorCategory,
+    ToolResultEnvelope,
+    classify_tool_error,
+)
 from agentic_v2.integrations.mcp.types import (
     McpConnectionState,
     McpServerConfig,
@@ -25,6 +30,7 @@ from agentic_v2.integrations.mcp.types import (
 )
 
 __all__ = [
+    "ErrorCategory",
     "McpConfigLoader",
     "McpConnectionState",
     "McpServerConfig",
@@ -32,5 +38,7 @@ __all__ = [
     "McpTransportConfig",
     "McpWebSocketConfig",
     "McpSSEConfig",
+    "ToolResultEnvelope",
     "TransportType",
+    "classify_tool_error",
 ]

@@ -101,7 +101,19 @@ class ShellTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute shell commands with security controls and output capture"
+        return (
+            "Run a single shell `command` STRING (e.g. 'ls -la | grep py') with "
+            "security controls and captured stdout/stderr, plus optional `cwd`, "
+            "`timeout` (default 60s), and `capture_output`. The command is "
+            "parsed as a shell line, so it supports pipes/operators but is "
+            "subject to a denylist that blocks dangerous patterns. Requires "
+            "approval (arbitrary execution). Returns stdout, stderr, and exit "
+            "code; a nonzero exit or timeout is a failure result. PREFER "
+            "`shell` when you genuinely need shell features (a pipeline, glob, "
+            "or redirect); PREFER `shell_exec` when you have a fixed program "
+            "plus a list of arguments — it skips shell parsing and escapes "
+            "args, avoiding quoting/injection pitfalls."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -277,7 +289,17 @@ class ShellExecTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute shell commands with automatic argument escaping for safety"
+        return (
+            "Run a `program` with an explicit `args` LIST and NO shell parsing — "
+            "each argument is passed verbatim, so spaces, quotes, and special "
+            "characters in args are never re-interpreted (the injection-safe "
+            "way to run a command). Optional `cwd` and `timeout` (default 60s). "
+            "Because there is no shell, pipes/globs/redirects do NOT work here. "
+            "Requires approval. Returns stdout, stderr, and exit code. PREFER "
+            "`shell_exec` for a known program + arguments (e.g. "
+            "program='git', args=['commit','-m','my message']); PREFER `shell` "
+            "only when you actually need a pipeline or shell expansion."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
