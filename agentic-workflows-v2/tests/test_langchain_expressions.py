@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from agentic_v2.langchain.expressions import evaluate_condition, resolve_expression
+import logging
+
+import pytest
+
+from agentic_v2.langchain.expressions import (
+    ConditionEvaluationError,
+    evaluate_condition,
+    resolve_expression,
+)
 
 
 class TestEvaluateCondition:
@@ -57,14 +65,23 @@ class TestEvaluateCondition:
         state = {"inputs": {"depth": "deep"}}
         assert evaluate_condition("${inputs.depth} != 'quick'", state) is True
 
-    def test_disallowed_ast_returns_false(self) -> None:
-        """Function calls in expressions are rejected."""
-        state = {"inputs": {"x": "test"}}
-        # A function call should fail AST validation
-        assert evaluate_condition("len(${inputs.x}) > 0", state) is False
+    def test_disallowed_call_fails_closed(self) -> None:
+        """Function calls in expressions are rejected (fail closed by raising).
 
-    def test_missing_variable_returns_false(self) -> None:
-        """Missing variable path evaluates to None, causing comparison to fail."""
+        Previously this silently returned ``False``; an unevaluable
+        condition must now raise so a step is never silently skipped /
+        looped on account of a rejected expression.
+        """
+        state = {"inputs": {"x": "test"}}
+        with pytest.raises(ConditionEvaluationError):
+            evaluate_condition("len(${inputs.x}) > 0", state)
+
+    def test_missing_variable_evaluates_cleanly(self) -> None:
+        """A missing path resolves to None; the comparison stays evaluable.
+
+        ``None == 'value'`` is a legitimate (False) comparison — it must
+        NOT raise.  Only malformed / adversarial expressions fail closed.
+        """
         state = {"inputs": {}}
         assert evaluate_condition("${inputs.missing_key} == 'value'", state) is False
 
@@ -119,3 +136,98 @@ class TestResolveExpression:
         state = {"a": {}}
         result = resolve_expression("${a.b.c}", state)
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# Adversarial parity with the engine evaluator (test_expressions.py:415-432).
+#
+# The LangChain condition path substitutes ``${...}`` tokens with
+# ``repr(resolved_value)`` BEFORE evaluation, so a dunder placed *inside*
+# a ``${...}`` token is resolved away (to None) and never reaches the AST.
+# The real attack surface is therefore the *literal* part of the
+# expression — dunder traversal, sandbox-escape introspection, the
+# str.format / format_map dunder bypass, and the sequence-multiply DoS —
+# all of which reach the shared engine AST interpreter and must be
+# rejected (raise ConditionEvaluationError), never silently True/False.
+# ---------------------------------------------------------------------------
+
+
+# Each vector is the *literal* portion of a workflow condition that an
+# attacker could author directly in a YAML ``when`` / ``loop_until`` field.
+_ADVERSARIAL_CONDITION_VECTORS = [
+    # Dunder traversal / sandbox-escape introspection (engine corpus parity).
+    "().__class__.__mro__[-1].__subclasses__()",
+    "().__class__.__bases__",
+    "{}.__class__.__mro__[1].__subclasses__()",
+    "().__class__.__base__",
+    "__import__('os')",
+    "__builtins__",
+    # Dunder reached through a substituted reference value.
+    "${inputs.x}.__class__",
+    "${inputs.x}.__class__.__mro__",
+    # str.format / format_map dunder bypass (callable allowlist must reject).
+    "'{0.__globals__}'.format('x')",
+    "'{x.__class__}'.format_map({'x': 'y'})",
+    # Arbitrary method invocation (only coalesce() may be called).
+    "'abc'.upper()",
+    "'a:b'.split(':')",
+    # Sequence-multiply DoS cap.
+    "'a' * 100000",
+    "'a' * 9999 * 9999",
+]
+
+
+@pytest.mark.security
+@pytest.mark.parametrize("literal", _ADVERSARIAL_CONDITION_VECTORS)
+def test_adversarial_condition_fails_closed(literal: str) -> None:
+    """Adversarial conditions raise (fail closed), never silently True/False.
+
+    Mirrors the engine evaluator's dunder/builtins/format_map/DoS corpus
+    so the LangChain condition path has the same security posture.
+    """
+    state = {"inputs": {"x": "test"}}
+    with pytest.raises(ConditionEvaluationError):
+        evaluate_condition(literal, state)
+
+
+@pytest.mark.security
+def test_malformed_condition_is_logged_and_fails_closed(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A malformed condition must be logged AND fail closed (raise).
+
+    The raw expression must not be echoed into the log — only a redacted
+    marker — and the call must raise rather than silently returning a
+    bool that would mask the error (skipping a step / looping forever).
+    """
+    state = {"inputs": {"x": "secret-payload"}}
+    with (
+        caplog.at_level(logging.WARNING, logger="agentic_v2.langchain.expressions"),
+        pytest.raises(ConditionEvaluationError),
+    ):
+        # Syntax error: not a valid Python expression after substitution.
+        evaluate_condition("${inputs.x} === broken (", state)
+
+    # A warning was logged, and the raw expression / secret was redacted.
+    assert any(
+        "redacted" in rec.getMessage().lower() for rec in caplog.records
+    ), "expected a redacted condition-rejection warning"
+    assert all(
+        "secret-payload" not in rec.getMessage() for rec in caplog.records
+    ), "raw payload must not be logged"
+
+
+@pytest.mark.security
+def test_dunder_inside_reference_is_substituted_away() -> None:
+    """A dunder *inside* a ${...} token is resolved (to None), not executed.
+
+    ``${ctx.__class__}`` resolves ``ctx.__class__`` against the plain
+    state dict — ``dict.get('__class__')`` is None — so it becomes the
+    literal ``None`` and the condition evaluates cleanly to a bool rather
+    than reaching any introspection.  This documents that the
+    substitution layer neutralises in-token dunders; the AST guard
+    handles the literal surface (covered above).
+    """
+    state = {"ctx": {"value": 1}}
+    # Resolves to ``None`` → ``None == None`` → True; must not raise.
+    assert evaluate_condition("${ctx.__class__} == None", state) is True
