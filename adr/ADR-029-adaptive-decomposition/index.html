@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-029-adaptive-decomposition/">
       
       
-        <link rel="prev" href="../../CHANGELOG/">
-      
-      
-        <link rel="next" href="../../CONTRIBUTING/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>ADRs - Agentic Runtime Platform</title>
+        <title>ADR-029: Adaptive Decomposition — Investigate, Per-File, then Cross-File - Agentic Runtime Platform</title>
       
     
     
@@ -67,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-029: Adaptive Decomposition — Investigate, Per-File, then Cross-File - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-029-adaptive-decomposition.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-029-adaptive-decomposition/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-029: Adaptive Decomposition — Investigate, Per-File, then Cross-File - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-029-adaptive-decomposition.png" />
 </head>
   
   
@@ -97,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-index-agentic-workflows-v2" class="md-skip">
+        <a href="#adr-029-adaptive-decomposition-investigate-per-file-then-cross-file" class="md-skip">
           Skip to content
         </a>
       
@@ -131,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADRs
+              ADR-029: Adaptive Decomposition — Investigate, Per-File, then Cross-File
             
           </span>
         </div>
@@ -464,12 +460,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../../project-overview/" class="md-tabs__link">
           
   
@@ -2494,10 +2488,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -2517,22 +2509,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -2550,7 +2539,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2649,37 +2638,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADRs
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2695,70 +2657,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick-Access Deck
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lineage Chains
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supporting Documents
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2854,10 +2752,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick-Access Deck
+        Context
       
     </span>
   </a>
@@ -2865,10 +2763,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lineage Chains
+        Decision
       
     </span>
   </a>
@@ -2876,10 +2774,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
+  <a href="#single-shot-vs-adaptive-decomposition" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Status
+        Single-shot vs. adaptive decomposition
       
     </span>
   </a>
@@ -2887,10 +2785,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supporting Documents
+        Consequences
       
     </span>
   </a>
@@ -2914,7 +2812,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-INDEX.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-029-adaptive-decomposition.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2923,393 +2821,135 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-INDEX.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-029-adaptive-decomposition.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-index-agentic-workflows-v2">ADR Index — agentic-workflows-v2<a class="headerlink" href="#adr-index-agentic-workflows-v2" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Last updated:</strong> 2026-06-13
-<strong>Total ADRs:</strong> 20 (15 Accepted, 4 Proposed, 1 Superseded)</p>
-</blockquote>
+<h1 id="adr-029-adaptive-decomposition-investigate-per-file-then-cross-file">ADR-029: Adaptive Decomposition — Investigate, Per-File, then Cross-File<a class="headerlink" href="#adr-029-adaptive-decomposition-investigate-per-file-then-cross-file" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-06-13
+<strong>Related:</strong> <a href="../ADR-025-sdk-task-orchestration/">ADR-025</a> (SDK <code>Task</code> counterpart),
+<a href="../ADR-001-002-003-architecture-decisions/">ADR-001</a> (native DAG engine)</p>
 <hr />
-<h2 id="quick-access-deck">Quick-Access Deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p><code>OrchestratorAgent</code> (<code>agentic_v2/agents/orchestrator.py</code>) decomposed every task
+in a <strong>single shot</strong>: one <code>_call_model</code> call produced a complete JSON plan that
+was parsed into <code>SubTask</code>s and executed. On the no-backend baseline that call
+returned a <strong>frozen constant</strong> — a fixed <code>generate</code> → <code>review</code> pair — regardless
+of the task. Two problems followed:</p>
+<ol>
+<li><strong>Non-adaptive.</strong> The plan was fixed before any investigation. The
+   orchestrator never looked at <em>what the task actually touched</em> before deciding
+   how to break it up, so it could not, for example, spin up one analysis pass
+   per file actually discovered.</li>
+<li><strong>Capability scoring was inert on the no-key path.</strong> Because the no-backend
+   stub always emitted the same two capabilities (<code>code_generation</code>,
+   <code>code_review</code>), <code>_assign_agents</code>'s <code>CapabilitySet.score_match</code> had nothing
+   task-dependent to route on — it scored the same two subtasks every time.</li>
+</ol>
+<p>The exam pattern this models is <strong>adaptive decomposition</strong>: a coordinator runs an
+initial investigation step, <em>generates new subtasks from the intermediate
+findings</em> (a local pass per file discovered), then runs a <strong>separate cross-file
+integration pass</strong> over those per-file outputs. ARP modeled the <em>shape</em> of
+multi-agent orchestration but never derived the decomposition from findings.</p>
+<hr />
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Make decomposition adaptive in three phases, and replace the frozen stub with a
+task-derived plan so capability-scored selection becomes operational.</p>
+<ol>
+<li><strong>Investigate</strong> — <code>_investigate(task)</code> runs an initial step that returns
+   concrete <code>InvestigationFindings</code> (the <code>files</code> the task touches +
+   <code>observations</code>). With a backend it sends <code>INVESTIGATION_SYSTEM_PROMPT</code>; with
+   none (or a placeholder backend that returns prose) it derives findings
+   deterministically from file-like tokens in the task text.</li>
+<li><strong>Per-file</strong> — <code>_subtasks_from_findings</code> emits <strong>one local analysis subtask
+   per discovered file</strong> (<code>per_file_{i}</code>, requiring <code>STATIC_ANALYSIS</code>, no
+   dependencies). This is the findings-driven branch: the subtask <em>set</em> is a
+   function of what investigation found, not a constant.</li>
+<li><strong>Cross-file</strong> — a <strong>single, distinct</strong> <code>cross_file_integration</code> subtask is
+   emitted that <code>depends_on</code> <strong>every</strong> per-file pass, so it runs strictly after
+   all local passes complete and reconciles them.</li>
+</ol>
+<p><code>decompose_adaptive(task)</code> returns an immutable <code>AdaptiveDecomposition</code> and
+registers the generated plan into <code>self._subtasks</code> / <code>self._fallback_chains</code>
+(clearing any prior plan), so the existing <code>_assign_agents</code> and <code>_execute_plan</code>
+machinery runs over the findings-derived plan unchanged. <code>run_adaptive(task)</code>
+ties the phases to assignment + bounded-parallel execution end-to-end.</p>
+<p>The hardcoded <code>_call_model</code> stub is <strong>gone</strong>: the no-backend path now calls
+<code>_intent_decomposition(task_text)</code>, which maps task keywords to the capability a
+matching subtask should require (a "review" task → a <code>code_review</code> subtask, a
+"test" task → a <code>test_generation</code> subtask, chained in declaration order). The
+backed path additionally falls back to <code>_intent_decomposition</code> when the model
+returns content with no extractable JSON (the placeholder-backend case), so a
+plan is always produced and capability scoring always has task-dependent
+subtasks to route.</p>
+<hr />
+<h2 id="single-shot-vs-adaptive-decomposition">Single-shot vs. adaptive decomposition<a class="headerlink" href="#single-shot-vs-adaptive-decomposition" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>ADR</th>
-<th>Title</th>
-<th>Status</th>
-<th>File</th>
+<th>Dimension</th>
+<th>Single-shot (before)</th>
+<th>Adaptive (this ADR)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>001</strong></td>
-<td>Dual Execution Engine (LangGraph vs. Kahn's DAG)</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
+<td><strong>When the plan is fixed</strong></td>
+<td>Up front, before any inspection</td>
+<td>After an investigation step observes the task</td>
 </tr>
 <tr>
-<td><strong>002</strong></td>
-<td>SmartModelRouter Circuit-Breaker Hardening</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
+<td><strong>Subtask set</strong></td>
+<td>Constant (<code>generate</code>/<code>review</code>) on the no-key path</td>
+<td>A function of discovered files (one pass each)</td>
 </tr>
 <tr>
-<td><strong>003</strong></td>
-<td>Deep Research Supervisor / CI Gating</td>
-<td>Superseded → 007</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
+<td><strong>Cross-file reasoning</strong></td>
+<td>None — independent subtasks only</td>
+<td>A distinct integration pass gated on all per-file passes</td>
 </tr>
 <tr>
-<td><strong>007</strong></td>
-<td>Multidimensional Classification Matrix &amp; Stop Policy</td>
-<td>Proposed</td>
-<td><a href="../ADR-007-classification-matrix-stop-policy/">ADR-007</a></td>
+<td><strong>Capability scoring</strong></td>
+<td>Inert on no-key path (same 2 caps always)</td>
+<td>Operational — task-derived caps drive <code>score_match</code></td>
 </tr>
 <tr>
-<td><strong>008</strong></td>
-<td>Testing Approach Overhaul (Value Taxonomy)</td>
-<td>Accepted</td>
-<td><a href="../ADR-008-testing-approach-overhaul/">ADR-008</a></td>
-</tr>
-<tr>
-<td><strong>009</strong></td>
-<td>Scoring Enhancements (Exponential Decay, Lexicographic)</td>
-<td>Accepted</td>
-<td><a href="../ADR-009-scoring-enhancements/">ADR-009</a></td>
-</tr>
-<tr>
-<td><strong>010</strong></td>
-<td>Commit-Driven A/B Eval Harness Methodology</td>
-<td>Proposed</td>
-<td><a href="../ADR-010-eval-harness-methodology/">ADR-010</a></td>
-</tr>
-<tr>
-<td><strong>011</strong></td>
-<td>Eval Harness API &amp; Interface Design</td>
-<td>Proposed</td>
-<td><a href="../ADR-011-eval-harness-api-interface/">ADR-011</a></td>
-</tr>
-<tr>
-<td><strong>012</strong></td>
-<td>UI Evaluation Hub &amp; A/B Comparison</td>
-<td>Proposed</td>
-<td><a href="../ADR-012-ui-evaluation-hub/">ADR-012</a></td>
-</tr>
-<tr>
-<td><strong>014</strong></td>
-<td>Pydantic Discriminated Union as Execution Event Wire Format</td>
-<td>Accepted</td>
-<td><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></td>
-</tr>
-<tr>
-<td><strong>015</strong></td>
-<td>SLO Rolling Window Stored in Git</td>
-<td>Accepted</td>
-<td><a href="../ADR-015-slo-in-git-rolling-window/">ADR-015</a></td>
-</tr>
-<tr>
-<td><strong>016</strong></td>
-<td>GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider</td>
-<td>Accepted</td>
-<td><a href="../ADR-016-github-token-as-default-e2e-llm/">ADR-016</a></td>
-</tr>
-<tr>
-<td><strong>017</strong></td>
-<td>Dataset Identifiers as Query Parameters, Not Path Segments</td>
-<td>Accepted</td>
-<td><a href="../ADR-017-dataset-id-query-params/">ADR-017</a></td>
-</tr>
-<tr>
-<td><strong>018</strong></td>
-<td>API Rate Limiting and Per-IP Auth Throttle</td>
-<td>Accepted</td>
-<td><a href="../ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a></td>
-</tr>
-<tr>
-<td><strong>019</strong></td>
-<td>DAG Executor Top-Level Timeout Watchdog</td>
-<td>Accepted</td>
-<td><a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a></td>
-</tr>
-<tr>
-<td><strong>020</strong></td>
-<td>LangChain Adapter Eager Validation at FastAPI Startup</td>
-<td>Accepted</td>
-<td><a href="../ADR-020-langchain-adapter-eager-validation/">ADR-020</a></td>
-</tr>
-<tr>
-<td><strong>021</strong></td>
-<td>JWT OIDC Authentication for API Routes</td>
-<td>Accepted</td>
-<td><a href="../ADR-021-jwt-oidc-authentication/">ADR-021</a></td>
-</tr>
-<tr>
-<td><strong>022</strong></td>
-<td>Tenant-Scoped Run and Dataset Isolation</td>
-<td>Accepted</td>
-<td><a href="../ADR-022-tenant-isolation/">ADR-022</a></td>
-</tr>
-<tr>
-<td><strong>023</strong></td>
-<td>ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single <code>executionkit</code> package)</td>
-<td>Accepted</td>
-<td><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> · <a href="../ADR-023-migration-plan/">plan</a> · <a href="../ADR-023-preservation-matrix/">matrix</a> · <a href="../ADR-023-migration-notes/">notes</a> · <a href="../ADR-023-finish-plan/">finish-plan</a></td>
-</tr>
-<tr>
-<td><strong>024</strong></td>
-<td>Expression Evaluation via AST Interpreter (eliminate <code>eval()</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-024-expression-evaluator-ast-sandbox/">ADR-024</a></td>
-</tr>
-<tr>
-<td><strong>025</strong></td>
-<td>SDK <code>Task</code>-Tool Orchestration (counterpart to the asyncio orchestrator)</td>
-<td>Accepted</td>
-<td><a href="../ADR-025-sdk-task-orchestration/">ADR-025</a></td>
-</tr>
-<tr>
-<td><strong>026</strong></td>
-<td><code>--resume</code> / <code>fork_session</code> and the summary-seeded-session tradeoff</td>
-<td>Accepted</td>
-<td><a href="../ADR-026-resume-vs-summary-session/">ADR-026</a></td>
-</tr>
-<tr>
-<td><strong>027</strong></td>
-<td>Forced / <code>any</code> / <code>auto</code> <code>tool_choice</code> and cross-role <code>verify_fact</code></td>
-<td>Accepted</td>
-<td><a href="../ADR-027-forced-tool-choice/">ADR-027</a></td>
-</tr>
-<tr>
-<td><strong>028</strong></td>
-<td>Tool descriptions are the primary tool-selection mechanism</td>
-<td>Accepted</td>
-<td><a href="../ADR-028-tool-descriptions-as-selection-mechanism/">ADR-028</a></td>
-</tr>
-<tr>
-<td><strong>029</strong></td>
-<td>Adaptive decomposition (investigate → per-file → cross-file)</td>
-<td>Accepted</td>
-<td><a href="../ADR-029-adaptive-decomposition/">ADR-029</a></td>
+<td><strong>No-backend determinism</strong></td>
+<td>Frozen constant</td>
+<td>Task-text-derived plan (still deterministic)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed.</p>
+<p><strong>Takeaway.</strong> Adaptive decomposition is the right default when the <em>correct</em>
+breakdown is not knowable until the task is inspected — investigation finds the
+files, the per-file tier fans out over exactly those, and a separate cross-file
+pass integrates. The single-shot path remains available (<code>decompose_task</code> /
+<code>run</code>) for tasks whose plan is genuinely known in advance; it is now
+task-derived rather than a constant.</p>
 <hr />
-<h2 id="lineage-chains">Lineage Chains<a class="headerlink" href="#lineage-chains" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Engine Domain:
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ADR-001 (Dual Engine) ─── standalone
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Models Domain:
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ADR-002 (Circuit Breaker) ─── standalone
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ADR-016 (GitHub Models default) ─── standalone (CI policy)
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Research Domain:
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  ADR-003 (CI Gating) ──superseded-by──&gt; ADR-007 (Classification Matrix)
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                              └──extended-by──&gt; ADR-009 (Scoring Enhancements)
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>Testing Domain:
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  ADR-008 (Test Value Taxonomy) ─── standalone
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>Evaluation Domain:
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  ADR-010 (Harness Methodology) ──extended-by──&gt; ADR-011 (API Interface)
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                                      └──extended-by──&gt; ADR-012 (UI Hub)
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>Observability Domain:
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  ADR-014 (Event Wire Format) ─── standalone
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  ADR-015 (SLO Rolling Window) ─── standalone
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>Evaluation Surface Domain:
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  ADR-017 (Dataset ID Query Params) ─── standalone (ratification)
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>Security / Reliability Domain (Sprint 1):
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>  ADR-018 (Rate Limiting + Auth Throttle) ─── standalone; cluster mode deferred to Sprint 2
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>  ADR-019 (DAG Top-Level Timeout) ─── standalone; composes additively with step-level timeouts
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  ADR-020 (Adapter Eager Validation) ─── standalone; narrows ADR-001 startup behavior
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  ADR-021 (JWT OIDC Auth) ─── extends ADR-018 auth boundary; preserves API-key fallback
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  ADR-022 (Tenant Isolation) ─── extends ADR-021 identity boundary with data scoping
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  ADR-024 (AST Expression Interpreter) ─── standalone; eliminates eval() in the engine condition evaluator
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>Execution Kernel Domain:
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>  ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
-</span></code></pre></div>
-<hr />
-<h2 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>ADR</th>
-<th style="text-align: center;">Decision</th>
-<th style="text-align: center;">Implemented</th>
-<th style="text-align: center;">Tests</th>
-<th>Last Audit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>001</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~65%</td>
-<td style="text-align: center;">Protocol + adapter tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>002</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~80%</td>
-<td style="text-align: center;">Extensive router/rate-limit tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>003</td>
-<td style="text-align: center;">Superseded</td>
-<td style="text-align: center;">Legacy fragments only</td>
-<td style="text-align: center;">Legacy scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>007</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~50%</td>
-<td style="text-align: center;">Unit + wiring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>008</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~90%</td>
-<td style="text-align: center;">Phase 0-3 complete: cleanup (-23), +539 new tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>009</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~85%</td>
-<td style="text-align: center;">CI + multidimensional scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>010</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (primitives only)</td>
-<td style="text-align: center;">Reused primitives only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>011</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~15% (partial eval infra)</td>
-<td style="text-align: center;">Adjacent route/UI helpers only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>012</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (existing evaluations table only)</td>
-<td style="text-align: center;">None specific</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>014</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (contracts + schema-drift gate)</td>
-<td style="text-align: center;">test_schemas.py, golden output</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>015</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (rolling windows, nightly gate)</td>
-<td style="text-align: center;">slo measurement tests</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>016</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (GITHUB_TOKEN wiring, fork-skip guards)</td>
-<td style="text-align: center;">CI workflow invariants</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>017</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (shape already live; ADR ratifies)</td>
-<td style="text-align: center;">Sample-list route tests in <code>tests/server/</code></td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>018</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (slowapi middleware + AuthThrottle)</td>
-<td style="text-align: center;">Rate-limit + throttle unit tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>019</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (asyncio.timeout + BFS cascade)</td>
-<td style="text-align: center;">DAG executor timeout tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>020</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (validate_selected + lifespan hook)</td>
-<td style="text-align: center;">Adapter registry startup tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>021</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (OIDC JWT middleware + API-key fallback)</td>
-<td style="text-align: center;">OIDC auth middleware tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>022</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (tenant context + scoped runs/datasets)</td>
-<td style="text-align: center;">Tenant isolation + OIDC claim tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>023</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">F0–F5 landed (Option A′: single <code>executionkit</code> package; <code>executionkit-contracts</code> retired; B-1/B-2 fixed; <code>AGENTIC_EK_PROVIDER</code> opt-in)</td>
-<td style="text-align: center;">81 EK bridge tests green; flag-OFF floor held</td>
-<td>2026-06-01</td>
-</tr>
-<tr>
-<td>024</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (AST interpreter replaces eval() in the engine condition evaluator)</td>
-<td style="text-align: center;">test_expressions.py (128 cases incl. dunder/DoS vectors)</td>
-<td>2026-06-13</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="supporting-documents">Supporting Documents<a class="headerlink" href="#supporting-documents" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Document</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../RAG-pipeline-blueprint/">RAG-pipeline-blueprint.md</a></td>
-<td>Companion blueprint (not a formal ADR) — LanceDB + Voyage 4 hybrid RAG design with cross-encoder reranking, async-first contracts, and provider abstraction via LiteLLM. Informs the <code>rag/</code> implementation in the main runtime.</td>
-</tr>
-</tbody>
-</table>
-<p><em>Previously listed supporting audit files were removed during the 2026-04-22 docs cleanup because they had fallen out of sync with the ADRs themselves. This index is now the canonical source.</em></p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Positive:</strong> The orchestrator now derives subtasks from intermediate findings
+  and runs a distinct cross-file integration pass — the named adaptive pattern,
+  end-to-end and tested.</li>
+<li><strong>Positive:</strong> Capability-scored selection is operational on the no-key
+  baseline because subtasks now carry task-dependent capabilities; the frozen
+  <code>generate</code>/<code>review</code> constant is removed.</li>
+<li><strong>Positive:</strong> All new types (<code>InvestigationFindings</code>, <code>AdaptiveDecomposition</code>)
+  are frozen/immutable and JSON-serializable, fitting the repo's immutable-data
+  and wire-format conventions.</li>
+<li><strong>Neutral:</strong> The no-backend investigation uses a conservative path/extension
+  regex to find files. It is a deterministic stand-in for an LLM investigation,
+  not a real file-system scan; tasks that imply files without naming them yield
+  an empty per-file tier (and therefore no cross-file pass).</li>
+<li><strong>Negative:</strong> With a real backend the investigation adds one extra model round
+  trip before the per-file plan exists. This is the cost of adaptivity and is
+  bounded to a single low-temperature call.</li>
+</ul>
 
 
 
@@ -3342,7 +2982,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 14, 2026 07:47:46 UTC">June 14, 2026</span>
   </span>
 
     
@@ -3372,44 +3012,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../../CHANGELOG/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Changelog">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Changelog
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../../CONTRIBUTING/" class="md-footer__link md-footer__link--next" aria-label="Next: Contributing">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Contributing
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
