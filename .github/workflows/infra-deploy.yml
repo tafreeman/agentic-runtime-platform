@@ -1,0 +1,75 @@
+# Reference IaC deploy workflow — DISPATCH-ONLY, OIDC, and NEVER RUN.
+#
+# This exists as prod-readiness evidence alongside infra/azure/main.bicep. It is
+# intentionally `workflow_dispatch`-only (no push/PR/schedule trigger) so it
+# CANNOT run automatically, and it uses short-lived OIDC federation (no stored
+# cloud secrets). The ARP flagship's live proof is the local k6 run + the Pages
+# report; this workflow is not part of the $0 proof and must not be triggered
+# without an explicit decision to spend money.
+#
+# Guardrails baked in:
+#   * Only manual dispatch can start it.
+#   * A required typed confirmation input ("DEPLOY") gates the deploy steps.
+#   * `az deployment ... --what-if` runs before any real deploy.
+#   * No client secrets — azure/login uses OIDC (id-token: write).
+
+name: infra-deploy (reference — never run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to confirm you intend to provision PAID Azure resources.'
+        required: true
+        default: 'no'
+      environment:
+        description: 'Target environment (dev/stage/prod).'
+        required: true
+        default: 'dev'
+
+permissions:
+  id-token: write # OIDC federation — short-lived creds, no stored secrets
+  contents: read
+
+jobs:
+  validate:
+    name: bicep build + lint (no cloud)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bicep build (compile + lint)
+        run: |
+          az bicep install
+          az bicep build --file infra/azure/main.bicep
+          az bicep lint --file infra/azure/main.bicep
+
+  deploy:
+    name: what-if + deploy (gated, OIDC)
+    needs: validate
+    if: ${{ github.event.inputs.confirm == 'DEPLOY' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # OIDC login — these vars are repo/environment configuration, NOT secrets.
+      - name: Azure login (OIDC, no client secret)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if (preview changes, no apply)
+        run: |
+          az deployment group what-if \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file infra/azure/main.bicep \
+            --parameters infra/azure/main.bicepparam
+
+      - name: Deploy
+        run: |
+          az deployment group create \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file infra/azure/main.bicep \
+            --parameters infra/azure/main.bicepparam

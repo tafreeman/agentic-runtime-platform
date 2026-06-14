@@ -1,0 +1,92 @@
+# Local, $0 load-proof stack for the ARP Redis-CAS + horizontal-scale story.
+#
+#   Redis (shared circuit-breaker state)
+#     ^                ^
+#     |                |
+#  backend  ... x N  (ARP FastAPI replicas, AGENTIC_NO_LLM=1, REDIS_URL set)
+#     ^
+#     |
+#   lb (nginx round-robin)  <--  k6 traffic hits ONE url, fans out to all replicas
+#
+# Bring up with N replicas:
+#   docker compose -f load/docker-compose.load.yml up -d --build --scale backend=N
+#
+# k6 then targets http://lb:80 from inside the same compose network. Because the
+# replicas share one Redis, every replica's circuit-breaker counter deltas are
+# merged via the CAS read-modify-write path (agentic_v2/models/redis_state.py),
+# which is exactly the consistency property the load run proves.
+#
+# No host ports are published for the backend replicas (so `--scale` never
+# collides). Only the load balancer is reachable, and only on the compose
+# network used by the k6 container — nothing is exposed to the host by default.
+
+name: arp-load
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [loadnet]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: load/Dockerfile.load
+    # No container_name and no host ports → safe to `--scale backend=N`.
+    command:
+      - python
+      - -m
+      - uvicorn
+      - agentic_v2.server.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8010"
+    environment:
+      # --- The load contract: deterministic, token-free, shared Redis state ---
+      AGENTIC_NO_LLM: "1"
+      REDIS_URL: "redis://redis:6379/0"
+      # Native DAG engine — dependency-light, no LangChain extras required
+      # (the shipped backend-dev image does not install [langchain], and the
+      # langchain default would abort startup via _validate_selected_adapter).
+      AGENTIC_DEFAULT_ADAPTER: "native"
+      # Disable the per-IP rate limiter so it does not throttle the load itself
+      # (we are measuring app/orchestration throughput, not slowapi's limiter).
+      AGENTIC_RATE_LIMIT_DISABLED: "1"
+      # Keep tracing/metrics off the hot path for a clean throughput baseline.
+      AGENTIC_TRACING: "0"
+      AGENTIC_METRICS: "0"
+      # Circuit-breaker key prefix + TTL (defaults, made explicit for the probe).
+      REDIS_CIRCUIT_BREAKER_PREFIX: "agentic:cb:"
+      REDIS_CIRCUIT_BREAKER_TTL: "3600"
+      # Allow the lb host through CORS / host checks (no auth key set on purpose:
+      # this is a local, throwaway load stack with no secrets).
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      redis:
+        condition: service_healthy
+    expose:
+      - "8010"
+    networks: [loadnet]
+
+  lb:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx.load.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    # Publish the lb on the host too, so a human can curl it during a run.
+    ports:
+      - "8088:80"
+    networks: [loadnet]
+
+networks:
+  loadnet:
+    driver: bridge

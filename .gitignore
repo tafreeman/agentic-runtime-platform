@@ -341,6 +341,9 @@ tot_*.txt
 # PromptEval / tooling outputs (generated)
 results/
 !agentic-workflows-v2/agentic_v2/**/results/
+# Flagship k6 load proof: the committed result JSON is the Pages dashboard data source
+!load/results/
+load/results/.sonar/
 
 # Agentic workflow execution artifacts (generated run logs)
 agentic-workflows-v2/runs/*.json

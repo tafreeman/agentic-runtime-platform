@@ -1,0 +1,5 @@
+{"status":"ready","dependencies":[{"name":"redis","status":"ok","detail":null}],"degraded_selection_count":0,"open_circuit_breakers":[]}
+{"status":"ready","dependencies":[{"name":"redis","status":"ok","detail":null}],"degraded_selection_count":0,"open_circuit_breakers":[]}
+{"status":"ready","dependencies":[{"name":"redis","status":"ok","detail":null}],"degraded_selection_count":0,"open_circuit_breakers":[]}
+{"status":"ready","dependencies":[{"name":"redis","status":"ok","detail":null}],"degraded_selection_count":0,"open_circuit_breakers":[]}
+{"status":"ready","dependencies":[{"name":"redis","status":"ok","detail":null}],"degraded_selection_count":0,"open_circuit_breakers":[]}

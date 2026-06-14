@@ -1,0 +1,72 @@
+# Render the ARP load-report Pages dashboard from committed k6 JSON.
+#
+# The load RUN is local and $0 (see load/run_load.sh). CI never runs containers
+# or k6 — it only regenerates docs/load-report.md from the committed
+# load/results/*.json via scripts/build_load_report.py, then builds + deploys the
+# docs site. This keeps GitHub Pages free and deterministic: the published page
+# is always a pure function of the committed measurement data, with no
+# hand-typed metrics.
+#
+# Triggers on changes to the results JSON, the generator, or the load docs, plus
+# manual dispatch. Mirrors the install/build/deploy steps of docs.yml.
+
+name: Deploy load-report to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "load/results/**"
+      - "scripts/build_load_report.py"
+      - "docs/load-report.md"
+      - "docs/flagship.md"
+      - ".github/workflows/load-report-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # required for mkdocs git-revision-date-localized
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      # Regenerate the page from the committed JSON. If the JSON and the
+      # committed page have drifted, fail loudly — the page must be a pure
+      # function of the data (no hand edits).
+      - name: Generate load-report from committed k6 JSON
+        run: |
+          python scripts/build_load_report.py
+          if ! git diff --quiet -- docs/load-report.md; then
+            echo "::error::docs/load-report.md is out of date with load/results/*.json."
+            echo "Run 'python scripts/build_load_report.py' and commit the result."
+            git --no-pager diff -- docs/load-report.md
+            exit 1
+          fi
+
+      - name: Install Cairo (required by mkdocs-material social plugin)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libpango-1.0-0 libpangocairo-1.0-0
+
+      - name: Install MkDocs + plugins
+        run: |
+          pip install \
+            "mkdocs-material[imaging]" \
+            mkdocs-mermaid2-plugin \
+            mkdocs-git-revision-date-localized-plugin \
+            pillow \
+            cairosvg
+
+      - name: Build (strict)
+        run: mkdocs build --strict
+
+      - name: Deploy
+        run: mkdocs gh-deploy --force
