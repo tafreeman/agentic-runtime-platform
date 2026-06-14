@@ -253,9 +253,7 @@ class TestCapabilityScoredAssignment:
         orch = _build_orchestrator_with_stubs(
             [("review_only", _make_stub("review_only", review_caps))]
         )
-        _populate_subtask(
-            orch, "sec_task", [CapabilityType.SECURITY_ANALYSIS]
-        )
+        _populate_subtask(orch, "sec_task", [CapabilityType.SECURITY_ANALYSIS])
 
         assignments = await orch._assign_agents()
 
@@ -431,8 +429,13 @@ class TestFallbackChainRecovery:
         assert st.status == StepStatus.SUCCESS
 
     @pytest.mark.asyncio
-    async def test_all_agents_fail_produces_failed_status(self):
-        """Test 11: All candidates raise → st.status == FAILED with error payload."""
+    async def test_all_agents_fail_produces_structured_handoff(self):
+        """Test 11: All candidates raise → FAILED status + structured handoff.
+
+        ARP-3: exhaustion emits a structured handoff (failure_type,
+        attempted_agents, partial_results, suggested_next_action) routed to the
+        escalation gate, not a bare ``{"error": ...}``.
+        """
         call_log: list[str] = []
         orch, st = self._setup_orch_with_fallbacks(
             [("a1", True), ("a2", True), ("a3", True)],
@@ -445,12 +448,17 @@ class TestFallbackChainRecovery:
         assert st.status == StepStatus.FAILED, (
             f"All agents failed; expected FAILED status; got {st.status}"
         )
-        assert "error" in result, (
-            f"Payload must carry an 'error' key when all agents fail; got {result}"
+        # Structured handoff shape (no bare 'error' key).
+        assert result.get("handoff") is True, (
+            f"Exhaustion must emit a structured handoff; got {result}"
         )
-        assert "fallback_task" in result["error"], (
-            "Error message should identify the failed subtask"
-        )
+        assert result["subtask_id"] == "fallback_task"
+        assert result["failure_type"] == "all_agents_exhausted"
+        assert result["attempted_agents"] == ["a1", "a2", "a3"]
+        # Each attempted agent's failure captured as a partial result.
+        assert set(result["partial_results"]) == {"a1", "a2", "a3"}
+        assert result["suggested_next_action"], "must suggest a next action"
+        assert "fallback_task" in result["suggested_next_action"]
         # All three agents attempted
         assert call_log == ["a1", "a2", "a3"], (
             f"All agents should be tried before giving up; log={call_log}"
@@ -508,18 +516,19 @@ class TestFallbackChainRecovery:
             OrchestratorInput(task="test", max_parallel=5)
         )
 
-        # failing_task should be recorded as an error
+        # failing_task should be recorded as a structured handoff (ARP-3)
         assert "failing_task" in plan_result, "failing_task must appear in plan results"
-        assert "error" in plan_result["failing_task"], (
-            f"failing_task result should carry 'error'; got {plan_result['failing_task']}"
+        assert plan_result["failing_task"].get("handoff") is True, (
+            f"failing_task should carry a structured handoff; "
+            f"got {plan_result['failing_task']}"
         )
 
         # sibling_task should have succeeded independently
         assert "sibling_task" in plan_result, "sibling_task must appear in plan results"
         sibling_result = plan_result["sibling_task"]
-        assert "error" not in sibling_result or sibling_result.get("error") is None, (
-            f"sibling_task should NOT have failed; got {sibling_result}"
-        )
+        assert not (
+            isinstance(sibling_result, dict) and sibling_result.get("handoff")
+        ), f"sibling_task should NOT have escalated; got {sibling_result}"
         # Both tasks attempted (order may vary due to asyncio.gather)
         assert "fail_agent" in call_log
         assert "ok_agent" in call_log
@@ -527,3 +536,65 @@ class TestFallbackChainRecovery:
         # Verify status flags on the subtask objects
         assert failing_st.status == StepStatus.FAILED
         assert sibling_st.status == StepStatus.SUCCESS
+
+
+# ---------------------------------------------------------------------------
+# Batch-merge robustness: a bare gathered exception must not abort the merge
+# ---------------------------------------------------------------------------
+
+
+class TestRecordBatchResultsResilience:
+    """_record_batch_results tolerates bare exceptions from asyncio.gather.
+
+    ``_execute_plan`` gathers with ``return_exceptions=True``; if a subtask
+    coroutine raises before returning its ``(id, result)`` tuple, the gathered
+    list contains a bare ``BaseException``. The merge must record it as a failed
+    subtask and still merge the rest, never aborting on a tuple-unpack error.
+    """
+
+    def test_bare_exception_does_not_abort_merge(self) -> None:
+        orch = OrchestratorAgent()
+        batch = [
+            SubTask(
+                id="t_raised",
+                description="raised before returning",
+                required_capabilities=[CapabilityType.CODE_GENERATION],
+            ),
+            SubTask(
+                id="t_ok",
+                description="returned normally",
+                required_capabilities=[CapabilityType.CODE_GENERATION],
+            ),
+        ]
+        # First element is a bare exception (coroutine raised); second is a
+        # normal (task_id, result) tuple.
+        batch_results = [
+            RuntimeError("boom inside coroutine"),
+            ("t_ok", {"output": "done"}),
+        ]
+        results: dict[str, object] = {}
+        executed: set[str] = set()
+
+        orch._record_batch_results(batch_results, results, executed, batch)
+
+        # The healthy result is merged.
+        assert results["t_ok"] == {"output": "done"}
+        assert "t_ok" in executed
+        # The raised subtask is recorded as a failure under its real id, not lost.
+        assert "t_raised" in executed
+        assert "boom inside coroutine" in results["t_raised"]["error"]
+
+    def test_bare_exception_without_batch_uses_positional_fallback(self) -> None:
+        orch = OrchestratorAgent()
+        batch_results = [ValueError("no batch metadata")]
+        results: dict[str, object] = {}
+        executed: set[str] = set()
+
+        # Without the batch arg the id cannot be recovered, but the merge must
+        # still not raise and must record the failure under a synthetic id.
+        orch._record_batch_results(batch_results, results, executed)
+
+        assert len(results) == 1
+        (only_id,) = results
+        assert "no batch metadata" in results[only_id]["error"]
+        assert only_id in executed

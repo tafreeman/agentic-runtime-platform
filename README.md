@@ -178,6 +178,10 @@ Tier 3: gemini-2.5-flash → gh:gpt-4o → openai:gpt-4o → anthropic:claude-so
 
 The `SmartModelRouter` extends this with health-weighted selection, adaptive cooldowns (exponential backoff on failures), and circuit breaker patterns.
 
+### asyncio Orchestrator vs. SDK-`Task` Orchestration
+
+`OrchestratorAgent` decomposes a task, scores agents against a capability set, and fans subtasks out with `asyncio.gather`. The **SDK-native counterpart** — using the real Claude Agent SDK `Task` tool with `AgentDefinition` subagents, dynamic model-driven selection, and parallel `Task` calls in one turn — lives in [`examples/sdk_task_orchestrator.py`](examples/sdk_task_orchestrator.py). The tradeoff (deterministic capability-routed fan-out vs. open-ended model-driven delegation) is documented in [ADR-025](docs/adr/ADR-025-sdk-task-orchestration.md).
+
 ### Why Rubric-Based Scoring?
 
 LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across five orthogonal dimensions (coverage, source quality, agreement, verification, recency) into lettered tiers (S/A/B/C/D/F).

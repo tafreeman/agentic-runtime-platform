@@ -424,6 +424,78 @@ def orchestrate(
     raise typer.Exit(1)
 
 
+@app.command()
+def resume(
+    name: str = typer.Argument(
+        ...,
+        help="Checkpoint name to rehydrate (the file stem under --checkpoint-dir)",
+    ),
+    checkpoint_dir: Path = typer.Option(
+        Path(".agentic_checkpoints"),
+        "--checkpoint-dir",
+        help="Directory holding checkpoint JSON files",
+    ),
+    fork: str | None = typer.Option(
+        None,
+        "--fork",
+        help="After rehydrating, branch a divergent run with this fork name",
+    ),
+):
+    """Rehydrate a named ExecutionContext checkpoint and report file changes.
+
+    Loads ``<checkpoint-dir>/<name>.json`` into a fresh ``ExecutionContext``,
+    diffs any files tracked at save time, and prints the "these files changed"
+    notice for the operator to prepend to a resumed prompt. With ``--fork`` it
+    then branches a divergent run off the rehydrated baseline via
+    ``fork_session``.
+
+    See ADR-026 for why a fresh session seeded with a structured summary often
+    beats ``--resume`` with stale tool results.
+
+    Examples:
+        agentic resume my_run
+        agentic resume my_run --checkpoint-dir ./ckpts --fork experiment_a
+    """
+    from ..engine import ExecutionContext
+
+    checkpoint_path = checkpoint_dir / f"{name}.json"
+    if not checkpoint_path.exists():
+        console.print(f"[red]Error:[/red] Checkpoint not found: {checkpoint_path}")
+        raise typer.Exit(1)
+
+    ctx = ExecutionContext(checkpoint_dir=checkpoint_dir)
+    try:
+        asyncio.run(ctx.restore_checkpoint(checkpoint_path))
+    except (ValueError, FileNotFoundError) as e:
+        console.print(f"[red]Error:[/red] Failed to restore checkpoint: {e}")
+        raise typer.Exit(1) from e
+
+    console.print(
+        Panel(
+            f"[bold]{name}[/bold]\n"
+            f"workflow={ctx.workflow_id}\n"
+            f"completed steps: {len(ctx.completed_steps)} | "
+            f"failed steps: {len(ctx.failed_steps)}",
+            title="Resumed Checkpoint",
+            border_style="green",
+        )
+    )
+
+    changed = ExecutionContext.detect_changed_files(checkpoint_path)
+    notice = ExecutionContext.build_changed_files_notice(changed)
+    if notice:
+        console.print(notice)
+    else:
+        console.print("[dim]No tracked files changed since the checkpoint.[/dim]")
+
+    if fork:
+        forked = ctx.fork_session(fork)
+        console.print(
+            f"[cyan]Forked[/cyan] '[bold]{fork}[/bold]' "
+            f"(run_id={forked.run_id}) off baseline run {ctx.run_id}"
+        )
+
+
 @app.command("list")
 def list_components(
     component_type: str = typer.Argument(

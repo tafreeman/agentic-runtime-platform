@@ -240,7 +240,8 @@ class TestMakeLlmStep:
         "agentic_v2.engine.agent_resolver.load_agent_system_prompt", return_value=None
     )
     @patch(
-        "agentic_v2.engine.agent_resolver.build_tool_contracts", return_value=([], {})
+        "agentic_v2.engine.agent_resolver.build_tool_contracts",
+        return_value=([], {}, "auto"),
     )
     @patch(
         "agentic_v2.engine.agent_resolver.build_system_prompt",
@@ -275,7 +276,8 @@ class TestMakeLlmStep:
         return_value="You are a coder.",
     )
     @patch(
-        "agentic_v2.engine.agent_resolver.build_tool_contracts", return_value=([], {})
+        "agentic_v2.engine.agent_resolver.build_tool_contracts",
+        return_value=([], {}, "auto"),
     )
     @patch(
         "agentic_v2.engine.agent_resolver.build_system_prompt",

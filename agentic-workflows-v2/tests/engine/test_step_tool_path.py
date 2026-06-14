@@ -398,7 +398,13 @@ def _make_step_func(
     )
     tool_schemas, bound_tools = _echo_contracts(tool)
     monkeypatch.setattr(
-        ar, "build_tool_contracts", lambda _tier, _enabled: (tool_schemas, bound_tools)
+        ar,
+        "build_tool_contracts",
+        lambda _tier, _enabled, _choice="auto": (
+            tool_schemas,
+            bound_tools,
+            _choice,
+        ),
     )
     # Keep prompt assembly trivial / deterministic.
     monkeypatch.setattr(ar, "build_system_prompt", lambda **_kw: "do the task")

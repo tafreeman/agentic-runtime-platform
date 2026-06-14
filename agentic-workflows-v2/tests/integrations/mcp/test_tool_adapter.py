@@ -13,7 +13,22 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from agentic_v2.integrations.mcp.adapters.tool_adapter import McpToolAdapter
+from agentic_v2.integrations.mcp.error_envelope import ErrorCategory
+from agentic_v2.integrations.mcp.protocol.client import (
+    McpProtocolError,
+    McpTimeoutError,
+)
 from agentic_v2.integrations.mcp.types import ToolDescriptor
+
+
+def _adapter(name: str = "test_tool", timeout: float | None = None) -> McpToolAdapter:
+    """Build an adapter wrapping a mock client for envelope tests."""
+    tool = ToolDescriptor(
+        name=name,
+        description="Test",
+        input_schema={"type": "object"},
+    )
+    return McpToolAdapter("server", tool, MagicMock(), timeout=timeout)
 
 
 @pytest.mark.asyncio
@@ -256,3 +271,146 @@ class TestMcpToolAdapter:
         assert adapter1.name == "mcp_server1_common_tool"
         assert adapter2.name == "mcp_server2_common_tool"
         assert adapter1.name != adapter2.name
+
+
+@pytest.mark.asyncio
+class TestMcpToolAdapterErrorEnvelope:
+    """Test the MCP-standard structured error envelope surfaced to the model."""
+
+    async def test_success_envelope(self) -> None:
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            return_value={"content": [{"type": "text", "text": "data"}]}
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is False
+        assert env.is_empty is False
+        assert env.error_category is None
+        assert env.text == "data"
+
+    async def test_valid_empty_result_is_not_an_error(self) -> None:
+        # A tool that ran fine but matched nothing: empty content, no isError.
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(return_value={"content": []})
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is False
+        assert env.is_empty is True
+        assert env.error_category is None
+
+    async def test_access_failure_differs_from_empty_result(self) -> None:
+        # Same empty-looking content, but the server flagged isError -> failure.
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            return_value={
+                "isError": True,
+                "content": [{"type": "text", "text": "403 Forbidden: no access"}],
+            }
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.is_empty is False
+        assert env.error_category is ErrorCategory.PERMISSION
+        assert env.is_retryable is False
+
+    async def test_is_error_flag_surfaces_business_failure(self) -> None:
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            return_value={
+                "isError": True,
+                "content": [{"type": "text", "text": "Issue is already closed"}],
+            }
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.error_category is ErrorCategory.BUSINESS
+        assert env.is_retryable is False
+
+    async def test_timeout_is_transient_and_retryable(self) -> None:
+        adapter = _adapter(timeout=0.01)
+
+        async def slow_call(*args: object, **kwargs: object) -> dict[str, object]:
+            import asyncio
+
+            await asyncio.sleep(5)
+            return {"content": []}
+
+        adapter.client.call_tool = slow_call  # type: ignore[assignment]
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.error_category is ErrorCategory.TRANSIENT
+        assert env.is_retryable is True
+        assert "timed out" in env.text.lower()
+
+    async def test_protocol_timeout_is_transient(self) -> None:
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            side_effect=McpTimeoutError("request timed out")
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.error_category is ErrorCategory.TRANSIENT
+        assert env.is_retryable is True
+
+    async def test_protocol_validation_error_is_not_retryable(self) -> None:
+        # JSON-RPC -32602 "Invalid params" -> validation, not retryable.
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            side_effect=McpProtocolError("MCP error -32602: Invalid params")
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.error_category is ErrorCategory.VALIDATION
+        assert env.is_retryable is False
+
+    async def test_unexpected_exception_is_classified(self) -> None:
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            side_effect=Exception("Connection reset by peer")
+        )
+
+        env = await adapter.execute_envelope({})
+
+        assert env.is_error is True
+        assert env.error_category is ErrorCategory.TRANSIENT
+        assert env.is_retryable is True
+        assert "Connection reset" in env.text
+
+    async def test_execute_string_wrapper_embeds_structured_fields(self) -> None:
+        # The legacy str-returning execute() must carry the envelope text.
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            side_effect=McpProtocolError("403 Forbidden")
+        )
+
+        result = await adapter.execute({})
+
+        assert isinstance(result, str)
+        assert "permission" in result
+        assert "not retryable" in result
+
+    async def test_to_mcp_result_round_trip(self) -> None:
+        adapter = _adapter()
+        adapter.client.call_tool = AsyncMock(
+            side_effect=McpProtocolError("429 too many requests")
+        )
+
+        env = await adapter.execute_envelope({})
+        payload = env.to_mcp_result()
+
+        assert payload["isError"] is True
+        assert payload["errorCategory"] == "transient"
+        assert payload["isRetryable"] is True

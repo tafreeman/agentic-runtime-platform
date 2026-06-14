@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1.7
+#
+# Load-test variant of the ARP backend image.
+#
+# It reuses the repo-root Dockerfile's `backend-dev` stage verbatim (so the
+# load proof runs the SAME application code that ships) and layers ONE thing on
+# top: the optional `redis` extra. The shipped `backend-dev` stage installs
+# `[dev,server,tracing]` but not `[redis]`; the Redis-CAS circuit-breaker store
+# (agentic_v2/models/redis_state.py) only activates when the `redis` package is
+# importable AND settings.redis_url is set. Installing the extra here is what
+# turns the shared-state CAS path on for the multi-replica load run.
+#
+# Build context is the repo root (see load/docker-compose.load.yml). No source
+# is modified — this Dockerfile lives entirely under load/.
+
+FROM agentic-runtime-platform:backend-dev AS load
+
+USER root
+# Add the redis client (+ hiredis) so RedisCircuitBreakerStore connects instead
+# of degrading to local-only state. Pin matches pyproject's `redis` extra.
+RUN pip install --no-cache-dir "redis[hiredis]>=5.0,<9"
+USER appuser
+
+WORKDIR /workspace/agentic-workflows-v2
+EXPOSE 8010

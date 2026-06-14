@@ -24,10 +24,11 @@ Key capabilities:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
@@ -37,6 +38,24 @@ logger = logging.getLogger(__name__)
 import jmespath
 
 T = TypeVar("T")
+
+
+def _fingerprint_files(paths: list[str | Path]) -> dict[str, str]:
+    """Return ``{path: sha256}`` for each readable file in *paths*.
+
+    Missing or unreadable files are recorded with a sentinel digest so a later
+    diff treats "file deleted" as a change rather than silently skipping it.
+    """
+    fingerprints: dict[str, str] = {}
+    for raw in paths:
+        path = Path(raw)
+        key = str(path)
+        try:
+            data = path.read_bytes()
+            fingerprints[key] = hashlib.sha256(data).hexdigest()
+        except (OSError, ValueError):
+            fingerprints[key] = "__missing__"
+    return fingerprints
 
 
 PROTECTED_VARIABLE_KEYS = frozenset(
@@ -160,6 +179,18 @@ class ExecutionContext:
     # Checkpointing
     checkpoint_dir: Path | None = None
 
+    # Init-only convenience: callers may seed the variable store directly via
+    # ``ExecutionContext(variables={...})`` (used by the native DAG adapter in
+    # server/execution.py and the CLI helpers). ``__post_init__`` copies it into
+    # the private ``_variables`` field; the langchain adapter seeds ``_variables``
+    # by other means, which is why only the native/CLI paths exercised this.
+    variables: InitVar[dict[str, Any] | None] = None
+
+    def __post_init__(self, variables: dict[str, Any] | None) -> None:
+        """Seed ``_variables`` from the init-only ``variables`` arg, when provided."""
+        if variables:
+            self._variables = dict(variables)
+
     def child(self, step_name: str | None = None) -> "ExecutionContext":
         """Create a child context with inherited variables.
 
@@ -177,6 +208,40 @@ class ExecutionContext:
         if step_name:
             child_ctx.current_step = step_name
         return child_ctx
+
+    def fork_session(self, name: str) -> "ExecutionContext":
+        """Branch a divergent run off this shared baseline.
+
+        Returns a child scope (see :meth:`child`) that reads this context's
+        variables but writes locally, so a forked experiment never mutates the
+        baseline. The fork is tagged with a fresh ``run_id`` and a
+        ``metadata["fork_name"]`` / ``metadata["forked_from_run"]`` lineage so
+        divergent branches stay distinguishable in traces and checkpoints.
+
+        This is the in-house counterpart to the Claude Agent SDK's
+        ``fork_session`` (see ``docs/adr/ADR-026-resume-vs-summary-session.md``):
+        both let you explore an alternative trajectory from a common point
+        without disturbing the original.
+
+        Args:
+            name: Human-readable label for the fork (also used as the default
+                checkpoint name when the fork is later saved).
+
+        Returns:
+            A child :class:`ExecutionContext` seeded from this baseline.
+        """
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("fork_session requires a non-empty name")
+
+        fork = self.child(step_name=self.current_step)
+        # A fork is a distinct run; give it its own identity for trace isolation.
+        fork.run_id = str(uuid.uuid4())
+        fork.metadata = {
+            **self.metadata,
+            "fork_name": name,
+            "forked_from_run": self.run_id,
+        }
+        return fork
 
     # -------------------------------------------------------------------------
     # Variable Management
@@ -413,8 +478,19 @@ class ExecutionContext:
     # Checkpointing
     # -------------------------------------------------------------------------
 
-    async def save_checkpoint(self, name: str | None = None) -> Path:
+    async def save_checkpoint(
+        self,
+        name: str | None = None,
+        *,
+        tracked_files: list[str | Path] | None = None,
+    ) -> Path:
         """Save current state to a checkpoint file.
+
+        Args:
+            name: Optional checkpoint name (defaults to a timestamped name).
+            tracked_files: Optional paths whose content fingerprints (sha256)
+                are recorded so a later resume can detect which files changed
+                since this checkpoint (see :meth:`detect_changed_files`).
 
         Returns path to checkpoint file.
         """
@@ -435,6 +511,7 @@ class ExecutionContext:
             "completed_steps": self.completed_steps,
             "failed_steps": self.failed_steps,
             "metadata": self.metadata,
+            "file_fingerprints": _fingerprint_files(tracked_files or []),
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
@@ -455,11 +532,61 @@ class ExecutionContext:
         async with self._lock:
             self._variables = variables.copy()
 
+        # Restore identity so a resumed run keeps the saved workflow/run lineage
+        # (save_checkpoint persists both). Without this a resume kept a freshly
+        # generated run_id and any later fork recorded the wrong forked_from_run.
+        self.workflow_id = data.get("workflow_id", self.workflow_id)
+        self.run_id = data.get("run_id", self.run_id)
+
         self.completed_steps = data.get("completed_steps", [])
         self.failed_steps = data.get("failed_steps", [])
         self.metadata.update(data.get("metadata", {}))
 
         await self._emit(EventType.CHECKPOINT_RESTORE, {"path": str(checkpoint_path)})
+
+    @staticmethod
+    def detect_changed_files(checkpoint_path: Path) -> list[str]:
+        """Return the tracked files that changed since *checkpoint_path*.
+
+        Compares each file's current sha256 against the fingerprint recorded at
+        save time. A file is "changed" if its content differs **or** it no
+        longer exists. Files added since the checkpoint are not reported (only
+        the originally-tracked set is compared).
+
+        Returns the changed file paths, sorted for deterministic output. Returns
+        an empty list when the checkpoint recorded no fingerprints.
+        """
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
+
+        data = json.loads(checkpoint_path.read_text())
+        recorded: dict[str, str] = data.get("file_fingerprints", {}) or {}
+        current = _fingerprint_files(list(recorded.keys()))
+
+        changed = [
+            path
+            for path, old_digest in recorded.items()
+            if current.get(path) != old_digest
+        ]
+        return sorted(changed)
+
+    @staticmethod
+    def build_changed_files_notice(changed_files: list[str]) -> str:
+        """Render a "these files changed" notice for the caller/operator.
+
+        Surfaces the notice as a string for the caller to prepend to a resumed
+        prompt; this method does not assemble or inject any prompt itself.
+        Returns an empty string when nothing changed so callers can prepend the
+        result unconditionally.
+        """
+        if not changed_files:
+            return ""
+        lines = "\n".join(f"  - {path}" for path in changed_files)
+        return (
+            "[Resume notice] The following files changed on disk since this "
+            "session was checkpointed; re-read them before relying on prior "
+            f"tool results:\n{lines}\n"
+        )
 
     def _validate_checkpoint_variables(self, variables: Any) -> dict[str, Any]:
         """Validate checkpoint variables before restoring them."""

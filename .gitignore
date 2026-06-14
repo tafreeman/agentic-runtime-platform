@@ -208,8 +208,12 @@ PORTFOLIO_REVIEW_AND_BACKLOG.md
 SB-2-FIX-SUMMARY.md
 SB-2-IMPLEMENTATION-REPORT.md
 
-# AI assistant scaffolding and local tool state
-.claude/
+# AI assistant scaffolding and local tool state.
+# Ignore transient/local .claude state (settings.local.json, caches, session
+# data) but TRACK the checked-in project rules so CLAUDE.md's @imports resolve
+# for every contributor.
+.claude/*
+!.claude/rules/
 .mcp.json
 
 # Local editor config — VS Code workspace state and per-user MCP config
@@ -337,6 +341,9 @@ tot_*.txt
 # PromptEval / tooling outputs (generated)
 results/
 !agentic-workflows-v2/agentic_v2/**/results/
+# Flagship k6 load proof: the committed result JSON is the Pages dashboard data source
+!load/results/
+load/results/.sonar/
 
 # Agentic workflow execution artifacts (generated run logs)
 agentic-workflows-v2/runs/*.json

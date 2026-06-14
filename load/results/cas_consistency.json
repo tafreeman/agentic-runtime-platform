@@ -1,0 +1,26 @@
+{
+  "schema": "arp.load.cas_consistency/v1",
+  "generated_at": "2026-06-14T03:48:16.016554+00:00",
+  "redis_url_host": "redis://redis:6379/0",
+  "observed_state": {
+    "key_prefix": "agentic:cb:",
+    "model_count": 0,
+    "models": {},
+    "all_counters_coherent": true
+  },
+  "cas_torture": {
+    "model": "loadtest:cas-probe",
+    "workers": 4,
+    "failures_per_worker": 50,
+    "expected_failure_count": 200,
+    "observed_failure_count": 200,
+    "consistent": true,
+    "lost_or_double_counted": 0,
+    "merged_counter_snapshot": {
+      "success_count": 0,
+      "failure_count": 200,
+      "rate_limit_count": 0,
+      "timeout_count": 0
+    }
+  }
+}

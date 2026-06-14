@@ -1,0 +1,27 @@
+// Example parameters for infra/azure/main.bicep.
+//
+// COPY to main.bicepparam and fill in real values BEFORE any deploy. This file
+// is the committed, secret-free template — main.bicepparam is gitignored.
+// There are NO secrets here: Redis keys, App Insights connection strings, and
+// ACR credentials are all resolved at deploy time inside the template via
+// listKeys()/managed identity, never passed as parameters.
+//
+// Reference IaC only — this stack is NOT deployed ($0). See infra/azure/README.md.
+
+using './main.bicep'
+
+param environmentName = 'dev'
+param baseName = 'arp'
+
+// Point at the image your ACR builds (e.g. '<acr>.azurecr.io/arp:<gitsha>').
+// Left as the public quickstart image so `az bicep build` has a valid default.
+param containerImage = 'mcr.microsoft.com/k8se/quickstart:latest'
+
+// Horizontal-scale envelope — minReplicas >= 2 mirrors the multi-replica
+// Redis-CAS proof (at least two replicas sharing one Redis under load).
+param minReplicas = 2
+param maxReplicas = 10
+param concurrentRequestsPerReplica = 50
+
+param cpuCores = '0.5'
+param memorySize = '1.0Gi'

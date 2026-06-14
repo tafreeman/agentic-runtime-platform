@@ -19,7 +19,19 @@ class GitTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute git operations like status, diff, commit, log, add"
+        return (
+            "General-purpose git runner: pass a `command` plus an `args` list "
+            "and optional `cwd`. ALLOWLISTED commands only — status, diff, log, "
+            "add, commit, branch, show, rev-parse; any other command (push, "
+            "checkout, reset, …) is rejected, so this cannot mutate remotes or "
+            "rewrite history. `args` are passed verbatim after the subcommand "
+            "(e.g. command='log', args=['--oneline','-n','5']). Returns raw "
+            "stdout; a nonzero exit is surfaced as success=False with stderr. "
+            "Edge cases: a missing `cwd` fails fast. PREFER the `git_status` / "
+            "`git_diff` convenience wrappers for those two common reads; reach "
+            "for this generic tool when you need log, add, commit, branch, "
+            "show, or rev-parse, or need to pass custom flags."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -136,7 +148,16 @@ class GitStatusTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Get the current git working tree status"
+        return (
+            "Report the git working-tree status for `cwd`: which files are "
+            "staged, modified, or untracked. Set `short=True` for the compact "
+            "`--short` porcelain-style listing, else the verbose human format. "
+            "Read-only convenience wrapper over `git status` (no other git "
+            "subcommands). PREFER `git_status` to answer 'what has changed?' "
+            "BEFORE staging or committing; prefer `git_diff` to see the actual "
+            "line-level changes, or the generic `git` tool for "
+            "log/add/commit/branch."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:
@@ -171,7 +192,16 @@ class GitDiffTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Show changes between commits, commit and working tree, etc"
+        return (
+            "Show the line-level git diff for `cwd`. With no args, diffs the "
+            "working tree against the index (unstaged edits). Set `cached=True` "
+            "for staged-vs-HEAD (what a commit would capture), or pass `ref` "
+            "(e.g. 'HEAD', a branch, or a commit sha) to diff against that "
+            "reference. Read-only convenience wrapper over `git diff`. PREFER "
+            "`git_diff` to inspect WHAT changed line by line; prefer "
+            "`git_status` first for the high-level list of changed files, or "
+            "the generic `git` tool for log/show/commit."
+        )
 
     @property
     def parameters(self) -> dict[str, Any]:

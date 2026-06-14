@@ -349,8 +349,14 @@ async def _run_native_tool_loop(
     tool_schemas: Any,
     bound_tools: dict[str, Any],
     max_tokens: int,
+    tool_choice: str | dict[str, Any] = "auto",
 ) -> tuple[str, str, int, int]:
     """Legacy ``run_tool_calls`` multi-turn loop.
+
+    A forced/``required`` *tool_choice* is applied only to the FIRST turn. On
+    later turns the choice reverts to ``"auto"`` so the model can synthesize a
+    final answer after seeing tool results — otherwise a forced choice would
+    make every turn emit another tool call and never terminate.
 
     Returns ``(response, model_used, tokens_used, tool_call_count)``.
     """
@@ -360,12 +366,14 @@ async def _run_native_tool_loop(
     tool_call_count = 0
 
     for iteration in range(MAX_TOOL_ROUNDS + 1):
+        turn_tool_choice = tool_choice if iteration == 0 else "auto"
         chat_response, model_used, turn_tokens = await complete_chat_with_fallback(
             client=client,
             tier=tier,
             messages=messages,
             max_tokens=max_tokens,
             tools=tool_schemas if bound_tools else None,
+            tool_choice=turn_tool_choice,
         )
         tokens_used += turn_tokens
 
@@ -426,13 +434,16 @@ async def _execute_llm_step(
     enabled_tools: list[str] | None,
     tool_path: str | None,
     persona_prompt: str | None,
+    tool_choice: str | dict[str, Any] = "auto",
 ) -> dict[str, Any]:
     """Assemble the prompt, run the owning tool loop, and parse the output."""
     # Gather available context as step input
     all_vars = ctx.all_variables()
 
-    # Build tool contracts
-    tool_schemas, bound_tools = build_tool_contracts(tier, enabled_tools)
+    # Build tool contracts (also validates + normalizes the tool choice).
+    tool_schemas, bound_tools, normalized_tool_choice = build_tool_contracts(
+        tier, enabled_tools, tool_choice
+    )
 
     # Assemble the full prompt
     prompt = build_system_prompt(
@@ -472,6 +483,7 @@ async def _execute_llm_step(
                 tool_schemas=tool_schemas,
                 bound_tools=bound_tools,
                 max_tokens=max_tokens,
+                tool_choice=normalized_tool_choice,
             )
         )
     except Exception as e:
@@ -501,6 +513,7 @@ def _make_llm_step(
     prompt_file_override: str | None = None,
     enabled_tools: list[str] | None = None,
     tool_path: str | None = None,
+    tool_choice: str | dict[str, Any] = "auto",
 ) -> StepFunction:
     """Create an async step function that calls an LLM for its output.
 
@@ -523,6 +536,11 @@ def _make_llm_step(
             the step's tool loop is driven by EK ``react_loop``; when the flag
             is OFF the legacy ``run_tool_calls`` loop runs byte-for-byte.
             Single-owner: exactly one loop drives a given step.
+        tool_choice: How the step selects among its tools. ``"auto"`` (default)
+            lets the model decide; ``"any"``/``"required"`` forces *some* tool;
+            a tool name or ``{"type": "tool", "name": ...}`` dict forces that
+            specific tool. Honored on the native tool loop; validated against
+            the resolved tool set by ``build_tool_contracts``.
     """
     persona_prompt = load_agent_system_prompt(agent_name, prompt_file_override)
 
@@ -542,6 +560,7 @@ def _make_llm_step(
                 expected_output_keys=expected_output_keys,
                 enabled_tools=enabled_tools,
                 tool_path=tool_path,
+                tool_choice=tool_choice,
                 persona_prompt=persona_prompt,
             )
 
@@ -613,6 +632,7 @@ def resolve_agent(step_def: StepDefinition) -> StepDefinition:
             prompt_file_override=step_def.metadata.get("prompt_file"),
             enabled_tools=step_def.metadata.get("tools"),
             tool_path=step_def.metadata.get("tool_path"),
+            tool_choice=step_def.metadata.get("tool_choice", "auto"),
         )
         logger.debug(
             "Resolved step '%s' -> LLM agent %s (tier %s)",

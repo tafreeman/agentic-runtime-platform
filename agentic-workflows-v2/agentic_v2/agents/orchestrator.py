@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -38,6 +39,71 @@ class SubTask:
     assigned_agent: str | None = None
     result: Any | None = None
     status: StepStatus = StepStatus.PENDING
+
+
+@dataclass(frozen=True)
+class InvestigationFindings:
+    """Immutable result of the orchestrator's initial investigation step.
+
+    The investigation phase of adaptive decomposition discovers what the task
+    actually touches *before* any analysis subtask is generated.  ``files`` is
+    the concrete list of artifacts found (each becomes its own per-file local
+    analysis pass); ``observations`` are free-form notes that seed the cross-file
+    integration pass.
+    """
+
+    files: tuple[str, ...] = ()
+    observations: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable view of the findings."""
+        return {
+            "files": list(self.files),
+            "observations": list(self.observations),
+        }
+
+
+@dataclass(frozen=True)
+class AdaptiveDecomposition:
+    """Immutable output of :meth:`OrchestratorAgent.decompose_adaptive`.
+
+    Captures the full adaptive trajectory: the ``findings`` from the initial
+    investigation, the ``per_file`` subtasks derived from those findings (one
+    local analysis pass per discovered file), and the single ``cross_file``
+    integration subtask that depends on every per-file pass.
+
+    ``subtasks`` is the flattened, dependency-ordered plan (investigation is not
+    re-emitted as a subtask — it has already run to produce ``findings``).
+    """
+
+    findings: InvestigationFindings
+    per_file: tuple[dict[str, Any], ...]
+    cross_file: dict[str, Any] | None
+
+    @property
+    def subtasks(self) -> list[dict[str, Any]]:
+        """Flatten per-file passes followed by the cross-file pass."""
+        plan: list[dict[str, Any]] = list(self.per_file)
+        if self.cross_file is not None:
+            plan.append(self.cross_file)
+        return plan
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable view of the decomposition."""
+        return {
+            "findings": self.findings.to_dict(),
+            "per_file": list(self.per_file),
+            "cross_file": self.cross_file,
+            "subtasks": self.subtasks,
+        }
+
+
+# Capability used for both the per-file local analysis passes and the
+# cross-file integration pass — static analysis is the closest registered
+# capability to "read this file and report what it contains".
+_PER_FILE_CAPABILITY = CapabilityType.STATIC_ANALYSIS
+_CROSS_FILE_CAPABILITY = CapabilityType.STATIC_ANALYSIS
+_CROSS_FILE_TASK_ID = "cross_file_integration"
 
 
 class OrchestratorInput(TaskInput):
@@ -82,6 +148,26 @@ When decomposing tasks, provide JSON with this structure:
     "execution_order": ["id1", "id2"],
     "validation_steps": ["How to validate the result"]
 }"""
+
+
+INVESTIGATION_SYSTEM_PROMPT = """You are an investigation agent that runs the FIRST step of an adaptive task decomposition.
+
+You do NOT plan the whole task up front. Instead you inspect the task and report
+only what you can concretely observe: which files/artifacts it touches and any
+salient observations. A later step turns each discovered file into its own local
+analysis pass, then a separate cross-file integration pass reasons over those
+per-file results.
+
+Respond with JSON of exactly this shape:
+{
+    "files": ["path/or/name/of/each/file/the/task/touches"],
+    "observations": ["short factual note", "another note"]
+}
+
+Rules:
+- List every distinct file the task references or implies, one entry each.
+- If the task names no files, return an empty "files" list — do NOT invent paths.
+- Keep observations factual and short; they seed the cross-file pass."""
 
 
 class OrchestratorAgent(
@@ -250,32 +336,21 @@ class OrchestratorAgent(
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """Call LLM for orchestration."""
+        """Call the LLM for orchestration.
+
+        When a backend is configured the real LLM client drives decomposition.
+        When it is not (the ``AGENTIC_NO_LLM`` / unit-test baseline) the plan is
+        derived deterministically *from the task text itself* via
+        :func:`_intent_decomposition` — not from a frozen ``generate``/``review``
+        constant.  That makes capability-scored selection operational on the
+        no-backend path: a "review" task yields a ``code_review`` subtask, a
+        "test" task yields a ``test_generation`` subtask, and so on, so the right
+        registered agent is actually scored and assigned.
+        """
+        task_text = _latest_user_text(messages)
+
         if self.llm_client.backend is None:
-            # Default implementation for testing
-            return {
-                "content": json.dumps(
-                    {
-                        "subtasks": [
-                            {
-                                "id": "generate",
-                                "description": "Generate the code",
-                                "capabilities": ["code_generation"],
-                                "dependencies": [],
-                                "parallel_group": 1,
-                            },
-                            {
-                                "id": "review",
-                                "description": "Review the generated code",
-                                "capabilities": ["code_review"],
-                                "dependencies": ["generate"],
-                                "parallel_group": 2,
-                            },
-                        ],
-                        "execution_order": ["generate", "review"],
-                    }
-                )
-            }
+            return {"content": json.dumps(_intent_decomposition(task_text))}
 
         # Use real LLM client
         result_dict, _, _ = await self.llm_client.complete_chat(
@@ -283,8 +358,16 @@ class OrchestratorAgent(
             tier=self.config.default_tier,
             temperature=0.2,  # Lower temp for structural task planning
         )
+        content = result_dict.get("content", result_dict.get("message", ""))
 
-        return {"content": result_dict.get("content", result_dict.get("message", ""))}
+        # Defensive fallback: a placeholder backend (the AGENTIC_NO_LLM baseline)
+        # returns prose with no JSON. Rather than yield an empty plan, derive a
+        # capability-tagged plan from the task text so decomposition stays
+        # operational and capability-scored selection still has subtasks to route.
+        if not _has_extractable_json(content):
+            return {"content": json.dumps(_intent_decomposition(task_text))}
+
+        return {"content": content}
 
     def _extract_json(self, text: str) -> dict[str, Any]:
         """Extract JSON from response using balanced-brace extraction."""
@@ -328,17 +411,26 @@ class OrchestratorAgent(
         return ready
 
     async def _execute_subtask_with_fallback(self, st: SubTask) -> tuple[str, Any]:
-        """Run a single subtask, trying its primary agent then fallbacks."""
+        """Run a single subtask, trying its primary agent then fallbacks.
+
+        When every candidate agent fails, this emits a structured
+        :class:`~agentic_v2.governance.HandoffSummary` (routed to the
+        escalation gate) instead of a bare ``{"error": ...}``, so a human or a
+        higher-tier recovery agent has the context to act.
+        """
         # Build candidate list: primary agent + fallbacks
         candidates: list[str] = []
         if st.assigned_agent:
             candidates.append(st.assigned_agent)
         candidates.extend(self._fallback_chains.get(st.id, []))
 
+        attempted: list[str] = []
+        partial_results: dict[str, Any] = {}
         for agent_name in candidates:
             agent = self._agents.get(agent_name)
             if not agent:
                 continue
+            attempted.append(agent_name)
             try:
                 task_input = self._resolve_task_input(st.description, agent)
                 result = await agent.run(task_input)
@@ -352,19 +444,66 @@ class OrchestratorAgent(
                     st.id,
                     e,
                 )
+                partial_results[agent_name] = f"{type(e).__name__}: {e}"
                 continue
 
         st.status = StepStatus.FAILED
-        return st.id, {"error": f"All agents failed for subtask {st.id}"}
+        handoff = await self._emit_escalation_handoff(st, attempted, partial_results)
+        return st.id, handoff.to_dict()
+
+    async def _emit_escalation_handoff(
+        self,
+        st: SubTask,
+        attempted: list[str],
+        partial_results: dict[str, Any],
+    ) -> Any:
+        """Build and route a structured handoff for an exhausted fallback chain."""
+        from ..governance import HandoffSummary, route_handoff
+
+        handoff = HandoffSummary.from_exhausted_chain(
+            subtask_id=st.id,
+            attempted_agents=attempted,
+            partial_results=partial_results,
+        )
+        return await route_handoff(handoff)
 
     def _record_batch_results(
         self,
         batch_results: list[Any],
         results: dict[str, Any],
         executed: set[str],
+        batch: list[SubTask] | None = None,
     ) -> None:
-        """Merge a completed batch into *results* and mark tasks executed."""
-        for task_id, result in batch_results:
+        """Merge a completed batch into *results* and mark tasks executed.
+
+        ``_execute_plan`` gathers with ``return_exceptions=True``, so an element
+        can be a bare ``BaseException`` rather than the expected
+        ``(task_id, result)`` tuple (a subtask coroutine that raised before
+        returning). Such an element is recorded as a failed subtask and skipped
+        instead of failing the whole merge on a tuple-unpack error.
+        """
+        positions = batch or []
+        for index, item in enumerate(batch_results):
+            if isinstance(item, BaseException):
+                # Recover the originating subtask id by position when available.
+                failed_id = (
+                    positions[index].id
+                    if index < len(positions)
+                    else f"unknown_{index}"
+                )
+                logger.warning(
+                    "Subtask %s raised during batch execution: %s",
+                    failed_id,
+                    item,
+                )
+                results[failed_id] = {"error": str(item)}
+                executed.add(failed_id)
+                self._execution_trace.append(
+                    {"task_id": failed_id, "result": str(item)[:200]}
+                )
+                continue
+
+            task_id, result = item
             if isinstance(result, Exception):
                 results[task_id] = {"error": str(result)}
             else:
@@ -393,7 +532,7 @@ class OrchestratorAgent(
                 return_exceptions=True,
             )
 
-            self._record_batch_results(batch_results, results, executed)
+            self._record_batch_results(batch_results, results, executed, batch)
 
         return results
 
@@ -410,6 +549,198 @@ class OrchestratorAgent(
             return plan.get("subtasks", [])
         except Exception:
             return []
+
+    # -------------------------------------------------------------------------
+    # Adaptive decomposition (ARP-9): investigate -> per-file -> cross-file
+    # -------------------------------------------------------------------------
+
+    async def _investigate(self, task: str) -> InvestigationFindings:
+        """Run the initial investigation step and return concrete findings.
+
+        This is the first phase of adaptive decomposition: rather than planning
+        the whole task up front, the coordinator inspects the task and reports
+        only what it can observe — the files it touches and salient notes. Those
+        findings *drive* the subtask set produced afterwards.
+
+        With a backend configured, the investigation system prompt is sent to the
+        LLM. Without one, findings are derived deterministically from the task
+        text (file-like tokens become discovered files) so the adaptive path is
+        exercised the same way in the no-key baseline.
+        """
+        prompt = (
+            f"{INVESTIGATION_SYSTEM_PROMPT}\n\nTask to investigate:\n{task}\n\n"
+            "Return the investigation JSON now."
+        )
+        messages = [{"role": "user", "content": prompt}]
+        response = await self._call_model(messages)
+        content = response.get("content", "")
+
+        try:
+            data = self._extract_json(content)
+        except Exception:
+            data = {}
+
+        files = data.get("files")
+        observations = data.get("observations")
+
+        # No-backend / malformed-response fallback: derive findings from the task
+        # text itself so the per-file branch still has something to fan out over.
+        if not isinstance(files, list):
+            files = _extract_file_tokens(task)
+        if not isinstance(observations, list):
+            observations = []
+
+        return InvestigationFindings(
+            files=tuple(str(f) for f in files if str(f).strip()),
+            observations=tuple(str(o) for o in observations if str(o).strip()),
+        )
+
+    def _subtasks_from_findings(
+        self, task: str, findings: InvestigationFindings
+    ) -> AdaptiveDecomposition:
+        """Generate subtasks *from* investigation findings (not a fixed plan).
+
+        One local-analysis pass is emitted per discovered file, then a single
+        cross-file integration pass is emitted that depends on every per-file
+        pass. When the investigation found no files, there is nothing to analyze
+        locally and the per-file tier is empty; the cross-file pass is only
+        emitted when at least one per-file pass exists for it to integrate.
+        """
+        per_file: list[dict[str, Any]] = []
+        for index, file_path in enumerate(findings.files):
+            per_file.append(
+                {
+                    "id": _per_file_task_id(index),
+                    "description": (
+                        f"Local analysis pass over '{file_path}': summarize its "
+                        "role, public surface, and anything relevant to: "
+                        f"{task}"
+                    ),
+                    "capabilities": [_PER_FILE_CAPABILITY.value],
+                    "dependencies": [],
+                    "file": file_path,
+                }
+            )
+
+        cross_file: dict[str, Any] | None = None
+        if per_file:
+            cross_file = {
+                "id": _CROSS_FILE_TASK_ID,
+                "description": (
+                    "Cross-file integration pass: reconcile the per-file analyses "
+                    f"into one coherent answer for: {task}. Resolve "
+                    "inconsistencies across files and surface interactions."
+                ),
+                "capabilities": [_CROSS_FILE_CAPABILITY.value],
+                "dependencies": [st["id"] for st in per_file],
+                "observations": list(findings.observations),
+            }
+
+        return AdaptiveDecomposition(
+            findings=findings,
+            per_file=tuple(per_file),
+            cross_file=cross_file,
+        )
+
+    async def decompose_adaptive(self, task: str) -> AdaptiveDecomposition:
+        """Adaptively decompose *task* into per-file then cross-file passes.
+
+        Phases:
+            1. **Investigate** — discover which files/artifacts the task touches.
+            2. **Per-file** — emit one local analysis subtask per discovered file.
+            3. **Cross-file** — emit a single integration subtask that depends on
+               every per-file pass.
+
+        The generated subtasks are registered into ``self._subtasks`` (replacing
+        any prior decomposition) so the existing assignment, fallback, and
+        execution machinery (:meth:`_assign_agents`, :meth:`_execute_plan`) runs
+        over the findings-derived plan unchanged.
+        """
+        findings = await self._investigate(task)
+        decomposition = self._subtasks_from_findings(task, findings)
+        self._register_subtasks(decomposition.subtasks)
+        return decomposition
+
+    def _register_subtasks(self, subtasks: list[dict[str, Any]]) -> None:
+        """Install a freshly generated subtask plan into the orchestrator.
+
+        Clears any prior decomposition state so a re-run does not accumulate
+        stale subtasks or fallback chains, then materializes each plan entry as a
+        :class:`SubTask`.
+        """
+        self._subtasks = {}
+        self._fallback_chains = {}
+        for st_data in subtasks:
+            capabilities = [
+                CapabilityType(c)
+                for c in st_data.get("capabilities", [])
+                if c in [ct.value for ct in CapabilityType]
+            ]
+            subtask = SubTask(
+                id=st_data.get("id", f"task_{len(self._subtasks)}"),
+                description=st_data.get("description", ""),
+                required_capabilities=capabilities,
+                dependencies=st_data.get("dependencies", []),
+            )
+            self._subtasks[subtask.id] = subtask
+
+    async def run_adaptive(
+        self, task: str, max_parallel: int = 3
+    ) -> OrchestratorOutput:
+        """End-to-end adaptive run: investigate, fan out per-file, then integrate.
+
+        Ties :meth:`decompose_adaptive` to the existing assignment and execution
+        machinery so the per-file passes run (in parallel, bounded by
+        *max_parallel*) and the cross-file pass runs strictly after all of them.
+        Returns the same :class:`OrchestratorOutput` shape as :meth:`run`, with
+        the adaptive findings attached under ``execution_trace``.
+        """
+        decomposition = await self.decompose_adaptive(task)
+
+        subtasks_view = [
+            {
+                "id": st.id,
+                "description": st.description,
+                "capabilities": [c.value for c in st.required_capabilities],
+            }
+            for st in self._subtasks.values()
+        ]
+
+        assignments = await self._assign_agents()
+
+        final_result = None
+        if self._agents:
+            final_result = await self._execute_plan(
+                OrchestratorInput(task=task, max_parallel=max_parallel)
+            )
+
+        trace = list(self._execution_trace)
+        trace.append(
+            {"phase": "investigation", "findings": decomposition.findings.to_dict()}
+        )
+
+        # An empty plan (the task named no files, so no per-file or cross-file
+        # passes were produced) is a real no-op, not a success. Surface it as a
+        # failure with an explanatory error rather than a silent success.
+        if not subtasks_view:
+            return OrchestratorOutput(
+                success=False,
+                error="adaptive decomposition produced no subtasks",
+                subtasks=subtasks_view,
+                agent_assignments=assignments,
+                final_result=final_result,
+                execution_trace=trace,
+                confidence=0.0,
+            )
+
+        return OrchestratorOutput(
+            success=True,
+            subtasks=subtasks_view,
+            agent_assignments=assignments,
+            final_result=final_result,
+            execution_trace=trace,
+            confidence=0.85,
+        )
 
     async def select_agent(
         self, task: dict[str, Any], available_agents: list[BaseAgent]
@@ -526,6 +857,140 @@ class OrchestratorAgent(
 
         pipeline = builder.build()
         return await run_pipeline(pipeline, ctx)
+
+
+def _per_file_task_id(index: int) -> str:
+    """Stable id for the *index*-th per-file local analysis pass."""
+    return f"per_file_{index}"
+
+
+def _latest_user_text(messages: list[dict[str, Any]]) -> str:
+    """Return the content of the most recent user message (or "")."""
+    for message in reversed(messages):
+        if message.get("role") == "user":
+            content = message.get("content", "")
+            return content if isinstance(content, str) else str(content)
+    return ""
+
+
+def _has_extractable_json(content: str) -> bool:
+    """Return True when *content* contains a JSON object the parser can read."""
+    if not content:
+        return False
+    try:
+        extract_json(content)
+        return True
+    except Exception:
+        return False
+
+
+# A token looks like a file when it carries a dotted extension (``a/b.py``,
+# ``config.yaml``). The stem (text before the final dot) must contain at least
+# one ALPHABETIC char and the extension must START with a letter, so numeric
+# tokens ("2.0", "99.9", "3.11", "4.50") and Latin abbreviations are not mistaken
+# for files. The stem allows path separators/dots/hyphens/underscores so nested
+# paths still match.
+_FILE_TOKEN_RE = re.compile(
+    r"(?P<stem>[A-Za-z0-9_./\\-]*[A-Za-z][A-Za-z0-9_./\\-]*)"
+    r"\.(?P<ext>[A-Za-z][A-Za-z0-9]{0,7})"
+)
+
+# Latin/prose abbreviations that match the file shape (alpha stem + letter ext)
+# but are never files. Compared case-insensitively against the whole token.
+_FILE_TOKEN_ABBREVIATIONS: frozenset[str] = frozenset(
+    {"e.g", "i.e", "etc", "vs", "et.al"}
+)
+
+
+def _extract_file_tokens(task: str) -> list[str]:
+    """Extract file-like tokens from *task* text, de-duplicated in order.
+
+    Used as the no-backend / fallback investigation: when the LLM is not
+    available to report discovered files, any path/extension-shaped token in the
+    task description is treated as a file to analyze locally. Version numbers,
+    percentages, and decimals (numeric stems) and a curated set of Latin prose
+    abbreviations ("e.g.", "i.e.", ...) are rejected so they do not fabricate
+    phantom per-file subtasks.
+    """
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for match in _FILE_TOKEN_RE.finditer(task):
+        token = match.group(0).strip(".")
+        if not token or token.lower() in _FILE_TOKEN_ABBREVIATIONS:
+            continue
+        if token not in seen:
+            seen.add(token)
+            ordered.append(token)
+    return ordered
+
+
+# Intent keyword -> the capability a matching subtask should require. Ordered so
+# the emitted plan reads naturally (generate, then test, then review/analyze).
+_INTENT_RULES: tuple[tuple[tuple[str, ...], str, CapabilityType], ...] = (
+    (
+        ("generat", "build", "create", "implement", "write code", "add"),
+        "Generate the implementation",
+        CapabilityType.CODE_GENERATION,
+    ),
+    (
+        ("test", "pytest", "coverage"),
+        "Generate tests for the implementation",
+        CapabilityType.TEST_GENERATION,
+    ),
+    (
+        ("review", "audit", "inspect"),
+        "Review the implementation",
+        CapabilityType.CODE_REVIEW,
+    ),
+    (
+        ("analyz", "analyse", "investigate", "examine"),
+        "Statically analyze the implementation",
+        CapabilityType.STATIC_ANALYSIS,
+    ),
+)
+
+
+def _intent_decomposition(task_text: str) -> dict[str, Any]:
+    """Derive a capability-tagged plan from the *task_text* keywords.
+
+    Replaces the previous frozen ``generate``/``review`` constant on the
+    no-backend path. Each matched intent contributes one subtask requiring the
+    mapped capability, chained in declaration order so capability-scored
+    assignment picks the right registered agent for each. Falls back to a single
+    code-generation subtask when no keyword matches, so a plan is always
+    produced.
+    """
+    lowered = task_text.lower()
+    subtasks: list[dict[str, Any]] = []
+    previous_id: str | None = None
+
+    for keywords, description, capability in _INTENT_RULES:
+        if any(keyword in lowered for keyword in keywords):
+            task_id = capability.value
+            subtasks.append(
+                {
+                    "id": task_id,
+                    "description": description,
+                    "capabilities": [capability.value],
+                    "dependencies": [previous_id] if previous_id else [],
+                }
+            )
+            previous_id = task_id
+
+    if not subtasks:
+        subtasks.append(
+            {
+                "id": CapabilityType.CODE_GENERATION.value,
+                "description": "Complete the requested task",
+                "capabilities": [CapabilityType.CODE_GENERATION.value],
+                "dependencies": [],
+            }
+        )
+
+    return {
+        "subtasks": subtasks,
+        "execution_order": [st["id"] for st in subtasks],
+    }
 
 
 def _reviewer_input_factory(description: str) -> Any:

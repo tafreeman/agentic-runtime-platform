@@ -4,8 +4,13 @@ MCP Tool Adapter - wraps remote MCP tools as local tool instances.
 Critical design choices:
 1. **Schema Passthrough**: Original JSON Schema preserved verbatim (no Pydantic reconstruction)
 2. **Namespacing**: Tools named `mcp_{server_name}_{tool_name}` to prevent conflicts
-3. **Error Trapping**: All execution errors caught and returned as friendly strings (never crash orchestrator)
+3. **Error Trapping**: All execution errors caught and returned as a structured,
+   MCP-correct error envelope (``isError`` + ``errorCategory`` + ``isRetryable``)
+   the model can reason about — never crash the orchestrator
 4. **Timeout Enforcement**: All tool calls wrapped with configurable timeout
+5. **Empty vs access-failure**: A valid result that legitimately carried no
+   content is reported as a (non-error) empty result, distinct from an
+   access/permission failure that sets ``isError``.
 """
 
 import asyncio
@@ -13,6 +18,10 @@ import logging
 from typing import Any
 
 from agentic_v2.integrations.mcp.discovery.tools import ToolDiscovery
+from agentic_v2.integrations.mcp.error_envelope import (
+    ErrorCategory,
+    ToolResultEnvelope,
+)
 from agentic_v2.integrations.mcp.protocol.client import (
     McpProtocolClient,
     McpProtocolError,
@@ -24,6 +33,9 @@ logger = logging.getLogger(__name__)
 
 # Tool execution timeout (matching claude-code-main)
 TOOL_CALL_TIMEOUT = 120.0  # 2 minutes
+
+# Sentinel text for a valid, non-error empty result.
+EMPTY_RESULT_TEXT = "[Tool returned no content]"
 
 
 class McpToolAdapter:
@@ -71,7 +83,12 @@ class McpToolAdapter:
         arguments: dict[str, Any],
         timeout: float | None = None,
     ) -> str:
-        """Execute the remote tool.
+        """Execute the remote tool, returning the model-facing result string.
+
+        Backward-compatible thin wrapper over :meth:`execute_envelope`. The
+        returned string embeds the structured error fields (category +
+        retryability) inline for failures, so callers that only handle strings
+        still surface the MCP-correct error text to the model.
 
         Args:
             arguments: Tool input arguments (validated against input_schema)
@@ -79,6 +96,30 @@ class McpToolAdapter:
 
         Returns:
             Tool result as string (never raises exceptions to LLM)
+        """
+        envelope = await self.execute_envelope(arguments, timeout)
+        return envelope.text
+
+    async def execute_envelope(
+        self,
+        arguments: dict[str, Any],
+        timeout: float | None = None,
+    ) -> ToolResultEnvelope:
+        """Execute the remote tool and return the structured MCP result envelope.
+
+        The envelope carries the MCP-correct contract surfaced to the model:
+        ``isError`` for true failures, an ``errorCategory``
+        (transient/validation/business/permission), an ``isRetryable`` flag,
+        and human-readable ``text``. A valid result that legitimately returned
+        no content is reported as a (non-error) empty result — explicitly
+        distinct from an access/permission failure.
+
+        Args:
+            arguments: Tool input arguments (validated against input_schema)
+            timeout: Execution timeout (default: 120s)
+
+        Returns:
+            A :class:`ToolResultEnvelope`. Never raises exceptions to the LLM.
         """
         timeout_value = timeout or self._default_timeout or TOOL_CALL_TIMEOUT
 
@@ -94,40 +135,67 @@ class McpToolAdapter:
                     self.tool_descriptor.name, arguments
                 )
 
-            # Extract content from response
-            content = response.get("content", [])
-
-            # Format response based on content type
-            if not content:
-                return "[Tool returned no content]"
-
-            # MCP tools can return multiple content blocks
-            formatted_parts = [self._format_content_block(block) for block in content]
-
-            result = "\n\n".join(formatted_parts)
-            logger.debug(f"Tool result length: {len(result)} chars")
-            return result
+            return self._envelope_from_response(response)
 
         except TimeoutError:
             error_msg = f"Tool execution timed out after {timeout_value}s"
             logger.warning(f"{self.name}: {error_msg}")
-            return f"Error: {error_msg}"
+            return ToolResultEnvelope.failure(
+                error_msg,
+                category=ErrorCategory.TRANSIENT,
+                is_retryable=True,
+            )
 
         except McpTimeoutError as e:
             error_msg = f"MCP protocol timeout: {e}"
             logger.warning(f"{self.name}: {error_msg}")
-            return f"Error: {error_msg}"
+            return ToolResultEnvelope.failure(
+                error_msg,
+                category=ErrorCategory.TRANSIENT,
+                is_retryable=True,
+            )
 
         except McpProtocolError as e:
+            # JSON-RPC protocol errors carry the server's code/message — let the
+            # classifier bucket them (e.g. -32602 -> validation, 403 -> permission).
             error_msg = f"MCP protocol error: {e}"
             logger.error(f"{self.name}: {error_msg}")
-            return f"Error: {error_msg}"
+            return ToolResultEnvelope.failure(error_msg)
 
         except Exception as e:
             # Catch-all for any unexpected errors
             error_msg = f"Unexpected error: {e}"
             logger.error(f"{self.name}: {error_msg}", exc_info=True)
-            return f"Error: {error_msg}"
+            return ToolResultEnvelope.failure(error_msg)
+
+    def _envelope_from_response(self, response: dict[str, Any]) -> ToolResultEnvelope:
+        """Build a result envelope from a successful JSON-RPC tool response.
+
+        Handles the MCP ``isError: true`` flag (a tool-execution failure
+        reported inside an otherwise-successful JSON-RPC result) and the
+        access-failure vs valid-empty-result distinction.
+        """
+        content = response.get("content", [])
+
+        formatted_parts = [self._format_content_block(block) for block in content]
+        result_text = "\n\n".join(part for part in formatted_parts if part)
+
+        # MCP spec: a tool may report a domain failure via ``isError: true``
+        # while still returning HTTP/JSON-RPC success. That is a TRUE error the
+        # model must see — surface it through the envelope (not as plain text).
+        if response.get("isError"):
+            error_text = result_text or "Tool reported an error with no detail"
+            logger.warning(f"{self.name}: tool returned isError -> {error_text}")
+            return ToolResultEnvelope.failure(error_text)
+
+        # No content + no isError == a *valid* empty result (e.g. a search that
+        # matched nothing). This is explicitly NOT an access failure.
+        if not result_text:
+            logger.debug(f"{self.name}: tool returned a valid empty result")
+            return ToolResultEnvelope.success(EMPTY_RESULT_TEXT, is_empty=True)
+
+        logger.debug(f"Tool result length: {len(result_text)} chars")
+        return ToolResultEnvelope.success(result_text)
 
     @staticmethod
     def _format_content_block(block: dict[str, Any]) -> str:

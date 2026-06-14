@@ -29,6 +29,11 @@
 | **022** | Tenant-Scoped Run and Dataset Isolation | Accepted | [ADR-022](ADR-022-tenant-isolation.md) |
 | **023** | ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single `executionkit` package) | Accepted | [ADR-023](ADR-023-executionkit-runtime-contract-relationship.md) · [plan](ADR-023-migration-plan.md) · [matrix](ADR-023-preservation-matrix.md) · [notes](ADR-023-migration-notes.md) · [finish-plan](ADR-023-finish-plan.md) |
 | **024** | Expression Evaluation via AST Interpreter (eliminate `eval()`) | Accepted | [ADR-024](ADR-024-expression-evaluator-ast-sandbox.md) |
+| **025** | SDK `Task`-Tool Orchestration (counterpart to the asyncio orchestrator) | Accepted | [ADR-025](ADR-025-sdk-task-orchestration.md) |
+| **026** | `--resume` / `fork_session` and the summary-seeded-session tradeoff | Accepted | [ADR-026](ADR-026-resume-vs-summary-session.md) |
+| **027** | Forced / `any` / `auto` `tool_choice` and cross-role `verify_fact` | Accepted | [ADR-027](ADR-027-forced-tool-choice.md) |
+| **028** | Tool descriptions are the primary tool-selection mechanism | Accepted | [ADR-028](ADR-028-tool-descriptions-as-selection-mechanism.md) |
+| **029** | Adaptive decomposition (investigate → per-file → cross-file) | Accepted | [ADR-029](ADR-029-adaptive-decomposition.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed.
 
