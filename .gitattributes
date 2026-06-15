@@ -19,3 +19,8 @@ agentic-workflows-v2/ui/src/api/runs_summary.generated.ts text eol=lf
 # diff is deterministic.
 agentic-workflows-v2/scripts/generate_ts_types.py text eol=lf
 agentic-workflows-v2/ui/scripts/generate-ts-types.mjs text eol=lf
+
+# Force LF on the pip constraints file derived from uv.lock. The
+# `lockfile-constraints` CI job regenerates it on Linux and diffs against the
+# committed copy; a CRLF Windows commit would otherwise show spurious drift.
+ci-constraints.txt text eol=lf
