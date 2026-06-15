@@ -15,9 +15,9 @@ venv:
 
 setup: venv
     & "{{venv_python}}" -m pip install --upgrade pip
-    & "{{venv_python}}" -m pip install -e .
-    & "{{venv_python}}" -m pip install -e "./agentic-workflows-v2[dev,server,langchain,tracing]"
-    & "{{venv_python}}" -m pip install -e "./agentic-v2-eval[dev]"
+    & "{{venv_python}}" -m pip install -e . -c ci-constraints.txt
+    & "{{venv_python}}" -m pip install -e "./agentic-workflows-v2[dev,server,langchain,tracing]" -c ci-constraints.txt
+    & "{{venv_python}}" -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
     npm --prefix agentic-workflows-v2/ui install
 
 test: _require-venv
