@@ -18,12 +18,15 @@ export default function StatusBadge({ status, size = "sm" }: Readonly<Props>) {
   const cfg = config[status as StepStatus] ?? config.pending;
   const sizeClass = size === "sm" ? "text-xs" : "text-sm";
   const animateClass = cfg.animate ? "animate-pulse" : "";
+  const plainLabel = cfg.label.replace(/[\[\]\s-]/g, "") || status;
 
   return (
     <span
+      role="status"
+      aria-label={plainLabel}
       className={`inline-block font-mono tabular-nums ${cfg.color} ${sizeClass} ${animateClass}`}
     >
-      {cfg.label}
+      <span aria-hidden="true">{cfg.label}</span>
     </span>
   );
 }

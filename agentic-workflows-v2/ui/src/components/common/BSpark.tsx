@@ -12,7 +12,7 @@ export default function BSpark({
   className = "",
 }: Readonly<BSparkProps>) {
   if (values.length < 2) {
-    return <svg height={height} className={className} />;
+    return <svg height={height} className={className} aria-hidden="true" focusable="false" />;
   }
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -34,6 +34,8 @@ export default function BSpark({
       width="100%"
       height={height}
       className={className}
+      aria-hidden="true"
+      focusable="false"
     >
       <polyline
         points={points}

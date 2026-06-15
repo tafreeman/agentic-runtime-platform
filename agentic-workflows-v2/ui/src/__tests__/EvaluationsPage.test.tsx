@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EvaluationsPage from "../pages/EvaluationsPage";
@@ -29,7 +29,30 @@ describe("EvaluationsPage", () => {
         <EvaluationsPage />
       </MemoryRouter>
     );
-    expect(screen.getByText("No evaluations found")).toBeInTheDocument();
+    // Empty state now uses the shared <EmptyState> component ("$ no … yet").
+    expect(screen.getByText("no evaluated runs yet")).toBeInTheDocument();
+  });
+
+  it("surfaces a fetch error with a retry affordance", () => {
+    const refetch = vi.fn();
+    mockUseRuns.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("eval store down"),
+      refetch,
+    });
+
+    render(
+      <MemoryRouter>
+        <EvaluationsPage />
+      </MemoryRouter>
+    );
+
+    const alert = screen.getByRole("alert");
+    expect(alert).toHaveTextContent(/failed to load evaluations/i);
+    fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+    expect(refetch).toHaveBeenCalledTimes(1);
   });
 
   it("renders evaluated runs in a table", () => {

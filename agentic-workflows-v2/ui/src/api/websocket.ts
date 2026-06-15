@@ -9,10 +9,25 @@ export type EventHandler = (event: ExecutionEvent) => void;
 export function connectExecutionStream(
   runId: string,
   onEvent: EventHandler,
-  options: { maxRetries?: number; retryDelayMs?: number; pathPrefix?: string } = {}
+  options: {
+    maxRetries?: number;
+    retryDelayMs?: number;
+    pathPrefix?: string;
+    /**
+     * Called once when the socket closes after all reconnect attempts are
+     * exhausted. Lets the caller surface a "connection lost" state instead of
+     * leaving a stale view that looks like it is still streaming.
+     */
+    onRetriesExhausted?: () => void;
+  } = {}
 ): { close: () => void } {
   // maxRetries=5, retryDelayMs=1000 → exponential sequence: 1s, 2s, 4s, 8s, 16s (31s total)
-  const { maxRetries = 5, retryDelayMs = 1000, pathPrefix = "execution" } = options;
+  const {
+    maxRetries = 5,
+    retryDelayMs = 1000,
+    pathPrefix = "execution",
+    onRetriesExhausted,
+  } = options;
   let ws: WebSocket | null = null;
   let retries = 0;
   let closed = false;
@@ -56,6 +71,9 @@ export function connectExecutionStream(
         // Protects restarting server from hammering; matches AWS/GCP/Azure standards
         // Retries at: 1s, 2s, 4s, 8s, 16s (cumulative: 31s max)
         setTimeout(connect, retryDelayMs * Math.pow(2, retries - 1));
+      } else {
+        // All reconnect attempts spent — the stream is permanently dead.
+        onRetriesExhausted?.();
       }
     };
 

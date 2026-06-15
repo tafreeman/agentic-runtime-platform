@@ -22,13 +22,13 @@ export default function TokenCounter({ events }: Readonly<Props>) {
   }
 
   return (
-    <div className="flex items-center gap-4 text-xs text-gray-400">
+    <div className="flex items-center gap-4 text-xs text-b-text-dim">
       <span className="flex items-center gap-1">
-        <Cpu className="h-3.5 w-3.5" />
+        <Cpu aria-hidden="true" className="h-3.5 w-3.5" />
         {totalTokens.toLocaleString()} tokens
       </span>
       {models.size > 0 && (
-        <span className="text-gray-600">
+        <span className="text-b-text-faint">
           {models.size} model{models.size > 1 ? "s" : ""}
         </span>
       )}

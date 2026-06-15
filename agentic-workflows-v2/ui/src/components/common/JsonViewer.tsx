@@ -32,31 +32,32 @@ function JsonNode({
 }>) {
   const [expanded, setExpanded] = useState(initialExpanded && depth < maxDepth);
 
-  if (value === null) return <span className="text-gray-500">null</span>;
-  if (value === undefined) return <span className="text-gray-500">undefined</span>;
+  if (value === null) return <span className="text-b-text-dim">null</span>;
+  if (value === undefined) return <span className="text-b-text-dim">undefined</span>;
   if (typeof value === "boolean")
-    return <span className="text-amber-400">{String(value)}</span>;
+    return <span className="text-b-amber">{String(value)}</span>;
   if (typeof value === "number")
-    return <span className="text-blue-400">{value}</span>;
+    return <span className="text-b-blue">{value}</span>;
   if (typeof value === "string") {
     if (value.length > 200 && !expanded) {
       return (
         <span>
-          <span className="text-green-400">"{value.slice(0, 200)}</span>
+          <span className="text-b-green">"{value.slice(0, 200)}</span>
           <button
+            type="button"
             onClick={() => setExpanded(true)}
-            className="text-gray-500 hover:text-gray-300"
+            className="text-b-text-dim hover:text-b-text"
           >
             ...{value.length - 200} more"
           </button>
         </span>
       );
     }
-    return <span className="text-green-400">"{value}"</span>;
+    return <span className="text-b-green">"{value}"</span>;
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-gray-500">[]</span>;
+    if (value.length === 0) return <span className="text-b-text-dim">[]</span>;
     return (
       <Collapsible
         expanded={expanded}
@@ -67,7 +68,7 @@ function JsonNode({
         {value.map((item, i) => (
           <div key={`${typeof item === 'object' ? JSON.stringify(item) : String(item)}-${i}`} className="pl-4">
             <JsonNode value={item} depth={depth + 1} expanded={false} maxDepth={maxDepth} />
-            {i < value.length - 1 && <span className="text-gray-600">,</span>}
+            {i < value.length - 1 && <span className="text-b-text-faint">,</span>}
           </div>
         ))}
       </Collapsible>
@@ -77,7 +78,7 @@ function JsonNode({
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0)
-      return <span className="text-gray-500">{"{}"}</span>;
+      return <span className="text-b-text-dim">{"{}"}</span>;
     return (
       <Collapsible
         expanded={expanded}
@@ -87,17 +88,17 @@ function JsonNode({
       >
         {entries.map(([k, v], i) => (
           <div key={k} className="pl-4">
-            <span className="text-purple-400">"{k}"</span>
-            <span className="text-gray-500">: </span>
+            <span className="text-b-purple">"{k}"</span>
+            <span className="text-b-text-dim">: </span>
             <JsonNode value={v} depth={depth + 1} expanded={false} maxDepth={maxDepth} />
-            {i < entries.length - 1 && <span className="text-gray-600">,</span>}
+            {i < entries.length - 1 && <span className="text-b-text-faint">,</span>}
           </div>
         ))}
       </Collapsible>
     );
   }
 
-  return <span className="text-gray-400">{String(value)}</span>;
+  return <span className="text-b-text-dim">{String(value)}</span>;
 }
 
 function Collapsible({
@@ -116,8 +117,11 @@ function Collapsible({
   return (
     <span>
       <button
+        type="button"
         onClick={onToggle}
-        className="inline-flex items-center text-gray-500 hover:text-gray-300"
+        aria-label={expanded ? "Collapse" : "Expand"}
+        aria-expanded={expanded}
+        className="inline-flex items-center text-b-text-dim hover:text-b-text"
       >
         {expanded ? (
           <ChevronDown className="h-3 w-3" />
@@ -127,14 +131,14 @@ function Collapsible({
       </button>
       {expanded ? (
         <>
-          <span className="text-gray-500">{bracket[0]}</span>
+          <span className="text-b-text-dim">{bracket[0]}</span>
           <div>{children}</div>
-          <span className="text-gray-500">{bracket[1]}</span>
+          <span className="text-b-text-dim">{bracket[1]}</span>
         </>
       ) : (
         <button
           type="button"
-          className="cursor-pointer border-0 bg-transparent p-0 text-left text-gray-500 hover:text-gray-300"
+          className="cursor-pointer border-0 bg-transparent p-0 text-left text-b-text-dim hover:text-b-text"
           onClick={onToggle}
         >
           {bracket[0]} {summary} {bracket[1]}

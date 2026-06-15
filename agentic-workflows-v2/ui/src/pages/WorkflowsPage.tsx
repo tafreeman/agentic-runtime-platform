@@ -73,6 +73,7 @@ export default function WorkflowsPage() {
             <input
               ref={inputRef}
               type="text"
+              aria-label="Filter workflows by name or tag"
               placeholder="filter by name, tag…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -150,7 +151,8 @@ export default function WorkflowsPage() {
 
               {filtered.length === 0 && !isLoading && (
                 <div className="rounded-sm border border-dashed border-b-line py-10 text-center font-mono text-[11px] text-b-text-dim">
-                  {`no workflows match "${query}"`}
+                  no workflows match "
+                  <span className="text-b-text">{query}</span>"
                 </div>
               )}
             </div>

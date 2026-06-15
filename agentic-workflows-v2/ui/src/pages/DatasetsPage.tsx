@@ -1,9 +1,11 @@
 import { useEvaluationDatasets } from "../hooks/useWorkflows";
 import BTopBar from "../components/layout/BTopBar";
 import DatasetBrowser from "../components/datasets/DatasetBrowser";
+import InlineError from "../components/states/InlineError";
+import EmptyState from "../components/states/EmptyState";
 
 export default function DatasetsPage() {
-  const { data: datasets, isLoading, error } = useEvaluationDatasets();
+  const { data: datasets, isLoading, error, refetch } = useEvaluationDatasets();
 
   const repoCount = datasets?.repository.length ?? 0;
   const localCount = datasets?.local.length ?? 0;
@@ -36,9 +38,10 @@ export default function DatasetsPage() {
           }
           if (error) {
             return (
-              <div className="rounded-sm border border-b-red bg-b-red/10 p-4 font-mono text-[11px] text-b-red">
-                [!] failed to load datasets
-              </div>
+              <InlineError
+                message={`failed to load datasets${error instanceof Error ? `: ${error.message}` : ""}`}
+                onRetry={() => void refetch()}
+              />
             );
           }
           if (datasets) {
@@ -48,11 +51,7 @@ export default function DatasetsPage() {
               </div>
             );
           }
-          return (
-            <div className="flex h-32 items-center justify-center font-mono text-[11px] text-b-text-dim">
-              No datasets available.
-            </div>
-          );
+          return <EmptyState entity="datasets" />;
         })()}
       </div>
     </div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { listEvaluationDatasets } from "../../api/client";
+import { useEvaluationDatasets } from "../../hooks/useWorkflows";
 import type {
-  EvaluationDatasetsResponse,
   ExecutionProfileRequest,
   WorkflowInputSchema,
 } from "../../api/types";
@@ -61,42 +60,22 @@ export default function RunConfigForm({
   const [evalSetId, setEvalSetId] = useState("");
   const [sampleText, setSampleText] = useState("0");
   const [runsPerRecord, setRunsPerRecord] = useState(1);
-  const [datasets, setDatasets] = useState<EvaluationDatasetsResponse | null>(
-    null
-  );
-  const [datasetsLoading, setDatasetsLoading] = useState(false);
-  const [datasetsError, setDatasetsError] = useState<string | null>(null);
+  // Datasets are fetched lazily — only once the advanced panel is opened — via
+  // the shared react-query hook so the result is cached and retried like the
+  // rest of the data layer (replaces a hand-rolled fetch + cancellation dance).
+  const datasetsQuery = useEvaluationDatasets(advancedOpen);
+  const datasets = datasetsQuery.data ?? null;
+  const datasetsLoading = datasetsQuery.isLoading;
+  let datasetsError: string | null = null;
+  if (datasetsQuery.error instanceof Error) {
+    datasetsError = datasetsQuery.error.message;
+  } else if (datasetsQuery.isError) {
+    datasetsError = "failed to load datasets";
+  }
 
   useEffect(() => {
     setInputValues(buildInitialValues(inputs));
   }, [inputs]);
-
-  useEffect(() => {
-    if (!advancedOpen || datasets || datasetsLoading) return;
-
-    let cancelled = false;
-    setDatasetsLoading(true);
-    setDatasetsError(null);
-
-    listEvaluationDatasets()
-      .then((result) => {
-        if (!cancelled) setDatasets(result);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setDatasetsError(
-            error instanceof Error ? error.message : "failed to load datasets"
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setDatasetsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [advancedOpen, datasets]);
 
   const datasetOptions = useMemo(() => {
     if (!datasets) return [];

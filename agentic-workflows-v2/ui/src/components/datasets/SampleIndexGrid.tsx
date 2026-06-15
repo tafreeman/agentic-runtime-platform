@@ -76,6 +76,8 @@ export default function SampleIndexGrid({
 
       <div className="flex items-center justify-between border-t border-b-line bg-b-bg2 px-3 py-1.5 font-mono text-[10px] text-b-text-dim">
         <button
+          type="button"
+          aria-label="Previous page"
           disabled={offset === 0}
           onClick={() => setOffset(Math.max(0, offset - limit))}
           className="disabled:opacity-40 hover:text-b-text"
@@ -87,6 +89,8 @@ export default function SampleIndexGrid({
           {data.sample_count}
         </span>
         <button
+          type="button"
+          aria-label="Next page"
           disabled={!hasMore}
           onClick={() => setOffset(offset + limit)}
           className="disabled:opacity-40 hover:text-b-text"

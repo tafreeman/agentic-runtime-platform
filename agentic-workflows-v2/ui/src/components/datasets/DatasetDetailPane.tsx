@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useDatasetSampleDetail } from "../../hooks/useDatasets";
 import BPill from "../common/BPill";
 import JsonViewer from "../common/JsonViewer";
@@ -43,6 +43,7 @@ export default function DatasetDetailPane({
   sampleIndex,
 }: Readonly<DatasetDetailPaneProps>) {
   const [metaOpen, setMetaOpen] = useState(false);
+  const metaPanelId = useId();
   const { data, isLoading, error } = useDatasetSampleDetail(
     datasetSource,
     datasetId,
@@ -101,13 +102,16 @@ export default function DatasetDetailPane({
       {/* Dataset meta (collapsed by default) */}
       <div>
         <button
+          type="button"
+          aria-expanded={metaOpen}
+          aria-controls={metaPanelId}
           onClick={() => setMetaOpen((v) => !v)}
           className="font-mono text-[10px] text-b-text-dim hover:text-b-text"
         >
           {metaOpen ? "[meta -]" : "[meta +]"}
         </button>
         {metaOpen && (
-          <div className="mt-1 border border-b-line-soft bg-b-bg2 p-2">
+          <div id={metaPanelId} className="mt-1 border border-b-line-soft bg-b-bg2 p-2">
             <JsonViewer data={data.dataset_meta} />
           </div>
         )}

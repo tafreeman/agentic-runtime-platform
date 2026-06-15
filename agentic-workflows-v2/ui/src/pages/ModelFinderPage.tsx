@@ -124,8 +124,10 @@ export default function ModelFinderPage() {
               <div className="flex items-center gap-3">
                 <HardDrive className="h-5 w-5 text-b-clay" />
                 <div>
-                  <div className="text-xl font-semibold text-b-text">
-                    {isLoading ? "…" : `${data?.profile.ram_gb ?? 0} GB`}
+                  <div className="text-[24px] font-semibold text-b-text">
+                    {isLoading
+                      ? <div className="h-5 w-16 animate-pulse rounded bg-b-bg3" />
+                      : `${data?.profile.ram_gb ?? 0} GB`}
                   </div>
                   <div className="font-mono text-[10px] text-b-text-dim">
                     usable memory budget
@@ -137,8 +139,10 @@ export default function ModelFinderPage() {
               <div className="flex items-center gap-3">
                 <Cpu className="h-5 w-5 text-b-blue" />
                 <div>
-                  <div className="text-xl font-semibold text-b-text">
-                    {isLoading ? "…" : `${data?.profile.cpu_cores_logical ?? 0} threads`}
+                  <div className="text-[24px] font-semibold text-b-text">
+                    {isLoading
+                      ? <div className="h-5 w-20 animate-pulse rounded bg-b-bg3" />
+                      : `${data?.profile.cpu_cores_logical ?? 0} threads`}
                   </div>
                   <div className="font-mono text-[10px] text-b-text-dim">
                     {data?.profile.cpu_name ?? "detecting CPU"}
@@ -150,9 +154,9 @@ export default function ModelFinderPage() {
               <div className="flex items-center gap-3">
                 <Gauge className="h-5 w-5 text-b-green" />
                 <div>
-                  <div className="text-xl font-semibold text-b-text">
+                  <div className="text-[24px] font-semibold text-b-text">
                     {isLoading
-                      ? "…"
+                      ? <div className="h-5 w-16 animate-pulse rounded bg-b-bg3" />
                       : compactNumber(data?.profile.estimated_cinebench_r23_multi ?? 0)}
                   </div>
                   <div className="font-mono text-[10px] text-b-text-dim">
@@ -163,7 +167,9 @@ export default function ModelFinderPage() {
             </BBox>
             <BBox title="accelerators" bodyClassName="p-4">
               <div className="font-mono text-[11px] leading-5 text-b-text">
-                {isLoading ? "detecting…" : acceleratorText}
+                {isLoading
+                  ? <div className="h-5 w-24 animate-pulse rounded bg-b-bg3" />
+                  : acceleratorText}
               </div>
               <div className="mt-1 font-mono text-[10px] text-b-text-dim">
                 tier: {data?.profile.performance_tier ?? "unknown"}
@@ -177,7 +183,7 @@ export default function ModelFinderPage() {
           >
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
-                <thead className="border-b border-b-line bg-b-bg2 font-mono text-[10px] uppercase text-b-text-dim">
+                <thead className="border-b border-b-line font-mono text-[10px] uppercase text-b-text-dim">
                   <tr>
                     <th className="px-3 py-2">rank</th>
                     <th className="px-3 py-2">model</th>
@@ -188,7 +194,15 @@ export default function ModelFinderPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-b-line">
-                  {(data?.models ?? []).map((model, index) => (
+                  {isLoading &&
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <tr key={`skeleton-${i}`}>
+                        <td colSpan={6} className="px-3 py-3">
+                          <div className="h-4 animate-pulse rounded bg-b-bg3" />
+                        </td>
+                      </tr>
+                    ))}
+                  {!isLoading && (data?.models ?? []).map((model, index) => (
                     <tr key={model.id} className="align-top hover:bg-b-bg2/50">
                       <td className="px-3 py-3 font-mono text-[11px] text-b-text-dim">
                         #{index + 1}
@@ -198,7 +212,8 @@ export default function ModelFinderPage() {
                           href={model.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-b-text hover:text-b-clay"
+                          title={model.name}
+                          className="block max-w-[280px] truncate font-semibold text-b-text hover:text-b-clay"
                         >
                           {model.name}
                         </a>
