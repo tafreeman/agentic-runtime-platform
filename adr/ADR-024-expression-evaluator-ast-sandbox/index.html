@@ -2771,6 +2771,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#langchain-condition-path-default-server-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LangChain condition path (default server path)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2873,18 +2890,22 @@
 <strong>Related:</strong> <a href="../ADR-001-002-003-architecture-decisions/">ADR-001</a> (native DAG engine), <a href="../ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a> / <a href="../ADR-021-jwt-oidc-authentication/">ADR-021</a> / <a href="../ADR-022-tenant-isolation/">ADR-022</a> (security &amp; reliability domain)</p>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Workflow conditional edges and <code>${...}</code> substitutions are resolved by the expression evaluator in <code>agentic_v2/engine/expressions.py</code>. The evaluator previously compiled each expression to a Python code object and executed it with <code>eval(compile(tree, "&lt;expr&gt;", "eval"), {"__builtins__": {}}, env)</code> — an AST-validated, empty-builtins sandbox.</p>
+<p>Workflow conditional edges and <code>${...}</code> substitutions are resolved by expression evaluators. There were <strong>two</strong> of them, with divergent security postures:</p>
+<ol>
+<li>The <strong>engine</strong> evaluator (<code>agentic_v2/engine/expressions.py</code>), used by the native DAG engine. It previously compiled each expression to a Python code object and executed it with <code>eval(compile(tree, "&lt;expr&gt;", "eval"), {"__builtins__": {}}, env)</code> — an AST-validated, empty-builtins sandbox.</li>
+<li>The <strong>LangChain-adapter</strong> evaluator (<code>agentic_v2/langchain/expressions.py</code>), used by the <em>default</em> server workflow-execution path (<code>graph_wiring.py</code> condition wiring → <code>runner.py</code> → <code>server/execution.py</code>). This one substituted each <code>${...}</code> reference with <code>repr(resolved_value)</code> against the run state and then called <code>eval(compile(tree, "&lt;expr&gt;", "eval"))</code> with <strong>no restricted globals</strong> — inheriting the full <code>__builtins__</code> — wrapped in a bare <code>except Exception: return False</code> that failed <em>open</em> (a malformed or adversarial condition silently became <code>False</code>, silently skipping a step or looping forever).</li>
+</ol>
 <p>Even with an empty <code>__builtins__</code> map and a node allowlist, <code>eval()</code>-based sandboxes carry residual risk:</p>
 <ul>
 <li><strong>Dunder-traversal escape:</strong> expressions such as <code>().__class__.__mro__[-1].__subclasses__()</code> can reach arbitrary types unless dunder access is blocked at every layer.</li>
 <li><strong><code>str.format</code> / <code>format_map</code> bypass:</strong> the format-string machinery can be coerced into attribute traversal.</li>
 <li><strong>Engine-trust dependency:</strong> the sandbox's safety depends on the CPython <code>eval</code>/<code>compile</code> machinery remaining escape-free across interpreter versions.</li>
 </ul>
-<p>Workflow condition strings originate from authored YAML and, in multi-tenant deployments (ADR-022), potentially from less-trusted sources. An <code>eval()</code> call on that path is the kind of construct a security reviewer flags on sight.</p>
+<p>Workflow condition strings originate from authored YAML and, in multi-tenant deployments (ADR-022), potentially from less-trusted sources. An <code>eval()</code> call on that path — especially the LangChain one with full builtins and a fail-open <code>except</code> — is the kind of construct a security reviewer flags on sight.</p>
 <hr />
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p>Replace <code>eval()</code>/<code>compile()</code> in the expression evaluator with a <strong>pure-Python AST interpreter</strong>.</p>
-<p>The evaluator now:</p>
+<p>Replace <code>eval()</code>/<code>compile()</code> in <strong>both</strong> expression evaluators with a <strong>single, shared pure-Python AST interpreter</strong>. There is now exactly one expression security boundary in the codebase.</p>
+<p>The engine evaluator now:</p>
 <ol>
 <li>Parses the expression to an AST (<code>ast.parse(..., mode="eval")</code>).</li>
 <li>Validates the tree against a node allowlist via <code>_validate_ast</code>, rejecting dunder attribute and name access at validation time.</li>
@@ -2896,26 +2917,34 @@
 <li><strong>Sequence-multiply DoS cap:</strong> <code>_MAX_SEQUENCE_MULTIPLY</code> bounds <code>seq * n</code> expansions to prevent memory exhaustion via large multiplications.</li>
 </ul>
 <p>The public <code>ExpressionEvaluator</code> API (<code>evaluate</code>, <code>resolve_variable</code>) is unchanged; this is an internal, behavior-compatible substitution.</p>
+<h3 id="langchain-condition-path-default-server-path">LangChain condition path (default server path)<a class="headerlink" href="#langchain-condition-path-default-server-path" title="Permanent link">&para;</a></h3>
+<p>The LangChain-adapter evaluator keeps its <code>${...}</code> → <code>repr(resolved_value)</code> substitution layer (it resolves references against the LangGraph run-state dict, not an <code>ExecutionContext</code>), but the final evaluation is now routed through the engine's interpreter via the shared helper <code>engine.expressions.evaluate_safe_expression(...)</code>. After substitution the expression is literal-only, so it runs through the <em>same</em> <code>_validate_ast</code> + <code>_eval_node</code> machinery — the dunder block, the <code>coalesce</code>-only callable allowlist, and the sequence-multiply DoS cap all apply. <strong>No <code>eval()</code> / <code>compile()</code> of expressions remains on this path.</strong> (<code>re.compile</code> for the <code>${...}</code> token regex is unrelated to code execution.)</p>
+<p>The fail-<strong>open</strong> <code>except Exception: return False</code> is replaced with <strong>fail-closed</strong> behavior: only the expected error classes (<code>ExpressionError</code> — the engine helper's own <code>ValueError</code> subclass — plus <code>ValueError</code> / <code>NameError</code> / <code>TypeError</code>) are caught; the failure is logged with the raw expression <strong>redacted</strong> and re-raised as <code>ConditionEvaluationError</code>. A malformed or adversarial condition therefore surfaces to the run instead of silently skipping a step or looping forever. Legitimate "missing reference → benign comparison" cases (e.g. <code>None == 'value'</code>) still evaluate cleanly to a bool and do <strong>not</strong> raise.</p>
 <hr />
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Eliminates the <code>eval()</code>/<code>compile()</code> escape class entirely — there is no interpreter-level code execution left to sandbox.</li>
+<li>Eliminates the <code>eval()</code>/<code>compile()</code> escape class entirely — there is no interpreter-level code execution left to sandbox on <strong>either</strong> the native-engine path or the default LangChain server path.</li>
+<li>A single shared security boundary: the LangChain condition path and the engine path validate and walk expressions through the same code, so a hardening change applies to both at once and the two can no longer drift.</li>
 <li>Evaluation is explicit and auditable: only allowlisted node types and a single allowlisted callable execute.</li>
-<li>Adversarial coverage added to <code>tests/test_expressions.py</code>: dunder-traversal vectors, <code>str.format</code>/<code>format_map</code> bypass attempts, and the sequence-multiply DoS cap (128 cases total; every prior evaluator test retained and passing).</li>
+<li>The default condition path now fails <strong>closed</strong> and logged: a malformed / adversarial <code>when</code> / <code>loop_until</code> raises <code>ConditionEvaluationError</code> instead of silently returning <code>False</code>.</li>
+<li>Adversarial coverage in <code>tests/test_expressions.py</code> (engine) and <code>tests/test_langchain_expressions.py</code> (condition-path parity): dunder-traversal vectors, <code>str.format</code>/<code>format_map</code> bypass attempts, the sequence-multiply DoS cap, and a fail-closed + redacted-logging assertion. Every prior evaluator test is retained and passing.</li>
 </ul>
 <h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
 <ul>
 <li>New operators or node types must be added to the interpreter explicitly rather than inherited for free from Python — a deliberate, security-positive constraint.</li>
 <li>Marginally more code than a single <code>eval()</code> call.</li>
+<li>Callers of <code>evaluate_condition</code> must tolerate <code>ConditionEvaluationError</code> for unevaluable input (the prior contract silently returned <code>False</code>). This is the intended fail-closed behavior; legitimate conditions are unaffected.</li>
 </ul>
 <h3 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h3>
 <p>The AST-interpreter design was prototyped in the sibling <code>agentic-systems-lab</code> repository and upstreamed here. This ADR records the decision as adopted by <code>agentic-runtime-platform</code>; it does <strong>not</strong> import any execution-engine decision from that repository — ARP retains the dual-engine architecture of <a href="../ADR-001-002-003-architecture-decisions/">ADR-001</a> and the LangChain adapter of <a href="../ADR-020-langchain-adapter-eager-validation/">ADR-020</a>.</p>
 <hr />
 <h2 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>agentic_v2/engine/expressions.py</code> — <code>_safe_eval</code> (parse + validate + interpret), <code>_eval_node</code>, <code>_validate_ast</code>, <code>_BINOP_OPS</code> / <code>_UNARYOP_OPS</code> / <code>_CMPOP_OPS</code>, <code>_MAX_SEQUENCE_MULTIPLY</code>.</li>
-<li><code>tests/test_expressions.py</code> — 128 cases including the security vectors above.</li>
+<li><code>agentic_v2/engine/expressions.py</code> — <code>_safe_eval</code> (parse + validate + interpret), <code>_eval_node</code>, <code>_validate_ast</code>, <code>_BINOP_OPS</code> / <code>_UNARYOP_OPS</code> / <code>_CMPOP_OPS</code>, <code>_MAX_SEQUENCE_MULTIPLY</code>; plus the shared <code>evaluate_safe_expression(...)</code> entry point and the <code>ExpressionError</code> type reused by the LangChain path.</li>
+<li><code>agentic_v2/langchain/expressions.py</code> — <code>evaluate_condition</code> keeps the <code>${...}</code> → <code>repr(value)</code> substitution layer and delegates the final evaluation to <code>evaluate_safe_expression</code>; the fail-open <code>except</code> is replaced with fail-closed <code>ConditionEvaluationError</code> + redacted logging. <code>resolve_expression</code> (pure path / <code>coalesce</code> resolution, never <code>eval</code>) is unchanged.</li>
+<li><code>tests/test_expressions.py</code> — engine security corpus (dunder-traversal, <code>str.format</code>/<code>format_map</code> bypass, sequence-multiply DoS).</li>
+<li><code>tests/test_langchain_expressions.py</code> — condition-path adversarial parity (<code>_ADVERSARIAL_CONDITION_VECTORS</code>) plus a fail-closed + redacted-logging test.</li>
 </ul>
 
 
@@ -2939,7 +2968,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 13, 2026 16:04:36 UTC">June 13, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 15, 2026 04:03:25 UTC">June 15, 2026</span>
   </span>
 
     
