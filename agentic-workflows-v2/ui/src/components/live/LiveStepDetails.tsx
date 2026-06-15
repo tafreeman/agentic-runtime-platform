@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useId } from "react";
 import { ChevronDown, ChevronRight, Cpu, Timer } from "lucide-react";
 import StatusBadge from "../common/StatusBadge";
 import DurationDisplay from "../common/DurationDisplay";
@@ -48,7 +48,7 @@ export default function LiveStepDetailsList({
 
   if (names.length === 0) {
     return (
-      <div className="rounded-lg border border-white/5 bg-surface-1 px-3 py-4 text-center text-xs text-gray-600">
+      <div className="rounded-sm border border-b-line bg-b-bg1 px-3 py-4 text-center text-xs text-b-text-faint">
         Waiting for step updates...
       </div>
     );
@@ -87,22 +87,26 @@ function StepPanel({
   isOpen: boolean;
   onToggle: () => void;
 }>) {
+  const regionId = useId();
+
   return (
-    <div className="overflow-hidden rounded-lg border border-white/5 bg-surface-1">
+    <div className="overflow-hidden rounded-sm border border-b-line bg-b-bg1">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-2/30"
+        aria-expanded={isOpen}
+        aria-controls={regionId}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-b-bg2"
       >
         {isOpen ? (
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-4 w-4 text-b-text-dim" />
         ) : (
-          <ChevronRight className="h-4 w-4 text-gray-500" />
+          <ChevronRight className="h-4 w-4 text-b-text-dim" />
         )}
 
-        <span className="flex-1 truncate text-sm font-medium text-gray-200">{stepName}</span>
+        <span className="flex-1 truncate text-sm font-medium text-b-text">{stepName}</span>
 
-        <div className="flex items-center gap-2 text-[11px] text-gray-500">
+        <div className="flex items-center gap-2 text-[11px] text-b-text-dim">
           {step.durationMs != null && (
             <span className="flex items-center gap-1">
               <Timer className="h-3 w-3" />
@@ -121,7 +125,7 @@ function StepPanel({
       </button>
 
       {isOpen && (
-        <div className="border-t border-white/5 px-3 py-3">
+        <div id={regionId} className="border-t border-b-line px-3 py-3">
           <LiveStepDetails
             step={{
               step_name: stepName,
@@ -133,13 +137,13 @@ function StepPanel({
             }}
           />
 
-          <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-600">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs text-b-text-faint">
             {step.tier && <span>Tier: {step.tier}</span>}
             {step.modelUsed && (
               <span className="flex items-center gap-1">
                 Model: {step.modelUsed}
                 {step.modelInferred && (
-                  <span className="text-[10px] text-accent-amber/80 italic">(inferred)</span>
+                  <span className="text-[10px] text-b-amber/80 italic">(inferred)</span>
                 )}
               </span>
             )}
@@ -199,7 +203,7 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
       {isFailed && step.error && (
         <div
           data-testid="step-error"
-          className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400"
+          className="rounded-sm border border-b-red/40 bg-b-red/10 px-3 py-2 font-mono text-[11px] text-b-red"
         >
           {step.error}
         </div>
@@ -207,28 +211,28 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
 
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
-          <div className="mb-1 text-[10px] uppercase tracking-wide text-gray-500">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
             Status
           </div>
-          <div data-testid="step-status" className="text-gray-300">
+          <div data-testid="step-status" className="text-b-text">
             <StatusBadge status={step.status} size="sm" />
           </div>
         </div>
         <div>
-          <div className="mb-1 text-[10px] uppercase tracking-wide text-gray-500">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
             Duration
           </div>
-          <div data-testid="step-duration" className="text-gray-300">
+          <div data-testid="step-duration" className="text-b-text">
             {formatDuration(step.duration_ms)}
           </div>
         </div>
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] uppercase tracking-wide text-gray-500">
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
           Scores
         </div>
-        <div data-testid="step-scores" className="text-xs text-gray-300">
+        <div data-testid="step-scores" className="text-xs text-b-text">
           {hasScores ? (
             <JsonViewer
               data={step.scores}
@@ -242,12 +246,12 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] uppercase tracking-wide text-gray-500">
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
           Inputs
         </div>
         <div
           data-testid="step-input"
-          className="max-h-60 overflow-y-auto rounded-md bg-surface-0 p-3 text-xs"
+          className="max-h-60 overflow-y-auto rounded-sm bg-b-bg0 p-3 text-xs"
         >
           {hasInput ? (
             <JsonViewer
@@ -256,18 +260,18 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
               maxDepth={3}
             />
           ) : (
-            <span className="text-gray-600">No input captured yet.</span>
+            <span className="text-b-text-faint">No input captured yet.</span>
           )}
         </div>
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] uppercase tracking-wide text-gray-500">
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
           Outputs
         </div>
         <div
           data-testid="step-output"
-          className="max-h-60 overflow-y-auto rounded-md bg-surface-0 p-3 text-xs"
+          className="max-h-60 overflow-y-auto rounded-sm bg-b-bg0 p-3 text-xs"
         >
           {(() => {
             if (hasOutput) {
@@ -280,12 +284,12 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
               );
             }
             if (isRunning) {
-              return <span className="text-gray-500 italic">streaming...</span>;
+              return <span className="text-b-text-dim italic">streaming...</span>;
             }
             if (isFailed) {
-              return <span className="text-gray-600">No output (step failed).</span>;
+              return <span className="text-b-text-faint">No output (step failed).</span>;
             }
-            return <span className="text-gray-600">No output captured yet.</span>;
+            return <span className="text-b-text-faint">No output captured yet.</span>;
           })()}
         </div>
       </div>

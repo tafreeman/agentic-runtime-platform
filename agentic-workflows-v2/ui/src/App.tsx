@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./components/layout/Sidebar";
 import DashboardPage from "./pages/DashboardPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
@@ -15,6 +16,20 @@ import NotFoundPage from "./components/states/NotFoundPage";
 
 export default function App() {
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
+  const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+  const isFirstRender = useRef(true);
+
+  // Move focus to the main region on client-side navigation so keyboard and
+  // screen-reader users are told the content changed. Skip the initial load —
+  // focus belongs wherever the browser placed it then.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    mainRef.current?.focus();
+  }, [location.pathname]);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -26,7 +41,12 @@ export default function App() {
         skip to main content
       </a>
       <Sidebar />
-      <main id="main-content" className="flex-1 overflow-hidden" tabIndex={-1}>
+      <main
+        ref={mainRef}
+        id="main-content"
+        className="flex-1 overflow-hidden focus:outline-none"
+        tabIndex={-1}
+      >
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/workflows" element={<WorkflowsPage />} />

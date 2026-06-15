@@ -1,5 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, it, expect, vi } from "vitest";
+import type { ReactElement } from "react";
 import type { WorkflowInputSchema } from "../api/types";
 
 const clientMocks = vi.hoisted(() => ({
@@ -9,6 +11,20 @@ const clientMocks = vi.hoisted(() => ({
 vi.mock("../api/client", () => clientMocks);
 
 import RunConfigForm from "../components/runs/RunConfigForm";
+
+/**
+ * Render inside a fresh QueryClient — the form now loads datasets via the
+ * shared `useEvaluationDatasets` react-query hook (was a hand-rolled fetch).
+ * A new client per render keeps the dataset cache from leaking across tests.
+ */
+function renderForm(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
 
 /** Helper to build a minimal input schema. */
 function makeInput(
@@ -64,7 +80,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     // Both fields should be rendered
     expect(screen.getByTestId("input-repo_url")).toBeInTheDocument();
@@ -84,7 +100,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     const select = screen.getByTestId("input-language") as HTMLSelectElement;
     expect(select.tagName).toBe("SELECT");
@@ -104,7 +120,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     const optionalInput = screen.getByTestId(
       "input-optional_field"
@@ -123,7 +139,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     const input = screen.getByTestId("input-model") as HTMLInputElement;
     expect(input.value).toBe("gpt-4o");
@@ -135,7 +151,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     // Advanced panel should not be visible initially
     expect(screen.queryByTestId("rubric-config")).not.toBeInTheDocument();
@@ -155,7 +171,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     // The form should emit onChange on initial render with defaults
     expect(onChange).toHaveBeenCalled();
@@ -173,7 +189,7 @@ describe("RunConfigForm", () => {
     ];
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />);
 
     const textarea = screen.getByTestId("input-config") as HTMLTextAreaElement;
     expect(textarea.tagName).toBe("TEXTAREA");
@@ -182,7 +198,7 @@ describe("RunConfigForm", () => {
   it("renders no input grid when inputs array is empty", () => {
     const onChange = vi.fn();
 
-    render(<RunConfigForm inputs={[]} workflowName="test" onChange={onChange} />);
+    renderForm(<RunConfigForm inputs={[]} workflowName="test" onChange={onChange} />);
 
     expect(screen.queryByTestId("workflow-inputs")).not.toBeInTheDocument();
     // Form wrapper should still exist
@@ -192,7 +208,7 @@ describe("RunConfigForm", () => {
   it("loads selectable local datasets and emits the selected dataset config", async () => {
     const onChange = vi.fn();
 
-    render(
+    renderForm(
       <RunConfigForm
         inputs={[makeInput({ name: "prompt", default: "hello" })]}
         workflowName="test"

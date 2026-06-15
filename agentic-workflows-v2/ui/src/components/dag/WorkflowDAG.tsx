@@ -255,8 +255,8 @@ function WorkflowDAGInner({
       const traversalCount = edgeCounts?.get(edgeId) ?? 0;
       const isKickback = kickbackEdges?.has(edgeId) ?? false;
 
-      // Design token colors
-      const defaultColor = "#2c2c36"; // b-bg2 — pending/dark
+      // Theme-aware design-token colors (CSS vars resolve per active theme).
+      const defaultColor = "rgb(var(--b-line))"; // pending/idle edge
       let strokeColor = defaultColor;
       let animated = false;
       let strokeDasharray: string | undefined;
@@ -266,16 +266,16 @@ function WorkflowDAGInner({
         !disconnected;
 
       if (isKickback && traversalCount > 0) {
-        strokeColor = "#c084fc"; // b-purple
+        strokeColor = "rgb(var(--b-purple))";
         strokeDasharray = "3 3";
       } else if (sourceState?.status === "success" && targetState?.status === "running" && !disconnected) {
         animated = true;
       } else if (sourceState?.status === "success") {
-        strokeColor = "#4ade80"; // b-green — completed
+        strokeColor = "rgb(var(--b-green))"; // completed
       } else if (sourceState?.status === "running") {
-        strokeColor = "#d97757"; // b-clay — running source
+        strokeColor = "rgb(var(--b-clay))"; // running source
       } else if (sourceState?.status === "failed") {
-        strokeColor = "rgba(248,113,113,0.5)"; // b-red faint
+        strokeColor = "rgb(var(--b-red) / 0.5)"; // failed source, faint
       }
 
       return {
@@ -329,7 +329,12 @@ function WorkflowDAGInner({
         minZoom={0.2}
         maxZoom={2}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#1a1a28" />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
+          color="rgb(var(--b-line-soft))"
+        />
         <Controls showInteractive={false} className="dag-controls" />
       </ReactFlow>
     </div>

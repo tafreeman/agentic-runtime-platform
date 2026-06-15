@@ -50,9 +50,10 @@ function rootOf(container: HTMLElement, id = "step-a"): HTMLElement | null {
 }
 
 describe("StepNode — live animation (Story 2.5)", () => {
-  it("applies clay glow class when running", () => {
+  it("applies the theme-aware clay glow when running", () => {
     const { container } = renderStepNode({ status: "running" });
-    expect(container.innerHTML).toContain("rgba(217, 119, 87, 0.33)");
+    // Glow is now token-driven so it adapts across themes (was a hardcoded rgba).
+    expect(container.innerHTML).toContain("rgb(var(--b-clay) / 0.33)");
   });
 
   it("removes glow class when succeeded", () => {

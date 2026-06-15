@@ -29,9 +29,10 @@ export function useWorkflowEditor(name: string | undefined, enabled = true) {
   });
 }
 
-export function useEvaluationDatasets() {
+export function useEvaluationDatasets(enabled = true) {
   return useQuery({
     queryKey: ["evaluation-datasets"],
     queryFn: () => listEvaluationDatasets(),
+    enabled,
   });
 }

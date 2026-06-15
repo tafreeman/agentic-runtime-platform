@@ -156,3 +156,28 @@
 .react-flow__node {
   transition: opacity 0.3s ease;
 }
+
+/* ──────────────────────────────────────────────────────────────
+ * Reduced motion (WCAG 2.3.3 / seizure safety)
+ *
+ * Users who set `prefers-reduced-motion: reduce` at the OS level get a
+ * static experience: looping/infinite animations (clay-glow, dash-flow,
+ * the blinking cursor, opacity pulses) are stopped, and large transform
+ * transitions (DAG pan/zoom, node/edge fades) snap instantly instead of
+ * animating. Short color transitions are flattened too — harmless, and
+ * keeps the rule simple and future-proof.
+ * ────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .react-flow__viewport {
+    transition: none !important;
+  }
+}

@@ -5,6 +5,8 @@ import BTopBar from "../components/layout/BTopBar";
 import BBox from "../components/common/BBox";
 import BPill, { type BPillTone } from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
+import EmptyState from "../components/states/EmptyState";
+import InlineError from "../components/states/InlineError";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
 type BarColor = "b-green" | "b-clay" | "b-red" | "b-amber" | "b-blue";
@@ -43,7 +45,7 @@ function rateBarColor(ratio: number): BarColor {
 }
 
 export default function EvaluationsPage() {
-  const { data: runs, isLoading } = useRuns();
+  const { data: runs, isLoading, isError, error, refetch } = useRuns();
   const [expandedFilename, setExpandedFilename] = useState<string | null>(null);
 
   const evaluatedRuns = useMemo(
@@ -92,13 +94,26 @@ export default function EvaluationsPage() {
         Loading evaluations...
       </div>
     );
+  } else if (isError) {
+    mainContent = (
+      <InlineError
+        message={`failed to load evaluations${error instanceof Error ? `: ${error.message}` : ""}`}
+        onRetry={() => refetch()}
+      />
+    );
   } else if (evaluatedRuns.length === 0) {
     mainContent = (
-      <BBox>
-        <div className="p-8 text-center font-mono text-[11px] text-b-text-dim">
-          No evaluations found
-        </div>
-      </BBox>
+      <EmptyState
+        entity="evaluated runs"
+        action={
+          <Link
+            to="/workflows"
+            className="font-mono text-[11px] text-b-clay underline hover:text-b-text"
+          >
+            [→ run a workflow with evaluation]
+          </Link>
+        }
+      />
     );
   } else {
     mainContent = (
@@ -256,8 +271,10 @@ export default function EvaluationsPage() {
                                   [↗]
                                 </Link>
                                 <button
+                                  type="button"
                                   className="ml-2 font-mono text-[10px] text-b-text-dim hover:text-b-text"
-                                  aria-label={isExpanded ? "collapse" : "expand"}
+                                  aria-label={isExpanded ? "collapse rubric" : "expand rubric"}
+                                  aria-expanded={isExpanded}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setExpandedFilename(

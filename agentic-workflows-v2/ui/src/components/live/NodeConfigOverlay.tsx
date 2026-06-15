@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   X,
   Save,
@@ -42,11 +42,62 @@ export default function NodeConfigOverlay({
 }: Readonly<NodeConfigOverlayProps>) {
   const [config, setConfig] = useState<NodeConfig>(initialConfig);
   const [hasChanges, setHasChanges] = useState(false);
+  const firstFocusableRef = useRef<HTMLSelectElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setConfig(initialConfig);
     setHasChanges(false);
   }, [initialConfig, isOpen]);
+
+  // Focus first control when panel opens
+  useEffect(() => {
+    if (isOpen) {
+      firstFocusableRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Close on Escape and trap focus within panel
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "Tab" && panelRef.current) {
+        const focusable = Array.from(
+          panelRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => !el.hasAttribute("disabled"));
+
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (!first || !last) return;
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleConfigChange = useCallback(
     (key: keyof NodeConfig, value: any) => {
@@ -92,25 +143,31 @@ export default function NodeConfigOverlay({
       />
 
       {/* Overlay Panel */}
-      <div className="relative h-screen max-h-screen w-full max-w-2xl overflow-hidden bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="node-config-title"
+        className="relative h-screen max-h-screen w-full max-w-2xl overflow-hidden bg-b-bg1 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-6 py-4 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-6 py-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <Settings2 className="h-5 w-5 text-gray-600" />
+            <Settings2 className="h-5 w-5 text-b-text-mid" />
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 id="node-config-title" className="text-lg font-semibold text-b-text">
                 Configure Step
               </h2>
-              <p className="text-sm text-gray-500">{stepName}</p>
+              <p className="text-sm text-b-text-dim">{stepName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             type="button"
-            className="rounded-lg p-2 hover:bg-gray-100 transition-colors"
-            title="Close"
+            className="btn btn-ghost rounded-sm p-2"
+            aria-label="Close configuration panel"
           >
-            <X className="h-5 w-5 text-gray-600" />
+            <X aria-hidden="true" className="h-5 w-5 text-b-text-mid" />
           </button>
         </div>
 
@@ -118,14 +175,15 @@ export default function NodeConfigOverlay({
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Model Selection */}
           <div>
-            <label htmlFor="node-config-model" className="block text-sm font-medium text-gray-900 mb-2">
+            <label htmlFor="node-config-model" className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim mb-2">
               Model
             </label>
             <select
               id="node-config-model"
+              ref={firstFocusableRef}
               value={config.model || ""}
               onChange={(e) => handleConfigChange("model", e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+              className="w-full rounded-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
             >
               <option value="">Use Default (tier-based)</option>
               {availableModels.map((model) => (
@@ -134,7 +192,7 @@ export default function NodeConfigOverlay({
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-b-text-dim">
               Leave empty to use default model for this agent tier
             </p>
           </div>
@@ -142,14 +200,14 @@ export default function NodeConfigOverlay({
           {/* System Prompt */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label htmlFor="node-config-system-prompt" className="block text-sm font-medium text-gray-900">
+              <label htmlFor="node-config-system-prompt" className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
                 System Prompt / Instructions
               </label>
               {config.system_prompt && (
                 <button
                   onClick={handleCopyPrompt}
                   type="button"
-                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-b-text-mid hover:bg-b-bg2 transition-colors"
                   title="Copy prompt to clipboard"
                 >
                   <Copy className="h-3 w-3" />
@@ -165,9 +223,9 @@ export default function NodeConfigOverlay({
               }
               placeholder="Leave empty to use default instructions..."
               rows={6}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-mono focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors resize-none"
+              className="w-full rounded-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm font-mono text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors resize-none"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-b-text-dim">
               Override the system prompt for this agent
             </p>
           </div>
@@ -176,7 +234,7 @@ export default function NodeConfigOverlay({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {/* Temperature */}
             <div>
-              <label htmlFor="node-config-temperature" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-temperature" className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim mb-2">
                 Temperature
               </label>
               <input
@@ -193,16 +251,16 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="0.7"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-b-text-dim">
                 0.0 (deterministic) - 2.0 (creative)
               </p>
             </div>
 
             {/* Max Tokens */}
             <div>
-              <label htmlFor="node-config-max-tokens" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-max-tokens" className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim mb-2">
                 Max Tokens
               </label>
               <input
@@ -218,14 +276,14 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="4096"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
-              <p className="mt-1 text-xs text-gray-500">Maximum response length</p>
+              <p className="mt-1 text-xs text-b-text-dim">Maximum response length</p>
             </div>
 
             {/* Top P */}
             <div>
-              <label htmlFor="node-config-top-p" className="block text-sm font-medium text-gray-900 mb-2">
+              <label htmlFor="node-config-top-p" className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim mb-2">
                 Top P
               </label>
               <input
@@ -242,9 +300,9 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="1.0"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-b-text-dim">
                 Nucleus sampling (0.0 - 1.0)
               </p>
             </div>
@@ -253,14 +311,14 @@ export default function NodeConfigOverlay({
           {/* Tools Selection */}
           {availableTools.length > 0 && (
             <fieldset>
-              <legend className="block text-sm font-medium text-gray-900 mb-2">
+              <legend className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim mb-2">
                 Available Tools
               </legend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {availableTools.map((tool) => (
                   <label
                     key={tool}
-                    className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2 rounded-sm border border-b-line bg-b-bg0 px-3 py-2 cursor-pointer hover:bg-b-bg2 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -278,21 +336,21 @@ export default function NodeConfigOverlay({
                           updated.length > 0 ? updated : undefined
                         );
                       }}
-                      className="rounded border-gray-300"
+                      className="rounded-sm border-b-line"
                     />
-                    <span className="text-xs text-gray-700">{tool}</span>
+                    <span className="font-mono text-[11px] text-b-text-mid">{tool}</span>
                   </label>
                 ))}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-b-text-dim">
                 Select which tools this agent can use
               </p>
             </fieldset>
           )}
 
           {/* Info Box */}
-          <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-            <p className="text-xs text-blue-900">
+          <div className="rounded-sm border border-b-blue/40 bg-b-blue/10 p-3">
+            <p className="font-mono text-[11px] text-b-blue">
               <strong>Note:</strong> Configuration changes are applied immediately
               to the next execution of this step. Changes persist for the entire
               workflow run.
@@ -301,12 +359,12 @@ export default function NodeConfigOverlay({
         </div>
 
         {/* Footer / Actions */}
-        <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 border-t border-b-line bg-b-bg2 px-6 py-4 flex items-center justify-between">
           <button
             onClick={handleReset}
             type="button"
             disabled={!hasChanges}
-            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn btn-ghost inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="h-4 w-4" />
             Reset
@@ -316,7 +374,7 @@ export default function NodeConfigOverlay({
             <button
               onClick={onClose}
               type="button"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="btn btn-ghost"
             >
               Cancel
             </button>
@@ -324,7 +382,7 @@ export default function NodeConfigOverlay({
               onClick={handleSave}
               type="button"
               disabled={!hasChanges}
-              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn btn-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="h-4 w-4" />
               Save & Apply

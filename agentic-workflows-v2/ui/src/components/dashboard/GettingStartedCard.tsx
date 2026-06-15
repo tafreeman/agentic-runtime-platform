@@ -169,7 +169,7 @@ export default function GettingStartedCard({
                   </p>
                   {step.inlineGuidance && (
                     <div className="mt-2 rounded border border-b-line bg-b-bg3 px-2 py-1.5 font-mono text-[10px] text-b-text-faint">
-                      💡 {step.inlineGuidance}
+                      [i] {step.inlineGuidance}
                     </div>
                   )}
                 </div>

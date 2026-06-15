@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
 import { runWorkflow } from "../api/client";
+import InlineError from "../components/states/InlineError";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
 import RunList from "../components/runs/RunList";
 import RunConfigForm, {
@@ -114,7 +115,7 @@ export default function WorkflowDetailPage() {
     isError: dagError,
     error: dagQueryError,
   } = useWorkflowDAG(name);
-  const { data: runs, isLoading: runsLoading } = useRuns(name);
+  const { data: runs, isLoading: runsLoading, isError: runsError, refetch: refetchRuns } = useRuns(name);
   const dagErrorMessage =
     dagQueryError instanceof Error ? dagQueryError.message : "failed to load dag";
   const hasWorkflowSteps = (dag?.nodes.length ?? 0) > 0;
@@ -212,10 +213,11 @@ export default function WorkflowDetailPage() {
       <BTopBar path={`workflows/${name ?? ""}`}>
         <button
           type="button"
+          aria-label="Go back"
           onClick={() => navigate("/workflows")}
           className="btn-ghost"
         >
-          <ArrowLeft className="h-3 w-3" />
+          <ArrowLeft aria-hidden="true" className="h-3 w-3" />
           <span>[b] back</span>
         </button>
         {workflowBuilderEnabled && name && (
@@ -230,7 +232,7 @@ export default function WorkflowDetailPage() {
         {supportsDeterministicDemo && (
           <button
             type="button"
-            onClick={() => runMutation.mutate()}
+            onClick={() => { if (runMutation.isPending) return; runMutation.mutate(); }}
             disabled={runMutation.isPending}
             className="btn-ghost"
           >
@@ -240,7 +242,7 @@ export default function WorkflowDetailPage() {
         )}
         <button
           type="button"
-          onClick={() => runMutation.mutate()}
+          onClick={() => { if (runMutation.isPending) return; runMutation.mutate(); }}
           disabled={runMutation.isPending}
           className="btn-primary"
           data-testid="run-button"
@@ -258,7 +260,7 @@ export default function WorkflowDetailPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── Center: DAG ── */}
-        <div className="flex flex-1 flex-col overflow-hidden border-r border-b-line">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-b-line">
           {/* Slim DAG header */}
           <div className="flex items-center gap-3 border-b border-b-line bg-b-bg1 px-4 py-2">
             <span className="font-mono text-[10px] font-bold text-b-clay uppercase tracking-wider">
@@ -305,7 +307,7 @@ export default function WorkflowDetailPage() {
         </div>
 
         {/* ── Right panel: Run config + Run history ── */}
-        <div className="w-[340px] flex flex-col overflow-y-auto bg-b-bg0">
+        <div className="flex w-full flex-col overflow-y-auto bg-b-bg0 md:w-[340px]">
           {/* $ RUN CONFIGURATION header */}
           <div className="flex items-center justify-between border-b border-b-line bg-b-bg1 px-4 py-2">
             <span className="font-mono text-[10px] font-bold text-b-clay uppercase tracking-wider">
@@ -342,7 +344,14 @@ export default function WorkflowDetailPage() {
                 </span>
               </div>
               <div className="p-2">
-                <RunList runs={runs} isLoading={runsLoading} />
+                {runsError ? (
+                  <InlineError
+                    message="failed to load run history"
+                    onRetry={() => void refetchRuns()}
+                  />
+                ) : (
+                  <RunList runs={runs} isLoading={runsLoading} />
+                )}
               </div>
             </div>
           </div>

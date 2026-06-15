@@ -15,11 +15,17 @@ export default function BAsciiBar({
   const filled = Math.round(clamped * width);
   const empty = width - filled;
   const bar = "█".repeat(filled) + "░".repeat(empty);
+  const pct = Math.round(clamped * 100);
   return (
     <span
+      role="progressbar"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${pct}%`}
       className={`font-mono text-[10px] leading-none text-${color} ${className}`}
     >
-      {bar}
+      <span aria-hidden="true">{bar}</span>
     </span>
   );
 }

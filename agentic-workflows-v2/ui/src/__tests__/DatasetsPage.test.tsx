@@ -28,7 +28,8 @@ describe("DatasetsPage", () => {
       error: null,
     });
     rerender(<DatasetsPage />);
-    expect(screen.getByText("No datasets available.")).toBeInTheDocument();
+    // Empty state now uses the shared <EmptyState> component ("$ no … yet").
+    expect(screen.getByText("no datasets yet")).toBeInTheDocument();
   });
 
   it("renders repository, local, and evaluation set cards", () => {

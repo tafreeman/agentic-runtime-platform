@@ -1,6 +1,7 @@
 import { memo, useEffect, useState, type ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { StepStatus } from "../../api/types";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 export interface StepNodeData {
   label: string;
@@ -35,15 +36,15 @@ function resolveModelBadge(
 ): { label: string; bg: string; fg: string } | null {
   if (!modelUsed && !tier) return null;
   const m = (modelUsed ?? "").toLowerCase();
-  if (m.includes("opus"))   return { label: "OPUS",   bg: "rgba(217,119,87,0.18)",  fg: "rgb(var(--b-clay))" };
-  if (m.includes("sonnet")) return { label: "SONNET", bg: "rgba(56,189,248,0.18)",  fg: "rgb(var(--b-blue))" };
-  if (m.includes("haiku"))  return { label: "HAIKU",  bg: "rgba(74,222,128,0.15)",   fg: "rgb(var(--b-green))" };
-  if (m.includes("flash"))  return { label: "FLASH",  bg: "rgba(56,189,248,0.18)",  fg: "rgb(var(--b-blue))" };
-  if (m.includes("gpt-4"))  return { label: "GPT-4",  bg: "rgba(74,222,128,0.15)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("gpt-3"))  return { label: "GPT-3",  bg: "rgba(74,222,128,0.12)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("gemini")) return { label: "GEMINI", bg: "rgba(74,222,128,0.15)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("llama"))  return { label: "LLAMA",  bg: "rgba(192,132,252,0.15)", fg: "rgb(var(--b-purple))" };
-  if (m.includes("mistral"))return { label: "MIST",   bg: "rgba(192,132,252,0.15)", fg: "rgb(var(--b-purple))" };
+  if (m.includes("opus"))   return { label: "OPUS",   bg: "rgb(var(--b-clay) / 0.18)",   fg: "rgb(var(--b-clay))" };
+  if (m.includes("sonnet")) return { label: "SONNET", bg: "rgb(var(--b-blue) / 0.18)",   fg: "rgb(var(--b-blue))" };
+  if (m.includes("haiku"))  return { label: "HAIKU",  bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
+  if (m.includes("flash"))  return { label: "FLASH",  bg: "rgb(var(--b-blue) / 0.18)",   fg: "rgb(var(--b-blue))" };
+  if (m.includes("gpt-4"))  return { label: "GPT-4",  bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
+  if (m.includes("gpt-3"))  return { label: "GPT-3",  bg: "rgb(var(--b-green) / 0.12)",  fg: "rgb(var(--b-green))" };
+  if (m.includes("gemini")) return { label: "GEMINI", bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
+  if (m.includes("llama"))  return { label: "LLAMA",  bg: "rgb(var(--b-purple) / 0.15)", fg: "rgb(var(--b-purple))" };
+  if (m.includes("mistral"))return { label: "MIST",   bg: "rgb(var(--b-purple) / 0.15)", fg: "rgb(var(--b-purple))" };
   // Fallback: show tier if no model yet
   if (tier) return { label: tier.toUpperCase(), bg: "rgb(var(--b-bg2))", fg: "rgb(var(--b-purple))" };
   return null;
@@ -70,11 +71,11 @@ const ASCII_STATUS: Record<StepStatus, string> = {
 
 function statusBorderColor(status: StepStatus): string {
   switch (status) {
-    case "success":   return "#4ade80";
-    case "running":   return "#d97757";
-    case "failed":    return "#f87171";
-    case "skipped":   return "#fb923c";
-    default:          return "#40403a";
+    case "success":   return "rgb(var(--b-green))";
+    case "running":   return "rgb(var(--b-clay))";
+    case "failed":    return "rgb(var(--b-red))";
+    case "skipped":   return "rgb(var(--b-amber))";
+    default:          return "rgb(var(--b-line))";
   }
 }
 
@@ -104,13 +105,13 @@ function StepNodeComponent({ id, data }: NodeProps) {
         data-testid={`dag-node-${id}`}
         style={{
           width: 128,
-          background: "rgb(8, 8, 12)",
+          background: "rgb(var(--b-bg0))",
           border: `1px solid ${borderColor}`,
           padding: "5px 8px",
           fontSize: 10,
           fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
           boxSizing: "border-box",
-          boxShadow: status === "running" ? `rgba(217, 119, 87, 0.33) 0px 0px 10px` : "none",
+          boxShadow: status === "running" ? `rgb(var(--b-clay) / 0.33) 0px 0px 10px` : "none",
         }}
       >
         {/* Row 1: [OK] status glyph + model badge (space-between) */}
@@ -146,7 +147,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
         {/* Row 2: step name on its own line */}
         <div
           style={{
-            color: "rgb(236, 236, 222)",
+            color: "rgb(var(--b-text))",
             fontWeight: 600,
             fontSize: "10.5px",
             marginTop: "2px",
@@ -167,16 +168,16 @@ function StepNodeComponent({ id, data }: NodeProps) {
               tokenContent = (
                 <>
                   {tokensIn != null && (
-                    <span>↓<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
+                    <span>↓<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
                   )}
                   {tokensOut != null && (
-                    <span>↑<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
+                    <span>↑<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
                   )}
                 </>
               );
             } else if (tokensUsed != null) {
               tokenContent = (
-                <span>↕<span style={{ color: "rgb(236,236,222)", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
+                <span>↕<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
               );
             }
             return (
@@ -187,7 +188,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
                   display: "flex",
                   justifyContent: "space-between",
                   fontSize: "9px",
-                  color: "#a4a494",
+                  color: "rgb(var(--b-text-mid))",
                   fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
                 }}
               >
@@ -196,7 +197,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
             );
           }
           if (status === "pending") {
-            return <div style={{ marginTop: "4px", fontSize: "9px", color: "#40403a" }}>queued</div>;
+            return <div style={{ marginTop: "4px", fontSize: "9px", color: "rgb(var(--b-text-faint))" }}>queued</div>;
           }
           return null;
         })()}
@@ -209,7 +210,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "9px",
-                color: "#70706a",
+                color: "rgb(var(--b-text-dim))",
               }}
             >
               <StepTimer
@@ -217,7 +218,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
                 startTime={nodeData.startTime}
                 durationMs={nodeData.durationMs}
               />
-              <span style={{ color: "#d97757" }}>streaming</span>
+              <span style={{ color: "rgb(var(--b-clay))" }}>streaming</span>
             </div>
             <StreamingBar />
           </div>
@@ -233,7 +234,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
               overflowY: "auto",
               wordBreak: "break-word",
               fontSize: "9px",
-              color: "#f87171",
+              color: "rgb(var(--b-red))",
             }}
           >
             {error}
@@ -271,26 +272,28 @@ function resolveStatusColor(status: StepStatus): string {
 
 /** Thin animated progress bar shown while a step is streaming. */
 function StreamingBar() {
+  const reducedMotion = usePrefersReducedMotion();
   const [phase, setPhase] = useState(0);
 
   useEffect(() => {
+    if (reducedMotion) return;
     const id = setInterval(() => setPhase((p) => (p + 1) % 100), 8);
     return () => clearInterval(id);
-  }, []);
+  }, [reducedMotion]);
 
-  // Oscillate between 20% and 80%
-  const pct = 20 + Math.abs(Math.sin(phase * 0.063)) * 60;
+  // Oscillate between 20% and 80%; hold a steady fill when motion is reduced.
+  const pct = reducedMotion ? 60 : 20 + Math.abs(Math.sin(phase * 0.063)) * 60;
 
   return (
     <div
       data-testid="step-node-streaming-bar"
-      style={{ marginTop: "2px", height: "2px", background: "#1d1d26", overflow: "hidden" }}
+      style={{ marginTop: "2px", height: "2px", background: "rgb(var(--b-bg3))", overflow: "hidden" }}
     >
       <div
         style={{
           width: `${pct}%`,
           height: "100%",
-          background: "#d97757",
+          background: "rgb(var(--b-clay))",
           transition: "width 0.08s linear",
         }}
       />

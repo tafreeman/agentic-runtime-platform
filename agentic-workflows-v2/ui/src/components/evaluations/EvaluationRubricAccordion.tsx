@@ -17,12 +17,20 @@ function gradeToTone(grade: string): BPillTone {
 export default function EvaluationRubricAccordion({
   filename,
 }: Readonly<EvaluationRubricAccordionProps>) {
-  const { data, isLoading } = useRunEvaluationDetail(filename);
+  const { data, isLoading, isError, error } = useRunEvaluationDetail(filename);
 
   if (isLoading) {
     return (
       <div className="p-2 font-mono text-[11px] text-b-text-dim">
         $ loading rubric…
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-2 font-mono text-[11px] text-b-red">
+        [!] {error instanceof Error ? error.message : "failed to load rubric"}
       </div>
     );
   }

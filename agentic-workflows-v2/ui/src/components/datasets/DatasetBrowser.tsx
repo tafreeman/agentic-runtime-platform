@@ -23,7 +23,7 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
   return (
     <div className="flex h-full overflow-hidden border border-b-line">
       {/* Left pane — dataset list */}
-      <div className="w-1/4 overflow-y-auto border-r border-b-line">
+      <div className="w-1/4 min-w-[160px] overflow-y-auto border-r border-b-line">
         {datasets.repository.length > 0 && (
           <div>
             <div className="border-b border-b-line-soft bg-b-bg2 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-b-text-faint">
@@ -104,6 +104,14 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
             ))}
           </div>
         )}
+
+        {datasets.repository.length === 0 &&
+          datasets.local.length === 0 &&
+          datasets.eval_sets.length === 0 && (
+            <div className="px-3 py-4 font-mono text-[11px] text-b-text-dim">
+              $ no datasets available
+            </div>
+          )}
       </div>
 
       {/* Middle pane — sample index */}

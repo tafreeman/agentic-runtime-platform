@@ -6,6 +6,7 @@ import BTopBar from "../components/layout/BTopBar";
 import BBox from "../components/common/BBox";
 import BPill from "../components/common/BPill";
 import DurationDisplay from "../components/common/DurationDisplay";
+import InlineError from "../components/states/InlineError";
 import type { RunSummary } from "../api/types";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
@@ -37,7 +38,7 @@ function shortId(run: RunSummary): string {
 }
 
 export default function RunsPage() {
-  const { data: runs, isLoading } = useRuns();
+  const { data: runs, isLoading, isError, error, refetch } = useRuns();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +106,7 @@ export default function RunsPage() {
                     className={`font-mono text-[11px] rounded-sm px-2 py-1 border transition-colors ${
                       active
                         ? "border-b-clay text-b-clay bg-b-clay/10"
-                        : "border-b-line text-b-text-dim hover:text-b-text hover:border-b-line-mid"
+                        : "border-b-line text-b-text-dim hover:text-b-text hover:border-b-line"
                     }`}
                   >
                     {f} <span className="text-b-text-faint">({count})</span>
@@ -119,6 +120,7 @@ export default function RunsPage() {
               <input
                 ref={inputRef}
                 type="text"
+                aria-label="Search runs by workflow name or run ID"
                 placeholder="search by workflow or run id…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -131,6 +133,14 @@ export default function RunsPage() {
               )}
             </div>
           </div>
+
+          {/* Error (non-blocking — stale rows may still be shown below) */}
+          {isError && (
+            <InlineError
+              message={`failed to load runs${error instanceof Error ? `: ${error.message}` : ""}`}
+              onRetry={() => refetch()}
+            />
+          )}
 
           {/* Loading */}
           {isLoading && (

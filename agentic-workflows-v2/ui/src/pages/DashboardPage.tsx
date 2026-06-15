@@ -116,6 +116,19 @@ function StatCard({
   );
 }
 
+/** Placeholder card shown while summary data is loading on a cold start. */
+function StatCardSkeleton() {
+  return (
+    <BBox>
+      <div className="p-[14px]">
+        <div className="h-[10px] w-16 animate-pulse rounded bg-b-bg3" />
+        <div className="mt-2 h-[26px] w-20 animate-pulse rounded bg-b-bg3" />
+        <div className="mt-3 h-[24px] w-full animate-pulse rounded bg-b-bg2" />
+      </div>
+    </BBox>
+  );
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const summaryQuery = useRunsSummary();
@@ -125,6 +138,11 @@ export default function DashboardPage() {
   const runs = runsQuery.data;
   const workflows = workflowsQuery.data;
   const noLlmMode = isNoLlmModeEnabled();
+
+  // Cold-start loading (no cached data yet) — render skeletons instead of
+  // zero-filled cards so the page doesn't look like an empty workspace.
+  const isSummaryLoading = summaryQuery.isLoading && !summary;
+  const isRunsLoading = runsQuery.isLoading && !runs;
 
   const [filter, setFilter] = useState("");
   const filterRef = useRef<HTMLInputElement>(null);
@@ -261,49 +279,73 @@ export default function DashboardPage() {
 
           {loadErrorMessage ? (
             <BBox title="dashboard notice">
-              <div className="p-[14px] font-mono text-[11px] text-b-amber">
-                [!] some dashboard data could not be loaded · {loadErrorMessage}
+              <div
+                role="alert"
+                className="flex items-center gap-2 p-[14px] font-mono text-[11px] text-b-amber"
+              >
+                <span className="flex-1">
+                  [!] some dashboard data could not be loaded · {loadErrorMessage}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    runsQuery.refetch();
+                    summaryQuery.refetch();
+                    workflowsQuery.refetch();
+                  }}
+                  className="rounded-sm border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-none focus:ring-1 focus:ring-b-amber/50"
+                >
+                  retry
+                </button>
               </div>
             </BBox>
           ) : null}
 
           {/* Stat cards */}
-          <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-            <StatCard
-              label="total runs"
-              value={totalRuns.toLocaleString()}
-              delta={totalRuns > 0 ? `+${totalRuns}` : undefined}
-              deltaTone="up"
-              values={sparkSeries}
-              sparkColor="rgb(var(--b-green))"
-            />
-            <StatCard
-              label="success rate"
-              value={`${successRate.toFixed(1)}%`}
-              delta={failed > 0 ? `-${failed} fail` : undefined}
-              deltaTone={failed > 0 ? "down" : "up"}
-              values={sparkSeries.map((v) => v * 0.9 + 1)}
-              sparkColor="rgb(var(--b-clay))"
-            />
-            <StatCard
-              label="avg score"
-              value="—"
-              empty
-              values={sparkSeries.map((v) => v + 2)}
-              sparkColor="rgb(var(--b-blue))"
-            />
-            <StatCard
-              label="tokens 30d"
-              value={
-                typeof summary?.tokens_30d === "number"
-                  ? summary.tokens_30d.toLocaleString()
-                  : "—"
-              }
-              empty={!summary?.tokens_30d}
-              values={sparkSeries}
-              sparkColor="rgb(var(--b-purple))"
-            />
-          </div>
+          {isSummaryLoading ? (
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              {["sk-stat-0", "sk-stat-1", "sk-stat-2", "sk-stat-3"].map((k) => (
+                <StatCardSkeleton key={k} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              <StatCard
+                label="total runs"
+                value={totalRuns.toLocaleString()}
+                delta={totalRuns > 0 ? `+${totalRuns}` : undefined}
+                deltaTone="up"
+                values={sparkSeries}
+                sparkColor="rgb(var(--b-green))"
+              />
+              <StatCard
+                label="success rate"
+                value={`${successRate.toFixed(1)}%`}
+                delta={failed > 0 ? `-${failed} fail` : undefined}
+                deltaTone={failed > 0 ? "down" : "up"}
+                values={sparkSeries.map((v) => v * 0.9 + 1)}
+                sparkColor="rgb(var(--b-clay))"
+              />
+              <StatCard
+                label="avg score"
+                value="—"
+                empty
+                values={sparkSeries.map((v) => v + 2)}
+                sparkColor="rgb(var(--b-blue))"
+              />
+              <StatCard
+                label="tokens 30d"
+                value={
+                  typeof summary?.tokens_30d === "number"
+                    ? summary.tokens_30d.toLocaleString()
+                    : "—"
+                }
+                empty={!summary?.tokens_30d}
+                values={sparkSeries}
+                sparkColor="rgb(var(--b-purple))"
+              />
+            </div>
+          )}
 
           {/* Charts row */}
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-3">
@@ -320,7 +362,14 @@ export default function DashboardPage() {
                         />
                       ))}
                     </div>
-                    <div className="relative flex h-full items-end gap-[4px]">
+                    <div
+                      role="img"
+                      aria-label={`Runs per day over the last 14 days · ${dailyBuckets.reduce(
+                        (sum, b) => sum + b.ok + b.err,
+                        0,
+                      )} total`}
+                      className="relative flex h-full items-end gap-[4px]"
+                    >
                       {dailyBuckets.map((b, i) => {
                         const total = b.ok + b.err;
                         const isToday = i === dailyBuckets.length - 1;
@@ -426,7 +475,15 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {recent.length === 0 && (
+                  {isRunsLoading &&
+                    ["sk-run-0", "sk-run-1", "sk-run-2"].map((k) => (
+                      <tr key={k} className="border-b border-b-line-soft">
+                        <td colSpan={7} className="px-3 py-2">
+                          <div className="h-[18px] w-full animate-pulse rounded bg-b-bg2" />
+                        </td>
+                      </tr>
+                    ))}
+                  {!isRunsLoading && recent.length === 0 && (
                     <tr>
                       <td
                         colSpan={7}

@@ -11,6 +11,7 @@ import BTopBar from "../components/layout/BTopBar";
 import BBox from "../components/common/BBox";
 import BPill from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
+import ErrorBanner from "../components/states/ErrorBanner";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
 
 type RunTone = "ok" | "err" | "clay" | "dim";
@@ -34,8 +35,12 @@ function evalBarColorFor(evalPct: number | null): EvalBarColor {
 export default function RunDetailPage() {
   const { filename } = useParams<{ filename: string }>();
   const navigate = useNavigate();
-  const { data: run, isLoading } = useRunDetail(filename);
-  const { data: dag } = useWorkflowDAG(run?.workflow_name);
+  const { data: run, isLoading, isError, error } = useRunDetail(filename);
+  const {
+    data: dag,
+    isLoading: dagLoading,
+    isError: dagError,
+  } = useWorkflowDAG(run?.workflow_name);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
 
   const runSteps = run?.steps ?? [];
@@ -96,6 +101,16 @@ export default function RunDetailPage() {
     );
   }
 
+  if (isError) {
+    return (
+      <ErrorBanner
+        message={error instanceof Error ? error.message : "failed to load run"}
+        ctaLabel="back to runs"
+        ctaHref="/runs"
+      />
+    );
+  }
+
   if (!run) {
     return (
       <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-red">
@@ -121,11 +136,12 @@ export default function RunDetailPage() {
     <div className="flex h-full flex-col">
       <BTopBar path={`runs/${run.workflow_name}`}>
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="btn-ghost"
-          title="Go back"
+          aria-label="Go back"
         >
-          <ArrowLeft className="h-3 w-3" />
+          <ArrowLeft className="h-3 w-3" aria-hidden="true" />
           <span>[esc] back</span>
         </button>
       </BTopBar>
@@ -183,6 +199,14 @@ export default function RunDetailPage() {
               kickbackEdges={kickbackEdges}
               onNodeClick={setSelectedStep}
             />
+          ) : dagLoading ? (
+            <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
+              $ loading dag…
+            </div>
+          ) : dagError ? (
+            <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-red">
+              [!] failed to load workflow dag
+            </div>
           ) : (
             <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
               $ dag unavailable

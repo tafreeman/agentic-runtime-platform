@@ -106,7 +106,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
               className={`rounded-sm border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
                 active
                   ? "border-b-clay bg-b-clay/10 text-b-clay"
-                  : "border-b-line text-b-text-dim hover:border-b-line-mid hover:text-b-text"
+                  : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
               }`}
             >
               {label}

@@ -16,25 +16,31 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
   );
 
   return (
-    <div className={`rounded-lg border border-white/5 bg-surface-1 ${className}`}>
+    <div className={`rounded-sm border border-b-line bg-b-bg1 ${className}`}>
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls={panelId}
-        className="flex w-full items-center justify-between border-b border-white/5 px-4 py-2 text-left hover:bg-white/[0.02]"
+        className="flex w-full items-center justify-between border-b border-b-line px-4 py-2 text-left hover:bg-b-bg2"
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="text-xs font-medium text-gray-500 uppercase flex items-center gap-1.5">
+        <span className="font-mono text-[11px] uppercase tracking-[0.5px] text-b-text-dim flex items-center gap-1.5">
           {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           Event Log
         </span>
-        <span className="text-[10px] text-gray-500">{displayEvents.length} events</span>
+        <span className="font-mono text-[10px] text-b-text-faint">{displayEvents.length} events</span>
       </button>
 
       {expanded && (
-        <div id={panelId} className="max-h-64 overflow-y-auto p-2 font-mono text-xs">
+        <div
+          id={panelId}
+          className="max-h-64 overflow-y-auto p-2 font-mono text-xs"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Event log"
+        >
           {displayEvents.length === 0 && (
-            <div className="px-2 py-4 text-center text-gray-600">
+            <div className="px-2 py-4 text-center text-b-text-faint">
               Waiting for events...
             </div>
           )}
@@ -48,16 +54,16 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
 }
 
 function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
-  let color = "text-gray-500";
+  let color = "text-b-text-dim";
   let message = "";
 
   switch (event.type) {
     case "workflow_start":
-      color = "text-blue-400";
+      color = "text-b-blue";
       message = `Workflow "${event.workflow_name}" started`;
       break;
     case "step_start":
-      color = "text-blue-300";
+      color = "text-b-blue";
       message = `Step "${event.step}" started`;
       break;
     case "step_end":
@@ -65,7 +71,7 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
     case "step_error": {
       const status =
         event.type === "step_error" ? "failed" : event.status ?? "failed";
-      color = status === "success" ? "text-green-400" : "text-red-400";
+      color = status === "success" ? "text-b-green" : "text-b-red";
       message = `Step "${event.step}" ${status} (${
         event.duration_ms < 1000
           ? `${Math.round(event.duration_ms)}ms`
@@ -74,19 +80,19 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       break;
     }
     case "workflow_end":
-      color = event.status === "success" ? "text-green-400" : "text-red-400";
+      color = event.status === "success" ? "text-b-green" : "text-b-red";
       message = `Workflow ${event.status}`;
       break;
     case "evaluation_start":
-      color = "text-amber-400";
+      color = "text-b-amber";
       message = "Evaluation started";
       break;
     case "evaluation_complete":
-      color = event.passed ? "text-green-400" : "text-amber-400";
+      color = event.passed ? "text-b-green" : "text-b-amber";
       message = `Evaluation complete: ${event.weighted_score.toFixed(1)} (${event.grade})`;
       break;
     case "error":
-      color = "text-red-500";
+      color = "text-b-red";
       message = `Error: ${event.error}`;
       break;
     default:
@@ -99,10 +105,10 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       : "";
 
   return (
-    <div className="flex items-start gap-2 px-2 py-1 hover:bg-white/[0.02] rounded">
-      <Clock className="mt-0.5 h-3 w-3 flex-shrink-0 text-gray-700" />
+    <div className="flex items-start gap-2 px-2 py-1 hover:bg-b-bg2 rounded-sm">
+      <Clock aria-hidden="true" className="mt-0.5 h-3 w-3 flex-shrink-0 text-b-text-faint" />
       {timestamp && (
-        <span className="flex-shrink-0 text-gray-700">{timestamp}</span>
+        <span className="flex-shrink-0 text-b-text-faint">{timestamp}</span>
       )}
       <span className={color}>{message}</span>
     </div>

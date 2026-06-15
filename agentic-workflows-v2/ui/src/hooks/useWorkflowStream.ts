@@ -55,6 +55,12 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<{ close: () => void } | null>(null);
+  // Mirror the latest status so the (long-lived) reconnect callback can read it
+  // without capturing a stale closure value.
+  const workflowStatusRef = useRef(workflowStatus);
+  useEffect(() => {
+    workflowStatusRef.current = workflowStatus;
+  }, [workflowStatus]);
 
   const handleEvent = useCallback((event: ExecutionEvent) => {
     setEvents((prev) => [...prev, event]);
@@ -159,7 +165,16 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
     setWorkflowStatus("connecting");
     setError(null);
 
-    connectionRef.current = connectExecutionStream(runId, handleEvent);
+    connectionRef.current = connectExecutionStream(runId, handleEvent, {
+      onRetriesExhausted: () => {
+        const current = workflowStatusRef.current;
+        // A finished run also closes the socket — don't overwrite a terminal
+        // state with a spurious error.
+        if (current === "completed" || current === "failed") return;
+        setError("connection lost — the live stream stopped responding");
+        setWorkflowStatus("error");
+      },
+    });
 
     return () => {
       connectionRef.current?.close();
