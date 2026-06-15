@@ -20,6 +20,11 @@ setup: venv
     & "{{venv_python}}" -m pip install -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
     npm --prefix agentic-workflows-v2/ui install
 
+# Regenerate ci-constraints.txt from uv.lock. Run after changing dependencies
+# or uv.lock; the `lockfile-constraints` CI job fails if it is out of date.
+update-constraints:
+    uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt
+
 test: _require-venv
     & "{{venv_python}}" -m pytest agentic-workflows-v2/tests -v
     & "{{venv_python}}" -m pytest agentic-v2-eval/tests -v
