@@ -1,0 +1,21 @@
+[
+  {
+    "case_id": "code_review_no_llm_v1",
+    "description": "code_review workflow output captured under AGENTIC_NO_LLM=1; all 5 steps succeed, no retries, no LLM output expected. Scored against the 'code' rubric via deterministic structural derivation.",
+    "rubric": "code",
+    "workflow_name": "code_review",
+    "golden_output_path": "code_review_output.json",
+    "expected_criteria": {
+      "success_rate_expected": 100.0,
+      "expected_step_names": [
+        "parse_code",
+        "style_check",
+        "complexity_analysis",
+        "review_code",
+        "generate_summary"
+      ],
+      "max_retries": 0
+    },
+    "threshold": 0.80
+  }
+]
