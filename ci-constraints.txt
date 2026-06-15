@@ -585,7 +585,7 @@ urllib3==2.6.3
     # via
     #   lance-namespace-urllib3-client
     #   requests
-uuid-utils==0.14.1
+uuid-utils==0.16.0
     # via
     #   langchain-core
     #   langsmith
