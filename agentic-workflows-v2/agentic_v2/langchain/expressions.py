@@ -93,7 +93,7 @@ def evaluate_condition(expr: str | None, state: dict[str, Any]) -> bool:
     # also surfaced (fail closed + logged) rather than swallowed.
     try:
         return bool(evaluate_safe_expression(resolved))
-    except (ExpressionError, ValueError, NameError, TypeError) as exc:
+    except (ExpressionError, ValueError, NameError, TypeError, ArithmeticError) as exc:
         logger.warning(
             "Condition evaluation rejected expression (redacted): %s",
             exc,

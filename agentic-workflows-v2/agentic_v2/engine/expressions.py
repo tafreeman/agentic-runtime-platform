@@ -133,7 +133,9 @@ def evaluate_safe_expression(expression: str) -> Any:
         evaluator._validate_ast(tree)
         env: dict[str, Any] = {"coalesce": _coalesce}
         return evaluator._eval_node(tree.body, env)
-    except (SyntaxError, ValueError, NameError, TypeError) as exc:
+    except (SyntaxError, ValueError, NameError, TypeError, ArithmeticError) as exc:
+        # ArithmeticError (e.g. ZeroDivisionError from an allowed Div/Mod) is
+        # wrapped too, so callers get a uniform ExpressionError and fail closed.
         raise ExpressionError(str(exc)) from exc
 
 
@@ -525,6 +527,11 @@ class ExpressionEvaluator:
         if isinstance(node, ast.Tuple):
             return tuple(self._eval_node(elt, env) for elt in node.elts)
 
+        if isinstance(node, ast.Set):
+            # Set literals back membership checks like ``x in {'A', 'B'}`` —
+            # a condition form the LangChain adapter historically supported.
+            return {self._eval_node(elt, env) for elt in node.elts}
+
         if isinstance(node, ast.Dict):
             result_dict: dict[Any, Any] = {}
             for k, v in zip(node.keys, node.values, strict=True):
@@ -742,6 +749,7 @@ class ExpressionEvaluator:
             ast.UAdd,
             ast.List,
             ast.Tuple,
+            ast.Set,
             ast.Dict,
             ast.Call,
         )

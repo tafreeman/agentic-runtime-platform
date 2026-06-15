@@ -60,6 +60,30 @@ class TestEvaluateCondition:
             is False
         )
 
+    def test_set_literal_membership(self) -> None:
+        """${...} in {'A', 'B'} (set literal) is supported — regression guard.
+
+        The previous LangChain allowlist accepted ``ast.Set``; unifying on the
+        shared engine evaluator must preserve this membership condition form.
+        """
+        state = {"steps": {"x": {"outputs": {"status": "APPROVED"}}}}
+        assert (
+            evaluate_condition(
+                "${steps.x.outputs.status} in {'APPROVED', 'SKIPPED'}", state
+            )
+            is True
+        )
+
+    def test_set_literal_membership_not_found(self) -> None:
+        """${...} in {'A', 'B'} is False when the value is absent."""
+        state = {"steps": {"x": {"outputs": {"status": "REJECTED"}}}}
+        assert (
+            evaluate_condition(
+                "${steps.x.outputs.status} in {'APPROVED', 'SKIPPED'}", state
+            )
+            is False
+        )
+
     def test_not_equal(self) -> None:
         """${inputs.depth} != 'quick' evaluates correctly."""
         state = {"inputs": {"depth": "deep"}}
@@ -75,6 +99,18 @@ class TestEvaluateCondition:
         state = {"inputs": {"x": "test"}}
         with pytest.raises(ConditionEvaluationError):
             evaluate_condition("len(${inputs.x}) > 0", state)
+
+    def test_division_by_zero_fails_closed(self) -> None:
+        """A ZeroDivisionError from an allowed Div/Mod fails closed.
+
+        The engine permits arithmetic, so ``${a} / ${b}`` with b == 0 raises
+        ZeroDivisionError inside the interpreter. It must surface as a logged,
+        redacted ConditionEvaluationError rather than leaking a raw exception
+        to graph callers.
+        """
+        state = {"inputs": {"a": 1, "b": 0}}
+        with pytest.raises(ConditionEvaluationError):
+            evaluate_condition("${inputs.a} / ${inputs.b} > 0", state)
 
     def test_missing_variable_evaluates_cleanly(self) -> None:
         """A missing path resolves to None; the comparison stays evaluable.
