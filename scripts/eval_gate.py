@@ -66,6 +66,16 @@ def _load_json(path: Path) -> Any:
         return json.load(handle)
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """Coerce a possibly-null / non-numeric JSON value to float; ``default`` on failure."""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, float]:
     """Derive ``code`` rubric criterion floats from a golden workflow result.
 
@@ -73,17 +83,28 @@ def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, f
     Correctness, Completeness, Code Quality, Efficiency, Security. All values
     are normalized to ``[0.0, 1.0]``.
     """
-    expected_criteria = case.get("expected_criteria", {})
+    # Defensive throughout: a golden may be malformed (null/wrong-typed fields).
+    # The gate must fail with a clear score, never a traceback.
+    expected_criteria = case.get("expected_criteria")
+    if not isinstance(expected_criteria, dict):
+        expected_criteria = {}
+
+    raw_steps = golden.get("steps")
     steps: list[dict[str, Any]] = [
-        s for s in golden.get("steps", []) if isinstance(s, dict)
+        s
+        for s in (raw_steps if isinstance(raw_steps, list) else [])
+        if isinstance(s, dict)
     ]
 
     # Correctness -- normalized step success rate.
-    correctness = float(golden.get("success_rate", 0.0)) / 100.0
+    correctness = _safe_float(golden.get("success_rate")) / 100.0
 
     # Completeness -- fraction of expected steps that completed as "success".
-    expected_names = tuple(
-        expected_criteria.get("expected_step_names", _DEFAULT_EXPECTED_STEPS)
+    raw_names = expected_criteria.get("expected_step_names")
+    expected_names = (
+        tuple(raw_names)
+        if isinstance(raw_names, (list, tuple))
+        else _DEFAULT_EXPECTED_STEPS
     )
     succeeded = {s.get("step_name") for s in steps if s.get("status") == "success"}
     completeness = (
@@ -96,15 +117,19 @@ def derive_criteria(golden: dict[str, Any], case: dict[str, Any]) -> dict[str, f
     parse_step = next((s for s in steps if s.get("step_name") == "parse_code"), None)
     code_quality = 0.0
     if parse_step is not None:
-        metrics = parse_step.get("output_data", {}).get("code_metrics", {})
+        output_data = parse_step.get("output_data")
+        metrics = (
+            output_data.get("code_metrics") if isinstance(output_data, dict) else None
+        )
         if isinstance(metrics, dict):
             present = _REQUIRED_METRIC_KEYS & metrics.keys()
             code_quality = len(present) / len(_REQUIRED_METRIC_KEYS)
 
     # Efficiency -- retry penalty. 0 retries -> 1.0; degrade linearly toward
-    # max_retries + 1 (so consuming the full retry budget scores 0.0).
-    total_retries = int(golden.get("total_retries", 0))
-    retry_budget = int(expected_criteria.get("max_retries", 0)) + 1
+    # max_retries + 1. Both clamped to >= 0 so a malformed negative value can't
+    # make retry_budget 0 and divide by zero.
+    total_retries = max(0, int(_safe_float(golden.get("total_retries"))))
+    retry_budget = max(0, int(_safe_float(expected_criteria.get("max_retries")))) + 1
     efficiency = max(0.0, 1.0 - (total_retries / retry_budget))
 
     # Security -- 1.0 unless any step leaks a non-empty error_type. Tolerate the
@@ -125,16 +150,30 @@ def score_case(
     case: dict[str, Any], cases_dir: Path, global_threshold: float
 ) -> dict[str, Any]:
     """Score a single dataset case and return a structured result dict."""
+    if not isinstance(case, dict):
+        return {
+            "case_id": "<invalid>",
+            "passed": False,
+            "error": f"case is not a JSON object: {type(case).__name__}",
+            "weighted_score": 0.0,
+            "threshold": global_threshold,
+            "missing_criteria": [],
+            "criterion_scores": {},
+        }
+
     case_id = str(case.get("case_id", "<unnamed>"))
     rubric_name = str(case.get("rubric", "code"))
     # Both bars must clear: the global (--threshold) and the case's own bar. The
     # global can tighten a case but never loosen it below its committed value.
     case_threshold = case.get("threshold")
-    threshold = (
-        global_threshold
-        if case_threshold is None
-        else max(global_threshold, float(case_threshold))
-    )
+    try:
+        threshold = (
+            global_threshold
+            if case_threshold is None
+            else max(global_threshold, float(case_threshold))
+        )
+    except (TypeError, ValueError):
+        threshold = global_threshold
 
     golden_path = Path(case.get("golden_output_path", ""))
     if not golden_path.is_absolute():
@@ -151,7 +190,18 @@ def score_case(
             "criterion_scores": {},
         }
 
-    golden = _load_json(golden_path)
+    try:
+        golden = _load_json(golden_path)
+    except (json.JSONDecodeError, OSError) as err:
+        return {
+            "case_id": case_id,
+            "passed": False,
+            "error": f"failed to load or parse golden file: {err}",
+            "weighted_score": 0.0,
+            "threshold": threshold,
+            "missing_criteria": [],
+            "criterion_scores": {},
+        }
     if not isinstance(golden, dict):
         return {
             "case_id": case_id,
@@ -218,7 +268,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ERROR: cases file not found: {cases_path}", file=sys.stderr)
         return 1
 
-    loaded = _load_json(cases_path)
+    try:
+        loaded = _load_json(cases_path)
+    except (json.JSONDecodeError, OSError) as err:
+        print(f"ERROR: failed to load or parse cases file: {err}", file=sys.stderr)
+        return 1
     if not isinstance(loaded, list) or not loaded:
         print(
             f"ERROR: dataset must be a non-empty JSON list: {cases_path}",
