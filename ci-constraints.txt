@@ -280,7 +280,7 @@ numpy==2.4.4
     #   lancedb
 ollama==0.6.1
     # via langchain-ollama
-openai==2.38.0
+openai==2.41.1
     # via
     #   agentic-tools
     #   langchain-openai
