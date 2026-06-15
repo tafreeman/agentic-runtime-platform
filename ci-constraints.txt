@@ -201,7 +201,7 @@ langchain==1.3.2
     # via agentic-workflows-v2
 langchain-anthropic==1.4.4
     # via agentic-workflows-v2
-langchain-core==1.4.0
+langchain-core==1.4.7
     # via
     #   agentic-tools
     #   agentic-workflows-v2
