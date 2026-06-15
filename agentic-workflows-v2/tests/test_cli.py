@@ -201,7 +201,12 @@ class TestServerApp:
         from agentic_v2.server.app import create_app
 
         app = create_app()
-        paths = [r.path for r in app.routes]
+        # Assert against the OpenAPI contract rather than iterating app.routes:
+        # newer Starlette nests included routes under _IncludedRouter entries
+        # that expose no `.path`, so walking app.routes directly is version-
+        # fragile (and the paths aren't top-level). OpenAPI paths are the stable
+        # public surface and work across Starlette versions.
+        paths = app.openapi()["paths"]
         assert "/api/health" in paths
         assert "/api/workflows" in paths
         assert "/api/agents" in paths
