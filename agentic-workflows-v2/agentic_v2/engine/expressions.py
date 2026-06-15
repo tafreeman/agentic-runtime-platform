@@ -88,6 +88,57 @@ def _coalesce(*args: Any) -> Any:
     return None
 
 
+class ExpressionError(ValueError):
+    """Raised when an expression cannot be safely evaluated.
+
+    Subclasses :class:`ValueError` so existing callers that catch
+    ``ValueError`` keep working.  Carries the original cause (syntax
+    error, disallowed AST node, undefined name, etc.) via ``__cause__``
+    so the failure can be logged without re-deriving it.
+    """
+
+
+def evaluate_safe_expression(expression: str) -> Any:
+    """Evaluate a literal-only Python expression via the AST interpreter.
+
+    This is the shared entry point used by the LangChain condition path
+    (``langchain/expressions.py``) after it has substituted every
+    ``${...}`` reference with ``repr(resolved_value)``.  The resulting
+    string therefore contains only literals, operators, and container
+    displays — no free names other than the ``coalesce`` helper.
+
+    The expression is run through the *same* AST whitelist
+    (:meth:`ExpressionEvaluator._validate_ast`) and pure-Python walker
+    (:meth:`ExpressionEvaluator._eval_node`) that guard the engine
+    evaluator, so there is a single security boundary — **no ``eval()``
+    or ``compile()`` of the expression is performed anywhere**.
+
+    Args:
+        expression: A restricted Python expression string (literals,
+            comparisons, boolean/arithmetic ops, container displays, and
+            at most ``coalesce(...)`` calls).
+
+    Returns:
+        The evaluated result value.
+
+    Raises:
+        ExpressionError: If parsing fails (``SyntaxError``), the AST
+            contains a disallowed node / dunder access, an unexpected
+            name is referenced, the only-``coalesce`` call rule is
+            violated, or the sequence-multiply DoS cap is exceeded.
+    """
+    evaluator = ExpressionEvaluator(ExecutionContext())
+    try:
+        tree = ast.parse(expression, mode="eval")
+        evaluator._validate_ast(tree)
+        env: dict[str, Any] = {"coalesce": _coalesce}
+        return evaluator._eval_node(tree.body, env)
+    except (SyntaxError, ValueError, NameError, TypeError, ArithmeticError) as exc:
+        # ArithmeticError (e.g. ZeroDivisionError from an allowed Div/Mod) is
+        # wrapped too, so callers get a uniform ExpressionError and fail closed.
+        raise ExpressionError(str(exc)) from exc
+
+
 def _from_namespace(obj: Any) -> Any:
     """Convert ``_SafeNamespace`` / ``SimpleNamespace`` trees back to plain dicts.
 
@@ -476,6 +527,11 @@ class ExpressionEvaluator:
         if isinstance(node, ast.Tuple):
             return tuple(self._eval_node(elt, env) for elt in node.elts)
 
+        if isinstance(node, ast.Set):
+            # Set literals back membership checks like ``x in {'A', 'B'}`` —
+            # a condition form the LangChain adapter historically supported.
+            return {self._eval_node(elt, env) for elt in node.elts}
+
         if isinstance(node, ast.Dict):
             result_dict: dict[Any, Any] = {}
             for k, v in zip(node.keys, node.values, strict=True):
@@ -693,6 +749,7 @@ class ExpressionEvaluator:
             ast.UAdd,
             ast.List,
             ast.Tuple,
+            ast.Set,
             ast.Dict,
             ast.Call,
         )
