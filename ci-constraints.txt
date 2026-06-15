@@ -50,7 +50,7 @@ black==26.5.1
     # via agentic-workflows-v2
 cachetools==5.5.2
     # via agentic-workflows-v2
-certifi==2026.2.25
+certifi==2026.5.20
     # via
     #   httpcore
     #   httpx
