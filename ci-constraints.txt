@@ -104,7 +104,7 @@ fastapi==0.136.0
     # via agentic-workflows-v2
 fastuuid==0.14.0
     # via litellm
-filelock==3.28.0
+filelock==3.29.4
     # via
     #   agentic-workflows-v2
     #   huggingface-hub
