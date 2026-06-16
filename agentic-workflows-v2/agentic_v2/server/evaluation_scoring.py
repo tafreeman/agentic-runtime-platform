@@ -731,6 +731,243 @@ def _finalize_grade_and_pass(
     return grade, grade_capped, passed
 
 
+@dataclass
+class _ScoreLayers:
+    """Intermediate score artifacts produced by the layered scoring pass.
+
+    Bundles the per-criterion payloads, the objective/advisory/judge/hybrid
+    score layers, and the running aggregates so the orchestrator can assemble
+    the final payload without threading a dozen positional values.
+    """
+
+    criteria: list[dict[str, Any]]
+    normalized_scores: dict[str, float]
+    objective_score_0_1: float
+    objective_weighted_score: float
+    advisory_similarity_0_1: float
+    advisory_efficiency_0_1: float
+    advisory_score_0_1: float
+    judge_result: JudgeEvaluationResult | None
+    judge_score_0_1: float | None
+    weighted_score: float
+    overall_score: float
+    active_hybrid_weights: dict[str, float]
+
+
+def _compute_score_layers(
+    result: WorkflowResult,
+    *,
+    weights: dict[str, float],
+    criteria_by_name: dict[str, WorkflowCriterion],
+    expected_text: str,
+    judge: LLMJudge | None,
+    hybrid_component_weights: dict[str, float] | None,
+    compute_criterion_score_fn: Callable[[str, WorkflowResult, str], float],
+) -> _ScoreLayers:
+    """Compute the objective, advisory, judge, and hybrid score layers.
+
+    Runs per-criterion scoring, derives the advisory similarity/efficiency
+    heuristics, applies the optional LLM judge (annotating criterion payloads
+    in place), and composes the hybrid 0--100 weighted score.
+    """
+    total_weight = sum(weights.values()) or 1.0
+    criteria, normalized_scores, weighted_sum, raw_sum = _compute_criteria_scores(
+        weights,
+        result=result,
+        expected_text=expected_text,
+        criteria_by_name=criteria_by_name,
+        compute_criterion_score_fn=compute_criterion_score_fn,
+    )
+
+    objective_score_0_1 = weighted_sum / total_weight
+    generated_text = _output_text(result)
+    advisory_similarity_0_1 = _advisory_similarity_score(
+        expected_text=expected_text,
+        generated_text=generated_text,
+        objective_score_0_1=objective_score_0_1,
+    )
+    advisory_efficiency_0_1 = _advisory_efficiency_score(
+        result=result,
+        normalized_scores=normalized_scores,
+    )
+    advisory_score_0_1 = (advisory_similarity_0_1 * 0.67) + (
+        advisory_efficiency_0_1 * 0.33
+    )
+
+    judge_result, judge_score_0_1 = _apply_judge_scores(
+        judge,
+        criteria=criteria,
+        weights=weights,
+        criteria_by_name=criteria_by_name,
+        generated_text=generated_text,
+        expected_text=expected_text,
+    )
+
+    hybrid_score_0_1, active_hybrid_weights = _compose_hybrid_score(
+        objective_score_0_1=objective_score_0_1,
+        advisory_score_0_1=advisory_score_0_1,
+        judge_score_0_1=judge_score_0_1,
+        component_weights=hybrid_component_weights,
+    )
+
+    return _ScoreLayers(
+        criteria=criteria,
+        normalized_scores=normalized_scores,
+        objective_score_0_1=objective_score_0_1,
+        objective_weighted_score=objective_score_0_1 * 100.0,
+        advisory_similarity_0_1=advisory_similarity_0_1,
+        advisory_efficiency_0_1=advisory_efficiency_0_1,
+        advisory_score_0_1=advisory_score_0_1,
+        judge_result=judge_result,
+        judge_score_0_1=judge_score_0_1,
+        weighted_score=hybrid_score_0_1 * 100.0,
+        overall_score=raw_sum / len(criteria) if criteria else 0.0,
+        active_hybrid_weights=active_hybrid_weights,
+    )
+
+
+def _build_base_payload(
+    layers: _ScoreLayers,
+    *,
+    result: WorkflowResult,
+    rubric_id: str,
+    rubric_version: str,
+    grade: str,
+    threshold: float,
+    dataset_meta: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Assemble the pre-gate evaluation payload from the computed score layers.
+
+    The ``passed`` flag and hard-gate/floor fields are filled in later by
+    :func:`_attach_gate_results`; this builds the deterministic score body.
+    """
+    judge_score_0_1 = layers.judge_score_0_1
+    return {
+        "enabled": True,
+        "rubric": rubric_id,
+        "rubric_id": rubric_id,
+        "rubric_version": rubric_version,
+        "criteria": layers.criteria,
+        "overall_score": round(layers.overall_score, 2),
+        "weighted_score": round(layers.weighted_score, 2),
+        "objective_weighted_score": round(layers.objective_weighted_score, 2),
+        "grade": grade,
+        "passed": False,
+        "pass_threshold": threshold,
+        "step_scores": _step_scores(result),
+        "dataset": dataset_meta,
+        "score_layers": {
+            "layer1_objective": round(layers.objective_score_0_1 * 100.0, 2),
+            "layer2_judge": (
+                None if judge_score_0_1 is None else round(judge_score_0_1 * 100.0, 2)
+            ),
+            "layer3_similarity": round(layers.advisory_similarity_0_1 * 100.0, 2),
+            "layer3_efficiency": round(layers.advisory_efficiency_0_1 * 100.0, 2),
+            "layer3_advisory": round(layers.advisory_score_0_1 * 100.0, 2),
+        },
+        "hybrid_weights": layers.active_hybrid_weights,
+        "judge": (
+            layers.judge_result.to_payload()
+            if layers.judge_result is not None
+            else None
+        ),
+        "generated_at": datetime.now(UTC).isoformat(),
+    }
+
+
+def _apply_gates_and_finalize(
+    payload: dict[str, Any],
+    *,
+    result: WorkflowResult,
+    layers: _ScoreLayers,
+    grade: str,
+    threshold: float,
+    floor_violations: list[CriterionFloorResult],
+    dataset_meta: dict[str, Any] | None,
+    dataset_sample: dict[str, Any] | None,
+    workflow_definition: WorkflowDefinition | None,
+    enforce_hard_gates: bool,
+    match_workflow_dataset_fn: Callable[
+        [WorkflowDefinition, dict[str, Any]], tuple[bool, list[str]]
+    ],
+) -> dict[str, Any]:
+    """Resolve hard gates, finalize the grade/pass verdict, and enrich payload.
+
+    Determines dataset/workflow compatibility, runs the hard gates against the
+    base payload, applies floor-cap and hard-gate rules to the grade, and
+    returns a new payload with the gate-derived fields attached.
+    """
+    dataset_compatible = _resolve_dataset_compatible(
+        dataset_meta,
+        dataset_sample=dataset_sample,
+        workflow_definition=workflow_definition,
+        match_workflow_dataset_fn=match_workflow_dataset_fn,
+    )
+
+    hard_gates = compute_hard_gates(
+        result,
+        workflow_outputs=workflow_definition.outputs if workflow_definition else None,
+        eval_payload=payload,
+        dataset_workflow_compatible=dataset_compatible,
+    )
+
+    grade, grade_capped, passed = _finalize_grade_and_pass(
+        grade,
+        weighted_score=layers.weighted_score,
+        threshold=threshold,
+        floor_violations=floor_violations,
+        hard_gates=hard_gates,
+        enforce_hard_gates=enforce_hard_gates,
+    )
+
+    return _attach_gate_results(
+        payload,
+        hard_gates=hard_gates,
+        floor_violations=floor_violations,
+        grade=grade,
+        grade_capped=grade_capped,
+        passed=passed,
+    )
+
+
+def _attach_gate_results(
+    payload: dict[str, Any],
+    *,
+    hard_gates: HardGateResult,
+    floor_violations: list[CriterionFloorResult],
+    grade: str,
+    grade_capped: bool,
+    passed: bool,
+) -> dict[str, Any]:
+    """Return a new payload with hard-gate, floor, and final grade fields set.
+
+    Does not mutate ``payload`` in place; returns a shallow copy with the
+    gate-derived keys added so the caller keeps an immutable update boundary.
+    """
+    enriched = dict(payload)
+    enriched["hard_gates"] = {
+        "required_outputs_present": hard_gates.required_outputs_present,
+        "overall_status_success": hard_gates.overall_status_success,
+        "no_critical_step_failures": hard_gates.no_critical_step_failures,
+        "release_build_verified": hard_gates.release_build_verified,
+        "schema_contract_valid": hard_gates.schema_contract_valid,
+        "dataset_workflow_compatible": hard_gates.dataset_workflow_compatible,
+    }
+    enriched["hard_gate_failures"] = hard_gates.failures
+    enriched["floor_violations"] = [
+        {
+            "criterion": violation.criterion,
+            "floor": round(violation.floor, 4),
+            "normalized_score": round(violation.normalized_score, 4),
+        }
+        for violation in floor_violations
+    ]
+    enriched["grade_capped"] = grade_capped
+    enriched["grade"] = grade
+    enriched["passed"] = passed
+    return enriched
+
+
 def score_workflow_result_impl(
     result: WorkflowResult,
     *,
@@ -780,129 +1017,47 @@ def score_workflow_result_impl(
         workflow_definition,
         rubric,
     )
-    total_weight = sum(weights.values()) or 1.0
     expected_text = _extract_expected_text(dataset_sample or {})
 
-    criteria, normalized_scores, weighted_sum, raw_sum = _compute_criteria_scores(
-        weights,
-        result=result,
-        expected_text=expected_text,
+    layers = _compute_score_layers(
+        result,
+        weights=weights,
         criteria_by_name=criteria_by_name,
+        expected_text=expected_text,
+        judge=judge,
+        hybrid_component_weights=hybrid_component_weights,
         compute_criterion_score_fn=compute_criterion_score_fn,
     )
 
-    objective_score_0_1 = weighted_sum / total_weight
-    objective_weighted_score = objective_score_0_1 * 100.0
-    generated_text = _output_text(result)
-    advisory_similarity_0_1 = _advisory_similarity_score(
-        expected_text=expected_text,
-        generated_text=generated_text,
-        objective_score_0_1=objective_score_0_1,
-    )
-    advisory_efficiency_0_1 = _advisory_efficiency_score(
-        result=result,
-        normalized_scores=normalized_scores,
-    )
-    advisory_score_0_1 = (advisory_similarity_0_1 * 0.67) + (
-        advisory_efficiency_0_1 * 0.33
-    )
-
-    judge_result, judge_score_0_1 = _apply_judge_scores(
-        judge,
-        criteria=criteria,
-        weights=weights,
-        criteria_by_name=criteria_by_name,
-        generated_text=generated_text,
-        expected_text=expected_text,
-    )
-
-    hybrid_score_0_1, active_hybrid_weights = _compose_hybrid_score(
-        objective_score_0_1=objective_score_0_1,
-        advisory_score_0_1=advisory_score_0_1,
-        judge_score_0_1=judge_score_0_1,
-        component_weights=hybrid_component_weights,
-    )
-    weighted_score = hybrid_score_0_1 * 100.0
-    overall_score = raw_sum / len(criteria) if criteria else 0.0
     threshold = pass_threshold()
-    grade = _grade(weighted_score)
-
-    floor_violations = _collect_floor_violations(criteria, normalized_scores)
-
-    step_scores = _step_scores(result)
-    payload: dict[str, Any] = {
-        "enabled": True,
-        "rubric": rubric_id,
-        "rubric_id": rubric_id,
-        "rubric_version": rubric_version,
-        "criteria": criteria,
-        "overall_score": round(overall_score, 2),
-        "weighted_score": round(weighted_score, 2),
-        "objective_weighted_score": round(objective_weighted_score, 2),
-        "grade": grade,
-        "passed": False,
-        "pass_threshold": threshold,
-        "step_scores": step_scores,
-        "dataset": dataset_meta,
-        "score_layers": {
-            "layer1_objective": round(objective_score_0_1 * 100.0, 2),
-            "layer2_judge": (
-                None if judge_score_0_1 is None else round(judge_score_0_1 * 100.0, 2)
-            ),
-            "layer3_similarity": round(advisory_similarity_0_1 * 100.0, 2),
-            "layer3_efficiency": round(advisory_efficiency_0_1 * 100.0, 2),
-            "layer3_advisory": round(advisory_score_0_1 * 100.0, 2),
-        },
-        "hybrid_weights": active_hybrid_weights,
-        "judge": judge_result.to_payload() if judge_result is not None else None,
-        "generated_at": datetime.now(UTC).isoformat(),
-    }
-
-    dataset_compatible = _resolve_dataset_compatible(
-        dataset_meta,
-        dataset_sample=dataset_sample,
-        workflow_definition=workflow_definition,
-        match_workflow_dataset_fn=match_workflow_dataset_fn,
+    grade = _grade(layers.weighted_score)
+    floor_violations = _collect_floor_violations(
+        layers.criteria, layers.normalized_scores
     )
 
-    hard_gates = compute_hard_gates(
-        result,
-        workflow_outputs=workflow_definition.outputs if workflow_definition else None,
-        eval_payload=payload,
-        dataset_workflow_compatible=dataset_compatible,
+    payload = _build_base_payload(
+        layers,
+        result=result,
+        rubric_id=rubric_id,
+        rubric_version=rubric_version,
+        grade=grade,
+        threshold=threshold,
+        dataset_meta=dataset_meta,
     )
 
-    grade, grade_capped, passed = _finalize_grade_and_pass(
-        grade,
-        weighted_score=weighted_score,
+    return _apply_gates_and_finalize(
+        payload,
+        result=result,
+        layers=layers,
+        grade=grade,
         threshold=threshold,
         floor_violations=floor_violations,
-        hard_gates=hard_gates,
+        dataset_meta=dataset_meta,
+        dataset_sample=dataset_sample,
+        workflow_definition=workflow_definition,
         enforce_hard_gates=enforce_hard_gates,
+        match_workflow_dataset_fn=match_workflow_dataset_fn,
     )
-
-    payload["hard_gates"] = {
-        "required_outputs_present": hard_gates.required_outputs_present,
-        "overall_status_success": hard_gates.overall_status_success,
-        "no_critical_step_failures": hard_gates.no_critical_step_failures,
-        "release_build_verified": hard_gates.release_build_verified,
-        "schema_contract_valid": hard_gates.schema_contract_valid,
-        "dataset_workflow_compatible": hard_gates.dataset_workflow_compatible,
-    }
-    payload["hard_gate_failures"] = hard_gates.failures
-    payload["floor_violations"] = [
-        {
-            "criterion": violation.criterion,
-            "floor": round(violation.floor, 4),
-            "normalized_score": round(violation.normalized_score, 4),
-        }
-        for violation in floor_violations
-    ]
-    payload["grade_capped"] = grade_capped
-    payload["grade"] = grade
-    payload["passed"] = passed
-
-    return payload
 
 
 __all__ = [

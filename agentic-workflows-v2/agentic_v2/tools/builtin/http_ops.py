@@ -10,8 +10,8 @@ import aiohttp
 from aiohttp.abc import AbstractResolver
 from aiohttp.resolver import DefaultResolver
 
-from ...settings import get_settings
 from ...security.url_guard import check_resolved_address, validate_url_async
+from ...settings import get_settings
 from ..base import BaseTool, ToolResult
 
 # Maximum number of redirects to follow manually before giving up.

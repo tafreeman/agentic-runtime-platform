@@ -980,7 +980,7 @@ class TestFromNamespaceConversions:
 
     def test_from_namespace_nullsafe_returns_none(self) -> None:
         """_from_namespace(_NullSafe()) must return None."""
-        from agentic_v2.engine.expressions import _NullSafe, _from_namespace
+        from agentic_v2.engine.expressions import _from_namespace, _NullSafe
 
         assert _from_namespace(_NullSafe()) is None
 
@@ -993,7 +993,7 @@ class TestFromNamespaceConversions:
 
     def test_from_namespace_list_with_nullsafe(self) -> None:
         """_from_namespace converts list elements including _NullSafe to None."""
-        from agentic_v2.engine.expressions import _NullSafe, _from_namespace
+        from agentic_v2.engine.expressions import _from_namespace, _NullSafe
 
         result = _from_namespace([1, _NullSafe(), "x"])
         assert result == [1, None, "x"]

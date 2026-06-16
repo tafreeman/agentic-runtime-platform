@@ -11,7 +11,6 @@ Target:
 
 from __future__ import annotations
 
-
 from agentic_v2.workflows.artifact_extractor import _scan_output_for_files
 
 

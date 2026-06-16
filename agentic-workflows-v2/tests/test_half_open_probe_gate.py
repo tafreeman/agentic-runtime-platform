@@ -13,8 +13,7 @@ import pytest
 
 from agentic_v2.models.model_stats import CircuitState, ModelStats
 from agentic_v2.models.router import FallbackChain, ModelTier
-from agentic_v2.models.smart_router import SmartModelRouter, CircuitResolvedError
-
+from agentic_v2.models.smart_router import CircuitResolvedError, SmartModelRouter
 
 # ---------------------------------------------------------------------------
 # Helpers

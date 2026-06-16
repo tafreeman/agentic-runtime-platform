@@ -12,6 +12,7 @@ from typing import Any
 
 import httpx
 import pytest
+
 from agentic_v2.models.backends_cloud import (
     AzureFoundryBackend,
     AzureOpenAIBackend,

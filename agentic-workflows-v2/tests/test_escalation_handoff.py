@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from agentic_v2.governance import (
     FailureType,
     HandoffSummary,

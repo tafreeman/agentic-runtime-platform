@@ -35,6 +35,31 @@ def _run(coro: Any) -> Any:
     return asyncio.get_event_loop().run_until_complete(coro)
 
 
+@pytest.fixture(autouse=True)
+def _force_block_private_ips_on(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Pin the SSRF private-IP guard ON for this module, independent of ambient env.
+
+    The runtime default (``settings.agentic_block_private_ips``) is ON, but a
+    developer ``.env`` — loaded into the test session at import time via
+    ``load_dotenv`` — may set ``AGENTIC_BLOCK_PRIVATE_IPS=0`` so local dev can
+    reach localhost LLM endpoints. These tests assert the guard's *behaviour* and
+    must not silently pass or fail on that ambient value, so we force the flag to
+    ``"1"`` (an ``os.environ`` write, which outranks the ``.env`` file in
+    pydantic-settings) and reset the cached ``Settings`` around every test.
+
+    Tests that deliberately exercise the flag-off path either pass
+    ``block_private=False`` directly to the guard (no settings read) or set the
+    env var themselves inside the test body, which — running after this fixture —
+    takes precedence.
+    """
+    import agentic_v2.settings as settings_mod
+
+    monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "1")
+    settings_mod.get_settings.cache_clear()
+    yield
+    settings_mod.get_settings.cache_clear()
+
+
 # ---------------------------------------------------------------------------
 # a. Default is ON
 # ---------------------------------------------------------------------------

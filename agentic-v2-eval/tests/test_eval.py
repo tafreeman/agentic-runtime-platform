@@ -378,6 +378,67 @@ def test_cli_evaluate_defaults_to_packaged_rubric(
     assert "results" in data
 
 
+def _write_default_results(path: Path) -> None:
+    """Write a results file scoring against the packaged 'default' rubric.
+
+    The weighted average lands well inside (0.0, 1.0), so a 0.99 threshold is
+    always above it and a 0.10 threshold is always below it — letting the gate
+    tests stay deterministic without pinning the exact computed score.
+    """
+    path.write_text(
+        json.dumps(
+            {
+                "Accuracy": 0.9,
+                "Completeness": 0.8,
+                "Efficiency": 0.7,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_cli_evaluate_fail_under_below_threshold_exits_nonzero(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    """A sub-threshold average with --fail-under exits with code 2."""
+    results_path = tmp_path / "results.json"
+    _write_default_results(results_path)
+
+    exit_code = main(["evaluate", str(results_path), "--fail-under", "0.99"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "below the --fail-under threshold" in captured.err
+
+
+def test_cli_evaluate_fail_under_above_threshold_exits_zero(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    """An above-threshold average with --fail-under exits 0."""
+    results_path = tmp_path / "results.json"
+    _write_default_results(results_path)
+
+    exit_code = main(["evaluate", str(results_path), "--fail-under", "0.10"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "below the --fail-under threshold" not in captured.err
+
+
+def test_cli_evaluate_without_fail_under_exits_zero(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    """Omitting --fail-under preserves the unconditional exit-0 behavior."""
+    results_path = tmp_path / "results.json"
+    _write_default_results(results_path)
+
+    exit_code = main(["evaluate", str(results_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "below the --fail-under threshold" not in captured.err
+
+
 # === Reporter Tests ===
 
 
