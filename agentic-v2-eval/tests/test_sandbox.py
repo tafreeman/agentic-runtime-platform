@@ -81,6 +81,36 @@ class TestLocalSubprocessSandbox:
                 result = sb.run_command(["echo", "safe_mode_off"])
             assert result.is_success
 
+    def test_safe_mode_allows_blocked_word_inside_token(self):
+        """Regression: a blocked word inside an unrelated token must not block.
+
+        The arg scan previously used a naive substring match, so the "rm" inside
+        a path like ``.../agentic-runtime-platform/python.exe`` (and "format" in
+        "reformat") wrongly tripped the blocklist. Word-boundary matching fixes
+        it. This is why ``[sys.executable, "script.py"]`` runs under safe mode.
+        """
+        with LocalSubprocessSandbox(safe_mode=True) as sb:
+            assert (
+                sb._check_command_safety(
+                    ["/opt/agentic-runtime-platform/bin/reformat", "script.py"]
+                )
+                is None
+            )
+
+    def test_safe_mode_blocks_command_as_shell_argument(self):
+        """A blocked command passed as a shell argument is still caught."""
+        with LocalSubprocessSandbox(safe_mode=True) as sb:
+            result = sb.run_command(["sh", "-c", "rm -rf /tmp/x"])
+            assert result.is_success is False
+            assert "blocked" in (result.error or "").lower()
+
+    def test_safe_mode_blocks_fork_bomb(self):
+        """The non-word fork-bomb pattern is still matched as a literal."""
+        with LocalSubprocessSandbox(safe_mode=True) as sb:
+            result = sb.run_command(["bash", "-c", ":(){ :|:& };:"])
+            assert result.is_success is False
+            assert "blocked" in (result.error or "").lower()
+
     def test_write_and_read_file(self):
         with LocalSubprocessSandbox() as sb:
             sb.write_file("test.txt", "hello world")
