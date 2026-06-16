@@ -25,7 +25,12 @@ def _resolve_project_root() -> Path:
         Path to the project root directory.
     """
     this_file = Path(__file__).resolve()
-    candidates = [this_file.parents[2], this_file.parents[3]]
+    parents = this_file.parents
+    # Normal layout places the package root at parents[2]
+    # (agentic_v2/scoring/eval_config.py); a src/ layout places it at
+    # parents[3]. Guard the index access so an unusually shallow install path
+    # cannot raise IndexError at import time.
+    candidates = [parents[index] for index in (2, 3) if len(parents) > index]
     for root in candidates:
         if (root / "agentic_v2").exists() and (root / "pyproject.toml").exists():
             return root
@@ -33,7 +38,7 @@ def _resolve_project_root() -> Path:
             root / "pyproject.toml"
         ).exists():
             return root
-    return this_file.parents[2]
+    return candidates[0] if candidates else this_file.parent
 
 
 def _resolve_eval_config_path(project_root: Path) -> Path:
