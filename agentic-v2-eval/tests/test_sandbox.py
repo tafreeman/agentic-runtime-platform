@@ -96,6 +96,7 @@ class TestLocalSubprocessSandbox:
                 )
                 is None
             )
+            assert sb._check_command_safety(["curl-config", "--libs"]) is None
 
     def test_safe_mode_blocks_command_as_shell_argument(self):
         """A blocked command passed as a shell argument is still caught."""
