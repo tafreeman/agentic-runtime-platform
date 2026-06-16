@@ -17,7 +17,7 @@ Key responsibilities:
   return ``(sample_dict, metadata_dict)``.
 
 Dataset-to-workflow matching and sample adaptation logic lives in
-:mod:`~agentic_v2.server.dataset_matching` and is re-exported here for
+:mod:`~agentic_v2.scoring.dataset_matching` and is re-exported here for
 backward compatibility.
 
 All public names are re-exported by :mod:`~agentic_v2.server.evaluation`
@@ -32,12 +32,12 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from ..core.tenant import DEFAULT_TENANT_ID, sanitize_tenant_id, tenant_dataset_dir
 
-# Re-export matching/adaptation functions for backward compatibility
-from .dataset_matching import (
+# Re-export matching/adaptation functions for backward compatibility. These now
+# live in the ``scoring`` domain package; ``server`` depends on ``scoring`` (not
+# the reverse) -- see ADR-0007.
+from ..scoring.dataset_matching import (
     _dataset_value_for_input,
     _extract_message_text,
     _is_empty_value,
@@ -47,6 +47,10 @@ from .dataset_matching import (
     match_workflow_dataset,
     validate_required_inputs_present,
 )
+
+# Re-export the eval-config loader (also relocated to ``scoring``) so existing
+# ``from .datasets import _load_eval_config`` importers keep working.
+from ..scoring.eval_config import _load_eval_config
 
 __all__ = [
     "_dataset_value_for_input",
@@ -85,45 +89,8 @@ def _resolve_project_root() -> Path:
     return this_file.parents[2]
 
 
-def _resolve_eval_config_path(project_root: Path) -> Path:
-    """Resolve the path to ``evaluation.yaml`` under the project root.
-
-    Args:
-        project_root: Resolved project root directory.
-
-    Returns:
-        Path to the evaluation config file (may not exist on disk).
-    """
-    candidates = [
-        project_root / "agentic_v2" / "config" / "defaults" / "evaluation.yaml",
-        project_root / "src" / "agentic_v2" / "config" / "defaults" / "evaluation.yaml",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-
 _PROJECT_ROOT = _resolve_project_root()
 _WORKSPACE_ROOT = _PROJECT_ROOT.parent
-_EVAL_CONFIG_PATH = _resolve_eval_config_path(_PROJECT_ROOT)
-
-
-def _load_eval_config() -> dict[str, Any]:
-    """Load and parse the evaluation YAML configuration file.
-
-    Returns:
-        Parsed config dict, or empty dict if the file is missing or invalid.
-    """
-    if not _EVAL_CONFIG_PATH.exists():
-        return {}
-    try:
-        with _EVAL_CONFIG_PATH.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-            return data if isinstance(data, dict) else {}
-    except (OSError, yaml.YAMLError, ValueError) as exc:
-        logger.warning("Failed to load evaluation config: %s", exc)
-        return {}
 
 
 # ---------------------------------------------------------------------------

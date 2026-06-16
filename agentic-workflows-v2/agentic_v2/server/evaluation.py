@@ -6,7 +6,7 @@ without knowing the internal split:
 
 * :mod:`~agentic_v2.server.datasets` -- dataset discovery, loading,
   sample-to-input adaptation, and workflow/dataset compatibility matching.
-* :mod:`~agentic_v2.server.evaluation_scoring` -- hard-gate checks,
+* :mod:`~agentic_v2.scoring.evaluation_scoring` -- hard-gate checks,
   per-criterion scoring, rubric resolution, hybrid score composition,
   and letter-grade assignment.
 
@@ -22,6 +22,29 @@ from pathlib import Path
 from typing import Any
 
 from ..contracts import WorkflowResult
+from ..scoring.evaluation_scoring import (
+    CriterionFloorResult,
+    HardGateResult,
+    _build_judge_criteria,
+    _clamp,
+    _compose_hybrid_score,
+    _extract_expected_text,
+    _grade,
+    _output_text,
+    _resolve_rubric,
+    _step_scores,
+    _text_overlap_score,
+    _tokenize,
+    _validate_rubric_weights,
+    compute_hard_gates,
+    pass_threshold,
+    score_workflow_result_impl,
+    validate_evaluation_payload_schema,
+)
+from ..scoring.evaluation_scoring import (
+    _compute_criterion_score as _compute_criterion_score_impl,
+)
+from ..scoring.judge import LLMJudge
 from ..workflows.loader import (
     WorkflowDefinition,
     WorkflowInput,
@@ -44,29 +67,6 @@ from .datasets import (
     match_workflow_dataset,
     validate_required_inputs_present,
 )
-from .evaluation_scoring import (
-    CriterionFloorResult,
-    HardGateResult,
-    _build_judge_criteria,
-    _clamp,
-    _compose_hybrid_score,
-    _extract_expected_text,
-    _grade,
-    _output_text,
-    _resolve_rubric,
-    _step_scores,
-    _text_overlap_score,
-    _tokenize,
-    _validate_rubric_weights,
-    compute_hard_gates,
-    pass_threshold,
-    score_workflow_result_impl,
-    validate_evaluation_payload_schema,
-)
-from .evaluation_scoring import (
-    _compute_criterion_score as _compute_criterion_score_impl,
-)
-from .judge import LLMJudge
 
 
 def _compute_criterion_score(

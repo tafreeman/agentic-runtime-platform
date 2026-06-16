@@ -1,4 +1,4 @@
-"""Focused unit tests for agentic_v2.server.evaluation_scoring.
+"""Focused unit tests for agentic_v2.scoring.evaluation_scoring.
 
 Covers the scoring-engine internals that were extracted into this module
 during the refactoring described in REFACTORING_PLAN.md.
@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
-from agentic_v2.server.evaluation_scoring import (
+from agentic_v2.scoring.evaluation_scoring import (
     CriterionFloorResult,
     HardGateResult,
     _resolve_rubric,
@@ -23,7 +23,7 @@ from agentic_v2.server.evaluation_scoring import (
     score_workflow_result_impl,
     validate_evaluation_payload_schema,
 )
-from agentic_v2.server.scoring_criteria import (
+from agentic_v2.scoring.scoring_criteria import (
     _advisory_efficiency_score,
     _advisory_similarity_score,
     _clamp,
@@ -410,21 +410,21 @@ class TestStepScores:
 class TestPassThreshold:
     def test_returns_default_when_config_missing(self) -> None:
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             assert pass_threshold() == 70.0
 
     def test_returns_configured_value(self) -> None:
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={"evaluation": {"scoring": {"pass_threshold": 85.0}}},
         ):
             assert pass_threshold() == 85.0
 
     def test_returns_default_on_invalid_value(self) -> None:
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={
                 "evaluation": {"scoring": {"pass_threshold": "not-a-number"}}
             },
@@ -440,7 +440,7 @@ class TestPassThreshold:
 class TestResolveRubric:
     def test_defaults_when_no_workflow_definition(self) -> None:
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             rubric_id, version, weights, criteria = _resolve_rubric(None, None)
@@ -450,7 +450,7 @@ class TestResolveRubric:
 
     def test_rubric_override_takes_precedence(self) -> None:
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             rubric_id, _, _, _ = _resolve_rubric(None, "my_custom_rubric")
@@ -471,7 +471,7 @@ class TestResolveRubric:
             ),
         )
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             _, _, weights, _ = _resolve_rubric(wf, None)
@@ -490,7 +490,7 @@ class TestResolveRubric:
             ),
         )
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             rubric_id, _, _, _ = _resolve_rubric(wf, None)
@@ -1023,7 +1023,7 @@ class TestScoreWorkflowResultImpl:
         }
         defaults.update(overrides)
         with patch(
-            "agentic_v2.server.evaluation_scoring._load_eval_config",
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={},
         ):
             return score_workflow_result_impl(**defaults)

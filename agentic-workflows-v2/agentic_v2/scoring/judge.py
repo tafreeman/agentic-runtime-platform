@@ -32,8 +32,8 @@ from dataclasses import dataclass, field
 from hashlib import sha256
 from typing import Any, Protocol
 
+from ..evaluation.normalization import normalize_score
 from ..models.client import LLMClientWrapper, get_client
-from .normalization import normalize_score
 
 logger = logging.getLogger(__name__)
 

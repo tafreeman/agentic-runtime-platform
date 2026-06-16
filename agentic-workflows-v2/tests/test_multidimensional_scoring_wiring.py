@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_v2.server.multidimensional_scoring import (
+from agentic_v2.scoring.multidimensional_scoring import (
     RESEARCH_DIMENSIONS,
     compute_ci_tiebreaker,
     evaluate_research_round,

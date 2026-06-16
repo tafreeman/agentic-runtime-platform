@@ -26,7 +26,7 @@ evaluation YAML config, workflow-level scoring profiles (A--E), per-criterion
 weight overrides, and an optional rubric ID override.
 
 Criterion-level scoring, text analysis, grading, judge criteria building,
-and hybrid score composition live in :mod:`~agentic_v2.server.scoring_criteria`.
+and hybrid score composition live in :mod:`~agentic_v2.scoring.scoring_criteria`.
 """
 
 from __future__ import annotations
@@ -37,14 +37,15 @@ from datetime import UTC, datetime
 from typing import Any, Callable
 
 from ..contracts import StepStatus, WorkflowResult
+from ..evaluation.normalization import adjust_for_sample_size, normalize_score
 from ..workflows.loader import (
     WorkflowCriterion,
     WorkflowDefinition,
     WorkflowOutput,
 )
-from .datasets import _load_eval_config, match_workflow_dataset
+from .dataset_matching import match_workflow_dataset
+from .eval_config import _load_eval_config
 from .judge import JudgeEvaluationResult, LLMJudge
-from .normalization import adjust_for_sample_size, normalize_score
 
 # Re-export everything from scoring_criteria so callers that import from
 # this module continue to work unchanged.
