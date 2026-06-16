@@ -12,6 +12,7 @@ for production isolation.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import tempfile
 import time
@@ -44,6 +45,24 @@ BLOCKED_COMMANDS = frozenset(
         "nc",
         "netcat",
     }
+)
+
+# Pre-compiled matchers for the argument scan. Alphanumeric command names are
+# matched on word boundaries so a blocked word is not flagged when it appears
+# *inside* an unrelated token — e.g. the "rm" in a path like
+# ``.../agentic-runtime-platform/python.exe`` or "nc" in "sync" must NOT trip
+# the blocklist. Non-word patterns (the fork bomb ``:(){``) keep a literal
+# substring match because they cannot be expressed with ``\b`` boundaries.
+_ARG_PATTERN_MATCHERS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
+    (
+        pattern,
+        re.compile(
+            rf"(?<![a-zA-Z0-9_-]){re.escape(pattern)}(?![a-zA-Z0-9_-])"
+            if pattern.isalnum()
+            else re.escape(pattern)
+        ),
+    )
+    for pattern in sorted(BLOCKED_COMMANDS)
 )
 
 
@@ -122,10 +141,12 @@ class LocalSubprocessSandbox(Sandbox):
         if cmd_name in BLOCKED_COMMANDS:
             return f"Command '{cmd_name}' is blocked in safe mode"
 
-        # Check for dangerous patterns in arguments
+        # Check for dangerous patterns in arguments. Match whole command words
+        # (word boundaries) so a blocked name inside an unrelated token or path
+        # does not false-positive; the fork-bomb pattern matches as a literal.
         full_cmd = " ".join(command).lower()
-        for pattern in BLOCKED_COMMANDS:
-            if pattern in full_cmd:
+        for pattern, matcher in _ARG_PATTERN_MATCHERS:
+            if matcher.search(full_cmd):
                 return f"Pattern '{pattern}' is blocked in safe mode"
 
         return None
