@@ -34,6 +34,7 @@
 | **027** | Forced / `any` / `auto` `tool_choice` and cross-role `verify_fact` | Accepted | [ADR-027](ADR-027-forced-tool-choice.md) |
 | **028** | Tool descriptions are the primary tool-selection mechanism | Accepted | [ADR-028](ADR-028-tool-descriptions-as-selection-mechanism.md) |
 | **029** | Adaptive decomposition (investigate → per-file → cross-file) | Accepted | [ADR-029](ADR-029-adaptive-decomposition.md) |
+| **030** | SSRF guard pins the connection target in both modes (opt-out too) | Accepted | [ADR-030](ADR-030-unconditional-connection-pinning.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed.
 

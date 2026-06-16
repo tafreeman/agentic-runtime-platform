@@ -245,11 +245,6 @@ ignore = [
     #   Cleanup (target Q3 2026): reformat manually where wrapping improves readability;
     #   leave URL-only lines alone (add `# noqa: E501` per-line).
     "E501",
-    # I001 (74 violations): unsorted imports — pre-commit isort hook should
-    #   handle this, but the hook was added after many files were written.
-    #   Cleanup (target Q3 2026): run `ruff check --fix --select I001` in a dedicated
-    #   formatting commit so the diff is reviewable.
-    "I001",
     # UP017 (66 violations): `datetime.timezone.utc` → `datetime.UTC` —
     #   datetime.UTC was introduced in Python 3.11; safe to migrate but the
     #   change touches ~20 files and warrants a dedicated commit.

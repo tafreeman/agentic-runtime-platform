@@ -35,6 +35,31 @@ def _run(coro: Any) -> Any:
     return asyncio.get_event_loop().run_until_complete(coro)
 
 
+@pytest.fixture(autouse=True)
+def _force_block_private_ips_on(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Pin the SSRF private-IP guard ON for this module, independent of ambient env.
+
+    The runtime default (``settings.agentic_block_private_ips``) is ON, but a
+    developer ``.env`` — loaded into the test session at import time via
+    ``load_dotenv`` — may set ``AGENTIC_BLOCK_PRIVATE_IPS=0`` so local dev can
+    reach localhost LLM endpoints. These tests assert the guard's *behaviour* and
+    must not silently pass or fail on that ambient value, so we force the flag to
+    ``"1"`` (an ``os.environ`` write, which outranks the ``.env`` file in
+    pydantic-settings) and reset the cached ``Settings`` around every test.
+
+    Tests that deliberately exercise the flag-off path either pass
+    ``block_private=False`` directly to the guard (no settings read) or set the
+    env var themselves inside the test body, which — running after this fixture —
+    takes precedence.
+    """
+    import agentic_v2.settings as settings_mod
+
+    monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "1")
+    settings_mod.get_settings.cache_clear()
+    yield
+    settings_mod.get_settings.cache_clear()
+
+
 # ---------------------------------------------------------------------------
 # a. Default is ON
 # ---------------------------------------------------------------------------
@@ -1005,3 +1030,52 @@ class TestDnsRebinding:
         # Connection target is the FIRST (validated) address — a later flip
         # to 127.0.0.1 never enters the picture.
         assert seen["url"] == "http://93.184.216.34/"
+
+    def test_optout_mode_still_pins_to_checked_address(self, monkeypatch):
+        """With the private-IP guard OPTED OUT (AGENTIC_BLOCK_PRIVATE_IPS=0) the
+        httpx path still pins the connection to the screened address.
+
+        Pinning is independent of the private-IP policy: a rebinding domain must
+        not be able to pass the always-on metadata screen with a public address
+        and then have the client re-resolve to a metadata/private address at
+        connect time.  Private IPs remain permitted in this mode — only the
+        connect target is locked to the address actually checked.
+        """
+        import socket as socket_mod
+
+        import httpx
+
+        monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "0")
+        import agentic_v2.settings as settings_mod
+
+        settings_mod.get_settings.cache_clear()
+
+        calls = {"n": 0}
+
+        def rebinding_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            calls["n"] += 1
+            ip = "93.184.216.34" if calls["n"] == 1 else "127.0.0.1"
+            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", (ip, 0))]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", rebinding_getaddrinfo)
+
+        seen: dict[str, Any] = {}
+
+        def fake_get(self, url, **kwargs):  # type: ignore[no-untyped-def]
+            seen["url"] = url
+            resp = MagicMock(spec=httpx.Response)
+            resp.status_code = 200
+            resp.text = "ok"
+            return resp
+
+        monkeypatch.setattr(httpx.Client, "get", fake_get)
+
+        from agentic_v2.langchain.tools import _http_get_with_redirect_guard
+
+        try:
+            _http_get_with_redirect_guard("http://rebind.example.com/")
+            # Even opted out, the connect target is the screened address, not a
+            # re-resolved rebinding flip to 127.0.0.1.
+            assert seen["url"] == "http://93.184.216.34/"
+        finally:
+            settings_mod.get_settings.cache_clear()

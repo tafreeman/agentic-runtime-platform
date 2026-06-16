@@ -191,8 +191,12 @@ def _pin_request_target(
     (for https) in the ``sni_hostname`` extension so TLS handshake + cert
     verification still use the real hostname.
 
+    Pinning applies in both guard modes (the flag governs only whether private
+    addresses are rejected, not whether the connection is pinned).
+
     Returns ``(request_url, host_header, extensions)``; the last two are
-    ``None`` when no pinning applies (IP-literal host or guard flag off).
+    ``None`` when no pinning applies (IP-literal host or the DNS name did not
+    resolve).
 
     Raises:
         ValueError: When the guard blocks the URL.

@@ -23,9 +23,8 @@ from agentic_v2.agents.orchestrator import (
     SubTask,
 )
 from agentic_v2.contracts import StepStatus, TaskInput, TaskOutput
-from agentic_v2.engine.dag import CycleDetectedError, DAG
+from agentic_v2.engine.dag import DAG, CycleDetectedError
 from agentic_v2.engine.step import StepDefinition
-
 
 # ---------------------------------------------------------------------------
 # Stub agent helpers

@@ -20,6 +20,12 @@ from . import __version__
 from .rubrics import load_rubric
 from .scorer import Scorer
 
+# Exit code returned by `evaluate --fail-under` when the average weighted score
+# is below the configured threshold. Mirrors the gate semantics of
+# scripts/eval_gate.py while using a distinct code so callers can tell a
+# threshold miss apart from a load/parse error (code 1).
+_FAIL_UNDER_EXIT_CODE = 2
+
 
 def main(argv: list[str] | None = None) -> int:
     """Main CLI entry point."""
@@ -56,6 +62,17 @@ def main(argv: list[str] | None = None) -> int:
         "-o",
         type=Path,
         help="Output file for scored results (optional)",
+    )
+    eval_parser.add_argument(
+        "--fail-under",
+        type=float,
+        default=None,
+        dest="fail_under",
+        help=(
+            "Minimum average weighted score (0.0-1.0) required to pass. "
+            "When the average falls below this threshold, exit with code 2. "
+            "Omit to disable the gate (default behavior unchanged)."
+        ),
     )
 
     # Report command
@@ -134,10 +151,12 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
                 print(f"Result {idx}: {score_result.weighted_score:.4f}")
 
         # Summary
+        avg_score = (
+            sum(r["weighted_score"] for r in scored_results) / len(scored_results)
+            if scored_results
+            else 0.0
+        )
         if scored_results:
-            avg_score = sum(r["weighted_score"] for r in scored_results) / len(
-                scored_results
-            )
             print(f"\nAverage Score: {avg_score:.4f}")
 
         # Output if requested
@@ -149,6 +168,17 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
             with args.output.open("w", encoding="utf-8") as f:
                 json.dump(output_data, f, indent=2)
             print(f"\nScored results written to: {args.output}")
+
+        # Threshold gate (opt-in via --fail-under). Mirrors scripts/eval_gate.py:
+        # a sub-threshold average is a non-zero (code 2) failure; absent flag is
+        # a no-op so default behavior is unchanged.
+        if args.fail_under is not None and avg_score < args.fail_under:
+            print(
+                f"\nFAIL: average score {avg_score:.4f} is below the "
+                f"--fail-under threshold {args.fail_under:.4f}.",
+                file=sys.stderr,
+            )
+            return _FAIL_UNDER_EXIT_CODE
 
         return 0
 
