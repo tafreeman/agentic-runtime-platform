@@ -231,9 +231,12 @@ def _validate_url_core(
 ) -> tuple[str | None, str | None]:
     """Shared validation core returning ``(error, pinned_ip)``.
 
-    ``pinned_ip`` is only set when the hostname is a DNS name that was
-    resolved (i.e. *block_private* on): the validated address the caller
-    should dial instead of re-resolving in the HTTP client.
+    ``pinned_ip`` is set whenever the hostname is a DNS name that resolves to a
+    usable address — in BOTH modes — and is the validated address the caller
+    should dial instead of re-resolving in the HTTP client.  *block_private*
+    governs only whether private/loopback/reserved addresses are *rejected*; it
+    does not govern pinning.  ``pinned_ip`` is ``None`` for an IP-literal host
+    (nothing to resolve) or when resolution fails.
     """
     try:
         parsed = urlparse(url)
@@ -260,23 +263,36 @@ def _validate_url_core(
         # Metadata endpoints are blocked even when the private-IP guard is
         # opted out — but a DNS name pointing at a metadata IP would otherwise
         # sail through, since the string/literal checks above never resolve.
-        # Resolve and screen against the metadata list only.  Best-effort:
-        # resolution failure falls through (the operator explicitly disabled
+        # Resolve once, screen against the metadata list, and PIN the connection
+        # to the screened address: re-resolving in the HTTP client would let a
+        # rebinding domain pass this metadata screen (public IP) and then serve
+        # a metadata/private address to the connect.  Pinning closes that window
+        # in the opt-out path too — private IPs stay permitted (the guard is
+        # off), but the connect target is the address we actually checked.
+        # Best-effort: resolution failure falls through (the operator disabled
         # the guard; the request itself will fail on an unresolvable host).
-        if _parse_ip_literal(hostname) is None:
-            try:
-                infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
-            except (socket.gaierror, OSError):
-                return None, None
-            for info in infos:
-                resolved = _parse_ip_literal(str(info[4][0]))
-                if resolved is not None and _is_metadata_address(resolved):
-                    return (
-                        f"Host '{hostname}' resolves to a metadata endpoint "
-                        "and is blocked.",
-                        None,
-                    )
-        return None, None
+        if _parse_ip_literal(hostname) is not None:
+            return None, None  # IP literal — dialled directly, no DNS to pin.
+        try:
+            infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+        except (socket.gaierror, OSError):
+            return None, None
+        resolved_ips: list[str] = []
+        for info in infos:
+            resolved = _parse_ip_literal(str(info[4][0]))
+            if resolved is None:
+                continue
+            if _is_metadata_address(resolved):
+                return (
+                    f"Host '{hostname}' resolves to a metadata endpoint "
+                    "and is blocked.",
+                    None,
+                )
+            resolved_ips.append(str(resolved))
+        if not resolved_ips:
+            return None, None
+        # Prefer IPv4 to minimise breakage on hosts without a routable IPv6 path.
+        return None, sorted(resolved_ips, key=lambda ip: ":" in ip)[0]
 
     # IP literal path — client dials the literal directly, no DNS to pin.
     ip_result = _check_ip_literal(hostname)
@@ -321,17 +337,19 @@ def validate_url_pinned(
 ) -> tuple[str | None, str | None]:
     """Validate *url* and return a pinned IP for the connection (synchronous).
 
-    Same checks as :func:`validate_url`, but when the hostname is a DNS name
-    and *block_private* is on, the address validated here is also the one the
-    caller should CONNECT to.  Re-resolving in the HTTP client would let a
-    rebinding domain serve a public address to the check and a private one to
-    the connect — pinning closes that gap (single ``getaddrinfo`` per hop).
+    Same checks as :func:`validate_url`, but when the hostname is a DNS name the
+    address validated here is also the one the caller should CONNECT to — in
+    BOTH modes.  Re-resolving in the HTTP client would let a rebinding domain
+    serve a public address to the check and a private/metadata one to the
+    connect — pinning closes that gap (single ``getaddrinfo`` per hop).  The
+    *block_private* flag controls only whether private addresses are rejected,
+    not whether the connection is pinned.
 
     Returns:
         ``(error, pinned_ip)``.  ``error`` is an error string when blocked
         (``pinned_ip`` is ``None``).  ``pinned_ip`` is a validated address to
-        dial when the host is a DNS name and pinning applies; ``None`` when no
-        pinning is needed (IP-literal host, or *block_private* off).
+        dial when the host is a DNS name that resolved; ``None`` when no pinning
+        is needed (IP-literal host) or resolution failed.
     """
     return _validate_url_core(url, block_private=block_private)
 

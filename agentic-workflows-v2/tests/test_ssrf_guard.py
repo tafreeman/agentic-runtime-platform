@@ -1030,3 +1030,52 @@ class TestDnsRebinding:
         # Connection target is the FIRST (validated) address — a later flip
         # to 127.0.0.1 never enters the picture.
         assert seen["url"] == "http://93.184.216.34/"
+
+    def test_optout_mode_still_pins_to_checked_address(self, monkeypatch):
+        """With the private-IP guard OPTED OUT (AGENTIC_BLOCK_PRIVATE_IPS=0) the
+        httpx path still pins the connection to the screened address.
+
+        Pinning is independent of the private-IP policy: a rebinding domain must
+        not be able to pass the always-on metadata screen with a public address
+        and then have the client re-resolve to a metadata/private address at
+        connect time.  Private IPs remain permitted in this mode — only the
+        connect target is locked to the address actually checked.
+        """
+        import socket as socket_mod
+
+        import httpx
+
+        monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "0")
+        import agentic_v2.settings as settings_mod
+
+        settings_mod.get_settings.cache_clear()
+
+        calls = {"n": 0}
+
+        def rebinding_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            calls["n"] += 1
+            ip = "93.184.216.34" if calls["n"] == 1 else "127.0.0.1"
+            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", (ip, 0))]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", rebinding_getaddrinfo)
+
+        seen: dict[str, Any] = {}
+
+        def fake_get(self, url, **kwargs):  # type: ignore[no-untyped-def]
+            seen["url"] = url
+            resp = MagicMock(spec=httpx.Response)
+            resp.status_code = 200
+            resp.text = "ok"
+            return resp
+
+        monkeypatch.setattr(httpx.Client, "get", fake_get)
+
+        from agentic_v2.langchain.tools import _http_get_with_redirect_guard
+
+        try:
+            _http_get_with_redirect_guard("http://rebind.example.com/")
+            # Even opted out, the connect target is the screened address, not a
+            # re-resolved rebinding flip to 127.0.0.1.
+            assert seen["url"] == "http://93.184.216.34/"
+        finally:
+            settings_mod.get_settings.cache_clear()
