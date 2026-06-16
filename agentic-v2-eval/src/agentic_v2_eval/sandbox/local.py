@@ -57,7 +57,9 @@ _ARG_PATTERN_MATCHERS: tuple[tuple[str, re.Pattern[str]], ...] = tuple(
     (
         pattern,
         re.compile(
-            rf"\b{re.escape(pattern)}\b" if pattern.isalnum() else re.escape(pattern)
+            rf"(?<![a-zA-Z0-9_-]){re.escape(pattern)}(?![a-zA-Z0-9_-])"
+            if pattern.isalnum()
+            else re.escape(pattern)
         ),
     )
     for pattern in sorted(BLOCKED_COMMANDS)
