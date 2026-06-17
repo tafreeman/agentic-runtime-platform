@@ -1,4 +1,16 @@
 version: 2
+
+# Grouping: each ecosystem batches all of a week's minor/patch bumps into ONE
+# pull request (majors are ignored below and never grouped). This collapses the
+# ~16 individual PRs we used to get into ~5 grouped PRs, and avoids the pairwise
+# lockfile conflicts that separate PRs cause (npm shares one package-lock.json;
+# pip shares one uv.lock).
+#
+# Auto-merge (see .github/workflows/dependabot-auto-merge.yml): npm, github-actions
+# and docker patch/minor PRs self-merge once the required checks pass. pip is
+# deliberately NOT auto-merged — Dependabot does not regenerate uv.lock, so a pip
+# PR must have its lock + ci-constraints.txt re-synced before merge (one grouped
+# PR per directory, merged by hand after `uv lock && uv export ... -o ci-constraints.txt`).
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -10,6 +22,10 @@ updates:
       - "dependencies"
       - "ci"
     open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     # Major GH Actions bumps (e.g., actions/checkout v3→v4) stay as PRs for intentional review.
     # Patch/minor are auto-merged by the auto-merge workflow.
     ignore:
@@ -26,6 +42,10 @@ updates:
       - "dependencies"
       - "python"
     open-pull-requests-limit: 10
+    groups:
+      pip-root:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -40,6 +60,10 @@ updates:
       - "dependencies"
       - "python"
     open-pull-requests-limit: 10
+    groups:
+      pip-runtime:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -54,6 +78,10 @@ updates:
       - "dependencies"
       - "python"
     open-pull-requests-limit: 10
+    groups:
+      pip-eval:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -68,6 +96,10 @@ updates:
       - "dependencies"
       - "frontend"
     open-pull-requests-limit: 10
+    groups:
+      ui-npm:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -82,6 +114,10 @@ updates:
       - "dependencies"
       - "docker"
     open-pull-requests-limit: 10
+    groups:
+      docker:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
