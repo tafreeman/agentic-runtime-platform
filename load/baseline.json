@@ -1,0 +1,9 @@
+{
+  "_source": "Derived from load/results/scale_3replica.json (3-replica run, 2026-06-17).",
+  "_metrics_path": {
+    "p99_latency_ms": "metrics.http_req_duration[\"p(99)\"]",
+    "throughput_rps": "metrics.iterations.rate"
+  },
+  "p99_latency_ms": 127.77,
+  "throughput_rps": 282.68
+}
