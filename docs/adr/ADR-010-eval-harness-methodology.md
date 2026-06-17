@@ -397,3 +397,14 @@ catches these mechanically and deterministically.
 │    └── Own private repo + arbitrary commit SHA ─────── CHOSEN        │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+## Responsibility boundary: runtime normalization vs offline harness
+
+*(Clarification added 2026-06-17 — addresses whether runtime and offline evaluation duplicate each other. They do not.)*
+
+Two evaluation surfaces exist by design, with **no shared interface because they do different jobs**:
+
+- **Runtime** — `agentic_v2/evaluation/` is a stateless *score-normalization* registry (`normalize_score`, `FORMULA_REGISTRY`, `adjust_for_sample_size`). It maps a raw per-criterion value onto the canonical `[0.0, 1.0]` range for live workflow/server scoring. It owns no datasets, evaluators, metrics, or reporters.
+- **Offline** — `agentic-v2-eval/` (the separate `agentic_v2_eval` package) is the full evaluation *harness*: datasets, evaluators (`llm`, `pattern`, `quality`, `standard`), metrics, and reporters, run out-of-band against committed golden tasks (see ADR-011).
+
+The two are intentionally decoupled — **neither package imports the other**. That separation *is* the contract: ground-truth scoring lives in the offline harness; the runtime module only normalizes already-produced raw scores. A change that makes the runtime module *produce* scores (rather than normalize them) would cross this boundary and needs its own ADR.
