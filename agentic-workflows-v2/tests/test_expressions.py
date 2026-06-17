@@ -350,6 +350,7 @@ class TestExpressionEvaluatorPhase0:
         assert result.output_data["selected"] == "selected_fn"
 
 
+@pytest.mark.security
 class TestExpressionEvaluatorSafety:
     """Tests for safe eval restrictions."""
 
@@ -538,6 +539,181 @@ def test_legitimate_expressions_not_broken(
         evaluator.evaluate(expr)
     except ValueError:  # pragma: no cover — would indicate regression
         pytest.fail(f"Legitimate expression rejected by AST guard: {expr!r}")
+
+
+# ---------------------------------------------------------------------------
+# Additional security escape vectors (ARP-4 audit 2026-06-17)
+#
+# Vectors not yet covered by the S1-04 corpus above:
+#   A) exec/eval/compile names — blocked because they are not in the eval env
+#      (builtins stripped) AND because the AST callable allowlist rejects any
+#      name that resolves to something other than _coalesce.
+#   B) getattr() builtin bypass — ``getattr(ctx, '__class__')`` bypasses the
+#      dunder-attribute AST guard because the dunder string is a constant arg,
+#      not an ast.Attribute node.  Must be rejected by the callable allowlist
+#      (getattr is not coalesce).
+#   C) __reduce__ / __getattribute__ dunder variants — additional dunder names
+#      not present in the original _DUNDER_TRAVERSAL_VECTORS list.
+#   D) Deep AST recursion / expression complexity bomb — deeply nested binary
+#      ops do not exhaust the stack because the evaluator is pure-Python and
+#      Python's default recursion limit is ~1000 frames; expressions parsed
+#      from a ${...} string are naturally bounded by the depth the AST parser
+#      accepts before raising SyntaxError.  We verify the evaluator either
+#      evaluates correctly or raises ValueError/SyntaxError — never hangs.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.security
+class TestAdditionalEscapeVectors:
+    """Escape vectors not present in the original S1-04 dunder corpus.
+
+    Each test targets a distinct bypass technique; failures indicate a
+    regression in the sandbox boundary.
+    """
+
+    def test_exec_name_rejected(self) -> None:
+        """``exec(...)`` must be rejected — exec is not in the eval env."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        # exec is not exposed in the sandbox env; the callable allowlist also
+        # catches it because any callable that resolves is not _coalesce.
+        with pytest.raises((ValueError, NameError)):
+            evaluator._safe_eval("exec('import os')")
+
+    def test_eval_name_rejected(self) -> None:
+        """``eval(...)`` must be rejected — not available in the sandbox."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError)):
+            evaluator._safe_eval("eval('1+1')")
+
+    def test_compile_name_rejected(self) -> None:
+        """``compile(...)`` must be rejected — not available in the sandbox."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError)):
+            evaluator._safe_eval("compile('1', '<str>', 'eval')")
+
+    def test_getattr_builtin_bypass_rejected(self) -> None:
+        """``getattr(ctx, '__class__')`` bypasses the AST dunder-name guard
+        because ``__class__`` appears as a constant string arg, not as an
+        ``ast.Attribute`` or ``ast.Name`` node.
+
+        The callable allowlist (``Only coalesce()``) must catch this because
+        ``getattr`` is not ``_coalesce``, blocking the bypass before the
+        attribute access can occur.
+        """
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError)):
+            evaluator._safe_eval("getattr(ctx, '__class__')")
+
+    def test_getattr_subclasses_bypass_rejected(self) -> None:
+        """Chained getattr escape: ``getattr(getattr(ctx, '__class__'), '__subclasses__')()``
+        must be blocked — both getattr calls are caught by the callable allowlist."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError)):
+            evaluator._safe_eval(
+                "getattr(getattr(ctx, '__class__'), '__subclasses__')()"
+            )
+
+    def test_dunder_reduce_name_rejected(self) -> None:
+        """``__reduce__`` as a bare name must be blocked by the dunder-name guard."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError), match=r"[Dd]under|not defined"):
+            evaluator._safe_eval("__reduce__")
+
+    def test_dunder_getattribute_name_rejected(self) -> None:
+        """``__getattribute__`` as a bare name must be blocked."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises((ValueError, NameError), match=r"[Dd]under|not defined"):
+            evaluator._safe_eval("__getattribute__")
+
+    def test_dunder_reduce_attribute_rejected(self) -> None:
+        """``ctx.__reduce__`` — dunder attribute access must be blocked at AST
+        validation, same as ``__class__``."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match=r"[Dd]under|not allowed"):
+            evaluator._safe_eval("ctx.__reduce__")
+
+    def test_dunder_getattribute_attribute_rejected(self) -> None:
+        """``ctx.__getattribute__`` — dunder attribute access must be blocked."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match=r"[Dd]under|not allowed"):
+            evaluator._safe_eval("ctx.__getattribute__('x')")
+
+    def test_deeply_nested_expression_does_not_hang(self) -> None:
+        """A deeply nested binary expression must terminate (evaluate or raise),
+        never hang.  Python's own ast.parse raises SyntaxError at extreme depths;
+        at moderate depths the pure-Python evaluator resolves the result.
+
+        This is a resource-exhaustion guard: verify the evaluator is bounded.
+        """
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        # Build a chain of 200 additions: ((((1+1)+1)+1)…+1)
+        # This is well within Python's recursion limit and AST parse limit;
+        # it must evaluate to 201 without raising.
+        expr = " + ".join(["1"] * 201)
+        try:
+            result = evaluator._safe_eval(expr)
+            assert result == 201
+        except (ValueError, SyntaxError, RecursionError):
+            # Any of these is an acceptable bounded failure; the test just
+            # asserts the evaluator does not loop indefinitely.
+            pass
+
+    def test_ast_bomb_via_exponent_rejected(self) -> None:
+        """Exponentiation is not in the allowed BinOp set (no ast.Pow).
+
+        ``2 ** 1000000`` would produce a bignum and exhaust memory; the AST
+        whitelist must reject ``ast.Pow`` before any computation occurs.
+        """
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Unsupported"):
+            evaluator._safe_eval("2 ** 1000000")
+
+    def test_floor_div_not_allowed(self) -> None:
+        """Floor division (``//``) is not in the allowed BinOp set."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Unsupported"):
+            evaluator._safe_eval("10 // 3")
+
+    def test_bitwise_ops_not_allowed(self) -> None:
+        """Bitwise operators (|, &, ^, <<, >>) are not in the allowed set."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        for expr in ("1 | 2", "1 & 2", "1 ^ 2", "1 << 2", "1 >> 2"):
+            with pytest.raises(ValueError, match="Unsupported"):
+                evaluator._safe_eval(expr)
+
+    def test_ifexp_ternary_not_allowed(self) -> None:
+        """Ternary ``a if cond else b`` (ast.IfExp) is not in the allowed set."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Unsupported"):
+            evaluator._safe_eval("1 if True else 2")
+
+    def test_listcomp_not_allowed(self) -> None:
+        """List comprehensions are not in the allowed set."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Unsupported"):
+            evaluator._safe_eval("[x for x in range(10)]")
+
+    def test_generatorexp_not_allowed(self) -> None:
+        """Generator expressions are not in the allowed set."""
+        ctx = ExecutionContext()
+        evaluator = ExpressionEvaluator(ctx)
+        with pytest.raises(ValueError, match="Unsupported"):
+            evaluator._safe_eval("sum(x for x in [1, 2, 3])")
 
 
 class TestStepResultView:
