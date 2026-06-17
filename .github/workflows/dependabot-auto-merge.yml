@@ -18,11 +18,19 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Auto-merge patch and minor updates immediately — these are safe to absorb.
-      # Major version bumps stay open as intentional sprint-C work items.
-      - name: Auto-merge patch/minor updates
+      # Major version bumps stay open as intentional review work items (ignored in
+      # dependabot.yml, so they arrive as individual PRs).
+      #
+      # pip is deliberately excluded: Dependabot updates pyproject + ci-constraints.txt
+      # but NOT uv.lock, so an auto-merged pip PR would land a stale lockfile and turn
+      # the `ci-constraints.txt in sync with uv.lock` job red on main. pip PRs are
+      # merged by hand after regenerating the lock (`uv lock && uv export --locked
+      # --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt`).
+      - name: Auto-merge patch/minor updates (non-pip)
         if: >
-          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
-          steps.meta.outputs.update-type == 'version-update:semver-minor'
+          steps.meta.outputs.package-ecosystem != 'pip' &&
+          (steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+           steps.meta.outputs.update-type == 'version-update:semver-minor')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
