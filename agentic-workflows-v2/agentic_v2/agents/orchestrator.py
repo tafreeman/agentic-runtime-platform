@@ -1,17 +1,27 @@
-"""Meta-agent that decomposes tasks and delegates to specialized agents."""
+"""Meta-agent that decomposes tasks and delegates to specialized agents.
+
+This module is the public home of :class:`OrchestratorAgent`. The agent's
+value objects, prompts, deterministic planning helpers, and task-input
+factories live in sibling modules (:mod:`.orchestrator_models`,
+:mod:`.orchestrator_planning`, :mod:`.orchestrator_factories`); they are
+re-exported here so the historical import surface
+(``from agentic_v2.agents.orchestrator import X``) is unchanged.
+
+``get_agent_capabilities`` is imported into this module's namespace on
+purpose: :meth:`OrchestratorAgent.register_agent` resolves it as a module
+global, and the behavioral test-suite monkeypatches
+``agentic_v2.agents.orchestrator.get_agent_capabilities`` to inject stub
+capability sets. Keep that name resolving here.
+"""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
-import re
-from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from pydantic import Field
-
-from ..contracts import StepStatus, TaskInput, TaskOutput, WorkflowResult
+from ..contracts import StepStatus, WorkflowResult
 from ..engine import DAG, ExecutionContext, PipelineBuilder, run_pipeline
 from ..engine.protocol import ExecutionEngine
 from ..models import ModelTier
@@ -23,151 +33,32 @@ from .capabilities import (
     OrchestrationMixin,
     get_agent_capabilities,
 )
-from .json_extraction import extract_json
+from .orchestrator_factories import (
+    _coder_input_factory,
+    _register_default_factories,
+    _reviewer_input_factory,
+)
+from .orchestrator_models import (
+    _CROSS_FILE_CAPABILITY,
+    _CROSS_FILE_TASK_ID,
+    _PER_FILE_CAPABILITY,
+    INVESTIGATION_SYSTEM_PROMPT,
+    ORCHESTRATOR_SYSTEM_PROMPT,
+    AdaptiveDecomposition,
+    InvestigationFindings,
+    OrchestratorInput,
+    OrchestratorOutput,
+    SubTask,
+)
+from .orchestrator_planning import (
+    _extract_file_tokens,
+    _has_extractable_json,
+    _intent_decomposition,
+    _latest_user_text,
+    _per_file_task_id,
+)
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class SubTask:
-    """A single subtask produced by the orchestrator's task decomposition."""
-
-    id: str
-    description: str
-    required_capabilities: list[CapabilityType]
-    dependencies: list[str] = field(default_factory=list)
-    assigned_agent: str | None = None
-    result: Any | None = None
-    status: StepStatus = StepStatus.PENDING
-
-
-@dataclass(frozen=True)
-class InvestigationFindings:
-    """Immutable result of the orchestrator's initial investigation step.
-
-    The investigation phase of adaptive decomposition discovers what the task
-    actually touches *before* any analysis subtask is generated.  ``files`` is
-    the concrete list of artifacts found (each becomes its own per-file local
-    analysis pass); ``observations`` are free-form notes that seed the cross-file
-    integration pass.
-    """
-
-    files: tuple[str, ...] = ()
-    observations: tuple[str, ...] = ()
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return a JSON-serializable view of the findings."""
-        return {
-            "files": list(self.files),
-            "observations": list(self.observations),
-        }
-
-
-@dataclass(frozen=True)
-class AdaptiveDecomposition:
-    """Immutable output of :meth:`OrchestratorAgent.decompose_adaptive`.
-
-    Captures the full adaptive trajectory: the ``findings`` from the initial
-    investigation, the ``per_file`` subtasks derived from those findings (one
-    local analysis pass per discovered file), and the single ``cross_file``
-    integration subtask that depends on every per-file pass.
-
-    ``subtasks`` is the flattened, dependency-ordered plan (investigation is not
-    re-emitted as a subtask — it has already run to produce ``findings``).
-    """
-
-    findings: InvestigationFindings
-    per_file: tuple[dict[str, Any], ...]
-    cross_file: dict[str, Any] | None
-
-    @property
-    def subtasks(self) -> list[dict[str, Any]]:
-        """Flatten per-file passes followed by the cross-file pass."""
-        plan: list[dict[str, Any]] = list(self.per_file)
-        if self.cross_file is not None:
-            plan.append(self.cross_file)
-        return plan
-
-    def to_dict(self) -> dict[str, Any]:
-        """Return a JSON-serializable view of the decomposition."""
-        return {
-            "findings": self.findings.to_dict(),
-            "per_file": list(self.per_file),
-            "cross_file": self.cross_file,
-            "subtasks": self.subtasks,
-        }
-
-
-# Capability used for both the per-file local analysis passes and the
-# cross-file integration pass — static analysis is the closest registered
-# capability to "read this file and report what it contains".
-_PER_FILE_CAPABILITY = CapabilityType.STATIC_ANALYSIS
-_CROSS_FILE_CAPABILITY = CapabilityType.STATIC_ANALYSIS
-_CROSS_FILE_TASK_ID = "cross_file_integration"
-
-
-class OrchestratorInput(TaskInput):
-    """Input schema for OrchestratorAgent."""
-
-    task: str = Field(default="", description="Task description to orchestrate")
-    available_agents: list[str] = Field(
-        default_factory=list, description="Available agent names"
-    )
-    max_parallel: int = Field(default=3, description="Max parallel tasks")
-    require_review: bool = Field(default=True, description="Whether review is required")
-
-
-class OrchestratorOutput(TaskOutput):
-    """Output schema produced by OrchestratorAgent."""
-
-    subtasks: list[dict[str, Any]] = Field(default_factory=list)
-    agent_assignments: dict[str, str] = Field(default_factory=dict)
-    final_result: Any | None = Field(default=None)
-    execution_trace: list[dict[str, Any]] = Field(default_factory=list)
-
-
-ORCHESTRATOR_SYSTEM_PROMPT = """You are an expert task orchestrator that coordinates multiple AI agents.
-
-Your responsibilities:
-1. Analyze complex tasks and break them into subtasks
-2. Identify required capabilities for each subtask
-3. Assign subtasks to appropriate agents
-4. Aggregate results and ensure quality
-
-When decomposing tasks, provide JSON with this structure:
-{
-    "subtasks": [
-        {
-            "id": "unique_id",
-            "description": "What needs to be done",
-            "capabilities": ["code_generation", "test_generation"],
-            "dependencies": ["id_of_dependent_task"],
-            "parallel_group": 1
-        }
-    ],
-    "execution_order": ["id1", "id2"],
-    "validation_steps": ["How to validate the result"]
-}"""
-
-
-INVESTIGATION_SYSTEM_PROMPT = """You are an investigation agent that runs the FIRST step of an adaptive task decomposition.
-
-You do NOT plan the whole task up front. Instead you inspect the task and report
-only what you can concretely observe: which files/artifacts it touches and any
-salient observations. A later step turns each discovered file into its own local
-analysis pass, then a separate cross-file integration pass reasons over those
-per-file results.
-
-Respond with JSON of exactly this shape:
-{
-    "files": ["path/or/name/of/each/file/the/task/touches"],
-    "observations": ["short factual note", "another note"]
-}
-
-Rules:
-- List every distinct file the task references or implies, one entry each.
-- If the task names no files, return an empty "files" list — do NOT invent paths.
-- Keep observations factual and short; they seed the cross-file pass."""
 
 
 class OrchestratorAgent(
@@ -291,7 +182,7 @@ class OrchestratorAgent(
             )
 
         # Create subtasks
-        subtasks = []
+        subtasks: list[dict[str, Any]] = []
         for st_data in plan.get("subtasks", []):
             capabilities = [
                 CapabilityType(c)
@@ -371,6 +262,8 @@ class OrchestratorAgent(
 
     def _extract_json(self, text: str) -> dict[str, Any]:
         """Extract JSON from response using balanced-brace extraction."""
+        from .json_extraction import extract_json
+
         return extract_json(text)
 
     async def _assign_agents(self) -> dict[str, str]:
@@ -859,167 +752,32 @@ class OrchestratorAgent(
         return await run_pipeline(pipeline, ctx)
 
 
-def _per_file_task_id(index: int) -> str:
-    """Stable id for the *index*-th per-file local analysis pass."""
-    return f"per_file_{index}"
-
-
-def _latest_user_text(messages: list[dict[str, Any]]) -> str:
-    """Return the content of the most recent user message (or "")."""
-    for message in reversed(messages):
-        if message.get("role") == "user":
-            content = message.get("content", "")
-            return content if isinstance(content, str) else str(content)
-    return ""
-
-
-def _has_extractable_json(content: str) -> bool:
-    """Return True when *content* contains a JSON object the parser can read."""
-    if not content:
-        return False
-    try:
-        extract_json(content)
-        return True
-    except Exception:
-        return False
-
-
-# A token looks like a file when it carries a dotted extension (``a/b.py``,
-# ``config.yaml``). The stem (text before the final dot) must contain at least
-# one ALPHABETIC char and the extension must START with a letter, so numeric
-# tokens ("2.0", "99.9", "3.11", "4.50") and Latin abbreviations are not mistaken
-# for files. The stem allows path separators/dots/hyphens/underscores so nested
-# paths still match.
-_FILE_TOKEN_RE = re.compile(
-    r"(?P<stem>[A-Za-z0-9_./\\-]*[A-Za-z][A-Za-z0-9_./\\-]*)"
-    r"\.(?P<ext>[A-Za-z][A-Za-z0-9]{0,7})"
-)
-
-# Latin/prose abbreviations that match the file shape (alpha stem + letter ext)
-# but are never files. Compared case-insensitively against the whole token.
-_FILE_TOKEN_ABBREVIATIONS: frozenset[str] = frozenset(
-    {"e.g", "i.e", "etc", "vs", "et.al"}
-)
-
-
-def _extract_file_tokens(task: str) -> list[str]:
-    """Extract file-like tokens from *task* text, de-duplicated in order.
-
-    Used as the no-backend / fallback investigation: when the LLM is not
-    available to report discovered files, any path/extension-shaped token in the
-    task description is treated as a file to analyze locally. Version numbers,
-    percentages, and decimals (numeric stems) and a curated set of Latin prose
-    abbreviations ("e.g.", "i.e.", ...) are rejected so they do not fabricate
-    phantom per-file subtasks.
-    """
-    seen: set[str] = set()
-    ordered: list[str] = []
-    for match in _FILE_TOKEN_RE.finditer(task):
-        token = match.group(0).strip(".")
-        if not token or token.lower() in _FILE_TOKEN_ABBREVIATIONS:
-            continue
-        if token not in seen:
-            seen.add(token)
-            ordered.append(token)
-    return ordered
-
-
-# Intent keyword -> the capability a matching subtask should require. Ordered so
-# the emitted plan reads naturally (generate, then test, then review/analyze).
-_INTENT_RULES: tuple[tuple[tuple[str, ...], str, CapabilityType], ...] = (
-    (
-        ("generat", "build", "create", "implement", "write code", "add"),
-        "Generate the implementation",
-        CapabilityType.CODE_GENERATION,
-    ),
-    (
-        ("test", "pytest", "coverage"),
-        "Generate tests for the implementation",
-        CapabilityType.TEST_GENERATION,
-    ),
-    (
-        ("review", "audit", "inspect"),
-        "Review the implementation",
-        CapabilityType.CODE_REVIEW,
-    ),
-    (
-        ("analyz", "analyse", "investigate", "examine"),
-        "Statically analyze the implementation",
-        CapabilityType.STATIC_ANALYSIS,
-    ),
-)
-
-
-def _intent_decomposition(task_text: str) -> dict[str, Any]:
-    """Derive a capability-tagged plan from the *task_text* keywords.
-
-    Replaces the previous frozen ``generate``/``review`` constant on the
-    no-backend path. Each matched intent contributes one subtask requiring the
-    mapped capability, chained in declaration order so capability-scored
-    assignment picks the right registered agent for each. Falls back to a single
-    code-generation subtask when no keyword matches, so a plan is always
-    produced.
-    """
-    lowered = task_text.lower()
-    subtasks: list[dict[str, Any]] = []
-    previous_id: str | None = None
-
-    for keywords, description, capability in _INTENT_RULES:
-        if any(keyword in lowered for keyword in keywords):
-            task_id = capability.value
-            subtasks.append(
-                {
-                    "id": task_id,
-                    "description": description,
-                    "capabilities": [capability.value],
-                    "dependencies": [previous_id] if previous_id else [],
-                }
-            )
-            previous_id = task_id
-
-    if not subtasks:
-        subtasks.append(
-            {
-                "id": CapabilityType.CODE_GENERATION.value,
-                "description": "Complete the requested task",
-                "capabilities": [CapabilityType.CODE_GENERATION.value],
-                "dependencies": [],
-            }
-        )
-
-    return {
-        "subtasks": subtasks,
-        "execution_order": [st["id"] for st in subtasks],
-    }
-
-
-def _reviewer_input_factory(description: str) -> Any:
-    """Create CodeReviewInput for subtasks."""
-    from ..contracts import CodeReviewInput
-
-    return CodeReviewInput(
-        code=f"# Task: {description}\n# (code to be reviewed)",
-        language="python",
-        context={"subtask_description": description},
-    )
-
-
-def _coder_input_factory(description: str) -> Any:
-    """Create CodeGenerationInput for subtasks."""
-    from ..contracts import CodeGenerationInput
-
-    return CodeGenerationInput(
-        description=description,
-        language="python",
-    )
-
-
-def _register_default_factories() -> None:
-    """Register default task input factories for built-in agent types."""
-    from .coder import CoderAgent
-    from .reviewer import ReviewerAgent
-
-    OrchestratorAgent.register_task_input_factory(
-        ReviewerAgent, _reviewer_input_factory
-    )
-    OrchestratorAgent.register_task_input_factory(CoderAgent, _coder_input_factory)
+__all__ = [
+    # Agent
+    "OrchestratorAgent",
+    # I/O contracts and value objects (re-exported from .orchestrator_models)
+    "OrchestratorInput",
+    "OrchestratorOutput",
+    "SubTask",
+    "InvestigationFindings",
+    "AdaptiveDecomposition",
+    # Prompts and capability constants (re-exported from .orchestrator_models)
+    "ORCHESTRATOR_SYSTEM_PROMPT",
+    "INVESTIGATION_SYSTEM_PROMPT",
+    "_PER_FILE_CAPABILITY",
+    "_CROSS_FILE_CAPABILITY",
+    "_CROSS_FILE_TASK_ID",
+    # Deterministic planning helpers (re-exported from .orchestrator_planning)
+    "_intent_decomposition",
+    "_extract_file_tokens",
+    "_latest_user_text",
+    "_has_extractable_json",
+    "_per_file_task_id",
+    # Task-input factories (re-exported from .orchestrator_factories)
+    "_reviewer_input_factory",
+    "_coder_input_factory",
+    "_register_default_factories",
+    # Capability lookup — kept importable here because the behavioral suite
+    # monkeypatches ``agentic_v2.agents.orchestrator.get_agent_capabilities``.
+    "get_agent_capabilities",
+]
