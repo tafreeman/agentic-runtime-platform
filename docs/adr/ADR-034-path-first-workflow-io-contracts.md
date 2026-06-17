@@ -1,4 +1,4 @@
-# ADR-023: Path-First File I/O Contracts for Multi-Step Workflows
+# ADR-034: Path-First File I/O Contracts for Multi-Step Workflows
 
 **Status:** Proposed
 **Date:** 2026-05-24

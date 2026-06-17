@@ -288,6 +288,85 @@ cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
 
 ---
 
+## 9. Governance module (`agentic_v2/governance/`)
+
+The governance module provides two cross-cutting policy gates consulted at the
+tool-execution hot path — **before** parameter validation and execution:
+
+### 9.1 Human-approval gate (`approval.py`)
+
+`agentic_v2.governance.approval` intercepts tool calls that require operator
+consent. A tool requires approval when any of the following holds:
+
+- The tool's class sets `requires_approval = True` (high-impact builtins:
+  `shell`, `shell_exec`, `execute_python`, `file_write`, `file_delete`,
+  `file_move`, `directory_create`, `http`, `http_post`).
+- `Settings.agentic_require_tool_approval` is enabled (gates every tool).
+- The tool name appears in `Settings.agentic_approval_required_tools`.
+
+**Fail-closed:** if a tool requires approval and no provider is registered, the
+call is **DENIED** and never executes. Register a provider at process startup:
+
+```python
+from agentic_v2.governance.approval import (
+    set_approval_provider,
+    CallbackApprovalProvider,
+    ApprovalDecision,
+)
+
+async def my_gate(request):
+    # integrate with your operator prompt, queue, or remote approval service
+    return ApprovalDecision.APPROVED
+
+set_approval_provider(CallbackApprovalProvider(my_gate))
+```
+
+Built-in providers: `AutoApproveProvider` (trusted/non-interactive environments),
+`AutoDenyProvider` (hard kill-switch), `PolicyApprovalProvider` (allowlist by
+tool name), `CallbackApprovalProvider` (sync-or-async callable integration point).
+
+The shared entry point for both dispatch points (the engine tool loop in
+`agentic_v2.engine.tool_execution` and the agent loop in
+`agentic_v2.agents.base.BaseAgent`) is `evaluate_tool_approval()`, which returns
+a typed `ApprovalOutcome(allowed, decision, error_message, provider_label)`.
+
+### 9.2 Escalation sink (`escalation.py`)
+
+`agentic_v2.governance.escalation` handles the structured handoff emitted when
+every agent in an orchestrator's fallback chain has failed a subtask. Rather than
+returning a bare `{"error": ...}` that discards context, this module produces a
+`HandoffSummary` carrying `failure_type`, `attempted_agents`, `partial_results`
+(truncated to 500 chars), and `suggested_next_action`.
+
+**Default behavior:** `route_handoff()` logs the summary at WARNING and returns
+it. Register a custom sink to take real action:
+
+```python
+from agentic_v2.governance.escalation import (
+    set_escalation_sink,
+    HandoffSummary,
+    FailureType,
+)
+
+class TicketSink:
+    async def handle_handoff(self, handoff: HandoffSummary) -> None:
+        await my_ticketing_system.create(
+            title=f"Agent fallback exhausted: {handoff.subtask_id}",
+            body=handoff.suggested_next_action,
+        )
+
+set_escalation_sink(TicketSink())
+```
+
+The `HandoffSummary.from_exhausted_chain()` classmethod is the canonical
+constructor for orchestrators — it selects `FailureType.ALL_AGENTS_EXHAUSTED`
+vs `NO_AGENT_AVAILABLE` automatically based on whether any agent was attempted.
+
+Sink failures are caught and logged; they never propagate so that escalation
+never masks the original failure with a new one.
+
+---
+
 ## 5. What this document is not
 
 - Not a replacement for per-package docs — it is a map.
