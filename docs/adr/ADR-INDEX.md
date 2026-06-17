@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
-> **Last updated:** 2026-06-16
-> **Total ADRs:** 21 (15 Accepted, 4 Proposed, 2 Superseded)
+> **Last updated:** 2026-06-17
+> **Total ADRs:** 23 (17 Accepted, 4 Proposed, 2 Superseded)
 
 ---
 
@@ -36,6 +36,8 @@
 | **029** | Adaptive decomposition (investigate → per-file → cross-file) | Accepted | [ADR-029](ADR-029-adaptive-decomposition.md) |
 | **030** | SSRF guard pins the connection target in both modes (opt-out too) | Accepted | [ADR-030](ADR-030-unconditional-connection-pinning.md) |
 | **031** | Native DAG as Single Supported Execution Engine (salvaged from `agentic-systems-lab`; single-engine proposal NOT adopted — the LangGraph adapter is retained) | Superseded | [ADR-031](ADR-031-native-dag-single-engine.md) |
+| **032** | Extract Scoring/Judge Domain into `agentic_v2.scoring` (break the server "god package", fix dependency direction) | Accepted | [ADR-032](ADR-032-extract-scoring-package.md) |
+| **033** | Defensive Import-Time Project-Root Resolution in Scoring Eval-Config Loader | Accepted | [ADR-033](ADR-033-eval-config-project-root-resolution.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.)
 
@@ -114,6 +116,4 @@ Execution Kernel Domain:
 
 | Document | Description |
 |----------|-------------|
-| [RAG-pipeline-blueprint.md](RAG-pipeline-blueprint.md) | Companion blueprint (not a formal ADR) — LanceDB + Voyage 4 hybrid RAG design with cross-encoder reranking, async-first contracts, and provider abstraction via LiteLLM. Informs the `rag/` implementation in the main runtime. |
-
-_Previously listed supporting audit files were removed during the 2026-04-22 docs cleanup because they had fallen out of sync with the ADRs themselves. This index is now the canonical source._
+| [RAG-pipeline-blueprint.md](RAG-pipeline-blueprint.md) | Companion blueprint (not a formal ADR) — LanceDB + Voyage 4 hybrid RAG de
