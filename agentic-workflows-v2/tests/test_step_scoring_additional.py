@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from agentic_v2.engine.executor import ExecutorEvent
-from agentic_v2.server import step_scoring
+from agentic_v2.scoring import step_scoring
 
 
 def test_step_scoring_helpers_cover_mapping_and_output_conversion() -> None:

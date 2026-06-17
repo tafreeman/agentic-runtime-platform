@@ -16,6 +16,7 @@ from starlette.requests import Request
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.langchain import load_workflow_config
 from agentic_v2.langchain.config import InputConfig, OutputConfig, WorkflowConfig
+from agentic_v2.scoring.judge import LLMJudge
 from agentic_v2.server import execution as execution_mod
 from agentic_v2.server import result_normalization
 from agentic_v2.server.evaluation import (
@@ -26,7 +27,6 @@ from agentic_v2.server.evaluation import (
     score_workflow_result,
     validate_evaluation_payload_schema,
 )
-from agentic_v2.server.judge import LLMJudge
 from agentic_v2.server.models import WorkflowEvaluationRequest, WorkflowRunRequest
 from agentic_v2.server.routes import workflows as workflow_routes
 from agentic_v2.workflows.loader import (

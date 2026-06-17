@@ -3,7 +3,7 @@
 Contains the individual criterion scoring functions, text analysis utilities,
 grade mapping, LLM Judge criteria building, advisory heuristic scores, and
 the hybrid score composition logic used by the main scoring pipeline in
-:mod:`~agentic_v2.server.evaluation_scoring`.
+:mod:`~agentic_v2.scoring.evaluation_scoring`.
 """
 
 from __future__ import annotations
@@ -14,9 +14,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..contracts import StepStatus, WorkflowResult
+from ..evaluation.normalization import normalize_score
 from ..workflows.loader import WorkflowCriterion
 from .judge import JudgeCriterionDefinition
-from .normalization import normalize_score
 
 # =============================================================================
 # TEXT ANALYSIS UTILITIES

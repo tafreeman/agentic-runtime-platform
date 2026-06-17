@@ -49,12 +49,12 @@ except ImportError as exc:
     _LANGCHAIN_IMPORT_ERROR = to_missing_langchain_dependency_error(exc)
 
 from ..integrations.otel import create_trace_adapter
+from ..scoring.judge import LLMJudge
+from ..scoring.step_scoring import build_step_scoring_listener
 from ..workflows.run_logger import RunLogger
 from . import websocket
 from .evaluation import score_workflow_result
-from .judge import LLMJudge
 from .result_normalization import as_dict, extract_tokens, normalize_workflow_result
-from .step_scoring import build_step_scoring_listener
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_v2.server.judge import (
+from agentic_v2.scoring.judge import (
     JudgeCriterionDefinition,
     JudgeCriterionScore,
     JudgeEvaluationResult,

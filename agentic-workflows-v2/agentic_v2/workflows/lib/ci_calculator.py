@@ -1,13 +1,13 @@
 """Confidence-index helpers for multidimensional research scoring.
 
 Source of truth for the research dimension names, default weights, and
-recency logic shared across the workflow runtime. ``server.multidimensional_scoring``
+recency logic shared across the workflow runtime. ``scoring.multidimensional_scoring``
 delegates its CI tiebreaker computation here while keeping its own
 tier-classification and gate-evaluation responsibilities.
 
-This module is pure computation: it imports nothing from ``server`` (no FastAPI,
-no async server state) so it can be safely imported by server modules without
-risking a circular import.
+This module is pure computation: it imports nothing from ``server`` or
+``scoring`` (no FastAPI, no async server state) so it can be safely imported by
+those modules without risking a circular import.
 """
 
 from __future__ import annotations
