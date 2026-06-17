@@ -39,7 +39,7 @@ agentic-tools = { workspace = true }
 # `executionkit-contracts` seam is dropped), consumed from the published PyPI
 # release. httpx (an EK [httpx] extra) is already a base runtime dependency, so
 # EK's value types + error tree import with no extra.
-ek = ["executionkit>=0.1.0,<0.2.0"]
+ek = ["executionkit>=0.1.0,<0.3.0"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
