@@ -18,14 +18,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # Auto-merge patch and minor updates immediately — these are safe to absorb.
-      # Major version bumps stay open as intentional review work items (ignored in
-      # dependabot.yml, so they arrive as individual PRs).
+      # Major version bumps are not created at all (dependabot.yml ignores them across
+      # every ecosystem), so this step never sees a major update to merge.
       #
       # pip is deliberately excluded: Dependabot updates pyproject + ci-constraints.txt
       # but NOT uv.lock, so an auto-merged pip PR would land a stale lockfile and turn
       # the `ci-constraints.txt in sync with uv.lock` job red on main. pip PRs are
-      # merged by hand after regenerating the lock (`uv lock && uv export --locked
-      # --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt`).
+      # merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
       - name: Auto-merge patch/minor updates (non-pip)
         if: >
           steps.meta.outputs.package-ecosystem != 'pip' &&
