@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
 > **Last updated:** 2026-06-17
-> **Total ADRs:** 23 (17 Accepted, 4 Proposed, 2 Superseded)
+> **Total ADRs:** 25 (18 Accepted, 5 Proposed, 2 Superseded)
 
 ---
 
@@ -27,7 +27,7 @@
 | **020** | LangChain Adapter Eager Validation at FastAPI Startup | Accepted | [ADR-020](ADR-020-langchain-adapter-eager-validation.md) |
 | **021** | JWT OIDC Authentication for API Routes | Accepted | [ADR-021](ADR-021-jwt-oidc-authentication.md) |
 | **022** | Tenant-Scoped Run and Dataset Isolation | Accepted | [ADR-022](ADR-022-tenant-isolation.md) |
-| **023** | ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single `executionkit` package) | Accepted | [ADR-023](ADR-023-executionkit-runtime-contract-relationship.md) · [plan](ADR-023-migration-plan.md) · [matrix](ADR-023-preservation-matrix.md) · [notes](ADR-023-migration-notes.md) · [finish-plan](ADR-023-finish-plan.md) |
+| **023** | ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single `executionkit` package) | Accepted | [ADR-023](ADR-023-executionkit-runtime-contract-relationship.md) · [working notes](drafts/README.md) |
 | **024** | Expression Evaluation via AST Interpreter (eliminate `eval()`) | Accepted | [ADR-024](ADR-024-expression-evaluator-ast-sandbox.md) |
 | **025** | SDK `Task`-Tool Orchestration (counterpart to the asyncio orchestrator) | Accepted | [ADR-025](ADR-025-sdk-task-orchestration.md) |
 | **026** | `--resume` / `fork_session` and the summary-seeded-session tradeoff | Accepted | [ADR-026](ADR-026-resume-vs-summary-session.md) |
@@ -38,8 +38,10 @@
 | **031** | Native DAG as Single Supported Execution Engine (salvaged from `agentic-systems-lab`; single-engine proposal NOT adopted — the LangGraph adapter is retained) | Superseded | [ADR-031](ADR-031-native-dag-single-engine.md) |
 | **032** | Extract Scoring/Judge Domain into `agentic_v2.scoring` (break the server "god package", fix dependency direction) | Accepted | [ADR-032](ADR-032-extract-scoring-package.md) |
 | **033** | Defensive Import-Time Project-Root Resolution in Scoring Eval-Config Loader | Accepted | [ADR-033](ADR-033-eval-config-project-root-resolution.md) |
+| **034** | Path-First File I/O Contracts for Multi-Step Workflows | Proposed | [ADR-034](ADR-034-path-first-workflow-io-contracts.md) |
+| **035** | RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search) | Accepted | [ADR-035](ADR-035-rag-pipeline-architecture.md) |
 
-**Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.)
+**Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 
 ---
 
@@ -81,6 +83,16 @@ Security / Reliability Domain (Sprint 1):
 
 Execution Kernel Domain:
   ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
+
+Workflow I/O Domain:
+  ADR-034 (Path-First I/O Contracts) ─── extends ADR-014 wire-format discipline to file artifact handoffs
+
+RAG / Retrieval Domain:
+  ADR-035 (RAG Pipeline Architecture) ─── builds on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) + ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md
+
+Eval / Scoring Domain:
+  ADR-032 (Extract Scoring Package) ─── standalone; removes server "god package" coupling
+  ADR-033 (Eval-Config Project-Root Resolution) ─── extends ADR-032; import-time path fix
 ```
 
 ---
@@ -109,6 +121,10 @@ Execution Kernel Domain:
 | 022 | Yes | 100% (tenant context + scoped runs/datasets) | Tenant isolation + OIDC claim tests | 2026-05-18 |
 | 023 | Yes | F0–F5 landed (Option A′: single `executionkit` package; `executionkit-contracts` retired; B-1/B-2 fixed; `AGENTIC_EK_PROVIDER` opt-in) | 81 EK bridge tests green; flag-OFF floor held | 2026-06-01 |
 | 024 | Yes | 100% (AST interpreter replaces eval() in the engine condition evaluator) | test_expressions.py (128 cases incl. dunder/DoS vectors) | 2026-06-13 |
+| 032 | Yes | 100% (`agentic_v2/scoring/` package live) | scoring unit tests | 2026-06-17 |
+| 033 | Yes | 100% (import-time root resolution in eval_config.py) | scoring eval-config tests | 2026-06-17 |
+| 034 | Proposed | 0% (pilot on fullstack_generation workflow pending) | — | 2026-06-17 |
+| 035 | Yes | 100% (`agentic_v2/rag/` thirteen modules live) | rag/ unit + retrieval tests | 2026-06-17 |
 
 ---
 
@@ -116,4 +132,7 @@ Execution Kernel Domain:
 
 | Document | Description |
 |----------|-------------|
-| [RAG-pipeline-blueprint.md](RAG-pipeline-blueprint.md) | Companion blueprint (not a formal ADR) — LanceDB + Voyage 4 hybrid RAG de
+| [RAG-pipeline-blueprint.md](RAG-pipeline-blueprint.md) | Research blueprint and full implementation rationale for ADR-035. Retained alongside the formal ADR for deep reference. |
+| [drafts/](drafts/README.md) | Superseded ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix). Not formal ADRs; retained for historical reference. |
+
+_Previously listed supporting audit files were removed during the 2026-04-22 docs cleanup because they had fallen out of sync with the ADRs themselves. This index is now the canonical source._

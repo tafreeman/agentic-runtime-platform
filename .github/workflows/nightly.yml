@@ -111,3 +111,43 @@ jobs:
             # whose sole purpose is carrying the rolling JSON history.
             git push --force origin slo-data
           fi
+
+  # ---------------------------------------------------------------------------
+  # Gate: compare the committed load/results/*.json against load/baseline.json.
+  # The load test itself runs locally and its JSON summaries are committed (see
+  # load/README.md). This job enforces that what is committed never regresses
+  # beyond 2x p99 latency or below 0.5x throughput of the baseline, so a
+  # committed result that would breach the threshold fails the nightly before
+  # the load-report-pages.yml workflow publishes it.
+  # ---------------------------------------------------------------------------
+  performance-regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      # The compare script has no third-party dependencies — stdlib only.
+      # Run it against the canonical N-replica summary (scale_3replica.json),
+      # which is the primary throughput/latency signal committed by run_load.sh.
+      - name: Check performance regression (3-replica summary)
+        run: |
+          python load/compare_to_baseline.py \
+            load/results/scale_3replica.json \
+            --baseline load/baseline.json
+
+      # The 1-replica summary is expected to have lower throughput than the
+      # multi-replica baseline (it is the scale-up comparison point, not the
+      # production target). Run informational so the delta is visible in logs
+      # without blocking the nightly on the structural throughput gap.
+      - name: Report performance (1-replica summary, informational)
+        continue-on-error: true
+        run: |
+          python load/compare_to_baseline.py \
+            load/results/scale_1replica.json \
+            --baseline load/baseline.json
