@@ -1,5 +1,20 @@
 # Pre-commit configuration: formatting + linting + type checks
+# commit-msg stage is installed so the AI-trailer stripper runs on every commit;
+# run `pre-commit install --install-hooks` after cloning.
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
+  # Strip AI-assistant authorship trailers (Claude / Claude Code) from commit
+  # messages. Human + legitimate-bot co-authors are preserved.
+  - repo: local
+    hooks:
+      - id: strip-ai-coauthors
+        name: strip AI co-author trailers
+        entry: python scripts/strip_ai_coauthors.py
+        language: system
+        stages: [commit-msg]
+        always_run: true
+
   - repo: https://github.com/psf/black
     rev: 26.1.0
     hooks:

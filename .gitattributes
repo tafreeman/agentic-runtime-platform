@@ -1,3 +1,8 @@
+# Normalize ALL text files to LF in the repository. Without a global rule,
+# Windows checkouts re-introduce CRLF across the whole tree and every file shows
+# as modified (repo-wide spurious churn). See also: core.autocrlf=false locally.
+* text=auto eol=lf
+
 # Force LF line endings on generated wire-format artifacts. The
 # `wire-format-drift` CI job runs on Linux runners but commits originate from
 # both Windows and Linux developer machines. Without this rule, Windows-authored

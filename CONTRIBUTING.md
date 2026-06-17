@@ -131,7 +131,11 @@ Conventional commits. Enforced by review, not by hook.
 
 Scopes match the package or subsystem: `contracts`, `ui`, `server`, `engine`, `eval`, `rag`, `ci`, `slo`, `mcp/results`, etc. Read the last 40 commits on `main` (`git log --oneline -40`) to calibrate tone — terse, specific, present tense.
 
-Attribution (`Co-Authored-By`) is intentionally disabled for this repo. Do not re-enable it.
+AI-assistant attribution (`Co-Authored-By: Claude` / `Generated with Claude Code`) is intentionally disabled for this repo and must not be re-enabled. It is stripped at the source (`.claude/settings.json`, `includeCoAuthoredBy: false`) and backstopped by a `commit-msg` hook (`scripts/strip_ai_coauthors.py`). The hook only removes assistant trailers — human and PR-bot co-authors (`dependabot`, `gemini-code-assist`, `copilot`) are preserved. After cloning, install it once with:
+
+```bash
+pre-commit install --install-hooks   # installs the commit-msg stage too
+```
 
 ### Commit signing
 
@@ -247,8 +251,4 @@ Copy into your PR description:
 
 This repository is built solo with AI-assisted tooling. Because there is no second human reviewer, correctness is gated by **automated evidence**, not peer sign-off:
 
-- **CI gates (every push / PR):** ruff, `mypy --strict` (engine + contracts), the 80% coverage gate, the Pydantic↔TypeScript wire-format drift check, Playwright E2E (×5), CodeQL, SBOM generation, and dependency-audit. Merges block on a red pipeline.
-- **Behavioral verification:** the `agentic-v2-eval` evaluation package runs in CI, and the nightly job runs the E2E suite 50× against a 0.5% rolling flake-rate budget.
-- **Provenance:** AI-assisted changes are verified against these gates before merge; the CI and evaluation output is the verification artifact of record.
-
-Contributions are welcome via PR; CI must pass and changes should add or update tests.
+- **CI gates (every push / PR):** ruff, `mypy --strict` (engine + contracts), the 80% coverage gate, the Pydantic↔TypeScript wire-format drift check, Playwright E2E (×5), CodeQL, SBOM gen
