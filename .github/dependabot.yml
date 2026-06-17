@@ -10,7 +10,7 @@ version: 2
 # and docker patch/minor PRs self-merge once the required checks pass. pip is
 # deliberately NOT auto-merged — Dependabot does not regenerate uv.lock, so a pip
 # PR must have its lock + ci-constraints.txt re-synced before merge (one grouped
-# PR per directory, merged by hand after `uv lock && uv export ... -o ci-constraints.txt`).
+# PR per directory, merged by hand after `just relock` (re-locks + regenerates ci-constraints.txt).
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -26,8 +26,8 @@ updates:
       github-actions:
         patterns:
           - "*"
-    # Major GH Actions bumps (e.g., actions/checkout v3→v4) stay as PRs for intentional review.
-    # Patch/minor are auto-merged by the auto-merge workflow.
+    # Major bumps are not created (see the ignore rule below); only patch/minor are
+    # opened, grouped above, and auto-merged by the auto-merge workflow.
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
