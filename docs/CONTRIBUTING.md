@@ -85,6 +85,25 @@ Do not push directly to `main`. All changes land via PR.
 
 ---
 
+## 3a. Key runtime modules to know
+
+Before writing code that invokes tools or orchestrates agents, read these two modules:
+
+- **`agentic_v2/governance/approval.py`** — human-approval gate consulted before
+  every tool execution. High-impact tools (`shell`, `file_write`, `http_post`, etc.)
+  require an `ApprovalProvider` to be registered; without one the call is **denied
+  fail-closed**. Register `AutoApproveProvider` in trusted non-interactive tests, or
+  `CallbackApprovalProvider` for operator-prompt integration. See
+  [ARCHITECTURE.md §9.1](ARCHITECTURE.md#91-human-approval-gate-approvalpy).
+- **`agentic_v2/governance/escalation.py`** — structured handoff emitted when an
+  orchestrator's entire fallback chain is exhausted. Returns a `HandoffSummary`
+  (failure type, attempted agents, partial results, suggested next action) to a
+  registered `EscalationSink`. The default sink logs at WARNING; register a custom
+  sink for ticketing or queuing. See
+  [ARCHITECTURE.md §9.2](ARCHITECTURE.md#92-escalation-sink-escalationpy).
+
+---
+
 ## 4. Required local gates
 
 These must all pass before a PR will merge. Run them from the repo root:
