@@ -90,7 +90,7 @@ def _step_duration_ms(
             st = datetime.fromisoformat(start_ts_str)
             et = datetime.fromisoformat(end_ts_str)
             calc_duration = int((et - st).total_seconds() * 1000)
-        except ValueError:
+        except (ValueError, TypeError):
             pass
 
     if calc_duration <= 0:
