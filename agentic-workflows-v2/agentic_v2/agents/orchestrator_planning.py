@@ -31,11 +31,26 @@ def _per_file_task_id(index: int) -> str:
 
 
 def _latest_user_text(messages: list[dict[str, Any]]) -> str:
-    """Return the content of the most recent user message (or "")."""
+    """Return the text of the most recent user message (or "").
+
+    Handles both plain-string content and structured content-block lists
+    (multimodal messages), concatenating the text blocks so downstream
+    intent parsing sees real text rather than a serialized list repr.
+    """
     for message in reversed(messages):
         if message.get("role") == "user":
             content = message.get("content", "")
-            return content if isinstance(content, str) else str(content)
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts: list[str] = []
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        parts.append(str(block.get("text", "")))
+                    elif isinstance(block, str):
+                        parts.append(block)
+                return "".join(parts)
+            return str(content) if content is not None else ""
     return ""
 
 

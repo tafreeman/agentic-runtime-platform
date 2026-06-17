@@ -33,21 +33,22 @@ def _merge_stream_payload(
     """Merge one stream payload's context/outputs/steps/errors into aggregate state."""
     context = payload.get("context")
     if isinstance(context, Mapping):
-        aggregated["context"].update(context)
+        aggregated.setdefault("context", {}).update(context)
 
     outputs = payload.get("outputs")
     if isinstance(outputs, Mapping):
-        aggregated["outputs"].update(outputs)
+        aggregated.setdefault("outputs", {}).update(outputs)
 
     steps = payload.get("steps")
     if isinstance(steps, Mapping):
-        _merge_step_updates(aggregated["steps"], steps)
+        _merge_step_updates(aggregated.setdefault("steps", {}), steps)
 
     errors = payload.get("errors")
     if isinstance(errors, list):
+        aggregated_errors = aggregated.setdefault("errors", [])
         for err in errors:
             if err:
-                aggregated["errors"].append(str(err))
+                aggregated_errors.append(str(err))
 
 
 def _merge_step_updates(

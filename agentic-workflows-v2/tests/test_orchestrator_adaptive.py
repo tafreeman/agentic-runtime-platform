@@ -29,8 +29,46 @@ from agentic_v2.agents.orchestrator import (
     OrchestratorAgent,
     _extract_file_tokens,
     _intent_decomposition,
+    _latest_user_text,
 )
 from agentic_v2.contracts import StepStatus, TaskOutput
+
+
+class TestLatestUserTextMultimodal:
+    """``_latest_user_text`` must extract text from multimodal block lists.
+
+    Regression for a refactor-review finding: ``str(content)`` on a content-block
+    list leaked a serialized ``[{...}]`` repr into intent parsing.
+    """
+
+    def test_plain_string_content(self) -> None:
+        assert _latest_user_text([{"role": "user", "content": "review auth.py"}]) == (
+            "review auth.py"
+        )
+
+    def test_text_block_list_is_concatenated(self) -> None:
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "review "},
+                    {"type": "image", "source": {}},
+                    {"type": "text", "text": "auth.py"},
+                ],
+            }
+        ]
+        assert _latest_user_text(messages) == "review auth.py"
+
+    def test_string_blocks_in_list(self) -> None:
+        assert _latest_user_text([{"role": "user", "content": ["a", "b"]}]) == "ab"
+
+    def test_latest_user_message_wins(self) -> None:
+        messages = [
+            {"role": "user", "content": "first"},
+            {"role": "assistant", "content": "ack"},
+            {"role": "user", "content": [{"type": "text", "text": "second"}]},
+        ]
+        assert _latest_user_text(messages) == "second"
 
 
 class _MinimalOutput(TaskOutput):
