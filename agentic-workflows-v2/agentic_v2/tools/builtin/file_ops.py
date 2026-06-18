@@ -8,19 +8,17 @@ from typing import Any
 
 import aiofiles
 
-from ...settings import get_settings as _get_settings
+from ...settings import get_settings
 from ...utils.path_safety import ensure_within_base
 from ..base import BaseTool, ToolResult
-
-# Base directory for path validation.  When ``AGENTIC_FILE_BASE_DIR`` is set
-# tools will reject any path that escapes it.  When unset, all file operations
-# fail closed with a clear error directing the operator to configure the
-# sandbox root.
-_FILE_BASE_DIR: str | None = _get_settings().agentic_file_base_dir
 
 
 def _validate_path(path: str) -> Path:
     """Resolve and validate that *path* is within the configured base directory.
+
+    The sandbox root (``AGENTIC_FILE_BASE_DIR``) is read at call time rather
+    than captured at import, so a dynamic config change or ``monkeypatch`` of
+    the environment is honoured by every subsequent validation.
 
     When ``AGENTIC_FILE_BASE_DIR`` is not set or empty, this function raises a
     ``ValueError`` so that every file tool fails closed. Operators must set the
@@ -31,12 +29,13 @@ def _validate_path(path: str) -> Path:
         ValueError: If ``AGENTIC_FILE_BASE_DIR`` is unset/empty, or the path
             escapes the configured base directory.
     """
-    if not _FILE_BASE_DIR:
+    file_base_dir = get_settings().agentic_file_base_dir
+    if not file_base_dir:
         raise ValueError(
             "AGENTIC_FILE_BASE_DIR must be set to use file tools. "
             "Set it to the directory agents are allowed to read and write."
         )
-    return ensure_within_base(path, _FILE_BASE_DIR)
+    return ensure_within_base(path, file_base_dir)
 
 
 class FileCopyTool(BaseTool):

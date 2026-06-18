@@ -123,6 +123,10 @@ class CodeExecutionTool(BaseTool):
         "importlib",
         "sys.modules",
         "__loader__",
+        "__subclasses__",  # class-hierarchy escape to Popen/os
+        "__bases__",  # class-hierarchy traversal
+        "__mro__",  # class-hierarchy traversal
+        "__init_subclass__",  # class-hierarchy escape hook
     ]
 
     _SAFE_ENV_KEYS = frozenset(
