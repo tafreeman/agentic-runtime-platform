@@ -289,6 +289,41 @@ That's it!"""
         assert AgentEvent.STATE_CHANGE in events
         assert AgentEvent.THINKING in events
 
+    @pytest.mark.asyncio
+    async def test_llm_error_propagates_not_swallowed(self):
+        """A real LLM failure must propagate, not become a fake success.
+
+        Regression for C-12: ``_call_model`` previously caught every
+        exception and returned ``{"content": "Error calling LLM: ..."}``,
+        which let the agent finish "successfully" with the error string as
+        its output and the orchestrator report ``success=True`` on a failed
+        subtask. The exception must instead surface so ``BaseAgent.run``
+        marks the agent FAILED and re-raises.
+        """
+        from unittest.mock import AsyncMock
+
+        agent = CoderAgent()
+        await agent.initialize()
+
+        # Force the real-LLM branch (backend is None -> mock path otherwise),
+        # then make the routed call raise a permanent (non-retryable) error so
+        # ``complete_chat``'s internal retry does not mask it.
+        agent.llm_client.backend = object()
+        boom = RuntimeError("401 unauthorized: invalid api key")
+        agent.llm_client.complete_chat = AsyncMock(side_effect=boom)  # type: ignore[method-assign]
+
+        task = CodeGenerationInput(
+            description="Create a hello world function",
+            language="python",
+        )
+
+        with pytest.raises(RuntimeError, match="401 unauthorized"):
+            await agent.run(task)
+
+        assert agent.state == AgentState.FAILED
+        assert agent.error is not None
+        assert "401 unauthorized" in agent.error
+
 
 # ============================================================================
 # ReviewerAgent Tests

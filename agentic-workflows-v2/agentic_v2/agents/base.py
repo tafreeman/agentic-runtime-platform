@@ -210,7 +210,7 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
 
         _tracer = _get_tracer()
         _span_cm = (
-            _tracer.start_as_current_span(f"agent.{self.name}")
+            _tracer.start_as_current_span(f"agent.{self.config.name}")
             if _tracer
             else contextlib.nullcontext()
         )
