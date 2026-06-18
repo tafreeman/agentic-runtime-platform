@@ -467,7 +467,7 @@ CREATED → INITIALIZING → READY → RUNNING → COMPLETED
 
 ### `orchestrator_factories.py` — task-input factories (decomposed from `orchestrator.py`)
 - **Purpose:** Maps subtask descriptions to concrete `TaskInput` subclasses per managed agent type. E.g., reviewer subtasks → `CodeReviewInput`, coder subtasks → `CodeGenerationInput`. All cross-module imports are deferred to call time to avoid circular imports.
-- **Key exports:** `_reviewer_input_factory()`, `_coder_input_factory()`, `register_default_factories()`.
+- **Key exports:** `_reviewer_input_factory()`, `_coder_input_factory()`, `_register_default_factories()`.
 - **Design rationale:** Deferred imports at call time (not module load) keeps this module free of import-time coupling to the contracts layer and concrete agents.
 
 ### `memory.py` — 266 LOC
