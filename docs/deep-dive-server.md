@@ -395,7 +395,7 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 
 ### `_step_events.py` — step event builders (extracted from `execution.py`)
 - **Purpose:** Step-event builders and WebSocket broadcast logic for LangGraph streaming. Builds `step_start`/`step_end` broadcast payloads, computes step duration, walks node updates and emits per-step events (`_broadcast_node_steps`, `_process_streamed_step`).
-- **Key exports:** `_broadcast_node_steps()`, `_process_streamed_step()`, `_step_start_payload()`, `_step_end_payload()`.
+- **Key exports:** `_broadcast_node_steps()`, `_process_streamed_step()`, `_step_start_event()`, `_step_end_event()`.
 - **Dependency injection:** `_stream_dict_ref` is injected by `execution.py` immediately after it defines `_stream_dict`, avoiding a circular import.
 - **Suggested tests:** step payload shape, duration calculation, injection guard (raises if `_stream_dict_ref` unset).
 
