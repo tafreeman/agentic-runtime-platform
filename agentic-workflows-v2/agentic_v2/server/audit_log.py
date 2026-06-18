@@ -305,9 +305,18 @@ class AuditLogger:
                 try:
                     await self.store.append(record)
                 except Exception as exc:
-                    logger.exception("Audit store append failed: %s", exc)
+                    # The record was not persisted: leave self._last_hash on the
+                    # last durable hash so the chain does not advance to an
+                    # orphaned value that would make the JSONL unverifiable.
+                    logger.critical(
+                        "Audit store append failed; hash chain not advanced: %s",
+                        exc,
+                    )
+                    raise
+                self._last_hash = record["hash"]
                 _log_audit_event(event_type, outcome, record["hash"])
-            self._last_hash = record["hash"]
+            else:
+                self._last_hash = record["hash"]
             return record
 
     def _build_record(

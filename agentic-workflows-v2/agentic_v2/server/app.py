@@ -83,6 +83,11 @@ logger = logging.getLogger(__name__)
 _RATE_LIMIT_DISABLED: bool = os.environ.get("AGENTIC_RATE_LIMIT_DISABLED", "0") == "1"
 _RATE_LIMIT_DEFAULT: str = os.environ.get("AGENTIC_RATE_LIMIT_DEFAULT", "60/minute")
 
+# Env var name that lets an operator explicitly accept running with no rate
+# limiting when slowapi is not installed.  Read at startup (not import) so the
+# acknowledgement can be toggled per-process and exercised in tests.
+_DISABLE_RATE_LIMITING_ENV: str = "AGENTIC_DISABLE_RATE_LIMITING"
+
 
 try:
     from slowapi import Limiter
@@ -186,6 +191,38 @@ def _validate_selected_adapter() -> None:
             _selected_adapter,
         )
         raise
+
+
+def _enforce_rate_limiting_available() -> None:
+    """Fail fast at startup when rate limiting is silently absent.
+
+    When ``slowapi`` is not installed the server would otherwise come up with no
+    per-IP rate limiting and no error, leaving unauthenticated LLM-budget
+    exhaustion wide open. Refuse to start unless the operator has explicitly
+    accepted that risk via ``AGENTIC_DISABLE_RATE_LIMITING=1`` (or the existing
+    ``AGENTIC_RATE_LIMIT_DISABLED=1`` test override).
+
+    Raises:
+        RuntimeError: ``slowapi`` is unavailable and no override env var is set.
+    """
+    if _SLOWAPI_AVAILABLE:
+        return
+
+    explicitly_disabled = (
+        os.environ.get(_DISABLE_RATE_LIMITING_ENV, "0") == "1" or _RATE_LIMIT_DISABLED
+    )
+    if explicitly_disabled:
+        logger.warning(
+            "slowapi is not installed — rate limiting is inactive "
+            "(explicitly accepted via %s=1)",
+            _DISABLE_RATE_LIMITING_ENV,
+        )
+        return
+
+    raise RuntimeError(
+        "slowapi is required for rate limiting; install it or set "
+        f"{_DISABLE_RATE_LIMITING_ENV}=1 to explicitly disable."
+    )
 
 
 def _probe_llm_providers() -> None:
@@ -338,6 +375,10 @@ async def lifespan(app: FastAPI):
     # Eagerly validate the selected adapter at boot so misconfiguration is
     # surfaced with a clear error instead of an obscure mid-workflow traceback.
     _validate_selected_adapter()
+
+    # Refuse to start with rate limiting silently absent (slowapi missing and no
+    # explicit opt-out), which would expose unauthenticated LLM-budget drain.
+    _enforce_rate_limiting_available()
 
     _probe_llm_providers()
 

@@ -325,8 +325,17 @@ async def _audit_data_accessed(
 
 
 @router.get("/runs/{run_id}/stream")
-async def stream_run_events(run_id: str):
-    """SSE stream of execution events for a running workflow."""
+async def stream_run_events(
+    run_id: str,
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
+):
+    """SSE stream of execution events for a running workflow.
+
+    Requires the same authenticated tenant context as every other run-history
+    route so an unauthenticated caller cannot tap a live execution feed by
+    guessing a ``run_id``. The ``tenant`` dependency is resolved for its
+    auth side effect; SSE listeners are keyed by ``run_id`` upstream.
+    """
 
     async def event_generator():
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()

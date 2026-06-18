@@ -111,6 +111,51 @@ async def test_file_audit_store_growth_is_append_only(tmp_path: Path) -> None:
     assert len(_read_jsonl(audit_path)) == 2
 
 
+class _FlakyAuditStore:
+    """Audit store whose ``append`` can be toggled to fail (C-09 regression)."""
+
+    def __init__(self) -> None:
+        self.records: list[dict[str, Any]] = []
+        self.fail_next = False
+
+    async def append(self, record: dict[str, Any]) -> str:
+        if self.fail_next:
+            raise OSError("disk full")
+        self.records.append(record)
+        return str(len(self.records))
+
+    async def get_last_hash(self) -> str | None:
+        return self.records[-1]["hash"] if self.records else None
+
+    async def close(self) -> None:
+        return None
+
+
+@pytest.mark.asyncio
+async def test_last_hash_not_advanced_when_append_fails() -> None:
+    store = _FlakyAuditStore()
+    logger = AuditLogger(store)
+
+    first = await logger.audit("auth.succeeded", outcome="success")
+    hash_before_failure = logger._last_hash
+    assert hash_before_failure == first["hash"]
+
+    store.fail_next = True
+    with pytest.raises(OSError, match="disk full"):
+        await logger.audit("auth.failed", outcome="failure")
+
+    # The failed record must not advance the in-memory chain: the next durable
+    # record has to chain off the last persisted hash, not an orphaned one.
+    assert logger._last_hash == hash_before_failure
+    assert len(store.records) == 1
+
+    store.fail_next = False
+    third = await logger.audit("workflow.run_requested", outcome="success")
+    assert third["prev_hash"] == hash_before_failure
+    assert len(store.records) == 2
+    assert verify_audit_chain(store.records) is True
+
+
 @pytest.mark.skipif(not _REDIS_AVAILABLE, reason="redis package not installed")
 @pytest.mark.asyncio
 async def test_redis_audit_store_uses_xadd_maxlen_with_fakeredis() -> None:
