@@ -20,6 +20,8 @@ a global-singleton shortcut for simple scripts and tests.
 from __future__ import annotations
 
 import asyncio
+import contextvars
+import dataclasses
 import logging
 import traceback
 from collections.abc import Mapping
@@ -401,9 +403,15 @@ class WorkflowExecutor:
         self._history.record("step_start", step_def.name)
         await self._emit(ExecutorEvent.STEP_START, {"step": step_def.name})
 
-        # Apply default timeout if not set
+        # Apply default timeout if not set. Rebind to a new StepDefinition
+        # instead of mutating the shared instance in place: the same definition
+        # may be re-executed (re-entrant workflows / reused builder objects), and
+        # an in-place write would permanently erase the "caller set no timeout"
+        # signal for every subsequent run.
         if step_def.timeout_seconds is None:
-            step_def.timeout_seconds = self.config.step_default_timeout_seconds
+            step_def = dataclasses.replace(
+                step_def, timeout_seconds=self.config.step_default_timeout_seconds
+            )
 
         result = await self._step_executor.execute(step_def, ctx)
 
@@ -560,22 +568,29 @@ class WorkflowExecutor:
         return self._current_ctx
 
 
-# Global executor instance
-_executor: WorkflowExecutor | None = None
+# Per-task executor instance.
+#
+# A shared module-global executor is single-use mutable state (``_current_ctx``,
+# ``_cancelled``, ``_history``): two concurrent runs through the convenience
+# ``execute``/``run`` helpers would overwrite each other's in-flight context. A
+# ContextVar is copied into each asyncio Task, so each run gets its own executor.
+_executor: contextvars.ContextVar[WorkflowExecutor | None] = contextvars.ContextVar(
+    "_executor", default=None
+)
 
 
 def get_executor() -> WorkflowExecutor:
-    """Get or create global executor."""
-    global _executor
-    if _executor is None:
-        _executor = WorkflowExecutor()
-    return _executor
+    """Get or create the per-task executor."""
+    executor = _executor.get()
+    if executor is None:
+        executor = WorkflowExecutor()
+        _executor.set(executor)
+    return executor
 
 
 def reset_executor() -> None:
-    """Reset global executor (for testing)."""
-    global _executor
-    _executor = None
+    """Reset the per-task executor (for testing)."""
+    _executor.set(None)
 
 
 # Convenience functions

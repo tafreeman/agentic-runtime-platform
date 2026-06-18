@@ -24,6 +24,7 @@ Key capabilities:
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import hashlib
 import json
 import logging
@@ -253,23 +254,37 @@ class ExecutionContext:
         Supports JMESPath queries: ctx.get("results.items[0].name")
         """
         async with self._lock:
-            # Try local first
+            # Resolve locally while holding only this context's lock. Read the
+            # parent reference inside the lock, but do NOT call into the parent
+            # here: acquiring the parent lock while holding ours is a
+            # lock-inversion deadlock (two tasks descending opposite ends of the
+            # parent/child chain can each hold one lock and wait on the other).
+            local_hit = False
+            local_value: Any = None
             if "." in key or "[" in key:
                 # JMESPath query
                 try:
                     result = jmespath.search(key, self._variables)
                     if result is not None:
-                        return result
+                        local_hit = True
+                        local_value = result
                 except jmespath.exceptions.JMESPathError:
                     pass
             elif key in self._variables:
-                return self._variables[key]
+                local_hit = True
+                local_value = self._variables[key]
 
-            # Try parent
-            if self._parent is not None:
-                return await self._parent.get(key, default)
+            parent = self._parent
 
-            return default
+        if local_hit:
+            return local_value
+
+        # Delegate to the parent WITHOUT holding self._lock, breaking the
+        # inversion: the parent acquires its own lock independently.
+        if parent is not None:
+            return await parent.get(key, default)
+
+        return default
 
     def get_sync(self, key: str, default: Any = None) -> Any:
         """Synchronous get (use when not in async context)."""
@@ -329,10 +344,12 @@ class ExecutionContext:
 
     async def update(self, **kwargs: Any) -> None:
         """Update multiple variables at once."""
-        for key in kwargs:
-            self._validate_variable_key(key)
-
         async with self._lock:
+            # Validate inside the lock so validate-then-write is atomic: a
+            # concurrent writer cannot slip a mutation in between the check and
+            # the commit (TOCTOU). A rejected key aborts before any write.
+            for key in kwargs:
+                self._validate_variable_key(key)
             self._variables.update(kwargs)
 
     async def delete(self, key: str) -> bool:
@@ -527,7 +544,18 @@ class ExecutionContext:
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
         data = json.loads(checkpoint_path.read_text())
+        # Validate every untrusted field BEFORE mutating any state so a rejected
+        # (e.g. attacker-tampered) checkpoint leaves the context unchanged.
         variables = self._validate_checkpoint_variables(data.get("variables", {}))
+        workflow_id = self._validate_checkpoint_identity(
+            "workflow_id", data.get("workflow_id"), self.workflow_id
+        )
+        run_id = self._validate_checkpoint_identity(
+            "run_id", data.get("run_id"), self.run_id
+        )
+        completed_steps = self._validate_checkpoint_completed_steps(
+            data.get("completed_steps", [])
+        )
 
         async with self._lock:
             self._variables = variables.copy()
@@ -535,10 +563,10 @@ class ExecutionContext:
         # Restore identity so a resumed run keeps the saved workflow/run lineage
         # (save_checkpoint persists both). Without this a resume kept a freshly
         # generated run_id and any later fork recorded the wrong forked_from_run.
-        self.workflow_id = data.get("workflow_id", self.workflow_id)
-        self.run_id = data.get("run_id", self.run_id)
+        self.workflow_id = workflow_id
+        self.run_id = run_id
 
-        self.completed_steps = data.get("completed_steps", [])
+        self.completed_steps = completed_steps
         self.failed_steps = data.get("failed_steps", [])
         self.metadata.update(data.get("metadata", {}))
 
@@ -587,6 +615,60 @@ class ExecutionContext:
             "session was checkpointed; re-read them before relying on prior "
             f"tool results:\n{lines}\n"
         )
+
+    def _is_running_context(self) -> bool:
+        """Return True if this context is already bound to an active run.
+
+        A freshly constructed context used purely to *resume* a checkpoint has
+        no step history and no in-flight step, so its auto-generated identity is
+        a placeholder the checkpoint is allowed to overwrite. Once any step has
+        run (or is running) the identity is load-bearing and an incoming
+        checkpoint must not be allowed to silently reassign it.
+        """
+        return bool(self.completed_steps or self.failed_steps or self.current_step)
+
+    def _validate_checkpoint_identity(
+        self, field_name: str, candidate: Any, current: str
+    ) -> str:
+        """Validate an identity field (``workflow_id`` / ``run_id``).
+
+        Rejects type confusion and identity hijacking from an untrusted
+        checkpoint. A missing value falls back to the current identity; a
+        present value must be a ``str`` and, when this context is already bound
+        to a running execution, must match the running identity exactly.
+        """
+        if candidate is None:
+            return current
+        if not isinstance(candidate, str):
+            raise ValueError(
+                f"Invalid checkpoint {field_name}: expected str, got "
+                f"{type(candidate).__name__}"
+            )
+        if self._is_running_context() and candidate != current:
+            raise ValueError(
+                f"Checkpoint {field_name} {candidate!r} does not match the "
+                f"running context {current!r}; refusing to reassign identity"
+            )
+        return candidate
+
+    def _validate_checkpoint_completed_steps(self, steps: Any) -> list[str]:
+        """Validate ``completed_steps`` from an untrusted checkpoint.
+
+        Rejects a non-list payload or any non-string element so a tampered
+        checkpoint cannot inject structured data into the execution guards.
+        """
+        if not isinstance(steps, list):
+            raise ValueError(
+                "Invalid checkpoint completed_steps: expected a list, got "
+                f"{type(steps).__name__}"
+            )
+        for step_name in steps:
+            if not isinstance(step_name, str):
+                raise ValueError(
+                    "Invalid checkpoint completed_steps: expected str entries, "
+                    f"got {type(step_name).__name__}"
+                )
+        return list(steps)
 
     def _validate_checkpoint_variables(self, variables: Any) -> dict[str, Any]:
         """Validate checkpoint variables before restoring them."""
@@ -639,25 +721,32 @@ class ExecutionContext:
         )
 
 
-# Global context for simple use cases
-_current_context: ExecutionContext | None = None
+# Per-task ambient context for simple use cases.
+#
+# A plain module global is shared by every concurrent asyncio Task, so two
+# workflow runs racing in the same event loop would clobber each other's
+# context (and history). A ContextVar is copied into each Task at creation, so
+# every run reads and writes its own isolated slot. ``default=None`` keeps the
+# lazy "get or create" semantics callers already rely on.
+_current_context: contextvars.ContextVar[ExecutionContext | None] = (
+    contextvars.ContextVar("_current_context", default=None)
+)
 
 
 def get_context() -> ExecutionContext:
-    """Get or create the global execution context."""
-    global _current_context
-    if _current_context is None:
-        _current_context = ExecutionContext()
-    return _current_context
+    """Get or create the per-task execution context."""
+    ctx = _current_context.get()
+    if ctx is None:
+        ctx = ExecutionContext()
+        _current_context.set(ctx)
+    return ctx
 
 
 def set_context(ctx: ExecutionContext) -> None:
-    """Set the global execution context."""
-    global _current_context
-    _current_context = ctx
+    """Set the per-task execution context."""
+    _current_context.set(ctx)
 
 
 def reset_context() -> None:
-    """Reset the global context (for testing)."""
-    global _current_context
-    _current_context = None
+    """Reset the per-task context (for testing)."""
+    _current_context.set(None)
