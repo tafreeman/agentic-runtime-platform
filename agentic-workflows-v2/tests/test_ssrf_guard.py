@@ -851,6 +851,65 @@ class TestValidateUrlAsync:
         result = await validate_url_async("http://unresolvable.invalid/", block_private=True)
         assert result is not None
 
+    @pytest.mark.asyncio
+    async def test_async_dns_metadata_blocked_when_private_allowed(self, monkeypatch):
+        """C-10 regression: block_private=False must still resolve DNS and block
+        a hostname that aliases the cloud-metadata IP (169.254.169.254)."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("169.254.169.254", 0))
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = await validate_url_async(
+            "http://metadata-alias.example/", block_private=False
+        )
+        assert result is not None
+        assert "metadata" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_async_dns_private_allowed_when_private_off(self, monkeypatch):
+        """With block_private=False a hostname resolving to a plain private IP
+        is permitted (the guard is opted out) — only metadata is still blocked."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("10.0.0.5", 0))
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = await validate_url_async(
+            "http://internal.corp/", block_private=False
+        )
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_async_dns_failure_falls_through_when_private_off(self, monkeypatch):
+        """On the opt-out path a resolution failure falls through (None), matching
+        the synchronous _validate_url_core opt-out behaviour."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def raise_gaierror(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise socket_mod.gaierror("Name or service not known")
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", raise_gaierror)
+
+        result = await validate_url_async(
+            "http://unresolvable.invalid/", block_private=False
+        )
+        assert result is None
+
 
 # ---------------------------------------------------------------------------
 # Multicast + legacy IP-literal representations
