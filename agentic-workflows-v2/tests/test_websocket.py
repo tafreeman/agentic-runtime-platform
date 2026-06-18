@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -10,7 +11,9 @@ import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
+from agentic_v2.server import websocket as websocket_module
 from agentic_v2.server.app import create_app
+from agentic_v2.server.auth import AuthThrottle
 from agentic_v2.server.websocket import ConnectionManager
 
 
@@ -410,3 +413,83 @@ class TestWebSocketEndpointAuth:
             ),
         ):
             pass
+
+
+class TestWebSocketEndpointAuthThrottle:
+    """Brute-force throttle must apply to the WebSocket auth path (C-05)."""
+
+    _THRESHOLD = 3
+    _BAD_HEADERS = {
+        "Origin": "http://testserver",
+        "Authorization": "Bearer wrong-key",
+    }
+
+    def _attempt(self, client: TestClient) -> None:
+        """Make one failed WebSocket auth attempt; the server closes the socket."""
+        with suppress(WebSocketDisconnect):
+            with client.websocket_connect(
+                "/ws/execution/run-1", headers=self._BAD_HEADERS
+            ):
+                pass
+
+    def test_locks_out_after_threshold_failures(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The (N+1)th failed attempt is rejected by the throttle, not the token check.
+
+        After N failures lock the IP, the next handshake must be closed before
+        the credential check runs — so ``is_token_authorized`` (the token-store
+        interaction) is not invoked again on the locked attempt.
+        """
+        monkeypatch.setenv("AGENTIC_API_KEY", "test-secret-key")
+        app = create_app()
+        # Inject a fresh throttle with a small threshold so the test is fast.
+        app.state.auth_throttle = AuthThrottle(
+            window=60.0, threshold=self._THRESHOLD, lockout=300.0
+        )
+
+        # Count token-store interactions to prove the locked attempt skips it.
+        real_is_token_authorized = websocket_module.is_token_authorized
+        calls: list[int] = []
+
+        def _counting_is_token_authorized(
+            token: str | None, api_key: str | None
+        ) -> bool:
+            calls.append(1)
+            return real_is_token_authorized(token, api_key)
+
+        monkeypatch.setattr(
+            websocket_module, "is_token_authorized", _counting_is_token_authorized
+        )
+
+        with TestClient(app) as client:
+            # N failures — each reaches and fails the credential check.
+            for _ in range(self._THRESHOLD):
+                self._attempt(client)
+            calls_before_lockout = len(calls)
+            assert calls_before_lockout == self._THRESHOLD
+
+            # The (N+1)th attempt is now rejected by the lockout, before the
+            # credential check — so no additional token-store interaction occurs.
+            self._attempt(client)
+            assert len(calls) == calls_before_lockout
+
+    def test_first_n_attempts_reach_credential_check(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Below the threshold, attempts still hit the credential check (not
+        throttled)."""
+        monkeypatch.setenv("AGENTIC_API_KEY", "test-secret-key")
+        app = create_app()
+        app.state.auth_throttle = AuthThrottle(
+            window=60.0, threshold=self._THRESHOLD, lockout=300.0
+        )
+
+        throttle = app.state.auth_throttle
+        with TestClient(app) as client:
+            for _ in range(self._THRESHOLD - 1):
+                self._attempt(client)
+
+        # Not yet locked: failures recorded but below threshold.
+        locked, _retry = throttle.is_locked("testclient")
+        assert locked is False

@@ -221,6 +221,32 @@ def _resolve_and_check(hostname: str) -> str | None:
     return err
 
 
+def _resolve_and_check_metadata_only(hostname: str) -> str | None:
+    """Resolve *hostname* via DNS and block only if it points at a metadata IP.
+
+    Used on the ``block_private=False`` opt-out path: private addresses are
+    permitted (the guard is off), but a DNS name that resolves to a cloud
+    metadata endpoint (e.g. ``169.254.169.254``) must still be blocked.  The
+    string/literal checks never resolve, so without this a hostname aliasing a
+    metadata IP would sail straight through.
+
+    Best-effort: resolution failure falls through to ``None`` (the operator
+    disabled the guard; an unresolvable host fails on connect anyway), matching
+    the synchronous ``_validate_url_core`` opt-out behaviour.
+    """
+    try:
+        infos = socket.getaddrinfo(hostname, None, proto=socket.IPPROTO_TCP)
+    except (socket.gaierror, OSError):
+        return None
+    for info in infos:
+        resolved = _parse_ip_literal(str(info[4][0]))
+        if resolved is not None and _is_metadata_address(resolved):
+            return (
+                f"Host '{hostname}' resolves to a metadata endpoint " "and is blocked."
+            )
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Public sync API
 # ---------------------------------------------------------------------------
@@ -394,7 +420,13 @@ async def validate_url_async(url: str, *, block_private: bool) -> str | None:
         return metadata_err
 
     if not block_private:
-        return None
+        # Private IPs are permitted here, but a DNS name aliasing a metadata
+        # endpoint must still be blocked. An IP literal was already screened
+        # by ``_check_always_blocked`` above, so only DNS names need resolving;
+        # offload the blocking getaddrinfo to a thread.
+        if _parse_ip_literal(hostname) is not None:
+            return None
+        return await asyncio.to_thread(_resolve_and_check_metadata_only, hostname)
 
     # IP literal — no I/O needed
     ip_result = _check_ip_literal(hostname)

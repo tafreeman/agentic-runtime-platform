@@ -560,8 +560,9 @@ class TestAgentResolverParsing:
     def test_parse_malformed_json_salvages_expected_non_review_keys(self):
         """Malformed/truncated JSON should still salvage expected top-level keys.
 
-        This protects workflow handoffs (e.g. fullstack_generation) where
-        downstream steps depend on keys like api_spec/db_schema/component_tree.
+        This protects workflow handoffs (e.g. fullstack_generation)
+        where downstream steps depend on keys like
+        api_spec/db_schema/component_tree.
         """
         response = (
             "```json\n{\n"
@@ -854,6 +855,30 @@ class TestWorkflowExecutor:
 
         assert result.overall_status == StepStatus.SUCCESS
         assert len(result.steps) == 1
+
+    @pytest.mark.asyncio
+    async def test_default_timeout_does_not_mutate_shared_step(self):
+        """Re-executing a step must not write the default timeout back onto it.
+
+        Regression for C-02: _execute_step applied the config default timeout by
+        mutating the shared StepDefinition in place, so after the first run a
+        re-entrant run could no longer tell "caller set no timeout" from
+        "default already applied". The definition must stay timeout_seconds=None.
+        """
+
+        async def my_step(ctx):
+            return {"value": 1}
+
+        step_def = StepDefinition(name="reused", func=my_step, timeout_seconds=None)
+        executor = WorkflowExecutor(
+            config=ExecutionConfig(step_default_timeout_seconds=42.0)
+        )
+
+        await executor.execute(step_def, ExecutionContext())
+        assert step_def.timeout_seconds is None  # not mutated by the first run
+
+        await executor.execute(step_def, ExecutionContext())
+        assert step_def.timeout_seconds is None  # still pristine after the second run
 
     @pytest.mark.asyncio
     async def test_execute_step_list(self):

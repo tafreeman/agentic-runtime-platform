@@ -8,11 +8,32 @@ Covers the additions in ``agentic_v2/engine/context.py``:
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from agentic_v2.engine import ExecutionContext
+
+
+def _write_checkpoint(path: Path, **overrides: Any) -> Path:
+    """Write a minimal checkpoint JSON file with caller-supplied fields.
+
+    Used to craft attacker-controlled payloads for the identity-hardening
+    tests without going through ``save_checkpoint``.
+    """
+    payload: dict[str, Any] = {
+        "workflow_id": "wf",
+        "run_id": "run",
+        "variables": {},
+        "completed_steps": [],
+        "failed_steps": [],
+        "metadata": {},
+    }
+    payload.update(overrides)
+    path.write_text(json.dumps(payload))
+    return path
 
 
 class TestForkSession:
@@ -165,3 +186,87 @@ class TestResumeRoundTrip:
         # The fork lineage points at the ORIGINAL saved run_id, not a fresh uuid.
         assert fork.metadata["forked_from_run"] == original_run_id
         assert fork.run_id != original_run_id
+
+
+class TestCheckpointIdentityHardening:
+    """restore_checkpoint must reject hijacked identity / type confusion (C-04)."""
+
+    async def test_running_context_rejects_foreign_workflow_id(
+        self, tmp_path: Path
+    ) -> None:
+        # A context that has already run a step is a bound running identity.
+        ctx = ExecutionContext(checkpoint_dir=tmp_path)
+        await ctx.mark_step_complete("step_a")
+        original_workflow_id = ctx.workflow_id
+
+        path = _write_checkpoint(
+            tmp_path / "evil.json",
+            workflow_id="attacker-workflow",
+            run_id=ctx.run_id,
+        )
+
+        with pytest.raises(ValueError, match="does not match the running context"):
+            await ctx.restore_checkpoint(path)
+
+        # Identity is unchanged — the tampered value was rejected pre-mutation.
+        assert ctx.workflow_id == original_workflow_id
+
+    async def test_running_context_rejects_foreign_run_id(self, tmp_path: Path) -> None:
+        ctx = ExecutionContext(checkpoint_dir=tmp_path)
+        await ctx.mark_step_complete("step_a")
+        original_run_id = ctx.run_id
+
+        path = _write_checkpoint(
+            tmp_path / "evil.json",
+            workflow_id=ctx.workflow_id,
+            run_id="attacker-run",
+        )
+
+        with pytest.raises(ValueError, match="does not match the running context"):
+            await ctx.restore_checkpoint(path)
+
+        assert ctx.run_id == original_run_id
+
+    async def test_rejects_non_string_workflow_id(self, tmp_path: Path) -> None:
+        ctx = ExecutionContext(checkpoint_dir=tmp_path)
+        path = _write_checkpoint(tmp_path / "bad.json", workflow_id=42)
+
+        with pytest.raises(ValueError, match="expected str"):
+            await ctx.restore_checkpoint(path)
+
+    async def test_rejects_non_list_completed_steps(self, tmp_path: Path) -> None:
+        ctx = ExecutionContext(checkpoint_dir=tmp_path)
+        path = _write_checkpoint(tmp_path / "bad.json", completed_steps={"step": True})
+
+        with pytest.raises(ValueError, match="expected a list"):
+            await ctx.restore_checkpoint(path)
+
+    async def test_rejects_non_string_completed_step_entry(
+        self, tmp_path: Path
+    ) -> None:
+        ctx = ExecutionContext(checkpoint_dir=tmp_path)
+        path = _write_checkpoint(
+            tmp_path / "bad.json", completed_steps=["ok", {"nested": "obj"}]
+        )
+
+        with pytest.raises(ValueError, match="expected str entries"):
+            await ctx.restore_checkpoint(path)
+
+    async def test_fresh_resume_context_still_adopts_saved_identity(
+        self, tmp_path: Path
+    ) -> None:
+        # A pristine resume context (no steps run) legitimately adopts the
+        # checkpoint identity — the hardening must not break normal resume.
+        path = _write_checkpoint(
+            tmp_path / "good.json",
+            workflow_id="saved-wf",
+            run_id="saved-run",
+            completed_steps=["analyze"],
+        )
+
+        resumed = ExecutionContext(checkpoint_dir=tmp_path)
+        await resumed.restore_checkpoint(path)
+
+        assert resumed.workflow_id == "saved-wf"
+        assert resumed.run_id == "saved-run"
+        assert resumed.completed_steps == ["analyze"]

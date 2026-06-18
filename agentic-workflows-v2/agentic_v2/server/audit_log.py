@@ -305,9 +305,18 @@ class AuditLogger:
                 try:
                     await self.store.append(record)
                 except Exception as exc:
-                    logger.exception("Audit store append failed: %s", exc)
+                    # The record was not persisted: leave self._last_hash on the
+                    # last durable hash so the chain does not advance to an
+                    # orphaned value that would make the JSONL unverifiable.
+                    logger.critical(
+                        "Audit store append failed; hash chain not advanced: %s",
+                        exc,
+                    )
+                    raise
+                self._last_hash = record["hash"]
                 _log_audit_event(event_type, outcome, record["hash"])
-            self._last_hash = record["hash"]
+            else:
+                self._last_hash = record["hash"]
             return record
 
     def _build_record(
@@ -359,12 +368,16 @@ async def build_audit_logger(settings: Any | None = None) -> AuditLogger:
         if redis_url:
             store = await RedisAuditStore.connect(
                 redis_url=redis_url,
-                stream_name=getattr(settings, "audit_log_redis_stream", _DEFAULT_REDIS_STREAM),
+                stream_name=getattr(
+                    settings, "audit_log_redis_stream", _DEFAULT_REDIS_STREAM
+                ),
                 max_events=max_events,
             )
             if store.is_connected:
                 return AuditLogger(store, enabled=True)
-        logger.warning("Audit redis backend unavailable; falling back to file audit store")
+        logger.warning(
+            "Audit redis backend unavailable; falling back to file audit store"
+        )
 
     store = FileAuditStore(
         path=getattr(settings, "audit_log_file_path", _DEFAULT_FILE_PATH)

@@ -185,22 +185,19 @@ def example():
 
 This is a placeholder implementation."""}
 
-        # Use the real LLM client with smart routing
-        try:
-            result_dict, _, _ = await self.llm_client.complete_chat(
-                tier=self.config.default_tier,
-                messages=messages,
-                max_tokens=self.config.max_iterations * 1000,
-                temperature=0.7,
-                tools=tools,
-            )
-            return result_dict
-        except Exception as e:
-            # Log error and return informative message
-            return {
-                "content": f"Error calling LLM: {e}",
-                "tool_calls": None,
-            }
+        # Use the real LLM client with smart routing. ``complete_chat`` already
+        # retries transient/rate-limit failures (``@retry_with_jitter``) and
+        # re-raises permanent errors, so we let any surviving exception propagate
+        # to ``BaseAgent.run`` rather than swallowing it into a fake-success dict
+        # (which would let the orchestrator report success on a failed subtask).
+        result_dict, _, _ = await self.llm_client.complete_chat(
+            tier=self.config.default_tier,
+            messages=messages,
+            max_tokens=self.config.max_iterations * 1000,
+            temperature=0.7,
+            tools=tools,
+        )
+        return result_dict
 
     def _extract_code_blocks(self, text: str, language: str | None = None) -> list[str]:
         """Extract code blocks from markdown."""

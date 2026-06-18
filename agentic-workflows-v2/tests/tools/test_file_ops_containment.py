@@ -117,6 +117,40 @@ async def test_path_traversal_rejected(tmp_path, bad_path):
 
 
 # ---------------------------------------------------------------------------
+# Call-time base-dir resolution (regression for C-14)
+# ---------------------------------------------------------------------------
+
+
+async def test_validate_path_reads_base_dir_at_call_time(tmp_path, monkeypatch):
+    """``_validate_path`` must honour a base dir set *after* module import.
+
+    Regression for C-14: the sandbox root was captured at import time into a
+    module-level ``_FILE_BASE_DIR``, so a ``monkeypatch.setenv`` (or any dynamic
+    config change) made after import was ignored.  We import the module first
+    *without* reloading it, then set the env var, and assert validation picks up
+    the new value at call time.
+    """
+    import agentic_v2.tools.builtin.file_ops as mod
+    from agentic_v2.settings import get_settings
+
+    # The module must have NO captured import-time base-dir constant anymore.
+    assert not hasattr(mod, "_FILE_BASE_DIR")
+
+    # Set the sandbox root AFTER the module is already imported.
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+    get_settings.cache_clear()
+
+    # No module reload: _validate_path must still resolve against the new root.
+    target = tmp_path / "inside.txt"
+    resolved = mod._validate_path(str(target))
+    assert resolved == target.resolve()
+
+    # Cleared cache + fresh env value flows through, so a fresh tool succeeds.
+    result = await mod.FileWriteTool().execute(str(target), "hello")
+    assert result.success is True
+
+
+# ---------------------------------------------------------------------------
 # Cleanup: restore module state after the test module finishes so other test
 # modules that import file_ops at collection time see a deterministic value.
 # ---------------------------------------------------------------------------

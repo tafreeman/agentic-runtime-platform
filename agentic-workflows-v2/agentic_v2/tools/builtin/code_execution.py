@@ -123,6 +123,10 @@ class CodeExecutionTool(BaseTool):
         "importlib",
         "sys.modules",
         "__loader__",
+        "__subclasses__",  # class-hierarchy escape to Popen/os
+        "__bases__",  # class-hierarchy traversal
+        "__mro__",  # class-hierarchy traversal
+        "__init_subclass__",  # class-hierarchy escape hook
     ]
 
     _SAFE_ENV_KEYS = frozenset(
@@ -167,12 +171,14 @@ class CodeExecutionTool(BaseTool):
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
-                blocked = self._first_blocked_import(
-                    alias.name for alias in node.names
-                )
+                blocked = self._first_blocked_import(alias.name for alias in node.names)
                 if blocked:
                     return f"Blocked: import of restricted module '{blocked}'"
-            elif isinstance(node, ast.ImportFrom) and node.module and (top := node.module.split(".")[0]) in self._DANGEROUS_IMPORTS:
+            elif (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                and (top := node.module.split(".")[0]) in self._DANGEROUS_IMPORTS
+            ):
                 return f"Blocked: import from restricted module '{top}'"
 
         return None

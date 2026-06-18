@@ -208,6 +208,28 @@ class TestSandboxEscapeCorpus:
         assert not result.success
         assert "sys.modules" in result.error or "Blocked" in result.error
 
+    async def test_subclasses_hierarchy_escape_blocked(self) -> None:
+        """().__class__.__base__.__subclasses__() traversal must be blocked."""
+        tool = CodeExecutionTool(sandbox=True)
+        code = "result = ().__class__.__base__.__subclasses__()"
+        safety_error = tool._check_code_safety(code)
+        assert safety_error is not None
+        assert "__subclasses__" in safety_error
+        result = await tool.execute(code, timeout=10.0)
+        assert not result.success
+        assert "__subclasses__" in result.error or "Blocked" in result.error
+
+    async def test_subclasses_popen_filter_escape_blocked(self) -> None:
+        """object.__subclasses__() comprehension hunting Popen must be blocked."""
+        tool = CodeExecutionTool(sandbox=True)
+        code = '[c for c in object.__subclasses__() if "Popen" in str(c)]'
+        safety_error = tool._check_code_safety(code)
+        assert safety_error is not None
+        assert "__subclasses__" in safety_error
+        result = await tool.execute(code, timeout=10.0)
+        assert not result.success
+        assert "__subclasses__" in result.error or "Blocked" in result.error
+
     @pytest.mark.skipif(os.name == "nt", reason="RLIMIT_AS not available on Windows")
     async def test_memory_bomb_timeout(self) -> None:
         """Memory allocation exceeding RLIMIT_AS must fail (POSIX only)."""

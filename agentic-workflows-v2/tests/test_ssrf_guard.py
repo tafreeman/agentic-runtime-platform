@@ -104,26 +104,34 @@ class TestFlagRespected:
         from agentic_v2.security.url_guard import validate_url
 
         # metadata hosts are ALWAYS blocked regardless of the flag
-        result = validate_url("http://169.254.169.254/latest/meta-data/", block_private=False)
+        result = validate_url(
+            "http://169.254.169.254/latest/meta-data/", block_private=False
+        )
         assert result is not None
         assert "metadata" in result.lower() or "blocked" in result.lower()
 
     def test_metadata_google_blocked_when_flag_off(self):
         from agentic_v2.security.url_guard import validate_url
 
-        result = validate_url("http://metadata.google.internal/computeMetadata/v1/", block_private=False)
+        result = validate_url(
+            "http://metadata.google.internal/computeMetadata/v1/", block_private=False
+        )
         assert result is not None
 
     def test_fd00_ec2_metadata_blocked_when_flag_off(self):
         from agentic_v2.security.url_guard import validate_url
 
-        result = validate_url("http://[fd00:ec2::254]/latest/meta-data/", block_private=False)
+        result = validate_url(
+            "http://[fd00:ec2::254]/latest/meta-data/", block_private=False
+        )
         assert result is not None
 
     def test_alibaba_metadata_blocked_when_flag_off(self):
         from agentic_v2.security.url_guard import validate_url
 
-        result = validate_url("http://100.100.100.200/latest/meta-data/", block_private=False)
+        result = validate_url(
+            "http://100.100.100.200/latest/meta-data/", block_private=False
+        )
         assert result is not None
 
     def test_dns_name_resolving_to_metadata_blocked_when_flag_off(self, monkeypatch):
@@ -139,7 +147,13 @@ class TestFlagRespected:
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             return [
-                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("169.254.169.254", 0))
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("169.254.169.254", 0),
+                )
             ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -151,8 +165,9 @@ class TestFlagRespected:
     def test_dns_failure_allowed_when_flag_off(self, monkeypatch):
         """With the flag off, the metadata resolution screen is best-effort.
 
-        Resolution failure must NOT block (the operator explicitly disabled
-        the guard; an unresolvable host fails at request time anyway).
+        Resolution failure must NOT block (the operator explicitly
+        disabled the guard; an unresolvable host fails at request time
+        anyway).
         """
         import socket as socket_mod
 
@@ -174,7 +189,13 @@ class TestFlagRespected:
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             return [
-                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
             ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -240,7 +261,9 @@ class TestDnsResolution:
         from agentic_v2.security.url_guard import validate_url
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("127.0.0.1", 0))]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("127.0.0.1", 0))
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -255,7 +278,9 @@ class TestDnsResolution:
         from agentic_v2.security.url_guard import validate_url
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("127.0.0.1", 0))]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("127.0.0.1", 0))
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -269,7 +294,9 @@ class TestDnsResolution:
         from agentic_v2.security.url_guard import validate_url
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("10.0.0.1", 0))]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("10.0.0.1", 0))
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -284,7 +311,15 @@ class TestDnsResolution:
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             # 93.184.216.34 = example.com
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -312,7 +347,11 @@ class TestDnsFailure:
 
         result = validate_url("http://unresolvable.invalid/", block_private=True)
         assert result is not None
-        assert "blocked" in result.lower() or "fail" in result.lower() or "resolve" in result.lower()
+        assert (
+            "blocked" in result.lower()
+            or "fail" in result.lower()
+            or "resolve" in result.lower()
+        )
 
     def test_dns_failure_not_blocked_when_flag_off(self, monkeypatch):
         """When blocking is disabled, DNS resolution is skipped entirely."""
@@ -350,7 +389,15 @@ class TestRedirectRevalidationAiohttp:
         # DNS for the initial public host resolves to a public IP
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             if host == "public.example.com":
-                return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+                return [
+                    (
+                        socket_mod.AF_INET,
+                        socket_mod.SOCK_STREAM,
+                        0,
+                        "",
+                        ("93.184.216.34", 0),
+                    )
+                ]
             raise socket_mod.gaierror(f"unexpected host: {host}")
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -371,7 +418,11 @@ class TestRedirectRevalidationAiohttp:
         result = await tool.execute(url="http://public.example.com/page")
         assert not result.success
         assert result.error is not None
-        assert "blocked" in result.error.lower() or "private" in result.error.lower() or "loopback" in result.error.lower()
+        assert (
+            "blocked" in result.error.lower()
+            or "private" in result.error.lower()
+            or "loopback" in result.error.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_redirect_to_metadata_ip_blocked(self, monkeypatch):
@@ -383,17 +434,28 @@ class TestRedirectRevalidationAiohttp:
         from agentic_v2.tools.builtin.http_ops import HttpTool
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
         # Turn off the blocking flag — metadata should STILL be blocked
         monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "0")
         import agentic_v2.settings as settings_mod
+
         settings_mod.get_settings.cache_clear()
 
         redirect_response = MagicMock()
         redirect_response.status = 302
-        redirect_response.headers = {"Location": "http://169.254.169.254/latest/meta-data/"}
+        redirect_response.headers = {
+            "Location": "http://169.254.169.254/latest/meta-data/"
+        }
 
         redirect_response.release = MagicMock()  # release() is sync in aiohttp 3.x
 
@@ -417,7 +479,7 @@ class TestRedirectRevalidationAiohttp:
 
 
 class TestRedirectRevalidationHttpx:
-    """langchain http_get must re-validate each redirect hop."""
+    """Langchain http_get must re-validate each redirect hop."""
 
     def test_redirect_to_private_ip_blocked(self, monkeypatch):
         """Public URL that 302s to a private IP is rejected."""
@@ -426,7 +488,15 @@ class TestRedirectRevalidationHttpx:
         # DNS: public.example.com → public IP
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             if host == "public.example.com":
-                return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+                return [
+                    (
+                        socket_mod.AF_INET,
+                        socket_mod.SOCK_STREAM,
+                        0,
+                        "",
+                        ("93.184.216.34", 0),
+                    )
+                ]
             raise socket_mod.gaierror(f"unexpected host: {host}")
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -458,7 +528,15 @@ class TestRedirectRevalidationHttpx:
         import socket as socket_mod
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -481,13 +559,22 @@ class TestRedirectRevalidationHttpx:
     def test_dns_name_request_is_ip_pinned(self, monkeypatch):
         """The validated address is the one dialled (DNS-rebinding defence).
 
-        The request URL must carry the pinned IP while the original hostname
-        travels in the Host header and (https) the sni_hostname extension.
+        The request URL must carry the pinned IP while the original
+        hostname travels in the Host header and (https) the sni_hostname
+        extension.
         """
         import socket as socket_mod
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -555,7 +642,15 @@ class TestRedirectLoopBound:
         from agentic_v2.tools.builtin.http_ops import HttpTool
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -580,13 +675,21 @@ class TestRedirectLoopBound:
         assert hop_counter["n"] <= 6
 
     def test_httpx_redirect_limit_exceeded(self, monkeypatch):
-        """langchain http_get stops after 5 redirects and returns an error."""
+        """Langchain http_get stops after 5 redirects and returns an error."""
         import socket as socket_mod
 
         import httpx
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -650,7 +753,13 @@ class TestRedirectMethodPreservation:
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             return [
-                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
             ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -693,7 +802,13 @@ class TestRedirectMethodPreservation:
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             return [
-                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("93.184.216.34", 0),
+                )
             ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -748,7 +863,15 @@ class TestRelativeRedirectResolution:
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             # public.example.com → public; 127.0.0.1 is a literal, not DNS
             if host == "public.example.com":
-                return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+                return [
+                    (
+                        socket_mod.AF_INET,
+                        socket_mod.SOCK_STREAM,
+                        0,
+                        "",
+                        ("93.184.216.34", 0),
+                    )
+                ]
             raise socket_mod.gaierror(f"unexpected: {host}")
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -772,14 +895,22 @@ class TestRelativeRedirectResolution:
         assert result.error is not None
 
     def test_relative_redirect_to_private_blocked_httpx(self, monkeypatch):
-        """langchain http_get blocks a relative redirect targeting a private IP."""
+        """Langchain http_get blocks a relative redirect targeting a private IP."""
         import socket as socket_mod
 
         import httpx
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             if host == "public.example.com":
-                return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("93.184.216.34", 0))]
+                return [
+                    (
+                        socket_mod.AF_INET,
+                        socket_mod.SOCK_STREAM,
+                        0,
+                        "",
+                        ("93.184.216.34", 0),
+                    )
+                ]
             raise socket_mod.gaierror(f"unexpected: {host}")
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
@@ -830,7 +961,9 @@ class TestValidateUrlAsync:
         from agentic_v2.security.url_guard import validate_url_async
 
         def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("192.168.1.1", 0))]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("192.168.1.1", 0))
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
 
@@ -848,8 +981,73 @@ class TestValidateUrlAsync:
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", raise_gaierror)
 
-        result = await validate_url_async("http://unresolvable.invalid/", block_private=True)
+        result = await validate_url_async(
+            "http://unresolvable.invalid/", block_private=True
+        )
         assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_async_dns_metadata_blocked_when_private_allowed(self, monkeypatch):
+        """C-10 regression: block_private=False must still resolve DNS and block
+        a hostname that aliases the cloud-metadata IP (169.254.169.254)."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (
+                    socket_mod.AF_INET,
+                    socket_mod.SOCK_STREAM,
+                    0,
+                    "",
+                    ("169.254.169.254", 0),
+                )
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = await validate_url_async(
+            "http://metadata-alias.example/", block_private=False
+        )
+        assert result is not None
+        assert "metadata" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_async_dns_private_allowed_when_private_off(self, monkeypatch):
+        """With block_private=False a hostname resolving to a plain private IP is
+        permitted (the guard is opted out) — only metadata is still blocked."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def fake_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", ("10.0.0.5", 0))
+            ]
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", fake_getaddrinfo)
+
+        result = await validate_url_async("http://internal.corp/", block_private=False)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_async_dns_failure_falls_through_when_private_off(self, monkeypatch):
+        """On the opt-out path a resolution failure falls through (None), matching the
+        synchronous _validate_url_core opt-out behaviour."""
+        import socket as socket_mod
+
+        from agentic_v2.security.url_guard import validate_url_async
+
+        def raise_gaierror(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
+            raise socket_mod.gaierror("Name or service not known")
+
+        monkeypatch.setattr(socket_mod, "getaddrinfo", raise_gaierror)
+
+        result = await validate_url_async(
+            "http://unresolvable.invalid/", block_private=False
+        )
+        assert result is None
 
 
 # ---------------------------------------------------------------------------
@@ -937,7 +1135,9 @@ class TestCheckResolvedAddress:
     def test_metadata_ip_blocked_even_without_flag(self):
         from agentic_v2.security.url_guard import check_resolved_address
 
-        assert check_resolved_address("169.254.169.254", block_private=False) is not None
+        assert (
+            check_resolved_address("169.254.169.254", block_private=False) is not None
+        )
 
     def test_private_ip_blocked_with_flag(self):
         from agentic_v2.security.url_guard import check_resolved_address
@@ -965,9 +1165,9 @@ class TestDnsRebinding:
 
     @pytest.mark.asyncio
     async def test_aiohttp_rebinding_blocked_at_connect_time(self, monkeypatch):
-        """getaddrinfo returns a public IP for the pre-check, then a private
-        IP when aiohttp's connector resolves — the GuardedResolver must block
-        the connection (no request reaches the private address)."""
+        """Getaddrinfo returns a public IP for the pre-check, then a private IP when
+        aiohttp's connector resolves — the GuardedResolver must block the connection (no
+        request reaches the private address)."""
         import socket as socket_mod
 
         from agentic_v2.tools.builtin.http_ops import HttpTool
@@ -982,7 +1182,9 @@ class TestDnsRebinding:
         def rebinding_getaddrinfo(host, port, *args, **kwargs):  # type: ignore[no-untyped-def]
             calls["n"] += 1
             ip = "93.184.216.34" if calls["n"] == 1 else "127.0.0.1"
-            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", (ip, port or 0))]
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 0, "", (ip, port or 0))
+            ]
 
         monkeypatch.setattr(socket_mod, "getaddrinfo", rebinding_getaddrinfo)
 
@@ -1032,8 +1234,8 @@ class TestDnsRebinding:
         assert seen["url"] == "http://93.184.216.34/"
 
     def test_optout_mode_still_pins_to_checked_address(self, monkeypatch):
-        """With the private-IP guard OPTED OUT (AGENTIC_BLOCK_PRIVATE_IPS=0) the
-        httpx path still pins the connection to the screened address.
+        """With the private-IP guard OPTED OUT (AGENTIC_BLOCK_PRIVATE_IPS=0) the httpx
+        path still pins the connection to the screened address.
 
         Pinning is independent of the private-IP policy: a rebinding domain must
         not be able to pass the always-on metadata screen with a public address

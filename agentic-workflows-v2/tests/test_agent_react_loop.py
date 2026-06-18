@@ -300,13 +300,58 @@ async def test_invalid_tool_params_report_error_without_raising() -> None:
 
 
 # ---------------------------------------------------------------------------
+# 5b. OTel span construction reads the agent name from config
+# ---------------------------------------------------------------------------
+
+
+class _RecordingTracer:
+    """No-op tracer that records the span name passed to start_as_current_span."""
+
+    def __init__(self) -> None:
+        self.span_names: list[str] = []
+
+    def start_as_current_span(self, name: str) -> Any:
+        self.span_names.append(name)
+        from contextlib import nullcontext
+
+        return nullcontext()
+
+
+async def test_run_under_tracer_uses_config_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With a tracer injected, run() must not raise AttributeError (C-11).
+
+    Regression: the OTel span used ``self.name`` which does not exist on
+    BaseAgent; the identifier lives at ``self.config.name``. Any run under an
+    enabled tracer crashed with AttributeError before the fix.
+    """
+    tracer = _RecordingTracer()
+    monkeypatch.setattr(
+        "agentic_v2.agents.base._get_tracer", lambda: tracer, raising=True
+    )
+
+    agent = _ScriptedAgent(
+        [_final("done")],
+        config=AgentConfig(name="traced-agent"),
+    )
+    await agent.initialize()
+
+    result = await agent.run(SimpleTask(prompt="hello"))
+
+    assert result.response == "done"
+    # The span was opened exactly once and its name carries the config name.
+    assert tracer.span_names == ["agent.traced-agent"]
+
+
+# ---------------------------------------------------------------------------
 # 6. ClaudeAgent stop_reason -> completion
 # ---------------------------------------------------------------------------
 
 
 def _claude_agent() -> ClaudeAgent:
     """A ClaudeAgent with a dummy API key (no client call is made here)."""
-    return ClaudeAgent(api_key="test-key-not-used")
+    return ClaudeAgent(api_key="test-key-not-used")  # pragma: allowlist secret
 
 
 @pytest.mark.parametrize(
@@ -383,8 +428,8 @@ async def test_claude_max_tokens_continuation_aggregates_chunks(
     """A response split across max_tokens turns is reassembled in the output.
 
     BaseAgent._execute_loop hands only the LAST turn's content to
-    _parse_output; without buffering, the earlier truncated segments would be
-    silently dropped from the final SimpleOutput.
+    _parse_output; without buffering, the earlier truncated segments
+    would be silently dropped from the final SimpleOutput.
     """
     agent = _claude_agent()
     await agent.initialize()

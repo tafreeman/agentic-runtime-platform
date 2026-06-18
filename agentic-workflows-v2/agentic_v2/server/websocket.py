@@ -41,8 +41,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ..contracts.events import validate_event
 from ..integrations.otel import is_tracing_enabled
+from .audit_log import audit_auth_request_event
 from .auth import (
+    AuthThrottle,
     _get_api_key,
+    _get_auth_throttle_singleton,
     extract_websocket_token,
     is_token_authorized,
     is_websocket_origin_allowed,
@@ -316,7 +319,9 @@ class ConnectionManager:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 _task = asyncio.ensure_future(self._clear_store(run_id))
-                _task.add_done_callback(lambda _t: None)  # prevent GC of fire-and-forget task
+                _task.add_done_callback(
+                    lambda _t: None
+                )  # prevent GC of fire-and-forget task
         except RuntimeError:
             # No event loop — store clear will be skipped; this is acceptable
             # in unit tests that don't run an event loop.
@@ -403,15 +408,98 @@ async def _reject_websocket_connection(
         return True
 
     api_key = _get_api_key()
-    token = extract_websocket_token(websocket)
-    if api_key is not None and not is_token_authorized(
-        token.value if token is not None else None, api_key
-    ):
-        await websocket.close(code=1008, reason="Invalid or missing API key")
-        logger.warning("WebSocket auth failed for run %s from %s", run_id, client_host)
+    if api_key is None:
+        return False
+
+    throttle = _resolve_websocket_throttle(websocket)
+
+    # Reject locked-out IPs before even checking credentials (mirrors the HTTP path).
+    is_locked, retry_after = throttle.is_locked(client_host)
+    if is_locked:
+        await websocket.close(
+            code=1008, reason="Too many failed authentication attempts"
+        )
+        logger.warning(
+            "Auth throttle: rejecting locked WebSocket IP %s for run %s (retry after %.0fs)",
+            client_host,
+            run_id,
+            retry_after,
+        )
+        await _audit_websocket_auth_event(
+            websocket,
+            run_id,
+            "auth.throttled",
+            outcome="denied",
+            metadata={"status_code": 429, "retry_after": int(max(1, retry_after))},
+        )
         return True
 
+    token = extract_websocket_token(websocket)
+    if not is_token_authorized(token.value if token is not None else None, api_key):
+        await websocket.close(code=1008, reason="Invalid or missing API key")
+        logger.warning("WebSocket auth failed for run %s from %s", run_id, client_host)
+        throttle.record_failure(client_host)
+
+        # Re-check immediately: this failure may have triggered a lockout.
+        is_now_locked, retry_after = throttle.is_locked(client_host)
+        token_source = token.source if token is not None else "missing"
+        if is_now_locked:
+            await _audit_websocket_auth_event(
+                websocket,
+                run_id,
+                "auth.throttled",
+                outcome="denied",
+                metadata={
+                    "token_source": token_source,
+                    "status_code": 429,
+                    "retry_after": int(max(1, retry_after)),
+                },
+            )
+        else:
+            await _audit_websocket_auth_event(
+                websocket,
+                run_id,
+                "auth.failed",
+                outcome="failure",
+                metadata={"token_source": token_source, "status_code": 401},
+            )
+        return True
+
+    # Successful auth — clear any failure history for this IP.
+    throttle.record_success(client_host)
     return False
+
+
+def _resolve_websocket_throttle(websocket: WebSocket) -> AuthThrottle:
+    """Return the per-IP throttle from app state, falling back to the singleton.
+
+    Mirrors the HTTP middleware so tests can inject a fresh throttle via
+    ``app.state.auth_throttle`` while production shares the process singleton.
+    """
+    try:
+        throttle = websocket.app.state.auth_throttle
+    except AttributeError:
+        return _get_auth_throttle_singleton()
+    if isinstance(throttle, AuthThrottle):
+        return throttle
+    return _get_auth_throttle_singleton()
+
+
+async def _audit_websocket_auth_event(
+    websocket: WebSocket,
+    run_id: str,
+    event_type: str,
+    *,
+    outcome: str,
+    metadata: dict[str, Any],
+) -> None:
+    """Emit a best-effort auth audit event for a WebSocket handshake."""
+    await audit_auth_request_event(
+        websocket,
+        event_type,
+        outcome=outcome,  # type: ignore[arg-type]
+        metadata={"run_id": run_id, "transport": "websocket", **metadata},
+    )
 
 
 async def _send_trace_context(websocket: WebSocket, run_id: str) -> None:

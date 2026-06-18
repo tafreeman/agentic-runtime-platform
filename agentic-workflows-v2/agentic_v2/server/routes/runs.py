@@ -122,7 +122,11 @@ async def list_runs(
                 request,
                 tenant,
                 "run.list",
-                run_id=record.get("run_id") if isinstance(record.get("run_id"), str) else None,
+                run_id=(
+                    record.get("run_id")
+                    if isinstance(record.get("run_id"), str)
+                    else None
+                ),
             )
         except Exception as e:
             logger.warning("Failed to load run %s: %s", p.name, e)
@@ -250,7 +254,9 @@ async def get_run(
         request,
         tenant,
         "run.detail",
-        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+        run_id=(
+            run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None
+        ),
     )
 
     steps = run_data.get("steps")
@@ -279,12 +285,16 @@ async def get_run_evaluation(
         request,
         tenant,
         "run.evaluation",
-        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+        run_id=(
+            run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None
+        ),
     )
 
     extra = run_data.get("extra") or {}
     evaluation_requested = bool(extra.get("evaluation_requested", False))
-    evaluation_raw = extra.get("evaluation") if isinstance(extra.get("evaluation"), dict) else None
+    evaluation_raw = (
+        extra.get("evaluation") if isinstance(extra.get("evaluation"), dict) else None
+    )
 
     evaluation: RunEvaluationDetail | None = None
     if evaluation_raw and evaluation_raw.get("enabled"):
@@ -325,8 +335,17 @@ async def _audit_data_accessed(
 
 
 @router.get("/runs/{run_id}/stream")
-async def stream_run_events(run_id: str):
-    """SSE stream of execution events for a running workflow."""
+async def stream_run_events(
+    run_id: str,
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
+):
+    """SSE stream of execution events for a running workflow.
+
+    Requires the same authenticated tenant context as every other run-history
+    route so an unauthenticated caller cannot tap a live execution feed by
+    guessing a ``run_id``. The ``tenant`` dependency is resolved for its
+    auth side effect; SSE listeners are keyed by ``run_id`` upstream.
+    """
 
     async def event_generator():
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()

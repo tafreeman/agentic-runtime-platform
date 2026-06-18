@@ -355,8 +355,10 @@ class McpProtocolClient:
         """
         logger.error(f"Transport error: {error}")
 
-        # Reject all pending requests
-        for request_id, future in self._pending_requests.items():
+        # Reject all pending requests. Snapshot the items first: set_exception()
+        # can schedule callbacks that pop() from _pending_requests, which would
+        # raise "dictionary changed size during iteration" under concurrent load.
+        for request_id, future in list(self._pending_requests.items()):
             if not future.done():
                 future.set_exception(McpProtocolError(f"Transport error: {error}"))
 
@@ -366,8 +368,10 @@ class McpProtocolClient:
         """
         logger.info("Transport closed")
 
-        # Reject all pending requests
-        for request_id, future in self._pending_requests.items():
+        # Reject all pending requests. Snapshot the items first: set_exception()
+        # can schedule callbacks that pop() from _pending_requests, which would
+        # raise "dictionary changed size during iteration" under concurrent load.
+        for request_id, future in list(self._pending_requests.items()):
             if not future.done():
                 future.set_exception(McpProtocolError("Transport closed unexpectedly"))
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_v2.tools.builtin import file_ops as _file_ops
+from agentic_v2.settings import get_settings
 from agentic_v2.tools.builtin.file_ops import (
     DirectoryCreateTool,
     FileCopyTool,
@@ -29,10 +29,10 @@ def _scoped_file_base_dir(request, tmp_path, monkeypatch):
     """File tools now fail-closed when AGENTIC_FILE_BASE_DIR is unset (S1-02).
 
     Scoped to file-tool test classes only — transform/yaml/json tests
-    don't need the env var. Uses monkeypatch.setattr on the module-level
-    _FILE_BASE_DIR because that global is read at runtime by
-    _validate_path; module reload would leave already-imported tool
-    classes bound to the stale global.
+    don't need the env var. ``_validate_path`` reads
+    ``get_settings().agentic_file_base_dir`` at call time (C-14), so we set
+    the env var and clear the ``get_settings`` lru_cache; the next validation
+    picks up the scoped sandbox root with no module reload.
     """
     file_tool_classes = {
         "TestFileCopyTool",
@@ -44,7 +44,8 @@ def _scoped_file_base_dir(request, tmp_path, monkeypatch):
     owner = request.cls.__name__ if request.cls else ""
     if owner not in file_tool_classes:
         return
-    monkeypatch.setattr(_file_ops, "_FILE_BASE_DIR", str(tmp_path))
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+    get_settings.cache_clear()
 
 
 class TestFileCopyTool:

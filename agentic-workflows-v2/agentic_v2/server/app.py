@@ -83,6 +83,11 @@ logger = logging.getLogger(__name__)
 _RATE_LIMIT_DISABLED: bool = os.environ.get("AGENTIC_RATE_LIMIT_DISABLED", "0") == "1"
 _RATE_LIMIT_DEFAULT: str = os.environ.get("AGENTIC_RATE_LIMIT_DEFAULT", "60/minute")
 
+# Env var name that lets an operator explicitly accept running with no rate
+# limiting when slowapi is not installed.  Read at startup (not import) so the
+# acknowledgement can be toggled per-process and exercised in tests.
+_DISABLE_RATE_LIMITING_ENV: str = "AGENTIC_DISABLE_RATE_LIMITING"
+
 
 try:
     from slowapi import Limiter
@@ -107,7 +112,9 @@ try:
         else Limiter(key_func=_public_exempt_key, default_limits=[_RATE_LIMIT_DEFAULT])
     )
 
-    def _rate_limit_exceeded_handler(_request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    def _rate_limit_exceeded_handler(
+        _request: Request, exc: RateLimitExceeded
+    ) -> JSONResponse:
         """Convert a slowapi ``RateLimitExceeded`` exception to a 429 JSON response."""
         retry_after = getattr(exc, "retry_after", None)
         headers = {}
@@ -167,13 +174,16 @@ def _initialize_sanitization_state(app: FastAPI) -> Exception | None:
 def _validate_selected_adapter() -> None:
     """Eagerly validate the configured startup adapter, aborting on misconfig.
 
-    AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as its
-    selected engine at startup. Named YAML workflow requests default to
-    "langchain" during the migration window because WorkflowRunRequest.adapter
-    defaults to "langchain". Set to "native" to validate and run the
-    dependency-light DAG/Pipeline adapter instead.
+    AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as
+    its selected engine at startup. Named YAML workflow requests default
+    to "langchain" during the migration window because
+    WorkflowRunRequest.adapter defaults to "langchain". Set to "native"
+    to validate and run the dependency-light DAG/Pipeline adapter
+    instead.
     """
-    _selected_adapter = os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
+    _selected_adapter = (
+        os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
+    )
     logger.info("Default adapter: %s", _selected_adapter)
     try:
         get_registry().validate_selected(_selected_adapter)
@@ -188,11 +198,44 @@ def _validate_selected_adapter() -> None:
         raise
 
 
+def _enforce_rate_limiting_available() -> None:
+    """Fail fast at startup when rate limiting is silently absent.
+
+    When ``slowapi`` is not installed the server would otherwise come up with no
+    per-IP rate limiting and no error, leaving unauthenticated LLM-budget
+    exhaustion wide open. Refuse to start unless the operator has explicitly
+    accepted that risk via ``AGENTIC_DISABLE_RATE_LIMITING=1`` (or the existing
+    ``AGENTIC_RATE_LIMIT_DISABLED=1`` test override).
+
+    Raises:
+        RuntimeError: ``slowapi`` is unavailable and no override env var is set.
+    """
+    if _SLOWAPI_AVAILABLE:
+        return
+
+    explicitly_disabled = (
+        os.environ.get(_DISABLE_RATE_LIMITING_ENV, "0") == "1" or _RATE_LIMIT_DISABLED
+    )
+    if explicitly_disabled:
+        logger.warning(
+            "slowapi is not installed — rate limiting is inactive "
+            "(explicitly accepted via %s=1)",
+            _DISABLE_RATE_LIMITING_ENV,
+        )
+        return
+
+    raise RuntimeError(
+        "slowapi is required for rate limiting; install it or set "
+        f"{_DISABLE_RATE_LIMITING_ENV}=1 to explicitly disable."
+    )
+
+
 def _probe_llm_providers() -> None:
     """Probe available LLM providers and update tier defaults for both engines.
 
-    NoProviderConfiguredError is non-fatal at startup — the server starts in a
-    degraded state; the error is surfaced per-request via the 503 handler.
+    NoProviderConfiguredError is non-fatal at startup — the server
+    starts in a degraded state; the error is surfaced per-request via
+    the 503 handler.
     """
     try:
         from ..langchain.models import probe_and_update_tier_defaults
@@ -339,6 +382,10 @@ async def lifespan(app: FastAPI):
     # surfaced with a clear error instead of an obscure mid-workflow traceback.
     _validate_selected_adapter()
 
+    # Refuse to start with rate limiting silently absent (slowapi missing and no
+    # explicit opt-out), which would expose unauthenticated LLM-budget drain.
+    _enforce_rate_limiting_available()
+
     _probe_llm_providers()
 
     # Initialize sanitization middleware.
@@ -469,7 +516,9 @@ def create_app() -> FastAPI:
     # E7-3: Map NoProviderConfiguredError to 503 Service Unavailable
     from ..core.errors import NoProviderConfiguredError
 
-    def _no_provider_handler(request: Request, exc: NoProviderConfiguredError) -> JSONResponse:
+    def _no_provider_handler(
+        request: Request, exc: NoProviderConfiguredError
+    ) -> JSONResponse:
         """Convert NoProviderConfiguredError to HTTP 503 with guidance JSON."""
         return JSONResponse(
             status_code=503,
@@ -543,9 +592,8 @@ def _mount_spa(app: FastAPI) -> None:
         if path:
             base = os.path.realpath(UI_DIST_DIR_RESOLVED)
             candidate = os.path.realpath(os.path.join(base, path))
-            if (
-                os.path.commonpath([base, candidate]) == base
-                and os.path.isfile(candidate)
+            if os.path.commonpath([base, candidate]) == base and os.path.isfile(
+                candidate
             ):
                 return FileResponse(candidate)
         return FileResponse(index_html)
