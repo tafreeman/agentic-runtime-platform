@@ -466,6 +466,8 @@ presentation/src/tokens/raw-themes/*
 # Tool-installed skill/agent packs (regenerable — like node_modules)
 _bmad*
 **/bmad-*/
+# BMAD document-project run-state artifact (written under docs/; regenerable telemetry, not docs)
+docs/project-scan-report.json
 **/wds-*/
 .agent/
 .agents/
