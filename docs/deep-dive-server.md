@@ -3,8 +3,8 @@
 > **Package:** `agentic-workflows-v2/agentic_v2/server/`
 > **Audience:** Backend engineers extending the server, security reviewers, and DevOps engineers deploying the service.
 
-**Generated:** 2026-05-02 (rewritten from source)
-**Key source files:** `server/app.py`, `server/auth.py`, `server/websocket.py`, `server/middleware/__init__.py`, `server/routes/`
+**Generated:** 2026-05-02 (updated 2026-06-17)
+**Key source files:** `server/app.py`, `server/auth.py`, `server/websocket.py`, `server/middleware/__init__.py`, `server/routes/`, `server/execution.py`, `server/_step_events.py`, `server/_stream_merge.py`
 
 ---
 
@@ -289,12 +289,12 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 
 **Responsibilities:**
 - HTTP API for workflows, agents, runs, datasets, evaluation (`routes/`)
-- Async workflow execution and event broadcast (`execution.py`)
+- Async workflow execution and event broadcast (`execution.py` + `_step_events.py` + `_stream_merge.py`)
 - WebSocket/SSE streaming hub with replay buffer (`websocket.py`)
 - Auth (bearer + X-API-Key) with constant-time comparison (`auth.py`)
 - Prompt sanitization middleware (`middleware/__init__.py`)
-- Evaluation pipeline: hard gates → criterion scoring → optional LLM judge (`evaluation.py`, `evaluation_scoring.py`, `judge.py`, `scoring_*.py`)
-- Dataset discovery, loading, matching, adaptation (`datasets.py`, `dataset_matching.py`)
+- Evaluation pipeline delegation — hard gates → criterion scoring → optional LLM judge; domain logic lives in `agentic_v2.scoring` (see ADR-032), `evaluation.py` is now a thin orchestration layer
+- Dataset discovery, loading, matching, adaptation (`datasets.py`; `dataset_matching.py` moved to `agentic_v2.scoring`)
 - Pydantic request/response contracts (`models.py`)
 
 ---
@@ -370,9 +370,8 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 - **Risks:** Path traversal possible if caller doesn't sanitize `name`; uses `is_within_base()` guard.
 - **Suggested tests:** malformed JSON (non-list, non-dict), missing files, symlink escape, network failure for HF/GitHub.
 
-### `dataset_matching.py` — 564 LOC
-- **Purpose:** Heuristic field-name mapping between dataset sample fields and workflow input schema. E.g. `"file"` inputs search for `code_file`, `patch`, `path`. Handles type coercion (JSON parsing, stringifying) and file materialization (`.py`, `.txt`).
-- **Key exports:** `match_sample_to_inputs(sample, schema)`, `materialize_file_input()`, `FieldMatch`.
+### `dataset_matching.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- Now at `agentic_v2/scoring/dataset_matching.py`. Heuristic field-name mapping between dataset sample fields and workflow input schema. The `server/` package imports this from `agentic_v2.scoring`.
 - **Risks:** Silent failures if sample structure unexpected — prefer explicit field map in workflow YAML.
 - **Suggested tests:** edge cases (nested fields, arrays, None values), file materialization with weird extensions, traversal attempts.
 
@@ -383,18 +382,27 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 - **Side effects:** Optional LLM call if judge configured.
 - **Suggested tests:** pipeline ordering, short-circuit on hard-gate failure.
 
-### `evaluation_scoring.py` — 762 LOC
-- **Purpose:** Aggregation and grading. Weighted blend of criterion scores with advisory heuristics (similarity, efficiency). Maps to A/B/C/D/F grades. Includes multidimensional profiles.
-- **Key exports:** `aggregate_scores()`, `compute_grade()`, `ScoringResult`, `GradeBand`.
-- **Risks:** Any single hard-gate failure forces grade F — no partial credit.
-- **Suggested tests:** grade boundary values (89.5, 79.5), hard-gate failure pinning, weighted blend correctness.
+### `evaluation_scoring.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- This module has been extracted to `agentic_v2/scoring/evaluation_scoring.py`. The `server/` package imports from `agentic_v2.scoring` rather than hosting the logic directly. `server/evaluation.py` remains as a thin orchestration wrapper.
+- See [Scoring Package](architecture-runtime.md#scoring-package) in the runtime architecture doc.
 
-### `execution.py` — 520 LOC
-- **Purpose:** Async workflow execution orchestrator. Handles LangGraph streaming, event broadcasting (step_start, step_end, workflow_end, evaluation_complete), SSE queues, result normalization, and run logging.
-- **Key exports:** `execute_workflow_async()`, `stream_events(run_id)`, `_lc_runner` (global singleton).
-- **Imports:** `..langchain.WorkflowRunner`, `..engine.context.ExecutionContext`, `..adapters`, `.websocket`, `.result_normalization`.
+### `execution.py` — background execution core
+- **Purpose:** Async workflow execution orchestrator. Handles LangGraph runner singleton lifecycle, stream payload materialization, LangGraph streaming orchestration (`_stream_and_run`), native adapter execution (`_run_via_native_adapter`), and the full background task lifecycle (`_run_and_evaluate`).
+- **Key exports:** `_get_lc_runner()`, `_run_and_evaluate()`, `_run_via_native_adapter()`, `_stream_and_run()`, `_stream_dict` (payload materializer).
+- **Imports:** `..langchain.WorkflowRunner`, `..engine.context.ExecutionContext`, `..adapters`, `.websocket`, `.result_normalization`, `._step_events` (set `_stream_dict_ref` after own definition), `._stream_merge`.
 - **Risks:** Global `_lc_runner` singleton — not thread-safe; assumes single event loop.
 - **Suggested tests:** concurrent run isolation, event ordering under load, adapter fallback.
+
+### `_step_events.py` — step event builders (extracted from `execution.py`)
+- **Purpose:** Step-event builders and WebSocket broadcast logic for LangGraph streaming. Builds `step_start`/`step_end` broadcast payloads, computes step duration, walks node updates and emits per-step events (`_broadcast_node_steps`, `_process_streamed_step`).
+- **Key exports:** `_broadcast_node_steps()`, `_process_streamed_step()`, `_step_start_event()`, `_step_end_event()`.
+- **Dependency injection:** `_stream_dict_ref` is injected by `execution.py` immediately after it defines `_stream_dict`, avoiding a circular import.
+- **Suggested tests:** step payload shape, duration calculation, injection guard (raises if `_stream_dict_ref` unset).
+
+### `_stream_merge.py` — stream state merge helpers (extracted from `execution.py`)
+- **Purpose:** Pure, stateless helpers for incrementally merging LangGraph node update payloads into the aggregate run state dict. Merges `context`, `outputs`, `steps`, and `errors` without side effects.
+- **Key exports:** `_merge_stream_state()`, `_merge_stream_payload()`.
+- **Design:** No imports from other server modules — purely a set of dict-manipulation functions, making it safe to test in complete isolation.
 
 ### `judge.py` — 579 LOC
 - **Purpose:** LLM-as-judge with anchored 1–5 Likert rubric. Positional bias mitigation via deterministic criteria shuffling. Optional pairwise consistency check. Strict JSON schema validation. Temperature clamped [0.0, 0.1].
@@ -410,10 +418,8 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 - **Risks:** Contract models are additive-only — never remove fields.
 - **Suggested tests:** schema round-trip, optional-field defaults, enum coverage.
 
-### `multidimensional_scoring.py` — 549 LOC
-- **Purpose:** Advanced multi-axis scoring profile: correctness, quality, efficiency, documentation. Supports custom weight profiles.
-- **Key exports:** `MultidimensionalScorer`, `ScoringProfile`.
-- **Used by:** `evaluation_scoring.py`.
+### `multidimensional_scoring.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- Now at `agentic_v2/scoring/multidimensional_scoring.py`. See the scoring package documentation.
 
 ### `normalization.py` — 35 LOC
 - **Purpose:** Thin re-export facade for `result_normalization` (backward-compat).
@@ -424,13 +430,11 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 - **Key exports:** `normalize_langchain_result()`, `normalize_native_result()`.
 - **Risks:** Breaking schema drift in runners → silent field loss; add schema version assertions.
 
-### `scoring_criteria.py` — 487 LOC
-- **Purpose:** Per-criterion 0–100 scoring from execution signals: success rate, text overlap, step failures, duration, output richness. 4 criterion families.
-- **Key exports:** `CriterionScorer`, `score_correctness()`, `score_quality()`, `score_efficiency()`, `score_documentation()`.
+### `scoring_criteria.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- Now at `agentic_v2/scoring/scoring_criteria.py`.
 
-### `scoring_profiles.py` — 139 LOC
-- **Purpose:** Named scoring profiles (default, strict, lenient). Weight maps per criterion.
-- **Key exports:** `PROFILES`, `get_profile(name)`.
+### `scoring_profiles.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- Now at `agentic_v2/scoring/scoring_profiles.py`.
 
 ### `websocket.py` — 261 LOC
 - **Purpose:** Pub/sub hub. Bounded deque (500 events) for replay; async fan-out to WS + SSE subscribers.
@@ -474,17 +478,25 @@ app.py
   │   ├─ routes/agents.py
   │   ├─ routes/workflows.py → models.py
   │   ├─ routes/runs.py → execution.py → websocket.py, result_normalization.py
-  │   └─ routes/evaluation_routes.py → datasets.py, dataset_matching.py, evaluation.py
+  │   └─ routes/evaluation_routes.py → datasets.py, evaluation.py
   ├─ auth.py
   ├─ middleware/__init__.py
   └─ websocket.py
 
-evaluation.py
-  ├─ evaluation_scoring.py
-  │   ├─ scoring_criteria.py
-  │   ├─ scoring_profiles.py
-  │   └─ multidimensional_scoring.py
-  └─ judge.py
+execution.py
+  ├─ _step_events.py  (step-event builders; receives _stream_dict via injection)
+  └─ _stream_merge.py (pure state-merge helpers; no server imports)
+
+evaluation.py  (thin orchestration wrapper)
+  └─ agentic_v2.scoring  (domain logic — cross-package import)
+       ├─ scoring.evaluation_scoring
+       │   ├─ scoring.scoring_criteria
+       │   ├─ scoring.scoring_profiles
+       │   └─ scoring.multidimensional_scoring
+       ├─ scoring.judge
+       ├─ scoring.step_scoring
+       ├─ scoring.dataset_matching
+       └─ scoring.eval_config
 
 normalization.py → result_normalization.py (shim)
 ```
@@ -498,10 +510,10 @@ No circular dependencies. `models.py` is leaf-shared by all route modules.
 **Inbound HTTP → response:**
 1. Client → FastAPI → CORS → sanitization middleware → auth dependency → router.
 2. Router validates request via `models.py` Pydantic schema.
-3. For `POST /api/run`: handler kicks off `execute_workflow_async()` which returns run_id, then streams events via `websocket.py` hub.
-4. `execution.py` invokes `WorkflowRunner` (LangChain) or native engine adapter.
+3. For `POST /api/run`: handler kicks off `_run_and_evaluate()` (in `execution.py`) as a `BackgroundTask`, then returns run_id immediately.
+4. `execution.py` invokes `WorkflowRunner` (LangChain / `_stream_and_run`) or native engine adapter (`_run_via_native_adapter`). Per-step events are built by `_step_events.py` and state is merged by `_stream_merge.py`.
 5. Events flow: engine → `websocket.publish_event()` → deque + fan-out to all subscribers.
-6. On completion: `result_normalization` → `evaluation.evaluate_workflow_result()` (if evaluation requested) → persisted to run log (`RunLogger`).
+6. On completion: `result_normalization` → `evaluation.evaluate_workflow_result()` (delegates to `agentic_v2.scoring` if evaluation requested) → persisted to run log (`RunLogger`).
 
 **Streaming:**
 - WebSocket: client subscribes `/ws/execution/{run_id}` → auth/origin check → subscribe to hub → receive replay buffer + live events.
@@ -516,6 +528,7 @@ No circular dependencies. `models.py` is leaf-shared by all route modules.
 - **`..engine.context`**: `ExecutionContext` for native DAG executor.
 - **`..adapters`**: `AdapterRegistry` for pluggable execution backends.
 - **`..models`**: `get_client()`, `get_secret()`, `SmartModelRouter`, model-tier resolution.
+- **`..scoring`**: domain logic for evaluation, judge, scoring criteria, profiles, dataset matching (ADR-032; no transport dependency).
 - **`..middleware.sanitization`**: prompt sanitization rules.
 - **`..integrations.otel`**: OpenTelemetry tracing (optional).
 - **External**: `tools.agents.benchmarks`, HuggingFace Datasets, GitHub raw files.

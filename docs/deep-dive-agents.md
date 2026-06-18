@@ -3,8 +3,8 @@
 > **Package:** `agentic-workflows-v2/agentic_v2/agents/`
 > **Audience:** Engineers building new agents, workflow authors, and architects reviewing agent integration points.
 
-**Updated:** 2026-05-02 (rewritten from source)
-**Key source files:** `agents/base.py`, `agents/config.py`, `agents/orchestrator.py`, `agents/implementations/`
+**Updated:** 2026-05-02 (updated 2026-06-17)
+**Key source files:** `agents/base.py`, `agents/config.py`, `agents/orchestrator.py`, `agents/orchestrator_models.py`, `agents/orchestrator_planning.py`, `agents/orchestrator_factories.py`, `agents/implementations/`
 
 ---
 
@@ -448,12 +448,27 @@ CREATED → INITIALIZING → READY → RUNNING → COMPLETED
 - **Purpose:** Test-generation agent producing pytest/Jest test scaffolds with fixtures.
 - **Key exports:** `TestAgent(BaseAgent[TestInput, TestOutput])`.
 
-### `orchestrator.py` — 541 LOC
+### `orchestrator.py`
 - **Purpose:** Meta-agent that decomposes a high-level task into subtasks, scores candidate agents via `capabilities.score_match`, dispatches, and aggregates results. Supports fallback chains and DAG execution.
 - **Key exports:** `OrchestratorAgent(BaseAgent[OrchestratorInput, OrchestratorOutput])`, `decompose_task()`, `select_agent()`.
-- **Imports:** `..engine.dag`, capabilities, all concrete agents (via factory registry).
+- **Imports:** `..engine.dag`, capabilities, all concrete agents (via factory registry), plus sibling modules `orchestrator_models`, `orchestrator_planning`, `orchestrator_factories`.
 - **Risks:** Silent fallback chain — logs warnings but returns best-effort output if all agents fail.
 - **Suggested tests:** all-agents-fail scenario surfaces error; DAG cycle detection; capability tie-breaking.
+
+### `orchestrator_models.py` — value objects and prompts (decomposed from `orchestrator.py`)
+- **Purpose:** Holds `SubTask`, `OrchestratorInput`, `OrchestratorOutput`, system prompts, and capability constants. Dependencies restricted to `..contracts` and `.capabilities` — no engine imports.
+- **Key exports:** `SubTask`, `OrchestratorInput`, `OrchestratorOutput`.
+- **Design rationale:** Isolating these value objects allows them to be imported by unit tests and by the evaluation harness without pulling in orchestration logic.
+
+### `orchestrator_planning.py` — pure planning helpers (decomposed from `orchestrator.py`)
+- **Purpose:** Deterministic, stateless planning utilities: `_intent_decomposition` (capability-tagged plan from task text for no-LLM mode), `_extract_file_tokens`, `_latest_user_text`, `_has_extractable_json`, `_per_file_task_id`.
+- **Key exports:** `_intent_decomposition()`, `_extract_file_tokens()`, `_latest_user_text()`, `_per_file_task_id()`.
+- **Design rationale:** Pure functions with no orchestrator state — directly unit-testable without mocking the LLM. Backs the `AGENTIC_NO_LLM` decomposition path.
+
+### `orchestrator_factories.py` — task-input factories (decomposed from `orchestrator.py`)
+- **Purpose:** Maps subtask descriptions to concrete `TaskInput` subclasses per managed agent type. E.g., reviewer subtasks → `CodeReviewInput`, coder subtasks → `CodeGenerationInput`. All cross-module imports are deferred to call time to avoid circular imports.
+- **Key exports:** `_reviewer_input_factory()`, `_coder_input_factory()`, `_register_default_factories()`.
+- **Design rationale:** Deferred imports at call time (not module load) keeps this module free of import-time coupling to the contracts layer and concrete agents.
 
 ### `memory.py` — 266 LOC
 - **Purpose:** `ConversationMemory` with sliding-window summarization. Keeps up to 50 messages and ~8000 tokens; auto-summarizes older turns when window exceeded. First system message always preserved.
@@ -497,11 +512,14 @@ CREATED → INITIALIZING → READY → RUNNING → COMPLETED
 ```
 base.py
   ↑
-  ├─ coder.py         → json_extraction.py, memory.py, capabilities.py
-  ├─ reviewer.py      → json_extraction.py, memory.py, capabilities.py
-  ├─ architect.py     → json_extraction.py, memory.py, capabilities.py
-  ├─ test_agent.py    → json_extraction.py, memory.py, capabilities.py
-  └─ orchestrator.py  → capabilities.py, (factory registry from __init__)
+  ├─ coder.py              → json_extraction.py, memory.py, capabilities.py
+  ├─ reviewer.py           → json_extraction.py, memory.py, capabilities.py
+  ├─ architect.py          → json_extraction.py, memory.py, capabilities.py
+  ├─ test_agent.py         → json_extraction.py, memory.py, capabilities.py
+  └─ orchestrator.py       → capabilities.py, (factory registry from __init__)
+       ├─ orchestrator_models.py      → ..contracts, .capabilities (no engine)
+       ├─ orchestrator_planning.py    → .capabilities, .json_extraction (pure functions)
+       └─ orchestrator_factories.py   → (deferred imports at call time)
 
 implementations/
   ├─ agent_loader.py  (registry populated by __init__.py)

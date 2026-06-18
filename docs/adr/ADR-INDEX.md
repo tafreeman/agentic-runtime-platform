@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
 > **Last updated:** 2026-06-17
-> **Total ADRs:** 25 (18 Accepted, 5 Proposed, 2 Superseded)
+> **Total ADRs:** 31 (24 Accepted, 5 Proposed, 2 Superseded)
 
 ---
 

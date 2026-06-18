@@ -26,7 +26,7 @@ Security and observability are first-class concerns throughout. A sanitization m
 
 ---
 
-## Current State (as of May 2026)
+## Current State (as of June 2026)
 
 The platform has shipped the following epics:
 
@@ -63,7 +63,7 @@ The platform has shipped the following epics:
 | Distributed tracing | OpenTelemetry SDK + OTLP exporter |
 | Documentation | MkDocs Material + mermaid2 plugin |
 | Containerization | Docker (backend + frontend separate images) |
-| CI/CD | GitHub Actions (11 workflow files) |
+| CI/CD | GitHub Actions (15 workflow files) |
 
 ---
 
@@ -142,11 +142,12 @@ agentic-runtime-platform/
 │   │   ├── models/         LLM routing (8+ providers)
 │   │   ├── prompts/        7 agent persona definitions
 │   │   ├── rag/            Full RAG pipeline
+│   │   ├── scoring/        Scoring/judge domain (extracted from server/)
 │   │   ├── server/         FastAPI + WebSocket/SSE
 │   │   ├── tools/builtin/  11 built-in tool modules
 │   │   ├── utils/          General utilities
 │   │   └── workflows/      6 YAML workflow definitions
-│   ├── tests/              100+ test files
+│   ├── tests/              150+ test files
 │   └── ui/                 React 19 dashboard
 ├── agentic-v2-eval/        Standalone evaluation framework
 │   └── src/agentic_v2_eval/
@@ -163,7 +164,7 @@ agentic-runtime-platform/
 ├── _bmad-output/           BMad-generated artifacts
 ├── docs/                   MkDocs documentation source
 
-├── .github/workflows/      11 CI/CD workflow files
+├── .github/workflows/      15 CI/CD workflow files
 ├── otel/                   OpenTelemetry collector config
 ├── tests/e2e/              Cross-package smoke tests
 └── pyproject.toml          uv workspace root + agentic-tools
@@ -188,6 +189,6 @@ agentic-runtime-platform/
 | [Development Guide](development-guide.md) | Local development setup, dev servers, testing, linting, CLI usage |
 | [Deployment Guide](deployment-guide.md) | CI/CD pipeline, environment variable reference, Docker, production configuration |
 | [Onboarding](ONBOARDING.md) | New contributor onboarding path (5 minutes to 1 hour) |
-| [ADR Index](adr/ADR-INDEX.md) | All 17 architecture decision records |
+| [ADR Index](adr/ADR-INDEX.md) | All 31 architecture decision records |
 | [Roadmap](ROADMAP.md) | Shipped epics, in-flight work, proposed Epic 7 |
 | [Known Limitations](KNOWN_LIMITATIONS.md) | Honest accounting of current caveats and open debt |
