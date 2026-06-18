@@ -211,9 +211,7 @@ class TestCheckpointIdentityHardening:
         # Identity is unchanged — the tampered value was rejected pre-mutation.
         assert ctx.workflow_id == original_workflow_id
 
-    async def test_running_context_rejects_foreign_run_id(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_running_context_rejects_foreign_run_id(self, tmp_path: Path) -> None:
         ctx = ExecutionContext(checkpoint_dir=tmp_path)
         await ctx.mark_step_complete("step_a")
         original_run_id = ctx.run_id
@@ -238,9 +236,7 @@ class TestCheckpointIdentityHardening:
 
     async def test_rejects_non_list_completed_steps(self, tmp_path: Path) -> None:
         ctx = ExecutionContext(checkpoint_dir=tmp_path)
-        path = _write_checkpoint(
-            tmp_path / "bad.json", completed_steps={"step": True}
-        )
+        path = _write_checkpoint(tmp_path / "bad.json", completed_steps={"step": True})
 
         with pytest.raises(ValueError, match="expected a list"):
             await ctx.restore_checkpoint(path)

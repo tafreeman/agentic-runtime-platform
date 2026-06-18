@@ -319,7 +319,9 @@ class ConnectionManager:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 _task = asyncio.ensure_future(self._clear_store(run_id))
-                _task.add_done_callback(lambda _t: None)  # prevent GC of fire-and-forget task
+                _task.add_done_callback(
+                    lambda _t: None
+                )  # prevent GC of fire-and-forget task
         except RuntimeError:
             # No event loop — store clear will be skipped; this is acceptable
             # in unit tests that don't run an event loop.
@@ -414,7 +416,9 @@ async def _reject_websocket_connection(
     # Reject locked-out IPs before even checking credentials (mirrors the HTTP path).
     is_locked, retry_after = throttle.is_locked(client_host)
     if is_locked:
-        await websocket.close(code=1008, reason="Too many failed authentication attempts")
+        await websocket.close(
+            code=1008, reason="Too many failed authentication attempts"
+        )
         logger.warning(
             "Auth throttle: rejecting locked WebSocket IP %s for run %s (retry after %.0fs)",
             client_host,

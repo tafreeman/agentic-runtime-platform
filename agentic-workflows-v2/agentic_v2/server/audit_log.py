@@ -368,12 +368,16 @@ async def build_audit_logger(settings: Any | None = None) -> AuditLogger:
         if redis_url:
             store = await RedisAuditStore.connect(
                 redis_url=redis_url,
-                stream_name=getattr(settings, "audit_log_redis_stream", _DEFAULT_REDIS_STREAM),
+                stream_name=getattr(
+                    settings, "audit_log_redis_stream", _DEFAULT_REDIS_STREAM
+                ),
                 max_events=max_events,
             )
             if store.is_connected:
                 return AuditLogger(store, enabled=True)
-        logger.warning("Audit redis backend unavailable; falling back to file audit store")
+        logger.warning(
+            "Audit redis backend unavailable; falling back to file audit store"
+        )
 
     store = FileAuditStore(
         path=getattr(settings, "audit_log_file_path", _DEFAULT_FILE_PATH)

@@ -405,9 +405,7 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
             )
 
             tool = self._bound_tools.get(tool_name)
-            result_str = await self._dispatch_tool(
-                tool, tool_name, tool_args, call_id
-            )
+            result_str = await self._dispatch_tool(tool, tool_name, tool_args, call_id)
 
             self._emit(
                 AgentEvent.TOOL_RESULT,

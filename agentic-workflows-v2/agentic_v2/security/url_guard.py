@@ -242,8 +242,7 @@ def _resolve_and_check_metadata_only(hostname: str) -> str | None:
         resolved = _parse_ip_literal(str(info[4][0]))
         if resolved is not None and _is_metadata_address(resolved):
             return (
-                f"Host '{hostname}' resolves to a metadata endpoint "
-                "and is blocked."
+                f"Host '{hostname}' resolves to a metadata endpoint " "and is blocked."
             )
     return None
 

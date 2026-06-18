@@ -26,7 +26,7 @@ _DEADLOCK_TIMEOUT_S = 2.0
 
 
 class TestGetDeadlock:
-    """get() must not hold its own lock while descending to the parent."""
+    """Get() must not hold its own lock while descending to the parent."""
 
     async def test_concurrent_parent_child_get_does_not_hang(self) -> None:
         """Two tasks reading opposite ends of the chain both complete."""
@@ -53,7 +53,7 @@ class TestGetDeadlock:
         assert all(value == "from_parent" for value in results)
 
     async def test_child_lock_released_before_descending_to_parent(self) -> None:
-        """get() must drop its own lock before calling into the parent.
+        """Get() must drop its own lock before calling into the parent.
 
         This is the precise root cause of the inversion: the buggy code held
         ``child._lock`` across ``await self._parent.get(...)``, so a task holding
@@ -82,9 +82,7 @@ class TestGetDeadlock:
             await asyncio.wait_for(parent_entered.wait(), timeout=_DEADLOCK_TIMEOUT_S)
 
             # While the parent read is parked, the child's lock must be free.
-            await asyncio.wait_for(
-                child._lock.acquire(), timeout=_DEADLOCK_TIMEOUT_S
-            )
+            await asyncio.wait_for(child._lock.acquire(), timeout=_DEADLOCK_TIMEOUT_S)
             child._lock.release()
         finally:
             let_parent_finish.set()
@@ -98,7 +96,7 @@ class TestGetDeadlock:
 
 
 class TestUpdateAtomicValidation:
-    """update() validates and writes atomically (no TOCTOU window)."""
+    """Update() validates and writes atomically (no TOCTOU window)."""
 
     async def test_update_rejects_protected_key_without_partial_write(self) -> None:
         parent = ExecutionContext()

@@ -452,7 +452,9 @@ class TestWebSocketEndpointAuthThrottle:
         real_is_token_authorized = websocket_module.is_token_authorized
         calls: list[int] = []
 
-        def _counting_is_token_authorized(token: str | None, api_key: str | None) -> bool:
+        def _counting_is_token_authorized(
+            token: str | None, api_key: str | None
+        ) -> bool:
             calls.append(1)
             return real_is_token_authorized(token, api_key)
 
@@ -475,7 +477,8 @@ class TestWebSocketEndpointAuthThrottle:
     def test_first_n_attempts_reach_credential_check(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Below the threshold, attempts still hit the credential check (not throttled)."""
+        """Below the threshold, attempts still hit the credential check (not
+        throttled)."""
         monkeypatch.setenv("AGENTIC_API_KEY", "test-secret-key")
         app = create_app()
         app.state.auth_throttle = AuthThrottle(

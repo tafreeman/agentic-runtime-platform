@@ -44,8 +44,9 @@ T = TypeVar("T")
 def _fingerprint_files(paths: list[str | Path]) -> dict[str, str]:
     """Return ``{path: sha256}`` for each readable file in *paths*.
 
-    Missing or unreadable files are recorded with a sentinel digest so a later
-    diff treats "file deleted" as a change rather than silently skipping it.
+    Missing or unreadable files are recorded with a sentinel digest so a
+    later diff treats "file deleted" as a change rather than silently
+    skipping it.
     """
     fingerprints: dict[str, str] = {}
     for raw in paths:
@@ -323,9 +324,9 @@ class ExecutionContext:
     async def set_internal(self, key: str, value: Any) -> None:
         """Set an engine-owned variable, including protected lifecycle keys.
 
-        This is the explicit opt-in escape hatch for runtime code that must
-        seed a protected context key in the variable namespace.  It still
-        enforces plain, top-level variable names.
+        This is the explicit opt-in escape hatch for runtime code that
+        must seed a protected context key in the variable namespace.  It
+        still enforces plain, top-level variable names.
         """
         self._validate_variable_key(key, allow_protected=True)
         async with self._lock:
@@ -576,13 +577,15 @@ class ExecutionContext:
     def detect_changed_files(checkpoint_path: Path) -> list[str]:
         """Return the tracked files that changed since *checkpoint_path*.
 
-        Compares each file's current sha256 against the fingerprint recorded at
-        save time. A file is "changed" if its content differs **or** it no
-        longer exists. Files added since the checkpoint are not reported (only
-        the originally-tracked set is compared).
+        Compares each file's current sha256 against the fingerprint
+        recorded at save time. A file is "changed" if its content
+        differs **or** it no longer exists. Files added since the
+        checkpoint are not reported (only the originally-tracked set is
+        compared).
 
-        Returns the changed file paths, sorted for deterministic output. Returns
-        an empty list when the checkpoint recorded no fingerprints.
+        Returns the changed file paths, sorted for deterministic output.
+        Returns an empty list when the checkpoint recorded no
+        fingerprints.
         """
         if not checkpoint_path.exists():
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
@@ -602,10 +605,10 @@ class ExecutionContext:
     def build_changed_files_notice(changed_files: list[str]) -> str:
         """Render a "these files changed" notice for the caller/operator.
 
-        Surfaces the notice as a string for the caller to prepend to a resumed
-        prompt; this method does not assemble or inject any prompt itself.
-        Returns an empty string when nothing changed so callers can prepend the
-        result unconditionally.
+        Surfaces the notice as a string for the caller to prepend to a
+        resumed prompt; this method does not assemble or inject any
+        prompt itself. Returns an empty string when nothing changed so
+        callers can prepend the result unconditionally.
         """
         if not changed_files:
             return ""
@@ -619,11 +622,12 @@ class ExecutionContext:
     def _is_running_context(self) -> bool:
         """Return True if this context is already bound to an active run.
 
-        A freshly constructed context used purely to *resume* a checkpoint has
-        no step history and no in-flight step, so its auto-generated identity is
-        a placeholder the checkpoint is allowed to overwrite. Once any step has
-        run (or is running) the identity is load-bearing and an incoming
-        checkpoint must not be allowed to silently reassign it.
+        A freshly constructed context used purely to *resume* a
+        checkpoint has no step history and no in-flight step, so its
+        auto-generated identity is a placeholder the checkpoint is
+        allowed to overwrite. Once any step has run (or is running) the
+        identity is load-bearing and an incoming checkpoint must not be
+        allowed to silently reassign it.
         """
         return bool(self.completed_steps or self.failed_steps or self.current_step)
 
@@ -654,8 +658,9 @@ class ExecutionContext:
     def _validate_checkpoint_completed_steps(self, steps: Any) -> list[str]:
         """Validate ``completed_steps`` from an untrusted checkpoint.
 
-        Rejects a non-list payload or any non-string element so a tampered
-        checkpoint cannot inject structured data into the execution guards.
+        Rejects a non-list payload or any non-string element so a
+        tampered checkpoint cannot inject structured data into the
+        execution guards.
         """
         if not isinstance(steps, list):
             raise ValueError(

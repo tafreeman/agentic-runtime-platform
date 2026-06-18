@@ -560,8 +560,9 @@ class TestAgentResolverParsing:
     def test_parse_malformed_json_salvages_expected_non_review_keys(self):
         """Malformed/truncated JSON should still salvage expected top-level keys.
 
-        This protects workflow handoffs (e.g. fullstack_generation) where
-        downstream steps depend on keys like api_spec/db_schema/component_tree.
+        This protects workflow handoffs (e.g. fullstack_generation)
+        where downstream steps depend on keys like
+        api_spec/db_schema/component_tree.
         """
         response = (
             "```json\n{\n"

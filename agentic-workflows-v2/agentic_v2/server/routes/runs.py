@@ -122,7 +122,11 @@ async def list_runs(
                 request,
                 tenant,
                 "run.list",
-                run_id=record.get("run_id") if isinstance(record.get("run_id"), str) else None,
+                run_id=(
+                    record.get("run_id")
+                    if isinstance(record.get("run_id"), str)
+                    else None
+                ),
             )
         except Exception as e:
             logger.warning("Failed to load run %s: %s", p.name, e)
@@ -250,7 +254,9 @@ async def get_run(
         request,
         tenant,
         "run.detail",
-        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+        run_id=(
+            run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None
+        ),
     )
 
     steps = run_data.get("steps")
@@ -279,12 +285,16 @@ async def get_run_evaluation(
         request,
         tenant,
         "run.evaluation",
-        run_id=run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None,
+        run_id=(
+            run_data.get("run_id") if isinstance(run_data.get("run_id"), str) else None
+        ),
     )
 
     extra = run_data.get("extra") or {}
     evaluation_requested = bool(extra.get("evaluation_requested", False))
-    evaluation_raw = extra.get("evaluation") if isinstance(extra.get("evaluation"), dict) else None
+    evaluation_raw = (
+        extra.get("evaluation") if isinstance(extra.get("evaluation"), dict) else None
+    )
 
     evaluation: RunEvaluationDetail | None = None
     if evaluation_raw and evaluation_raw.get("enabled"):

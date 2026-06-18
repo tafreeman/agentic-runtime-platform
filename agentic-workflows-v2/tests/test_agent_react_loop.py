@@ -351,7 +351,7 @@ async def test_run_under_tracer_uses_config_name(
 
 def _claude_agent() -> ClaudeAgent:
     """A ClaudeAgent with a dummy API key (no client call is made here)."""
-    return ClaudeAgent(api_key="test-key-not-used")
+    return ClaudeAgent(api_key="test-key-not-used")  # pragma: allowlist secret
 
 
 @pytest.mark.parametrize(
@@ -428,8 +428,8 @@ async def test_claude_max_tokens_continuation_aggregates_chunks(
     """A response split across max_tokens turns is reassembled in the output.
 
     BaseAgent._execute_loop hands only the LAST turn's content to
-    _parse_output; without buffering, the earlier truncated segments would be
-    silently dropped from the final SimpleOutput.
+    _parse_output; without buffering, the earlier truncated segments
+    would be silently dropped from the final SimpleOutput.
     """
     agent = _claude_agent()
     await agent.initialize()

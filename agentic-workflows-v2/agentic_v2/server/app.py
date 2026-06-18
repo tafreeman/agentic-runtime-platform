@@ -112,7 +112,9 @@ try:
         else Limiter(key_func=_public_exempt_key, default_limits=[_RATE_LIMIT_DEFAULT])
     )
 
-    def _rate_limit_exceeded_handler(_request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    def _rate_limit_exceeded_handler(
+        _request: Request, exc: RateLimitExceeded
+    ) -> JSONResponse:
         """Convert a slowapi ``RateLimitExceeded`` exception to a 429 JSON response."""
         retry_after = getattr(exc, "retry_after", None)
         headers = {}
@@ -172,13 +174,16 @@ def _initialize_sanitization_state(app: FastAPI) -> Exception | None:
 def _validate_selected_adapter() -> None:
     """Eagerly validate the configured startup adapter, aborting on misconfig.
 
-    AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as its
-    selected engine at startup. Named YAML workflow requests default to
-    "langchain" during the migration window because WorkflowRunRequest.adapter
-    defaults to "langchain". Set to "native" to validate and run the
-    dependency-light DAG/Pipeline adapter instead.
+    AGENTIC_DEFAULT_ADAPTER controls which engine the server treats as
+    its selected engine at startup. Named YAML workflow requests default
+    to "langchain" during the migration window because
+    WorkflowRunRequest.adapter defaults to "langchain". Set to "native"
+    to validate and run the dependency-light DAG/Pipeline adapter
+    instead.
     """
-    _selected_adapter = os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
+    _selected_adapter = (
+        os.environ.get("AGENTIC_DEFAULT_ADAPTER", "langchain").strip().lower()
+    )
     logger.info("Default adapter: %s", _selected_adapter)
     try:
         get_registry().validate_selected(_selected_adapter)
@@ -228,8 +233,9 @@ def _enforce_rate_limiting_available() -> None:
 def _probe_llm_providers() -> None:
     """Probe available LLM providers and update tier defaults for both engines.
 
-    NoProviderConfiguredError is non-fatal at startup — the server starts in a
-    degraded state; the error is surfaced per-request via the 503 handler.
+    NoProviderConfiguredError is non-fatal at startup — the server
+    starts in a degraded state; the error is surfaced per-request via
+    the 503 handler.
     """
     try:
         from ..langchain.models import probe_and_update_tier_defaults
@@ -510,7 +516,9 @@ def create_app() -> FastAPI:
     # E7-3: Map NoProviderConfiguredError to 503 Service Unavailable
     from ..core.errors import NoProviderConfiguredError
 
-    def _no_provider_handler(request: Request, exc: NoProviderConfiguredError) -> JSONResponse:
+    def _no_provider_handler(
+        request: Request, exc: NoProviderConfiguredError
+    ) -> JSONResponse:
         """Convert NoProviderConfiguredError to HTTP 503 with guidance JSON."""
         return JSONResponse(
             status_code=503,
@@ -584,9 +592,8 @@ def _mount_spa(app: FastAPI) -> None:
         if path:
             base = os.path.realpath(UI_DIST_DIR_RESOLVED)
             candidate = os.path.realpath(os.path.join(base, path))
-            if (
-                os.path.commonpath([base, candidate]) == base
-                and os.path.isfile(candidate)
+            if os.path.commonpath([base, candidate]) == base and os.path.isfile(
+                candidate
             ):
                 return FileResponse(candidate)
         return FileResponse(index_html)
