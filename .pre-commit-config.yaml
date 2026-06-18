@@ -21,11 +21,12 @@ repos:
       - id: black
         args: ["--line-length", "88"]
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 7.0.0
-    hooks:
-      - id: isort
-        args: ["--profile", "black"]
+  # Import sorting is handled by ruff's `I` rules with
+  # [tool.ruff.lint.isort] known-first-party = ["agentic_v2"] in
+  # agentic-workflows-v2/pyproject.toml. A standalone isort hook is redundant
+  # and actively conflicts with ruff (it groups agentic_v2 as third-party and
+  # splits comment-tagged imports onto their own line), so the two never reach
+  # a fixpoint under `pre-commit run --all-files`. ruff is the single sorter.
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.15.0
