@@ -145,7 +145,7 @@ The runtime and all tooling are validated on Windows in CI. `scripts/setup-dev.p
   <div class="stat-label">Tests passing</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">17</div>
+  <div class="stat-value">31</div>
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">

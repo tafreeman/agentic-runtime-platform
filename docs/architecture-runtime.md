@@ -34,10 +34,11 @@ agentic-workflows-v2/
 │   ├── core/            # Protocols, memory, errors
 │   ├── models/          # LLM client wrappers, SmartModelRouter (8+ providers)
 │   ├── rag/             # Full RAG pipeline (load, chunk, embed, retrieve, assemble)
+│   ├── scoring/         # Scoring/judge domain (evaluation_scoring, judge, criteria, profiles, step_scoring)
 │   ├── tools/           # 11 built-in tool modules
 │   ├── workflows/       # YAML loader, run logger
 │   └── integrations/    # OTEL tracing, MCP adapters
-├── tests/               # 100+ test files (pytest-asyncio auto mode)
+├── tests/               # 150+ test files (pytest-asyncio auto mode)
 └── ui/                  # React 19 dashboard (separate build)
 ```
 
@@ -353,20 +354,21 @@ The system serves dual purpose: an operational agentic AI platform and a referen
 agentic-workflows-v2/
 ├── agentic_v2/
 │   ├── server/              # FastAPI application, routes, auth, streaming
-│   ├── agents/              # BaseAgent + 4 specialized agents + implementations/
+│   ├── agents/              # BaseAgent + 5 specialized agents + orchestrator decomposition + implementations/
 │   ├── adapters/            # AdapterRegistry, ExecutionEngine backends
 │   ├── core/                # Protocols, memory, context, contracts, errors
 │   ├── engine/              # Native DAG executor (Kahn's algorithm)
 │   ├── langchain/           # LangGraph execution engine (optional)
 │   ├── models/              # LLM tier routing, provider backends, smart router
 │   ├── rag/                 # Full RAG pipeline
+│   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
 │   ├── contracts/           # Pydantic I/O models (additive-only)
 │   ├── prompts/             # 7 agent persona definitions (.md)
 │   ├── tools/builtin/       # 11 built-in tool modules
 │   ├── workflows/definitions/ # 6 YAML workflow definitions
 │   ├── integrations/        # OpenTelemetry integration
 │   └── middleware/          # Sanitization detectors
-├── tests/                   # 100+ test files, pytest-asyncio auto mode
+├── tests/                   # 150+ test files, pytest-asyncio auto mode
 └── ui/                      # React 19 frontend
 ```
 
@@ -400,7 +402,9 @@ Middleware is applied in the following order (outermost to innermost):
 | `server/routes/stream.py` | SSE streaming for live run events |
 | `server/routes/eval.py` | Evaluation dataset listing and dataset preview |
 | `server/websocket.py` | WebSocket handler with 500-event replay buffer |
-| `server/execution.py` | Background task coordination, event publication |
+| `server/execution.py` | Background task coordination, LangGraph streaming orchestration, event publication |
+| `server/_step_events.py` | Step-event builders (`step_start`/`step_end`) and per-step WebSocket broadcast logic |
+| `server/_stream_merge.py` | Pure stream-state merge helpers for LangGraph node updates |
 | `server/auth.py` | API key dependency, `secrets.compare_digest` |
 | `server/models.py` | All server-layer Pydantic request/response models |
 
@@ -437,6 +441,20 @@ All agents inherit from `BaseAgent`. It provides:
 | Reviewer | `ReviewerAgent` | Code review, quality analysis, finding generation |
 | Orchestrator | `OrchestratorAgent` | Workflow coordination, sub-task delegation |
 | Architect | `ArchitectAgent` | System design decisions, ADR generation |
+| TestAgent | `TestAgent` | Test scaffold generation (pytest/Jest) |
+
+#### Orchestrator Decomposition
+
+`OrchestratorAgent` was refactored from a single >800-line module into four focused modules under `agents/`:
+
+| Module | Contents |
+|--------|---------|
+| `orchestrator.py` | `OrchestratorAgent` class — lifecycle, delegation loop, result assembly |
+| `orchestrator_models.py` | Value objects: `SubTask`, `OrchestratorInput`, `OrchestratorOutput`, system prompts, capability constants |
+| `orchestrator_planning.py` | Pure planning helpers: `_intent_decomposition`, `_extract_file_tokens`, `_latest_user_text`, `_per_file_task_id` — no orchestrator state, fully unit-testable |
+| `orchestrator_factories.py` | Task-input factory functions mapping subtask descriptions to concrete `TaskInput` subclasses per agent type |
+
+`orchestrator_planning.py` backs the `AGENTIC_NO_LLM` deterministic decomposition path and carries no import-time dependency on the engine, keeping unit tests lightweight.
 
 #### Capability Mixins
 
@@ -617,6 +635,37 @@ Embedding (with hash-based cache)
 
 ---
 
+### Scoring Package
+
+**Source:** `agentic_v2/scoring/` (extracted from `server/` per ADR-032)
+
+The scoring and judge domain is a self-contained package with **no dependency on the FastAPI transport layer**. The `server/` package imports from `scoring/`; the reverse is never true. This eliminates the previous "god package" coupling where scoring logic was colocated with HTTP route handlers.
+
+#### Package Contents
+
+| Module | Description |
+|--------|-------------|
+| `eval_config.py` | Evaluation configuration loader with import-time project-root resolution (ADR-033) |
+| `evaluation_scoring.py` | Aggregation and grading: weighted blend of criterion scores, A/B/C/D/F grade bands |
+| `judge.py` | LLM-as-judge with anchored 1–5 Likert rubric and positional bias mitigation |
+| `multidimensional_scoring.py` | Multi-axis scoring: correctness, quality, efficiency, documentation |
+| `scoring_criteria.py` | Per-criterion 0–100 scoring from execution signals (success rate, text overlap, step failures, duration) |
+| `scoring_profiles.py` | Named scoring profiles (default, strict, lenient) with weight maps per criterion |
+| `step_scoring.py` | Per-step score computation from `StepResult` objects |
+| `dataset_matching.py` | Heuristic field-name mapping between dataset samples and workflow input schemas |
+
+#### Dependency Direction
+
+```
+agentic_v2.server  →  agentic_v2.scoring  ←  agentic_v2.evaluation
+                                ↑
+                    (no upward imports into server)
+```
+
+This allows the scoring logic to be used by the offline evaluation harness (`agentic-v2-eval`) and by the server's execution pipeline without circular dependency risk.
+
+---
+
 ### Core Protocols
 
 **Source:** `agentic_v2/core/protocols.py`
@@ -775,14 +824,15 @@ The `compare` command is useful for verifying that the native and LangGraph engi
 
 | Path | Contents |
 |------|---------|
-| `agentic_v2/server/` | FastAPI app factory, route modules, auth, execution coordinator, WebSocket handler, SSE streaming, server-layer models |
+| `agentic_v2/server/` | FastAPI app factory, route modules, auth, execution coordinator (`execution.py`), step-event builders (`_step_events.py`), stream-merge helpers (`_stream_merge.py`), WebSocket handler, SSE streaming, server-layer models |
+| `agentic_v2/scoring/` | Scoring/judge domain: `evaluation_scoring`, `judge`, `scoring_criteria`, `scoring_profiles`, `multidimensional_scoring`, `step_scoring`, `eval_config`, `dataset_matching` (no transport dependency; see ADR-032) |
 | `agentic_v2/contracts/` | Pydantic contracts: messages, schemas, sanitization, verification (additive-only policy) |
 | `agentic_v2/core/` | Protocols, memory implementations, context, errors, secret provider |
 | `agentic_v2/engine/` | Native DAG executor (Kahn's algorithm), step scheduler, result collector |
 | `agentic_v2/langchain/` | LangGraph execution engine, state graph builder, LangChain tool wrappers |
 | `agentic_v2/adapters/` | AdapterRegistry singleton, ExecutionEngine adapter base class |
 | `agentic_v2/models/` | SmartRouter, provider backends, tier config, circuit breaker, LiteLLM integration |
-| `agentic_v2/agents/` | BaseAgent, CoderAgent, ReviewerAgent, OrchestratorAgent, ArchitectAgent, capability mixins, implementations/ |
+| `agentic_v2/agents/` | BaseAgent, CoderAgent, ReviewerAgent, OrchestratorAgent (+orchestrator_models/planning/factories), ArchitectAgent, TestAgent, capability mixins, implementations/ |
 | `agentic_v2/tools/builtin/` | 11 built-in tool modules: file_read, file_write, file_delete, shell, web_search, http_request, git, code_exec, rag_search, memory_read, memory_write |
 | `agentic_v2/rag/` | Document loader, chunker, embedder, LanceDB vector store, BM25 index, hybrid retriever, RRF fusion, token-budget assembler, OTEL spans |
 | `agentic_v2/prompts/` | 7 agent persona Markdown files |
@@ -790,7 +840,7 @@ The `compare` command is useful for verifying that the native and LangGraph engi
 | `agentic_v2/integrations/` | OpenTelemetry integration, tracer provider setup, span helpers |
 | `agentic_v2/middleware/` | Sanitization detector implementations (secret, PII, prompt injection, Unicode, classifier) |
 | `agentic_v2/cli/` | Typer CLI entry points |
-| `tests/` | 100+ test files; pytest-asyncio auto mode; markers: integration, slow, security |
+| `tests/` | 150+ test files; pytest-asyncio auto mode; markers: integration, slow, security |
 | `ui/` | React 19 frontend; @xyflow/react DAG canvas; TanStack Query; Tailwind CSS; Vitest |
 
 ---
