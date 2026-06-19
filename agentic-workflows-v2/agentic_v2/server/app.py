@@ -47,9 +47,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Re-export shims — keep import contracts that tests depend on valid.
 # ---------------------------------------------------------------------------
-# test_rate_limit_startup_guard.py: from agentic_v2.server.app import _enforce_rate_limiting_available
 # test_smart_router_redis_lifespan.py: app_mod._install_smart_router / app_mod.lifespan
-# (all already imported above, so the names exist as module-level attributes)
+# (all already imported above, so the names exist as module-level attributes).
+# The rate-limit startup guard (_enforce_rate_limiting_available) and its
+# _SLOWAPI_AVAILABLE / _RATE_LIMIT_DISABLED flags live in .lifespan; that test
+# imports and patches them there directly, so no shim is needed here.
 
 
 def create_app() -> FastAPI:

@@ -13,6 +13,7 @@ export type ExecutionEvent =
   | WorkflowStartEvent
   | StepStartEvent
   | StepEndEvent
+  | TokenDeltaEvent
   | StepCompleteEvent
   | StepErrorEvent
   | WorkflowEndEvent
@@ -54,6 +55,21 @@ export interface StepEndEvent {
   timestamp: string;
   tokens_used?: number | null;
   type?: 'step_end';
+}
+/**
+ * Incremental text delta streamed from an LLM completion.
+ *
+ * Emitted per chunk while the EK adapter streams a step's response. Carries
+ * the same correlation fields as the sibling step events (``run_id``,
+ * ``step``, ``timestamp``) plus the ``delta`` text fragment. After the stream
+ * is exhausted the caller emits a ``step_complete`` with the assembled text.
+ */
+export interface TokenDeltaEvent {
+  delta: string;
+  run_id: string;
+  step: string;
+  timestamp: string;
+  type?: 'token_delta';
 }
 export interface StepCompleteEvent {
   duration_ms: number;
