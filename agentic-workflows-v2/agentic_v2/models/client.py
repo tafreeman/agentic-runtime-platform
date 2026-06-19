@@ -420,11 +420,18 @@ class LLMClientWrapper:
     ) -> tuple[str, str, int]:
         """ADR-023 Phase 5b EK provider path (``AGENTIC_EK_PROVIDER=1``).
 
-        Sequence: cache → sanitize → SmartRouterProvider.complete → sanitize
-        response → budget → cache store.  Retry/record-once is owned by the
-        router + EK; ``retry_with_jitter`` is NOT applied here. ``max_retries``
-        is accepted only so the ImportError fallback can forward the caller's
-        value to the legacy path — the EK path itself does not retry here.
+        Sequence: cache → sanitize → EK ``checked_complete`` (retry-wrapped
+        ``SmartRouterProvider.complete``) → sanitize response → budget → cache
+        store. Record-once is owned by the router; FAILOVER on a retryable HTTP
+        error (429 → RateLimitError, 5xx → ProviderError) is owned by EK's
+        ``DEFAULT_RETRY``, which re-invokes ``complete()`` so the router
+        re-selects a healthy model — restoring the multi-model failover the
+        legacy ``complete()`` had and matching the tool path's
+        ``_TrackedProvider(retry=None)`` seam (a ``PermanentError`` such as a
+        401/403 is NOT retried). ``retry_with_jitter`` is NOT applied (the EK
+        retry layer replaces it). ``max_retries`` is accepted only so the
+        ImportError fallback can forward the caller's value to the legacy path;
+        on the EK path retry breadth is governed by ``DEFAULT_RETRY``.
 
         Graceful fallback: if ExecutionKit is not importable, log a warning and
         fall back to the legacy path rather than raising — the EK provider is an
@@ -434,6 +441,9 @@ class LLMClientWrapper:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         try:
+            from executionkit.cost import CostTracker
+            from executionkit.patterns.base import checked_complete
+
             from .ek_provider import get_provider
         except ImportError:
             logger.warning(
@@ -465,10 +475,25 @@ class LLMClientWrapper:
         # 2. Pre-send sanitization (identical gate to the legacy path).
         effective_prompt = await self._sanitize_prompt(prompt, "llm_complete", tier)
 
-        # 3. Route through the EK provider shim (reliability lives here).
+        # 3. Route through the EK provider shim (reliability lives here),
+        # wrapped in EK's retry layer (checked_complete + DEFAULT_RETRY) so a
+        # retryable HTTP failure re-invokes complete() and the router re-selects
+        # a healthy model — restoring legacy complete() failover. budget=None:
+        # the runtime TokenBudget below owns the token-sum ceiling, so EK's
+        # call-budget stays unused here (mirrors the tool path's
+        # _TrackedProvider(budget=None, retry=None)). The throwaway CostTracker
+        # is required by the EK seam but its usage record is not consumed.
         messages = [{"role": "user", "content": effective_prompt}]
         provider = get_provider(self.router, self.backend, tier)
-        response = await provider.complete(messages, model=model, **kwargs)
+        response = await checked_complete(
+            provider,
+            messages,
+            tracker=CostTracker(),
+            budget=None,
+            retry=None,
+            model=model,
+            **kwargs,
+        )
 
         content = response.content
         total_tokens = response.total_tokens
