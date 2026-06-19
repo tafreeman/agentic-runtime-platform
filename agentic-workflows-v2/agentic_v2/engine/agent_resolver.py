@@ -31,9 +31,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
-import importlib.util
 import logging
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +55,7 @@ from .tool_execution import (
     MAX_TOOL_CALLS_PER_ROUND,
     MAX_TOOL_RESULT_CHARS,
     MAX_TOOL_ROUNDS,
+    _executionkit_available,
     build_tool_contracts,
     complete_chat_with_fallback,
     run_tool_calls,
@@ -407,20 +406,6 @@ async def _run_native_tool_loop(
             break
 
     return response, model_used, tokens_used, tool_call_count
-
-
-@lru_cache(maxsize=1)
-def _executionkit_available() -> bool:
-    """Whether the optional ``executionkit`` package is importable.
-
-    The EK tool loop (:mod:`.ek_step_delegation`) imports ``executionkit`` at
-    module load, so when the package is absent the EK path must defer to the
-    native loop rather than raising ``ImportError`` into the placeholder
-    fallback. ``executionkit`` is an optional install (see the coverage
-    ``omit`` list); ``AGENTIC_EK_PROVIDER`` being on does not guarantee it is
-    present (e.g. the no-extras CI test env), so the loop owner is gated on it.
-    """
-    return importlib.util.find_spec("executionkit") is not None
 
 
 def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None) -> bool:
