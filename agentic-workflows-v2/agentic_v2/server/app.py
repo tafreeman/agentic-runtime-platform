@@ -45,13 +45,17 @@ configure_logging(log_format=get_settings().log_format)
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Re-export shims — keep import contracts that tests depend on valid.
+# Re-export surface.
 # ---------------------------------------------------------------------------
-# test_smart_router_redis_lifespan.py: app_mod._install_smart_router / app_mod.lifespan
-# (all already imported above, so the names exist as module-level attributes).
-# The rate-limit startup guard (_enforce_rate_limiting_available) and its
-# _SLOWAPI_AVAILABLE / _RATE_LIMIT_DISABLED flags live in .lifespan; that test
-# imports and patches them there directly, so no shim is needed here.
+# Only `lifespan`, `_initialize_sanitization_state`, and `websocket` are
+# reachable through `agentic_v2.server.app` (imported above; `create_app` is
+# defined here). The lifecycle helpers the lifespan delegates to —
+# `_install_smart_router`, `_validate_selected_adapter`, `_probe_llm_providers`,
+# `build_audit_logger`, `_enforce_rate_limiting_available` — and the rate-limit
+# flags (`_SLOWAPI_AVAILABLE` / `_RATE_LIMIT_DISABLED`) live in `.lifespan`.
+# `lifespan()` calls them as bare names bound to the lifespan module's globals,
+# so tests must import and patch them on `agentic_v2.server.lifespan`, NOT here
+# — a re-export shim would not intercept those calls.
 
 
 def create_app() -> FastAPI:

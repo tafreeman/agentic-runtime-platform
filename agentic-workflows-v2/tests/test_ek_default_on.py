@@ -66,6 +66,29 @@ def test_ek_provider_env_can_still_force_legacy_off(monkeypatch):
         settings_mod.get_settings.cache_clear()
 
 
+def test_ek_provider_unrecognized_value_falls_back_to_default(monkeypatch):
+    """An unrecognized AGENTIC_EK_PROVIDER value coerces to the default, not a crash.
+
+    Regression: the before-validator referenced ``cls._EK_PROVIDER_DEFAULT``,
+    but that default is a MODULE-level constant, not a class attribute — so an
+    env typo (or an explicit ``None``) raised ``AttributeError`` while building
+    ``Settings()`` instead of logging a warning and falling back. The validator
+    must resolve the bare module global ``_EK_PROVIDER_DEFAULT``.
+    """
+    from agentic_v2.settings import _EK_PROVIDER_DEFAULT, Settings
+
+    monkeypatch.setenv("AGENTIC_EK_PROVIDER", "not-a-bool")
+    assert Settings().agentic_ek_provider is _EK_PROVIDER_DEFAULT
+
+    # Direct validator calls for the two fallback inputs (None + unknown str).
+    assert Settings._coerce_ek_provider_flag(None) is _EK_PROVIDER_DEFAULT
+    assert Settings._coerce_ek_provider_flag("garbage") is _EK_PROVIDER_DEFAULT
+
+    # A real false-literal still forces the legacy path off.
+    monkeypatch.setenv("AGENTIC_EK_PROVIDER", "0")
+    assert Settings().agentic_ek_provider is False
+
+
 def test_complete_stream_remains_reachable_on_backend_abc():
     """Streaming stays OUT of the kernel but reachable on the LLMBackend ABC."""
     assert hasattr(LLMBackend, "complete_stream")

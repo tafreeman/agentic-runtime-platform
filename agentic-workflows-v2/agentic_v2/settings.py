@@ -173,7 +173,7 @@ class Settings(BaseSettings):
         if isinstance(v, bool):
             return v
         if v is None:
-            return cls._EK_PROVIDER_DEFAULT
+            return _EK_PROVIDER_DEFAULT
         s = str(v).strip().lower()
         if s in _TRUE_LITERALS:
             return True
@@ -183,11 +183,11 @@ class Settings(BaseSettings):
             "AGENTIC_EK_PROVIDER=%r not recognised; treating as the default "
             "(%s). Accepted: %s (True) or %s (False).",
             v,
-            cls._EK_PROVIDER_DEFAULT,
+            _EK_PROVIDER_DEFAULT,
             sorted(_TRUE_LITERALS),
             sorted(_FALSE_LITERALS),
         )
-        return cls._EK_PROVIDER_DEFAULT
+        return _EK_PROVIDER_DEFAULT
 
     # --- Governance: human approval gates (P1 #12) ---
     agentic_require_tool_approval: bool = Field(

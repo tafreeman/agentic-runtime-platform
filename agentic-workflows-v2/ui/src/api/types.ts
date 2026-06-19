@@ -212,6 +212,7 @@ export type {
   WorkflowStartEvent,
   StepStartEvent,
   StepEndEvent,
+  TokenDeltaEvent,
   StepCompleteEvent,
   StepErrorEvent,
   WorkflowEndEvent,

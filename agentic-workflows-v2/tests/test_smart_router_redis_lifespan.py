@@ -92,7 +92,7 @@ async def test_install_router_uses_redis_store_when_url_set(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """_install_smart_router builds a Redis-backed router when REDIS_URL is set."""
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     fake_store = await _make_fake_store()
 
@@ -114,7 +114,7 @@ async def test_install_router_uses_redis_store_when_url_set(
     )
 
     settings = _make_settings("redis://localhost:6379/0")
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
 
     # The returned router is Redis-backed and connected.
     assert router._redis_store is fake_store
@@ -142,7 +142,7 @@ async def test_installed_redis_router_persists_via_cas(
     success on the installed router queues a background save that writes the
     model's stats into the (fake) Redis store.
     """
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     fake_store = await _make_fake_store(prefix="test:cas:")
 
@@ -159,7 +159,7 @@ async def test_installed_redis_router_persists_via_cas(
     )
 
     settings = _make_settings("redis://localhost:6379/0")
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
     router._available_models.add("ollama:phi4")
 
     # Record a success → fire-and-forget CAS save task is scheduled.
@@ -188,6 +188,7 @@ async def test_lifespan_shutdown_drains_router(
     whose aclose() is observable, and asserts it is called on shutdown.
     """
     from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     aclose_calls: list[str] = []
 
@@ -203,10 +204,10 @@ async def test_lifespan_shutdown_drains_router(
     async def fake_install(settings: object) -> SmartModelRouter:
         return sentinel
 
-    monkeypatch.setattr(app_mod, "_install_smart_router", fake_install)
-    monkeypatch.setattr(app_mod, "_validate_selected_adapter", lambda: None)
-    monkeypatch.setattr(app_mod, "_probe_llm_providers", lambda: None)
-    monkeypatch.setattr(app_mod, "_initialize_sanitization_state", lambda app: None)
+    monkeypatch.setattr(lifespan_mod, "_install_smart_router", fake_install)
+    monkeypatch.setattr(lifespan_mod, "_validate_selected_adapter", lambda: None)
+    monkeypatch.setattr(lifespan_mod, "_probe_llm_providers", lambda: None)
+    monkeypatch.setattr(lifespan_mod, "_initialize_sanitization_state", lambda app: None)
 
     async def _noop_init_store() -> None:
         return None
@@ -221,7 +222,7 @@ async def test_lifespan_shutdown_drains_router(
 
         return AuditLogger(NullAuditStore(), enabled=False)
 
-    monkeypatch.setattr(app_mod, "build_audit_logger", _fake_build_audit_logger)
+    monkeypatch.setattr(lifespan_mod, "build_audit_logger", _fake_build_audit_logger)
 
     app = app_mod.create_app()
 
@@ -244,7 +245,7 @@ async def test_aclose_drains_pending_redis_save_tasks(
     Mirrors the shutdown drain contract: an in-flight CAS save task is queued,
     then aclose() (called by the lifespan) awaits it to completion.
     """
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     fake_store = await _make_fake_store(prefix="test:drain:")
 
@@ -273,7 +274,7 @@ async def test_aclose_drains_pending_redis_save_tasks(
     )
 
     settings = _make_settings("redis://localhost:6379/0")
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
     router._available_models.add("ollama:phi4")
 
     router.record_success("ollama:phi4", latency_ms=10.0)
@@ -295,10 +296,10 @@ async def test_aclose_drains_pending_redis_save_tasks(
 @pytest.mark.asyncio
 async def test_unset_redis_url_uses_in_process_router() -> None:
     """No REDIS_URL → the in-process router is returned, never Redis-backed."""
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     settings = _make_settings(None)
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
 
     assert router is get_smart_router()
     assert router._redis_store is None
@@ -309,7 +310,7 @@ async def test_redis_connect_failure_falls_back_without_raising(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """create_with_redis raising must not crash startup — fall back in-process."""
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     async def boom_create_with_redis(*args: object, **kwargs: object) -> SmartModelRouter:
         raise ConnectionError("redis unreachable")
@@ -321,7 +322,7 @@ async def test_redis_connect_failure_falls_back_without_raising(
     settings = _make_settings("redis://localhost:6379/0")
 
     # Must not raise.
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
 
     # Fell back to the in-process router (no Redis store).
     assert router is get_smart_router()
@@ -339,7 +340,7 @@ async def test_redis_store_not_connected_falls_back(
     connection fails, returning a router with a disconnected store. The wiring
     must detect ``is_connected is False`` and keep the in-process router.
     """
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
 
     disconnected_store = await _make_fake_store(connected=False)
 
@@ -356,7 +357,7 @@ async def test_redis_store_not_connected_falls_back(
     )
 
     settings = _make_settings("redis://localhost:6379/0")
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
 
     # The installed router is the in-process one, NOT the disconnected-store one.
     assert router is get_smart_router()
@@ -373,7 +374,7 @@ async def test_settings_redis_url_from_env_drives_wiring(
     Confirms the optional REDIS_URL setting (pydantic-settings, default None)
     is the real switch — setting the env var routes through the Redis path.
     """
-    from agentic_v2.server import app as app_mod
+    from agentic_v2.server import lifespan as lifespan_mod
     from agentic_v2.settings import get_settings
 
     fake_store = await _make_fake_store(prefix="test:env:")
@@ -402,7 +403,7 @@ async def test_settings_redis_url_from_env_drives_wiring(
     settings = get_settings()
     assert settings.redis_url == "redis://localhost:6379/2"
 
-    router = await app_mod._install_smart_router(settings)
+    router = await lifespan_mod._install_smart_router(settings)
     assert router._redis_store is fake_store
     assert get_smart_router() is router
 

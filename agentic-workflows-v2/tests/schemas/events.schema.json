@@ -642,7 +642,7 @@
       "type": "object"
     },
     "TokenDeltaEvent": {
-      "description": "Incremental text delta streamed from an LLM completion.\n\nEmitted per chunk while the EK adapter streams a step's response. Carries\nthe same correlation fields as the sibling step events (``run_id``,\n``step``, ``timestamp``) plus the ``delta`` text fragment. After the stream\nis exhausted the caller emits a ``step_complete`` with the assembled text.",
+      "description": "Incremental text delta streamed from an LLM completion.\n\nReserved wire type for per-chunk streaming deltas. NO runtime producer\nemits this yet \u2014 ``SmartRouterProvider.stream`` / ``_complete_stream_via_ek``\ncurrently yield raw ``str`` chunks and the engine assembles the full text\nbefore emitting ``step_complete``. The shape is committed to the contract\n(and the generated TS union) ahead of wiring an emitter so a future\nstreaming-UI change is purely additive. Carries the same correlation fields\nas the sibling step events (``run_id``, ``step``, ``timestamp``) plus the\n``delta`` text fragment.",
       "properties": {
         "delta": {
           "title": "Delta",

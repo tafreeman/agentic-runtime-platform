@@ -46,10 +46,14 @@ class StepEndEvent(BaseModel):
 class TokenDeltaEvent(BaseModel):
     """Incremental text delta streamed from an LLM completion.
 
-    Emitted per chunk while the EK adapter streams a step's response. Carries
-    the same correlation fields as the sibling step events (``run_id``,
-    ``step``, ``timestamp``) plus the ``delta`` text fragment. After the stream
-    is exhausted the caller emits a ``step_complete`` with the assembled text.
+    Reserved wire type for per-chunk streaming deltas. NO runtime producer
+    emits this yet — ``SmartRouterProvider.stream`` / ``_complete_stream_via_ek``
+    currently yield raw ``str`` chunks and the engine assembles the full text
+    before emitting ``step_complete``. The shape is committed to the contract
+    (and the generated TS union) ahead of wiring an emitter so a future
+    streaming-UI change is purely additive. Carries the same correlation fields
+    as the sibling step events (``run_id``, ``step``, ``timestamp``) plus the
+    ``delta`` text fragment.
     """
 
     type: Literal["token_delta"] = "token_delta"

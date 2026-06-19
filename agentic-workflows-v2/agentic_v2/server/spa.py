@@ -42,9 +42,15 @@ def _mount_spa(app: FastAPI) -> None:
         if path:
             base = os.path.realpath(UI_DIST_DIR_RESOLVED)
             candidate = os.path.realpath(os.path.join(base, path))
-            if os.path.commonpath([base, candidate]) == base and os.path.isfile(
-                candidate
-            ):
+            # commonpath raises ValueError when the two paths live on different
+            # drives (Windows: candidate normalized onto another volume). Treat
+            # that as "outside the dist tree" and fall through to index.html
+            # rather than letting it surface as an HTTP 500.
+            try:
+                within = os.path.commonpath([base, candidate]) == base
+            except ValueError:
+                within = False
+            if within and os.path.isfile(candidate):
                 return FileResponse(candidate)
         return FileResponse(index_html)
 

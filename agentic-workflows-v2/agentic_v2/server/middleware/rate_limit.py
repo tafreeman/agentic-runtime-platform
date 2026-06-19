@@ -1,7 +1,7 @@
 """Global rate-limiting setup using slowapi.
 
-Provides the Limiter instance and handler used by :func:`_configure_rate_limiting`
-in :mod:`agentic_v2.server.app`.
+Provides the Limiter instance and handler used by :func:`configure_rate_limiting`
+in this module (:mod:`agentic_v2.server.middleware.rate_limit`).
 
 Environment variables:
     AGENTIC_RATE_LIMIT_DISABLED: Set to ``"1"`` to disable rate limiting (for tests).
@@ -12,12 +12,15 @@ Environment variables:
 
 from __future__ import annotations
 
+import logging
 import os
 
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from ..auth import is_public_path
+
+logger = logging.getLogger(__name__)
 
 # Set AGENTIC_RATE_LIMIT_DISABLED=1 to skip rate limiting entirely (tests).
 # Set AGENTIC_RATE_LIMIT_DEFAULT to override the per-IP limit string, e.g.
@@ -80,17 +83,12 @@ except ImportError:
         return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
 
 
-def configure_rate_limiting(app: "FastAPI") -> None:  # type: ignore[name-defined]  # noqa: F821
+def configure_rate_limiting(app: FastAPI) -> None:
     """Register slowapi global rate-limiting middleware when available.
 
     Logs an explanatory message in each of the three states: enabled,
     explicitly disabled via env var, or unavailable (slowapi not installed).
     """
-    import logging
-
-
-    logger = logging.getLogger(__name__)
-
     if _limiter is not None and _SLOWAPI_AVAILABLE:
         app.state.limiter = _limiter
         app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
