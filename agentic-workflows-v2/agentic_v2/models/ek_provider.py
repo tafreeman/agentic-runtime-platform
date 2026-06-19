@@ -45,7 +45,8 @@ this provider is a thin, reliability-preserving ``complete`` shim.
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+import weakref
+from collections.abc import AsyncGenerator, AsyncIterator, Sequence
 from typing import Any
 
 from executionkit.errors import ProviderError
@@ -70,7 +71,11 @@ except ImportError:  # pragma: no cover — optional dependency
     _httpx = None  # type: ignore[assignment]
     _HTTPX_AVAILABLE = False
 
-__all__ = ["SmartRouterProvider"]
+__all__ = [
+    "SmartRouterProvider",
+    "get_provider",
+    "reset_provider_cache",
+]
 
 # Maximum physical attempts inside a single EK ``complete()`` call. Mirrors the
 # fallback breadth of the legacy ``LLMClientWrapper.complete`` / router
@@ -253,6 +258,99 @@ class SmartRouterProvider:
             f"Tried: {tried}. Last error: {last_error}"
         )
 
+    # ------------------------------------------------------------------
+    # StreamingProvider protocol
+    # ------------------------------------------------------------------
+    def stream(
+        self,
+        messages: Sequence[dict[str, Any]],
+        *,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        tools: Sequence[dict[str, Any]] | None = None,
+        usage_sink: list[LLMResponse] | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        """Stream text deltas through the hardened router's selected backend.
+
+        Satisfies EK's structural ``StreamingProvider`` protocol: this is a
+        *normal* (non-``async``) method that RETURNS an async iterator — call
+        it without ``await`` and consume with ``async for``.
+
+        The model is resolved via ``router.get_model_for_tier(tier)`` (same as
+        the non-stream path) and each physical streamed call runs inside
+        ``router.execute_with_bulkhead(model)`` so the per-provider bulkhead is
+        honoured. Success / failure bookkeeping fires exactly once.
+
+        ``tools`` are accepted for protocol-shape parity but not forwarded:
+        the platform backend's ``complete_stream`` is a text-delta stream and
+        does not carry tool calls.
+        """
+        return self._stream_impl(
+            list(messages),
+            temperature=temperature,
+            max_tokens=max_tokens,
+            usage_sink=usage_sink,
+            **kwargs,
+        )
+
+    async def _stream_impl(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float | None,
+        max_tokens: int | None,
+        usage_sink: list[LLMResponse] | None,
+        **kwargs: Any,
+    ) -> AsyncGenerator[str, None]:
+        """Async-generator implementation backing :meth:`stream`."""
+        model = self.router.get_model_for_tier(self.tier)
+        if model is None:
+            raise ProviderError(
+                f"No model available for tier {self.tier.name} (streaming)."
+            )
+
+        prompt = self._messages_to_prompt(messages)
+        call_kwargs: dict[str, Any] = dict(kwargs)
+        if temperature is not None:
+            call_kwargs["temperature"] = temperature
+        if max_tokens is not None:
+            call_kwargs["max_tokens"] = max_tokens
+
+        start_mono = time.monotonic()
+        chunks: list[str] = []
+        try:
+            async with self.router.execute_with_bulkhead(model):
+                async for chunk in self.backend.complete_stream(
+                    model, prompt, **call_kwargs
+                ):
+                    chunks.append(chunk)
+                    yield chunk
+        except Exception as exc:
+            self.router._classify_and_record_error(model, exc)
+            raise
+
+        latency_ms = (time.monotonic() - start_mono) * 1000.0
+        self.router.record_success(model, latency_ms)
+        if usage_sink is not None:
+            usage_sink.append(
+                LLMResponse(content="".join(chunks), raw={"model": model})
+            )
+
+    @staticmethod
+    def _messages_to_prompt(messages: Sequence[dict[str, Any]]) -> str:
+        """Flatten chat messages into a single prompt for the text stream API.
+
+        The platform ``complete_stream`` backends take a single prompt string;
+        we join message contents in order so multi-turn context is preserved.
+        """
+        parts: list[str] = []
+        for message in messages:
+            content = message.get("content")
+            if isinstance(content, str) and content:
+                parts.append(content)
+        return "\n".join(parts)
+
     async def _call_backend(
         self,
         model: str,
@@ -309,6 +407,103 @@ class SmartRouterProvider:
             # take only (message, ...).
             return error_cls(message, retry_after=retry_after)  # type: ignore[call-arg]
         return error_cls(message)
+
+
+# ---------------------------------------------------------------------------
+# Provider cache (ADR-023 Phase 1): one SmartRouterProvider per
+# (router, backend, tier) identity. The provider holds no per-call mutable
+# state, so reusing one instance per tier avoids re-allocating a shim on every
+# LLMClientWrapper.complete() call while staying correct — a different router,
+# backend, or tier yields a distinct entry and a fresh build.
+#
+# Lifecycle assumption: the cache must NEVER return a provider built against a
+# router/backend that has since been garbage-collected. A naive ``id()`` key is
+# unsafe because CPython reuses ``id()`` values after an object is freed — a new
+# router could collide with a dead one's key and receive a stale provider bound
+# to the wrong (dead) router. We therefore:
+#   * key on the *stable* ``(id(router), id(backend), tier)`` triple, AND
+#   * store the cached provider in a ``WeakValueDictionary`` so a provider whose
+#     only references are the (also dead) router/backend can be evicted, AND
+#   * additionally hold weak references to the original router/backend and, on
+#     every cache hit, VALIDATE that the live objects are identical (``is``).
+#     A dead-ref or identity mismatch evicts the stale entry and rebuilds.
+# This makes id()-reuse impossible to observe: a recycled id never passes the
+# identity re-check, so a fresh provider is always built for a new object.
+# ---------------------------------------------------------------------------
+
+_ProviderCacheKey = tuple[int, int, ModelTier]
+
+
+class _ProviderCacheEntry:
+    """A cached provider plus weak refs to the router/backend it was built for.
+
+    Holds the provider strongly (the cache is the owner) and the router/backend
+    weakly so we can re-validate identity on hit without keeping them alive.
+    """
+
+    __slots__ = ("backend_ref", "provider", "router_ref")
+
+    def __init__(
+        self,
+        provider: SmartRouterProvider,
+        router: SmartModelRouter,
+        backend: LLMBackend,
+    ) -> None:
+        self.provider = provider
+        self.router_ref: weakref.ref[SmartModelRouter] = weakref.ref(router)
+        self.backend_ref: weakref.ref[LLMBackend] = weakref.ref(backend)
+
+    def matches(self, router: SmartModelRouter, backend: LLMBackend) -> bool:
+        """True iff both weak refs are alive AND identical to the given pair."""
+        return self.router_ref() is router and self.backend_ref() is backend
+
+
+_provider_cache: dict[_ProviderCacheKey, _ProviderCacheEntry] | None = None
+
+
+def _cache_key(
+    router: SmartModelRouter, backend: LLMBackend, tier: ModelTier
+) -> _ProviderCacheKey:
+    """Identity-keyed cache key — never coalesces across distinct router/backend.
+
+    Uses ``id()`` so two different router or backend objects never share a
+    cached provider (they own divergent circuit-breaker / model state). The
+    id()-reuse hazard is neutralised by the weakref identity re-check in
+    :func:`get_provider`.
+    """
+    return (id(router), id(backend), tier)
+
+
+def get_provider(
+    router: SmartModelRouter, backend: LLMBackend, tier: ModelTier
+) -> SmartRouterProvider:
+    """Return a cached :class:`SmartRouterProvider` for this router/backend/tier.
+
+    Builds and caches a fresh provider on first use for a given identity triple;
+    subsequent calls with the same *live* triple return the same instance. The
+    provider is immutable after construction (it stores only references to the
+    router and backend, which own all mutable state), so caching is safe.
+
+    A cache hit is validated against the live router/backend identity (see the
+    module-level lifecycle note): a dead weak ref or an identity mismatch (the
+    id() was recycled by a different object) evicts the stale entry and rebuilds.
+    """
+    global _provider_cache
+    if _provider_cache is None:
+        _provider_cache = {}
+    key = _cache_key(router, backend, tier)
+    entry = _provider_cache.get(key)
+    if entry is not None and entry.matches(router, backend):
+        return entry.provider
+    provider = SmartRouterProvider(router, backend, tier)
+    _provider_cache[key] = _ProviderCacheEntry(provider, router, backend)
+    return provider
+
+
+def reset_provider_cache() -> None:
+    """Clear the module-level provider cache (test isolation seam)."""
+    global _provider_cache
+    _provider_cache = None
 
 
 def _parse_retry_after(response: Any) -> float | None:

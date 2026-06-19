@@ -31,6 +31,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, AsyncIterator, Callable
 
 if TYPE_CHECKING:
+    from executionkit.provider import LLMResponse
+
     from ..middleware.response_sanitizer import ResponseSanitizer
     from ..middleware.sanitization import SanitizationMiddleware
 
@@ -213,7 +215,6 @@ class LLMClientWrapper:
             blocks, response_sanitizer=self.response_sanitizer
         )
 
-    @retry_with_jitter(max_retries=3)
     async def complete(
         self,
         prompt: str,
@@ -224,6 +225,15 @@ class LLMClientWrapper:
         **kwargs: Any,
     ) -> tuple[str, str, int]:
         """Send completion request with smart routing.
+
+        Dispatches between the flag-gated EK provider path and the legacy
+        text path. This wrapper is intentionally **undecorated**: the EK
+        branch must NOT be subject to :func:`retry_with_jitter`'s sleep-retry
+        (the router + EK already own retry/record-once semantics, and an EK
+        ``RateLimitError`` would otherwise trigger a multi-second backoff
+        sleep here and hang). The legacy branch delegates to
+        :meth:`_complete_legacy`, which carries the ``retry_with_jitter``
+        decorator so its retry behaviour is byte-for-byte unchanged.
 
         Args:
             prompt: Prompt to send
@@ -244,22 +254,55 @@ class LLMClientWrapper:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
 
         # ADR-023 Phase 5b: flag-gated EK provider hot path. DEFAULT ON since
-        # P7 (2026-05-31) — the EK path is now the default. Force the legacy
+        # P7 (ADR-023) — the EK path is now the default. Force the legacy
         # branch with AGENTIC_EK_PROVIDER=0; when off, the legacy branch below
-        # runs byte-for-byte. The EK path does NOT wrap in retry_with_jitter:
-        # the router + EK already own retry/record-once semantics.
+        # runs byte-for-byte. The EK path is dispatched HERE, in the
+        # undecorated wrapper, so it early-returns before the
+        # retry_with_jitter boundary that wraps _complete_legacy.
         from ..settings import get_settings
 
         if get_settings().agentic_ek_provider:
             return await self._complete_via_ek(
-                prompt, tier, use_cache=use_cache, model=model, **kwargs
+                prompt,
+                tier,
+                max_retries=max_retries,
+                use_cache=use_cache,
+                model=model,
+                **kwargs,
             )
 
-        # --- DEPRECATED: legacy text-only complete() path (ADR-023) ---
-        # Retained as the bake-in rollback path (reachable via
-        # AGENTIC_EK_PROVIDER=0). Slated for removal post-bake-in once the
-        # EK provider path has soaked in production. Do NOT extend this
-        # branch with new behaviour — changes belong in _complete_via_ek.
+        return await self._complete_legacy(
+            prompt,
+            tier,
+            max_retries=max_retries,
+            use_cache=use_cache,
+            model=model,
+            **kwargs,
+        )
+
+    @retry_with_jitter(max_retries=3)
+    async def _complete_legacy(
+        self,
+        prompt: str,
+        tier: ModelTier = ModelTier.TIER_2,
+        max_retries: int = 3,
+        use_cache: bool = True,
+        model: str | None = None,
+        **kwargs: Any,
+    ) -> tuple[str, str, int]:
+        """Legacy text-only ``complete`` path (ADR-023), retry-decorated.
+
+        Retained as the bake-in rollback path (reachable via
+        ``AGENTIC_EK_PROVIDER=0``). Slated for removal post-bake-in once the
+        EK provider path has soaked in production. Do NOT extend this branch
+        with new behaviour — changes belong in ``_complete_via_ek``.
+
+        Carries ``@retry_with_jitter`` so the legacy retry/backoff semantics
+        remain byte-for-byte identical to the pre-restructure ``complete``.
+        """
+        if self.backend is None:
+            raise RuntimeError(ERR_NO_LLM_BACKEND)
+
         # Check cache
         cache_key: str | None = None
         if use_cache and self.enable_cache:
@@ -370,6 +413,7 @@ class LLMClientWrapper:
         self,
         prompt: str,
         tier: ModelTier,
+        max_retries: int = 3,
         use_cache: bool = True,
         model: str | None = None,
         **kwargs: Any,
@@ -378,12 +422,32 @@ class LLMClientWrapper:
 
         Sequence: cache → sanitize → SmartRouterProvider.complete → sanitize
         response → budget → cache store.  Retry/record-once is owned by the
-        router + EK; ``retry_with_jitter`` is NOT applied here.
-        """
-        from .ek_provider import SmartRouterProvider
+        router + EK; ``retry_with_jitter`` is NOT applied here. ``max_retries``
+        is accepted only so the ImportError fallback can forward the caller's
+        value to the legacy path — the EK path itself does not retry here.
 
+        Graceful fallback: if ExecutionKit is not importable, log a warning and
+        fall back to the legacy path rather than raising — the EK provider is an
+        optional acceleration, not a hard dependency.
+        """
         if self.backend is None:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
+
+        try:
+            from .ek_provider import get_provider
+        except ImportError:
+            logger.warning(
+                "ExecutionKit not importable; falling back to the legacy "
+                "complete() path for this call (AGENTIC_EK_PROVIDER on)."
+            )
+            return await self._complete_legacy(
+                prompt,
+                tier,
+                max_retries=max_retries,
+                use_cache=use_cache,
+                model=model,
+                **kwargs,
+            )
 
         # 1. Cache lookup (short-circuit). Same key as the legacy path —
         # scoped by the model override so a forced model never reads a cache
@@ -403,7 +467,7 @@ class LLMClientWrapper:
 
         # 3. Route through the EK provider shim (reliability lives here).
         messages = [{"role": "user", "content": effective_prompt}]
-        provider = SmartRouterProvider(self.router, self.backend, tier)
+        provider = get_provider(self.router, self.backend, tier)
         response = await provider.complete(messages, model=model, **kwargs)
 
         content = response.content
@@ -464,6 +528,71 @@ class LLMClientWrapper:
         if self.backend is None:
             raise RuntimeError(ERR_NO_LLM_BACKEND)
 
+        # ADR-023: flag-gated EK streaming path. When on, delegate to the EK
+        # provider's StreamingProvider.stream(); on ImportError or when the
+        # flag is off, the legacy streaming path below runs unchanged.
+        from ..settings import get_settings
+
+        if get_settings().agentic_ek_provider:
+            try:
+                from .ek_provider import get_provider
+            except ImportError:
+                logger.warning(
+                    "ExecutionKit not importable; falling back to the legacy "
+                    "complete_stream() path (AGENTIC_EK_PROVIDER on)."
+                )
+                # Explicit fallback (mirrors _complete_via_ek): stream the legacy
+                # path and return, so a future edit cannot silently break the
+                # fall-through by reordering the branches below.
+                async for chunk in self._complete_stream_legacy(
+                    prompt, tier, **kwargs
+                ):
+                    yield chunk
+                return
+            else:
+                async for chunk in self._complete_stream_via_ek(
+                    prompt, tier, get_provider, **kwargs
+                ):
+                    yield chunk
+                return
+
+        async for chunk in self._complete_stream_legacy(prompt, tier, **kwargs):
+            yield chunk
+
+    async def _complete_stream_via_ek(
+        self,
+        prompt: str,
+        tier: ModelTier,
+        get_provider: Callable[..., Any],
+        **kwargs: Any,
+    ) -> AsyncIterator[str]:
+        """EK streaming path: sanitize → SmartRouterProvider.stream → budget.
+
+        Reliability (bulkhead, record-once) lives inside the provider's
+        ``stream``; here we own sanitization and budget accounting.
+        """
+        assert self.backend is not None  # guarded by complete_stream
+        effective_prompt = await self._sanitize_prompt(prompt, "llm_stream", tier)
+        messages = [{"role": "user", "content": effective_prompt}]
+        provider = get_provider(self.router, self.backend, tier)
+
+        usage_sink: list[LLMResponse] = []
+        async for chunk in provider.stream(messages, usage_sink=usage_sink, **kwargs):
+            yield chunk
+
+        if self.budget and usage_sink:
+            full_response = usage_sink[-1].content
+            model_used = self.router.get_model_for_tier(tier) or ""
+            tokens = self.backend.count_tokens(
+                effective_prompt + full_response, model_used
+            )
+            self.budget.consume(tokens)
+
+    async def _complete_stream_legacy(
+        self, prompt: str, tier: ModelTier, **kwargs: Any
+    ) -> AsyncIterator[str]:
+        """Legacy streaming path — byte-for-byte unchanged from pre-EK."""
+        assert self.backend is not None  # guarded by complete_stream
         model = self.router.get_model_for_tier(tier)
         if model is None:
             raise RuntimeError(f"No available model for tier {tier.name}")

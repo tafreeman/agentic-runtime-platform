@@ -34,6 +34,13 @@ logger = logging.getLogger(__name__)
 _TRUE_LITERALS = frozenset({"1", "true", "yes", "on"})
 _FALSE_LITERALS = frozenset({"", "0", "false", "no", "off"})
 
+# Default for ``agentic_ek_provider`` — the EK path is default-on (ADR-023).
+# Module-level (not a model class attribute) so the coercion validator's
+# unset/unrecognised fallback resolves to the SAME default the Field declares.
+# A class-level ``_NAME = True`` would be captured by pydantic as a
+# ``ModelPrivateAttr`` wrapper, not the bare bool.
+_EK_PROVIDER_DEFAULT = True
+
 
 def _coerce_env_flag(raw: Any, *, var_name: str) -> bool:
     """Coerce a bool-ish env var value without raising validation errors."""
@@ -129,21 +136,24 @@ class Settings(BaseSettings):
 
     # --- ADR-023 Phase 5b: EK provider hot-path switch ---
     agentic_ek_provider: bool = Field(
-        default=False,
+        default=True,
         description=(
             "ADR-023 Option A hot-path switch. When true, "
             "LLMClientWrapper.complete() routes through the ExecutionKit "
             "LLMProvider shim (SmartRouterProvider -> backend.complete_chat) "
-            "instead of the legacy text complete() path. DEFAULT OFF "
-            "(opt-in via AGENTIC_EK_PROVIDER=1). P7 briefly flipped this to "
-            "default-on (2026-05-31) but it was reverted the same day: "
-            "default-on exposed two blockers tracked in ADR-023-migration-notes "
-            "(an AGENTIC_EK_PROVIDER + get_settings lru_cache test-isolation "
-            "leak, and a hang in the EK-default path). The EK path is "
-            "fully functional opt-in; default-on resumes once both are fixed. "
-            "Accepted string values mirror AGENTIC_NO_LLM: "
-            "'1'/'true'/'yes'/'on' are True; ''/'0'/'false'/'no'/'off' are "
-            "False; unknown values are coerced to False with a logged warning."
+            "instead of the legacy text complete() path. DEFAULT ON (ADR-023): "
+            "the EK provider path is now the default. The two earlier blockers "
+            "that forced a 2026-05-31 revert are resolved — the "
+            "AGENTIC_EK_PROVIDER + get_settings lru_cache test-isolation leak "
+            "(now bracketed by the conftest provider-cache reset) and the hang "
+            "in the EK-default path (the EK branch is dispatched in an "
+            "undecorated complete() wrapper that early-returns before the "
+            "retry_with_jitter boundary, so an EK RateLimitError no longer "
+            "triggers a multi-second backoff sleep). Force the legacy rollback "
+            "path with AGENTIC_EK_PROVIDER=0. Accepted string values mirror "
+            "AGENTIC_NO_LLM: '1'/'true'/'yes'/'on' are True; "
+            "''/'0'/'false'/'no'/'off' are False; unknown values are coerced "
+            "to False with a logged warning."
         ),
     )
 
@@ -153,27 +163,31 @@ class Settings(BaseSettings):
         """Normalise ``AGENTIC_EK_PROVIDER`` env values.
 
         Mirrors :meth:`_coerce_no_llm_flag` so an unusual string never
-        surfaces as an opaque ``ValidationError`` at the first LLM call;
-        unrecognised values fall back to ``False`` (legacy path) with a
+        surfaces as an opaque ``ValidationError`` at the first LLM call. The
+        flag is default-ON (ADR-023), so an unset/None value resolves to the
+        default (``True``), NOT ``False`` — only an explicit false-literal
+        ('0'/'false'/'no'/'off'/'') forces the legacy path off. An
+        unrecognised string also falls back to the default (``True``) with a
         logged warning so operators find out via the log, not a crash.
         """
         if isinstance(v, bool):
             return v
         if v is None:
-            return False
+            return cls._EK_PROVIDER_DEFAULT
         s = str(v).strip().lower()
         if s in _TRUE_LITERALS:
             return True
         if s in _FALSE_LITERALS:
             return False
         logger.warning(
-            "AGENTIC_EK_PROVIDER=%r not recognised; treating as False "
-            "(legacy path). Accepted: %s (True) or %s (False).",
+            "AGENTIC_EK_PROVIDER=%r not recognised; treating as the default "
+            "(%s). Accepted: %s (True) or %s (False).",
             v,
+            cls._EK_PROVIDER_DEFAULT,
             sorted(_TRUE_LITERALS),
             sorted(_FALSE_LITERALS),
         )
-        return False
+        return cls._EK_PROVIDER_DEFAULT
 
     # --- Governance: human approval gates (P1 #12) ---
     agentic_require_tool_approval: bool = Field(

@@ -43,6 +43,22 @@ class StepEndEvent(BaseModel):
     timestamp: str
 
 
+class TokenDeltaEvent(BaseModel):
+    """Incremental text delta streamed from an LLM completion.
+
+    Emitted per chunk while the EK adapter streams a step's response. Carries
+    the same correlation fields as the sibling step events (``run_id``,
+    ``step``, ``timestamp``) plus the ``delta`` text fragment. After the stream
+    is exhausted the caller emits a ``step_complete`` with the assembled text.
+    """
+
+    type: Literal["token_delta"] = "token_delta"
+    run_id: str
+    step: str
+    delta: str
+    timestamp: str
+
+
 class StepCompleteEvent(BaseModel):
     type: Literal["step_complete"] = "step_complete"
     run_id: str
@@ -142,6 +158,7 @@ ExecutionEvent = Annotated[
         WorkflowStartEvent,
         StepStartEvent,
         StepEndEvent,
+        TokenDeltaEvent,
         StepCompleteEvent,
         StepErrorEvent,
         WorkflowEndEvent,

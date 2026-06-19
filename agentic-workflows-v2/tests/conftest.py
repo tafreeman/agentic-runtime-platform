@@ -67,10 +67,27 @@ def _reset_settings_cache():
 
     Ordered after ``_snapshot_os_environ`` so its setup clear runs once the env
     is at the per-test baseline and the next test always re-reads fresh settings.
+
+    Also clears the EK provider cache (``ek_provider.reset_provider_cache``) on
+    both setup and teardown so a SmartRouterProvider built against one test's
+    router/backend can never be reused by a later test (ADR-023 Phase 1 test
+    isolation). The import is lazy and best-effort, mirroring the other reset
+    fixtures, so the suite stays usable even when executionkit is absent.
     """
     _settings_module.get_settings.cache_clear()
+    _reset_ek_provider_cache()
     yield
     _settings_module.get_settings.cache_clear()
+    _reset_ek_provider_cache()
+
+
+def _reset_ek_provider_cache() -> None:
+    """Best-effort clear of the EK provider cache (import-guarded)."""
+    try:
+        from agentic_v2.models.ek_provider import reset_provider_cache
+    except ImportError:
+        return
+    reset_provider_cache()
 
 
 @pytest.fixture(autouse=True)
