@@ -641,6 +641,41 @@
       "title": "StepStartEvent",
       "type": "object"
     },
+    "TokenDeltaEvent": {
+      "description": "Incremental text delta streamed from an LLM completion.\n\nEmitted per chunk while the EK adapter streams a step's response. Carries\nthe same correlation fields as the sibling step events (``run_id``,\n``step``, ``timestamp``) plus the ``delta`` text fragment. After the stream\nis exhausted the caller emits a ``step_complete`` with the assembled text.",
+      "properties": {
+        "delta": {
+          "title": "Delta",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "step": {
+          "title": "Step",
+          "type": "string"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        },
+        "type": {
+          "const": "token_delta",
+          "default": "token_delta",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "step",
+        "delta",
+        "timestamp"
+      ],
+      "title": "TokenDeltaEvent",
+      "type": "object"
+    },
     "WorkflowEndEvent": {
       "properties": {
         "run_id": {
@@ -711,6 +746,7 @@
       "step_end": "#/$defs/StepEndEvent",
       "step_error": "#/$defs/StepErrorEvent",
       "step_start": "#/$defs/StepStartEvent",
+      "token_delta": "#/$defs/TokenDeltaEvent",
       "workflow_end": "#/$defs/WorkflowEndEvent",
       "workflow_start": "#/$defs/WorkflowStartEvent"
     },
@@ -725,6 +761,9 @@
     },
     {
       "$ref": "#/$defs/StepEndEvent"
+    },
+    {
+      "$ref": "#/$defs/TokenDeltaEvent"
     },
     {
       "$ref": "#/$defs/StepCompleteEvent"
