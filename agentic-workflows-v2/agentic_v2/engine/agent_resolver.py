@@ -55,6 +55,7 @@ from .tool_execution import (
     MAX_TOOL_CALLS_PER_ROUND,
     MAX_TOOL_RESULT_CHARS,
     MAX_TOOL_ROUNDS,
+    _executionkit_available,
     build_tool_contracts,
     complete_chat_with_fallback,
     run_tool_calls,
@@ -411,8 +412,10 @@ def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None)
     """ADR-023 Phase 6b gate: is the EK react_loop the owner of this step?
 
     DEFAULT OFF — only ``True`` when ``AGENTIC_EK_PROVIDER`` is set AND the step
-    did not opt out with ``tool_path: native`` AND the step has tools. When this
-    is ``False`` the legacy ``run_tool_calls`` loop runs byte-for-byte.
+    did not opt out with ``tool_path: native`` AND the step has tools AND the
+    optional ``executionkit`` package is installed. When this is ``False`` the
+    legacy ``run_tool_calls`` loop runs byte-for-byte (so an EK-on deployment
+    without ``executionkit`` degrades gracefully to native, not to placeholder).
     Single-owner: exactly one loop drives this step (never both mid-thread).
     """
     from ..settings import get_settings
@@ -421,6 +424,7 @@ def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None)
         bool(bound_tools)
         and tool_path != "native"
         and get_settings().agentic_ek_provider
+        and _executionkit_available()
     )
 
 

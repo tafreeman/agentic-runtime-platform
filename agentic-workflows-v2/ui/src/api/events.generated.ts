@@ -13,6 +13,7 @@ export type ExecutionEvent =
   | WorkflowStartEvent
   | StepStartEvent
   | StepEndEvent
+  | TokenDeltaEvent
   | StepCompleteEvent
   | StepErrorEvent
   | WorkflowEndEvent
@@ -54,6 +55,25 @@ export interface StepEndEvent {
   timestamp: string;
   tokens_used?: number | null;
   type?: 'step_end';
+}
+/**
+ * Incremental text delta streamed from an LLM completion.
+ *
+ * Reserved wire type for per-chunk streaming deltas. NO runtime producer
+ * emits this yet — ``SmartRouterProvider.stream`` / ``_complete_stream_via_ek``
+ * currently yield raw ``str`` chunks and the engine assembles the full text
+ * before emitting ``step_complete``. The shape is committed to the contract
+ * (and the generated TS union) ahead of wiring an emitter so a future
+ * streaming-UI change is purely additive. Carries the same correlation fields
+ * as the sibling step events (``run_id``, ``step``, ``timestamp``) plus the
+ * ``delta`` text fragment.
+ */
+export interface TokenDeltaEvent {
+  delta: string;
+  run_id: string;
+  step: string;
+  timestamp: string;
+  type?: 'token_delta';
 }
 export interface StepCompleteEvent {
   duration_ms: number;

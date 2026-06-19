@@ -372,6 +372,14 @@ class _NoopTool:
 async def test_native_loop_forces_first_turn_then_auto(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # This asserts the LEGACY native-loop forced-first-turn behaviour. The EK
+    # completion path (now default-on) deliberately refuses a forced tool_choice
+    # (see TestEKProviderForcedToolChoice below), so force the legacy path here.
+    monkeypatch.setenv("AGENTIC_EK_PROVIDER", "0")
+    from agentic_v2.settings import get_settings
+
+    get_settings.cache_clear()
+
     # Skip the approval gate for the in-loop tool execution.
     async def _allow(**_kwargs: Any) -> Any:
         class _Decision:

@@ -22,11 +22,29 @@ Provides the full machinery for multi-turn tool-use inside LLM step functions:
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import logging
+from functools import lru_cache
 from typing import Any
 
 from ..models.router import ModelTier
+
+
+@lru_cache(maxsize=1)
+def _executionkit_available() -> bool:
+    """Whether the optional ``executionkit`` package is importable.
+
+    Both EK seams (this module's ``complete_chat_with_fallback`` and the engine's
+    ``_run_ek_tool_loop``) import ``executionkit`` only inside the EK branch, so
+    when the package is absent the branch must be skipped in favour of the native
+    path rather than raising ``ImportError`` into the placeholder fallback.
+    ``executionkit`` is an OPTIONAL install (coverage ``omit`` list; not present
+    in the no-extras CI test env), so ``AGENTIC_EK_PROVIDER`` being on does not
+    guarantee it is importable. An EK-on deployment without it degrades to the
+    fully functional native loop instead of emitting placeholder output.
+    """
+    return importlib.util.find_spec("executionkit") is not None
 
 logger = logging.getLogger(__name__)
 
@@ -476,9 +494,11 @@ async def complete_chat_with_fallback(
         # The EK provider stack does not thread a tool_choice; a genuinely
         # FORCED choice cannot be honored on this opt-in path. Silently
         # downgrading it to model-decided would let a step that REQUIRES a tool
-        # quietly skip it, so raise instead (before importing the optional EK
-        # dependency). A plain 'auto'/None (and 'none', which forces *no* tool)
-        # passes through unchanged.
+        # quietly skip it, so raise instead. This is a FLAG-level policy: with
+        # AGENTIC_EK_PROVIDER on, a forced choice is rejected regardless of
+        # whether the optional ``executionkit`` package is installed, so the
+        # failure mode does not silently depend on the deploy's extras. A plain
+        # 'auto'/None (and 'none', which forces *no* tool) passes through.
         if tools and _is_forced_tool_choice(tool_choice):
             raise NotImplementedError(
                 f"tool_choice={tool_choice!r} forces tool selection, but the EK "
@@ -487,6 +507,11 @@ async def complete_chat_with_fallback(
                 "steps that force a tool, or use the default completion path."
             )
 
+    if get_settings().agentic_ek_provider and _executionkit_available():
+        # Only take the EK execution path when the optional package is actually
+        # importable; otherwise fall through to the native loop below (fully
+        # functional without executionkit) rather than raising ImportError into
+        # the caller's placeholder fallback.
         from executionkit.cost import CostTracker
 
         from .ek_step_delegation import complete_turn_via_ek

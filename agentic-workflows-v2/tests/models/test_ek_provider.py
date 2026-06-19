@@ -288,6 +288,51 @@ async def test_http_error_records_failure_exactly_once_and_does_not_loop() -> No
     assert stats.failure_count == 1  # recorded exactly once
 
 
+async def test_checked_complete_retry_seam_fails_over_on_http_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The EK retry seam (checked_complete + DEFAULT_RETRY) FAILS OVER a 429.
+
+    Regression for the public ``LLMClientWrapper.complete()`` path: the bare
+    ``SmartRouterProvider`` deliberately raises a typed error on a 429/5xx and
+    does NOT loop (see the test above), expecting the caller's EK retry layer to
+    own failover. ``client._complete_via_ek`` now wraps the call in
+    ``checked_complete`` (``DEFAULT_RETRY``), so a 429 on model A re-invokes
+    ``complete()`` and the router — having cooled A on the rate-limit — selects
+    model B. This restores the multi-model failover the legacy ``complete()``
+    had and matches the tool path's ``_TrackedProvider`` seam.
+    """
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    from executionkit.cost import CostTracker
+    from executionkit.patterns.base import checked_complete
+
+    # Skip DEFAULT_RETRY's exponential backoff sleeps so the test is fast.
+    monkeypatch.setattr(asyncio, "sleep", AsyncMock())
+
+    chain = ("openai:gpt-4o-mini", "anthropic:claude-3-5-haiku-20241022")
+    router = _router_with(chain, _TIER)
+    backend = _FakeBackend(
+        [
+            _http_status_error(429, retry_after="30"),  # model A: rate-limited
+            {"content": "served-by-B", "tool_calls": None},  # model B: succeeds
+        ]
+    )
+    provider = SmartRouterProvider(router, backend, _TIER)
+
+    response = await checked_complete(
+        provider, _MESSAGES, tracker=CostTracker(), budget=None, retry=None
+    )
+
+    # Failed over to the healthy model rather than surfacing the 429.
+    assert response.content == "served-by-B"
+    assert len(backend.calls) == 2  # A rate-limited, then B tried
+    assert backend.calls[0]["model"] == "openai:gpt-4o-mini"
+    assert backend.calls[1]["model"] == "anthropic:claude-3-5-haiku-20241022"
+    assert router.model_stats["openai:gpt-4o-mini"].failure_count == 1
+
+
 # ---------------------------------------------------------------------------
 # Reliability: non-HTTP failures DO fall through to the next candidate
 # ---------------------------------------------------------------------------
