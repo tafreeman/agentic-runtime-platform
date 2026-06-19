@@ -89,6 +89,40 @@ def test_ek_provider_unrecognized_value_falls_back_to_default(monkeypatch):
     assert Settings().agentic_ek_provider is False
 
 
+def test_ek_tool_loop_defers_to_native_when_executionkit_absent(monkeypatch):
+    """EK-on without the optional executionkit package degrades to native.
+
+    Regression: ek_step_delegation imports executionkit at module load, so when
+    the package is absent (e.g. the no-extras CI test env) the EK tool loop
+    raised ImportError into the placeholder fallback — making engine steps emit
+    'No module named executionkit' placeholder output and breaking deterministic
+    workflow tests. The gate must fall back to the native loop instead.
+    """
+    import importlib.util as iu
+
+    from agentic_v2.engine import agent_resolver as ar
+    from agentic_v2.settings import get_settings
+
+    monkeypatch.setenv("AGENTIC_EK_PROVIDER", "1")
+    get_settings.cache_clear()
+    orig_find_spec = iu.find_spec
+    monkeypatch.setattr(
+        iu,
+        "find_spec",
+        lambda name, *a, **k: None
+        if name == "executionkit"
+        else orig_find_spec(name, *a, **k),
+    )
+    ar._executionkit_available.cache_clear()
+    try:
+        assert ar._executionkit_available() is False
+        # Flag on + tools present, but executionkit absent -> native owns the loop.
+        assert ar._should_use_ek_tool_loop({"some_tool": object()}, None) is False
+    finally:
+        ar._executionkit_available.cache_clear()
+        get_settings.cache_clear()
+
+
 def test_complete_stream_remains_reachable_on_backend_abc():
     """Streaming stays OUT of the kernel but reachable on the LLMBackend ABC."""
     assert hasattr(LLMBackend, "complete_stream")

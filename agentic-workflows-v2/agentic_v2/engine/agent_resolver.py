@@ -31,7 +31,9 @@ from __future__ import annotations
 
 import ast
 import contextlib
+import importlib.util
 import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -407,12 +409,28 @@ async def _run_native_tool_loop(
     return response, model_used, tokens_used, tool_call_count
 
 
+@lru_cache(maxsize=1)
+def _executionkit_available() -> bool:
+    """Whether the optional ``executionkit`` package is importable.
+
+    The EK tool loop (:mod:`.ek_step_delegation`) imports ``executionkit`` at
+    module load, so when the package is absent the EK path must defer to the
+    native loop rather than raising ``ImportError`` into the placeholder
+    fallback. ``executionkit`` is an optional install (see the coverage
+    ``omit`` list); ``AGENTIC_EK_PROVIDER`` being on does not guarantee it is
+    present (e.g. the no-extras CI test env), so the loop owner is gated on it.
+    """
+    return importlib.util.find_spec("executionkit") is not None
+
+
 def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None) -> bool:
     """ADR-023 Phase 6b gate: is the EK react_loop the owner of this step?
 
     DEFAULT OFF — only ``True`` when ``AGENTIC_EK_PROVIDER`` is set AND the step
-    did not opt out with ``tool_path: native`` AND the step has tools. When this
-    is ``False`` the legacy ``run_tool_calls`` loop runs byte-for-byte.
+    did not opt out with ``tool_path: native`` AND the step has tools AND the
+    optional ``executionkit`` package is installed. When this is ``False`` the
+    legacy ``run_tool_calls`` loop runs byte-for-byte (so an EK-on deployment
+    without ``executionkit`` degrades gracefully to native, not to placeholder).
     Single-owner: exactly one loop drives this step (never both mid-thread).
     """
     from ..settings import get_settings
@@ -421,6 +439,7 @@ def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None)
         bool(bound_tools)
         and tool_path != "native"
         and get_settings().agentic_ek_provider
+        and _executionkit_available()
     )
 
 
