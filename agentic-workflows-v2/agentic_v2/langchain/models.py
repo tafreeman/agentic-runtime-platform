@@ -49,6 +49,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..models.router import FallbackChain, ModelRouter, ModelTier
 
+from ..models.ollama_discovery import discover_ollama_models
 from .model_builders import (
     _resolve_notebooklm_model_name,
     build_anthropic_model,
@@ -227,6 +228,70 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
         logger.info("  Tier %d -> %s", tier, model_id)
 
     return summary
+
+
+def enumerate_known_models() -> list[dict[str, Any]]:
+    """Return every tier-chain model plus live-discovered Ollama models.
+
+    Each entry carries the model id, its provider prefix, the lowest tier the
+    model appears in (``0`` for live-discovered models not in any chain), and
+    whether that provider currently has credentials configured. Unlike
+    :func:`probe_and_update_tier_defaults` (which returns one resolved default
+    per tier), this surfaces the *full* catalog plus whatever the local Ollama
+    server and (when ``OLLAMA_API_KEY`` is set) the hosted cloud expose right
+    now, so the console shows everything currently runnable — not just the
+    static fallback chains.
+    """
+    lowest_tier: dict[str, int] = {}
+    for tier, chain in _TIER_FALLBACK_CHAINS.items():
+        for model_id in chain:
+            existing = lowest_tier.get(model_id)
+            if existing is None or tier < existing:
+                lowest_tier[model_id] = tier
+
+    models: list[dict[str, Any]] = [
+        {
+            "id": model_id,
+            "provider": provider_prefix(model_id),
+            "tier": tier,
+            "available": is_provider_available(provider_prefix(model_id)),
+        }
+        for model_id, tier in lowest_tier.items()
+    ]
+
+    # Merge in models the live Ollama probe reports as available now (local
+    # server + cloud when keyed), enriching with cloud / capability / running
+    # metadata from the raw /api/tags + /api/ps payloads. Catalog entries that
+    # are present get marked available and enriched; models absent from every
+    # tier chain are appended at tier 0 so the console reflects everything
+    # currently runnable — not just the static fallback chains.
+    discovered = discover_ollama_models()
+    by_id = {info.id: info for info in discovered}
+    catalog_ids = {m["id"] for m in models}
+    for model in models:
+        info = by_id.get(model["id"])
+        if info is not None:
+            model["available"] = True
+            model["cloud"] = info.cloud
+            model["capabilities"] = list(info.capabilities)
+            model["running"] = info.running
+    for info in discovered:
+        if info.id in catalog_ids:
+            continue
+        models.append(
+            {
+                "id": info.id,
+                "provider": provider_prefix(info.id),
+                "tier": 0,
+                "available": True,
+                "cloud": info.cloud,
+                "capabilities": list(info.capabilities),
+                "running": info.running,
+            }
+        )
+
+    models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
+    return models
 
 
 def _make_env_health_checker(
@@ -426,9 +491,7 @@ def get_model_for_tier(tier: int, model_override: str | None = None) -> Any:
             continue
 
     raise ValueError(
-        f"No available model for tier {tier}. "
-        f"Checked: {chain}. "
-        f"Last error: {last_err}"
+        f"No available model for tier {tier}. Checked: {chain}. Last error: {last_err}"
     )
 
 
@@ -490,6 +553,8 @@ __all__ = [
     # probe helpers
     "probe_available_providers",
     "probe_and_update_tier_defaults",
+    "enumerate_known_models",
+    "discover_ollama_models",
     # re-exported from model_builders
     "build_github_model",
     "build_openai_model",

@@ -52,6 +52,7 @@ from tools.llm.probe_config import (
     ENV_LOCAL_OPENAI_BASE_URL,
     ENV_NVIDIA_NIM_API_KEY,
     ENV_NVIDIA_NIM_HOST,
+    ENV_OLLAMA_API_KEY,
     ENV_OLLAMA_HOST,
     ENV_OPENAI_API_BASE,
     ENV_OPENAI_API_KEY,
@@ -64,6 +65,7 @@ from tools.llm.probe_config import (
     LOCAL_SERVER_COMMON_PORTS,
     NVIDIA_NIM_TOKEN_SLOT_RANGE,
     OLLAMA_API_TAGS_ENDPOINT,
+    OLLAMA_CLOUD_HOST,
     OLLAMA_DEFAULT_HOST,
     PATH_SEPARATOR,
     PLATFORM_WINDOWS,
@@ -215,6 +217,65 @@ def _probe_ollama() -> dict[str, Any]:
     }
 
 
+def _probe_ollama_cloud() -> dict[str, Any]:
+    """Probe Ollama's hosted cloud catalog (ollama.com) for available models.
+
+    Cloud models are never returned by the local ``/api/tags`` probe — they
+    are served by the hosted API and require an Ollama account API key
+    (``OLLAMA_API_KEY``, created at ollama.com/settings/keys). An Ollama Pro
+    plan raises cloud rate limits but does not expose the catalog without a
+    key.
+
+    Key-gated: with no key configured this is a no-op that performs no network
+    request, so local/offline scans stay fast and private. When a key is
+    present, the hosted ``/api/tags`` endpoint is queried with a bearer token
+    and the returned models are prefixed (``ollama:``) like the local probe.
+    """
+    api_key = os.getenv(ENV_OLLAMA_API_KEY)
+    if not api_key:
+        return {
+            "configured": False,
+            "available": [],
+            "count": 0,
+            "host": OLLAMA_CLOUD_HOST,
+            "error": None,
+            "notes": (
+                "Set OLLAMA_API_KEY (create one at ollama.com/settings/keys) "
+                "to discover Ollama cloud models."
+            ),
+        }
+
+    cloud_models: list[str] = []
+    cloud_error = None
+
+    try:
+        req = urllib.request.Request(
+            f"{OLLAMA_CLOUD_HOST}{OLLAMA_API_TAGS_ENDPOINT}",
+            headers={
+                "Accept": CONTENT_TYPE_JSON,
+                "Authorization": f"Bearer {api_key}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=TIMEOUT_CLOUD_HTTP) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            cloud_models = [
+                f"{PREFIX_OLLAMA}{m.get('name', '')}"
+                for m in data.get("models", [])
+                if m.get("name")
+            ]
+    except Exception as exc:
+        cloud_error = f"Ollama cloud not reachable at {OLLAMA_CLOUD_HOST}: {exc}"
+
+    return {
+        "configured": True,
+        "available": cloud_models,
+        "count": len(cloud_models),
+        "host": OLLAMA_CLOUD_HOST,
+        "error": cloud_error,
+        "notes": "Hosted cloud models via ollama.com (requires OLLAMA_API_KEY).",
+    }
+
+
 def _probe_azure_foundry() -> dict[str, Any]:
     """Probe Azure Foundry configuration."""
     foundry_configured = bool(os.getenv(ENV_AZURE_FOUNDRY_API_KEY))
@@ -345,7 +406,9 @@ def _probe_anthropic() -> dict[str, Any]:
     anthropic_models: list[str] = []
     anthropic_error = None
     # Respect ANTHROPIC_URI if set (custom endpoint override)
-    anthropic_base = (os.getenv(ENV_ANTHROPIC_BASE_URL) or "https://api.anthropic.com").rstrip("/")
+    anthropic_base = (
+        os.getenv(ENV_ANTHROPIC_BASE_URL) or "https://api.anthropic.com"
+    ).rstrip("/")
 
     if anthropic_configured:
         try:
@@ -488,9 +551,7 @@ def _clean_aitk_model_name(dir_name: str) -> str:
     return simple_name
 
 
-def _load_aitk_catalog(
-    aitk_modelinfo: Path, already_available: list[str]
-) -> list[str]:
+def _load_aitk_catalog(aitk_modelinfo: Path, already_available: list[str]) -> list[str]:
     """Load chat-completion model aliases from the AI Toolkit modelinfo file."""
     aitk_catalog: list[str] = []
     if not aitk_modelinfo.exists():
@@ -627,7 +688,9 @@ def _probe_nvidia() -> dict[str, Any]:
 def _probe_lmstudio() -> dict[str, Any]:
     """Probe LM Studio OpenAI-compatible local server."""
     # Accept both LMSTUDIO_HOST and LM_STUDIO_HOST; strip trailing path segments
-    raw_host = os.getenv(ENV_LMSTUDIO_HOST) or os.getenv(ENV_LM_STUDIO_HOST, LMSTUDIO_DEFAULT_HOST)
+    raw_host = os.getenv(ENV_LMSTUDIO_HOST) or os.getenv(
+        ENV_LM_STUDIO_HOST, LMSTUDIO_DEFAULT_HOST
+    )
     # Strip /v1/... or /chat/completions suffixes so we get a clean base URL
     for tail in ["/v1/chat/completions", "/chat/completions", "/v1"]:
         if raw_host.rstrip("/").endswith(tail.rstrip("/")):

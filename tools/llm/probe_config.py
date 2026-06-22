@@ -167,18 +167,24 @@ OPENAI_CANONICAL_BASE_URL = "https://api.openai.com/v1"
 # Cloud API hostnames to EXCLUDE from local/generic OpenAI-compatible probing.
 # These have their own dedicated probe functions; picking them up in
 # _probe_local_openai_compatible causes misidentification and double-counting.
-CLOUD_API_HOSTS_SKIPLIST: frozenset[str] = frozenset({
-    "api.openai.com",
-    "integrate.api.nvidia.com",
-    "api.anthropic.com",
-    "models.inference.ai.azure.com",
-    "github.models.ai",
-    "generativelanguage.googleapis.com",
-    "openai.azure.com",
-})
+CLOUD_API_HOSTS_SKIPLIST: frozenset[str] = frozenset(
+    {
+        "api.openai.com",
+        "integrate.api.nvidia.com",
+        "api.anthropic.com",
+        "models.inference.ai.azure.com",
+        "github.models.ai",
+        "generativelanguage.googleapis.com",
+        "openai.azure.com",
+    }
+)
 
 # URLs and API endpoints
 OLLAMA_DEFAULT_HOST = "http://localhost:11434"
+# Hosted Ollama cloud catalog (ollama.com). Cloud models are NEVER returned by
+# the local /api/tags probe; they are listed by the hosted API and require an
+# account API key (ENV_OLLAMA_API_KEY). Reuses OLLAMA_API_TAGS_ENDPOINT.
+OLLAMA_CLOUD_HOST = "https://ollama.com"
 OLLAMA_API_TAGS_ENDPOINT = "/api/tags"
 LMSTUDIO_DEFAULT_HOST = "http://127.0.0.1:12340"
 LOCAL_SERVER_COMMON_PORTS = [12340, 1234, 5000, 5001, 8080, 8081]
@@ -306,7 +312,9 @@ def save_cache(cache: dict[str, Any]) -> None:
 
 def cache_key(model: str) -> str:
     """Generate cache key for a model."""
-    return hashlib.md5(model.encode(), usedforsecurity=False).hexdigest()[:CACHE_KEY_MD5_LENGTH]
+    return hashlib.md5(model.encode(), usedforsecurity=False).hexdigest()[
+        :CACHE_KEY_MD5_LENGTH
+    ]
 
 
 # =============================================================================

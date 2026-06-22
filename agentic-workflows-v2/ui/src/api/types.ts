@@ -434,3 +434,35 @@ export interface ModelRecommendationResponse {
   sort_order: string[];
   category: ModelTaskCategory | "all";
 }
+
+/**
+ * One model from the live provider probe — the static tier-chain catalog plus
+ * models discovered live from the Ollama server/cloud. `cloud`, `capabilities`,
+ * and `running` are present only for live-discovered Ollama models.
+ */
+export interface ProbedModel {
+  id: string;
+  provider: string;
+  tier: number;
+  available: boolean;
+  /** True for Ollama cloud-hosted models (ollama.com / remote_host). */
+  cloud?: boolean;
+  /** Model capabilities from /api/tags, e.g. "tools", "thinking", "vision". */
+  capabilities?: string[];
+  /** True when the model is currently loaded in memory (/api/ps). */
+  running?: boolean;
+}
+
+/**
+ * Response from `GET /api/models/probe` — re-probes which LLM providers have
+ * credentials and returns the full known model catalog with per-model tier and
+ * availability. `no_llm_mode` reflects whether the runtime is forced onto the
+ * deterministic placeholder model.
+ */
+export interface ModelProbeResponse {
+  available_providers: string[];
+  unavailable_providers: string[];
+  tier_defaults: Record<string, string>;
+  models: ProbedModel[];
+  no_llm_mode: boolean;
+}
