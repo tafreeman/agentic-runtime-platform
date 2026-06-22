@@ -50,10 +50,10 @@ function rootOf(container: HTMLElement, id = "step-a"): HTMLElement | null {
 }
 
 describe("StepNode — live animation (Story 2.5)", () => {
-  it("applies the theme-aware clay glow when running", () => {
+  it("applies the theme-aware blue glow when running", () => {
     const { container } = renderStepNode({ status: "running" });
-    // Glow is now token-driven so it adapts across themes (was a hardcoded rgba).
-    expect(container.innerHTML).toContain("rgb(var(--b-clay) / 0.33)");
+    // Running accent is the tier blue (design ref), token-driven across themes.
+    expect(container.innerHTML).toContain("rgb(var(--b-blue) / 0.33)");
   });
 
   it("removes glow class when succeeded", () => {
@@ -76,14 +76,14 @@ describe("StepNode — live animation (Story 2.5)", () => {
 });
 
 describe("StepNode — B2 redesign (Story 2.8)", () => {
-  it("renders ASCII status [RUN] while running", () => {
+  it("renders ASCII status [ •• ] while running", () => {
     const { getByTestId } = renderStepNode({ status: "running" });
-    expect(getByTestId("step-node-status").textContent).toBe("[RUN]");
+    expect(getByTestId("step-node-status").textContent).toBe("[ •• ]");
   });
 
-  it("renders ASCII status [OK ] on success", () => {
+  it("renders ASCII status [ ok ] on success", () => {
     const { getByTestId } = renderStepNode({ status: "success" });
-    expect(getByTestId("step-node-status").textContent).toBe("[OK ]");
+    expect(getByTestId("step-node-status").textContent).toBe("[ ok ]");
   });
 
   it("renders ASCII status [ERR] on failure", () => {
@@ -91,9 +91,9 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
     expect(getByTestId("step-node-status").textContent).toBe("[ERR]");
   });
 
-  it("renders ASCII status [...] when pending", () => {
+  it("renders ASCII status [ -- ] when pending", () => {
     const { getByTestId } = renderStepNode({ status: "pending" });
-    expect(getByTestId("step-node-status").textContent).toBe("[...]");
+    expect(getByTestId("step-node-status").textContent).toBe("[ -- ]");
   });
 
   it("renders ASCII status [SKP] when skipped", () => {
@@ -109,6 +109,24 @@ describe("StepNode — B2 redesign (Story 2.8)", () => {
     expect(rootOf(container, "parse_code")?.textContent).toContain(
       "parse_code",
     );
+  });
+
+  it("renders the agent name as subtext when present", () => {
+    const { container } = renderStepNode(
+      { status: "running", label: "parse_code", agent: "code_parser" },
+      "parse_code",
+    );
+    expect(rootOf(container, "parse_code")?.textContent).toContain(
+      "code_parser",
+    );
+  });
+
+  it("renders the footer status label for the current status", () => {
+    const { container } = renderStepNode({ status: "running" });
+    expect(rootOf(container)?.textContent).toContain("streaming");
+
+    const { container: doneContainer } = renderStepNode({ status: "success" });
+    expect(rootOf(doneContainer)?.textContent).toContain("done");
   });
 
   it("renders tier pill when tier is set", () => {

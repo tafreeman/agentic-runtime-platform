@@ -16,15 +16,44 @@ export default function DatasetsPage() {
       <BTopBar path="datasets" />
 
       <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden p-4">
-        <div>
-          <h1
-            className="text-[24px] font-semibold text-b-text"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            Datasets
-          </h1>
-          <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-            $ {repoCount} repo · {localCount} local · {evalSetCount} eval sets
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1
+              className="text-[30px] leading-none text-b-text"
+              style={{
+                fontFamily: "var(--b-font-heading)",
+                letterSpacing: "-0.5px",
+              }}
+            >
+              Datasets
+            </h1>
+            <div className="mt-1.5 font-mono text-[11px] text-b-text-dim">
+              $ {repoCount} repo · {localCount} local · {evalSetCount} eval sets
+            </div>
+          </div>
+          <div className="flex items-end gap-5">
+            {(
+              [
+                ["repo", repoCount],
+                ["local", localCount],
+                ["eval sets", evalSetCount],
+              ] as const
+            ).map(([label, count]) => (
+              <div key={label} className="flex flex-col items-end leading-none">
+                <span
+                  className="tabular-nums text-[22px] text-b-text"
+                  style={{
+                    fontFamily: "var(--b-font-heading)",
+                    letterSpacing: "-0.5px",
+                  }}
+                >
+                  {count}
+                </span>
+                <span className="mt-1 font-mono text-[8px] uppercase tracking-[1.5px] text-b-text-faint">
+                  {label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 

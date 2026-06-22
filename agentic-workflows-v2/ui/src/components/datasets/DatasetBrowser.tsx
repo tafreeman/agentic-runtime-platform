@@ -1,5 +1,9 @@
 import { useState } from "react";
-import type { EvaluationDatasetsResponse } from "../../api/types";
+import type { ReactNode } from "react";
+import type {
+  EvaluationDatasetOption,
+  EvaluationDatasetsResponse,
+} from "../../api/types";
 import SampleIndexGrid from "./SampleIndexGrid";
 import DatasetDetailPane from "./DatasetDetailPane";
 
@@ -8,6 +12,64 @@ interface DatasetBrowserProps {
 }
 
 type SelectedSource = "repository" | "local" | null;
+
+function SectionLabel({ children }: Readonly<{ children: ReactNode }>) {
+  return (
+    <div
+      className="border-b border-b-line-soft bg-b-bg2 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint"
+    >
+      {children}
+    </div>
+  );
+}
+
+interface DatasetRowProps {
+  dataset: EvaluationDatasetOption;
+  active: boolean;
+  onSelect: () => void;
+}
+
+function DatasetRow({ dataset, active, onSelect }: Readonly<DatasetRowProps>) {
+  return (
+    <button
+      onClick={onSelect}
+      className={`relative grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-b-line-soft px-3 py-2 text-left transition-colors hover:bg-b-bg2 ${
+        active ? "bg-b-bg3" : ""
+      }`}
+    >
+      {active && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-[2px] bg-b-clay"
+        />
+      )}
+      <span className="min-w-0">
+        <span className="block truncate font-mono text-[11px] text-b-text">
+          {dataset.name}
+        </span>
+        <span className="block truncate font-mono text-[10px] text-b-text-dim">
+          {dataset.id}
+        </span>
+      </span>
+      {dataset.sample_count != null && (
+        <span className="flex flex-col items-end leading-none">
+          <span
+            className="tabular-nums text-[14px] text-b-text-mid"
+            style={{
+              fontFamily: "var(--b-font-heading)",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            {dataset.sample_count}
+          </span>
+          <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[1px] text-b-text-faint">
+            samples
+          </span>
+        </span>
+      )}
+    </button>
+  );
+}
 
 export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProps>) {
   const [selectedSource, setSelectedSource] = useState<SelectedSource>(null);
@@ -21,67 +83,52 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
   }
 
   return (
-    <div className="flex h-full overflow-hidden border border-b-line">
+    <div
+      className="flex h-full overflow-hidden bg-b-bg1"
+      style={{
+        border: "var(--b-bw) solid rgb(var(--b-line))",
+        borderRadius: "var(--b-rad-lg)",
+      }}
+    >
       {/* Left pane — dataset list */}
-      <div className="w-1/4 min-w-[160px] overflow-y-auto border-r border-b-line">
+      <div
+        className="w-1/4 min-w-[160px] overflow-y-auto border-r border-b-line"
+      >
         {datasets.repository.length > 0 && (
           <div>
-            <div className="border-b border-b-line-soft bg-b-bg2 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-b-text-faint">
-              repository ({datasets.repository.length})
-            </div>
+            <SectionLabel>repository · {datasets.repository.length}</SectionLabel>
             {datasets.repository.map((ds) => (
-              <button
+              <DatasetRow
                 key={ds.id}
-                onClick={() => selectDataset("repository", ds.id)}
-                className={`w-full border-b border-b-line-soft px-3 py-2 text-left hover:bg-b-bg2 ${
+                dataset={ds}
+                active={
                   selectedSource === "repository" && selectedDatasetId === ds.id
-                    ? "bg-b-bg3"
-                    : ""
-                }`}
-              >
-                <div className="truncate font-mono text-[11px] text-b-text">
-                  {ds.name}
-                </div>
-                <div className="font-mono text-[10px] text-b-text-dim">{ds.id}</div>
-              </button>
+                }
+                onSelect={() => selectDataset("repository", ds.id)}
+              />
             ))}
           </div>
         )}
 
         {datasets.local.length > 0 && (
           <div>
-            <div className="border-b border-b-line-soft bg-b-bg2 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-b-text-faint">
-              local ({datasets.local.length})
-            </div>
+            <SectionLabel>local · {datasets.local.length}</SectionLabel>
             {datasets.local.map((ds) => (
-              <button
+              <DatasetRow
                 key={ds.id}
-                onClick={() => selectDataset("local", ds.id)}
-                className={`w-full border-b border-b-line-soft px-3 py-2 text-left hover:bg-b-bg2 ${
-                  selectedSource === "local" && selectedDatasetId === ds.id
-                    ? "bg-b-bg3"
-                    : ""
-                }`}
-              >
-                <div className="truncate font-mono text-[11px] text-b-text">
-                  {ds.name}
-                </div>
-                <div className="font-mono text-[10px] text-b-text-dim">{ds.id}</div>
-              </button>
+                dataset={ds}
+                active={selectedSource === "local" && selectedDatasetId === ds.id}
+                onSelect={() => selectDataset("local", ds.id)}
+              />
             ))}
           </div>
         )}
 
         {datasets.eval_sets.length > 0 && (
           <div>
-            <div className="border-b border-b-line-soft bg-b-bg2 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-b-text-faint">
-              eval sets ({datasets.eval_sets.length})
-            </div>
+            <SectionLabel>eval sets · {datasets.eval_sets.length}</SectionLabel>
             {datasets.eval_sets.map((es) => (
-              <div
-                key={es.id}
-                className="border-b border-b-line-soft px-3 py-2"
-              >
+              <div key={es.id} className="border-b border-b-line-soft px-3 py-2">
                 <div className="truncate font-mono text-[11px] text-b-text">
                   {es.name}
                 </div>
@@ -89,11 +136,12 @@ export default function DatasetBrowser({ datasets }: Readonly<DatasetBrowserProp
                   {es.datasets.length} linked datasets
                 </div>
                 {es.datasets.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
+                  <div className="mt-1.5 flex flex-wrap gap-1">
                     {es.datasets.map((d) => (
                       <span
                         key={d}
-                        className="rounded-sm bg-b-bg3 px-1 font-mono text-[10px] text-b-text-mid"
+                        className="inline-flex items-center bg-b-bg3 px-1.5 py-px font-mono text-[10px] text-b-text-mid"
+                        style={{ borderRadius: "var(--b-rad-sm)" }}
                       >
                         {d}
                       </span>

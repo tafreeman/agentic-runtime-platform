@@ -43,8 +43,15 @@ export default {
         },
       },
       fontFamily: {
-        mono: ["JetBrains Mono", "Geist Mono", "ui-monospace", "monospace"],
-        heading: ["Geist", "-apple-system", "system-ui", "sans-serif"],
+        mono: ["var(--b-font-mono)"],
+        heading: ["var(--b-font-heading)"],
+      },
+      borderRadius: {
+        "b-lg": "var(--b-rad-lg)",
+        "b-sm": "var(--b-rad-sm)",
+      },
+      borderWidth: {
+        b: "var(--b-bw)",
       },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",

@@ -59,9 +59,13 @@ export default function RunDetailSteps({
               key={step.step_name}
               type="button"
               onClick={() => onSelectStep(step.step_name)}
-              className={`flex w-full items-center justify-between gap-2 rounded-sm border px-2 py-1.5 text-left font-mono text-[11px] transition-colors ${
+              style={{
+                borderRadius: "var(--b-rad-sm)",
+                borderWidth: "var(--b-bw)",
+              }}
+              className={`flex w-full items-center justify-between gap-2 border border-solid px-2 py-1.5 text-left font-mono text-[11px] transition-colors ${
                 active
-                  ? "border-b-clay bg-b-clay/10 text-b-text"
+                  ? "border-b-clay bg-b-clay-soft text-b-text"
                   : "border-b-line bg-b-bg1 text-b-text-dim hover:bg-b-bg2 hover:text-b-text"
               }`}
             >
@@ -72,7 +76,10 @@ export default function RunDetailSteps({
         })}
       </div>
 
-      <div className="rounded-sm border border-b-line bg-b-bg1">
+      <div
+        style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}
+        className="border border-solid border-b-line bg-b-bg1"
+      >
         <div className="border-b border-b-line px-3 py-2">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">

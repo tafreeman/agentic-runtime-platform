@@ -20,7 +20,10 @@ export default function ErrorBanner({
 }: Readonly<ErrorBannerProps>) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-24 font-mono">
-      <div className="max-w-lg rounded-[3px] border border-b-red/40 bg-b-red/10 px-5 py-4">
+      <div
+        className="max-w-lg border border-b-red/40 bg-b-red/10 px-5 py-4"
+        style={{ borderRadius: "var(--b-rad-sm)" }}
+      >
         <div className="flex items-start gap-2">
           <span className="text-b-red text-[13px] font-bold">[!]</span>
           <span className="text-b-red text-[13px] leading-snug">{message}</span>

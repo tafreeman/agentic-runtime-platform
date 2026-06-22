@@ -30,5 +30,26 @@ describe("RunSummaryCards", () => {
     expect(screen.getByText("9")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("1.3s")).toBeInTheDocument();
+    // 9/12 success → 75%.
+    expect(screen.getByText("75%")).toBeInTheDocument();
+  });
+
+  it("clamps the success rate to 100% when success exceeds total", () => {
+    render(
+      <RunSummaryCards
+        isLoading={false}
+        summary={{
+          total_runs: 4,
+          success: 6,
+          failed: 0,
+          avg_duration_ms: 1000,
+          workflows: ["review_flow"],
+        }}
+      />
+    );
+
+    // 6/4 would be 150% without the clamp; the helper caps it at 100%.
+    expect(screen.getByText("100%")).toBeInTheDocument();
+    expect(screen.queryByText("150%")).not.toBeInTheDocument();
   });
 });

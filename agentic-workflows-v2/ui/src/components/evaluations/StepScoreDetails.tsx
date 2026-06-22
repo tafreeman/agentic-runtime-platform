@@ -52,7 +52,10 @@ export default function StepScoreDetails({
       <div className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
         step scores
       </div>
-      <div className="overflow-hidden border border-b-line">
+      <div
+        className="overflow-hidden border border-b-line"
+        style={{ borderRadius: "var(--b-rad-sm)" }}
+      >
         {orderedScores.map((step) => {
           const isExpanded = expandedStep === step.step_name;
           const scoreFraction = scoreToFraction(step.score);

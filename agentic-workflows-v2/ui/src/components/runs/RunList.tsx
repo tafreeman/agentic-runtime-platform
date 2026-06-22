@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import type { RunSummary } from "../../api/types";
-import BPill from "../common/BPill";
 import DurationDisplay from "../common/DurationDisplay";
+import { gradeColorClass, gradeLetter } from "../../lib/grades";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
 
@@ -12,11 +11,19 @@ interface RunListProps {
   isLoading: boolean;
 }
 
-function statusTone(status: string | null | undefined) {
-  if (status === "success") return "ok" as const;
-  if (status === "failed" || status === "error") return "err" as const;
-  if (status === "running" || status === "in_progress") return "clay" as const;
-  return "dim" as const;
+/** ASCII status glyph + its CSS color variable, colored by run status. */
+function statusAscii(status: string | null | undefined): {
+  label: string;
+  color: string;
+} {
+  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
+  if (status === "failed" || status === "error") {
+    return { label: "[err ]", color: "var(--b-red)" };
+  }
+  if (status === "running" || status === "in_progress") {
+    return { label: "[ .. ]", color: "var(--b-clay)" };
+  }
+  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
 }
 
 function shortId(run: RunSummary): string {
@@ -37,12 +44,8 @@ function formatWhen(iso: string | null | undefined): string {
   });
 }
 
-function formatScore(score: number | null | undefined): string {
-  if (score == null) return "--";
-  return score > 1 ? score.toFixed(1) : (score * 100).toFixed(0);
-}
-
 export default function RunList({ runs, isLoading }: RunListProps) {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<StatusFilter>("all");
 
   const counts = useMemo(() => {
@@ -79,7 +82,11 @@ export default function RunList({ runs, isLoading }: RunListProps) {
         {Array.from({ length: 5 }).map((_, index) => (
           <div
             key={index}
-            className="h-[44px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
+            style={{
+              borderRadius: "var(--b-rad-sm)",
+              borderWidth: "var(--b-bw)",
+            }}
+            className="h-[44px] animate-pulse border border-solid border-b-line bg-b-bg1"
           />
         ))}
       </div>
@@ -103,15 +110,19 @@ export default function RunList({ runs, isLoading }: RunListProps) {
               key={value}
               type="button"
               onClick={() => setFilter(value)}
-              className={`rounded-sm border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
+              style={{
+                borderRadius: "var(--b-rad-sm)",
+                borderWidth: "var(--b-bw)",
+              }}
+              className={`border border-solid px-3 py-1 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
                 active
-                  ? "border-b-clay bg-b-clay/10 text-b-clay"
+                  ? "border-b-clay bg-b-clay-soft text-b-clay"
                   : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
               }`}
             >
               {label}
               <span aria-hidden="true" className="ml-1 text-b-text-faint">
-                {counts[value]}
+                · {counts[value]}
               </span>
             </button>
           );
@@ -119,75 +130,84 @@ export default function RunList({ runs, isLoading }: RunListProps) {
       </div>
 
       {filteredRuns.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-b-line px-3 py-8 text-center font-mono text-[11px] text-b-text-dim">
+        <div
+          style={{
+            borderRadius: "var(--b-rad-sm)",
+            borderWidth: "var(--b-bw)",
+          }}
+          className="border border-dashed border-b-line px-3 py-8 text-center font-mono text-[11px] text-b-text-dim"
+        >
           No runs found
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full font-mono text-[11px]">
-            <thead>
-              <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
-                <th className="px-2 py-1.5">Run</th>
-                <th className="px-2 py-1.5">Workflow</th>
-                <th className="px-2 py-1.5">Status</th>
-                <th className="px-2 py-1.5 text-right">Steps</th>
-                <th className="px-2 py-1.5 text-right">Dur</th>
-                <th className="px-2 py-1.5 text-right">Score</th>
-                <th className="px-2 py-1.5 text-right">When</th>
-                <th className="w-6 px-2 py-1.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRuns.map((run) => (
-                <tr
-                  key={run.filename}
-                  className="group border-b border-b-line-soft hover:bg-b-bg2"
+        <div
+          style={{
+            borderRadius: "var(--b-rad-lg)",
+            borderWidth: "var(--b-bw)",
+          }}
+          className="overflow-hidden border border-solid border-b-line bg-b-bg1"
+        >
+          {/* Column headers */}
+          <div
+            style={{ borderBottomWidth: "var(--b-bw)" }}
+            className="grid grid-cols-[80px_1.5fr_78px_50px_72px] gap-2.5 border-b border-solid border-b-line px-3 py-2 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint"
+          >
+            <span>Status</span>
+            <span>Workflow</span>
+            <span className="text-right">Duration</span>
+            <span className="text-center">Score</span>
+            <span className="text-right">When</span>
+          </div>
+
+          {filteredRuns.map((run) => {
+            const ascii = statusAscii(run.status);
+            const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
+            const target = `/runs/${encodeURIComponent(run.filename)}`;
+            return (
+              <div
+                key={run.filename}
+                role="button"
+                tabIndex={0}
+                aria-label={`Open run ${shortId(run)}`}
+                onClick={() => navigate(target)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(target);
+                  }
+                }}
+                className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-b-clay"
+              >
+                <span
+                  className="text-[9px] tracking-[0.5px]"
+                  style={{ color: ascii.color }}
                 >
-                  <td className="px-2 py-2">
-                    <Link
-                      to={`/runs/${encodeURIComponent(run.filename)}`}
-                      className="text-b-clay hover:underline"
-                    >
-                      {shortId(run)}
-                    </Link>
-                  </td>
-                  <td className="max-w-[160px] truncate px-2 py-2 text-b-text">
+                  {ascii.label}
+                </span>
+                <span className="min-w-0 truncate text-b-text">
+                  <Link
+                    to={target}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Open run ${shortId(run)}`}
+                    className="hover:text-b-clay"
+                  >
                     {run.workflow_name ?? "--"}
-                  </td>
-                  <td className="px-2 py-2">
-                    <BPill tone={statusTone(run.status)}>
-                      {run.status ?? "--"}
-                    </BPill>
-                  </td>
-                  <td className="px-2 py-2 text-right tabular-nums text-b-text-mid">
-                    {run.step_count ?? "--"}
-                    {run.failed_step_count ? (
-                      <span className="text-b-red">
-                        /{run.failed_step_count}
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="px-2 py-2 text-right tabular-nums text-b-text-mid">
-                    <DurationDisplay ms={run.total_duration_ms} />
-                  </td>
-                  <td className="px-2 py-2 text-right tabular-nums text-b-text-mid">
-                    {formatScore(run.evaluation_score)}
-                  </td>
-                  <td className="px-2 py-2 text-right text-b-text-dim">
-                    {formatWhen(run.start_time)}
-                  </td>
-                  <td className="px-2 py-2 text-right">
-                    <Link
-                      to={`/runs/${encodeURIComponent(run.filename)}`}
-                      aria-label={`Open run ${shortId(run)}`}
-                    >
-                      <ChevronRight className="h-3.5 w-3.5 text-b-text-faint group-hover:text-b-clay" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </Link>
+                </span>
+                <span className="text-right tabular-nums text-b-text-dim">
+                  <DurationDisplay ms={run.total_duration_ms} />
+                </span>
+                <span
+                  className={`text-center font-semibold ${gradeColorClass(grade)}`}
+                >
+                  {grade ?? "--"}
+                </span>
+                <span className="text-right text-[10px] text-b-text-dim">
+                  {formatWhen(run.start_time)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

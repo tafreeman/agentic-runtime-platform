@@ -88,10 +88,18 @@ describe("EvaluationsPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("review_flow")).toBeInTheDocument();
-    expect(screen.getByText("91.4")).toBeInTheDocument();
-    expect(screen.getByText("A")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /view/i })).toHaveAttribute(
+    // The evaluated workflow surfaces in both the run-picker banner and the
+    // eval-runs table, so assert on presence (≥1) rather than uniqueness.
+    expect(screen.getAllByText("review_flow").length).toBeGreaterThan(0);
+    // 91.4 renders in the SCORE column and, since this is the only scored run,
+    // also as the scorecard mean sub-label (now in matching 0..100 units), so
+    // assert on presence rather than uniqueness.
+    expect(screen.getAllByText("91.4").length).toBeGreaterThan(0);
+    // Grade "A" renders in the table cell and also in the scorecard tier scale.
+    expect(screen.getAllByText("A").length).toBeGreaterThan(0);
+    // Exact name "view" targets the table's aria-labelled detail link without
+    // colliding with the run-picker link whose name contains "review_flow".
+    expect(screen.getByRole("link", { name: "view" })).toHaveAttribute(
       "href",
       "/runs/run-1.json"
     );

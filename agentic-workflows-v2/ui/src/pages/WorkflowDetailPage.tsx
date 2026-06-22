@@ -38,6 +38,27 @@ function coerceInputValue(
   return val;
 }
 
+/**
+ * Resolve a theme-aware accent color for a tier hint. Mirrors the tier-badge
+ * coloring used by the DAG step nodes so the language stays consistent.
+ */
+function tierColor(tier: string): string {
+  const t = tier.toLowerCase();
+  if (t.startsWith("tier0")) return "rgb(var(--b-text-dim))";
+  if (t.startsWith("tier1")) return "rgb(var(--b-blue))";
+  if (t.startsWith("tier2")) return "rgb(var(--b-purple))";
+  return "rgb(var(--b-clay))";
+}
+
+/** Distinct, ordered tier hints present across the DAG nodes. */
+function collectTiers(nodes: { tier?: string | null }[] | undefined): string[] {
+  const seen = new Set<string>();
+  for (const node of nodes ?? []) {
+    if (node.tier) seen.add(node.tier);
+  }
+  return [...seen];
+}
+
 /** Label for the primary run button across batch/pending/eval/idle states. */
 function runButtonLabel(
   batchProgress: { done: number; total: number } | null,
@@ -119,6 +140,7 @@ export default function WorkflowDetailPage() {
   const dagErrorMessage =
     dagQueryError instanceof Error ? dagQueryError.message : "failed to load dag";
   const hasWorkflowSteps = (dag?.nodes.length ?? 0) > 0;
+  const tiers = collectTiers(dag?.nodes);
   const supportsDeterministicDemo =
     name === "test_deterministic" ||
     (!!dag &&
@@ -261,20 +283,56 @@ export default function WorkflowDetailPage() {
 
         {/* ── Center: DAG ── */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-b-line">
-          {/* Slim DAG header */}
-          <div className="flex items-center gap-3 border-b border-b-line bg-b-bg1 px-4 py-2">
-            <span className="font-mono text-[10px] font-bold text-b-clay uppercase tracking-wider">
-              ■ DAG PREVIEW
-            </span>
-            {dag && hasWorkflowSteps && (
-              <span className="font-mono text-[10px] text-b-text-faint">
-                {dag.nodes.length} nodes · {dag.edges.length} edges
+          {/* DAG header — serif workflow name, hairline meta, tier badges */}
+          <div className="border-b border-b-line bg-b-bg1 px-4 py-[10px]">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-b-clay">
+                ■ DAG PREVIEW
               </span>
-            )}
-            {dag?.description && (
-              <span className="hidden xl:block ml-auto font-mono text-[10px] text-b-text-dim truncate max-w-xs">
-                {dag.description}
-              </span>
+              {name && (
+                <span
+                  className="truncate text-b-text"
+                  style={{
+                    fontFamily: "var(--b-font-heading)",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    letterSpacing: "-0.4px",
+                  }}
+                >
+                  {name}
+                </span>
+              )}
+              {dag && hasWorkflowSteps && (
+                <span className="font-mono text-[10px] tabular-nums text-b-text-faint">
+                  {dag.nodes.length} nodes · {dag.edges.length} edges
+                </span>
+              )}
+              {dag?.description && (
+                <span className="ml-auto hidden max-w-xs truncate font-mono text-[10px] text-b-text-dim xl:block">
+                  {dag.description}
+                </span>
+              )}
+            </div>
+            {tiers.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {tiers.map((tier) => {
+                  const color = tierColor(tier);
+                  return (
+                    <span
+                      key={tier}
+                      className="font-mono text-[8.5px] uppercase tracking-[0.3px]"
+                      style={{
+                        color,
+                        border: `1px solid ${color}`,
+                        borderRadius: "var(--b-rad-sm)",
+                        padding: "1px 5px",
+                      }}
+                    >
+                      {tier}
+                    </span>
+                  );
+                })}
+              </div>
             )}
           </div>
 
@@ -308,12 +366,24 @@ export default function WorkflowDetailPage() {
 
         {/* ── Right panel: Run config + Run history ── */}
         <div className="flex w-full flex-col overflow-y-auto bg-b-bg0 md:w-[340px]">
-          {/* $ RUN CONFIGURATION header */}
+          {/* $ RUN CONFIGURATION header — live status dot */}
           <div className="flex items-center justify-between border-b border-b-line bg-b-bg1 px-4 py-2">
-            <span className="font-mono text-[10px] font-bold text-b-clay uppercase tracking-wider">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-b-clay">
               $ RUN CONFIGURATION
             </span>
-            <span className="font-mono text-[10px] text-b-green">
+            <span
+              className={`flex items-center gap-1.5 font-mono text-[10px] ${
+                runMutation.isPending ? "text-b-clay" : "text-b-green"
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`h-[5px] w-[5px] rounded-full ${
+                  runMutation.isPending
+                    ? "animate-b-pulse bg-b-clay"
+                    : "bg-b-green"
+                }`}
+              />
               {runMutation.isPending ? "running" : "ready"}
             </span>
           </div>
@@ -359,7 +429,10 @@ export default function WorkflowDetailPage() {
       </div>
 
       {runMutation.isError && (
-        <div className="border-t border-b-red bg-b-red/10 px-4 py-2 font-mono text-[11px] text-b-red">
+        <div
+          className="border-t border-b-red bg-b-red/10 px-4 py-2 font-mono text-[11px] text-b-red"
+          style={{ borderTopWidth: "var(--b-bw)" }}
+        >
           [!] {runMutation.error.message}
         </div>
       )}

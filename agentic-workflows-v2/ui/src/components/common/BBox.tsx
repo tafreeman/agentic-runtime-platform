@@ -17,13 +17,20 @@ export default function BBox({
 }: Readonly<BBoxProps>) {
   return (
     <div
-      className={`rounded-[4px] border border-b-line bg-b-bg1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] ${className}`}
+      className={`border-b-line bg-b-bg1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] ${className}`}
+      style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)", borderStyle: "solid" }}
     >
       {title && (
-        <div className="flex items-center justify-between border-b border-b-line bg-b-bg2 rounded-t-[3px] px-[11px] py-[5px]">
-          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.5px] text-b-text-mid">
+        <div
+          className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-[11px] py-[5px]"
+          style={{
+            borderTopLeftRadius: "var(--b-rad-lg)",
+            borderTopRightRadius: "var(--b-rad-lg)",
+          }}
+        >
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.5px] text-b-text-mid">
             <span className="text-b-green leading-none">▊</span>
-            <span>{title}</span>
+            <span style={{ fontFamily: "var(--b-font-heading)" }}>{title}</span>
           </div>
           {right && <div className="flex items-center gap-2">{right}</div>}
         </div>

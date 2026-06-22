@@ -30,15 +30,22 @@ async def probe_models() -> dict[str, Any]:
     bringing up a new local provider).
     """
     try:
-        from ...langchain.models import probe_and_update_tier_defaults
+        from ...langchain.models import (
+            enumerate_known_models,
+            probe_and_update_tier_defaults,
+        )
+        from ...settings import is_agentic_no_llm_enabled
 
         # The probe performs blocking network I/O (live Ollama discovery does
         # up to three synchronous httpx requests, ~5s each). Offload to a thread
         # so the async event loop is never frozen for concurrent requests.
         summary = await asyncio.to_thread(probe_and_update_tier_defaults)
+        summary["models"] = enumerate_known_models()
+        summary["no_llm_mode"] = is_agentic_no_llm_enabled()
         logger.info(
-            "On-demand model probe complete: available=%s",
+            "On-demand model probe complete: available=%s, models=%d",
             summary["available_providers"],
+            len(summary["models"]),
         )
         return summary
     except ImportError as exc:

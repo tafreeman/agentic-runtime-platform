@@ -42,6 +42,18 @@ function buildInitialValues(inputs: WorkflowInputSchema[]) {
   );
 }
 
+/** Theme-token radius + border-width for cards (radius-lg). */
+const CARD_TOKENS = {
+  borderRadius: "var(--b-rad-lg)",
+  borderWidth: "var(--b-bw)",
+} as const;
+
+/** Theme-token radius + border-width for small controls (radius-sm). */
+const CONTROL_TOKENS = {
+  borderRadius: "var(--b-rad-sm)",
+  borderWidth: "var(--b-bw)",
+} as const;
+
 export default function RunConfigForm({
   inputs,
   workflowName,
@@ -156,7 +168,8 @@ export default function RunConfigForm({
         datasetSelected ? (
           <div
             data-testid="dataset-inputs-banner"
-            className="rounded-sm border border-b-line bg-b-bg1 px-3 py-2 space-y-1.5"
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 px-3 py-2 space-y-1.5"
           >
             <div className="font-mono text-[10px] text-b-green uppercase tracking-wider">
               $ inputs from dataset
@@ -168,7 +181,8 @@ export default function RunConfigForm({
               {inputs.map((inp) => (
                 <span
                   key={inp.name}
-                  className="rounded-sm border border-b-line bg-b-bg0 px-1.5 py-0.5 font-mono text-[9px] text-b-text-dim"
+                  style={CONTROL_TOKENS}
+                  className="border border-solid border-b-line bg-b-bg0 px-1.5 py-0.5 font-mono text-[9px] text-b-text-dim"
                 >
                   {inp.name}
                   {inp.required ? (
@@ -186,7 +200,7 @@ export default function RunConfigForm({
           {inputs.map((input) => {
             const id = `workflow-input-${input.name}`;
             const fieldClass =
-              "w-full rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none";
+              "w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none";
 
             return (
               <label key={input.name} htmlFor={id} className="block">
@@ -205,6 +219,7 @@ export default function RunConfigForm({
                     onChange={(event) =>
                       updateInputValue(input.name, event.target.value)
                     }
+                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   >
                     {!input.required ? <option value="">--</option> : null}
@@ -225,6 +240,7 @@ export default function RunConfigForm({
                     }
                     placeholder={input.description}
                     rows={3}
+                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   />
                 ) : (
@@ -238,6 +254,7 @@ export default function RunConfigForm({
                     }
                     placeholder={input.description}
                     type={input.type === "number" ? "number" : "text"}
+                    style={CONTROL_TOKENS}
                     className={fieldClass}
                   />
                 )}
@@ -262,7 +279,8 @@ export default function RunConfigForm({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div
             data-testid="runtime-config"
-            className="rounded-sm border border-b-line bg-b-bg1 p-3"
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 p-3"
           >
             <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
               runtime
@@ -271,7 +289,8 @@ export default function RunConfigForm({
                 onChange={(event) =>
                   setRuntime(event.target.value as ExecutionProfileRequest["runtime"])
                 }
-                className="mt-1 w-full rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                style={CONTROL_TOKENS}
+                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
               >
                 <option value="subprocess">subprocess</option>
                 <option value="docker">docker</option>
@@ -281,7 +300,8 @@ export default function RunConfigForm({
 
           <div
             data-testid="rubric-config"
-            className="rounded-sm border border-b-line bg-b-bg1 p-3"
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 p-3"
           >
             <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
               rubric id
@@ -289,12 +309,16 @@ export default function RunConfigForm({
                 value={rubricId}
                 onChange={(event) => setRubricId(event.target.value)}
                 placeholder={`${workflowName}_default`}
-                className="mt-1 w-full rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
+                style={CONTROL_TOKENS}
+                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
               />
             </label>
           </div>
 
-          <div className="rounded-sm border border-b-line bg-b-bg1 p-3 md:col-span-3">
+          <div
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
+          >
             <label className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
               <input
                 type="checkbox"
@@ -310,7 +334,8 @@ export default function RunConfigForm({
                 onChange={(event) =>
                   updateDatasetSource(event.target.value as DatasetSource)
                 }
-                className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                style={CONTROL_TOKENS}
+                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
               >
                 <option value="none">none</option>
                 <option value="repository">repository</option>
@@ -323,7 +348,8 @@ export default function RunConfigForm({
                   aria-label="Dataset"
                   value={datasetId}
                   onChange={(event) => setDatasetId(event.target.value)}
-                  className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                  style={CONTROL_TOKENS}
+                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
                   disabled={datasetsLoading}
                 >
                   <option value="">
@@ -340,7 +366,8 @@ export default function RunConfigForm({
                   aria-label="Evaluation set"
                   value={evalSetId}
                   onChange={(event) => setEvalSetId(event.target.value)}
-                  className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                  style={CONTROL_TOKENS}
+                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
                   disabled={datasetsLoading}
                 >
                   <option value="">
@@ -353,7 +380,10 @@ export default function RunConfigForm({
                   ))}
                 </select>
               ) : (
-                <div className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text-dim">
+                <div
+                  style={CONTROL_TOKENS}
+                  className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text-dim"
+                >
                   no dataset
                 </div>
               )}
@@ -363,7 +393,8 @@ export default function RunConfigForm({
                 value={sampleText}
                 onChange={(event) => setSampleText(event.target.value)}
                 placeholder="0,1,2"
-                className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
+                style={CONTROL_TOKENS}
+                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint"
               />
               <input
                 aria-label="Runs per record"
@@ -375,7 +406,8 @@ export default function RunConfigForm({
                     Math.max(1, Number.parseInt(event.target.value, 10) || 1)
                   )
                 }
-                className="rounded-sm border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+                style={CONTROL_TOKENS}
+                className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
               />
             </div>
             {datasetsError ? (

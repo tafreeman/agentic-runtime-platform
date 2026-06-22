@@ -47,7 +47,8 @@
 
 @layer components {
   .card {
-    @apply rounded border border-b-line bg-b-bg1 p-4;
+    @apply border-b border-b-line bg-b-bg1 p-4;
+    border-radius: var(--b-rad-lg);
   }
 
   .card-hover {
@@ -55,7 +56,8 @@
   }
 
   .btn {
-    @apply inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 font-mono text-[11px] transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-b-clay/50;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] transition-colors duration-150 focus:outline-none focus:ring-1 focus:ring-b-clay/50;
+    border-radius: var(--b-rad-sm);
   }
 
   .btn-primary {
@@ -67,7 +69,7 @@
   }
 
   .btn-ghost {
-    @apply btn border border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
+    @apply btn border-b border-b-line text-b-text-dim hover:bg-b-bg2 hover:text-b-text;
   }
 }
 
@@ -131,6 +133,18 @@
   }
   50% {
     box-shadow: 0 0 12px 2px rgb(var(--b-clay));
+  }
+}
+
+/* Expanding-fade pulse ring around a live-running DAG node (design "ringpulse"). */
+@keyframes b-ring-pulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
   }
 }
 
