@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tools.llm.probe_config import OLLAMA_CLOUD_HOST
 from tools.llm.probe_discovery_providers import _probe_ollama_cloud
 
 
@@ -108,4 +109,4 @@ class TestProbeOllamaCloud:
         assert result["configured"] is True
         assert result["available"] == []
         assert result["error"] is not None
-        assert "ollama.com" in result["error"]
+        assert OLLAMA_CLOUD_HOST in result["error"]

@@ -261,7 +261,7 @@ def _probe_ollama_cloud() -> dict[str, Any]:
             cloud_models = [
                 f"{PREFIX_OLLAMA}{m.get('name', '')}"
                 for m in data.get("models", [])
-                if m.get("name")
+                if isinstance(m, dict) and m.get("name")
             ]
     except Exception as exc:
         cloud_error = f"Ollama cloud not reachable at {OLLAMA_CLOUD_HOST}: {exc}"

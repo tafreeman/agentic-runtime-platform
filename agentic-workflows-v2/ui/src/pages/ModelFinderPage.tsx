@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Cpu, Gauge, HardDrive, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import BTopBar from "../components/layout/BTopBar";
@@ -144,8 +144,8 @@ function ProfileStat({
   label,
   loading,
 }: Readonly<{
-  icon: React.ReactNode;
-  value: React.ReactNode;
+  icon: ReactNode;
+  value: ReactNode;
   label: string;
   loading: boolean;
 }>) {

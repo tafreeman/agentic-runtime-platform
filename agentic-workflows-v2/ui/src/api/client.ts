@@ -16,6 +16,7 @@ import type {
   WorkflowEditorValidateResponse,
   WorkflowRunRequest,
   WorkflowRunResponse,
+  ModelProbeResponse,
   ModelRecommendationResponse,
   ModelSortField,
   ModelTaskCategory,
@@ -305,6 +306,14 @@ export function getModelRecommendations(
 ): Promise<ModelRecommendationResponse> {
   const params = new URLSearchParams({ category, sort_by: sortBy });
   return fetchJSON(`${BASE}/model-finder/recommendations?${params}`);
+}
+
+/**
+ * Re-probe LLM providers and load the full known model catalog with per-model
+ * tier and live availability. Drives the model-router "rescan".
+ */
+export function probeModels(): Promise<ModelProbeResponse> {
+  return fetchJSON(`${BASE}/models/probe`);
 }
 
 /** Health check. */

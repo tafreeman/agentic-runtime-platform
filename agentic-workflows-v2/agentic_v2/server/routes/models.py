@@ -7,6 +7,7 @@ which backends are active without restarting the server.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -31,7 +32,10 @@ async def probe_models() -> dict[str, Any]:
     try:
         from ...langchain.models import probe_and_update_tier_defaults
 
-        summary = probe_and_update_tier_defaults()
+        # The probe performs blocking network I/O (live Ollama discovery does
+        # up to three synchronous httpx requests, ~5s each). Offload to a thread
+        # so the async event loop is never frozen for concurrent requests.
+        summary = await asyncio.to_thread(probe_and_update_tier_defaults)
         logger.info(
             "On-demand model probe complete: available=%s",
             summary["available_providers"],
