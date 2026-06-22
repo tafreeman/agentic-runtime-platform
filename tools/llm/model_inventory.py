@@ -104,11 +104,15 @@ def _dns_resolves(hostname: str) -> bool:
 def _probe_http_json(
     url: str,
     timeout_s: int = 3,
+    headers: dict[str, str] | None = None,
 ) -> tuple[bool, dict[str, Any] | None, str | None]:
     try:
+        request_headers = {"Accept": "application/json"}
+        if headers:
+            request_headers.update(headers)
         req = urllib.request.Request(
             url,
-            headers={"Accept": "application/json"},
+            headers=request_headers,
         )
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:
             body = resp.read().decode("utf-8", errors="replace")
@@ -335,6 +339,62 @@ def _inv_ollama(active_probes: bool) -> dict[str, Any]:
     }
 
 
+# Hosted Ollama cloud catalog. Cloud models are served by ollama.com and never
+# appear in the local /api/tags response; listing them needs an account key.
+_OLLAMA_CLOUD_HOST = "https://ollama.com"
+
+
+def _probe_ollama_cloud_models(api_key: str) -> dict[str, Any]:
+    """Probe the hosted Ollama cloud catalog with a bearer API key."""
+    ok, data, err = _probe_http_json(
+        f"{_OLLAMA_CLOUD_HOST}/api/tags",
+        timeout_s=10,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    models: list[str] = []
+    if ok and isinstance(data, dict):
+        for m in data.get("models", []) or []:
+            name = m.get("name") if isinstance(m, dict) else None
+            if name:
+                models.append(name)
+    return {
+        "configured": True,
+        "host": _OLLAMA_CLOUD_HOST,
+        "reachable": ok,
+        "models": sorted(set(models)),
+        "error": err,
+    }
+
+
+def _inv_ollama_cloud(active_probes: bool) -> dict[str, Any]:
+    """Inventory Ollama's hosted cloud catalog (key-gated).
+
+    Requires ``OLLAMA_API_KEY`` (ollama.com/settings/keys). Without it this is
+    a passive, no-network entry so the inventory stays offline-friendly.
+    """
+    api_key = os.getenv("OLLAMA_API_KEY")
+    if not api_key:
+        return {
+            "configured": False,
+            "host": _OLLAMA_CLOUD_HOST,
+            "reachable": None,
+            "models": [],
+            "notes": (
+                "Set OLLAMA_API_KEY (ollama.com/settings/keys) to inventory "
+                "Ollama cloud models. Ollama Pro raises limits but does not "
+                "expose the catalog without a key."
+            ),
+        }
+    if active_probes:
+        return _probe_ollama_cloud_models(api_key)
+    return {
+        "configured": True,
+        "host": _OLLAMA_CLOUD_HOST,
+        "reachable": None,
+        "models": [],
+    }
+
+
 def _inv_local_openai_compatible(active_probes: bool) -> dict[str, Any]:
     """Inventory a generic OpenAI-compatible local server."""
     local_openai_base = (
@@ -363,9 +423,7 @@ def _inv_local_openai_compatible(active_probes: bool) -> dict[str, Any]:
     }
 
 
-def _parse_windows_ai_bridge_output(
-    windows_ai_info: dict[str, Any], r: Any
-) -> None:
+def _parse_windows_ai_bridge_output(windows_ai_info: dict[str, Any], r: Any) -> None:
     """Merge .NET bridge subprocess output into the windows_ai_info dict."""
     windows_ai_info["bridge_exit_code"] = r.returncode
     stdout = (r.stdout or "").strip()
@@ -479,6 +537,7 @@ def build_inventory(active_probes: bool = False) -> dict[str, Any]:
         "azure_foundry": _inv_azure_foundry(),
         "azure_openai": _inv_azure_openai(),
         "ollama": _inv_ollama(active_probes),
+        "ollama_cloud": _inv_ollama_cloud(active_probes),
         "local_openai_compatible": _inv_local_openai_compatible(active_probes),
         "windows_ai_phi_silica": _inv_windows_ai(root, active_probes),
     }
@@ -512,6 +571,14 @@ def format_inventory_summary(inv: dict[str, Any]) -> str:
     ollama = p.get("ollama", {})
     ollama_reachable = ollama.get("reachable") if isinstance(ollama, dict) else None
 
+    ollama_cloud = p.get("ollama_cloud", {})
+    if isinstance(ollama_cloud, dict):
+        ollama_cloud_count = len(ollama_cloud.get("models", []) or [])
+        ollama_cloud_configured = bool(ollama_cloud.get("configured"))
+    else:
+        ollama_cloud_count = 0
+        ollama_cloud_configured = False
+
     windows_ai = p.get("windows_ai_phi_silica", {})
     windows_available = windows_ai.get("available")
     windows_ready = windows_ai.get("readyState")
@@ -531,6 +598,7 @@ def format_inventory_summary(inv: dict[str, Any]) -> str:
         f"openai(models={openai_count}), "
         f"gemini(models={gemini_count}), "
         f"ollama(reachable={ollama_reachable}), "
+        f"ollama_cloud(configured={ollama_cloud_configured}, models={ollama_cloud_count}), "
         f"windows_ai({windows_summary}{', ready=' + str(windows_ready) if windows_ready else ''})"
     )
 

@@ -27,6 +27,7 @@ import pytest
 from tools.llm.model_inventory import (
     _bool_env_present,
     _dns_resolves,
+    _inv_ollama_cloud,
     _load_dotenv,
     _probe_http_json,
     _probe_ollama,
@@ -292,6 +293,57 @@ class TestProbeOllama:
         )
         result = _probe_ollama("http://localhost:11434")
         assert result["models"] == ["valid"]
+
+
+# ---------------------------------------------------------------------------
+# _inv_ollama_cloud
+# ---------------------------------------------------------------------------
+
+
+class TestInvOllamaCloud:
+    """Key-gated inventory of the hosted Ollama cloud catalog."""
+
+    def test_no_key_is_passive_no_network(self, monkeypatch):
+        """Without OLLAMA_API_KEY: configured=False and no probe is attempted."""
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+        with patch("tools.llm.model_inventory._probe_http_json") as mock_probe:
+            result = _inv_ollama_cloud(active_probes=True)
+        mock_probe.assert_not_called()
+        assert result["configured"] is False
+        assert result["models"] == []
+        assert "OLLAMA_API_KEY" in result["notes"]
+
+    def test_key_present_passive_when_probes_disabled(self, monkeypatch):
+        """With a key but active_probes=False: configured but unprobed."""
+        monkeypatch.setenv("OLLAMA_API_KEY", "k")
+        with patch("tools.llm.model_inventory._probe_http_json") as mock_probe:
+            result = _inv_ollama_cloud(active_probes=False)
+        mock_probe.assert_not_called()
+        assert result["configured"] is True
+        assert result["reachable"] is None
+        assert result["models"] == []
+
+    @patch("tools.llm.model_inventory._probe_http_json")
+    def test_key_present_active_probe_lists_models(self, mock_probe, monkeypatch):
+        """With a key and active_probes: hosted models are listed and sorted."""
+        monkeypatch.setenv("OLLAMA_API_KEY", "k")
+        mock_probe.return_value = (
+            True,
+            {
+                "models": [
+                    {"name": "qwen3-coder:480b-cloud"},
+                    {"name": "gpt-oss:120b-cloud"},
+                ]
+            },
+            None,
+        )
+        result = _inv_ollama_cloud(active_probes=True)
+        # Probe must target the hosted host with a bearer header.
+        call = mock_probe.call_args
+        assert call.args[0] == "https://ollama.com/api/tags"
+        assert call.kwargs["headers"]["Authorization"] == "Bearer k"
+        assert result["reachable"] is True
+        assert result["models"] == ["gpt-oss:120b-cloud", "qwen3-coder:480b-cloud"]
 
 
 # ---------------------------------------------------------------------------

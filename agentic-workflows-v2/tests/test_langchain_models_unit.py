@@ -9,9 +9,11 @@ from agentic_v2.langchain.models import (
     _is_provider_available,
     _provider_prefix,
     _resolve_model_override,
+    enumerate_known_models,
     get_model_candidates_for_tier,
     is_retryable_model_error,
 )
+from agentic_v2.models.ollama_discovery import OllamaModelInfo
 
 
 class TestProviderPrefix:
@@ -207,3 +209,118 @@ class TestGetModelCandidatesForTier:
         """Returned list has no duplicates."""
         result = get_model_candidates_for_tier(2, include_unavailable=True)
         assert len(result) == len(set(result))
+
+
+class TestEnumerateKnownModelsMerge:
+    """enumerate_known_models merges live-discovered Ollama models.
+
+    Discovery itself is unit-tested in tests/models/test_ollama_discovery.py;
+    here it is patched to isolate the merge/enrichment logic.
+    """
+
+    def test_discovered_only_model_appended_as_tier0_with_metadata(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A discovered model absent from every tier chain is appended at tier 0
+        carrying its cloud/capability/running metadata."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:gemma4:31b",
+                    name="gemma4:31b",
+                    cloud=False,
+                    capabilities=("completion", "tools", "thinking"),
+                    running=True,
+                )
+            ],
+        )
+        models = enumerate_known_models()
+        gemma = next((m for m in models if m["id"] == "ollama:gemma4:31b"), None)
+        assert gemma is not None, "discovered local model must appear in the catalog"
+        assert gemma["tier"] == 0
+        assert gemma["provider"] == "ollama"
+        assert gemma["available"] is True
+        assert gemma["cloud"] is False
+        assert gemma["capabilities"] == ["completion", "tools", "thinking"]
+        assert gemma["running"] is True
+
+    def test_discovered_cloud_model_marked_cloud(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A discovered cloud model surfaces under provider 'ollama' with cloud=True."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:gpt-oss:120b-cloud",
+                    name="gpt-oss:120b-cloud",
+                    cloud=True,
+                    capabilities=("tools",),
+                    remote_host="ollama.com",
+                )
+            ],
+        )
+        models = enumerate_known_models()
+        cloud = next(
+            (m for m in models if m["id"] == "ollama:gpt-oss:120b-cloud"), None
+        )
+        assert cloud is not None
+        assert cloud["provider"] == "ollama"
+        assert cloud["cloud"] is True
+        assert cloud["capabilities"] == ["tools"]
+
+    def test_discovered_catalog_model_is_enriched_in_place(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A discovered model already in a tier chain keeps its tier but gains
+        availability + metadata (no duplicate tier-0 entry)."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [
+                OllamaModelInfo(
+                    id="ollama:qwen3-coder:30b",
+                    name="qwen3-coder:30b",
+                    cloud=False,
+                    capabilities=("tools", "thinking"),
+                    running=False,
+                )
+            ],
+        )
+        models = enumerate_known_models()
+        matches = [m for m in models if m["id"] == "ollama:qwen3-coder:30b"]
+        assert len(matches) == 1, "must enrich in place, not duplicate as tier-0"
+        entry = matches[0]
+        assert entry["tier"] >= 1, "keeps its original tier-chain tier"
+        assert entry["available"] is True
+        assert entry["capabilities"] == ["tools", "thinking"]
+
+    def test_no_discovered_models_leaves_catalog_intact(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With nothing discovered, only static tier-chain models are returned."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [],
+        )
+        models = enumerate_known_models()
+        assert models, "static catalog must still be returned"
+        assert all(m["tier"] >= 1 for m in models), (
+            "no tier-0 discovered entries should exist when discovery is empty"
+        )
+
+    def test_undiscovered_catalog_model_has_no_metadata_keys(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A catalog model that is NOT discovered must not gain spurious
+        cloud/capabilities/running keys (guards against blanket enrichment)."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models",
+            lambda: [],
+        )
+        models = enumerate_known_models()
+        entry = next((m for m in models if m["id"] == "ollama:qwen3-coder:30b"), None)
+        assert entry is not None, "tier-chain ollama model must be present"
+        assert "cloud" not in entry
+        assert "capabilities" not in entry
+        assert "running" not in entry

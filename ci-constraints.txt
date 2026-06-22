@@ -279,7 +279,9 @@ numpy==2.4.4
     #   agentic-tools
     #   lancedb
 ollama==0.6.1
-    # via langchain-ollama
+    # via
+    #   agentic-workflows-v2
+    #   langchain-ollama
 openai==2.41.1
     # via
     #   agentic-tools

@@ -40,7 +40,7 @@ adapter source code:
 | `anthropic_basic.json`   | `AnthropicBackend.complete_chat`               | `backends_cloud.py` ~317-323       | `tool_calls` is a list of raw `tool_use` blocks (id/name/input); `finish_reason` is Anthropic's `stop_reason` (`"end_turn"`); `usage` uses `input_tokens` / `output_tokens`. |
 | `gemini_basic.json`      | `GeminiBackend.complete_chat`                  | `backends_cloud.py` ~420-426       | `finish_reason` is the raw UPPERCASE `"STOP"`; `usage` is the raw camelCase `usageMetadata` (`promptTokenCount` / `candidatesTokenCount` / `totalTokenCount`). |
 | `ollama_basic.json`      | `OllamaBackend.complete_chat` (chat model)     | `backends_local.py` ~118-123       | No `usage` key (Ollama chat does not return token counts in this shape); `finish_reason` hard-coded to `"stop"`. |
-| `ollama_thinking.json`   | `OllamaBackend.complete_chat` (reasoning model) | `backends_local.py` ~110-123       | `content` is empty; `thinking` is preserved separately. **Note:** the current adapter folds `thinking` into `content` when `content` is blank; the fixture preserves the *underlying* shape so a future normalization can decide where reasoning content lives (see open decision #6, ollama-thinking-marker, in the migration notes). |
+| `ollama_thinking.json`   | `OllamaBackend.complete_chat` (reasoning model) | `backends_local.py` (`complete_chat`) | `content` is empty; `thinking` is preserved separately. The adapter keeps `thinking` as its own top-level key and leaves `content` empty for thinking-only turns — no fold-in (open decision #6 `ollama-thinking-marker` resolved by ADR-023 Phase 3; transport now the official `ollama` client per ADR-036). |
 
 ## How they will be used
 

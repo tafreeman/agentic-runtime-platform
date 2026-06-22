@@ -33,6 +33,7 @@ def discover_all_models(verbose: bool = False) -> dict[str, Any]:
         _probe_local_openai_compatible,
         _probe_nvidia,
         _probe_ollama,
+        _probe_ollama_cloud,
         _probe_openai,
         _probe_windows_ai,
     )
@@ -52,10 +53,15 @@ def discover_all_models(verbose: bool = False) -> dict[str, Any]:
         logger.info("[Discovery] Checking GitHub Models...")
     discovered["providers"]["github_models"] = _probe_github_models()
 
-    # 3. Ollama
+    # 3. Ollama (local server)
     if verbose:
         logger.info("[Discovery] Checking Ollama models...")
     discovered["providers"]["ollama"] = _probe_ollama()
+
+    # 3b. Ollama Cloud (hosted models via ollama.com; requires OLLAMA_API_KEY)
+    if verbose:
+        logger.info("[Discovery] Checking Ollama cloud models...")
+    discovered["providers"]["ollama_cloud"] = _probe_ollama_cloud()
 
     # 4. Azure Foundry
     if verbose:

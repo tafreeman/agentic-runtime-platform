@@ -2,7 +2,9 @@
 
 Concrete backends for locally-hosted model servers and runtimes:
 
-- ``OllamaBackend`` — Ollama local model server (http://localhost:11434)
+- ``OllamaBackend`` — Ollama local model server (http://localhost:11434),
+  backed by the official ``ollama`` Python client (``ollama.AsyncClient``)
+  rather than hand-rolled ``httpx`` requests (ADR-036).
 - ``OnnxBackend``   — local ONNX models via onnxruntime-genai (CPU / NPU)
 
 Ollama supports a wide variety of open-weight models including reasoning
@@ -24,7 +26,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import httpx
+import ollama
 
 from .backends_base import LLMBackend
 from .secrets import get_first_secret
@@ -36,19 +38,63 @@ from .secrets import get_first_secret
 
 @dataclass
 class OllamaBackend(LLMBackend):
-    """Backend for Ollama local models."""
+    """Backend for Ollama local models, backed by the official ``ollama`` client.
 
-    base_url: str = "http://localhost:11434"
+    Wraps :class:`ollama.AsyncClient` instead of hand-rolling ``httpx``
+    requests against ``/api/generate`` and ``/api/chat`` (ADR-036). The
+    client speaks Ollama's native wire format, so protocol changes — new
+    response fields, the ``thinking`` channel for reasoning models, and
+    structured ``tool_calls`` — track the SDK rather than bespoke JSON
+    parsing. The public surface is unchanged: the ``LLMBackend`` interface
+    and the canonical ``complete_chat`` dict shape (ADR-023 Phase 3) are
+    preserved; only the transport is swapped.
+
+    ``base_url`` honours ``OLLAMA_BASE_URL`` (matching the LangChain Ollama
+    builder), falling back to the local default. ``think`` opts reasoning
+    models into a separated chain-of-thought channel; ``None`` (the default)
+    leaves the parameter unset, preserving the pre-SDK behaviour where a
+    model only emits ``thinking`` if it does so on its own.
+    """
+
+    base_url: str = field(
+        default_factory=lambda: (
+            get_first_secret("OLLAMA_BASE_URL", default="http://localhost:11434")
+            or "http://localhost:11434"
+        )
+    )
     timeout: float = 300.0  # Local models can be slower
-    _client: httpx.AsyncClient | None = field(default=None, repr=False)
+    think: bool | None = None
+    _client: ollama.AsyncClient | None = field(default=None, repr=False)
 
-    def _get_client(self) -> httpx.AsyncClient:
-        if self._client is None or self._client.is_closed:
-            self._client = httpx.AsyncClient(
-                base_url=self.base_url,
-                timeout=self.timeout,
-            )
+    def _get_client(self) -> ollama.AsyncClient:
+        if self._client is None:
+            self._client = ollama.AsyncClient(host=self.base_url, timeout=self.timeout)
         return self._client
+
+    def _resolve_think(self, model_name: str) -> bool | None:
+        """Decide whether to request a separated ``thinking`` channel.
+
+        Returns the backend-level ``think`` setting unchanged. This is the
+        seam for per-model policy — e.g. enabling ``think`` only for known
+        reasoning families (qwen3 / deepseek-r1 / phi4-reasoning), or
+        degrading gracefully for models that reject the parameter. See
+        ADR-036 (open decision: think policy).
+        """
+        return self.think
+
+    @staticmethod
+    def _tool_calls_to_dicts(message: Any) -> list[dict[str, Any]] | None:
+        """Normalise SDK ``ToolCall`` objects to plain dicts (or ``None``).
+
+        Preserves the historical ``complete_chat`` contract where
+        ``tool_calls`` is a JSON-able ``list[dict]`` shaped as
+        ``{"function": {"name", "arguments"}}``, or ``None`` when the turn
+        made no tool calls.
+        """
+        tool_calls = getattr(message, "tool_calls", None)
+        if not tool_calls:
+            return None
+        return [tool_call.model_dump() for tool_call in tool_calls]
 
     async def complete(
         self,
@@ -58,32 +104,28 @@ class OllamaBackend(LLMBackend):
         temperature: float = 0.7,
         **kwargs: Any,
     ) -> str:
-        """Send completion request to Ollama."""
+        """Send a raw-prompt completion request to Ollama (``/api/generate``)."""
         client = self._get_client()
 
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
 
-        payload = {
-            "model": model_name,
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "num_predict": max_tokens,
-                "temperature": temperature,
-            },
-        }
+        try:
+            response = await client.generate(
+                model=model_name,
+                prompt=prompt,
+                think=self._resolve_think(model_name),
+                options={"num_predict": max_tokens, "temperature": temperature},
+            )
+        except ollama.ResponseError as exc:
+            raise RuntimeError(f"Ollama API error: {exc}") from exc
 
-        response = await client.post("/api/generate", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
         # Reasoning models (qwen3, deepseek-r1, phi4-reasoning) put their
-        # chain-of-thought in a "thinking" field and may leave "response"
-        # empty.  Fall back to "thinking" content when "response" is blank.
-        text = data.get("response", "")
+        # chain-of-thought in ``thinking`` and may leave ``response`` empty.
+        # Fall back to ``thinking`` content when ``response`` is blank.
+        text = response.response or ""
         if not text.strip():
-            text = data.get("thinking", "")
+            text = response.thinking or ""
         return text
 
     async def complete_chat(
@@ -95,58 +137,52 @@ class OllamaBackend(LLMBackend):
         tools: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        """Send chat completion request to Ollama."""
+        """Send a chat completion request to Ollama (``/api/chat``).
+
+        Returns the canonical dict shape (ADR-023 Phase 3): ``thinking`` is a
+        separate top-level key and ``content`` carries only the answer text.
+        The SDK exposes ``message.thinking`` and ``message.content`` directly,
+        so no inline-marker fold-in is needed — reasoning-only turns keep an
+        empty ``content`` and a populated ``thinking``.
+        """
         client = self._get_client()
 
         # Strip provider prefix if present
         model_name = model.replace("ollama:", "")
 
-        payload: dict[str, Any] = {
-            "model": model_name,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "num_predict": max_tokens,
-                "temperature": temperature,
-            },
-        }
+        try:
+            response = await client.chat(
+                model=model_name,
+                messages=messages,
+                tools=tools or None,
+                think=self._resolve_think(model_name),
+                options={"num_predict": max_tokens, "temperature": temperature},
+            )
+        except ollama.ResponseError as exc:
+            raise RuntimeError(f"Ollama API error: {exc}") from exc
 
-        # Ollama supports tools for some models
-        if tools:
-            payload["tools"] = tools
-
-        response = await client.post("/api/chat", json=payload)
-        response.raise_for_status()
-
-        data = response.json()
-        message = data.get("message", {})
-
-        # ADR-023 Phase 3: canonicalize the dict shape.  Reasoning models
-        # (qwen3, deepseek-r1, phi4-reasoning) put their chain-of-thought
-        # in ``message.thinking`` and may leave ``message.content`` empty.
-        # The previous adapter folded ``thinking`` into ``content`` when
-        # ``content`` was blank, which lost the distinction between answer
-        # and reasoning.  The chosen convention (ADR-023 open decision
-        # ollama-thinking-marker) is a separate top-level ``thinking`` key
-        # with ``content`` carrying only the actual answer text.  The
-        # prompt-path wrapper ``complete()`` retains its own fallback for
-        # backwards compatibility.
-        content = message.get("content", "") or ""
-        thinking = message.get("thinking", "") or ""
-
+        message = response.message
         return {
-            "content": content,
-            "thinking": thinking,
-            "tool_calls": message.get("tool_calls"),
+            "content": message.content or "",
+            "thinking": getattr(message, "thinking", None) or "",
+            "tool_calls": self._tool_calls_to_dicts(message),
             "finish_reason": "stop",
             "model": model_name,
-            "_raw_ollama": data,
+            "_raw_ollama": response.model_dump(),
         }
 
     async def close(self) -> None:
-        """Close the HTTP client."""
-        if self._client and not self._client.is_closed:
-            await self._client.aclose()
+        """Close the HTTP client owned by the Ollama SDK."""
+        client = self._client
+        if client is None:
+            return
+        # ``ollama.AsyncClient`` owns an inner ``httpx.AsyncClient``; close it
+        # so the connection pool is released. Guarded with getattr so a test
+        # double without the inner client (or already closed) is a no-op.
+        inner = getattr(client, "_client", None)
+        if inner is not None and not getattr(inner, "is_closed", False):
+            await inner.aclose()
+        self._client = None
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +229,9 @@ class OnnxBackend(LLMBackend):
     max_tokens_cap: int = 4096
     # Cache of resolved path -> (og_module, model, tokenizer).
     _models: dict[str, tuple[Any, Any, Any]] = field(default_factory=dict, repr=False)
-    _lock: threading.Lock = field(default_factory=threading.Lock, init=False, compare=False, repr=False)
+    _lock: threading.Lock = field(
+        default_factory=threading.Lock, init=False, compare=False, repr=False
+    )
 
     def _resolve_path(self, model: str) -> str:
         name = model.removeprefix("onnx:")
@@ -252,7 +290,7 @@ class OnnxBackend(LLMBackend):
         output = generator.get_sequence(0)
         # get_sequence returns the full sequence (prompt + completion);
         # decode only the newly generated tail.
-        new_tokens = output[len(input_tokens):]
+        new_tokens = output[len(input_tokens) :]
         return str(tokenizer.decode(new_tokens))
 
     async def complete(
