@@ -49,6 +49,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..models.router import FallbackChain, ModelRouter, ModelTier
 
+from ..models.local_discovery import (
+    discover_lmstudio_models,
+    discover_onnx_models,
+)
 from ..models.ollama_discovery import discover_ollama_models
 from .model_builders import (
     _resolve_notebooklm_model_name,
@@ -287,6 +291,23 @@ def enumerate_known_models() -> list[dict[str, Any]]:
                 "cloud": info.cloud,
                 "capabilities": list(info.capabilities),
                 "running": info.running,
+            }
+        )
+
+    # Other local providers: LM Studio (OpenAI-compatible server) and ONNX
+    # (onnxruntime-genai folders). These are plain id lists — no cloud/caps
+    # metadata — appended at tier 0 when not already in the catalog (ADR-038).
+    known_ids = {m["id"] for m in models}
+    for model_id in (*discover_lmstudio_models(), *discover_onnx_models()):
+        if model_id in known_ids:
+            continue
+        known_ids.add(model_id)
+        models.append(
+            {
+                "id": model_id,
+                "provider": provider_prefix(model_id),
+                "tier": 0,
+                "available": True,
             }
         )
 

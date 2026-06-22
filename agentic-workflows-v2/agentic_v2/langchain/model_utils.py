@@ -50,6 +50,7 @@ PROVIDER_ENV_KEYS: dict[str, list[str]] = {
     "gh": ["GITHUB_TOKEN"],
     "ollama": [],  # always available (local)
     "local": [],  # always available (ONNX)
+    "onnx": [],  # always available (local onnxruntime-genai)
     "lmstudio": [],  # always available (local server)
     "local_api": [],  # always available (local server)
 }
@@ -274,6 +275,5 @@ def resolve_model_override(model_override: str) -> str:
         return fallback
 
     raise ValueError(
-        f"Model override requires environment variable '{env_key}', "
-        "but it is not set."
+        f"Model override requires environment variable '{env_key}', but it is not set."
     )

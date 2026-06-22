@@ -214,9 +214,21 @@ class TestGetModelCandidatesForTier:
 class TestEnumerateKnownModelsMerge:
     """enumerate_known_models merges live-discovered Ollama models.
 
-    Discovery itself is unit-tested in tests/models/test_ollama_discovery.py;
-    here it is patched to isolate the merge/enrichment logic.
+    Discovery itself is unit-tested in tests/models/test_ollama_discovery.py
+    and test_local_discovery.py; here it is patched to isolate the
+    merge/enrichment logic.
     """
+
+    @pytest.fixture(autouse=True)
+    def _stub_local_discovery(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Default the LM Studio + ONNX sources to empty so these tests don't
+        touch a live LM Studio server or the real aigallery cache."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_onnx_models", lambda: []
+        )
 
     def test_discovered_only_model_appended_as_tier0_with_metadata(
         self, monkeypatch: pytest.MonkeyPatch
@@ -324,3 +336,32 @@ class TestEnumerateKnownModelsMerge:
         assert "cloud" not in entry
         assert "capabilities" not in entry
         assert "running" not in entry
+
+    def test_lmstudio_and_onnx_models_are_merged(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """LM Studio and ONNX discoveries surface as tier-0 entries under their
+        own provider prefixes (ADR-038)."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models",
+            lambda: ["lmstudio:gemma-3-12b-it"],
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_onnx_models",
+            lambda: ["onnx:Microsoft/qwen3-14b-generic-cpu-2/v2"],
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        lms = by_id.get("lmstudio:gemma-3-12b-it")
+        assert lms is not None
+        assert lms["provider"] == "lmstudio"
+        assert lms["tier"] == 0
+        assert lms["available"] is True
+
+        onnx = by_id.get("onnx:Microsoft/qwen3-14b-generic-cpu-2/v2")
+        assert onnx is not None
+        assert onnx["provider"] == "onnx"
+        assert onnx["available"] is True

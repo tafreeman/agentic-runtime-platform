@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
 > **Last updated:** 2026-06-21
-> **Total ADRs:** 33 (26 Accepted, 5 Proposed, 2 Superseded)
+> **Total ADRs:** 34 (27 Accepted, 5 Proposed, 2 Superseded)
 
 ---
 
@@ -42,6 +42,7 @@
 | **035** | RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search) | Accepted | [ADR-035](ADR-035-rag-pipeline-architecture.md) |
 | **036** | `OllamaBackend` uses the official `ollama` client (contained SDK swap) | Accepted | [ADR-036](ADR-036-ollama-sdk-backend.md) |
 | **037** | Live Ollama model discovery via the raw REST API (`/api/tags`+`/api/ps`, cloud via `remote_host`) | Accepted | [ADR-037](ADR-037-live-ollama-model-discovery.md) |
+| **038** | Live discovery for LM Studio (`/v1/models`) and ONNX (`genai_config.json`) local models | Accepted | [ADR-038](ADR-038-lmstudio-onnx-discovery.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 
@@ -129,6 +130,7 @@ Eval / Scoring Domain:
 | 035 | Yes | 100% (`agentic_v2/rag/` thirteen modules live) | rag/ unit + retrieval tests | 2026-06-17 |
 | 036 | Yes | 100% (`OllamaBackend` on `ollama.AsyncClient`; `ollama` promoted to core dep) | test_ollama_canonical.py (SDK-stubbed) | 2026-06-21 |
 | 037 | Yes | 100% (`models/ollama_discovery.py` raw probe; merged into `enumerate_known_models`; UI badges) | test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx | 2026-06-21 |
+| 038 | Yes | 100% (`models/local_discovery.py` LM Studio `/v1/models` + ONNX `genai_config.json`; merged into `enumerate_known_models`) | test_local_discovery.py, test_langchain_models_unit.py | 2026-06-21 |
 
 ---
 
