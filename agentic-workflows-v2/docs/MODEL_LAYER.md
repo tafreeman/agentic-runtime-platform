@@ -228,5 +228,24 @@ benefits native + LangChain + EK‑bridged execution identically, touches **no**
 `/api/tags`, stamped with `remote_host`). An Ollama **Pro** plan raises cloud
 rate limits but does **not** expose the catalog without one of these.
 
-**Still future work:** the same live‑listing pattern for the *other* providers'
+## Live discovery (LM Studio + ONNX) — implemented (ADR‑038)
+
+`agentic_v2/models/local_discovery.py` extends the same merge to the other two
+local providers; both are best‑effort and surface as `tier 0` router entries:
+
+- **LM Studio (`lmstudio:`):** `GET {host}/v1/models` (OpenAI‑compatible). Host
+  from `LMSTUDIO_HOST` / `LM_STUDIO_HOST`; with none set, ports `1234` then
+  `12340` are tried and the first reachable wins. Lights up once LM Studio's
+  server is running.
+- **ONNX (`onnx:`):** bounded‑depth walk for `genai_config.json` under the ONNX
+  root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default `~/.cache/aigallery`).
+  Returns `onnx:<relpath>` relative to that root — the *same* root `OnnxBackend`
+  resolves against, so **discovered == runnable**. The aigallery cache works out
+  of the box; point `ONNX_MODEL_DIR` at `~/.aitk/models` or `~/.foundry/cache/...`
+  to surface those Phi‑4 ONNX sets.
+
+`onnx` is registered in `PROVIDER_ENV_KEYS` (no key) so the router marks it
+available. Covered by `tests/models/test_local_discovery.py`.
+
+**Still future work:** the same live‑listing pattern for the *cloud* providers'
 list‑models endpoints (OpenAI `/v1/models`, Gemini, etc.).
