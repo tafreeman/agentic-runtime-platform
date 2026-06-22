@@ -2,7 +2,7 @@
 #    uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt
 aiofiles==24.1.0
     # via agentic-workflows-v2
-aiohappyeyeballs==2.6.1
+aiohappyeyeballs==2.6.2
     # via aiohttp
 aiohttp==3.14.1
     # via
@@ -21,12 +21,12 @@ annotated-doc==0.0.4
     #   typer
 annotated-types==0.7.0
     # via pydantic
-anthropic==0.109.1
+anthropic==0.111.0
     # via
     #   agentic-tools
     #   agentic-workflows-v2
     #   langchain-anthropic
-anyio==4.13.0
+anyio==4.14.0
     # via
     #   anthropic
     #   claude-agent-sdk
@@ -37,7 +37,7 @@ anyio==4.13.0
     #   sse-starlette
     #   starlette
     #   watchfiles
-ast-serialize==0.3.0
+ast-serialize==0.5.0
     # via mypy
 async-timeout==5.0.1 ; python_full_version < '3.11.3'
     # via redis
@@ -50,7 +50,7 @@ black==26.5.1
     # via agentic-workflows-v2
 cachetools==5.5.2
     # via agentic-workflows-v2
-certifi==2026.5.20
+certifi==2026.6.17
     # via
     #   httpcore
     #   httpx
@@ -63,9 +63,9 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.7
     # via requests
-claude-agent-sdk==0.2.101
+claude-agent-sdk==0.2.106
     # via agentic-workflows-v2
-click==8.3.2
+click==8.4.1
     # via
     #   black
     #   litellm
@@ -77,7 +77,7 @@ colorama==0.4.6 ; sys_platform == 'win32'
     #   pytest
     #   tqdm
     #   uvicorn
-coverage==7.13.5
+coverage==7.14.2
     # via pytest-cov
 cryptography==46.0.7
     # via
@@ -87,7 +87,7 @@ deprecated==1.3.1
     # via limits
 deprecation==2.1.0
     # via lancedb
-distlib==0.4.0
+distlib==0.4.3
     # via virtualenv
 distro==1.9.0
     # via
@@ -96,11 +96,11 @@ distro==1.9.0
     #   openai
 docstring-parser==0.18.0
     # via anthropic
-executionkit==0.1.0
+executionkit==0.2.0
     # via agentic-workflows-v2
-fakeredis==2.35.1
+fakeredis==2.36.2
     # via agentic-workflows-v2
-fastapi==0.136.0
+fastapi==0.138.0
     # via agentic-workflows-v2
 fastuuid==0.14.0
     # via litellm
@@ -116,29 +116,29 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2026.3.0
+fsspec==2026.6.0
     # via huggingface-hub
-google-auth==2.49.2
+google-auth==2.55.0
     # via google-genai
-google-genai==2.7.0
+google-genai==2.9.0
     # via langchain-google-genai
-googleapis-common-protos==1.74.0
+googleapis-common-protos==1.75.0
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-grpcio==1.80.0
+grpcio==1.81.1
     # via opentelemetry-exporter-otlp-proto-grpc
 h11==0.16.0
     # via
     #   httpcore
     #   uvicorn
-hf-xet==1.4.3 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
+hf-xet==1.5.1 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
-hiredis==3.3.1
+hiredis==3.4.0
     # via redis
 httpcore==1.0.9
     # via httpx
-httptools==0.7.1
+httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
     # via
@@ -154,17 +154,17 @@ httpx==0.28.1
     #   openai
 httpx-sse==0.4.3
     # via mcp
-huggingface-hub==1.10.2
+huggingface-hub==1.20.1
     # via tokenizers
-identify==2.6.18
+identify==2.6.19
     # via pre-commit
-idna==3.11
+idna==3.18
     # via
     #   anyio
     #   httpx
     #   requests
     #   yarl
-importlib-metadata==8.7.1
+importlib-metadata==8.9.0
     # via
     #   litellm
     #   opentelemetry-api
@@ -174,7 +174,7 @@ jinja2==3.1.6
     # via
     #   agentic-workflows-v2
     #   litellm
-jiter==0.14.0
+jiter==0.15.0
     # via
     #   anthropic
     #   openai
@@ -191,17 +191,17 @@ jsonschema==4.26.0
     #   mcp
 jsonschema-specifications==2025.9.1
     # via jsonschema
-lance-namespace==0.6.1
+lance-namespace==0.8.6
     # via lancedb
-lance-namespace-urllib3-client==0.6.1
+lance-namespace-urllib3-client==0.8.6
     # via lance-namespace
-lancedb==0.30.2
+lancedb==0.33.0
     # via agentic-workflows-v2
-langchain==1.3.2
+langchain==1.3.10
     # via agentic-workflows-v2
-langchain-anthropic==1.4.4
+langchain-anthropic==1.4.6
     # via agentic-workflows-v2
-langchain-core==1.4.7
+langchain-core==1.4.8
     # via
     #   agentic-tools
     #   agentic-workflows-v2
@@ -213,15 +213,15 @@ langchain-core==1.4.7
     #   langgraph
     #   langgraph-checkpoint
     #   langgraph-prebuilt
-langchain-google-genai==4.2.4
+langchain-google-genai==4.2.5
     # via agentic-workflows-v2
 langchain-ollama==1.1.0
     # via agentic-workflows-v2
-langchain-openai==1.2.2
+langchain-openai==1.3.2
     # via agentic-workflows-v2
-langchain-protocol==0.0.16
+langchain-protocol==0.0.18
     # via langchain-core
-langgraph==1.2.2
+langgraph==1.2.6
     # via
     #   agentic-workflows-v2
     #   langchain
@@ -232,15 +232,15 @@ langgraph-checkpoint==4.1.1
     #   langgraph-checkpoint-postgres
     #   langgraph-checkpoint-sqlite
     #   langgraph-prebuilt
-langgraph-checkpoint-postgres==3.0.5
+langgraph-checkpoint-postgres==3.1.0
     # via agentic-workflows-v2
 langgraph-checkpoint-sqlite==3.1.0
     # via agentic-workflows-v2
 langgraph-prebuilt==1.1.0
     # via langgraph
-langgraph-sdk==0.3.15
+langgraph-sdk==0.4.2
     # via langgraph
-langsmith==0.8.6
+langsmith==0.8.18
     # via
     #   agentic-workflows-v2
     #   langchain-core
@@ -248,15 +248,15 @@ librt==0.11.0 ; platform_python_implementation != 'PyPy'
     # via mypy
 limits==5.8.0
     # via slowapi
-litellm==1.80.0
+litellm==1.89.3
     # via agentic-workflows-v2
 lupa==2.8
     # via fakeredis
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
     # via rich
 markupsafe==3.0.3
     # via jinja2
-mcp==1.27.0
+mcp==1.28.0
     # via claude-agent-sdk
 mdurl==0.1.2
     # via markdown-it-py
@@ -274,50 +274,50 @@ mypy-extensions==1.1.0
     #   mypy
 nodeenv==1.10.0
     # via pre-commit
-numpy==2.4.4
+numpy==2.4.6
     # via
     #   agentic-tools
     #   lancedb
-ollama==0.6.1
+ollama==0.6.2
     # via
     #   agentic-workflows-v2
     #   langchain-ollama
-openai==2.41.1
+openai==2.43.0
     # via
     #   agentic-tools
     #   langchain-openai
     #   litellm
-opentelemetry-api==1.41.1
+opentelemetry-api==1.42.1
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-exporter-prometheus
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.41.0
+opentelemetry-exporter-otlp-proto-common==1.42.1
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-exporter-otlp-proto-grpc==1.41.0
+opentelemetry-exporter-otlp-proto-grpc==1.42.1
     # via agentic-workflows-v2
-opentelemetry-exporter-otlp-proto-http==1.41.0
+opentelemetry-exporter-otlp-proto-http==1.42.1
     # via agentic-workflows-v2
-opentelemetry-exporter-prometheus==0.62b1
+opentelemetry-exporter-prometheus==0.63b1
     # via agentic-workflows-v2
-opentelemetry-proto==1.41.0
+opentelemetry-proto==1.42.1
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-opentelemetry-sdk==1.41.1
+opentelemetry-sdk==1.42.1
     # via
     #   agentic-workflows-v2
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-exporter-prometheus
-opentelemetry-semantic-conventions==0.62b1
+opentelemetry-semantic-conventions==0.63b1
     # via opentelemetry-sdk
-orjson==3.11.8
+orjson==3.11.9
     # via
     #   langgraph-checkpoint-postgres
     #   langgraph-sdk
@@ -336,11 +336,11 @@ packaging==25.0
     #   langsmith
     #   limits
     #   pytest
-pathspec==1.0.4
+pathspec==1.1.1
     # via
     #   black
     #   mypy
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   black
     #   python-discovery
@@ -349,12 +349,12 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.5.1
+pre-commit==4.6.0
 prometheus-client==0.25.0
     # via
     #   agentic-workflows-v2
     #   opentelemetry-exporter-prometheus
-propcache==0.4.1
+propcache==0.5.2
     # via
     #   aiohttp
     #   yarl
@@ -400,9 +400,9 @@ pydantic==2.13.4
     #   ollama
     #   openai
     #   pydantic-settings
-pydantic-core==2.46.4
+pydantic-core==2.47.0
     # via pydantic
-pydantic-settings==2.13.1
+pydantic-settings==2.14.2
     # via
     #   agentic-workflows-v2
     #   mcp
@@ -412,12 +412,12 @@ pygments==2.20.0
     # via
     #   pytest
     #   rich
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via
     #   agentic-workflows-v2
     #   mcp
     #   redis
-pytest==9.0.3
+pytest==9.1.1
     # via
     #   agentic-tools
     #   agentic-v2-eval
@@ -440,7 +440,7 @@ pytest-timeout==2.4.0
     # via agentic-workflows-v2
 python-dateutil==2.9.0.post0
     # via lance-namespace-urllib3-client
-python-discovery==1.2.2
+python-discovery==1.4.2
     # via virtualenv
 python-dotenv==1.2.2
     # via
@@ -449,7 +449,7 @@ python-dotenv==1.2.2
     #   uvicorn
 python-json-logger==3.3.0
     # via agentic-workflows-v2
-python-multipart==0.0.26
+python-multipart==0.0.32
     # via
     #   agentic-workflows-v2
     #   mcp
@@ -476,7 +476,7 @@ referencing==0.37.0
     #   jsonschema-specifications
 regex==2026.5.9
     # via tiktoken
-requests==2.33.1
+requests==2.34.2
     # via
     #   google-auth
     #   google-genai
@@ -494,7 +494,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.15.17
+ruff==0.15.18
     # via
     #   agentic-v2-eval
     #   agentic-workflows-v2
@@ -502,7 +502,7 @@ shellingham==1.5.4
     # via typer
 six==1.17.0
     # via python-dateutil
-slowapi==0.1.9
+slowapi==0.1.10
     # via agentic-workflows-v2
 sniffio==1.3.1
     # via
@@ -510,15 +510,15 @@ sniffio==1.3.1
     #   claude-agent-sdk
     #   google-genai
     #   openai
-snowballstemmer==3.0.1
+snowballstemmer==3.1.1
     # via pydocstyle
 sortedcontainers==2.4.0
     # via fakeredis
 sqlite-vec==0.1.9
     # via langgraph-checkpoint-sqlite
-sse-starlette==3.3.4
+sse-starlette==3.4.5
     # via mcp
-starlette==1.0.0
+starlette==1.3.1
     # via
     #   fastapi
     #   mcp
@@ -527,24 +527,24 @@ tenacity==9.1.4
     # via
     #   google-genai
     #   langchain-core
-tiktoken==0.12.0
+tiktoken==0.13.0
     # via
     #   langchain-openai
     #   litellm
-tokenizers==0.22.2
+tokenizers==0.23.1
     # via litellm
 tomli==2.4.1 ; python_full_version <= '3.11'
     # via coverage
-tqdm==4.67.3
+tqdm==4.68.3
     # via
     #   huggingface-hub
     #   lancedb
     #   openai
-typer==0.24.1
+typer==0.26.7
     # via
     #   agentic-workflows-v2
     #   huggingface-hub
-types-pyyaml==6.0.12.20260408
+types-pyyaml==6.0.12.20260518
     # via agentic-v2-eval
 typing-extensions==4.15.0
     # via
@@ -584,23 +584,23 @@ typing-inspection==0.4.2
     #   pydantic-settings
 tzdata==2026.2 ; sys_platform == 'win32'
     # via psycopg
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   lance-namespace-urllib3-client
     #   requests
-uuid-utils==0.16.0
+uuid-utils==0.16.2
     # via
     #   langchain-core
     #   langsmith
-uvicorn==0.44.0
+uvicorn==0.49.0
     # via
     #   agentic-workflows-v2
     #   mcp
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
-virtualenv==21.2.4
+virtualenv==21.5.1
     # via pre-commit
-watchfiles==1.1.1
+watchfiles==1.2.0
     # via uvicorn
 websockets==16.0
     # via
@@ -608,15 +608,15 @@ websockets==16.0
     #   google-genai
     #   langsmith
     #   uvicorn
-wrapt==2.1.2
+wrapt==2.2.2
     # via deprecated
 xxhash==3.7.0
     # via
     #   langgraph
     #   langsmith
-yarl==1.23.0
+yarl==1.24.2
     # via aiohttp
 zipp==3.23.1
     # via importlib-metadata
-zstandard==0.23.0
+zstandard==0.25.0
     # via langsmith
