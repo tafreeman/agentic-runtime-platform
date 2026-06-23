@@ -4,16 +4,25 @@ Companion to :mod:`agentic_v2.models.ollama_discovery`. Both feed
 ``enumerate_known_models`` so the model router lists what is actually runnable
 right now, not just the static tier chains.
 
-- **LM Studio** — an OpenAI-compatible local server. ``GET {host}/v1/models``
-  lists loaded models. Host from ``LMSTUDIO_HOST`` (default
-  ``http://127.0.0.1:12340``) — the exact host the ``lmstudio`` backend sends
-  inference to — so a discovered ``lmstudio:<id>`` is always reachable.
+- **LM Studio** — a local server exposing both LM Studio's *native* REST API
+  (``GET {host}/api/v0/models``) and an OpenAI-compatible shim
+  (``GET {host}/v1/models``). Discovery prefers the native endpoint because it
+  lists the **whole downloaded library** with a ``type`` (``llm`` / ``vlm`` /
+  ``embeddings``) and a ``state`` (``loaded`` / ``not-loaded``); the OpenAI shim
+  only reports models currently *loaded* into memory, so on its own it surfaces
+  one or two models even when the library is large. The native payload is parsed
+  when present and the OpenAI shim is the fallback for older servers.
+
+  The host is resolved by :func:`resolve_lmstudio_host`: ``LMSTUDIO_HOST`` wins
+  when set, otherwise the LM Studio default port (``1234``) is probed first and
+  the legacy ARP port (``12340``) second. The ``lmstudio`` backend resolves the
+  host the *same* way, so a discovered ``lmstudio:<id>`` is always reachable at
+  the host the backend will target.
 - **ONNX** — onnxruntime-genai model folders, identified by a
-  ``genai_config.json``. Scanned under ``ONNX_MODEL_DIR`` / ``AIGALLERY_CACHE``
-  resolved exactly as ``OnnxBackend.model_dir`` (the *same* root the backend
-  joins ``onnx:<relpath>`` against), so a discovered id is always runnable. When
-  neither is set the backend resolves relative to the CWD, so there is no
-  catalog-wide root and discovery returns nothing.
+  ``genai_config.json``. Scanned under the roots ``OnnxBackend`` also resolves
+  against (``ONNX_MODEL_DIR`` — one or more roots, plus the ``~/.cache/aigallery``
+  default), so a discovered ``onnx:<relpath>`` is exactly what the backend joins
+  and loads.
 
 Best-effort by design: any probe failure contributes no models, so callers
 degrade to the static catalog rather than erroring. Bounded timeouts and a
@@ -24,7 +33,9 @@ from __future__ import annotations
 
 import logging
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -32,96 +43,242 @@ from .secrets import get_first_secret
 
 logger = logging.getLogger(__name__)
 
-# Mirror build_lmstudio_model: the lmstudio backend reads only LMSTUDIO_HOST and
-# defaults to 12340. Probing any other host or env var would advertise models
-# the backend cannot reach, so discovery resolves the host identically.
-_LMSTUDIO_HOST_ENV = "LMSTUDIO_HOST"
-_LMSTUDIO_DEFAULT_HOST = "http://127.0.0.1:12340"
-_LMSTUDIO_MODELS_PATH = "/v1/models"
 
-# Mirror OnnxBackend.model_dir resolution so discovered relpaths round-trip.
-_ONNX_ENV_VARS = ("ONNX_MODEL_DIR", "AIGALLERY_CACHE")
-_GENAI_CONFIG = "genai_config.json"
-_ONNX_SCAN_MAX_DEPTH = 6
+@dataclass(frozen=True)
+class LocalModelInfo:
+    """A model discovered from a local provider (LM Studio or ONNX).
+
+    Mirrors the slice of :class:`~agentic_v2.models.ollama_discovery.OllamaModelInfo`
+    the console consumes: a provider-prefixed id, whether it is loaded right now
+    (LM Studio's ``state``; always ``False`` for the filesystem-scanned ONNX
+    provider), and any capability badges (e.g. ``vision`` for an LM Studio
+    ``vlm``).
+    """
+
+    id: str  # provider-prefixed, e.g. "lmstudio:google/gemma-3-12b"
+    running: bool = False
+    capabilities: tuple[str, ...] = field(default=())
+
+
+# ---------------------------------------------------------------------------
+# Shared HTTP helper
+# ---------------------------------------------------------------------------
 
 _HTTP_TIMEOUT_SECONDS = 4.0
 
-# LM Studio's /v1/models lists embedding / TTS / etc. alongside chat models with
-# no type tag, so filter obvious non-chat ids by name to keep the router clean.
+
+def _get_json(url: str) -> dict[str, Any] | None:
+    """GET ``url`` and return a parsed JSON object, or ``None`` on any failure.
+
+    A ``None`` return means "host unreachable / not this provider"; an empty
+    payload still parses to a dict, distinguishing "reachable but no models".
+    """
+    try:
+        response = httpx.get(url, timeout=_HTTP_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as exc:
+        logger.debug("Local discovery probe failed for %s: %s", url, exc)
+        return None
+    return data if isinstance(data, dict) else None
+
+
+# ---------------------------------------------------------------------------
+# LM Studio
+# ---------------------------------------------------------------------------
+
+_LMSTUDIO_HOST_ENV = "LMSTUDIO_HOST"
+# LM Studio's documented default is :1234; ARP historically shipped :12340.
+# Probe the standard port first, then the legacy one, so an operator running
+# either is discovered without setting LMSTUDIO_HOST. resolve_lmstudio_host()
+# (used by the backend) follows the same order, keeping discovered == runnable.
+_LMSTUDIO_DEFAULT_PORTS = (1234, 12340)
+_LMSTUDIO_NATIVE_PATH = "/api/v0/models"  # full library + type + state
+_LMSTUDIO_OPENAI_PATH = "/v1/models"  # fallback: loaded models only, no type
+
+# Native-API model types usable as chat backends. "embeddings" (and any other
+# non-chat type) is excluded; "vlm" is chat-capable and gets a vision badge.
+_LMSTUDIO_CHAT_TYPES = frozenset({"llm", "vlm"})
+
+# OpenAI-shim fallback has no type field, so filter obvious non-chat ids by name.
 _NON_CHAT_MARKERS = ("embed", "tts", "whisper", "rerank")
 
 
 def _is_chat_model_id(model_id: str) -> bool:
-    """Heuristic: exclude embedding/TTS/etc. ids LM Studio reports as models."""
+    """Heuristic for the OpenAI-shim fallback (no ``type`` field available)."""
     lowered = model_id.lower()
     return not any(marker in lowered for marker in _NON_CHAT_MARKERS)
 
 
-def _lmstudio_hosts() -> list[str]:
-    """Resolve the LM Studio base URL exactly as ``build_lmstudio_model`` does.
+def _normalize_lmstudio_host(raw: str) -> str:
+    """Strip a trailing ``/`` and ``/v1`` so paths can be appended cleanly.
 
-    Reads ``LMSTUDIO_HOST`` (default ``http://127.0.0.1:12340``) — the single
-    host the ``lmstudio`` backend sends inference to — so a discovered
-    ``lmstudio:<id>`` is guaranteed reachable rather than advertised from a port
-    the backend never queries.
+    ``LMSTUDIO_HOST`` may be given with or without the ``/v1`` suffix the
+    backend appends; discovery hits ``/api/v0/...`` and ``/v1/...`` itself, so
+    it needs the bare host either way.
     """
-    host = os.environ.get(_LMSTUDIO_HOST_ENV, _LMSTUDIO_DEFAULT_HOST)
-    return [host.rstrip("/")]
+    host = raw.rstrip("/")
+    if host.endswith("/v1"):
+        host = host[: -len("/v1")]
+    return host
 
 
-def discover_lmstudio_models() -> list[str]:
-    """Discover models served by a local LM Studio server (best-effort).
+def _lmstudio_candidate_hosts() -> list[str]:
+    """Hosts to probe, honoring ``LMSTUDIO_HOST`` then the default port order."""
+    explicit = os.environ.get(_LMSTUDIO_HOST_ENV)
+    if explicit:
+        return [_normalize_lmstudio_host(explicit)]
+    return [f"http://127.0.0.1:{port}" for port in _LMSTUDIO_DEFAULT_PORTS]
 
-    Returns de-duplicated ``lmstudio:<id>`` ids from the first reachable host,
-    or ``[]`` if none responds. Never raises.
-    """
-    discovered: list[str] = []
+
+def _parse_native_models(data: dict[str, Any]) -> list[LocalModelInfo]:
+    """Map an ``/api/v0/models`` payload to records (full library + type/state)."""
+    discovered: list[LocalModelInfo] = []
     seen: set[str] = set()
-    for host in _lmstudio_hosts():
-        try:
-            response = httpx.get(
-                f"{host}{_LMSTUDIO_MODELS_PATH}", timeout=_HTTP_TIMEOUT_SECONDS
+    for entry in data.get("data", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        model_id = entry.get("id")
+        if not isinstance(model_id, str) or not model_id:
+            continue
+        model_type = entry.get("type")
+        # Exclude known non-chat types; keep when the type is absent/unknown so
+        # an unexpected payload degrades to "list it" rather than "drop it".
+        if (
+            isinstance(model_type, str)
+            and model_type.lower() not in _LMSTUDIO_CHAT_TYPES
+        ):
+            continue
+        full_id = f"lmstudio:{model_id}"
+        if full_id in seen:
+            continue
+        seen.add(full_id)
+        is_vision = isinstance(model_type, str) and model_type.lower() == "vlm"
+        discovered.append(
+            LocalModelInfo(
+                id=full_id,
+                running=entry.get("state") == "loaded",
+                capabilities=("vision",) if is_vision else (),
             )
-            response.raise_for_status()
-            data = response.json()
-        except Exception as exc:
-            logger.debug("LM Studio discovery failed for %s: %s", host, exc)
-            continue
-        if not isinstance(data, dict):
-            continue
-        for entry in data.get("data", []) or []:
-            if not isinstance(entry, dict):
-                continue
-            model_id = entry.get("id")
-            if not isinstance(model_id, str) or not model_id:
-                continue
-            if not _is_chat_model_id(model_id):
-                continue
-            full_id = f"lmstudio:{model_id}"
-            if full_id not in seen:
-                seen.add(full_id)
-                discovered.append(full_id)
-        # First reachable host wins; don't double-count across candidates.
-        if discovered:
-            break
+        )
     return discovered
 
 
-def _onnx_roots() -> list[Path]:
-    """Resolve the ONNX root the ``OnnxBackend`` also resolves against.
+def _parse_openai_models(data: dict[str, Any]) -> list[LocalModelInfo]:
+    """Map a ``/v1/models`` payload to records (loaded only, name-filtered)."""
+    discovered: list[LocalModelInfo] = []
+    seen: set[str] = set()
+    for entry in data.get("data", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        model_id = entry.get("id")
+        if not isinstance(model_id, str) or not model_id:
+            continue
+        if not _is_chat_model_id(model_id):
+            continue
+        full_id = f"lmstudio:{model_id}"
+        if full_id in seen:
+            continue
+        seen.add(full_id)
+        discovered.append(LocalModelInfo(id=full_id))
+    return discovered
 
-    Mirrors ``OnnxBackend.model_dir`` (``ONNX_MODEL_DIR`` / ``AIGALLERY_CACHE``
-    via the shared secret resolver, with ``~`` expanded) so a discovered
-    ``onnx:<relpath>`` — taken relative to this root — is exactly what the
-    backend joins and loads. When neither is configured the backend resolves
-    ``onnx:<name>`` relative to the CWD, so there is no catalog-wide root to
-    scan and discovery returns nothing rather than advertising models the
-    backend cannot load.
+
+def _fetch_lmstudio_models(host: str) -> list[LocalModelInfo] | None:
+    """Probe one host: native API first, OpenAI shim second.
+
+    Returns the chat models (possibly an empty list when the server is up but
+    has no chat models) if the host responds, or ``None`` when the host is
+    unreachable / not an LM Studio server.
     """
-    configured = get_first_secret(*_ONNX_ENV_VARS, default="") or ""
-    if configured:
-        return [Path(configured).expanduser()]
+    native = _get_json(f"{host}{_LMSTUDIO_NATIVE_PATH}")
+    if native is not None:
+        return _parse_native_models(native)
+    openai = _get_json(f"{host}{_LMSTUDIO_OPENAI_PATH}")
+    if openai is not None:
+        return _parse_openai_models(openai)
+    return None
+
+
+def resolve_lmstudio_host() -> str:
+    """Resolve the bare LM Studio base host the backend should target.
+
+    Honors ``LMSTUDIO_HOST`` (no probe — the operator pinned it); otherwise
+    returns the first reachable default-port host, falling back to the first
+    candidate (``:1234``) so the backend has a deterministic target and clear
+    error messages even when no server is up. :func:`discover_lmstudio_models`
+    walks the same candidate order, so a discovered id is reachable here.
+    """
+    explicit = os.environ.get(_LMSTUDIO_HOST_ENV)
+    if explicit:
+        return _normalize_lmstudio_host(explicit)
+    candidates = [f"http://127.0.0.1:{port}" for port in _LMSTUDIO_DEFAULT_PORTS]
+    for host in candidates:
+        if _fetch_lmstudio_models(host) is not None:
+            return host
+    return candidates[0]
+
+
+def discover_lmstudio_models() -> list[LocalModelInfo]:
+    """Discover models served by a local LM Studio server (best-effort).
+
+    Returns records from the first reachable host (native API preferred), or
+    ``[]`` if none responds. Never raises.
+    """
+    for host in _lmstudio_candidate_hosts():
+        result = _fetch_lmstudio_models(host)
+        if result is not None:
+            # First reachable host wins, even when it reports no chat models.
+            return result
     return []
+
+
+# ---------------------------------------------------------------------------
+# ONNX
+# ---------------------------------------------------------------------------
+
+# Mirror OnnxBackend.model_dir resolution so discovered relpaths round-trip.
+_ONNX_ENV_VARS = ("ONNX_MODEL_DIR", "AIGALLERY_CACHE")
+# Default root shipped by the AI Dev Gallery; resolved when no env override is
+# set. OnnxBackend defaults to the same root so discovered == runnable.
+_ONNX_DEFAULT_ROOT = "~/.cache/aigallery"
+# Multiple roots may be configured at once (e.g. aigallery + .aitk + .foundry),
+# separated by os.pathsep so a single env var can list them all.
+_GENAI_CONFIG = "genai_config.json"
+_ONNX_SCAN_MAX_DEPTH = 6
+
+
+def parse_onnx_roots(configured: str) -> list[Path]:
+    """Parse a root spec into resolved ONNX roots, widest-compatible order.
+
+    ``configured`` may list several roots separated by ``os.pathsep``; the
+    ``~/.cache/aigallery`` default is always appended last (so explicit roots
+    win on id collisions) and ``~`` is expanded. The shared parser keeps
+    :func:`onnx_roots` (discovery) and ``OnnxBackend`` (loading) resolving the
+    *same* roots, so a discovered ``onnx:<relpath>`` is loadable.
+    """
+    roots: list[Path] = []
+    seen: set[Path] = set()
+
+    def _add(raw: str) -> None:
+        text = raw.strip()
+        if not text:
+            return
+        resolved = Path(text).expanduser()
+        if resolved not in seen:
+            seen.add(resolved)
+            roots.append(resolved)
+
+    for part in configured.split(os.pathsep):
+        _add(part)
+    _add(_ONNX_DEFAULT_ROOT)
+    return roots
+
+
+def onnx_roots() -> list[Path]:
+    """Resolve the ONNX roots from ``ONNX_MODEL_DIR`` / ``AIGALLERY_CACHE``."""
+    configured = get_first_secret(*_ONNX_ENV_VARS, default="") or ""
+    return parse_onnx_roots(configured)
 
 
 def _iter_genai_configs(root: Path, max_depth: int = _ONNX_SCAN_MAX_DEPTH):
@@ -143,16 +300,17 @@ def _iter_genai_configs(root: Path, max_depth: int = _ONNX_SCAN_MAX_DEPTH):
                 continue
 
 
-def discover_onnx_models() -> list[str]:
-    """Discover onnxruntime-genai models under the configured ONNX root.
+def discover_onnx_models() -> list[LocalModelInfo]:
+    """Discover onnxruntime-genai models under the configured ONNX roots.
 
-    Returns de-duplicated ``onnx:<relpath>`` ids, where ``relpath`` is the model
-    folder relative to the root — exactly what ``OnnxBackend`` resolves against,
-    so every discovered id is runnable. Never raises.
+    Returns de-duplicated ``onnx:<relpath>`` records, where ``relpath`` is the
+    model folder relative to the root it was found under — exactly what
+    ``OnnxBackend`` resolves against, so every discovered id is runnable. The
+    first root to claim a given relpath wins. Never raises.
     """
-    discovered: list[str] = []
+    discovered: list[LocalModelInfo] = []
     seen: set[str] = set()
-    for root in _onnx_roots():
+    for root in onnx_roots():
         try:
             if not root.is_dir():
                 continue
@@ -161,10 +319,17 @@ def discover_onnx_models() -> list[str]:
                 model_id = f"onnx:{rel}"
                 if model_id not in seen:
                     seen.add(model_id)
-                    discovered.append(model_id)
+                    discovered.append(LocalModelInfo(id=model_id))
         except Exception as exc:
             logger.debug("ONNX discovery failed for %s: %s", root, exc)
     return discovered
 
 
-__all__ = ["discover_lmstudio_models", "discover_onnx_models"]
+__all__ = [
+    "LocalModelInfo",
+    "discover_lmstudio_models",
+    "discover_onnx_models",
+    "onnx_roots",
+    "parse_onnx_roots",
+    "resolve_lmstudio_host",
+]

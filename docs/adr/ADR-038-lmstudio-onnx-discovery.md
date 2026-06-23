@@ -26,27 +26,53 @@ these models by id, but the console never listed them, so they were undiscoverab
 ## Decision
 
 Add `agentic_v2/models/local_discovery.py` with two best-effort discovery
-functions, merged into `enumerate_known_models()` exactly like the Ollama source:
+functions, merged into `enumerate_known_models()` exactly like the Ollama source.
+Both return `LocalModelInfo` records (id + optional `running` / `capabilities`)
+so the console can render the same badges it draws for Ollama:
 
-- **`discover_lmstudio_models()`** — `GET {host}/v1/models` (OpenAI-compatible).
-  Host from `LMSTUDIO_HOST` / `LM_STUDIO_HOST`; with none set, common ports
-  (`1234`, then `12340`) are tried and the first reachable host wins. Returns
-  `lmstudio:<id>`.
+- **`discover_lmstudio_models()`** — prefers LM Studio's **native** REST API
+  `GET {host}/api/v0/models`, which lists the *whole downloaded library* with a
+  `type` (`llm` / `vlm` / `embeddings`) and a `state` (`loaded` / `not-loaded`);
+  the OpenAI-compatible `GET {host}/v1/models` is the fallback for older servers
+  but reports only *loaded* models. Non-chat `type`s are filtered (`vlm` is kept
+  and tagged `vision`); `state == loaded` sets `running`. The host comes from
+  `resolve_lmstudio_host()`: `LMSTUDIO_HOST` wins, else `:1234` (LM Studio
+  default) is probed then `:12340` (legacy ARP port), first reachable winning.
+  Returns `lmstudio:<id>`.
 - **`discover_onnx_models()`** — bounded-depth filesystem walk for
-  `genai_config.json` under the ONNX root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`,
-  default `~/.cache/aigallery`). Returns `onnx:<relpath>`, where `relpath` is the
-  model folder **relative to that root** — i.e. exactly what `OnnxBackend`
-  resolves against, so every discovered id is runnable (discovered == runnable).
+  `genai_config.json` under each ONNX root from `parse_onnx_roots()`:
+  `ONNX_MODEL_DIR` / `AIGALLERY_CACHE` (one or more roots, `os.pathsep`-separated)
+  plus the `~/.cache/aigallery` default (always appended). Returns
+  `onnx:<relpath>`, where `relpath` is the model folder **relative to the root it
+  was found under** — exactly what `OnnxBackend` resolves against, so every
+  discovered id is runnable (**discovered == runnable**).
 
-`enumerate_known_models()` appends these as `tier 0`, `available: True` entries
-(plain ids — no cloud/capabilities/running metadata, which are Ollama-specific).
-`onnx` is added to `PROVIDER_ENV_KEYS` (no key required) so the router marks the
-group available rather than "no keys". The UI groups by provider prefix, so new
+The **discovered == runnable** invariant is enforced by sharing resolution: the
+`lmstudio` backend builds its base URL via `resolve_lmstudio_host()`, and
+`OnnxBackend` resolves `onnx:` ids via `parse_onnx_roots()` (with `~` expansion),
+so the backend always targets the host / searches the roots discovery scanned.
+
+`enumerate_known_models()` enriches matching catalog entries and appends the rest
+as `tier 0`, `available: True` (carrying `running` / `capabilities` when present).
+`onnx` is in `PROVIDER_ENV_KEYS` (no key required) so the router marks the group
+available rather than "no keys". The UI groups by provider prefix, so the
 `lmstudio` and `onnx` groups appear with **no UI change**.
 
 Both are best-effort: a down LM Studio server or an absent/*unreadable* ONNX root
-contributes nothing, so the endpoint degrades to the prior catalog. The HTTP
+contributes nothing, so the endpoint degrades to the prior catalog. Each HTTP
 probe is bounded by a 4 s timeout; the filesystem walk is bounded to depth 6.
+
+### Amendment (2026-06-23)
+
+The first cut shipped a narrower form than the decision above: discovery hit only
+`/v1/models` on a single `LMSTUDIO_HOST` (default `:12340`), and ONNX returned
+nothing unless a root was explicitly configured. In practice LM Studio surfaced
+just the one or two *loaded* models (vs. Ollama's full library) and ONNX stayed
+dark for operators using the default aigallery cache. This amendment restores the
+intended behavior and extends it: native-API preference with `/v1` fallback,
+the `:1234`→`:12340` probe shared with the backend, the `~/.cache/aigallery`
+default, multi-root scanning, an `expanduser()` fix in `OnnxBackend`, and richer
+`LocalModelInfo` records (running / vision).
 
 ## Consequences
 

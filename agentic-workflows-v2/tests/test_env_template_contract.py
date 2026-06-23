@@ -13,6 +13,11 @@ REQUIRED_ENV_EXAMPLE_KEYS = {
     "AGENTIC_SHELL_ALLOWED_COMMANDS",
     "AGENTIC_BLOCK_PRIVATE_IPS",
     "AGENTIC_MEMORY_PATH",
+    # Local model discovery (ADR-037/038) — operators wire these to surface
+    # their local libraries in the model-router probe.
+    "OLLAMA_BASE_URL",
+    "LMSTUDIO_HOST",
+    "ONNX_MODEL_DIR",
 }
 
 

@@ -49,7 +49,9 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..models.router import FallbackChain, ModelRouter, ModelTier
 
+from ..models.cloud_discovery import discover_cloud_models
 from ..models.local_discovery import (
+    LocalModelInfo,
     discover_lmstudio_models,
     discover_onnx_models,
 )
@@ -234,41 +236,14 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     return summary
 
 
-def enumerate_known_models() -> list[dict[str, Any]]:
-    """Return every tier-chain model plus live-discovered Ollama models.
+def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
+    """Enrich/append live Ollama discovery into ``models`` in place.
 
-    Each entry carries the model id, its provider prefix, the lowest tier the
-    model appears in (``0`` for live-discovered models not in any chain), and
-    whether that provider currently has credentials configured. Unlike
-    :func:`probe_and_update_tier_defaults` (which returns one resolved default
-    per tier), this surfaces the *full* catalog plus whatever the local Ollama
-    server and (when ``OLLAMA_API_KEY`` is set) the hosted cloud expose right
-    now, so the console shows everything currently runnable — not just the
-    static fallback chains.
+    Models already in the catalog get marked available and enriched with cloud /
+    capability / running metadata from the raw ``/api/tags`` + ``/api/ps``
+    payloads; models absent from every tier chain are appended at tier 0 so the
+    console reflects everything currently runnable.
     """
-    lowest_tier: dict[str, int] = {}
-    for tier, chain in _TIER_FALLBACK_CHAINS.items():
-        for model_id in chain:
-            existing = lowest_tier.get(model_id)
-            if existing is None or tier < existing:
-                lowest_tier[model_id] = tier
-
-    models: list[dict[str, Any]] = [
-        {
-            "id": model_id,
-            "provider": provider_prefix(model_id),
-            "tier": tier,
-            "available": is_provider_available(provider_prefix(model_id)),
-        }
-        for model_id, tier in lowest_tier.items()
-    ]
-
-    # Merge in models the live Ollama probe reports as available now (local
-    # server + cloud when keyed), enriching with cloud / capability / running
-    # metadata from the raw /api/tags + /api/ps payloads. Catalog entries that
-    # are present get marked available and enriched; models absent from every
-    # tier chain are appended at tier 0 so the console reflects everything
-    # currently runnable — not just the static fallback chains.
     discovered = discover_ollama_models()
     by_id = {info.id: info for info in discovered}
     catalog_ids = {m["id"] for m in models}
@@ -294,22 +269,107 @@ def enumerate_known_models() -> list[dict[str, Any]]:
             }
         )
 
-    # Other local providers: LM Studio (OpenAI-compatible server) and ONNX
-    # (onnxruntime-genai folders). These are plain id lists — no cloud/caps
-    # metadata — appended at tier 0 when not already in the catalog (ADR-038).
+
+def _enrich_local_model(model: dict[str, Any], info: LocalModelInfo) -> None:
+    """Mark a catalog ``model`` available and copy LM Studio / ONNX metadata."""
+    model["available"] = True
+    if info.running:
+        model["running"] = True
+    if info.capabilities:
+        model["capabilities"] = list(info.capabilities)
+
+
+def _merge_local_models(models: list[dict[str, Any]]) -> None:
+    """Enrich/append LM Studio + ONNX discovery into ``models`` in place.
+
+    LM Studio's native API supplies the full downloaded library plus running /
+    vision metadata; ONNX supplies filesystem-scanned folders. Catalog entries
+    that are discovered get enriched; the rest are appended at tier 0 (ADR-038).
+    """
+    local_infos = [*discover_lmstudio_models(), *discover_onnx_models()]
+    local_by_id = {info.id: info for info in local_infos}
+    for model in models:
+        info = local_by_id.get(model["id"])
+        if info is not None:
+            _enrich_local_model(model, info)
     known_ids = {m["id"] for m in models}
-    for model_id in (*discover_lmstudio_models(), *discover_onnx_models()):
-        if model_id in known_ids:
+    for info in local_infos:
+        if info.id in known_ids:
             continue
-        known_ids.add(model_id)
+        known_ids.add(info.id)
+        entry: dict[str, Any] = {
+            "id": info.id,
+            "provider": provider_prefix(info.id),
+            "tier": 0,
+            "available": True,
+        }
+        if info.running:
+            entry["running"] = True
+        if info.capabilities:
+            entry["capabilities"] = list(info.capabilities)
+        models.append(entry)
+
+
+def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
+    """Append live cloud-provider listings (OpenAI/Anthropic/Gemini/GitHub).
+
+    Skipped entirely in no-LLM mode: that mode routes every tier to the
+    deterministic placeholder, so a live cloud listing would be both misleading
+    and a needless network/cost liability (it also keeps the unit suite — which
+    runs with ``AGENTIC_NO_LLM=1`` — hermetic). Discovered ids absent from the
+    static chains are appended at tier 0; only keyed providers make a call.
+    """
+    from ..settings import is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        return
+    known_ids = {m["id"] for m in models}
+    for info in discover_cloud_models():
+        if info.id in known_ids:
+            continue
+        known_ids.add(info.id)
         models.append(
             {
-                "id": model_id,
-                "provider": provider_prefix(model_id),
+                "id": info.id,
+                "provider": provider_prefix(info.id),
                 "tier": 0,
                 "available": True,
             }
         )
+
+
+def enumerate_known_models() -> list[dict[str, Any]]:
+    """Return every tier-chain model plus live-discovered local/cloud models.
+
+    Each entry carries the model id, its provider prefix, the lowest tier the
+    model appears in (``0`` for live-discovered models not in any chain), and
+    whether that provider currently has credentials configured. Unlike
+    :func:`probe_and_update_tier_defaults` (which returns one resolved default
+    per tier), this surfaces the *full* catalog plus whatever the local Ollama /
+    LM Studio servers, the ONNX cache, and (when keyed) the Ollama cloud expose
+    right now, so the console shows everything currently runnable — not just the
+    static fallback chains.
+    """
+    lowest_tier: dict[str, int] = {}
+    for tier, chain in _TIER_FALLBACK_CHAINS.items():
+        for model_id in chain:
+            existing = lowest_tier.get(model_id)
+            if existing is None or tier < existing:
+                lowest_tier[model_id] = tier
+
+    models: list[dict[str, Any]] = [
+        {
+            "id": model_id,
+            "provider": provider_prefix(model_id),
+            "tier": tier,
+            "available": is_provider_available(provider_prefix(model_id)),
+        }
+        for model_id, tier in lowest_tier.items()
+    ]
+
+    _merge_ollama_models(models)
+    _merge_local_models(models)
+    _merge_cloud_models(models)
 
     models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
     return models
