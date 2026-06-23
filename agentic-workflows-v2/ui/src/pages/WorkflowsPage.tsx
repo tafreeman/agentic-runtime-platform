@@ -46,27 +46,61 @@ export default function WorkflowsPage() {
     );
   }, [workflows, query]);
 
+  const definitionCount = workflows?.length ?? 0;
+
   return (
     <div className="flex h-full flex-col">
       <BTopBar path="workflows" />
 
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-4 p-6">
-          {/* Header */}
-          <div>
-            <h1
-              className="text-[24px] font-semibold text-b-text"
-              style={{ letterSpacing: "-0.5px" }}
-            >
-              Workflows
-            </h1>
-            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ {workflows?.length ?? 0} definitions · filter with <span className="text-b-clay">/</span>
+        <div className="mx-auto max-w-3xl space-y-5 p-6">
+          {/* Header — editorial serif title + stat numeric */}
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h1
+                className="text-b-text"
+                style={{
+                  fontFamily: "var(--b-font-heading)",
+                  fontSize: "30px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.8px",
+                  lineHeight: 1,
+                }}
+              >
+                Workflows
+              </h1>
+              <div className="mt-2 font-mono text-[11px] text-b-text-dim">
+                $ {definitionCount} definitions · filter with{" "}
+                <span className="text-b-clay">/</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div
+                className="text-b-text tabular-nums"
+                style={{
+                  fontFamily: "var(--b-font-heading)",
+                  fontSize: "34px",
+                  fontWeight: 600,
+                  letterSpacing: "-1.2px",
+                  lineHeight: 1,
+                }}
+              >
+                {definitionCount}
+              </div>
+              <div className="mt-1 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
+                Definitions
+              </div>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="flex items-center gap-2 rounded-sm border border-b-line bg-b-bg0 px-3 py-2 focus-within:ring-1 focus-within:ring-b-clay/50">
+          {/* Search — card with theme tokens */}
+          <div
+            className="flex items-center gap-2 border border-b-line bg-b-bg1 px-3 py-2 focus-within:ring-1 focus-within:ring-b-clay/50"
+            style={{
+              borderRadius: "var(--b-rad-sm)",
+              borderWidth: "var(--b-bw)",
+            }}
+          >
             <span className="font-mono text-[13px] font-bold text-b-clay">
               /
             </span>
@@ -88,34 +122,52 @@ export default function WorkflowsPage() {
 
           {/* Loading */}
           {isLoading && (
-            <div className="space-y-[2px]">
+            <div className="space-y-[3px]">
               {(["sk-0", "sk-1", "sk-2"] as const).map((skId) => (
                 <div
                   key={skId}
-                  className="h-[52px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
+                  className="h-[58px] animate-pulse border border-b-line bg-b-bg1"
+                  style={{
+                    borderRadius: "var(--b-rad-lg)",
+                    borderWidth: "var(--b-bw)",
+                  }}
                 />
               ))}
             </div>
           )}
 
           {isError && !isLoading && (
-            <div className="rounded-sm border border-b-red/40 bg-b-red/10 px-3 py-3 font-mono text-[11px] text-b-red">
+            <div
+              className="border border-b-red/40 bg-b-red/10 px-3 py-3 font-mono text-[11px] text-b-red"
+              style={{
+                borderRadius: "var(--b-rad-sm)",
+                borderWidth: "var(--b-bw)",
+              }}
+            >
               [!] {errorMessage}
             </div>
           )}
 
           {!isError &&
             !isLoading &&
-            (workflows?.length ?? 0) === 0 &&
+            definitionCount === 0 &&
             !query && (
-              <div className="rounded-sm border border-dashed border-b-line py-10 text-center font-mono text-[11px] text-b-text-dim">
+              <div
+                className="border border-dashed border-b-line py-12 text-center font-mono text-[11px] text-b-text-dim"
+                style={{ borderRadius: "var(--b-rad-lg)" }}
+              >
                 $ no workflow definitions found
               </div>
             )}
 
-          {/* List */}
-          {!isError && (workflows?.length ?? 0) > 0 && (
-            <div className="space-y-[2px]">
+          {/* List — hairline cards, clay accent bar on hover */}
+          {!isError && definitionCount > 0 && (
+            <div className="space-y-[3px]">
+              <div className="flex items-center gap-3 px-3 pb-1 font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint">
+                <span className="w-[14px]" aria-hidden="true" />
+                <span className="flex-1">Workflow</span>
+                <span>Last run</span>
+              </div>
               {filtered.map((name) => {
                 const latest = latestRunFor(runs, name);
                 return (
@@ -123,8 +175,17 @@ export default function WorkflowsPage() {
                     key={name}
                     to={`/workflows/${name}`}
                     data-testid={`workflow-link-${name}`}
-                    className="group flex items-center gap-3 border border-b-line border-l-2 bg-b-bg1 px-3 py-3 transition-colors hover:bg-b-bg2 hover:border-l-b-clay focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                    className="group relative flex items-center gap-3 overflow-hidden border border-b-line bg-b-bg1 px-3 py-[14px] transition-colors hover:bg-b-bg2 focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                    style={{
+                      borderRadius: "var(--b-rad-lg)",
+                      borderWidth: "var(--b-bw)",
+                    }}
                   >
+                    {/* clay accent bar — primary/active card pattern */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-b-clay transition-transform group-hover:scale-x-100 group-focus:scale-x-100"
+                    />
                     <span className="font-mono text-[14px] text-b-blue">
                       ▣
                     </span>
@@ -150,7 +211,10 @@ export default function WorkflowsPage() {
               })}
 
               {filtered.length === 0 && !isLoading && (
-                <div className="rounded-sm border border-dashed border-b-line py-10 text-center font-mono text-[11px] text-b-text-dim">
+                <div
+                  className="border border-dashed border-b-line py-12 text-center font-mono text-[11px] text-b-text-dim"
+                  style={{ borderRadius: "var(--b-rad-lg)" }}
+                >
                   no workflows match "
                   <span className="text-b-text">{query}</span>"
                 </div>

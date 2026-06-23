@@ -7,8 +7,8 @@ test.describe.serial('SLO: time-to-first-span p95 <= 2s', () => {
   test('record single latency sample', async ({ page }) => {
     await page.goto('/');
     const t0 = Date.now();
-    await page.getByRole('link', { name: /workflows/i }).click();
-    await page.getByRole('link', { name: /code_review/i }).click();
+    await page.getByTestId('nav-workflows').click();
+    await page.getByTestId('workflow-link-code_review').click();
     await page.getByTestId('run-button').click();
 
     // Wait for first DAG node render

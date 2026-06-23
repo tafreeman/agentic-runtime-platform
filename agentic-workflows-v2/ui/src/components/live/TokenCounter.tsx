@@ -3,11 +3,20 @@ import type { ExecutionEvent } from "../../api/types";
 
 interface Props {
   events: ExecutionEvent[];
+  /**
+   * "row" (default) renders the inline icon + token count + model count chip.
+   * "stat" renders just the formatted token total, inheriting the surrounding
+   * typography so it can sit inside an editorial stat tile.
+   */
+  variant?: "row" | "stat";
 }
 
-export default function TokenCounter({ events }: Readonly<Props>) {
+function tallyTokens(events: ExecutionEvent[]): {
+  totalTokens: number;
+  models: Set<string>;
+} {
   let totalTokens = 0;
-  let models = new Set<string>();
+  const models = new Set<string>();
 
   for (const e of events) {
     if (
@@ -19,6 +28,16 @@ export default function TokenCounter({ events }: Readonly<Props>) {
       totalTokens += e.tokens_used;
       if (e.model_used) models.add(e.model_used);
     }
+  }
+
+  return { totalTokens, models };
+}
+
+export default function TokenCounter({ events, variant = "row" }: Readonly<Props>) {
+  const { totalTokens, models } = tallyTokens(events);
+
+  if (variant === "stat") {
+    return <>{totalTokens.toLocaleString()}</>;
   }
 
   return (

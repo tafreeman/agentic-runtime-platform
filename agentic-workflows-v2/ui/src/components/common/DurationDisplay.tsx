@@ -4,7 +4,7 @@ interface Props {
 }
 
 export default function DurationDisplay({ ms, className = "" }: Readonly<Props>) {
-  if (ms == null) return <span className={className}>--</span>;
+  if (ms == null) return <span className={`tabular-nums ${className}`}>--</span>;
 
   let display: string;
   if (ms < 1000) {
@@ -17,5 +17,5 @@ export default function DurationDisplay({ ms, className = "" }: Readonly<Props>)
     display = `${minutes}m ${seconds}s`;
   }
 
-  return <span className={className}>{display}</span>;
+  return <span className={`tabular-nums ${className}`}>{display}</span>;
 }

@@ -13,6 +13,15 @@ interface Props {
   onSelectStep: (stepName: string | null) => void;
 }
 
+/** Theme-token card chrome (radius + border-width follow the active theme). */
+const CARD_STYLE = {
+  borderRadius: "var(--b-rad-sm)",
+  borderWidth: "var(--b-bw)",
+  borderStyle: "solid",
+} as const;
+
+const INSET_STYLE = { borderRadius: "var(--b-rad-sm)" } as const;
+
 function orderedStepNames(stepStates: Map<string, StepState>, stepOrder?: string[]): string[] {
   const known = new Set(stepStates.keys());
   const ordered: string[] = [];
@@ -48,7 +57,7 @@ export default function LiveStepDetailsList({
 
   if (names.length === 0) {
     return (
-      <div className="rounded-sm border border-b-line bg-b-bg1 px-3 py-4 text-center text-xs text-b-text-faint">
+      <div className="border-b-line bg-b-bg0 px-3 py-4 text-center font-mono text-[11px] text-b-text-faint" style={CARD_STYLE}>
         Waiting for step updates...
       </div>
     );
@@ -90,7 +99,7 @@ function StepPanel({
   const regionId = useId();
 
   return (
-    <div className="overflow-hidden rounded-sm border border-b-line bg-b-bg1">
+    <div className="overflow-hidden border-b-line bg-b-bg1" style={CARD_STYLE}>
       <button
         type="button"
         onClick={onToggle}
@@ -104,9 +113,14 @@ function StepPanel({
           <ChevronRight className="h-4 w-4 text-b-text-dim" />
         )}
 
-        <span className="flex-1 truncate text-sm font-medium text-b-text">{stepName}</span>
+        <span
+          className="flex-1 truncate text-[13px] font-semibold text-b-text"
+          style={{ fontFamily: "var(--b-font-heading)" }}
+        >
+          {stepName}
+        </span>
 
-        <div className="flex items-center gap-2 text-[11px] text-b-text-dim">
+        <div className="flex items-center gap-2 font-mono text-[11px] text-b-text-dim">
           {step.durationMs != null && (
             <span className="flex items-center gap-1">
               <Timer className="h-3 w-3" />
@@ -203,7 +217,8 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
       {isFailed && step.error && (
         <div
           data-testid="step-error"
-          className="rounded-sm border border-b-red/40 bg-b-red/10 px-3 py-2 font-mono text-[11px] text-b-red"
+          className="border border-b-red/40 bg-b-red/10 px-3 py-2 font-mono text-[11px] text-b-red"
+          style={INSET_STYLE}
         >
           {step.error}
         </div>
@@ -251,7 +266,8 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
         </div>
         <div
           data-testid="step-input"
-          className="max-h-60 overflow-y-auto rounded-sm bg-b-bg0 p-3 text-xs"
+          className="max-h-60 overflow-y-auto bg-b-bg0 p-3 text-xs"
+          style={INSET_STYLE}
         >
           {hasInput ? (
             <JsonViewer
@@ -271,7 +287,8 @@ export function LiveStepDetails({ step }: Readonly<LiveStepDetailsProps>) {
         </div>
         <div
           data-testid="step-output"
-          className="max-h-60 overflow-y-auto rounded-sm bg-b-bg0 p-3 text-xs"
+          className="max-h-60 overflow-y-auto bg-b-bg0 p-3 text-xs"
+          style={INSET_STYLE}
         >
           {(() => {
             if (hasOutput) {

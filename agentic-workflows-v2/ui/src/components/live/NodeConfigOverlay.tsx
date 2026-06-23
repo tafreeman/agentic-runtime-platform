@@ -149,22 +149,27 @@ export default function NodeConfigOverlay({
         aria-modal="true"
         aria-labelledby="node-config-title"
         className="relative h-screen max-h-screen w-full max-w-2xl overflow-hidden bg-b-bg1 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300"
+        style={{ borderLeft: "var(--b-bw) solid rgb(var(--b-clay))" }}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-b-line bg-b-bg2 px-6 py-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <Settings2 className="h-5 w-5 text-b-text-mid" />
+            <Settings2 className="h-5 w-5 text-b-clay" />
             <div>
-              <h2 id="node-config-title" className="text-lg font-semibold text-b-text">
+              <h2
+                id="node-config-title"
+                className="text-[17px] font-semibold text-b-text"
+                style={{ fontFamily: "var(--b-font-heading)" }}
+              >
                 Configure Step
               </h2>
-              <p className="text-sm text-b-text-dim">{stepName}</p>
+              <p className="font-mono text-[11px] text-b-text-dim">{stepName}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             type="button"
-            className="btn btn-ghost rounded-sm p-2"
+            className="btn btn-ghost rounded-b-sm p-2"
             aria-label="Close configuration panel"
           >
             <X aria-hidden="true" className="h-5 w-5 text-b-text-mid" />
@@ -183,7 +188,7 @@ export default function NodeConfigOverlay({
               ref={firstFocusableRef}
               value={config.model || ""}
               onChange={(e) => handleConfigChange("model", e.target.value)}
-              className="w-full rounded-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
+              className="w-full rounded-b-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
             >
               <option value="">Use Default (tier-based)</option>
               {availableModels.map((model) => (
@@ -207,7 +212,7 @@ export default function NodeConfigOverlay({
                 <button
                   onClick={handleCopyPrompt}
                   type="button"
-                  className="inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs text-b-text-mid hover:bg-b-bg2 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-b-sm px-2 py-1 text-xs text-b-text-mid hover:bg-b-bg2 transition-colors"
                   title="Copy prompt to clipboard"
                 >
                   <Copy className="h-3 w-3" />
@@ -223,7 +228,7 @@ export default function NodeConfigOverlay({
               }
               placeholder="Leave empty to use default instructions..."
               rows={6}
-              className="w-full rounded-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm font-mono text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors resize-none"
+              className="w-full rounded-b-sm border border-b-line bg-b-bg0 px-4 py-2 text-sm font-mono text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors resize-none"
             />
             <p className="mt-1 text-xs text-b-text-dim">
               Override the system prompt for this agent
@@ -251,7 +256,7 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="0.7"
-                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
+                className="w-full rounded-b-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
               <p className="mt-1 text-xs text-b-text-dim">
                 0.0 (deterministic) - 2.0 (creative)
@@ -276,7 +281,7 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="4096"
-                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
+                className="w-full rounded-b-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
               <p className="mt-1 text-xs text-b-text-dim">Maximum response length</p>
             </div>
@@ -300,7 +305,7 @@ export default function NodeConfigOverlay({
                   )
                 }
                 placeholder="1.0"
-                className="w-full rounded-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
+                className="w-full rounded-b-sm border border-b-line bg-b-bg0 px-3 py-2 text-sm text-b-text focus:border-b-clay focus:ring-1 focus:ring-b-clay/50 transition-colors"
               />
               <p className="mt-1 text-xs text-b-text-dim">
                 Nucleus sampling (0.0 - 1.0)
@@ -318,7 +323,7 @@ export default function NodeConfigOverlay({
                 {availableTools.map((tool) => (
                   <label
                     key={tool}
-                    className="flex items-center gap-2 rounded-sm border border-b-line bg-b-bg0 px-3 py-2 cursor-pointer hover:bg-b-bg2 transition-colors"
+                    className="flex items-center gap-2 rounded-b-sm border border-b-line bg-b-bg0 px-3 py-2 cursor-pointer hover:bg-b-bg2 transition-colors"
                   >
                     <input
                       type="checkbox"
@@ -336,7 +341,7 @@ export default function NodeConfigOverlay({
                           updated.length > 0 ? updated : undefined
                         );
                       }}
-                      className="rounded-sm border-b-line"
+                      className="rounded-b-sm border-b-line"
                     />
                     <span className="font-mono text-[11px] text-b-text-mid">{tool}</span>
                   </label>
@@ -349,7 +354,7 @@ export default function NodeConfigOverlay({
           )}
 
           {/* Info Box */}
-          <div className="rounded-sm border border-b-blue/40 bg-b-blue/10 p-3">
+          <div className="rounded-b-sm border border-b-blue/40 bg-b-blue/10 p-3">
             <p className="font-mono text-[11px] text-b-blue">
               <strong>Note:</strong> Configuration changes are applied immediately
               to the next execution of this step. Changes persist for the entire

@@ -51,38 +51,73 @@ export default function EvaluationRubricAccordion({
     <div className="space-y-3 py-2">
       {/* Header row: overall score, grade, pass/fail, rubric ID + version */}
       <div className="flex flex-wrap items-center gap-3 font-mono text-[11px]">
-        <span className="tabular-nums text-b-text">
-          score {detail.weighted_score.toFixed(1)}
+        <span
+          className="text-[15px] font-bold leading-none tabular-nums text-b-text"
+          style={{ fontFamily: "var(--b-font-heading)" }}
+        >
+          {detail.weighted_score.toFixed(1)}
         </span>
-        <span className="text-b-text-dim">grade</span>
+        <span className="text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+          weighted score
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+          grade
+        </span>
         <BPill tone={gradeToTone(detail.grade)}>{detail.grade}</BPill>
         <BPill tone={detail.passed ? "ok" : "err"}>
           {detail.passed ? "pass" : "fail"}
         </BPill>
-        <span className="text-b-text-faint">
+        <span className="text-b-text-dim">
           {detail.rubric_id} v{detail.rubric_version}
         </span>
       </div>
 
-      {/* Criteria table */}
+      {/* Rubric criteria card — design ref (evaluations 487-503): heading +
+          "YAML-defined · weighted · normalized" caption, then name / weight /
+          clay bar / score rows. */}
       {detail.criteria.length > 0 && (
-        <table className="w-full font-mono text-[11px]">
-          <thead>
-            <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
-              <th className="px-3 py-1">CRITERION</th>
-              <th className="px-3 py-1 text-right">SCORE</th>
-              <th className="px-3 py-1">WEIGHT</th>
-              <th className="px-3 py-1">BAR</th>
-              <th className="px-3 py-1"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {detail.criteria.map((c) => (
-              <CriterionRow key={c.criterion} criterion={c} />
-            ))}
-          </tbody>
-        </table>
+        <div
+          className="space-y-1 border border-b-line bg-b-bg1 p-[18px]"
+          style={{
+            borderWidth: "var(--b-bw)",
+            borderRadius: "var(--b-rad-lg)",
+          }}
+        >
+          <h3
+            className="m-0 whitespace-nowrap text-[13px] font-semibold text-b-text"
+            style={{ fontFamily: "var(--b-font-heading)" }}
+          >
+            Rubric criteria
+          </h3>
+          <div className="text-[10px] text-b-text-faint">
+            YAML-defined · weighted · normalized
+          </div>
+          <table className="w-full font-mono text-[11px]">
+            <thead>
+              <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
+                <th className="px-3 py-1">CRITERION</th>
+                <th className="px-3 py-1 text-right">SCORE</th>
+                <th className="px-3 py-1">WEIGHT</th>
+                <th className="px-3 py-1">BAR</th>
+                <th className="px-3 py-1"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {detail.criteria.map((c) => (
+                <CriterionRow key={c.criterion} criterion={c} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      {/* DESIGN-GAP: the design's scorecard "dimension breakdown" (caret rows
+          with expandable JUDGE REASONING + EVIDENCE per dimension — evaluations
+          452-484) has no backing data. RunEvaluationDetail exposes per-criterion
+          numeric scores only; `judge` is an opaque Record with no typed
+          per-dimension reasoning/evidence text. The criteria card above restyles
+          the data that does exist; reasoning/evidence is left out pending a
+          backend contract that surfaces it. */}
 
       {/* Score layers block */}
       {detail.score_layers && (

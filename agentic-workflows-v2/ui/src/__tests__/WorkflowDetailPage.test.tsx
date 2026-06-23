@@ -168,6 +168,29 @@ describe("WorkflowDetailPage", () => {
     });
   });
 
+  it("surfaces tier badges in the DAG header when nodes declare a tier", () => {
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "tiered_flow",
+        description: "Tiered workflow",
+        nodes: [
+          { id: "a", agent: "tier0_echo", description: "", depends_on: [], tier: "tier0" },
+          { id: "b", agent: "tier1_writer", description: "", depends_on: ["a"], tier: "tier1" },
+        ],
+        edges: [{ source: "a", target: "b" }],
+        inputs: [],
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderPage("/workflows/tiered_flow");
+
+    expect(screen.getByText("tier0")).toBeInTheDocument();
+    expect(screen.getByText("tier1")).toBeInTheDocument();
+    expect(screen.getByText("2 nodes · 1 edges")).toBeInTheDocument();
+  });
+
   it("offers a deterministic no-LLM demo run for the built-in smoke workflow", async () => {
     mockUseWorkflowDAG.mockReturnValue({
       data: {

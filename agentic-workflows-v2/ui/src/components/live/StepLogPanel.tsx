@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import type { ExecutionEvent } from "../../api/types";
-import { Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 interface Props {
   events: ExecutionEvent[];
@@ -16,25 +16,35 @@ export default function StepLogPanel({ events, className = "" }: Readonly<Props>
   );
 
   return (
-    <div className={`rounded-sm border border-b-line bg-b-bg1 ${className}`}>
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        className="flex w-full items-center justify-between border-b border-b-line px-4 py-2 text-left hover:bg-b-bg2"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <span className="font-mono text-[11px] uppercase tracking-[0.5px] text-b-text-dim flex items-center gap-1.5">
-          {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          Event Log
+    <div className={`flex min-h-0 flex-1 flex-col ${className}`}>
+      <div className="mb-[10px] flex items-center justify-between">
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={panelId}
+          className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-text-faint transition-colors hover:text-b-text-dim"
+          onClick={() => setExpanded(!expanded)}
+        >
+          {expanded ? (
+            <ChevronDown className="h-3 w-3" />
+          ) : (
+            <ChevronRight className="h-3 w-3" />
+          )}
+          Event Log · SSE
+        </button>
+        <span className="flex items-center gap-[5px] font-mono text-[9px] text-b-green">
+          <span
+            aria-hidden="true"
+            className="animate-b-pulse inline-block h-[5px] w-[5px] rounded-full bg-b-green"
+          />
+          streaming · {displayEvents.length}
         </span>
-        <span className="font-mono text-[10px] text-b-text-faint">{displayEvents.length} events</span>
-      </button>
+      </div>
 
       {expanded && (
         <div
           id={panelId}
-          className="max-h-64 overflow-y-auto p-2 font-mono text-xs"
+          className="flex-1 overflow-y-auto font-mono text-[10px]"
           aria-live="polite"
           aria-relevant="additions"
           aria-label="Event log"
@@ -105,10 +115,9 @@ function EventLine({ event }: Readonly<{ event: ExecutionEvent }>) {
       : "";
 
   return (
-    <div className="flex items-start gap-2 px-2 py-1 hover:bg-b-bg2 rounded-sm">
-      <Clock aria-hidden="true" className="mt-0.5 h-3 w-3 flex-shrink-0 text-b-text-faint" />
+    <div className="flex items-start gap-[9px] border-b border-b-line-soft py-[4px] leading-[1.4] last:border-b-0">
       {timestamp && (
-        <span className="flex-shrink-0 text-b-text-faint">{timestamp}</span>
+        <span className="flex-none text-b-text-faint">{timestamp}</span>
       )}
       <span className={color}>{message}</span>
     </div>

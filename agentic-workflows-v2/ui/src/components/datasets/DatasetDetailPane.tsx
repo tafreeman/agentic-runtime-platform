@@ -25,6 +25,9 @@ function WorkflowPreviewBadge({ preview }: Readonly<{ preview: Record<string, un
   const compatible = Boolean(preview.compatible);
   return (
     <div>
+      <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
+        workflow preview
+      </div>
       <BPill tone={compatible ? "ok" : "err"}>
         {compatible ? "[compatible]" : "[incompatible]"}
       </BPill>
@@ -69,30 +72,46 @@ export default function DatasetDetailPane({
   if (!data) return null;
 
   return (
-    <div className="h-full space-y-3 overflow-y-auto p-3">
-      {/* Header */}
-      <div>
-        <div className="font-mono text-[11px] text-b-text">
-          sample {data.sample_index} · {data.dataset_id}
-          {data.sample_id && (
-            <span className="ml-1 text-b-text-dim">#{data.sample_id}</span>
-          )}
-        </div>
-        {data.summary && (
-          <div className="mt-1 font-mono text-[11px] text-b-text-mid">
-            {data.summary}
+    <div className="h-full space-y-4 overflow-y-auto p-4">
+      {/* Header — stat numeric + identity */}
+      <div className="flex items-end gap-3 border-b border-b-line-soft pb-3">
+        <span
+          className="tabular-nums leading-none text-b-clay"
+          style={{
+            fontFamily: "var(--b-font-heading)",
+            fontSize: "34px",
+            letterSpacing: "-1px",
+          }}
+        >
+          {data.sample_index}
+        </span>
+        <div className="min-w-0 pb-0.5">
+          <div className="font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
+            sample
           </div>
-        )}
+          <div className="truncate font-mono text-[11px] text-b-text">
+            {data.dataset_id}
+            {data.sample_id && (
+              <span className="ml-1 text-b-text-dim">#{data.sample_id}</span>
+            )}
+          </div>
+        </div>
       </div>
 
+      {data.summary && (
+        <div className="font-mono text-[11px] text-b-text-mid">
+          {data.summary}
+        </div>
+      )}
+
       {/* Fields */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {Object.entries(data.sample).map(([key, value]) => (
           <div key={key}>
-            <div className="mb-0.5 font-mono text-[10px] uppercase tracking-wider text-b-text-dim">
+            <div className="mb-1 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
               {key}
             </div>
-            <div className="font-mono text-[11px] text-b-text">
+            <div className="font-mono text-[11px] leading-relaxed text-b-text">
               <FieldValue value={value} />
             </div>
           </div>
@@ -111,7 +130,11 @@ export default function DatasetDetailPane({
           {metaOpen ? "[meta -]" : "[meta +]"}
         </button>
         {metaOpen && (
-          <div id={metaPanelId} className="mt-1 border border-b-line-soft bg-b-bg2 p-2">
+          <div
+            id={metaPanelId}
+            className="mt-1.5 border border-b-line-soft bg-b-bg2 p-2.5"
+            style={{ borderRadius: "var(--b-rad-sm)" }}
+          >
             <JsonViewer data={data.dataset_meta} />
           </div>
         )}

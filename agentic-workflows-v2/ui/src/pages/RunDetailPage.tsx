@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useRunDetail } from "../hooks/useRuns";
@@ -8,7 +9,6 @@ import WorkflowDAG from "../components/dag/WorkflowDAG";
 import RunDetailSteps from "../components/runs/RunDetail";
 import DurationDisplay from "../components/common/DurationDisplay";
 import BTopBar from "../components/layout/BTopBar";
-import BBox from "../components/common/BBox";
 import BPill from "../components/common/BPill";
 import BAsciiBar from "../components/common/BAsciiBar";
 import ErrorBanner from "../components/states/ErrorBanner";
@@ -16,6 +16,29 @@ import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubri
 
 type RunTone = "ok" | "err" | "clay" | "dim";
 type EvalBarColor = "b-green" | "b-amber" | "b-red";
+
+/**
+ * Card matching the console's hairline language: theme-token radius +
+ * border-width, a hairline title header with the ▊ marker. Mirrors the
+ * shared BBox visual but takes the radius/border from theme tokens.
+ */
+function DetailCard({
+  title,
+  children,
+}: Readonly<{ title: string; children: ReactNode }>) {
+  return (
+    <div
+      style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}
+      className="overflow-hidden border border-solid border-b-line bg-b-bg1"
+    >
+      <div className="flex items-center gap-2 border-b border-b-line bg-b-bg2 px-[11px] py-[5px] font-mono text-[11px] uppercase tracking-[0.5px] text-b-text-mid">
+        <span className="leading-none text-b-green">▊</span>
+        <span>{title}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 /** Map a run's status string to a pill tone. */
 function runStatusTone(status: string): RunTone {
@@ -151,7 +174,7 @@ export default function RunDetailPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <h1
-              className="truncate text-[20px] font-semibold text-b-text"
+              className="truncate font-heading text-[22px] font-semibold text-b-text"
               style={{ letterSpacing: "-0.3px" }}
             >
               {run.workflow_name}
@@ -216,51 +239,66 @@ export default function RunDetailPage() {
 
         <div className="w-[450px] overflow-y-auto border-l border-b-line bg-b-bg0 p-3 space-y-3">
           {evalData && evalPct !== null && (
-            <BBox title="evaluation">
-              <div className="p-3">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div
-                      className="text-[28px] font-semibold text-b-text tabular-nums"
-                      style={{ fontFamily: "var(--b-font-heading)" }}
-                    >
-                      {evalData.weighted_score.toFixed(1)}
-                    </div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
-                      weighted / 100
-                    </div>
+            <div
+              style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}
+              className="relative overflow-hidden border border-solid border-b-line bg-b-bg1 p-[18px]"
+            >
+              {/* primary scorecard: 3px accent bar across the top */}
+              <div
+                className="absolute inset-x-0 top-0 h-[3px]"
+                style={{ background: `rgb(var(--${evalBarColor}))` }}
+              />
+              <div
+                className="font-mono text-[9px] uppercase tracking-[1.5px]"
+                style={{ color: `rgb(var(--${evalBarColor}))` }}
+              >
+                evaluation · {evalData.passed ? "passed" : "failed"}
+              </div>
+              <div className="mt-3 flex items-end gap-3.5">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="text-[42px] font-semibold leading-[0.9]"
+                    style={{
+                      fontFamily: "var(--b-font-heading)",
+                      color: `rgb(var(--${evalBarColor}))`,
+                    }}
+                  >
+                    {evalData.grade}
                   </div>
-                  <div className="text-right">
-                    <div className="font-mono text-[11px] text-b-text-mid">
-                      grade{" "}
-                      <span className="text-b-text">
-                        {evalData.grade}
-                      </span>
-                    </div>
+                  <div className="mt-1 font-mono text-[8px] uppercase tracking-[1.5px] text-b-text-faint">
+                    grade
+                  </div>
+                </div>
+                <div className="pb-1">
+                  <div className="font-mono text-[11px] text-b-text-mid">
+                    weighted{" "}
+                    <span className="font-semibold tabular-nums text-b-text">
+                      {evalData.weighted_score.toFixed(1)}
+                    </span>{" "}
+                    / 100
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
                     <BPill tone={evalData.passed ? "ok" : "err"}>
                       {evalData.passed ? "passed" : "failed"}
                     </BPill>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <BAsciiBar
-                    value={evalPct}
-                    color={evalBarColor}
-                  />
-                </div>
               </div>
-            </BBox>
+              <div className="mt-3">
+                <BAsciiBar value={evalPct} color={evalBarColor} />
+              </div>
+            </div>
           )}
 
           {evalData && filename && (
-            <BBox title="score detail">
+            <DetailCard title="score detail">
               <div className="p-3">
                 <EvaluationRubricAccordion filename={filename} />
               </div>
-            </BBox>
+            </DetailCard>
           )}
 
-          <BBox title={`steps · ${run.steps.length}`}>
+          <DetailCard title={`steps · ${run.steps.length}`}>
             <div className="p-2">
               <RunDetailSteps
                 steps={run.steps}
@@ -268,7 +306,7 @@ export default function RunDetailPage() {
                 onSelectStep={setSelectedStep}
               />
             </div>
-          </BBox>
+          </DetailCard>
         </div>
       </div>
     </div>

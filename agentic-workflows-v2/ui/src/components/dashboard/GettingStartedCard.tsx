@@ -120,12 +120,17 @@ export default function GettingStartedCard({
 
   return (
     <div data-testid="getting-started-card">
-      <BBox>
-        <div className="p-[14px]">
+      <BBox className="relative overflow-hidden">
+        {/* Primary card: clay accent bar across the top. */}
+        <div className="absolute left-0 right-0 top-0 h-[3px] bg-b-clay" />
+        <div className="p-[18px]">
           {/* Header */}
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-[18px] font-semibold tracking-[-0.3px] text-b-text">
+              <h2
+                style={{ fontFamily: "var(--b-font-heading)" }}
+                className="text-[20px] font-semibold tracking-[-0.3px] text-b-text"
+              >
                 Get Started with Agentic
               </h2>
               <p className="mt-1 font-mono text-[11px] text-b-text-dim">
@@ -134,7 +139,7 @@ export default function GettingStartedCard({
             </div>
             <button
               onClick={handleDismiss}
-              className="text-b-text-dim hover:text-b-text"
+              className="text-b-text-dim transition-colors hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay"
               aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
@@ -146,7 +151,12 @@ export default function GettingStartedCard({
             {steps.map((step) => (
               <div
                 key={step.id}
-                className="flex items-start gap-3 rounded border border-b-line-soft bg-b-bg2/50 p-3 transition-colors hover:border-b-line hover:bg-b-bg2"
+                style={{
+                  borderWidth: "var(--b-bw)",
+                  borderStyle: "solid",
+                  borderRadius: "var(--b-rad-sm)",
+                }}
+                className="flex items-start gap-3 border-b-line-soft bg-b-bg2/50 p-3 transition-colors hover:border-b-line hover:bg-b-bg2"
               >
                 <div className="mt-0.5 text-b-clay">
                   <Circle className="h-4 w-4" />
@@ -168,7 +178,14 @@ export default function GettingStartedCard({
                     {step.description}
                   </p>
                   {step.inlineGuidance && (
-                    <div className="mt-2 rounded border border-b-line bg-b-bg3 px-2 py-1.5 font-mono text-[10px] text-b-text-faint">
+                    <div
+                      style={{
+                        borderWidth: "var(--b-bw)",
+                        borderStyle: "solid",
+                        borderRadius: "var(--b-rad-sm)",
+                      }}
+                      className="mt-2 border-b-line bg-b-bg3 px-2 py-1.5 font-mono text-[10px] text-b-text-dim"
+                    >
                       [i] {step.inlineGuidance}
                     </div>
                   )}

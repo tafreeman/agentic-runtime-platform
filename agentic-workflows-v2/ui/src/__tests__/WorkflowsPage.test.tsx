@@ -108,4 +108,23 @@ describe("WorkflowsPage", () => {
     expect(screen.getByText(/no workflows match/i)).toBeInTheDocument();
     expect(screen.getByText("missing")).toBeInTheDocument();
   });
+
+  it("links each workflow to its detail route", () => {
+    mockUseWorkflows.mockReturnValue({
+      data: ["code_review", "triage_workflow"],
+      isLoading: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <WorkflowsPage />
+      </MemoryRouter>
+    );
+
+    // Behavioral: the testid-tagged link must point at the detail route.
+    const link = screen.getByTestId("workflow-link-code_review");
+    expect(link).toHaveAttribute("href", "/workflows/code_review");
+    // Presentational: definitions count is surfaced as a stat numeric.
+    expect(screen.getByText("Definitions")).toBeInTheDocument();
+  });
 });

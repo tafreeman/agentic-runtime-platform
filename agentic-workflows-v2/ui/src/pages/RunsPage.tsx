@@ -1,21 +1,27 @@
 import { useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
-import BBox from "../components/common/BBox";
-import BPill from "../components/common/BPill";
 import DurationDisplay from "../components/common/DurationDisplay";
 import InlineError from "../components/states/InlineError";
+import { gradeColorClass, gradeLetter } from "../lib/grades";
 import type { RunSummary } from "../api/types";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
 
-function statusTone(status: string | null | undefined) {
-  if (status === "success") return "ok" as const;
-  if (status === "failed" || status === "error") return "err" as const;
-  if (status === "running" || status === "in_progress") return "clay" as const;
-  return "dim" as const;
+/** ASCII status glyph + its CSS color variable, colored by run status. */
+function statusAscii(status: string | null | undefined): {
+  label: string;
+  color: string;
+} {
+  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
+  if (status === "failed" || status === "error") {
+    return { label: "[err ]", color: "var(--b-red)" };
+  }
+  if (status === "running" || status === "in_progress") {
+    return { label: "[ .. ]", color: "var(--b-clay)" };
+  }
+  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
 }
 
 function formatWhen(iso: string | null | undefined): string {
@@ -39,6 +45,7 @@ function shortId(run: RunSummary): string {
 
 export default function RunsPage() {
   const { data: runs, isLoading, isError, error, refetch } = useRuns();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +85,7 @@ export default function RunsPage() {
           {/* Header */}
           <div>
             <h1
-              className="text-[24px] font-semibold text-b-text"
+              className="font-heading text-[26px] font-semibold text-b-text"
               style={{ letterSpacing: "-0.5px" }}
             >
               Runs
@@ -89,8 +96,8 @@ export default function RunsPage() {
             </div>
           </div>
 
-          {/* Filter bar */}
-          <div className="flex items-center gap-2">
+          {/* Filter chips */}
+          <div className="flex flex-wrap items-center gap-2">
             {(["all", "success", "failed", "running"] as StatusFilter[]).map(
               (f) => {
                 const count =
@@ -103,35 +110,47 @@ export default function RunsPage() {
                     key={f}
                     type="button"
                     onClick={() => setFilter(f)}
-                    className={`font-mono text-[11px] rounded-sm px-2 py-1 border transition-colors ${
+                    style={{
+                      borderRadius: "var(--b-rad-sm)",
+                      borderWidth: "var(--b-bw)",
+                    }}
+                    className={`border border-solid px-3 py-1 font-mono text-[11px] transition-colors ${
                       active
-                        ? "border-b-clay text-b-clay bg-b-clay/10"
-                        : "border-b-line text-b-text-dim hover:text-b-text hover:border-b-line"
+                        ? "border-b-clay bg-b-clay-soft text-b-clay"
+                        : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
                     }`}
                   >
-                    {f} <span className="text-b-text-faint">({count})</span>
+                    {f} <span className="text-b-text-faint">· {count}</span>
                   </button>
                 );
               }
             )}
 
-            <div className="ml-auto flex items-center gap-2 rounded-sm border border-b-line bg-b-bg0 px-3 py-1.5 focus-within:ring-1 focus-within:ring-b-clay/50">
-              <span className="font-mono text-[13px] font-bold text-b-clay">/</span>
-              <input
-                ref={inputRef}
-                type="text"
-                aria-label="Search runs by workflow name or run ID"
-                placeholder="search by workflow or run id…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-48 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-none"
-              />
-              {query && (
-                <span className="font-mono text-[10px] text-b-text-dim">
-                  {filtered.length}
-                </span>
-              )}
-            </div>
+            <span className="ml-auto font-mono text-[10px] text-b-text-faint">
+              native + langchain adapters
+            </span>
+          </div>
+
+          {/* Search */}
+          <div
+            style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
+            className="flex items-center gap-2 border border-solid border-b-line bg-b-bg0 px-3 py-1.5 focus-within:ring-1 focus-within:ring-b-clay/50"
+          >
+            <span className="font-mono text-[13px] font-bold text-b-clay">/</span>
+            <input
+              ref={inputRef}
+              type="text"
+              aria-label="Search runs by workflow name or run ID"
+              placeholder="search by workflow or run id…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:outline-none"
+            />
+            {query && (
+              <span className="font-mono text-[10px] text-b-text-dim">
+                {filtered.length}
+              </span>
+            )}
           </div>
 
           {/* Error (non-blocking — stale rows may still be shown below) */}
@@ -148,7 +167,11 @@ export default function RunsPage() {
               {["sk-0", "sk-1", "sk-2", "sk-3", "sk-4"].map((skKey) => (
                 <div
                   key={skKey}
-                  className="h-[48px] animate-pulse rounded-sm border border-b-line bg-b-bg1"
+                  style={{
+                    borderRadius: "var(--b-rad-sm)",
+                    borderWidth: "var(--b-bw)",
+                  }}
+                  className="h-[48px] animate-pulse border border-solid border-b-line bg-b-bg1"
                 />
               ))}
             </div>
@@ -156,105 +179,103 @@ export default function RunsPage() {
 
           {/* Table */}
           {!isLoading && (
-            <BBox title={`${filtered.length} runs`}>
-              <div className="overflow-x-auto">
-                <table className="w-full font-mono text-[11px]">
-                  <thead>
-                    <tr className="border-b border-b-line text-left text-[10px] uppercase tracking-[0.5px] text-b-text-faint">
-                      <th className="w-[110px] px-3 py-2">ID</th>
-                      <th className="px-3 py-2">WORKFLOW</th>
-                      <th className="w-[130px] px-3 py-2">STATUS</th>
-                      <th className="w-[70px] px-3 py-2 text-right">STEPS</th>
-                      <th className="w-[90px] px-3 py-2 text-right">DUR</th>
-                      <th className="w-[70px] px-3 py-2 text-right">SCORE</th>
-                      <th className="w-[110px] px-3 py-2 text-right">WHEN</th>
-                      <th className="w-8 px-3 py-2" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={8}
-                          className="px-3 py-10 text-center text-b-text-dim"
-                        >
-                          {runs?.length === 0
-                            ? "no runs yet · select a workflow to start"
-                            : `no runs match "${query || filter}"`}
-                        </td>
-                      </tr>
-                    )}
-                    {filtered.map((r) => {
-                      const score = r.evaluation_score ?? null;
-                      let scoreClass: string;
-                      if (score === null) {
-                        scoreClass = "text-b-text-faint";
-                      } else if (score > 0.85) {
-                        scoreClass = "text-b-green";
-                      } else {
-                        scoreClass = "text-b-amber";
-                      }
-                      return (
-                        <tr
-                          key={r.filename}
-                          className="group border-b border-b-line-soft transition-colors hover:bg-b-bg2"
-                        >
-                          <td className="px-3 py-2">
-                            <Link
-                              to={`/runs/${encodeURIComponent(r.filename)}`}
-                              className="text-b-clay hover:underline"
-                            >
-                              {shortId(r)}
-                            </Link>
-                          </td>
-                          <td className="truncate px-3 py-2 text-b-text max-w-[200px]">
-                            {r.workflow_name ? (
-                              <Link
-                                to={`/workflows/${encodeURIComponent(r.workflow_name)}`}
-                                className="hover:text-b-clay"
-                              >
-                                {r.workflow_name}
-                              </Link>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td className="px-3 py-2">
-                            <BPill tone={statusTone(r.status)}>
-                              {r.status ?? "—"}
-                            </BPill>
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums text-b-text-mid">
-                            {r.step_count ?? "—"}
-                            {r.failed_step_count ? (
-                              <span className="text-b-red">
-                                /{r.failed_step_count}
-                              </span>
-                            ) : null}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums text-b-text-mid">
-                            <DurationDisplay ms={r.total_duration_ms} />
-                          </td>
-                          <td
-                            className={`px-3 py-2 text-right tabular-nums ${scoreClass}`}
-                          >
-                            {score === null ? "—" : (score * 100).toFixed(0)}
-                          </td>
-                          <td className="px-3 py-2 text-right text-b-text-dim">
-                            {formatWhen(r.start_time)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <Link to={`/runs/${encodeURIComponent(r.filename)}`}>
-                              <ChevronRight className="h-3.5 w-3.5 text-b-text-faint group-hover:text-b-clay" />
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            <div
+              style={{
+                borderRadius: "var(--b-rad-lg)",
+                borderWidth: "var(--b-bw)",
+              }}
+              className="overflow-hidden border border-solid border-b-line bg-b-bg1"
+            >
+              {/* Column headers */}
+              <div
+                style={{ borderBottomWidth: "var(--b-bw)" }}
+                className="grid grid-cols-[88px_1.6fr_84px_84px_56px_80px] gap-3 border-b border-solid border-b-line px-[18px] py-[11px] font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint"
+              >
+                <span>Status</span>
+                <span>Workflow</span>
+                <span className="text-right">Duration</span>
+                {/* DESIGN-GAP: design ref shows a TOKENS column here, but
+                    RunSummary exposes no token total (only step_count /
+                    failed_step_count), so we keep Steps until the backend
+                    surfaces token usage on the runs list. */}
+                <span className="text-right">Steps</span>
+                <span className="text-center">Score</span>
+                <span className="text-right">Time</span>
               </div>
-            </BBox>
+
+              {filtered.length === 0 ? (
+                <div className="px-[18px] py-10 text-center font-mono text-[11px] text-b-text-dim">
+                  {runs?.length === 0
+                    ? "no runs yet · select a workflow to start"
+                    : `no runs match "${query || filter}"`}
+                </div>
+              ) : (
+                filtered.map((r) => {
+                  const grade = gradeLetter(r.evaluation_grade, r.evaluation_score);
+                  const scoreClass = gradeColorClass(grade);
+                  const ascii = statusAscii(r.status);
+                  const target = `/runs/${encodeURIComponent(r.filename)}`;
+                  return (
+                    <div
+                      key={r.filename}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open run ${shortId(r)}`}
+                      onClick={() => navigate(target)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          navigate(target);
+                        }
+                      }}
+                      className="grid cursor-pointer grid-cols-[88px_1.6fr_84px_84px_56px_80px] items-center gap-3 border-b border-solid border-b-line-soft px-[18px] py-[13px] font-mono text-[11.5px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-b-clay"
+                    >
+                      <span
+                        className="text-[9px] tracking-[0.5px]"
+                        style={{ color: ascii.color }}
+                      >
+                        {ascii.label}
+                      </span>
+                      <span className="min-w-0 truncate text-b-text">
+                        <span className="text-[10px] text-b-text-dim">
+                          #{shortId(r)}
+                        </span>{" "}
+                        {r.workflow_name ? (
+                          <Link
+                            to={`/workflows/${encodeURIComponent(r.workflow_name)}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:text-b-clay"
+                          >
+                            {r.workflow_name}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </span>
+                      <span className="text-right tabular-nums text-b-text-dim">
+                        <DurationDisplay ms={r.total_duration_ms} />
+                      </span>
+                      <span className="text-right tabular-nums text-b-text-dim">
+                        {r.step_count ?? "—"}
+                        {r.failed_step_count ? (
+                          <span className="text-b-red">
+                            /{r.failed_step_count}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span
+                        className={`text-center font-semibold ${scoreClass}`}
+                      >
+                        {grade ?? "—"}
+                      </span>
+                      <span className="text-right text-[10px] text-b-text-dim">
+                        {formatWhen(r.start_time)}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           )}
         </div>
       </div>

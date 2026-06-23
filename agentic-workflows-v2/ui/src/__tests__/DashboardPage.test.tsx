@@ -8,6 +8,7 @@ const mockUseRunsSummary = vi.fn();
 const mockUseRuns = vi.fn();
 const mockUseWorkflows = vi.fn();
 const mockHealthCheck = vi.fn();
+const mockListAgents = vi.fn();
 const mockIsNoLlmModeEnabled = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
@@ -25,6 +26,7 @@ vi.mock("../hooks/useHotkeys", () => ({
 
 vi.mock("../api/client", () => ({
   healthCheck: () => mockHealthCheck(),
+  listAgents: () => mockListAgents(),
 }));
 
 vi.mock("../config/featureFlags", () => ({
@@ -52,6 +54,7 @@ describe("DashboardPage", () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockHealthCheck.mockResolvedValue({ status: "ok", version: "0.1.0" });
+    mockListAgents.mockResolvedValue({ agents: [] });
     mockIsNoLlmModeEnabled.mockReturnValue(false);
   });
 
@@ -91,11 +94,126 @@ describe("DashboardPage", () => {
 
     renderDashboard();
 
-    // Workflow quick links render in the workflows section
-    expect(screen.getByRole("link", { name: /triage/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /review/i })).toBeInTheDocument();
+    // Workflow quick links render in the workflows section. Recent-run rows
+    // are also links and may share the workflow name in their accessible
+    // name, so disambiguate the quick links by their /workflows/<name> href.
+    expect(
+      document.querySelector('a[href="/workflows/triage"]')
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector('a[href="/workflows/review"]')
+    ).toBeInTheDocument();
     // Dashboard heading
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    // Overview stat cards
+    expect(screen.getByText(/total runs/i)).toBeInTheDocument();
+    expect(screen.getByText(/success rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/tokens \(30d\)/i)).toBeInTheDocument();
+  });
+
+  it("renders the models panel from the agents endpoint", async () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 1, success: 1, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "run1.json",
+          run_id: "run-001",
+          workflow_name: "triage",
+          status: "success",
+          start_time: null,
+          step_count: 1,
+          failed_step_count: 0,
+          total_duration_ms: 1000,
+          evaluation_score: 0.92,
+          evaluation_grade: "A",
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+    mockListAgents.mockResolvedValue({
+      agents: [
+        { name: "anthropic:claude-sonnet", description: "", tier: "4" },
+        { name: "Planner Agent", description: "", tier: "2" },
+      ],
+    });
+
+    renderDashboard();
+
+    // Models panel header + a wired-in model name and tier badge
+    expect(screen.getByText("Models")).toBeInTheDocument();
+    expect(
+      await screen.findByText("anthropic:claude-sonnet")
+    ).toBeInTheDocument();
+    expect(screen.getByText("T4")).toBeInTheDocument();
+    // Provider parsed from the "provider:model" name form
+    expect(screen.getByText("anthropic")).toBeInTheDocument();
+    // Grade letter renders for the recent run
+    expect(screen.getByText("A")).toBeInTheDocument();
+  });
+
+  it("derives a recent-run grade letter from the score when the server letter is absent", async () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 1, success: 1, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "run1.json",
+          run_id: "run-001",
+          workflow_name: "triage",
+          status: "success",
+          start_time: null,
+          step_count: 1,
+          failed_step_count: 0,
+          total_duration_ms: 1000,
+          // 0..1 fraction, no server letter — matches the Runs pages, which
+          // derive a letter rather than rendering an em-dash.
+          evaluation_score: 0.83,
+          evaluation_grade: null,
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    expect(await screen.findByText("B")).toBeInTheDocument();
+  });
+
+  it("falls through a blank server grade to the score-derived letter", async () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 1, success: 1, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "run1.json",
+          run_id: "run-001",
+          workflow_name: "triage",
+          status: "success",
+          start_time: null,
+          step_count: 1,
+          failed_step_count: 0,
+          total_duration_ms: 1000,
+          // Empty-string letter must not leave a blank cell; score wins.
+          evaluation_score: 95,
+          evaluation_grade: "",
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    expect(await screen.findByText("A")).toBeInTheDocument();
   });
 
   it("renders the empty state when there are no runs", () => {

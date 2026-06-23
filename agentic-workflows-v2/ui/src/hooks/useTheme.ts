@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Theme = "dark" | "paper" | "bolt";
+export type Theme = "dark" | "paper";
 
 const STORAGE_KEY = "ui_theme";
 const DEFAULT_THEME: Theme = "dark";
@@ -16,8 +16,10 @@ export function applyTheme(theme: Theme): void {
 
 function readStoredTheme(): Theme {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (saved === "dark" || saved === "paper" || saved === "bolt") return saved;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "dark" || saved === "paper") return saved;
+    // A previously stored "bolt" theme (now removed) falls back to dark.
+    if (saved === "bolt") return "dark";
   } catch {
     /* ignore */
   }

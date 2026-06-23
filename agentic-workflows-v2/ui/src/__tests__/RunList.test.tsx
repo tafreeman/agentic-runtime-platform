@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import RunList from "../components/runs/RunList";
 import type { RunSummary } from "../api/types";
+
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 const runs: RunSummary[] = [
   {
@@ -55,7 +63,8 @@ describe("RunList", () => {
 
     expect(screen.getByText("review_flow")).toBeInTheDocument();
     expect(screen.getByText("triage_flow")).toBeInTheDocument();
-    expect(screen.getByText("91.4")).toBeInTheDocument();
+    // SCORE column renders a colored letter grade; run-1 carries grade "A".
+    expect(screen.getByText("A")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Failed" }));
     expect(screen.queryByText("review_flow")).not.toBeInTheDocument();
@@ -83,5 +92,53 @@ describe("RunList", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Failed" }));
     expect(screen.getByText("No runs found")).toBeInTheDocument();
+  });
+
+  it("grades a 0..100 score after normalizing (run-1 score 91.4 → A)", () => {
+    render(
+      <MemoryRouter>
+        <RunList
+          runs={[{ ...runs[0]!, evaluation_grade: null, evaluation_score: 91.4 }]}
+          isLoading={false}
+        />
+      </MemoryRouter>
+    );
+
+    // 91.4 normalizes to 91% → A; an un-normalized helper would mis-grade it.
+    expect(screen.getByText("A")).toBeInTheDocument();
+  });
+
+  it("activates a run row via keyboard (Enter and Space)", () => {
+    mockNavigate.mockClear();
+    render(
+      <MemoryRouter>
+        <RunList runs={runs} isLoading={false} />
+      </MemoryRouter>
+    );
+
+    // shortId("run-1") → "1", so the row's accessible name is "Open run 1".
+    const row = screen.getByRole("button", { name: "Open run 1" });
+    expect(row).toHaveAttribute("tabindex", "0");
+
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(mockNavigate).toHaveBeenCalledWith("/runs/run-1.json");
+
+    fireEvent.keyDown(row, { key: " " });
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the inner workflow link working without triggering row navigation", () => {
+    mockNavigate.mockClear();
+    render(
+      <MemoryRouter>
+        <RunList runs={runs} isLoading={false} />
+      </MemoryRouter>
+    );
+
+    const workflowLink = screen.getByRole("link", { name: "Open run 1" });
+    expect(workflowLink).toHaveAttribute("href", "/runs/run-1.json");
+
+    fireEvent.click(workflowLink);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

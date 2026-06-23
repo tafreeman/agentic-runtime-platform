@@ -26,29 +26,11 @@ export interface StepNodeData {
   disconnected?: boolean;
 }
 
-/**
- * Extract a short model family label and color from a model ID string.
- * e.g. "anthropic:claude-sonnet-4-6" → { label: "SONNET", color: "#38bdf8" }
- */
-function resolveModelBadge(
-  modelUsed: string | undefined,
-  tier: string | null | undefined,
-): { label: string; bg: string; fg: string } | null {
-  if (!modelUsed && !tier) return null;
-  const m = (modelUsed ?? "").toLowerCase();
-  if (m.includes("opus"))   return { label: "OPUS",   bg: "rgb(var(--b-clay) / 0.18)",   fg: "rgb(var(--b-clay))" };
-  if (m.includes("sonnet")) return { label: "SONNET", bg: "rgb(var(--b-blue) / 0.18)",   fg: "rgb(var(--b-blue))" };
-  if (m.includes("haiku"))  return { label: "HAIKU",  bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("flash"))  return { label: "FLASH",  bg: "rgb(var(--b-blue) / 0.18)",   fg: "rgb(var(--b-blue))" };
-  if (m.includes("gpt-4"))  return { label: "GPT-4",  bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("gpt-3"))  return { label: "GPT-3",  bg: "rgb(var(--b-green) / 0.12)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("gemini")) return { label: "GEMINI", bg: "rgb(var(--b-green) / 0.15)",  fg: "rgb(var(--b-green))" };
-  if (m.includes("llama"))  return { label: "LLAMA",  bg: "rgb(var(--b-purple) / 0.15)", fg: "rgb(var(--b-purple))" };
-  if (m.includes("mistral"))return { label: "MIST",   bg: "rgb(var(--b-purple) / 0.15)", fg: "rgb(var(--b-purple))" };
-  // Fallback: show tier if no model yet
-  if (tier) return { label: tier.toUpperCase(), bg: "rgb(var(--b-bg2))", fg: "rgb(var(--b-purple))" };
-  return null;
-}
+// DESIGN-GAP: the design ref surfaces only the TIER pill on a DAG node; the
+// model family (OPUS/SONNET/…) is shown in the run inspector, not on the node.
+// `modelUsed`/`modelInferred` remain on StepNodeData and are still consumed by
+// the inspector panel, so the per-node model badge was removed here rather than
+// re-homed. No backend data was fabricated.
 
 /** Format token count as e.g. "1.7k" or "29.7k" */
 function fmtTokens(n: number): string {
@@ -57,22 +39,64 @@ function fmtTokens(n: number): string {
 }
 
 /**
- * ASCII status glyphs for the B2 redesign. Width-stable (4 printable chars
- * between brackets) so the header row aligns across statuses.
+ * Short, human-readable status label shown in the node footer (design ref
+ * "live nodes n.boxStyle"): "queued" while pending, "streaming" while live,
+ * else the terminal disposition word.
+ */
+function resolveStatusLabel(status: StepStatus): string {
+  switch (status) {
+    case "running":
+      return "streaming";
+    case "success":
+      return "done";
+    case "failed":
+      return "error";
+    case "skipped":
+      return "skipped";
+    case "cancelled":
+      return "cancelled";
+    case "pending":
+    default:
+      return "queued";
+  }
+}
+
+/**
+ * ASCII status glyphs for the B2 redesign. The done/running/queued glyphs match
+ * the design ref ("[ ok ]", "[ •• ]", "[ -- ]"); error/skipped/cancelled keep
+ * their compact bracket variants.
  */
 const ASCII_STATUS: Record<StepStatus, string> = {
-  pending: "[...]",
-  running: "[RUN]",
-  success: "[OK ]",
+  pending: "[ -- ]",
+  running: "[ •• ]",
+  success: "[ ok ]",
   failed: "[ERR]",
   skipped: "[SKP]",
   cancelled: "[---]",
 };
 
+/**
+ * Tier accent color used for the running node (border, ring, glow) and the
+ * row-1 tier pill: T2 blue, T3 amber, T4 clay (design ref `renderVals` TIER).
+ */
+function tierBadgeColor(tier: string | null | undefined): string {
+  switch ((tier ?? "").toUpperCase()) {
+    case "T1":
+    case "T2":
+      return "rgb(var(--b-blue))";
+    case "T3":
+      return "rgb(var(--b-amber))";
+    case "T4":
+      return "rgb(var(--b-clay))";
+    default:
+      return "rgb(var(--b-blue))";
+  }
+}
+
 function statusBorderColor(status: StepStatus): string {
   switch (status) {
     case "success":   return "rgb(var(--b-green))";
-    case "running":   return "rgb(var(--b-clay))";
+    case "running":   return "rgb(var(--b-blue))";
     case "failed":    return "rgb(var(--b-red))";
     case "skipped":   return "rgb(var(--b-amber))";
     default:          return "rgb(var(--b-line))";
@@ -83,14 +107,21 @@ function StepNodeComponent({ id, data }: NodeProps) {
   const nodeData = data as unknown as StepNodeData;
   const { status, label, tier, tokensIn, tokensOut, tokensUsed, error } =
     nodeData;
+  const reducedMotion = usePrefersReducedMotion();
 
   const isLiveRunning = status === "running" && !nodeData.disconnected;
+  // Queued/pending steps are dimmed to recede behind active work (design ref:
+  // `opacity:0.55` on queued node boxStyle).
+  const isQueued = status === "pending";
 
   const showTokens =
     tokensIn != null || tokensOut != null || tokensUsed != null;
   const showStreamingBar = isLiveRunning;
 
-  const modelBadge = resolveModelBadge(nodeData.modelUsed, tier);
+  // Row-1 right pill = TIER (design ref). Model family is no longer surfaced
+  // on the node; a model hint lives in the inspector panel instead.
+  const tierLabel = tier ? tier.toUpperCase() : null;
+  const tierColor = tierBadgeColor(tier);
   const borderColor = statusBorderColor(status);
 
   return (
@@ -104,17 +135,43 @@ function StepNodeComponent({ id, data }: NodeProps) {
       <div
         data-testid={`dag-node-${id}`}
         style={{
-          width: 128,
-          background: "rgb(var(--b-bg0))",
-          border: `1px solid ${borderColor}`,
-          padding: "5px 8px",
+          position: "relative",
+          width: 154,
+          background: "rgb(var(--b-bg2))",
+          border: `var(--b-bw) solid ${borderColor}`,
+          borderRadius: "var(--b-rad-sm)",
+          padding: "11px 13px",
           fontSize: 10,
           fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
           boxSizing: "border-box",
-          boxShadow: status === "running" ? `rgb(var(--b-clay) / 0.33) 0px 0px 10px` : "none",
+          opacity: isQueued ? 0.55 : 1,
+          boxShadow:
+            status === "running"
+              ? `rgb(var(--b-blue) / 0.33) 0px 0px 10px`
+              : "none",
         }}
       >
-        {/* Row 1: [OK] status glyph + model badge (space-between) */}
+        {/* Blue ring while live-running — expanding-fade pulse (design
+            "ringpulse"). The CSS prefers-reduced-motion block neutralizes the
+            animation; we also drop it from the inline style as a belt-and-braces
+            guard for JS-driven reduced-motion environments. */}
+        {isLiveRunning && (
+          <span
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: "-1px",
+              borderRadius: "var(--b-rad-sm)",
+              border: "1px solid rgb(var(--b-blue))",
+              pointerEvents: "none",
+              animation: reducedMotion
+                ? undefined
+                : "b-ring-pulse 1.5s ease-out infinite",
+            }}
+          />
+        )}
+
+        {/* Row 1: [OK] status glyph + tier badge (space-between) */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span
             data-testid="step-node-status"
@@ -126,31 +183,32 @@ function StepNodeComponent({ id, data }: NodeProps) {
           >
             {ASCII_STATUS[status] ?? "[...]"}
           </span>
-          {modelBadge && (
+          {tierLabel && (
             <span
               data-testid="step-node-tier"
               style={{
                 fontSize: "8.5px",
                 letterSpacing: "0.3px",
                 textTransform: "uppercase",
-                color: modelBadge.fg,
-                border: `1px solid ${modelBadge.fg}`,
-                padding: "0px 3px",
-                borderRadius: "1px",
+                color: tierColor,
+                border: `1px solid ${tierColor}`,
+                padding: "0px 4px",
+                borderRadius: "var(--b-rad-sm)",
               }}
             >
-              {modelBadge.label}
+              {tierLabel}
             </span>
           )}
         </div>
 
-        {/* Row 2: step name on its own line */}
+        {/* Row 2: bold step name in the theme heading font */}
         <div
           style={{
             color: "rgb(var(--b-text))",
+            fontFamily: "var(--b-font-heading)",
             fontWeight: 600,
-            fontSize: "10.5px",
-            marginTop: "2px",
+            fontSize: "12px",
+            marginTop: "7px",
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -160,51 +218,66 @@ function StepNodeComponent({ id, data }: NodeProps) {
           {label}
         </div>
 
-        {/* Row 3: tokens spaced or "queued" */}
+        {/* Row 3: agent subtext */}
+        {nodeData.agent && (
+          <div
+            style={{
+              fontSize: "9.5px",
+              color: "rgb(var(--b-text-dim))",
+              marginTop: "2px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {nodeData.agent}
+          </div>
+        )}
+
+        {/* Row 4: footer — status label (left) + token count (right) */}
         {(() => {
+          let tokenContent: ReactNode = null;
           if (showTokens) {
-            let tokenContent: ReactNode;
             if (tokensIn != null || tokensOut != null) {
               tokenContent = (
-                <>
+                <span data-testid="step-node-tokens" style={{ color: "rgb(var(--b-text-mid))" }}>
                   {tokensIn != null && (
                     <span>↓<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensIn)}</span></span>
                   )}
                   {tokensOut != null && (
-                    <span>↑<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
+                    <span style={{ marginLeft: tokensIn != null ? "4px" : undefined }}>↑<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensOut)}</span></span>
                   )}
-                </>
+                </span>
               );
             } else if (tokensUsed != null) {
               tokenContent = (
-                <span>↕<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span></span>
+                <span data-testid="step-node-tokens" style={{ color: "rgb(var(--b-text-mid))" }}>
+                  ↕<span style={{ color: "rgb(var(--b-text))", marginLeft: "2px" }}>{fmtTokens(tokensUsed)}</span>
+                </span>
               );
             }
-            return (
-              <div
-                data-testid="step-node-tokens"
-                style={{
-                  marginTop: "4px",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "9px",
-                  color: "rgb(var(--b-text-mid))",
-                  fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-                }}
-              >
-                {tokenContent}
-              </div>
-            );
           }
-          if (status === "pending") {
-            return <div style={{ marginTop: "4px", fontSize: "9px", color: "rgb(var(--b-text-faint))" }}>queued</div>;
-          }
-          return null;
+          return (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginTop: "9px",
+                fontSize: "9px",
+                color: "rgb(var(--b-text-faint))",
+                fontFamily: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
+              }}
+            >
+              <span>{resolveStatusLabel(status)}</span>
+              {tokenContent}
+            </div>
+          );
         })()}
 
-        {/* Row 4: running timer + streaming indicator */}
+        {/* Row 5: running timer + streaming bar */}
         {showStreamingBar && (
-          <div style={{ marginTop: "4px" }}>
+          <div style={{ marginTop: "6px" }}>
             <div
               style={{
                 display: "flex",
@@ -218,13 +291,12 @@ function StepNodeComponent({ id, data }: NodeProps) {
                 startTime={nodeData.startTime}
                 durationMs={nodeData.durationMs}
               />
-              <span style={{ color: "rgb(var(--b-clay))" }}>streaming</span>
             </div>
             <StreamingBar />
           </div>
         )}
 
-        {/* Row 5: error line */}
+        {/* Row 6: error line */}
         {status === "failed" && error && (
           <div
             data-testid="step-node-error"
@@ -255,7 +327,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
 function resolveStatusColor(status: StepStatus): string {
   switch (status) {
     case "running":
-      return "rgb(var(--b-clay))";
+      return "rgb(var(--b-blue))";
     case "success":
       return "rgb(var(--b-green))";
     case "failed":
@@ -293,7 +365,7 @@ function StreamingBar() {
         style={{
           width: `${pct}%`,
           height: "100%",
-          background: "rgb(var(--b-clay))",
+          background: "rgb(var(--b-blue))",
           transition: "width 0.08s linear",
         }}
       />

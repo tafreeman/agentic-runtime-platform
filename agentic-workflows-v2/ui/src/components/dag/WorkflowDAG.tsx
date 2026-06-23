@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,13 +8,14 @@ import {
   type NodeTypes,
   MarkerType,
   BackgroundVariant,
-  useReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import StepNode, { type StepNodeData } from "./StepNode";
 import { layoutDAG } from "./dagLayout";
+import { useAutoPanZoom } from "../../hooks/useAutoPanZoom";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 import type { DAGNode, DAGEdge, StepStatus } from "../../api/types";
 
 const nodeTypes: NodeTypes = {
@@ -107,7 +108,7 @@ interface Props {
   className?: string;
 }
 
-/* ── Inner component (has access to useReactFlow) ── */
+/* ── Inner component (rendered inside ReactFlowProvider) ── */
 function WorkflowDAGInner({
   dagNodes,
   dagEdges,
@@ -118,11 +119,7 @@ function WorkflowDAGInner({
   disconnected = false,
   className = "",
 }: Readonly<Props>) {
-  const { fitView } = useReactFlow();
-  const prevRunningStrRef = useRef<string | null>(null);
-  const userInteractedRef = useRef(false);
-  const interactionCountRef = useRef(0);
-  const interactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
 
   const positions = useMemo(
     () => layoutDAG(dagNodes, dagEdges),
@@ -143,30 +140,7 @@ function WorkflowDAGInner({
     return ids;
   }, [effectiveStepStates]);
 
-  // Auto-pan / fitView to the running node(s) when changed
-  useEffect(() => {
-    const runningStr = [...runningStepIds].sort((a, b) => a.localeCompare(b)).join(",");
-    if (!runningStr || runningStr === prevRunningStrRef.current) return;
-    if (userInteractedRef.current) return; // respect manual navigation
-
-    prevRunningStrRef.current = runningStr;
-
-    // Small delay provides visual grace if multiple nodes start simultaneously
-    const timerId = setTimeout(() => {
-      if (userInteractedRef.current) return;
-      fitView({
-        nodes: runningStepIds.map((id) => ({ id })),
-        duration: 800,
-        padding: runningStepIds.length === 1 ? 0.35 : 0.2,
-        minZoom: 0.8,
-        maxZoom: 1.15,
-      });
-    }, 150);
-
-    return () => clearTimeout(timerId);
-  }, [runningStepIds, fitView]);
-
-  // When workflow completes (no running step and we had one before), zoom to fit all
+  // True once no known step is still pending or running.
   const allDone = useMemo(() => {
     if (effectiveStepStates.size === 0) return false;
     for (const [, state] of effectiveStepStates) {
@@ -175,54 +149,20 @@ function WorkflowDAGInner({
     return true;
   }, [effectiveStepStates]);
 
-  useEffect(() => {
-    if (allDone && prevRunningStrRef.current) {
-      prevRunningStrRef.current = null;
-      userInteractedRef.current = false;
-      fitView({ padding: 0.15, duration: 800 });
-    }
-  }, [allDone, fitView]);
-
-  // Track user interaction — pause auto-pan for 5s after multiple manual moves
-  const handleMoveEnd = useCallback((event: any) => {
-    // Only flag manual user interactions.
-    // Programmatic pans (via fitView/setCenter) send null/undefined events
-    if (!event) return;
-
-    interactionCountRef.current += 1;
-
-    // Require more than one interaction event within a short window to take over
-    if (interactionCountRef.current >= 2) {
-      userInteractedRef.current = true;
-    }
-
-    if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
-    
-    // If they successfully took over, pause auto-pan for 5s.
-    // If it was just an accidental single click/move, reset the counter after 2s.
-    const timeoutDuration = userInteractedRef.current ? 5000 : 2000;
-    
-    interactionTimerRef.current = setTimeout(() => {
-      userInteractedRef.current = false;
-      interactionCountRef.current = 0;
-    }, timeoutDuration);
-  }, []);
-
-  // Clear any pending interaction timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (interactionTimerRef.current) {
-        clearTimeout(interactionTimerRef.current);
-        interactionTimerRef.current = null;
-      }
-    };
-  }, []);
+  // Auto pan/zoom: follow execution on large workflows, yield to manual
+  // pan/zoom, and resume ~3s after the user stops interacting.
+  const { onMoveStart, onMoveEnd } = useAutoPanZoom({
+    runningStepIds,
+    allDone,
+    nodeCount: dagNodes.length,
+    reducedMotion,
+  });
 
   const nodes = useMemo(() => {
     return dagNodes.map((dn) => {
       const pos = positions.find((p) => p.id === dn.id);
       const live = effectiveStepStates.get(dn.id);
-      
+
       const data: StepNodeData = {
         label: dn.id,
         agent: dn.agent ?? null,
@@ -322,7 +262,8 @@ function WorkflowDAGInner({
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
-        onMoveEnd={handleMoveEnd}
+        onMoveStart={onMoveStart}
+        onMoveEnd={onMoveEnd}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}

@@ -3,12 +3,16 @@ import { describe, it, expect } from "vitest";
 import BDagMini from "../components/dag/BDagMini";
 import type { DAGNode, DAGEdge } from "../api/types";
 
-const node = (id: string, deps: string[] = []): DAGNode => ({
+const node = (
+  id: string,
+  deps: string[] = [],
+  tier: string | null = null,
+): DAGNode => ({
   id,
   agent: null,
   description: "",
   depends_on: deps,
-  tier: null,
+  tier,
 });
 
 describe("BDagMini", () => {
@@ -52,6 +56,36 @@ describe("BDagMini", () => {
       />,
     );
     expect(screen.getByText("this-is-a-ver…")).toBeInTheDocument();
+  });
+
+  it("applies a uniform hairline outline to nodes by default", () => {
+    const { container } = render(
+      <BDagMini nodes={[node("classify", [], "T4")]} edges={[]} />,
+    );
+    const rect = container.querySelector("rect");
+    const style = rect?.getAttribute("style") ?? "";
+    // Tier no longer drives the stroke: every node uses the line token at 1px.
+    expect(style).toContain("rgb(var(--b-line))");
+    expect(style).not.toContain("rgb(var(--b-clay))");
+  });
+
+  it("uses the clay accent only when selected", () => {
+    const { container } = render(
+      <BDagMini nodes={[node("classify", [], "T4")]} edges={[]} selected />,
+    );
+    const rect = container.querySelector("rect");
+    expect(rect?.getAttribute("style")).toContain("rgb(var(--b-clay))");
+  });
+
+  it("does not hardcode a node corner radius (theme token drives it)", () => {
+    const { container } = render(
+      <BDagMini nodes={[node("classify")]} edges={[]} />,
+    );
+    const rect = container.querySelector("rect");
+    // The old hardcoded rx={2} attribute is gone; corner radius now flows from
+    // --b-rad-sm via the CSS `rx` geometry property (0 on paper). jsdom does not
+    // serialize the SVG `rx` style property, so we assert the hardcode is gone.
+    expect(rect?.getAttribute("rx")).toBeNull();
   });
 
   it("passes className to the root svg element", () => {

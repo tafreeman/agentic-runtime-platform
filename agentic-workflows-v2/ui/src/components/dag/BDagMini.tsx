@@ -17,12 +17,15 @@ interface Props {
   nodes: DAGNode[];
   edges: DAGEdge[];
   className?: string;
+  /** When true, node outlines use the clay accent to mark the active thumbnail. */
+  selected?: boolean;
 }
 
 export default function BDagMini({
   nodes,
   edges,
   className = "",
+  selected = false,
 }: Readonly<Props>) {
   const positions = useMemo(() => layoutDAG(nodes, edges), [nodes, edges]);
 
@@ -54,6 +57,10 @@ export default function BDagMini({
   }
 
   const posMap = new Map(positions.map((p) => [p.id, p]));
+
+  // Uniform hairline outline (design ref: 1px line stroke); the clay accent is
+  // reserved for the selected thumbnail rather than encoding tier per node.
+  const nodeStroke = selected ? "rgb(var(--b-clay))" : "rgb(var(--b-line))";
 
   // Bounding box over all node rects
   let minX = Infinity,
@@ -112,7 +119,7 @@ export default function BDagMini({
             y1={src.y + NODE_H}
             x2={tgt.x + NODE_W / 2}
             y2={tgt.y}
-            style={{ stroke: "rgb(var(--b-line))", strokeWidth: 3 }}
+            style={{ stroke: "rgb(var(--b-line))", strokeWidth: 1 }}
             markerEnd="url(#bdagmini-arrow)"
           />
         );
@@ -131,11 +138,13 @@ export default function BDagMini({
               y={pos.y}
               width={NODE_W}
               height={NODE_H}
-              rx={4}
               style={{
                 fill: "rgb(var(--b-bg2))",
-                stroke: "rgb(var(--b-line))",
-                strokeWidth: 3,
+                stroke: nodeStroke,
+                strokeWidth: 1,
+                // Corner radius from the theme (0 on paper) via the CSS `rx`
+                // geometry property rather than a hardcoded rx attribute.
+                rx: "var(--b-rad-sm)",
               }}
             />
             <text
@@ -146,7 +155,8 @@ export default function BDagMini({
               style={{
                 fill: "rgb(var(--b-text))",
                 fontSize: 24,
-                fontFamily: "monospace",
+                fontFamily: "var(--b-font-heading)",
+                fontWeight: 600,
                 pointerEvents: "none",
               }}
             >
