@@ -138,7 +138,7 @@ function TokensCard({
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-[7px] font-mono text-[10.5px] uppercase tracking-[1.5px] text-b-clay">
           <span className="h-[6px] w-[6px] flex-none rounded-full bg-b-clay animate-b-pulse" />
-          tokens today
+          tokens (30d)
         </span>
         <span className="text-[13px] text-b-clay">→</span>
       </div>
@@ -312,7 +312,7 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-3">
               <StatCard
-                label="runs today"
+                label="total runs"
                 value={totalRuns.toLocaleString()}
                 onClick={() => navigate("/runs")}
               />
@@ -413,7 +413,11 @@ export default function DashboardPage() {
                     probe →
                   </Link>
                 </div>
-                {modelRows.length === 0 ? (
+                {agentsQuery.isLoading ? (
+                  <div className="border-t border-b-line-soft py-6 text-center font-mono text-[11px] text-b-text-dim animate-pulse">
+                    loading models...
+                  </div>
+                ) : modelRows.length === 0 ? (
                   <div className="border-t border-b-line-soft py-6 text-center font-mono text-[11px] text-b-text-dim">
                     no models configured
                   </div>

@@ -106,9 +106,9 @@ describe("DashboardPage", () => {
     // Dashboard heading
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     // Overview stat cards
-    expect(screen.getByText(/runs today/i)).toBeInTheDocument();
+    expect(screen.getByText(/total runs/i)).toBeInTheDocument();
     expect(screen.getByText(/success rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/tokens today/i)).toBeInTheDocument();
+    expect(screen.getByText(/tokens \(30d\)/i)).toBeInTheDocument();
   });
 
   it("renders the models panel from the agents endpoint", async () => {

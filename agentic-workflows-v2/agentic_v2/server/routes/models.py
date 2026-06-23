@@ -36,11 +36,15 @@ async def probe_models() -> dict[str, Any]:
         )
         from ...settings import is_agentic_no_llm_enabled
 
-        # The probe performs blocking network I/O (live Ollama discovery does
-        # up to three synchronous httpx requests, ~5s each). Offload to a thread
-        # so the async event loop is never frozen for concurrent requests.
-        summary = await asyncio.to_thread(probe_and_update_tier_defaults)
-        summary["models"] = enumerate_known_models()
+        def _probe() -> dict[str, Any]:
+            # Both calls perform blocking network I/O (Ollama/LM Studio httpx
+            # requests, up to ~5s each). Run together in a thread so the async
+            # event loop is never frozen for concurrent requests.
+            result = probe_and_update_tier_defaults()
+            result["models"] = enumerate_known_models()
+            return result
+
+        summary = await asyncio.to_thread(_probe)
         summary["no_llm_mode"] = is_agentic_no_llm_enabled()
         logger.info(
             "On-demand model probe complete: available=%s, models=%d",

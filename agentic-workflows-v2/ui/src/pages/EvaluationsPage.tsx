@@ -90,7 +90,9 @@ function rateBarColor(ratio: number): BarColor {
 /** Relative "Nh ago" label for the run picker. */
 function relativeWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const diff = Date.now() - new Date(iso).getTime();
+  const time = new Date(iso).getTime();
+  if (Number.isNaN(time)) return "—";
+  const diff = Date.now() - time;
   const s = Math.floor(diff / 1000);
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);

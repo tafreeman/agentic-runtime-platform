@@ -157,7 +157,12 @@ export function useAutoPanZoom({
       if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
       resumeTimerRef.current = setTimeout(() => {
         userControllingRef.current = false;
-        followNow(); // re-center on whatever is running (or fit-all if done)
+        // Don't force-reset the viewport after the run completes — the user
+        // may be panning around to inspect finished nodes. Only resume
+        // auto-following while there is still live execution to track.
+        if (!latestRef.current.allDone || !completedFitRef.current) {
+          followNow();
+        }
       }, INACTIVITY_RESUME_MS);
     },
     [followNow]
