@@ -34,6 +34,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -200,6 +201,7 @@ def _fetch_lmstudio_models(host: str) -> list[LocalModelInfo] | None:
     return None
 
 
+@lru_cache(maxsize=1)
 def resolve_lmstudio_host() -> str:
     """Resolve the bare LM Studio base host the backend should target.
 
@@ -208,6 +210,13 @@ def resolve_lmstudio_host() -> str:
     candidate (``:1234``) so the backend has a deterministic target and clear
     error messages even when no server is up. :func:`discover_lmstudio_models`
     walks the same candidate order, so a discovered id is reachable here.
+
+    Result is cached (``lru_cache``) because the backend calls this on every
+    inference request; re-probing ``:1234``→``:12340`` each time would add a
+    synchronous connection delay per request (up to ~8s when LM Studio is down).
+    The host is stable within a process; tests call ``cache_clear()`` to reset.
+    Discovery (``discover_lmstudio_models``) is intentionally *not* cached, so a
+    UI "rescan" still re-probes live.
     """
     explicit = os.environ.get(_LMSTUDIO_HOST_ENV)
     if explicit:
