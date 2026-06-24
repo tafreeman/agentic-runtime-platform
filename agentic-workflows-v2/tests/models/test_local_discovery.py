@@ -254,6 +254,22 @@ class TestResolveLmStudioHost:
         _route(monkeypatch, {})
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
 
+    def test_failed_resolution_not_cached(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A fallback result is not cached, so a server that starts later is still discovered."""
+        calls = _route(monkeypatch, {})
+        assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
+        # Each of the 2 candidate hosts is probed on both native and OpenAI-shim paths.
+        assert len(calls) == 4  # 2 hosts × 2 paths (native + OpenAI-shim)
+
+        # Server comes up on the legacy port — the next call must re-probe and find it.
+        _route(
+            monkeypatch,
+            {f"http://127.0.0.1:12340{_NATIVE}": _Resp({"data": []})},
+        )
+        assert resolve_lmstudio_host() == "http://127.0.0.1:12340"
+
 
 # ---------------------------------------------------------------------------
 # ONNX
