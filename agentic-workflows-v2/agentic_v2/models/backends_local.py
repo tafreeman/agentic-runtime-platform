@@ -29,6 +29,7 @@ from typing import Any
 import ollama
 
 from .backends_base import LLMBackend
+from .local_discovery import onnx_roots, parse_onnx_roots
 from .secrets import get_first_secret
 
 # ---------------------------------------------------------------------------
@@ -233,11 +234,29 @@ class OnnxBackend(LLMBackend):
         default_factory=threading.Lock, init=False, compare=False, repr=False
     )
 
+    def _candidate_roots(self) -> list[Path]:
+        """Roots to resolve ``onnx:`` ids against (discovered == runnable).
+
+        Honors an explicitly-set ``model_dir`` (parsed identically to the env
+        spec — ``os.pathsep``-separated, ``~`` expanded, with the aigallery
+        default appended); otherwise uses :func:`onnx_roots`. Either way the
+        backend searches the *same* roots discovery scanned, so a model surfaced
+        by the probe loads from the root it was found under.
+        """
+        if self.model_dir:
+            return parse_onnx_roots(self.model_dir)
+        return onnx_roots()
+
     def _resolve_path(self, model: str) -> str:
         name = model.removeprefix("onnx:")
-        if self.model_dir:
-            return str(Path(self.model_dir) / name)
-        return name
+        roots = self._candidate_roots()
+        for root in roots:
+            if (root / name).exists():
+                return str(root / name)
+        # Not present under any root yet: return a deterministic, expanded path
+        # under the first root so load errors point somewhere sensible and the
+        # per-path model cache stays stable across calls.
+        return str(roots[0] / name) if roots else name
 
     def _get_model(self, model: str) -> tuple[Any, Any, Any]:
         path = self._resolve_path(model)

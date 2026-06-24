@@ -221,13 +221,17 @@ class TestEnumerateKnownModelsMerge:
 
     @pytest.fixture(autouse=True)
     def _stub_local_discovery(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Default the LM Studio + ONNX sources to empty so these tests don't
-        touch a live LM Studio server or the real aigallery cache."""
+        """Default the LM Studio + ONNX + cloud sources to empty so these tests
+        don't touch a live LM Studio server, the real aigallery cache, or a
+        keyed cloud provider."""
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
         )
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_onnx_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", lambda: []
         )
 
     def test_discovered_only_model_appended_as_tier0_with_metadata(
@@ -345,13 +349,21 @@ class TestEnumerateKnownModelsMerge:
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_ollama_models", lambda: []
         )
+        from agentic_v2.models.local_discovery import LocalModelInfo
+
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_lmstudio_models",
-            lambda: ["lmstudio:gemma-3-12b-it"],
+            lambda: [
+                LocalModelInfo(
+                    id="lmstudio:gemma-3-12b-it",
+                    running=True,
+                    capabilities=("vision",),
+                )
+            ],
         )
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_onnx_models",
-            lambda: ["onnx:Microsoft/qwen3-14b-generic-cpu-2/v2"],
+            lambda: [LocalModelInfo(id="onnx:Microsoft/qwen3-14b-generic-cpu-2/v2")],
         )
         by_id = {m["id"]: m for m in enumerate_known_models()}
 
@@ -360,8 +372,61 @@ class TestEnumerateKnownModelsMerge:
         assert lms["provider"] == "lmstudio"
         assert lms["tier"] == 0
         assert lms["available"] is True
+        # Native-API metadata flows through to the catalog entry.
+        assert lms["running"] is True
+        assert lms["capabilities"] == ["vision"]
 
         onnx = by_id.get("onnx:Microsoft/qwen3-14b-generic-cpu-2/v2")
         assert onnx is not None
         assert onnx["provider"] == "onnx"
         assert onnx["available"] is True
+        # Filesystem-scanned ONNX models carry no running/vision metadata.
+        assert "running" not in onnx
+        assert "capabilities" not in onnx
+
+    def test_cloud_models_merged_in_llm_mode(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Keyed cloud listings append as tier-0 entries when LLM mode is on."""
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)  # LLM mode
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models",
+            lambda: [CloudModelInfo(id="openai:gpt-4o-2099-mega")],
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        entry = by_id.get("openai:gpt-4o-2099-mega")
+        assert entry is not None
+        assert entry["provider"] == "openai"
+        assert entry["tier"] == 0
+        assert entry["available"] is True
+
+    def test_cloud_discovery_skipped_in_no_llm_mode(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """No-LLM mode routes to the placeholder, so cloud probes are skipped."""
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+
+        called = {"n": 0}
+
+        def _tracked_cloud() -> list[CloudModelInfo]:
+            called["n"] += 1
+            return [CloudModelInfo(id="openai:should-not-appear")]
+
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", _tracked_cloud
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        assert "openai:should-not-appear" not in by_id
+        assert called["n"] == 0  # gated before the probe runs

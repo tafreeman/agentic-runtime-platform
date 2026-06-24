@@ -357,7 +357,12 @@ def build_lmstudio_model(model_name: str, temperature: float) -> Any:
             "Install with: pip install langchain-openai"
         ) from exc
 
-    base_url = os.environ.get("LMSTUDIO_HOST", "http://127.0.0.1:12340")
+    # Resolve the host the same way discovery does (LMSTUDIO_HOST, else the
+    # first reachable of :1234 / :12340) so a model surfaced by the probe is
+    # reachable at the host we send inference to — discovered == runnable.
+    from ..models.local_discovery import resolve_lmstudio_host
+
+    base_url = resolve_lmstudio_host()
     if not base_url.endswith("/v1"):
         base_url = f"{base_url.rstrip('/')}/v1"
 

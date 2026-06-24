@@ -496,3 +496,7 @@ secrets.txt
 # Cleanup: removed AI scaffolding and generated artifacts
 AGENTS.md
 .github/agents/
+
+# Generated model-probe discovery output (machine-specific paths; regenerated
+# by tools/llm/model_probe.py --discover and scripts/start-dev.ps1).
+tools/llm/filename.json

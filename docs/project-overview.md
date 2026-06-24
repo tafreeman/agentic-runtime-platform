@@ -111,7 +111,7 @@ The monorepo is organized as a **uv workspace** with four packages occupying dis
 
 **Protocol-based abstraction.** `core/protocols.py` defines all inter-component contracts as `@runtime_checkable` protocols. Concrete implementations are registered at startup, not hard-coded. This makes the system testable with minimal mocking and allows new engine backends or agent types to be added without modifying the core.
 
-**Layered LLM routing.** `ModelRouter` maps tiers (1/2/3) to model names from `config/defaults/models.yaml`. `SmartRouter` adds circuit breakers, per-provider bulkhead concurrency limits, latency-weighted selection, and tier-fallback degradation. Both are backed by the shared `tools.llm.LLMClient`.
+**Layered LLM routing.** `ModelRouter` maps tiers to model names via code-level fallback chains (`models/router.py` `DEFAULT_CHAINS`, mirrored by `langchain/models.py` `_TIER_FALLBACK_CHAINS`), refreshed at runtime by the provider probe and live model discovery (ADR-037/038/039). `SmartRouter` adds circuit breakers, per-provider bulkhead concurrency limits, latency-weighted selection, and tier-fallback degradation. Both are backed by the shared `tools.llm.LLMClient`.
 
 **Additive-only contracts.** Pydantic v2 models in `contracts/` follow a strict additive-only policy: existing fields are never removed or renamed. This ensures backward compatibility for any consumer of saved run outputs or API responses. The wire format is enforced by an automated Python-to-TypeScript type generation pipeline and a CI drift gate.
 
