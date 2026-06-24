@@ -34,6 +34,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -200,6 +201,20 @@ def _fetch_lmstudio_models(host: str) -> list[LocalModelInfo] | None:
     return None
 
 
+@lru_cache(maxsize=1)
+def _probe_lmstudio_host() -> str | None:
+    """Return the first reachable default-port host, or None when none respond.
+
+    Only successful results stay in the cache; resolve_lmstudio_host evicts the
+    cache on failure so that a server started after the first probe is discovered
+    on the next call rather than being permanently shadowed by the cached fallback.
+    """
+    for host in [f"http://127.0.0.1:{port}" for port in _LMSTUDIO_DEFAULT_PORTS]:
+        if _fetch_lmstudio_models(host) is not None:
+            return host
+    return None
+
+
 def resolve_lmstudio_host() -> str:
     """Resolve the bare LM Studio base host the backend should target.
 
@@ -208,15 +223,29 @@ def resolve_lmstudio_host() -> str:
     candidate (``:1234``) so the backend has a deterministic target and clear
     error messages even when no server is up. :func:`discover_lmstudio_models`
     walks the same candidate order, so a discovered id is reachable here.
+
+    Successful resolutions are cached because the backend calls this on every
+    inference request; re-probing ``:1234``→``:12340`` each time would add a
+    synchronous connection delay per request (up to ~8s when LM Studio is down).
+    Failed probes are **not** cached: the cache is evicted on failure so a server
+    that starts after the first probe is discovered on the next call. Tests call
+    ``cache_clear()`` to reset between cases.
+    Discovery (``discover_lmstudio_models``) is intentionally *not* cached, so a
+    UI "rescan" still re-probes live.
     """
     explicit = os.environ.get(_LMSTUDIO_HOST_ENV)
     if explicit:
         return _normalize_lmstudio_host(explicit)
-    candidates = [f"http://127.0.0.1:{port}" for port in _LMSTUDIO_DEFAULT_PORTS]
-    for host in candidates:
-        if _fetch_lmstudio_models(host) is not None:
-            return host
-    return candidates[0]
+    found = _probe_lmstudio_host()
+    if found is None:
+        _probe_lmstudio_host.cache_clear()  # don't retain the failure; retry on next call
+        return f"http://127.0.0.1:{_LMSTUDIO_DEFAULT_PORTS[0]}"
+    return found
+
+
+# Forward cache_clear so callers and test fixtures keep the same API regardless
+# of the underlying caching mechanism.
+resolve_lmstudio_host.cache_clear = _probe_lmstudio_host.cache_clear  # type: ignore[attr-defined]
 
 
 def discover_lmstudio_models() -> list[LocalModelInfo]:

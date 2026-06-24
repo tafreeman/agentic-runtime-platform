@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any
 
@@ -230,16 +231,24 @@ def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live listings from every keyed cloud provider (best-effort).
 
     Providers without a configured key contribute nothing and make no network
-    call. Never raises.
+    call. The four probes run concurrently so worst-case latency is a single
+    timeout (~8s) rather than the sum of all four; provider order is preserved.
+    Never raises.
     """
-    discovered: list[CloudModelInfo] = []
-    for probe in (
+    probes = (
         discover_openai_models,
         discover_anthropic_models,
         discover_gemini_models,
         discover_github_models,
-    ):
-        discovered.extend(probe())
+    )
+    discovered: list[CloudModelInfo] = []
+    with ThreadPoolExecutor(max_workers=len(probes)) as executor:
+        # Iterate in submission order so the aggregated list stays deterministic.
+        for future in [executor.submit(probe) for probe in probes]:
+            try:
+                discovered.extend(future.result())
+            except Exception as exc:  # defensive — probes are already best-effort
+                logger.debug("Cloud discovery probe failed: %s", exc)
     return discovered
 
 

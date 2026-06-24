@@ -29,6 +29,9 @@ from agentic_v2.models.local_discovery import (
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for var in ("LMSTUDIO_HOST", "LM_STUDIO_HOST", "ONNX_MODEL_DIR", "AIGALLERY_CACHE"):
         monkeypatch.delenv(var, raising=False)
+    # resolve_lmstudio_host is lru_cached; reset between tests so env changes
+    # (and the :1234/:12340 probe order) are re-evaluated per test.
+    resolve_lmstudio_host.cache_clear()
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +86,11 @@ class TestDiscoverLmStudioNative:
                 f"http://127.0.0.1:1234{_NATIVE}": _Resp(
                     {
                         "data": [
-                            {"id": "google/gemma-3-12b", "type": "llm", "state": "loaded"},
+                            {
+                                "id": "google/gemma-3-12b",
+                                "type": "llm",
+                                "state": "loaded",
+                            },
                             {"id": "qwen2-vl-7b", "type": "vlm", "state": "not-loaded"},
                             {"id": "nomic-embed-text", "type": "embeddings"},
                         ]
@@ -121,7 +128,14 @@ class TestDiscoverLmStudioNative:
             monkeypatch,
             {
                 f"http://127.0.0.1:1234{_NATIVE}": _Resp(
-                    {"data": ["x", {"id": ""}, {"id": "ok", "type": "llm"}, {"no_id": 1}]}
+                    {
+                        "data": [
+                            "x",
+                            {"id": ""},
+                            {"id": "ok", "type": "llm"},
+                            {"no_id": 1},
+                        ]
+                    }
                 )
             },
         )
@@ -211,6 +225,20 @@ class TestResolveLmStudioHost:
         assert resolve_lmstudio_host() == "http://127.0.0.1:9999"
         assert calls == []  # pinned host → no probe
 
+    def test_result_is_cached_no_reprobe_per_call(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Repeated calls (the backend's per-request path) probe only once."""
+        calls = _route(
+            monkeypatch,
+            {f"http://127.0.0.1:1234{_NATIVE}": _Resp({"data": []})},
+        )
+        first = resolve_lmstudio_host()
+        second = resolve_lmstudio_host()
+        assert first == second == "http://127.0.0.1:1234"
+        # Second call hit the lru_cache — no additional network probe.
+        assert calls == [f"http://127.0.0.1:1234{_NATIVE}"]
+
     def test_returns_first_reachable_default_port(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -226,6 +254,22 @@ class TestResolveLmStudioHost:
         _route(monkeypatch, {})
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
 
+    def test_failed_resolution_not_cached(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A fallback result is not cached, so a server that starts later is still discovered."""
+        calls = _route(monkeypatch, {})
+        assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
+        # Each of the 2 candidate hosts is probed on both native and OpenAI-shim paths.
+        assert len(calls) == 4  # 2 hosts × 2 paths (native + OpenAI-shim)
+
+        # Server comes up on the legacy port — the next call must re-probe and find it.
+        _route(
+            monkeypatch,
+            {f"http://127.0.0.1:12340{_NATIVE}": _Resp({"data": []})},
+        )
+        assert resolve_lmstudio_host() == "http://127.0.0.1:12340"
+
 
 # ---------------------------------------------------------------------------
 # ONNX
@@ -233,9 +277,7 @@ class TestResolveLmStudioHost:
 
 
 @pytest.fixture
-def _isolated_default_root(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> Path:
+def _isolated_default_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     """Point the aigallery default at an empty temp dir for deterministic tests."""
     default_root = tmp_path / "_default_aigallery"
     monkeypatch.setattr(local_discovery, "_ONNX_DEFAULT_ROOT", str(default_root))
@@ -294,7 +336,10 @@ class TestDiscoverOnnx:
         assert result == ["onnx:Phi-3.5-mini"]
 
     def test_missing_root_returns_empty(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, _isolated_default_root: Path
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+        _isolated_default_root: Path,
     ) -> None:
         monkeypatch.setenv("ONNX_MODEL_DIR", str(tmp_path / "does-not-exist"))
         assert discover_onnx_models() == []
