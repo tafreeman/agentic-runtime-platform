@@ -8,6 +8,7 @@ profile.
 
 from __future__ import annotations
 
+import logging
 import os
 import platform
 import re
@@ -16,7 +17,17 @@ import subprocess
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Final, Literal
+from typing import Annotated, Any, Final, Literal
+
+import yaml
+
+logger = logging.getLogger(__name__)
+
+# Machine-specific hardware override — gitignored, never committed.
+# Set HARDWARE_OVERRIDE_PATH to point to a different file.
+_DEFAULT_OVERRIDE = (
+    Path(__file__).resolve().parent.parent.parent / "config" / "hardware_override.yaml"
+)
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -367,12 +378,52 @@ def _accelerators() -> list[Accelerator]:
     return accelerators
 
 
+def _load_hardware_override() -> dict[str, Any]:
+    """Return the hardware override dict, or {} when none is configured."""
+    path_env = os.environ.get("HARDWARE_OVERRIDE_PATH")
+    override_path = Path(path_env) if path_env else _DEFAULT_OVERRIDE
+    if not override_path.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(override_path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception as exc:
+        logger.warning("Failed to load hardware override from %s: %s", override_path, exc)
+        return {}
+
+
+def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
+    """Parse accelerator dicts from the YAML override into typed objects."""
+    result: list[Accelerator] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        kind = entry.get("kind")
+        name = entry.get("name")
+        if kind not in ("gpu", "npu") or not isinstance(name, str):
+            continue
+        result.append(
+            Accelerator(
+                kind=kind,
+                name=name,
+                memory_gb=entry.get("memory_gb"),
+                vendor=entry.get("vendor"),
+            )
+        )
+    return result
+
+
 @lru_cache(maxsize=1)
 def get_system_profile() -> SystemProfile:
-    logical = os.cpu_count() or 1
-    ram = _ram_gb()
-    max_mhz = _cpu_max_mhz()
-    accelerators = _accelerators()
+    override = _load_hardware_override()
+    logical = int(override.get("cpu_cores_logical", 0)) or os.cpu_count() or 1
+    ram = float(override.get("ram_gb", 0)) or _ram_gb()
+    max_mhz = float(override.get("cpu_max_mhz", 0)) or _cpu_max_mhz()
+    accelerators = (
+        _accelerators_from_override(override["accelerators"])
+        if "accelerators" in override
+        else _accelerators()
+    )
     gpu_memory = max(
         (a.memory_gb or 0 for a in accelerators if a.kind == "gpu"), default=0
     )
@@ -398,8 +449,11 @@ def get_system_profile() -> SystemProfile:
     return SystemProfile(
         os=platform.platform(),
         architecture=platform.machine(),
-        cpu_name=_cpu_name(),
+        cpu_name=str(override.get("cpu_name") or _cpu_name()),
         cpu_cores_logical=logical,
+        cpu_cores_physical=int(override["cpu_cores_physical"])
+        if "cpu_cores_physical" in override
+        else None,
         cpu_max_mhz=max_mhz,
         ram_gb=ram,
         accelerators=accelerators,
