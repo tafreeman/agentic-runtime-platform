@@ -16,6 +16,10 @@ Providers probed (best-effort, only when their key env var is set):
 - **GitHub Models** (``gh:``) — ``GET https://models.github.ai/catalog/models``
   (``GITHUB_TOKEN``); ids keep their ``publisher/model`` form (e.g.
   ``gh:openai/gpt-4.1``) to match the backend's ``gh:`` resolution.
+- **NVIDIA NIM** (``nvidia:``) — ``GET https://integrate.api.nvidia.com/v1/models``
+  (``NVIDIA_API_KEY``; ``NVIDIA_BASE_URL`` honored for on-prem NIM deployments);
+  ids keep their ``publisher/model`` form (e.g.
+  ``nvidia:meta/llama-3.1-70b-instruct``).
 
 Best-effort by design: a missing key contributes nothing (no network call), and
 any probe failure (network, auth, schema drift) degrades to "no models for this
@@ -227,6 +231,30 @@ def discover_github_models() -> list[CloudModelInfo]:
     return _dedup_prefixed("gh", names)
 
 
+# ---------------------------------------------------------------------------
+# NVIDIA NIM
+# ---------------------------------------------------------------------------
+
+_NVIDIA_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
+
+
+def discover_nvidia_models() -> list[CloudModelInfo]:
+    """List NVIDIA NIM chat models the configured key can reach (best-effort).
+
+    Honors ``NVIDIA_BASE_URL`` for on-prem NIM deployments (e.g. a self-hosted
+    Llama NIM on ``http://nim.local:8000/v1``); falls back to the public cloud
+    endpoint. Model ids keep their ``publisher/model`` form so they round-trip
+    to the NIM OpenAI-compatible backend without transformation.
+    """
+    api_key = os.environ.get("NVIDIA_API_KEY")
+    if not api_key:
+        return []
+    base = (os.environ.get("NVIDIA_BASE_URL") or _NVIDIA_DEFAULT_BASE).rstrip("/")
+    url = f"{base}/models"
+    payload = _get_json(url, headers={"Authorization": f"Bearer {api_key}"})
+    return _dedup_prefixed("nvidia", _data_ids(payload))
+
+
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live listings from every keyed cloud provider (best-effort).
 
@@ -240,6 +268,7 @@ def discover_cloud_models() -> list[CloudModelInfo]:
         discover_anthropic_models,
         discover_gemini_models,
         discover_github_models,
+        discover_nvidia_models,
     )
     discovered: list[CloudModelInfo] = []
     with ThreadPoolExecutor(max_workers=len(probes)) as executor:
@@ -258,5 +287,6 @@ __all__ = [
     "discover_cloud_models",
     "discover_gemini_models",
     "discover_github_models",
+    "discover_nvidia_models",
     "discover_openai_models",
 ]

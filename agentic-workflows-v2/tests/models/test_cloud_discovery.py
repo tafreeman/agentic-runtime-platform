@@ -19,6 +19,7 @@ from agentic_v2.models.cloud_discovery import (
     discover_cloud_models,
     discover_gemini_models,
     discover_github_models,
+    discover_nvidia_models,
     discover_openai_models,
 )
 
@@ -26,6 +27,8 @@ _OPENAI = "https://api.openai.com/v1/models"
 _ANTHROPIC = "https://api.anthropic.com/v1/models"
 _GEMINI = "https://generativelanguage.googleapis.com/v1beta/models"
 _GITHUB = "https://models.github.ai/catalog/models"
+
+_NVIDIA = "https://integrate.api.nvidia.com/v1/models"
 
 _ALL_KEYS = (
     "OPENAI_API_KEY",
@@ -36,6 +39,8 @@ _ALL_KEYS = (
     "GOOGLE_API_KEY",
     "GEMINI_API_KEY",
     "GITHUB_TOKEN",
+    "NVIDIA_API_KEY",
+    "NVIDIA_BASE_URL",
 )
 
 
@@ -214,6 +219,63 @@ class TestGitHub:
         # publisher/model id preserved; embedding filtered.
         assert result == ["gh:openai/gpt-4.1", "gh:meta/Llama-4-Scout-17B"]
         assert calls[0][1]["Authorization"] == "Bearer ghp_x"
+
+
+class TestNVIDIA:
+    def test_lists_chat_models_and_filters_non_chat(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
+        calls = _route(
+            monkeypatch,
+            {
+                _NVIDIA: _Resp(
+                    {
+                        "data": [
+                            {"id": "meta/llama-3.1-70b-instruct"},
+                            {"id": "nvidia/nemotron-mini-4b-instruct"},
+                            {"id": "nvidia/nv-embed-v1"},          # embedding → filtered
+                            {"id": "nvidia/llama-3.2-nv-rerankqa-1b-v1"},  # rerank → filtered
+                        ]
+                    }
+                )
+            },
+        )
+        result = [m.id for m in discover_nvidia_models()]
+        assert result == [
+            "nvidia:meta/llama-3.1-70b-instruct",
+            "nvidia:nvidia/nemotron-mini-4b-instruct",
+        ]
+        assert calls[0][1]["Authorization"] == "Bearer nvapi-test"
+
+    def test_no_key_makes_no_call(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        calls = _route(monkeypatch, {})
+        assert discover_nvidia_models() == []
+        assert calls == []
+
+    def test_base_url_override_for_on_prem_nim(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """NVIDIA_BASE_URL lets on-prem NIM deployments be probed."""
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
+        monkeypatch.setenv("NVIDIA_BASE_URL", "http://nim.local:8000/v1")
+        calls = _route(
+            monkeypatch,
+            {
+                "http://nim.local:8000/v1/models": _Resp(
+                    {"data": [{"id": "meta/llama-3.1-8b-instruct"}]}
+                )
+            },
+        )
+        assert [m.id for m in discover_nvidia_models()] == [
+            "nvidia:meta/llama-3.1-8b-instruct"
+        ]
+        assert calls[0][0] == "http://nim.local:8000/v1/models"
+
+    def test_server_error_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
+        _route(monkeypatch, {_NVIDIA: _Resp(None, status=401)})
+        assert discover_nvidia_models() == []
 
 
 class TestAggregate:
