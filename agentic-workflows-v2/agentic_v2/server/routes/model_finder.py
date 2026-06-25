@@ -396,6 +396,8 @@ def _load_hardware_override() -> dict[str, Any]:
 
 def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
     """Parse accelerator dicts from the YAML override into typed objects."""
+    if not isinstance(raw, list):
+        return []
     result: list[Accelerator] = []
     for entry in raw:
         if not isinstance(entry, dict):
@@ -405,13 +407,23 @@ def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
         if kind not in ("gpu", "npu") or not isinstance(name, str):
             continue
         tops_raw = entry.get("tops")
+        try:
+            tops = float(tops_raw) if tops_raw is not None else None
+        except (ValueError, TypeError):
+            tops = None
+        memory_raw = entry.get("memory_gb")
+        try:
+            memory_gb = float(memory_raw) if memory_raw is not None else None
+        except (ValueError, TypeError):
+            memory_gb = None
+        vendor_raw = entry.get("vendor")
         result.append(
             Accelerator(
                 kind=kind,
                 name=name,
-                memory_gb=entry.get("memory_gb"),
-                vendor=entry.get("vendor"),
-                tops=float(tops_raw) if tops_raw is not None else None,
+                memory_gb=memory_gb,
+                vendor=str(vendor_raw) if vendor_raw is not None else None,
+                tops=tops,
             )
         )
     return result
@@ -420,12 +432,25 @@ def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
 @lru_cache(maxsize=1)
 def get_system_profile() -> SystemProfile:
     override = _load_hardware_override()
-    logical = int(override.get("cpu_cores_logical", 0)) or os.cpu_count() or 1
-    ram = float(override.get("ram_gb", 0)) or _ram_gb()
-    max_mhz = float(override.get("cpu_max_mhz", 0)) or _cpu_max_mhz()
+
+    def _safe_int(val: Any, default: int = 0) -> int:
+        try:
+            return int(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+
+    def _safe_float(val: Any, default: float = 0.0) -> float:
+        try:
+            return float(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+
+    logical = _safe_int(override.get("cpu_cores_logical")) or os.cpu_count() or 1
+    ram = _safe_float(override.get("ram_gb")) or _ram_gb()
+    max_mhz = _safe_float(override.get("cpu_max_mhz")) or _cpu_max_mhz()
     accelerators = (
         _accelerators_from_override(override["accelerators"])
-        if "accelerators" in override
+        if "accelerators" in override and override["accelerators"] is not None
         else _accelerators()
     )
     gpu_memory = max(
@@ -465,9 +490,7 @@ def get_system_profile() -> SystemProfile:
         architecture=platform.machine(),
         cpu_name=str(override.get("cpu_name") or _cpu_name()),
         cpu_cores_logical=logical,
-        cpu_cores_physical=int(override["cpu_cores_physical"])
-        if "cpu_cores_physical" in override
-        else None,
+        cpu_cores_physical=_safe_int(override.get("cpu_cores_physical"), 0) or None,
         cpu_max_mhz=max_mhz,
         ram_gb=ram,
         accelerators=accelerators,
