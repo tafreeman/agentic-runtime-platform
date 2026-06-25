@@ -112,8 +112,8 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 _TIER_DEFAULTS: dict[int, str] = {
-    1: "gemini:gemini-2.0-flash-lite",
-    2: "gemini:gemini-2.0-flash",
+    1: "gemini:gemini-2.5-flash-lite",
+    2: "gemini:gemini-2.5-flash",
     3: MODEL_GEMINI_FLASH,
     4: MODEL_GEMINI_FLASH,
     5: MODEL_GEMINI_FLASH,
@@ -124,7 +124,7 @@ _TIER_DEFAULTS: dict[int, str] = {
 _TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
     # Tier 1: fast / cheap -- summarisation, extraction, simple tasks
     1: [
-        "gemini:gemini-2.0-flash-lite",
+        "gemini:gemini-2.5-flash-lite",
         "gh:openai/gpt-4o-mini",
         "openai:gpt-4o-mini",
         "anthropic:claude-haiku-4-5-20251001",
@@ -132,7 +132,7 @@ _TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
     ],
     # Tier 2: balanced -- code review, moderate reasoning
     2: [
-        "gemini:gemini-2.0-flash",
+        "gemini:gemini-2.5-flash",
         MODEL_GH_GPT4O,
         MODEL_OPENAI_GPT4O,
         MODEL_ANTHROPIC_CLAUDE_SONNET,

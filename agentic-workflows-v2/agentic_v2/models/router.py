@@ -110,7 +110,7 @@ MODEL_OPENAI_GPT4O = "openai:gpt-4o"
 DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = {
     ModelTier.TIER_1: FallbackChain(
         (
-            "gemini:gemini-2.0-flash-lite",
+            "gemini:gemini-2.5-flash-lite",
             "gh:openai/gpt-4o-mini",
             "openai:gpt-4o-mini",
         ),
@@ -118,7 +118,7 @@ DEFAULT_CHAINS: dict[ModelTier, FallbackChain] = {
     ),
     ModelTier.TIER_2: FallbackChain(
         (
-            "gemini:gemini-2.0-flash",
+            "gemini:gemini-2.5-flash",
             "gh:openai/gpt-4o-mini",
             "openai:gpt-4o-mini",
             "anthropic:claude-3-5-haiku-20241022",
