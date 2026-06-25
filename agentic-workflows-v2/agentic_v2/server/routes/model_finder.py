@@ -47,6 +47,7 @@ class Accelerator(BaseModel):
     name: str
     memory_gb: float | None = None
     vendor: str | None = None
+    tops: float | None = None  # INT8 AI throughput in TOPS; None when unknown
 
 
 class SystemProfile(BaseModel):
@@ -58,6 +59,7 @@ class SystemProfile(BaseModel):
     cpu_max_mhz: float | None = None
     ram_gb: float
     accelerators: list[Accelerator] = Field(default_factory=list)
+    system_tops: float | None = None  # sum of all accelerator TOPS (INT8); None when unknown
     estimated_cinebench_r23_multi: int
     estimated_tokens_per_second_7b_q4: float
     performance_tier: Literal["entry", "mainstream", "workstation", "accelerated"]
@@ -402,12 +404,14 @@ def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
         name = entry.get("name")
         if kind not in ("gpu", "npu") or not isinstance(name, str):
             continue
+        tops_raw = entry.get("tops")
         result.append(
             Accelerator(
                 kind=kind,
                 name=name,
                 memory_gb=entry.get("memory_gb"),
                 vendor=entry.get("vendor"),
+                tops=float(tops_raw) if tops_raw is not None else None,
             )
         )
     return result
@@ -427,9 +431,19 @@ def get_system_profile() -> SystemProfile:
     gpu_memory = max(
         (a.memory_gb or 0 for a in accelerators if a.kind == "gpu"), default=0
     )
+    npu_tops = sum(a.tops or 0 for a in accelerators if a.kind == "npu")
+    all_tops = sum(a.tops or 0 for a in accelerators)
+    # system_tops override lets the YAML express the true total (incl. CPU VNNI/TOPS
+    # that aren't modelled as an Accelerator entry).
+    system_tops_raw = override.get("system_tops")
+    system_tops: float | None = (
+        float(system_tops_raw) if system_tops_raw is not None
+        else (round(all_tops, 1) if all_tops > 0 else None)
+    )
     cinebench = int(logical * ((max_mhz or 2500) / 1000) * 620)
+    # NPU TOPS contribute ~0.15 t/s per TOPS for INT4/INT8 quantized 7B models.
     tps = round(
-        max(1.5, (logical * ((max_mhz or 2500) / 2500) * 0.9) + (gpu_memory * 1.7)), 1
+        max(1.5, (logical * ((max_mhz or 2500) / 2500) * 0.9) + (gpu_memory * 1.7) + (npu_tops * 0.15)), 1
     )
     if gpu_memory >= 8 or any(a.kind == "npu" for a in accelerators):
         tier = "accelerated"
@@ -457,6 +471,7 @@ def get_system_profile() -> SystemProfile:
         cpu_max_mhz=max_mhz,
         ram_gb=ram,
         accelerators=accelerators,
+        system_tops=system_tops,
         estimated_cinebench_r23_multi=cinebench,
         estimated_tokens_per_second_7b_q4=tps,
         performance_tier=tier,
