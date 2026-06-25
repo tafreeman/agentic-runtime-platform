@@ -8,6 +8,7 @@ profile.
 
 from __future__ import annotations
 
+import logging
 import os
 import platform
 import re
@@ -16,7 +17,17 @@ import subprocess
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Final, Literal
+from typing import Annotated, Any, Final, Literal
+
+import yaml
+
+logger = logging.getLogger(__name__)
+
+# Machine-specific hardware override — gitignored, never committed.
+# Set HARDWARE_OVERRIDE_PATH to point to a different file.
+_DEFAULT_OVERRIDE = (
+    Path(__file__).resolve().parent.parent.parent / "config" / "hardware_override.yaml"
+)
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
@@ -36,6 +47,7 @@ class Accelerator(BaseModel):
     name: str
     memory_gb: float | None = None
     vendor: str | None = None
+    tops: float | None = None  # INT8 AI throughput in TOPS; None when unknown
 
 
 class SystemProfile(BaseModel):
@@ -47,6 +59,7 @@ class SystemProfile(BaseModel):
     cpu_max_mhz: float | None = None
     ram_gb: float
     accelerators: list[Accelerator] = Field(default_factory=list)
+    system_tops: float | None = None  # sum of all accelerator TOPS (INT8); None when unknown
     estimated_cinebench_r23_multi: int
     estimated_tokens_per_second_7b_q4: float
     performance_tier: Literal["entry", "mainstream", "workstation", "accelerated"]
@@ -367,18 +380,95 @@ def _accelerators() -> list[Accelerator]:
     return accelerators
 
 
+def _load_hardware_override() -> dict[str, Any]:
+    """Return the hardware override dict, or {} when none is configured."""
+    path_env = os.environ.get("HARDWARE_OVERRIDE_PATH")
+    override_path = Path(path_env) if path_env else _DEFAULT_OVERRIDE
+    if not override_path.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(override_path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception as exc:
+        logger.warning("Failed to load hardware override from %s: %s", override_path, exc)
+        return {}
+
+
+def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
+    """Parse accelerator dicts from the YAML override into typed objects."""
+    if not isinstance(raw, list):
+        return []
+    result: list[Accelerator] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            continue
+        kind = entry.get("kind")
+        name = entry.get("name")
+        if kind not in ("gpu", "npu") or not isinstance(name, str):
+            continue
+        tops_raw = entry.get("tops")
+        try:
+            tops = float(tops_raw) if tops_raw is not None else None
+        except (ValueError, TypeError):
+            tops = None
+        memory_raw = entry.get("memory_gb")
+        try:
+            memory_gb = float(memory_raw) if memory_raw is not None else None
+        except (ValueError, TypeError):
+            memory_gb = None
+        vendor_raw = entry.get("vendor")
+        result.append(
+            Accelerator(
+                kind=kind,
+                name=name,
+                memory_gb=memory_gb,
+                vendor=str(vendor_raw) if vendor_raw is not None else None,
+                tops=tops,
+            )
+        )
+    return result
+
+
 @lru_cache(maxsize=1)
 def get_system_profile() -> SystemProfile:
-    logical = os.cpu_count() or 1
-    ram = _ram_gb()
-    max_mhz = _cpu_max_mhz()
-    accelerators = _accelerators()
+    override = _load_hardware_override()
+
+    def _safe_int(val: Any, default: int = 0) -> int:
+        try:
+            return int(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+
+    def _safe_float(val: Any, default: float = 0.0) -> float:
+        try:
+            return float(val) if val is not None else default
+        except (ValueError, TypeError):
+            return default
+
+    logical = _safe_int(override.get("cpu_cores_logical")) or os.cpu_count() or 1
+    ram = _safe_float(override.get("ram_gb")) or _ram_gb()
+    max_mhz = _safe_float(override.get("cpu_max_mhz")) or _cpu_max_mhz()
+    accelerators = (
+        _accelerators_from_override(override["accelerators"])
+        if "accelerators" in override and override["accelerators"] is not None
+        else _accelerators()
+    )
     gpu_memory = max(
         (a.memory_gb or 0 for a in accelerators if a.kind == "gpu"), default=0
     )
+    npu_tops = sum(a.tops or 0 for a in accelerators if a.kind == "npu")
+    all_tops = sum(a.tops or 0 for a in accelerators)
+    # system_tops override lets the YAML express the true total (incl. CPU VNNI/TOPS
+    # that aren't modelled as an Accelerator entry).
+    system_tops_raw = override.get("system_tops")
+    system_tops: float | None = (
+        float(system_tops_raw) if system_tops_raw is not None
+        else (round(all_tops, 1) if all_tops > 0 else None)
+    )
     cinebench = int(logical * ((max_mhz or 2500) / 1000) * 620)
+    # NPU TOPS contribute ~0.15 t/s per TOPS for INT4/INT8 quantized 7B models.
     tps = round(
-        max(1.5, (logical * ((max_mhz or 2500) / 2500) * 0.9) + (gpu_memory * 1.7)), 1
+        max(1.5, (logical * ((max_mhz or 2500) / 2500) * 0.9) + (gpu_memory * 1.7) + (npu_tops * 0.15)), 1
     )
     if gpu_memory >= 8 or any(a.kind == "npu" for a in accelerators):
         tier = "accelerated"
@@ -398,11 +488,13 @@ def get_system_profile() -> SystemProfile:
     return SystemProfile(
         os=platform.platform(),
         architecture=platform.machine(),
-        cpu_name=_cpu_name(),
+        cpu_name=str(override.get("cpu_name") or _cpu_name()),
         cpu_cores_logical=logical,
+        cpu_cores_physical=_safe_int(override.get("cpu_cores_physical"), 0) or None,
         cpu_max_mhz=max_mhz,
         ram_gb=ram,
         accelerators=accelerators,
+        system_tops=system_tops,
         estimated_cinebench_r23_multi=cinebench,
         estimated_tokens_per_second_7b_q4=tps,
         performance_tier=tier,
