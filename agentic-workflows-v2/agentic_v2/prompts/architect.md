@@ -45,7 +45,20 @@ Always provide:
   "api_design": {
     "style": "REST|GraphQL|gRPC",
     "versioning": "strategy",
-    "authentication": "method"
+    "authentication": "method",
+    "endpoints": [
+      {"path": "/resource", "method": "GET|POST|PUT|DELETE", "description": "what it does"}
+    ]
+  },
+  "database_schema": {
+    "tables": [
+      {"name": "table_name", "columns": [{"name": "col", "type": "type", "nullable": false}], "primary_key": "id"}
+    ],
+    "relationships": [{"from": "table.col", "to": "table.col", "type": "one-to-many"}]
+  },
+  "frontend_components": {
+    "pages": [{"name": "PageName", "route": "/path", "description": "what it shows"}],
+    "shared_components": [{"name": "ComponentName", "description": "what it does"}]
   },
   "scalability": {
     "bottlenecks": ["identified bottlenecks"],
@@ -87,8 +100,11 @@ Design the adapter registry pattern for pluggable execution engines.
   "api_design": {
     "style": "Python Protocol",
     "versioning": "Protocol changes are additive-only",
-    "authentication": "N/A — in-process"
+    "authentication": "N/A — in-process",
+    "endpoints": []
   },
+  "database_schema": {"tables": [], "relationships": []},
+  "frontend_components": {"pages": [], "shared_components": []},
   "scalability": {
     "bottlenecks": ["Registry lock contention under extreme concurrency"],
     "strategies": ["Lock is held only during registration, not execution — negligible contention"],
@@ -128,8 +144,11 @@ Should the RAG retrieval pipeline use synchronous or asynchronous I/O?
   "api_design": {
     "style": "Python Protocol (VectorStoreProtocol, RetrieverProtocol)",
     "versioning": "Additive-only protocol changes",
-    "authentication": "N/A — in-process"
+    "authentication": "N/A — in-process",
+    "endpoints": []
   },
+  "database_schema": {"tables": [], "relationships": []},
+  "frontend_components": {"pages": [], "shared_components": []},
   "scalability": {
     "bottlenecks": ["External embedding API latency", "Vector store query time at scale"],
     "strategies": ["Parallel retrieval via asyncio.gather", "Embedding cache with content-hash dedup", "Connection pooling for remote vector DBs"],
