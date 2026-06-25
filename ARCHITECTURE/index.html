@@ -645,6 +645,37 @@
 </nav>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#9-governance-module-agentic_v2governance">
+<span class="md-ellipsis">
+      
+        9. Governance module (agentic_v2/governance/)
+      
+    </span>
+</a>
+<nav aria-label="9. Governance module (agentic_v2/governance/)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#91-human-approval-gate-approvalpy">
+<span class="md-ellipsis">
+      
+        9.1 Human-approval gate (approval.py)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#92-escalation-sink-escalationpy">
+<span class="md-ellipsis">
+      
+        9.2 Escalation sink (escalation.py)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#5-what-this-document-is-not">
 <span class="md-ellipsis">
       
@@ -1615,6 +1646,37 @@
 </nav>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#9-governance-module-agentic_v2governance">
+<span class="md-ellipsis">
+      
+        9. Governance module (agentic_v2/governance/)
+      
+    </span>
+</a>
+<nav aria-label="9. Governance module (agentic_v2/governance/)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#91-human-approval-gate-approvalpy">
+<span class="md-ellipsis">
+      
+        9.1 Human-approval gate (approval.py)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#92-escalation-sink-escalationpy">
+<span class="md-ellipsis">
+      
+        9.2 Escalation sink (escalation.py)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#5-what-this-document-is-not">
 <span class="md-ellipsis">
       
@@ -2067,6 +2129,69 @@ breaker, per-provider bulkhead semaphore, rate-limit header cooldown,
 cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
 <code>supports_tools</code> delegation.</p>
 <hr/>
+<h2 id="9-governance-module-agentic_v2governance">9. Governance module (<code>agentic_v2/governance/</code>)<a class="headerlink" href="#9-governance-module-agentic_v2governance" title="Permanent link">¶</a></h2>
+<p>The governance module provides two cross-cutting policy gates consulted at the
+tool-execution hot path — <strong>before</strong> parameter validation and execution:</p>
+<h3 id="91-human-approval-gate-approvalpy">9.1 Human-approval gate (<code>approval.py</code>)<a class="headerlink" href="#91-human-approval-gate-approvalpy" title="Permanent link">¶</a></h3>
+<p><code>agentic_v2.governance.approval</code> intercepts tool calls that require operator
+consent. A tool requires approval when any of the following holds:</p>
+<ul>
+<li>The tool's class sets <code>requires_approval = True</code> (high-impact builtins:
+  <code>shell</code>, <code>shell_exec</code>, <code>execute_python</code>, <code>file_write</code>, <code>file_delete</code>,
+  <code>file_move</code>, <code>directory_create</code>, <code>http</code>, <code>http_post</code>).</li>
+<li><code>Settings.agentic_require_tool_approval</code> is enabled (gates every tool).</li>
+<li>The tool name appears in <code>Settings.agentic_approval_required_tools</code>.</li>
+</ul>
+<p><strong>Fail-closed:</strong> if a tool requires approval and no provider is registered, the
+call is <strong>DENIED</strong> and never executes. Register a provider at process startup:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance.approval</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>    <span class="n">set_approval_provider</span><span class="p">,</span>
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>    <span class="n">CallbackApprovalProvider</span><span class="p">,</span>
+</span><span id="__span-0-4"><a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="n">ApprovalDecision</span><span class="p">,</span>
+</span><span id="__span-0-5"><a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="p">)</span>
+</span><span id="__span-0-6"><a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">my_gate</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+</span><span id="__span-0-8"><a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="c1"># integrate with your operator prompt, queue, or remote approval service</span>
+</span><span id="__span-0-9"><a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>    <span class="k">return</span> <span class="n">ApprovalDecision</span><span class="o">.</span><span class="n">APPROVED</span>
+</span><span id="__span-0-10"><a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">CallbackApprovalProvider</span><span class="p">(</span><span class="n">my_gate</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Built-in providers: <code>AutoApproveProvider</code> (trusted/non-interactive environments),
+<code>AutoDenyProvider</code> (hard kill-switch), <code>PolicyApprovalProvider</code> (allowlist by
+tool name), <code>CallbackApprovalProvider</code> (sync-or-async callable integration point).</p>
+<p>The shared entry point for both dispatch points (the engine tool loop in
+<code>agentic_v2.engine.tool_execution</code> and the agent loop in
+<code>agentic_v2.agents.base.BaseAgent</code>) is <code>evaluate_tool_approval()</code>, which returns
+a typed <code>ApprovalOutcome(allowed, decision, error_message, provider_label)</code>.</p>
+<h3 id="92-escalation-sink-escalationpy">9.2 Escalation sink (<code>escalation.py</code>)<a class="headerlink" href="#92-escalation-sink-escalationpy" title="Permanent link">¶</a></h3>
+<p><code>agentic_v2.governance.escalation</code> handles the structured handoff emitted when
+every agent in an orchestrator's fallback chain has failed a subtask. Rather than
+returning a bare <code>{"error": ...}</code> that discards context, this module produces a
+<code>HandoffSummary</code> carrying <code>failure_type</code>, <code>attempted_agents</code>, <code>partial_results</code>
+(truncated to 500 chars), and <code>suggested_next_action</code>.</p>
+<p><strong>Default behavior:</strong> <code>route_handoff()</code> logs the summary at WARNING and returns
+it. Register a custom sink to take real action:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance.escalation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>    <span class="n">set_escalation_sink</span><span class="p">,</span>
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">HandoffSummary</span><span class="p">,</span>
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="n">FailureType</span><span class="p">,</span>
+</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="p">)</span>
+</span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">TicketSink</span><span class="p">:</span>
+</span><span id="__span-1-8"><a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_handoff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handoff</span><span class="p">:</span> <span class="n">HandoffSummary</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-1-9"><a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>        <span class="k">await</span> <span class="n">my_ticketing_system</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="__span-1-10"><a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a>            <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Agent fallback exhausted: </span><span class="si">{</span><span class="n">handoff</span><span class="o">.</span><span class="n">subtask_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="__span-1-11"><a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a>            <span class="n">body</span><span class="o">=</span><span class="n">handoff</span><span class="o">.</span><span class="n">suggested_next_action</span><span class="p">,</span>
+</span><span id="__span-1-12"><a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a>        <span class="p">)</span>
+</span><span id="__span-1-13"><a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a>
+</span><span id="__span-1-14"><a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="n">set_escalation_sink</span><span class="p">(</span><span class="n">TicketSink</span><span class="p">())</span>
+</span></code></pre></div>
+<p>The <code>HandoffSummary.from_exhausted_chain()</code> classmethod is the canonical
+constructor for orchestrators — it selects <code>FailureType.ALL_AGENTS_EXHAUSTED</code>
+vs <code>NO_AGENT_AVAILABLE</code> automatically based on whether any agent was attempted.</p>
+<p>Sink failures are caught and logged; they never propagate so that escalation
+never masks the original failure with a new one.</p>
+<hr/>
 <h2 id="5-what-this-document-is-not">5. What this document is not<a class="headerlink" href="#5-what-this-document-is-not" title="Permanent link">¶</a></h2>
 <ul>
 <li>Not a replacement for per-package docs — it is a map.</li>
@@ -2079,7 +2204,7 @@ cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 17, 2026 21:08:14 UTC">June 17, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

@@ -1142,10 +1142,10 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#current-state-as-of-may-2026">
+<a class="md-nav__link" href="#current-state-as-of-june-2026">
 <span class="md-ellipsis">
       
-        Current State (as of May 2026)
+        Current State (as of June 2026)
       
     </span>
 </a>
@@ -1311,10 +1311,10 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#current-state-as-of-may-2026">
+<a class="md-nav__link" href="#current-state-as-of-june-2026">
 <span class="md-ellipsis">
       
-        Current State (as of May 2026)
+        Current State (as of June 2026)
       
     </span>
 </a>
@@ -1441,7 +1441,7 @@
 <p>The monorepo serves a deliberate dual purpose: it is both a working production platform and an reference implementation for enterprise software engineering teams. Every architectural decision — dual execution engines, protocol-based abstractions, layered sanitization, rubric-driven evaluation — is documented and designed to demonstrate enterprise practices. The evaluation framework (<code>agentic-v2-eval</code>) and shared tools library (<code>agentic-tools</code>) are independently installable packages, enabling teams to adopt the LLM client, benchmarking utilities, or evaluation pipeline independently of the full runtime.</p>
 <p>Security and observability are first-class concerns throughout. A sanitization middleware pipeline protects all inbound prompt content from secret leakage, PII exposure, and prompt injection — and is fail-closed, returning HTTP 400 on any unhandled exception rather than passing unvalidated content. An optional OpenTelemetry integration instruments the full execution pipeline — from HTTP request through agent steps, LLM calls, and RAG retrieval — for distributed tracing. CI enforces 80% test coverage on the runtime, 80% on the eval package, and 70% on shared tools, with bandit and pip-audit running in every pull request.</p>
 <hr/>
-<h2 id="current-state-as-of-may-2026">Current State (as of May 2026)<a class="headerlink" href="#current-state-as-of-may-2026" title="Permanent link">¶</a></h2>
+<h2 id="current-state-as-of-june-2026">Current State (as of June 2026)<a class="headerlink" href="#current-state-as-of-june-2026" title="Permanent link">¶</a></h2>
 <p>The platform has shipped the following epics:</p>
 <table>
 <thead>
@@ -1560,7 +1560,7 @@
 </tr>
 <tr>
 <td>CI/CD</td>
-<td>GitHub Actions (11 workflow files)</td>
+<td>GitHub Actions (15 workflow files)</td>
 </tr>
 </tbody>
 </table>
@@ -1602,7 +1602,7 @@
 <h3 id="architectural-characteristics">Architectural Characteristics<a class="headerlink" href="#architectural-characteristics" title="Permanent link">¶</a></h3>
 <p><strong>Dual execution engine.</strong> Named YAML workflows can execute through either the LangGraph engine (<code>adapter=langchain</code>) or the native DAG engine (<code>adapter=native</code>). CLI, server, and dashboard requests default to LangGraph during the migration window; runtime-generated DAGs default to the native engine. The <code>agentic compare</code> CLI command runs both engines on the same input and diffs their outputs. The <code>AdapterRegistry</code> in <code>adapters/registry.py</code> maps names (<code>"native"</code>, <code>"langchain"</code>) to <code>ExecutionEngine</code> protocol implementations.</p>
 <p><strong>Protocol-based abstraction.</strong> <code>core/protocols.py</code> defines all inter-component contracts as <code>@runtime_checkable</code> protocols. Concrete implementations are registered at startup, not hard-coded. This makes the system testable with minimal mocking and allows new engine backends or agent types to be added without modifying the core.</p>
-<p><strong>Layered LLM routing.</strong> <code>ModelRouter</code> maps tiers (1/2/3) to model names from <code>config/defaults/models.yaml</code>. <code>SmartRouter</code> adds circuit breakers, per-provider bulkhead concurrency limits, latency-weighted selection, and tier-fallback degradation. Both are backed by the shared <code>tools.llm.LLMClient</code>.</p>
+<p><strong>Layered LLM routing.</strong> <code>ModelRouter</code> maps tiers to model names via code-level fallback chains (<code>models/router.py</code> <code>DEFAULT_CHAINS</code>, mirrored by <code>langchain/models.py</code> <code>_TIER_FALLBACK_CHAINS</code>), refreshed at runtime by the provider probe and live model discovery (ADR-037/038/039). <code>SmartRouter</code> adds circuit breakers, per-provider bulkhead concurrency limits, latency-weighted selection, and tier-fallback degradation. Both are backed by the shared <code>tools.llm.LLMClient</code>.</p>
 <p><strong>Additive-only contracts.</strong> Pydantic v2 models in <code>contracts/</code> follow a strict additive-only policy: existing fields are never removed or renamed. This ensures backward compatibility for any consumer of saved run outputs or API responses. The wire format is enforced by an automated Python-to-TypeScript type generation pipeline and a CI drift gate.</p>
 <p><strong>Fail-closed security.</strong> The sanitization middleware pipeline returns HTTP 400 on any unhandled exception rather than passing unvalidated content. Tool operations default to DENY without explicit configuration. Subprocess environments are scrubbed of API keys before any shell or git tool invocation.</p>
 <p><strong>Zero-credential development.</strong> <code>AGENTIC_NO_LLM=1</code> installs deterministic placeholder providers at both engine chokepoints, allowing full end-to-end execution with the entire test suite passing without provider credentials. It affects provider calls only; adapter selection remains explicit (<code>langchain</code> by default for named YAML workflows, <code>native</code> for runtime-generated DAGs or <code>--adapter native</code>). CI runs exclusively in placeholder mode.</p>
@@ -1626,31 +1626,32 @@
 </span><span id="__span-1-16"><a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a>│   │   ├── models/         LLM routing (8+ providers)
 </span><span id="__span-1-17"><a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a>│   │   ├── prompts/        7 agent persona definitions
 </span><span id="__span-1-18"><a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a>│   │   ├── rag/            Full RAG pipeline
-</span><span id="__span-1-19"><a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a>│   │   ├── server/         FastAPI + WebSocket/SSE
-</span><span id="__span-1-20"><a href="#__codelineno-1-20" id="__codelineno-1-20" name="__codelineno-1-20"></a>│   │   ├── tools/builtin/  11 built-in tool modules
-</span><span id="__span-1-21"><a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a>│   │   ├── utils/          General utilities
-</span><span id="__span-1-22"><a href="#__codelineno-1-22" id="__codelineno-1-22" name="__codelineno-1-22"></a>│   │   └── workflows/      6 YAML workflow definitions
-</span><span id="__span-1-23"><a href="#__codelineno-1-23" id="__codelineno-1-23" name="__codelineno-1-23"></a>│   ├── tests/              100+ test files
-</span><span id="__span-1-24"><a href="#__codelineno-1-24" id="__codelineno-1-24" name="__codelineno-1-24"></a>│   └── ui/                 React 19 dashboard
-</span><span id="__span-1-25"><a href="#__codelineno-1-25" id="__codelineno-1-25" name="__codelineno-1-25"></a>├── agentic-v2-eval/        Standalone evaluation framework
-</span><span id="__span-1-26"><a href="#__codelineno-1-26" id="__codelineno-1-26" name="__codelineno-1-26"></a>│   └── src/agentic_v2_eval/
-</span><span id="__span-1-27"><a href="#__codelineno-1-27" id="__codelineno-1-27" name="__codelineno-1-27"></a>│       ├── evaluators/     5 evaluator types
-</span><span id="__span-1-28"><a href="#__codelineno-1-28" id="__codelineno-1-28" name="__codelineno-1-28"></a>│       ├── rubrics/        8 YAML rubric definitions
-</span><span id="__span-1-29"><a href="#__codelineno-1-29" id="__codelineno-1-29" name="__codelineno-1-29"></a>│       ├── runners/        Batch + streaming runners
-</span><span id="__span-1-30"><a href="#__codelineno-1-30" id="__codelineno-1-30" name="__codelineno-1-30"></a>│       └── reporters/      JSON / Markdown / HTML
-</span><span id="__span-1-31"><a href="#__codelineno-1-31" id="__codelineno-1-31" name="__codelineno-1-31"></a>├── tools/                  Shared utilities (agentic-tools)
-</span><span id="__span-1-32"><a href="#__codelineno-1-32" id="__codelineno-1-32" name="__codelineno-1-32"></a>│   ├── llm/                Multi-provider LLM client (20+ modules)
-</span><span id="__span-1-33"><a href="#__codelineno-1-33" id="__codelineno-1-33" name="__codelineno-1-33"></a>│   │   └── windows_ai_bridge/  Phi Silica on-device inference
-</span><span id="__span-1-34"><a href="#__codelineno-1-34" id="__codelineno-1-34" name="__codelineno-1-34"></a>│   ├── agents/benchmarks/  8 benchmark definitions
-</span><span id="__span-1-35"><a href="#__codelineno-1-35" id="__codelineno-1-35" name="__codelineno-1-35"></a>│   └── core/               Shared errors, cache, config
-</span><span id="__span-1-36"><a href="#__codelineno-1-36" id="__codelineno-1-36" name="__codelineno-1-36"></a>├── _bmad/                  BMad methodology setup
-</span><span id="__span-1-37"><a href="#__codelineno-1-37" id="__codelineno-1-37" name="__codelineno-1-37"></a>├── _bmad-output/           BMad-generated artifacts
-</span><span id="__span-1-38"><a href="#__codelineno-1-38" id="__codelineno-1-38" name="__codelineno-1-38"></a>├── docs/                   MkDocs documentation source
-</span><span id="__span-1-39"><a href="#__codelineno-1-39" id="__codelineno-1-39" name="__codelineno-1-39"></a>
-</span><span id="__span-1-40"><a href="#__codelineno-1-40" id="__codelineno-1-40" name="__codelineno-1-40"></a>├── .github/workflows/      11 CI/CD workflow files
-</span><span id="__span-1-41"><a href="#__codelineno-1-41" id="__codelineno-1-41" name="__codelineno-1-41"></a>├── otel/                   OpenTelemetry collector config
-</span><span id="__span-1-42"><a href="#__codelineno-1-42" id="__codelineno-1-42" name="__codelineno-1-42"></a>├── tests/e2e/              Cross-package smoke tests
-</span><span id="__span-1-43"><a href="#__codelineno-1-43" id="__codelineno-1-43" name="__codelineno-1-43"></a>└── pyproject.toml          uv workspace root + agentic-tools
+</span><span id="__span-1-19"><a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a>│   │   ├── scoring/        Scoring/judge domain (extracted from server/)
+</span><span id="__span-1-20"><a href="#__codelineno-1-20" id="__codelineno-1-20" name="__codelineno-1-20"></a>│   │   ├── server/         FastAPI + WebSocket/SSE
+</span><span id="__span-1-21"><a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a>│   │   ├── tools/builtin/  11 built-in tool modules
+</span><span id="__span-1-22"><a href="#__codelineno-1-22" id="__codelineno-1-22" name="__codelineno-1-22"></a>│   │   ├── utils/          General utilities
+</span><span id="__span-1-23"><a href="#__codelineno-1-23" id="__codelineno-1-23" name="__codelineno-1-23"></a>│   │   └── workflows/      6 YAML workflow definitions
+</span><span id="__span-1-24"><a href="#__codelineno-1-24" id="__codelineno-1-24" name="__codelineno-1-24"></a>│   ├── tests/              150+ test files
+</span><span id="__span-1-25"><a href="#__codelineno-1-25" id="__codelineno-1-25" name="__codelineno-1-25"></a>│   └── ui/                 React 19 dashboard
+</span><span id="__span-1-26"><a href="#__codelineno-1-26" id="__codelineno-1-26" name="__codelineno-1-26"></a>├── agentic-v2-eval/        Standalone evaluation framework
+</span><span id="__span-1-27"><a href="#__codelineno-1-27" id="__codelineno-1-27" name="__codelineno-1-27"></a>│   └── src/agentic_v2_eval/
+</span><span id="__span-1-28"><a href="#__codelineno-1-28" id="__codelineno-1-28" name="__codelineno-1-28"></a>│       ├── evaluators/     5 evaluator types
+</span><span id="__span-1-29"><a href="#__codelineno-1-29" id="__codelineno-1-29" name="__codelineno-1-29"></a>│       ├── rubrics/        8 YAML rubric definitions
+</span><span id="__span-1-30"><a href="#__codelineno-1-30" id="__codelineno-1-30" name="__codelineno-1-30"></a>│       ├── runners/        Batch + streaming runners
+</span><span id="__span-1-31"><a href="#__codelineno-1-31" id="__codelineno-1-31" name="__codelineno-1-31"></a>│       └── reporters/      JSON / Markdown / HTML
+</span><span id="__span-1-32"><a href="#__codelineno-1-32" id="__codelineno-1-32" name="__codelineno-1-32"></a>├── tools/                  Shared utilities (agentic-tools)
+</span><span id="__span-1-33"><a href="#__codelineno-1-33" id="__codelineno-1-33" name="__codelineno-1-33"></a>│   ├── llm/                Multi-provider LLM client (20+ modules)
+</span><span id="__span-1-34"><a href="#__codelineno-1-34" id="__codelineno-1-34" name="__codelineno-1-34"></a>│   │   └── windows_ai_bridge/  Phi Silica on-device inference
+</span><span id="__span-1-35"><a href="#__codelineno-1-35" id="__codelineno-1-35" name="__codelineno-1-35"></a>│   ├── agents/benchmarks/  8 benchmark definitions
+</span><span id="__span-1-36"><a href="#__codelineno-1-36" id="__codelineno-1-36" name="__codelineno-1-36"></a>│   └── core/               Shared errors, cache, config
+</span><span id="__span-1-37"><a href="#__codelineno-1-37" id="__codelineno-1-37" name="__codelineno-1-37"></a>├── _bmad/                  BMad methodology setup
+</span><span id="__span-1-38"><a href="#__codelineno-1-38" id="__codelineno-1-38" name="__codelineno-1-38"></a>├── _bmad-output/           BMad-generated artifacts
+</span><span id="__span-1-39"><a href="#__codelineno-1-39" id="__codelineno-1-39" name="__codelineno-1-39"></a>├── docs/                   MkDocs documentation source
+</span><span id="__span-1-40"><a href="#__codelineno-1-40" id="__codelineno-1-40" name="__codelineno-1-40"></a>
+</span><span id="__span-1-41"><a href="#__codelineno-1-41" id="__codelineno-1-41" name="__codelineno-1-41"></a>├── .github/workflows/      15 CI/CD workflow files
+</span><span id="__span-1-42"><a href="#__codelineno-1-42" id="__codelineno-1-42" name="__codelineno-1-42"></a>├── otel/                   OpenTelemetry collector config
+</span><span id="__span-1-43"><a href="#__codelineno-1-43" id="__codelineno-1-43" name="__codelineno-1-43"></a>├── tests/e2e/              Cross-package smoke tests
+</span><span id="__span-1-44"><a href="#__codelineno-1-44" id="__codelineno-1-44" name="__codelineno-1-44"></a>└── pyproject.toml          uv workspace root + agentic-tools
 </span></code></pre></div>
 <hr/>
 <h2 id="links-to-related-documentation">Links to Related Documentation<a class="headerlink" href="#links-to-related-documentation" title="Permanent link">¶</a></h2>
@@ -1716,7 +1717,7 @@
 </tr>
 <tr>
 <td><a href="../adr/ADR-INDEX/">ADR Index</a></td>
-<td>All 17 architecture decision records</td>
+<td>All 31 architecture decision records</td>
 </tr>
 <tr>
 <td><a href="../ROADMAP/">Roadmap</a></td>
@@ -1733,7 +1734,7 @@
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 1, 2026 06:54:03 UTC">June 1, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 24, 2026 03:25:47 UTC">June 24, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

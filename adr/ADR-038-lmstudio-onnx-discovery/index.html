@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-lab-canonical-divergence-audit/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-038-lmstudio-onnx-discovery/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>Lab-vs-Canonical Divergence Audit — Final Report - Agentic Runtime Platform</title>
+        <title>ADR-038: Live Discovery for LM Studio and ONNX Local Models - Agentic Runtime Platform</title>
       
     
     
@@ -63,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Lab-vs-Canonical Divergence Audit — Final Report - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-038: Live Discovery for LM Studio and ONNX Local Models - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-lab-canonical-divergence-audit.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-038-lmstudio-onnx-discovery.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-lab-canonical-divergence-audit/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-038-lmstudio-onnx-discovery/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Lab-vs-Canonical Divergence Audit — Final Report - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-038: Live Discovery for LM Studio and ONNX Local Models - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-lab-canonical-divergence-audit.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-038-lmstudio-onnx-discovery.png" />
 </head>
   
   
@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#lab-vs-canonical-divergence-audit-final-report" class="md-skip">
+        <a href="#adr-038-live-discovery-for-lm-studio-and-onnx-local-models" class="md-skip">
           Skip to content
         </a>
       
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Lab-vs-Canonical Divergence Audit — Final Report
+              ADR-038: Live Discovery for LM Studio and ONNX Local Models
             
           </span>
         </div>
@@ -2752,22 +2752,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#verdict-stale-fork-with-one-genuine-un-upstreamed-lab-contribution" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verdict: STALE FORK (with one genuine un-upstreamed lab contribution)
+        Context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Verdict: STALE FORK (with one genuine un-upstreamed lab contribution)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mechanical-baseline" class="md-nav__link">
+  <a href="#amendment-2026-06-23" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Mechanical baseline
+        Amendment (2026-06-23)
       
     </span>
   </a>
@@ -2780,93 +2791,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#methodology" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methodology
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Methodology">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#overturned-discarded-claims" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overturned (discarded) claims
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#directionality-by-subsystem" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Directionality by subsystem
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-the-lab-is-ahead-on-un-upstreamed-would-be-lost-on-discard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What the lab is ahead on (un-upstreamed — would be LOST on discard)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-canonical-is-ahead-on-lab-is-missingregressed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What canonical is ahead on (lab is missing/regressed)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risk-if-unreconciled" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Risk if unreconciled
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reconciliation-adr-023-compliant" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reconciliation (ADR-023 compliant)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#directionality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Directionality
+        Consequences
       
     </span>
   </a>
@@ -2890,7 +2818,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-023-lab-canonical-divergence-audit.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-038-lmstudio-onnx-discovery.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2899,203 +2827,94 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-023-lab-canonical-divergence-audit.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-038-lmstudio-onnx-discovery.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="lab-vs-canonical-divergence-audit-final-report">Lab-vs-Canonical Divergence Audit — Final Report<a class="headerlink" href="#lab-vs-canonical-divergence-audit-final-report" title="Permanent link">&para;</a></h1>
-<h2 id="verdict-stale-fork-with-one-genuine-un-upstreamed-lab-contribution">Verdict: STALE FORK (with one genuine un-upstreamed lab contribution)<a class="headerlink" href="#verdict-stale-fork-with-one-genuine-un-upstreamed-lab-contribution" title="Permanent link">&para;</a></h2>
-<p>The lab <code>agentic_v2</code> tree is a <strong>pre-ADR-023-Phase-4 snapshot, roughly six months behind canonical</strong>. It is <em>not</em> a healthy parallel branch: across six audited subsystems, the directionality is overwhelmingly <strong>canonical-ahead</strong>, with bidirectional divergence confined to a single research-tier feature (the Confidence-Index calculator) and ADR-013 deprecation scaffolding. The lab has also <em>actively diverged in a contract-breaking direction</em> (Pydantic <code>extra='forbid'</code>, <code>str</code>-typed <code>tier</code>, dropped <code>ErrorEvent</code>), which makes a symmetric merge unsafe.</p>
-<h3 id="mechanical-baseline">Mechanical baseline<a class="headerlink" href="#mechanical-baseline" title="Permanent link">&para;</a></h3>
+<h1 id="adr-038-live-discovery-for-lm-studio-and-onnx-local-models">ADR-038: Live Discovery for LM Studio and ONNX Local Models<a class="headerlink" href="#adr-038-live-discovery-for-lm-studio-and-onnx-local-models" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-06-21
+<strong>Related:</strong> <code>agentic_v2/models/local_discovery.py</code> (new),
+<code>agentic_v2/langchain/models.py</code> (<code>enumerate_known_models</code>),
+<code>agentic_v2/langchain/model_utils.py</code> (<code>PROVIDER_ENV_KEYS</code>),
+<code>ui/src/pages/ModelFinderPage.tsx</code>. Extends ADR-037 (live Ollama discovery) to
+the other two local providers the runtime already supports.</p>
+<hr />
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>ADR-037 made the model router probe reflect what <strong>Ollama</strong> actually has (local +
+cloud). The runtime also supports two other local providers that remained
+invisible in the router — only their static tier-chain entries (if any) showed:</p>
 <ul>
-<li>630 canonical files / 531 lab files</li>
-<li>313 identical, 209 content-divergent, <strong>108 canonical-only</strong>, <strong>9 lab-only</strong></li>
-<li>The 108 canonical-only files cluster in security, observability, reliability, and ExecutionKit bridging. The 9 lab-only files are the CI calculator module + tests + runtime artifacts.</li>
+<li><strong>LM Studio</strong> (<code>lmstudio:</code> prefix) — an OpenAI-compatible local server.</li>
+<li><strong>ONNX</strong> (<code>onnx:</code> / <code>local:</code> prefix) — onnxruntime-genai model folders.</li>
 </ul>
-<p>This 108-to-9 asymmetry is the headline: canonical added ~60KB+ of enterprise infrastructure the lab never received, while the lab accrued one library and four test files.</p>
-<hr />
-<h2 id="methodology">Methodology<a class="headerlink" href="#methodology" title="Permanent link">&para;</a></h2>
-<p>Per-subsystem analyses were each cross-examined by a 3-lens adversarial panel:
-- <strong>Reality lens</strong> — is the claimed divergence real or an artifact of partial reads?
-- <strong>Directionality lens</strong> — who is actually ahead, and did the analysis miss lab-ahead work?
-- <strong>Risk lens</strong> — what breaks if both copies coexist?</p>
-<p>This report <strong>weights adversarially-confirmed findings and discards overturned ones</strong>.</p>
-<h3 id="overturned-discarded-claims">Overturned (discarded) claims<a class="headerlink" href="#overturned-discarded-claims" title="Permanent link">&para;</a></h3>
+<p>Operators with large local libraries (GGUF served by LM Studio; Phi-4 / Qwen
+ONNX folders under the AI Dev Gallery / AI Toolkit / Foundry caches) could <em>run</em>
+these models by id, but the console never listed them, so they were undiscoverable.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Add <code>agentic_v2/models/local_discovery.py</code> with two best-effort discovery
+functions, merged into <code>enumerate_known_models()</code> exactly like the Ollama source.
+Both return <code>LocalModelInfo</code> records (id + optional <code>running</code> / <code>capabilities</code>)
+so the console can render the same badges it draws for Ollama:</p>
 <ul>
-<li>"Lab has hardened fail-closed sanitization middleware" — <strong>REVERSED</strong>: canonical holds the <code>_SANITIZER_NOT_CONFIGURED</code> sentinel + HTTP 503; lab passes through on <code>None</code> (lab is <em>less</em> hardened).</li>
-<li><code>integrations/base.py</code> <code>Dict</code> import, <code>langchain.py</code> 508B delta — cosmetic.</li>
-<li><code>rag/tracing.py</code> <code>perf_counter_ns</code> vs <code>monotonic</code> — functionally equivalent elapsed_ms.</li>
-<li><code>contracts/sanitization.py</code> &amp; <code>verification.py</code> docstring deltas — byte-identical files (false positives).</li>
-<li><code>src/</code>, <code>feature_package/</code>, <code>final_feature_package/</code> — AI-generated codegen output staging, not platform capability (null-valued scaffolding).</li>
-<li>README/CONTRIBUTING title differences, <code>.gitignore</code> line — naming/noise.</li>
-<li>protocols.py TYPE_CHECKING — real but low functional impact (runtime behavior equivalent).</li>
+<li><strong><code>discover_lmstudio_models()</code></strong> — prefers LM Studio's <strong>native</strong> REST API
+  <code>GET {host}/api/v0/models</code>, which lists the <em>whole downloaded library</em> with a
+  <code>type</code> (<code>llm</code> / <code>vlm</code> / <code>embeddings</code>) and a <code>state</code> (<code>loaded</code> / <code>not-loaded</code>);
+  the OpenAI-compatible <code>GET {host}/v1/models</code> is the fallback for older servers
+  but reports only <em>loaded</em> models. Non-chat <code>type</code>s are filtered (<code>vlm</code> is kept
+  and tagged <code>vision</code>); <code>state == loaded</code> sets <code>running</code>. The host comes from
+  <code>resolve_lmstudio_host()</code>: <code>LMSTUDIO_HOST</code> wins, else <code>:1234</code> (LM Studio
+  default) is probed then <code>:12340</code> (legacy ARP port), first reachable winning.
+  Returns <code>lmstudio:&lt;id&gt;</code>.</li>
+<li><strong><code>discover_onnx_models()</code></strong> — bounded-depth filesystem walk for
+  <code>genai_config.json</code> under each ONNX root from <code>parse_onnx_roots()</code>:
+  <code>ONNX_MODEL_DIR</code> / <code>AIGALLERY_CACHE</code> (one or more roots, <code>os.pathsep</code>-separated)
+  plus the <code>~/.cache/aigallery</code> default (always appended). Returns
+  <code>onnx:&lt;relpath&gt;</code>, where <code>relpath</code> is the model folder <strong>relative to the root it
+  was found under</strong> — exactly what <code>OnnxBackend</code> resolves against, so every
+  discovered id is runnable (<strong>discovered == runnable</strong>).</li>
 </ul>
-<hr />
-<h2 id="directionality-by-subsystem">Directionality by subsystem<a class="headerlink" href="#directionality-by-subsystem" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Subsystem</th>
-<th>Net call</th>
-<th>Why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>server + integrations</td>
-<td><strong>canonical-ahead</strong></td>
-<td>5 missing files (audit_log, replay_store, 2 middleware, metrics), stripped app factory</td>
-</tr>
-<tr>
-<td>models</td>
-<td><strong>canonical-ahead</strong></td>
-<td>4 missing files (weight_integrity, redis_state, ek_provider, ek_adapters); 43–57% smaller router/tracker</td>
-</tr>
-<tr>
-<td>engine + adapters + core</td>
-<td><strong>bidirectional → canonical</strong></td>
-<td>timeout/cleanup/sort guardrails canonical; CI calculator lab</td>
-</tr>
-<tr>
-<td>contracts + workflows + langchain</td>
-<td><strong>bidirectional → canonical</strong></td>
-<td>ADR-014 wire-format breaks canonical-ahead; CI calc + ADR-013 lab</td>
-</tr>
-<tr>
-<td>middleware + rag + cli + settings</td>
-<td><strong>canonical-ahead</strong></td>
-<td>settings 6 config blocks, logging_config, RAG provider validation</td>
-</tr>
-<tr>
-<td>tests</td>
-<td><strong>bidirectional → canonical</strong></td>
-<td>~44 canonical-only test files; 4 lab-only Sprint 9 / ADR-013 tests</td>
-</tr>
-<tr>
-<td>packaging + docs</td>
-<td><strong>canonical-ahead</strong></td>
-<td>newer deps + extras; lab has minor coverage tuning</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="what-the-lab-is-ahead-on-un-upstreamed-would-be-lost-on-discard">What the lab is ahead on (un-upstreamed — would be LOST on discard)<a class="headerlink" href="#what-the-lab-is-ahead-on-un-upstreamed-would-be-lost-on-discard" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong><code>agentic_v2/workflows/lib/ci_calculator.py</code></strong> (~182 lines, production code). Multidimensional research Confidence Index: 5 dimensions (coverage, source_quality, agreement, verification, recency); arithmetic + geometric aggregation; non-compensatory <code>check_gate()</code>; exponential <code>recency_decay()</code> with domain half-lives (ai_ml=90d, cloud=180d, languages=365d, academic=730d); frozen <code>GateResult</code> + <code>MappingProxyType</code> configs. Canonical explicitly removed/never had this. <strong>Survived all three lenses in four separate subsystem panels.</strong></li>
-<li><strong><code>agentic_v2/workflows/lib/__init__.py</code></strong> — package marker.</li>
-<li><strong><code>tests/test_ci_calculator.py</code></strong> (~20KB, 80+ cases).</li>
-<li><strong><code>tests/test_multidimensional_scoring_wiring.py</code></strong> — Sprint 9 Task 9.2 delegation/backward-compat.</li>
-<li><strong><code>tests/test_json_extraction.py</code></strong> — JSON-extraction edge cases (fences, escapes, brace masking) absent in canonical.</li>
-<li><strong><code>tests/test_langchain_deprecation.py</code></strong> + 4 <code>@pytest.mark.skip(ADR-013)</code> markers — an EOL decision canonical has not yet adopted.</li>
-<li><strong>Coverage rigor</strong>: <code>precision=2</code> in pyproject (minor).</li>
-</ol>
-<p>Everything else attributed to the lab was either overturned or is a stale subset of canonical.</p>
-<hr />
-<h2 id="what-canonical-is-ahead-on-lab-is-missingregressed">What canonical is ahead on (lab is missing/regressed)<a class="headerlink" href="#what-canonical-is-ahead-on-lab-is-missingregressed" title="Permanent link">&para;</a></h2>
+<p>The <strong>discovered == runnable</strong> invariant is enforced by sharing resolution: the
+<code>lmstudio</code> backend builds its base URL via <code>resolve_lmstudio_host()</code>, and
+<code>OnnxBackend</code> resolves <code>onnx:</code> ids via <code>parse_onnx_roots()</code> (with <code>~</code> expansion),
+so the backend always targets the host / searches the roots discovery scanned.</p>
+<p><code>enumerate_known_models()</code> enriches matching catalog entries and appends the rest
+as <code>tier 0</code>, <code>available: True</code> (carrying <code>running</code> / <code>capabilities</code> when present).
+<code>onnx</code> is in <code>PROVIDER_ENV_KEYS</code> (no key required) so the router marks the group
+available rather than "no keys". The UI groups by provider prefix, so the
+<code>lmstudio</code> and <code>onnx</code> groups appear with <strong>no UI change</strong>.</p>
+<p>Both are best-effort: a down LM Studio server or an absent/<em>unreadable</em> ONNX root
+contributes nothing, so the endpoint degrades to the prior catalog. Each HTTP
+probe is bounded by a 4 s timeout; the filesystem walk is bounded to depth 6.</p>
+<h3 id="amendment-2026-06-23">Amendment (2026-06-23)<a class="headerlink" href="#amendment-2026-06-23" title="Permanent link">&para;</a></h3>
+<p>The first cut shipped a narrower form than the decision above: discovery hit only
+<code>/v1/models</code> on a single <code>LMSTUDIO_HOST</code> (default <code>:12340</code>), and ONNX returned
+nothing unless a root was explicitly configured. In practice LM Studio surfaced
+just the one or two <em>loaded</em> models (vs. Ollama's full library) and ONNX stayed
+dark for operators using the default aigallery cache. This amendment restores the
+intended behavior and extends it: native-API preference with <code>/v1</code> fallback,
+the <code>:1234</code>→<code>:12340</code> probe shared with the backend, the <code>~/.cache/aigallery</code>
+default, multi-root scanning, an <code>expanduser()</code> fix in <code>OnnxBackend</code>, and richer
+<code>LocalModelInfo</code> records (running / vision).</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Compliance/audit</strong>: <code>audit_log.py</code> (SHA-256 hash chain) + auth audit events. SOC2/FedRAMP/HIPAA critical.</li>
-<li><strong>Supply-chain</strong>: <code>weight_integrity.py</code> + <code>trusted_model_hashes.yaml</code> + schema. No tamper detection in lab.</li>
-<li><strong>Session durability</strong>: <code>replay_store.py</code> (Redis/SQLite/in-memory). Lab loses state on restart.</li>
-<li><strong>Observability</strong>: <code>integrations/metrics.py</code> (Prometheus), <code>middleware/metrics.py</code>, <code>middleware/tracing.py</code> (W3C traceparent), <code>logging_config.py</code>, settings <code>agentic_metrics</code> + 6 config blocks.</li>
-<li><strong>Distributed state</strong>: <code>models/redis_state.py</code> + smart_router Redis/metrics/degraded callbacks.</li>
-<li><strong>Auth</strong>: <code>auth_oidc.py</code> (OIDC JWT), <code>AuthThrottle</code> per-IP lockout, slowapi rate limiting.</li>
-<li><strong>ExecutionKit (ADR-023 Phase 4/5a)</strong>: <code>ek_provider.py</code>, <code>ek_adapters.py</code>.</li>
-<li><strong>Reliability guardrails</strong>: DAG wall-clock timeout + spans, NativeEngine checkpoint cleanup, deterministic <code>MemoryEntry</code> sort, <code>registry.validate_selected()</code>.</li>
-<li><strong>Provider compat</strong>: rate_limit_tracker Gemini/GitHub/Azure/OpenAI-duration parsers.</li>
-<li><strong>Wire-format (ADR-014)</strong>: <code>ErrorEvent</code>, <code>StepStartEvent.input</code>, int-typed <code>tier</code>, <code>TaskInput extra='ignore'</code>, <code>StepConfig dict[str,Any]</code> + <code>loop_max_expr</code>.</li>
-<li><strong>Multi-tenancy</strong>: tenant isolation + tests.</li>
-<li><strong>Deps</strong>: langchain-core 1.4 (vs 0.3), langgraph 1.2 (vs 0.2), cachetools&lt;8, python-json-logger; <code>[mcp]/[redis]/[sqlite]/[postgres]/[devex]</code> extras.</li>
-<li><strong>DX</strong>: <code>NoProviderConfiguredError</code>, README "Your First Run", setup-dev.ps1 helpers, <code>schemas/workflow.schema.json</code>.</li>
-<li><strong>Test coverage</strong>: ~44 canonical-only test files mirroring all of the above.</li>
+<li>The model router now lists <strong>all three</strong> local providers (Ollama, LM Studio,
+  ONNX) plus cloud — what is actually runnable, surfaced on "rescan".</li>
+<li><strong>ONNX is immediate</strong> for models already under the default aigallery cache;
+  <code>.aitk</code> / <code>.foundry</code> roots require pointing <code>ONNX_MODEL_DIR</code> at them (the
+  <code>OnnxBackend</code> resolves a single root, so discovery follows it to keep
+  discovered == runnable).</li>
+<li><strong>LM Studio</strong> lights up once its server is running; with it down, the group is
+  simply empty.</li>
+<li>GGUF files (LM Studio's library) are surfaced via the LM Studio server, not by
+  scanning <code>~/.models</code> — serving them is LM Studio's job; importing them into
+  Ollama (<code>ollama create</code>) is the alternative path for the Ollama group.</li>
+<li>The probe endpoint now also performs a local HTTP call + a bounded filesystem
+  walk per rescan; both are guarded so failures never reach the caller.</li>
 </ul>
-<hr />
-<h2 id="risk-if-unreconciled">Risk if unreconciled<a class="headerlink" href="#risk-if-unreconciled" title="Permanent link">&para;</a></h2>
-<p><strong>HIGH and compounding.</strong> Lab deployment loses audit trails, OIDC, throttling, and weight verification (compliance + attack surface). ADR-014 wire-format diverges — <code>ErrorEvent</code>/<code>tier</code>/<code>TaskInput</code> mismatches silently break any canonical↔lab event flow. No durable replay (session loss on restart), no DAG timeout (runaway-workflow DoS), no Redis CB coordination (thundering herd), checkpoint task leaks (FD/lock exhaustion). Observability blind. Stale <code>langchain-core 0.3</code> carries unpatched/incompatible APIs. Governance: 209 divergent + 108 canonical-only files guarantee wrong-tree edits, non-propagating security fixes, and an ever-widening gap. The lab is safe only as a sandboxed dev environment, never a production baseline.</p>
-<hr />
-<h2 id="reconciliation-adr-023-compliant">Reconciliation (ADR-023 compliant)<a class="headerlink" href="#reconciliation-adr-023-compliant" title="Permanent link">&para;</a></h2>
-<p>ADR-023: canonical is the single source of truth; the lab must <strong>consume</strong> the canonical runtime, not vendor a forked copy.</p>
-<ol>
-<li><strong>Freeze</strong> the lab's vendored <code>agentic_v2/</code> (read-only).</li>
-<li><strong>Upstream lab-only work to canonical FIRST</strong> (before any deletion): port <code>ci_calculator.py</code> + <code>lib/__init__.py</code> + the four lab-only tests; adopt the ADR-013 deprecation decision; optionally adopt <code>precision=2</code>. Land via reviewed PR with tests green.</li>
-<li><strong>Re-base the lab as a dependency</strong>: publish canonical <code>agentic_v2</code> as a versioned wheel (preferred) or pin via git-subtree/submodule; switch the lab's pyproject to depend on the canonical runtime; delete the lab's entire vendored <code>agentic_v2/</code> source tree. Keep only true lab-layer code that <em>imports</em> the runtime.</li>
-<li><strong>Delete</strong> stale lab pins and tracked runtime artifacts (<code>.agentic_memory.json</code>, <code>.coverage</code>, <code>ui/tsconfig.tsbuildinfo</code>).</li>
-<li><strong>Guardrail</strong>: CI check that fails on re-vendoring canonical source + an automated divergence detector.</li>
-</ol>
-<p>Do <strong>not</strong> attempt a symmetric merge — it would re-introduce the lab's contract-breaking edits. The flow is strictly one-directional: upstream the CI calculator, then make the lab a consumer.</p>
-<h2 id="directionality">Directionality<a class="headerlink" href="#directionality" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Subsystem</th>
-<th>Canonical-ahead</th>
-<th>Lab-ahead</th>
-<th>Bidirectional</th>
-<th>Noise (overturned)</th>
-<th>Net call</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>server + integrations (observability/audit/metrics/replay)</td>
-<td>audit_log.py, replay_store.py, middleware/metrics.py, middleware/tracing.py, integrations/metrics.py, OIDC+rate-limit+metrics app factory, decoupled otel.py, step scoring</td>
-<td>— (CI calculator lives elsewhere)</td>
-<td>—</td>
-<td>base.py <code>Dict</code> import, langchain.py 508B delta</td>
-<td><strong>canonical-ahead</strong> (lab is missing ~60KB enterprise infra; the "hardened sanitization" claim was REVERSED — canonical has the fail-closed sentinel, not lab)</td>
-</tr>
-<tr>
-<td>models (routing/backends)</td>
-<td>weight_integrity.py, redis_state.py, ek_provider.py, ek_adapters.py, rate_limit_tracker (Gemini/GitHub/Azure parsers), smart_router (Redis+metrics+degraded callbacks), LLMBackend ABC unification, backends canonicalization</td>
-<td>—</td>
-<td>—</td>
-<td>none material</td>
-<td><strong>canonical-ahead</strong> (mid-ADR-023 migration; lab is a pre-Phase-4 snapshot)</td>
-</tr>
-<tr>
-<td>engine + adapters + core</td>
-<td>DAG timeout+span, ConditionalBranch/ParallelGroup, CancelledError propagation, registry.validate_selected(), NativeEngine checkpoint cleanup, MemoryEntry deterministic sort, NoProviderConfiguredError</td>
-<td>ci_calculator.py + 3 test suites (research evaluation tier)</td>
-<td>yes (core canonical-ahead; research lab-ahead)</td>
-<td>protocols.py TYPE_CHECKING (functionally low-impact), Mapping import</td>
-<td><strong>bidirectional, net canonical-ahead</strong> (lab carries genuine un-upstreamed CI calculator)</td>
-</tr>
-<tr>
-<td>contracts + workflows + langchain</td>
-<td>ErrorEvent export+class, StepStartEvent.input, tier int-typing, TaskInput extra='ignore', loop_max_expr, dict[str,Any] inputs, feature_spec required, runner checkpoint helpers</td>
-<td>ci_calculator lib + tests, ADR-013 deprecation tests</td>
-<td>yes</td>
-<td>sanitization.py &amp; verification.py docstrings (identical files)</td>
-<td><strong>bidirectional, net canonical-ahead</strong> (wire-format breaks per ADR-014 are acute; lab also actively diverged via extra='forbid')</td>
-</tr>
-<tr>
-<td>middleware + rag + tools + cli + settings</td>
-<td>settings.py (6 config blocks: OTEL/OIDC/audit/Redis/replay/checkpointing), logging_config.py, RAG embedding provider validation, CLI test-patch hooks, error dedup</td>
-<td>ci_calculator module</td>
-<td>—</td>
-<td>rag/tracing.py timing (perf_counter_ns vs monotonic — functionally equivalent)</td>
-<td><strong>canonical-ahead</strong></td>
-</tr>
-<tr>
-<td>tests (behavioral drift signal)</td>
-<td>~44 canonical-only test files: audit_log, weight_integrity, redis_circuit_breaker, auth_oidc, auth_throttle×2, otel_metrics, json_logging, replay_store, traceparent, tenant_isolation, model canonicalization, ek_adapters</td>
-<td>test_ci_calculator, test_multidimensional_scoring_wiring, test_json_extraction, test_langchain_deprecation; ADR-013 skips; WorkflowState import</td>
-<td>yes</td>
-<td>none</td>
-<td><strong>bidirectional, net canonical-ahead</strong> (lab ~6mo behind on security/observability; carries Sprint 9 + ADR-013 work)</td>
-</tr>
-<tr>
-<td>packaging + docs + top-level</td>
-<td>pyproject deps (langchain-core 1.4 vs 0.3, langgraph 1.2 vs 0.2, cachetools&lt;8, python-json-logger) + extras (mcp/redis/sqlite/postgres/devex), NoProviderConfiguredError, agentic_metrics, setup-dev.ps1 helpers, schemas/*.json</td>
-<td>ci_calculator lib, coverage precision=2, lab-specific coverage omits</td>
-<td>yes (minor)</td>
-<td>src/, feature_package/, final_feature_package/ (generated codegen artifacts — overturned as low-materiality), .gitignore line, README/CONTRIBUTING titles</td>
-<td><strong>canonical-ahead</strong> (lab's lib + coverage tuning are minor)</td>
-</tr>
-</tbody>
-</table>
 
 
 
@@ -3118,7 +2937,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 24, 2026 03:25:47 UTC">June 24, 2026</span>
   </span>
 
     
@@ -3128,7 +2947,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 22, 2026 14:10:27 UTC">June 22, 2026</span>
   </span>
 
     

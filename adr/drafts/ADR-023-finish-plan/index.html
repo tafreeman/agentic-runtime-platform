@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-preservation-matrix/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/drafts/ADR-023-finish-plan/">
       
       
       
@@ -18,19 +18,19 @@
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Functionality Preservation Matrix — ADR-023 Option A - Agentic Runtime Platform</title>
+        <title>ADR-023 — Finishing Plan (Option A′: single executionkit package) - Agentic Runtime Platform</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,13 +49,13 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/tokens.css">
+      <link rel="stylesheet" href="../../../stylesheets/tokens.css">
     
-      <link rel="stylesheet" href="../../stylesheets/ember.css">
+      <link rel="stylesheet" href="../../../stylesheets/ember.css">
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -63,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Functionality Preservation Matrix — ADR-023 Option A - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-023 — Finishing Plan (Option A′: single executionkit package) - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-preservation-matrix.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/drafts/ADR-023-finish-plan.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-preservation-matrix/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/drafts/ADR-023-finish-plan/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Functionality Preservation Matrix — ADR-023 Option A - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-023 — Finishing Plan (Option A′: single executionkit package) - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-preservation-matrix.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/drafts/ADR-023-finish-plan.png" />
 </head>
   
   
@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#functionality-preservation-matrix-adr-023-option-a" class="md-skip">
+        <a href="#adr-023-finishing-plan-option-a-single-executionkit-package" class="md-skip">
           Skip to content
         </a>
       
@@ -107,7 +107,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Functionality Preservation Matrix — ADR-023 Option A
+              ADR-023 — Finishing Plan (Option A′: single executionkit package)
             
           </span>
         </div>
@@ -245,7 +245,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -266,7 +266,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../../../getting-started/" class="md-tabs__link">
           
   
   
@@ -288,7 +288,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        <a href="../../../ARCHITECTURE/" class="md-tabs__link">
           
   
   
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../deep-dive-server/" class="md-tabs__link">
+        <a href="../../../deep-dive-server/" class="md-tabs__link">
           
   
   
@@ -332,7 +332,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../../api-contracts-runtime/" class="md-tabs__link">
           
   
   
@@ -354,7 +354,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+        <a href="../../../WORKFLOW_AUTHORING/" class="md-tabs__link">
           
   
   
@@ -376,7 +376,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../architecture-eval/" class="md-tabs__link">
+        <a href="../../../architecture-eval/" class="md-tabs__link">
           
   
   
@@ -398,7 +398,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../tools/" class="md-tabs__link">
+        <a href="../../../tools/" class="md-tabs__link">
           
   
   
@@ -420,7 +420,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../operations/" class="md-tabs__link">
+        <a href="../../../operations/" class="md-tabs__link">
           
   
   
@@ -442,7 +442,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/" class="md-tabs__link">
+        <a href="../../../configuration/" class="md-tabs__link">
           
   
   
@@ -464,7 +464,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../project-overview/" class="md-tabs__link">
+        <a href="../../../project-overview/" class="md-tabs__link">
           
   
   
@@ -500,7 +500,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+    <a href="../../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -530,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -592,7 +592,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../getting-started/" class="md-nav__link ">
+            <a href="../../../getting-started/" class="md-nav__link ">
               
   
   
@@ -636,7 +636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -664,7 +664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart/" class="md-nav__link">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -692,7 +692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+      <a href="../../../getting-started/first-workflow/" class="md-nav__link">
         
   
   
@@ -720,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../development-guide/" class="md-nav__link">
+      <a href="../../../development-guide/" class="md-nav__link">
         
   
   
@@ -748,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+      <a href="../../../NO_LLM_MODE/" class="md-nav__link">
         
   
   
@@ -776,7 +776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ONBOARDING/" class="md-nav__link">
+      <a href="../../../ONBOARDING/" class="md-nav__link">
         
   
   
@@ -877,7 +877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE/" class="md-nav__link">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -905,7 +905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-runtime/" class="md-nav__link">
+      <a href="../../../architecture-runtime/" class="md-nav__link">
         
   
   
@@ -933,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-ui/" class="md-nav__link">
+      <a href="../../../architecture-ui/" class="md-nav__link">
         
   
   
@@ -961,7 +961,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-eval/" class="md-nav__link">
+      <a href="../../../architecture-eval/" class="md-nav__link">
         
   
   
@@ -989,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-tools/" class="md-nav__link">
+      <a href="../../../architecture-tools/" class="md-nav__link">
         
   
   
@@ -1017,7 +1017,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integration-architecture/" class="md-nav__link">
+      <a href="../../../integration-architecture/" class="md-nav__link">
         
   
   
@@ -1081,7 +1081,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../rag/" class="md-nav__link ">
+            <a href="../../../rag/" class="md-nav__link ">
               
   
   
@@ -1123,7 +1123,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-server/" class="md-nav__link">
+      <a href="../../../deep-dive-server/" class="md-nav__link">
         
   
   
@@ -1151,7 +1151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-agents/" class="md-nav__link">
+      <a href="../../../deep-dive-agents/" class="md-nav__link">
         
   
   
@@ -1181,7 +1181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+      <a href="../../../deep-dive-agentic-v2-eval/" class="md-nav__link">
         
   
   
@@ -1280,7 +1280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-contracts-runtime/" class="md-nav__link">
+      <a href="../../../api-contracts-runtime/" class="md-nav__link">
         
   
   
@@ -1308,7 +1308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../data-models-runtime/" class="md-nav__link">
+      <a href="../../../data-models-runtime/" class="md-nav__link">
         
   
   
@@ -1336,7 +1336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../component-inventory-ui/" class="md-nav__link">
+      <a href="../../../component-inventory-ui/" class="md-nav__link">
         
   
   
@@ -1364,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ui/pages/" class="md-nav__link">
+      <a href="../../../ui/pages/" class="md-nav__link">
         
   
   
@@ -1392,7 +1392,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ui/api-integration/" class="md-nav__link">
+      <a href="../../../ui/api-integration/" class="md-nav__link">
         
   
   
@@ -1454,7 +1454,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../workflows/" class="md-nav__link ">
+            <a href="../../../workflows/" class="md-nav__link ">
               
   
   
@@ -1496,7 +1496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+      <a href="../../../WORKFLOW_AUTHORING/" class="md-nav__link">
         
   
   
@@ -1524,7 +1524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+      <a href="../../../PATTERN_CATALOG/" class="md-nav__link">
         
   
   
@@ -1627,7 +1627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-eval/" class="md-nav__link">
+      <a href="../../../architecture-eval/" class="md-nav__link">
         
   
   
@@ -1655,7 +1655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/rubrics/" class="md-nav__link">
+      <a href="../../../evaluation/rubrics/" class="md-nav__link">
         
   
   
@@ -1683,7 +1683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/judge/" class="md-nav__link">
+      <a href="../../../evaluation/judge/" class="md-nav__link">
         
   
   
@@ -1711,7 +1711,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/gating/" class="md-nav__link">
+      <a href="../../../evaluation/gating/" class="md-nav__link">
         
   
   
@@ -1739,7 +1739,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/runners/" class="md-nav__link">
+      <a href="../../../evaluation/runners/" class="md-nav__link">
         
   
   
@@ -1767,7 +1767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../evaluation/datasets/" class="md-nav__link">
+      <a href="../../../evaluation/datasets/" class="md-nav__link">
         
   
   
@@ -1839,7 +1839,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../tools/" class="md-nav__link ">
+            <a href="../../../tools/" class="md-nav__link ">
               
   
   
@@ -1883,7 +1883,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture-tools/" class="md-nav__link">
+      <a href="../../../architecture-tools/" class="md-nav__link">
         
   
   
@@ -1911,7 +1911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/llm-client/" class="md-nav__link">
+      <a href="../../../tools/llm-client/" class="md-nav__link">
         
   
   
@@ -1939,7 +1939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/local-models/" class="md-nav__link">
+      <a href="../../../tools/local-models/" class="md-nav__link">
         
   
   
@@ -1967,7 +1967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/windows-ai/" class="md-nav__link">
+      <a href="../../../tools/windows-ai/" class="md-nav__link">
         
   
   
@@ -1995,7 +1995,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/model-probing/" class="md-nav__link">
+      <a href="../../../tools/model-probing/" class="md-nav__link">
         
   
   
@@ -2023,7 +2023,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/provider-limits/" class="md-nav__link">
+      <a href="../../../tools/provider-limits/" class="md-nav__link">
         
   
   
@@ -2051,7 +2051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tools/benchmarks/" class="md-nav__link">
+      <a href="../../../tools/benchmarks/" class="md-nav__link">
         
   
   
@@ -2115,7 +2115,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../operations/" class="md-nav__link ">
+            <a href="../../../operations/" class="md-nav__link ">
               
   
   
@@ -2159,7 +2159,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-guide/" class="md-nav__link">
+      <a href="../../../deployment-guide/" class="md-nav__link">
         
   
   
@@ -2187,7 +2187,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operations/security-hardening/" class="md-nav__link">
+      <a href="../../../operations/security-hardening/" class="md-nav__link">
         
   
   
@@ -2215,7 +2215,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../operations/troubleshooting/" class="md-nav__link">
+      <a href="../../../operations/troubleshooting/" class="md-nav__link">
         
   
   
@@ -2316,7 +2316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/" class="md-nav__link">
+      <a href="../../../configuration/" class="md-nav__link">
         
   
   
@@ -2344,7 +2344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../GLOSSARY/" class="md-nav__link">
+      <a href="../../../GLOSSARY/" class="md-nav__link">
         
   
   
@@ -2372,7 +2372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+      <a href="../../../CODING_STANDARDS/" class="md-nav__link">
         
   
   
@@ -2400,7 +2400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+      <a href="../../../KNOWN_LIMITATIONS/" class="md-nav__link">
         
   
   
@@ -2428,7 +2428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+      <a href="../../../AI_RISK_MANAGEMENT/" class="md-nav__link">
         
   
   
@@ -2456,7 +2456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../MIGRATIONS/" class="md-nav__link">
+      <a href="../../../MIGRATIONS/" class="md-nav__link">
         
   
   
@@ -2557,7 +2557,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../project-overview/" class="md-nav__link">
+      <a href="../../../project-overview/" class="md-nav__link">
         
   
   
@@ -2585,7 +2585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ROADMAP/" class="md-nav__link">
+      <a href="../../../ROADMAP/" class="md-nav__link">
         
   
   
@@ -2613,7 +2613,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CHANGELOG/" class="md-nav__link">
+      <a href="../../../CHANGELOG/" class="md-nav__link">
         
   
   
@@ -2641,7 +2641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ADR-INDEX/" class="md-nav__link">
+      <a href="../../ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2669,7 +2669,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CONTRIBUTING/" class="md-nav__link">
+      <a href="../../../CONTRIBUTING/" class="md-nav__link">
         
   
   
@@ -2697,7 +2697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../DEMO/" class="md-nav__link">
+      <a href="../../../DEMO/" class="md-nav__link">
         
   
   
@@ -2752,10 +2752,209 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#at-risk-mitigations" class="md-nav__link">
+  <a href="#0-why-this-plan-exists" class="md-nav__link">
     <span class="md-ellipsis">
       
-        At-risk / mitigations
+        0. Why this plan exists
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-decision-this-plan-encodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. The decision this plan encodes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. The decision this plan encodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A′
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-canonical-dependency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Canonical dependency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-target-end-state" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Target end-state
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-phases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Phases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Phases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#f0-environment-single-dependency-declaration-the-unblock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F0 — Environment + single-dependency declaration (the unblock)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f1-collapse-imports-to-executionkit-core-of-option-a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F1 — Collapse imports to executionkit (core of Option A′)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f2-flag-off-green-floor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F2 — Flag-OFF green floor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f3-fix-b-1-lru_cache-test-isolation-leak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F3 — Fix B-1 (lru_cache test-isolation leak)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f4-verify-b-2-is-resolved-by-the-collapse-fix-any-residual" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F4 — Verify B-2 is resolved by the collapse; fix any residual
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f5-close-the-usage-normalization-drift-now-points-at-the-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F5 — Close the usage-normalization drift (now points at the engine)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f6-default-on-decision-docsadr-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F6 — Default-on decision + docs/ADR reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f7-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F7 — Commit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Risks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-testing-strategy-tiered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Testing strategy (tiered)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-what-changed-vs-the-original-migration-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. What changed vs the original migration plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-suggested-execution-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Suggested execution order
       
     </span>
   </a>
@@ -2779,7 +2978,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-023-preservation-matrix.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/drafts/ADR-023-finish-plan.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2788,381 +2987,190 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-023-preservation-matrix.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/drafts/ADR-023-finish-plan.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="functionality-preservation-matrix-adr-023-option-a">Functionality Preservation Matrix — ADR-023 Option A<a class="headerlink" href="#functionality-preservation-matrix-adr-023-option-a" title="Permanent link">&para;</a></h1>
+<h1 id="adr-023-finishing-plan-option-a-single-executionkit-package">ADR-023 — Finishing Plan (Option A′: single <code>executionkit</code> package)<a class="headerlink" href="#adr-023-finishing-plan-option-a-single-executionkit-package" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Created:</strong> 2026-06-01
+<strong>Status:</strong> Plan — not yet executed. No code changes have been made under this plan.
+<strong>Companion to:</strong>
+- <a href="../../ADR-023-executionkit-runtime-contract-relationship/"><code>ADR-023-executionkit-runtime-contract-relationship.md</code></a>
+- <a href="../ADR-023-migration-plan/"><code>ADR-023-migration-plan.md</code></a> (the original P0–P7 plan)
+- <a href="../ADR-023-migration-notes/"><code>ADR-023-migration-notes.md</code></a> (phase tracker + open decisions + blockers B-1/B-2)
+- <a href="../ADR-023-preservation-matrix/"><code>ADR-023-preservation-matrix.md</code></a></p>
+</blockquote>
+<hr />
+<h2 id="0-why-this-plan-exists">0. Why this plan exists<a class="headerlink" href="#0-why-this-plan-exists" title="Permanent link">&para;</a></h2>
+<p>ADR-023 Option A is <strong>~80% written but not done</strong>:</p>
+<ul>
+<li>All P0–P7 code exists <strong>only in the working tree, uncommitted</strong> — every <code>ek_*</code> module is untracked; <code>client.py</code>, <code>settings.py</code>, <code>tool_execution.py</code>, <code>agent_resolver.py</code>, <code>conftest.py</code> are modified-not-staged.</li>
+<li><strong>It does not run.</strong> The <code>ek_*</code> modules import <code>executionkit</code> and <code>executionkit_contracts</code>, but neither is declared in <code>agentic-workflows-v2/pyproject.toml</code>, and there is no <code>.venv</code>. In a fresh environment the imports raise <code>ModuleNotFoundError</code>. This is the "failed when running" that caused testing to be deferred.</li>
+<li><strong>B-1 and B-2 are both still open</strong> (documented in the migration-notes as blockers to default-on). The "48 tests green / 0 regressions" result was achieved with <code>AGENTIC_EK_PROVIDER</code> <strong>OFF</strong>, which never exercises the EK path — so that green run does not cover B-1 or B-2.</li>
+<li>The status docs contradict each other: the ADR-INDEX says "P5–P7 in progress"; the migration-notes say all phases "landed (default-on reverted)". Neither is fully accurate.</li>
+</ul>
+<hr />
+<h2 id="1-the-decision-this-plan-encodes">1. The decision this plan encodes<a class="headerlink" href="#1-the-decision-this-plan-encodes" title="Permanent link">&para;</a></h2>
+<p>The original Option A introduced a separate <strong><code>executionkit-contracts</code></strong> package as a "zero-dependency seam" so the runtime could type against ExecutionKit's value types without dragging in the HTTP client / httpx / provider machinery.</p>
+<p><strong>That premise is false for this codebase:</strong></p>
+<ul>
+<li><code>executionkit</code>'s base <code>dependencies = []</code> (httpx is an optional extra).</li>
+<li><code>executionkit.provider</code> probes httpx with <code>try/except</code> and falls back to stdlib <code>urllib</code> — importing the value types never requires httpx.</li>
+<li>The 9-class error tree is already re-exported from <code>executionkit.provider</code>, and <code>executionkit.errors</code> is stdlib-only.</li>
+</ul>
+<p>So the contracts package solved a non-problem. Worse, the actual build made <code>executionkit-contracts</code> a <strong>verbatim duplicate</strong> of EK's types (its own files say "COPIED VERBATIM from executionkit.provider"), and <code>executionkit</code> was <strong>never</strong> refactored to import from it. The result is two parallel, identically-named class trees:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>adapter raises  ──▶ executionkit_contracts.errors.ProviderError   (one class)
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>EK retry checks ──▶ executionkit.errors.ProviderError             (a DIFFERENT class)
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>isinstance(contracts_error, executionkit.errors.LLMError) == False
+</span></code></pre></div>
+<p>This dual-tree mismatch means EK's pattern/retry layer cannot classify the provider errors the runtime adapter raises — the <strong>suspected root cause of B-2</strong> (the EK-default-on hang).</p>
+<h3 id="option-a">Option A′<a class="headerlink" href="#option-a" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Collapse to a single package: <code>executionkit</code>. Drop <code>executionkit-contracts</code> from the runtime.</strong>
+One value-type set (<code>executionkit.provider.{LLMResponse, ToolCall}</code>), one error tree (<code>executionkit.errors.*</code>). This eliminates the dual-tree bug by construction and removes a duplicate-maintenance liability. The contracts seam's only legitimate justification — a published, independently-versioned stable ABI consumed by multiple external projects — does not apply to a single internal runtime↔engine bridge.</p>
+</blockquote>
+<p>This is a deliberate <strong>amendment</strong> to ADR-023, recorded in F6 — not silent drift.</p>
+<hr />
+<h2 id="2-canonical-dependency">2. Canonical dependency<a class="headerlink" href="#2-canonical-dependency" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Origin</th>
-<th>Disposition</th>
-<th>How preserved</th>
-<th>Verifying test</th>
+<th>Package</th>
+<th>Canonical location</th>
+<th>Install name</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>LLMProvider</code> Protocol (<code>complete(...)-&gt;LLMResponse</code>)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>provider.py:118-134</code>; becomes single canonical LLM seam in <code>executionkit.contracts</code>. Runtime adapter satisfies it structurally.</td>
-<td><code>isinstance(adapter, LLMProvider)</code> True; EK pattern tests pass against adapter.</td>
-</tr>
-<tr>
-<td><code>ToolCallingProvider</code> (<code>supports_tools</code>)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>provider.py:137-146</code> + F-04 delegation note; <code>SmartRouterProvider.supports_tools</code> delegates to inner route (False for Gemini).</td>
-<td><code>isinstance(adapter, ToolCallingProvider)</code> reflects inner capability; react_loop refuses non-tool route.</td>
-</tr>
-<tr>
-<td><code>Provider</code> HTTP client (httpx/urllib, aclose)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>provider.py:154-341</code>; stays EK reference provider, coexists with runtime MultiBackend.</td>
-<td>Provider unit tests (post/parse/429/401/aclose) pass.</td>
-</tr>
-<tr>
-<td><code>LLMResponse</code> value type (+usage normalization)</td>
-<td>executionkit</td>
-<td>kept_as_is + extended</td>
-<td><code>provider.py:70-110</code>; usage normalization (OpenAI+Anthropic+<strong>Gemini camelCase</strong>+<strong>Anthropic cache</strong>) centralized here; <code>FinishReason</code> enum added.</td>
-<td>Round-trip from each backend dict preserves content/tool_calls/finish_reason/tokens; cache + Gemini branches nonzero.</td>
-</tr>
-<tr>
-<td><code>ToolCall</code> value type</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>provider.py:61-67</code>.</td>
-<td><code>_parse_tool_calls</code> yields id/name/arguments(dict) for dict + JSON-string forms.</td>
-</tr>
-<tr>
-<td><code>ExecutionKitError</code> base (cost, metadata)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>errors.py</code> root; runtime catches + maps, never replaces.</td>
-<td>StepExecutor maps EK error to <code>StepResult.error</code> preserving cost/metadata.</td>
-</tr>
-<tr>
-<td><code>LLMError</code>/<code>RateLimitError</code>/<code>PermanentError</code>/<code>ProviderError</code></td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>provider.py:452-485</code> classification; <code>RetryConfig.retryable=(RateLimit,Provider)</code>.</td>
-<td>Status-&gt;class test; should_retry True for RateLimit/Provider, False for Permanent.</td>
-</tr>
-<tr>
-<td><code>PatternError</code>/<code>Budget</code>/<code>Consensus</code>/<code>MaxIterations</code></td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>errors.py</code> subtree; raised by checked_complete/consensus/react.</td>
-<td>unanimous mismatch-&gt;ConsensusFailed; max_rounds-&gt;MaxIterations; over-budget-&gt;BudgetExhausted.</td>
-</tr>
-<tr>
-<td><code>RetryConfig</code> + <code>DEFAULT_RETRY</code> (full jitter)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>retry.py:21-54</code>; canonical pattern-level retry.</td>
-<td>get_delay in [0,cap]; with_retry retries then re-raises.</td>
-</tr>
-<tr>
-<td><code>with_retry</code> (CancelledError propagation)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>retry.py:76-105</code>; cancellation re-raised at :105.</td>
-<td>CancelledError propagates unretried; <code>_before_attempt</code> invoked 1-indexed.</td>
-</tr>
-<tr>
-<td><code>TokenUsage</code> (frozen, <code>__add__</code>)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>types.py:26-44</code>; canonical cost unit; feeds runtime TokenBudget via <code>.total_tokens</code>.</td>
-<td>a+b summed + immutable; FrozenInstanceError on mutate.</td>
-</tr>
-<tr>
-<td><code>CostTracker</code> (reserve/release/record TOCTOU-safe)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>cost.py:17-81</code> two-phase ordering preserved when wrapped.</td>
-<td>concurrent reserve gates at limit; release restores; record no double-count.</td>
-</tr>
-<tr>
-<td><code>consensus</code> pattern</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/consensus.py</code> via gather_strict.</td>
-<td>num_samples=5 yields PatternResult metadata; unanimous mismatch raises.</td>
-</tr>
-<tr>
-<td><code>refine_loop</code> (injection-mitigated evaluator)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/refine_loop.py</code> + ConvergenceDetector; XML delimiters/max_eval_chars.</td>
-<td>converges on target/patience; delimiter+truncation security test.</td>
-</tr>
-<tr>
-<td><code>react_loop</code> (arg validation, truncation, history trim)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/react_loop.py</code>; max_observation_chars=12000, max_history.</td>
-<td>terminates on final answer/max_rounds; oversized result truncated; bad args rejected.</td>
-</tr>
-<tr>
-<td><code>structured</code> pattern</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/structured.py</code> (extract_json 3-strategy).</td>
-<td>parses fenced/raw/balanced; invalid repairs then raises; metadata recorded.</td>
-</tr>
-<tr>
-<td><code>pipe</code> composition (-1 sentinel, sig filtering)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>compose.py:44-55,:72,:131</code>.</td>
-<td>threads value-&gt;prompt, accumulates cost, kwarg-filter prevents TypeError; empty-&gt;zero cost.</td>
-</tr>
-<tr>
-<td><code>PatternResult[T]</code> (frozen generic, MappingProxyType)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>types.py:47-59</code>; distinct from runtime StepResult.</td>
-<td>each pattern returns it; metadata read-only; pipe composes without substitution.</td>
-</tr>
-<tr>
-<td><code>checked_complete</code> (precheck-&gt;retry-&gt;record)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/base.py</code> ordering preserved.</td>
-<td>concurrent calls respect budget; cancel propagates; usage recorded once.</td>
-</tr>
-<tr>
-<td><code>validate_score</code></td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>patterns/base.py</code>.</td>
-<td>in-range ok; NaN/out-of-range raises.</td>
-</tr>
-<tr>
-<td><code>ConvergenceDetector</code></td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>engine/convergence.py</code>.</td>
-<td>should_stop on threshold/patience; reset clears.</td>
-</tr>
-<tr>
-<td><code>extract_json</code> (3-strategy)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>engine/json_extraction.py</code>; distinct from runtime llm_output_parsing.</td>
-<td>handles raw/fenced/balanced; raises when none; removing a strategy fails a case.</td>
-</tr>
-<tr>
-<td><code>gather_strict</code> (TaskGroup all-or-nothing)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>engine/parallel.py</code>; used by consensus.</td>
-<td>cancels on first failure; single exception unwrapped; semaphore-capped.</td>
-</tr>
-<tr>
-<td><code>gather_resilient</code> (return_exceptions)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>engine/parallel.py</code>.</td>
-<td>exceptions returned in order; CancelledError propagates.</td>
-</tr>
-<tr>
-<td><code>Kit</code> session facade</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>kit.py</code>; works against runtime adapter.</td>
-<td>delegates + accumulates usage; <code>__aexit__</code> aclose.</td>
-</tr>
-<tr>
-<td><code>Tool</code> value type (<code>to_schema</code>)</td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>types.py:71-93</code>; canonical for react_loop.</td>
-<td>to_schema valid OpenAI fn schema; params MappingProxyType.</td>
-</tr>
-<tr>
-<td><code>VotingStrategy</code> enum / <code>Evaluator</code> alias / <code>PatternStep</code></td>
-<td>executionkit</td>
-<td>kept_as_is</td>
-<td><code>types.py</code>/<code>compose.py</code>.</td>
-<td>consensus accepts enum+string; pipe accepts matching callables.</td>
-</tr>
-<tr>
-<td><code>RetryConfig</code> as data (contract)</td>
-<td>executionkit</td>
-<td>moved_to_contract</td>
-<td>Phase 1: <code>RetryConfig</code>+<code>DEFAULT_RETRY</code> move to <code>executionkit.contracts</code>; <code>with_retry()</code> stays in engine.</td>
-<td>import asserts field values; patterns default to DEFAULT_RETRY.</td>
-</tr>
-<tr>
-<td><code>LLMBackend</code> ABC (complete/complete_chat/stream/count_tokens)</td>
-<td>runtime</td>
-<td>moved_to_adapter</td>
-<td><code>backends_base.py:14-40</code> stays runtime contract; adapter wraps it as EK <code>LLMProvider</code> via <code>complete_chat</code>-&gt;<code>LLMResponse</code>. Full surface retained.</td>
-<td>each concrete backend wrapped returns correct LLMResponse; stream/count_tokens reachable.</td>
-</tr>
-<tr>
-<td><code>LLMBackend</code> Protocol in <code>client.py</code> (lossy)</td>
-<td>runtime</td>
-<td><strong>removed</strong> (was at_risk)</td>
-<td><strong>Phase 2: DELETED</strong> (<code>client.py:45-60</code>); <code>client.py</code> imports the ABC; wrapper backend retyped to ABC.</td>
-<td>mypy --strict: complete_chat reachable; no reference to lossy Protocol.</td>
-</tr>
-<tr>
-<td>GitHub/OpenAI/Anthropic/Gemini/Ollama backends</td>
-<td>runtime</td>
-<td>stays_in_runtime + normalized</td>
-<td><code>backends_cloud.py</code>/<code>backends_local.py</code>; <strong>Phase 3</strong> normalizes outputs (Anthropic tool_use-&gt;OpenAI, Gemini functionCall+finishReason+usage, Ollama thinking+usage).</td>
-<td>per-backend tests: shapes/finish_reason/usage normalized; Ollama thinking populates content.</td>
-</tr>
-<tr>
-<td><code>MultiBackend</code> (model-prefix dispatch)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>backends.py</code>; exposed to EK as single LLMProvider.</td>
-<td>prefix routing + unconfigured raises; EK patterns route transparently.</td>
-</tr>
-<tr>
-<td><code>LLMClientWrapper</code> (cache/sanitization/budget/retry)</td>
-<td>runtime</td>
-<td>stays_in_runtime + re-pointed</td>
-<td><code>client.py</code>; <strong>Phase 5</strong> drives message/complete_chat path through adapter; cache/sanitization/budget kept; wrapper retry retired on EK path only.</td>
-<td>identical prompt hits cache; TTL/LRU prune fire; sanitization invoked; tool_calls/usage survive.</td>
-</tr>
-<tr>
-<td><code>TokenBudget</code> (per-run scalar cap)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>client.py</code>; fed from <code>response.total_tokens</code>; precedence documented (Phase 6).</td>
-<td>can_afford gates; consume False over cap; no double-count vs CostTracker.</td>
-</tr>
-<tr>
-<td><code>retry_with_jitter</code> decorator</td>
-<td>runtime</td>
-<td>stays_in_runtime (off EK seam)</td>
-<td><code>client.py</code>; kept for non-LLM/non-EK call sites; retired on EK LLM seam to avoid double retry.</td>
-<td>backoff+jitter+cap; coexistence test: no double-retry storm.</td>
-</tr>
-<tr>
-<td><code>SmartModelRouter</code> (circuit breaker, rate-limit, bulkhead, Redis CAS, cross-tier)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>smart_router.py</code>; surfaced to EK only via <code>SmartRouterProvider</code>; EK never sees internals.</td>
-<td>breaker opens after 3 fails/half-opens; cooldown from headers; degraded hook fires; semaphore caps; Redis CAS + local fallback.</td>
-</tr>
-<tr>
-<td><code>ModelTier</code> + <code>FallbackChain</code> (ChainBuilder)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>router.py</code>; tier selection internal to wrapper.</td>
-<td>selects first available in chain; immutable chain; tier escalation.</td>
-</tr>
-<tr>
-<td><code>ModelStats</code> (EMA, percentiles, breaker state)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>model_stats.py</code>; no EK counterpart.</td>
-<td>EMA alpha=0.2; reservoir bounded 1000; CLOSED/OPEN/HALF_OPEN; JSON round-trip.</td>
-</tr>
-<tr>
-<td><code>RateLimitTracker</code> (ADR-002E dual bucket, header parsing)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>rate_limit_tracker.py</code>.</td>
-<td>per-provider header parse; RPM+TPM buckets; backoff fallback.</td>
-</tr>
-<tr>
-<td><code>StepExecutor</code>/<code>StepDefinition</code>/RetryStrategy lifecycle</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>step.py</code>; DAG lifecycle untouched; steps invoke EK patterns + catch EK errors (Phase 6).</td>
-<td>should_run + when/unless; wait_for timeout; verification escalation; loop_until; EK-wrapping step populates model_used/tokens.</td>
-</tr>
-<tr>
-<td><code>tool_execution.py</code> (run_tool_calls; 8 rounds/12 calls/12000 chars)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>tool_execution.py:38-40</code>; one owner per tool path (Phase 6).</td>
-<td>≤12 calls/round, ≤8 rounds; 12000-char truncation; tier-filtered contracts; fallback selects healthy model.</td>
-</tr>
-<tr>
-<td><code>llm_output_parsing.py</code> (sentinel FILE blocks, ReviewStatus.normalize)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>messages.py</code>+<code>result_normalization.py</code>; superset of EK extract_json for gating.</td>
-<td>fences/brackets/quoted JSON; FILE block parse; ReviewStatus.normalize variants.</td>
-</tr>
-<tr>
-<td><code>VerificationGate</code>/Policy/Loop</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>verification.py</code>; wraps EK pattern calls + budget-pct floor (Phase 6).</td>
-<td>commands return PASSED/FAILED/ERROR; max_retries + token_budget_pct floor; escalation on failure.</td>
-</tr>
-<tr>
-<td><code>ExecutionContext</code> (scoping, hooks, DI, JMESPath)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>context.py</code>; EK patterns stateless.</td>
-<td>child inherits/isolates; JMESPath deep query; hooks propagate; concurrent set locked.</td>
-</tr>
-<tr>
-<td><code>ConnectionManager</code>/<code>ReplayStore</code>/WebSocket</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>server/websocket.py</code>+<code>replay_store.py</code>.</td>
-<td>broadcast by run_id; late replay; backend persistence; reconnect replays.</td>
-</tr>
-<tr>
-<td><code>AuditLog</code> (hash-chained)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>server/audit_log.py</code>; can record EK-driven calls.</td>
-<td>SHA-256 chain; tamper breaks verify; File/Redis round-trip; Null no-op.</td>
-</tr>
-<tr>
-<td>Core protocols (Engine/Agent/Tool/Memory)</td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>core/protocols.py</code>.</td>
-<td>isinstance per impl; EK-pattern Agent satisfies AgentProtocol.</td>
-</tr>
-<tr>
-<td><code>StepResult</code>/<code>WorkflowResult</code>/<code>ReviewStatus</code>/<code>ReviewReport</code></td>
-<td>runtime</td>
-<td>stays_in_runtime</td>
-<td><code>contracts/messages.py</code> (Pydantic v2, additive-only).</td>
-<td>validates v2; success_rate computed; ReviewStatus.normalize; step wrapping EK pattern populates tokens_used.</td>
+<td>ExecutionKit (engine)</td>
+<td><code>C:\Users\tandf\source\executionkit</code></td>
+<td><code>executionkit</code></td>
+<td>hatchling, dynamic version, GitHub <code>tafreeman/executionkit</code>, base <code>dependencies = []</code>, httpx via <code>[httpx]</code> extra. Provides <code>cost.CostTracker</code>, <code>patterns.base._TrackedProvider</code>, <code>patterns.react_loop.react_loop</code>, <code>patterns.structured.structured</code>, <code>provider.{LLMResponse, ToolCall, LLMProvider, ToolCallingProvider}</code>, <code>types.Tool</code>, <code>errors.*</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="at-risk-mitigations">At-risk / mitigations<a class="headerlink" href="#at-risk-mitigations" title="Permanent link">&para;</a></h2>
+<p>Four other copies exist on disk and are <strong>not</strong> canonical: <code>_audit\executionkit</code>, <code>github-audit\executionkit</code>, and two under <code>_archive\2026-05-29\</code>. <code>executionkit-contracts</code> (<code>C:\Users\tandf\source\executionkit-contracts</code>) is <strong>not</strong> declared by the runtime under Option A′.</p>
+<p><strong>Dependency form is to be confirmed before installing</strong> (editable path-dep for local finishing vs VCS-pinned wheel for reproducibility). The deep relative path across the <code>_audit\</code> boundary is fragile; a tagged VCS dependency on <code>tafreeman/executionkit</code> is the reproducible long-term form.</p>
+<hr />
+<h2 id="3-target-end-state">3. Target end-state<a class="headerlink" href="#3-target-end-state" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>[CLOSED in P2] Lossy <code>client.py</code> <code>LLMBackend</code> Protocol</strong> (omits <code>complete_chat</code>). Mitigation executed: delete the Protocol, import the ABC, retype <code>LLMClientWrapper.backend</code>. Verified by <code>mypy --strict</code> reachability.</li>
-<li><strong>[CLOSED in P3] Anthropic raw <code>tool_use</code> blocks / <code>stop_reason</code></strong> — normalized at backend layer to OpenAI tool shape + mapped finish_reason. Defensive dual-shape branch retained in adapter (P4).</li>
-<li><strong>[CLOSED in P3] Gemini tool-blind + UPPERCASE finishReason + camelCase usage</strong> — backend parses functionCall, lowercases/maps finishReason, remaps usageMetadata; <code>supports_tools</code> False for Gemini routes so react_loop refuses rather than silently drops.</li>
-<li><strong>[CLOSED in P3] Ollama no usage + flattened thinking</strong> — <code>complete_chat</code> gains thinking fallback, count_tokens back-fill, <code>[THINKING]</code> marker, truncation heuristic.</li>
-<li><strong>[CLOSED in P1] EK usage normalization gaps (Gemini, Anthropic cache)</strong> — third normalization branch + cache-token summation added to <code>LLMResponse</code>, the single source of truth.</li>
-<li><strong>[CLOSED in P1] finish_reason vocabulary</strong> — <code>FinishReason</code> enum centralizes the canonical set; <code>was_truncated</code> updated.</li>
-<li><strong>[CLOSED in P4] Mutable-dict aliasing</strong> between backend dict and frozen <code>LLMResponse.usage</code> — adapter deep-copies before MappingProxyType wrap.</li>
-<li><strong>[CLOSED in P5] complete() bypasses complete_chat</strong> — wrapper re-pointed onto message/complete_chat path behind <code>AGENTIC_EK_PROVIDER</code> flag.</li>
-<li><strong>[CLOSED in P5] SmartRouterProvider missing</strong> — implemented over <code>execute_with_bulkhead</code> (not text-only <code>_execute_call</code>); httpx-&gt;EK error translation; reliability tests gate the phase.</li>
-<li><strong>[CLOSED in P5/P6] Double retry / double cost</strong> — wrapper retry retired on EK seam; record once inside SmartRouterProvider; budget recorded once from <code>response.total_tokens</code>.</li>
-<li><strong>[CLOSED in P6] EK error bypasses VerificationGate/hooks</strong> — all step execution wrapped in gate; EK errors flow to error_hooks; budget-pct floor visible to inner pattern.</li>
-<li><strong>[CLOSED in P6] Two budget systems</strong> — precedence: TokenBudget(scalar) consumed first, CostTracker(dimensions) records; documented layering, no merge; TOCTOU ordering preserved.</li>
-<li><strong>[CLOSED in P6] Two tool-execution paths</strong> — one owner per call path; until migrated a step keeps <code>run_tool_calls</code>; no mid-thread mixing.</li>
-<li><strong>No EK equivalent (must stay in runtime, surfaced only via adapter):</strong> SmartModelRouter circuit breaker/rate-limit/cross-tier/bulkhead/Redis CAS; ModelStats/ReplayStore/AuditLog observability+compliance; StepExecutor lifecycle + ExecutionContext; tool_execution bounds + tier-filtered contracts. Mitigation: routing never moves into EK; EK sees only one <code>LLMProvider</code>.</li>
-<li><strong>ACCEPTED RISKS:</strong> pre-Phase-3 Gemini tool calls unrecoverable (forward-fixed only); Ollama truncation is heuristic; streaming + per-provider <code>count_tokens</code> stay OUT of the kernel contract (roadmap, separate optional protocols).</li>
+<li>One value-type set + one error tree, both from <code>executionkit</code>.</li>
+<li><code>agentic_v2.models</code> and <code>agentic_v2.engine</code> depend on <strong><code>executionkit</code> only</strong>.</li>
+<li>The <code>AGENTIC_EK_PROVIDER</code> opt-in path runs end-to-end; the default is set deliberately (not reverted-by-accident).</li>
+<li>ADR-023 amended to Option A′; ADR-INDEX and migration-notes reconciled; all work committed.</li>
 </ul>
+<hr />
+<h2 id="4-phases">4. Phases<a class="headerlink" href="#4-phases" title="Permanent link">&para;</a></h2>
+<h3 id="f0-environment-single-dependency-declaration-the-unblock">F0 — Environment + single-dependency declaration (the unblock)<a class="headerlink" href="#f0-environment-single-dependency-declaration-the-unblock" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Create <code>.venv</code> (none exists).</li>
+<li>Add <code>executionkit</code> (path/editable) to <code>pyproject.toml</code> — e.g. an <code>ek</code> optional extra plus a <code>[tool.uv.sources]</code> path entry. Pull httpx via <code>executionkit[httpx]</code> or the runtime's existing httpx dependency.</li>
+<li>Install <code>.[dev,server,langchain]</code> + the <code>ek</code> extra.</li>
+<li><strong>Gate:</strong> <code>python -c "import executionkit"</code> and <code>from agentic_v2.models.ek_provider import SmartRouterProvider</code> both succeed; <code>executionkit_contracts</code> is <strong>not</strong> on the path.</li>
+</ul>
+<h3 id="f1-collapse-imports-to-executionkit-core-of-option-a">F1 — Collapse imports to <code>executionkit</code> (core of Option A′)<a class="headerlink" href="#f1-collapse-imports-to-executionkit-core-of-option-a" title="Permanent link">&para;</a></h3>
+<p>Pure import repoint — no logic change:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic_v2/models/ek_adapters.py</code> (lines 29–38)</td>
+<td><code>executionkit_contracts.errors</code> → <code>executionkit.errors</code>; <code>executionkit_contracts.responses</code> → <code>executionkit.provider</code>; fix docstring refs (lines 6, 13)</td>
+</tr>
+<tr>
+<td><code>agentic_v2/models/ek_provider.py</code> (lines 51–52)</td>
+<td><code>ProviderError</code> ← <code>executionkit.errors</code>; <code>LLMResponse</code> ← <code>executionkit.provider</code></td>
+</tr>
+<tr>
+<td><code>agentic_v2/engine/ek_step_delegation.py</code> (line 68)</td>
+<td>drop <code>ContractsResponse</code>; use the single <code>executionkit.provider.LLMResponse</code></td>
+</tr>
+<tr>
+<td><code>agentic_v2/engine/ek_step_delegation.py</code> (~140, ~218)</td>
+<td><strong>delete the two <code>cast(...)</code> hacks</strong> — with one type there is no boundary to bridge</td>
+</tr>
+<tr>
+<td><code>tests/models/test_ek_adapters.py</code>, <code>tests/models/test_ek_provider.py</code>, <code>tests/models/test_ek_provider_wrapper.py</code>, <code>tests/engine/test_step_tool_path.py</code>, <code>tests/engine/test_step_ek_delegation.py</code>, <code>tests/conftest.py</code></td>
+<td>repoint imports; update skip-guard messages to reference only <code>executionkit</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Gate:</strong> <code>mypy --strict agentic_v2/models agentic_v2/engine</code> clean <strong>with the casts removed</strong>; all imports resolve.</li>
+</ul>
+<h3 id="f2-flag-off-green-floor">F2 — Flag-OFF green floor<a class="headerlink" href="#f2-flag-off-green-floor" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Full <code>pytest tests/ -q</code> with <code>AGENTIC_EK_PROVIDER</code> unset; confirm the documented "0 regressions" floor still holds after the import collapse. Record the floor as the oracle for later phases.</li>
+</ul>
+<h3 id="f3-fix-b-1-lru_cache-test-isolation-leak">F3 — Fix B-1 (lru_cache test-isolation leak)<a class="headerlink" href="#f3-fix-b-1-lru_cache-test-isolation-leak" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>tests/conftest.py</code> <code>ek_flag_on</code> / <code>ek_flag_off</code> fixtures: call <code>get_settings.cache_clear()</code> on teardown <strong>after</strong> <code>monkeypatch</code> undo (bracket both sides), mirroring the <code>_force_no_llm_env</code> autouse pattern.</li>
+<li><strong>Gate:</strong> EK flag tests pass in <strong>full-suite order</strong>, not just in isolation.</li>
+</ul>
+<h3 id="f4-verify-b-2-is-resolved-by-the-collapse-fix-any-residual">F4 — Verify B-2 is resolved by the collapse; fix any residual<a class="headerlink" href="#f4-verify-b-2-is-resolved-by-the-collapse-fix-any-residual" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The collapse removes the suspected root cause: <code>SmartRouterProvider</code> now raises <code>executionkit.errors.*</code> — the <strong>same tree</strong> EK's <code>_TrackedProvider</code> / <code>react_loop</code> / retry classify against — so 429 / 401 / 5xx are recognized instead of leaking as unclassified exceptions that can spin.</li>
+<li><strong>Reproduce before declaring victory:</strong> <code>pytest -x --timeout=10 --timeout-method=thread</code> flag-ON under <code>AGENTIC_NO_LLM=1</code>; capture the first blocking test's stack. If still hanging, localize residual causes — the <code>SmartRouterProvider.complete</code> fallback loop under MockBackend (<code>get_model_for_tier</code> re-selection / <code>_is_model_ready_for_attempt</code> settling), and the <code>supports_tools: Literal[True]</code> vs <code>bool</code>-property nuance in react_loop's refusal path.</li>
+<li><strong>Gate:</strong> flag-ON unit suite completes in time comparable to flag-OFF (minutes, not &gt;600s).</li>
+</ul>
+<h3 id="f5-close-the-usage-normalization-drift-now-points-at-the-engine">F5 — Close the usage-normalization drift (now points at the engine)<a class="headerlink" href="#f5-close-the-usage-normalization-drift-now-points-at-the-engine" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Phase-1 promised a <code>FinishReason</code> enum plus Gemini-camelCase and Anthropic-cache usage normalization. <code>executionkit.provider.LLMResponse</code> has <strong>none</strong> of these (OpenAI/Anthropic snake_case only).</li>
+<li>Recommend <strong>accept + document</strong>: Phase-3 backend canonicalization already emits <code>prompt_tokens</code> / <code>completion_tokens</code> before the adapter, so the engine's existing branches cover it. Verify with a fixture test; if a gap is proven, add the branch <strong>additively</strong> to <code>executionkit.provider.LLMResponse</code>.</li>
+</ul>
+<h3 id="f6-default-on-decision-docsadr-reconciliation">F6 — Default-on decision + docs/ADR reconciliation<a class="headerlink" href="#f6-default-on-decision-docsadr-reconciliation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Only after F2–F4 are green: decide the <code>AGENTIC_EK_PROVIDER</code> default. Keep <strong>opt-in</strong> unless the flag-ON full suite is green and stable.</li>
+<li><strong>Amend ADR-023 to Option A′</strong> (single package; contracts seam dropped, with the httpx-premise rationale). Update the ADR-INDEX row 023 and reconcile it with the migration-notes (currently contradictory). Resolve or explicitly defer the still-<code>pending owner</code> decision-log items (#1 Gemini-usage location — now moot under one type; #3 cache-hit accounting; #4 model-field; #6 ollama-thinking).</li>
+<li>Record the fate of the <code>executionkit-contracts</code> repo (retire / dormant) so it is not mistaken for live.</li>
+</ul>
+<h3 id="f7-commit">F7 — Commit<a class="headerlink" href="#f7-commit" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Run pre-commit (black, isort, ruff, docformatter, mypy, pydocstyle, detect-secrets) first.</li>
+<li>Stage the <code>ek_*</code> modules + wiring edits + tests + fixtures + docs.</li>
+<li>Conventional commit, e.g. <code>feat(models): ADR-023 Option A′ ExecutionKit bridge (single package, opt-in)</code>.</li>
+</ul>
+<hr />
+<h2 id="5-risks">5. Risks<a class="headerlink" href="#5-risks" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Do not assume the collapse alone fixes B-2.</strong> F4 reproduces the hang before declaring it resolved. Error-tree unification is the <em>likely</em> cause, not a certainty.</li>
+<li><strong>The additive-only freeze now applies to <code>executionkit.provider</code></strong> (one tree, enforced once). The <code>executionkit-contracts/tests/test_shapes_frozen.py</code> guard becomes irrelevant to the runtime; the equivalent guard should live in / already exist in EK.</li>
+<li><strong><code>supports_tools: Literal[True]</code></strong> on EK's <code>ToolCallingProvider</code> vs the runtime's <code>bool</code> property — verify <code>react_loop</code> reads the <em>value</em> (F-04 refusal for Gemini) and is not satisfied by mere attribute presence under <code>runtime_checkable</code>.</li>
+<li><strong>Cross-<code>_audit\</code> path-dep is non-portable.</strong> Pin the one canonical <code>executionkit</code>; the four stale copies are not it.</li>
+</ol>
+<hr />
+<h2 id="6-testing-strategy-tiered">6. Testing strategy (tiered)<a class="headerlink" href="#6-testing-strategy-tiered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Floor:</strong> flag-OFF full suite — regression oracle (F2).</li>
+<li><strong>Opt-in:</strong> flag-ON suite — tool_calls / finish_reason / usage survive end-to-end.</li>
+<li><strong>Targeted:</strong></li>
+<li>B-1 full-suite-order reproduction (F3).</li>
+<li>B-2 timeout reproduction under <code>AGENTIC_NO_LLM=1</code> (F4).</li>
+<li><strong>New isinstance test:</strong> an httpx-429 raised by <code>SmartRouterProvider</code> is caught as an <code>executionkit.errors</code>-retryable error by an EK pattern — locks in the collapse's payoff.</li>
+</ul>
+<hr />
+<h2 id="7-what-changed-vs-the-original-migration-plan">7. What changed vs the original migration plan<a class="headerlink" href="#7-what-changed-vs-the-original-migration-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Two-package dependency model → <strong>one</strong> (<code>executionkit</code> only).</li>
+<li>"Fix dual error-tree" → <strong>F1 collapse imports</strong> (eliminates the bug by construction) + <strong>F4 verify B-2 gone</strong>.</li>
+<li>The two <code>cast(...)</code> boundary hacks in <code>ek_step_delegation.py</code> become explicit deletions.</li>
+<li>F5 usage-normalization drift now targets the engine's <code>LLMResponse</code>, not the contracts copy.</li>
+<li>Added an explicit <strong>ADR-023 → Option A′ amendment</strong> (F6).</li>
+</ul>
+<hr />
+<h2 id="8-suggested-execution-order">8. Suggested execution order<a class="headerlink" href="#8-suggested-execution-order" title="Permanent link">&para;</a></h2>
+<p>The natural first checkpoint is <strong>F0 + F1</strong> (unblock + collapse), since everything downstream depends on imports resolving. The exact <code>executionkit</code> dependency form (editable path-dep vs VCS-pinned wheel) is confirmed with the owner before installing.</p>
 
 
 
@@ -3185,7 +3193,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 25, 2026 04:39:13 UTC">June 25, 2026</span>
   </span>
 
     
@@ -3195,7 +3203,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 2, 2026 06:14:00 UTC">June 2, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 17, 2026 21:08:14 UTC">June 17, 2026</span>
   </span>
 
     
@@ -3260,10 +3268,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

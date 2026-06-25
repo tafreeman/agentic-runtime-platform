@@ -1621,10 +1621,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#orchestratorpy-541-loc" class="md-nav__link">
+  <a href="#orchestratorpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        orchestrator.py — 541 LOC
+        orchestrator.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_modelspy-value-objects-and-prompts-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_models.py — value objects and prompts (decomposed from orchestrator.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_planningpy-pure-planning-helpers-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_planning.py — pure planning helpers (decomposed from orchestrator.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_factoriespy-task-input-factories-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_factories.py — task-input factories (decomposed from orchestrator.py)
       
     </span>
   </a>
@@ -3800,10 +3833,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#orchestratorpy-541-loc" class="md-nav__link">
+  <a href="#orchestratorpy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        orchestrator.py — 541 LOC
+        orchestrator.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_modelspy-value-objects-and-prompts-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_models.py — value objects and prompts (decomposed from orchestrator.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_planningpy-pure-planning-helpers-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_planning.py — pure planning helpers (decomposed from orchestrator.py)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orchestrator_factoriespy-task-input-factories-decomposed-from-orchestratorpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        orchestrator_factories.py — task-input factories (decomposed from orchestrator.py)
       
     </span>
   </a>
@@ -4029,8 +4095,8 @@
 <p><strong>Package:</strong> <code>agentic-workflows-v2/agentic_v2/agents/</code>
 <strong>Audience:</strong> Engineers building new agents, workflow authors, and architects reviewing agent integration points.</p>
 </blockquote>
-<p><strong>Updated:</strong> 2026-05-02 (rewritten from source)
-<strong>Key source files:</strong> <code>agents/base.py</code>, <code>agents/config.py</code>, <code>agents/orchestrator.py</code>, <code>agents/implementations/</code></p>
+<p><strong>Updated:</strong> 2026-05-02 (updated 2026-06-17)
+<strong>Key source files:</strong> <code>agents/base.py</code>, <code>agents/config.py</code>, <code>agents/orchestrator.py</code>, <code>agents/orchestrator_models.py</code>, <code>agents/orchestrator_planning.py</code>, <code>agents/orchestrator_factories.py</code>, <code>agents/implementations/</code></p>
 <hr />
 <h2 id="1-agent-taxonomy">1. Agent Taxonomy<a class="headerlink" href="#1-agent-taxonomy" title="Permanent link">&para;</a></h2>
 <p>The system defines a strict hierarchy of agent types:</p>
@@ -4438,13 +4504,31 @@
 <li><strong>Purpose:</strong> Test-generation agent producing pytest/Jest test scaffolds with fixtures.</li>
 <li><strong>Key exports:</strong> <code>TestAgent(BaseAgent[TestInput, TestOutput])</code>.</li>
 </ul>
-<h3 id="orchestratorpy-541-loc"><code>orchestrator.py</code> — 541 LOC<a class="headerlink" href="#orchestratorpy-541-loc" title="Permanent link">&para;</a></h3>
+<h3 id="orchestratorpy"><code>orchestrator.py</code><a class="headerlink" href="#orchestratorpy" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Purpose:</strong> Meta-agent that decomposes a high-level task into subtasks, scores candidate agents via <code>capabilities.score_match</code>, dispatches, and aggregates results. Supports fallback chains and DAG execution.</li>
 <li><strong>Key exports:</strong> <code>OrchestratorAgent(BaseAgent[OrchestratorInput, OrchestratorOutput])</code>, <code>decompose_task()</code>, <code>select_agent()</code>.</li>
-<li><strong>Imports:</strong> <code>..engine.dag</code>, capabilities, all concrete agents (via factory registry).</li>
+<li><strong>Imports:</strong> <code>..engine.dag</code>, capabilities, all concrete agents (via factory registry), plus sibling modules <code>orchestrator_models</code>, <code>orchestrator_planning</code>, <code>orchestrator_factories</code>.</li>
 <li><strong>Risks:</strong> Silent fallback chain — logs warnings but returns best-effort output if all agents fail.</li>
 <li><strong>Suggested tests:</strong> all-agents-fail scenario surfaces error; DAG cycle detection; capability tie-breaking.</li>
+</ul>
+<h3 id="orchestrator_modelspy-value-objects-and-prompts-decomposed-from-orchestratorpy"><code>orchestrator_models.py</code> — value objects and prompts (decomposed from <code>orchestrator.py</code>)<a class="headerlink" href="#orchestrator_modelspy-value-objects-and-prompts-decomposed-from-orchestratorpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Holds <code>SubTask</code>, <code>OrchestratorInput</code>, <code>OrchestratorOutput</code>, system prompts, and capability constants. Dependencies restricted to <code>..contracts</code> and <code>.capabilities</code> — no engine imports.</li>
+<li><strong>Key exports:</strong> <code>SubTask</code>, <code>OrchestratorInput</code>, <code>OrchestratorOutput</code>.</li>
+<li><strong>Design rationale:</strong> Isolating these value objects allows them to be imported by unit tests and by the evaluation harness without pulling in orchestration logic.</li>
+</ul>
+<h3 id="orchestrator_planningpy-pure-planning-helpers-decomposed-from-orchestratorpy"><code>orchestrator_planning.py</code> — pure planning helpers (decomposed from <code>orchestrator.py</code>)<a class="headerlink" href="#orchestrator_planningpy-pure-planning-helpers-decomposed-from-orchestratorpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Deterministic, stateless planning utilities: <code>_intent_decomposition</code> (capability-tagged plan from task text for no-LLM mode), <code>_extract_file_tokens</code>, <code>_latest_user_text</code>, <code>_has_extractable_json</code>, <code>_per_file_task_id</code>.</li>
+<li><strong>Key exports:</strong> <code>_intent_decomposition()</code>, <code>_extract_file_tokens()</code>, <code>_latest_user_text()</code>, <code>_per_file_task_id()</code>.</li>
+<li><strong>Design rationale:</strong> Pure functions with no orchestrator state — directly unit-testable without mocking the LLM. Backs the <code>AGENTIC_NO_LLM</code> decomposition path.</li>
+</ul>
+<h3 id="orchestrator_factoriespy-task-input-factories-decomposed-from-orchestratorpy"><code>orchestrator_factories.py</code> — task-input factories (decomposed from <code>orchestrator.py</code>)<a class="headerlink" href="#orchestrator_factoriespy-task-input-factories-decomposed-from-orchestratorpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Purpose:</strong> Maps subtask descriptions to concrete <code>TaskInput</code> subclasses per managed agent type. E.g., reviewer subtasks → <code>CodeReviewInput</code>, coder subtasks → <code>CodeGenerationInput</code>. All cross-module imports are deferred to call time to avoid circular imports.</li>
+<li><strong>Key exports:</strong> <code>_reviewer_input_factory()</code>, <code>_coder_input_factory()</code>, <code>_register_default_factories()</code>.</li>
+<li><strong>Design rationale:</strong> Deferred imports at call time (not module load) keeps this module free of import-time coupling to the contracts layer and concrete agents.</li>
 </ul>
 <h3 id="memorypy-266-loc"><code>memory.py</code> — 266 LOC<a class="headerlink" href="#memorypy-266-loc" title="Permanent link">&para;</a></h3>
 <ul>
@@ -4492,16 +4576,19 @@
 <h2 id="dependency-graph-within-agents">Dependency Graph (within <code>agents/</code>)<a class="headerlink" href="#dependency-graph-within-agents" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>base.py
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  ↑
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  ├─ coder.py         → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  ├─ reviewer.py      → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  ├─ architect.py     → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  ├─ test_agent.py    → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>  └─ orchestrator.py  → capabilities.py, (factory registry from __init__)
-</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
-</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>implementations/
-</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>  ├─ agent_loader.py  (registry populated by __init__.py)
-</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>  ├─ claude_agent.py  → base.py
-</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>  └─ claude_sdk_agent.py  (standalone)
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  ├─ coder.py              → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>  ├─ reviewer.py           → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>  ├─ architect.py          → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>  ├─ test_agent.py         → json_extraction.py, memory.py, capabilities.py
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>  └─ orchestrator.py       → capabilities.py, (factory registry from __init__)
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>       ├─ orchestrator_models.py      → ..contracts, .capabilities (no engine)
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>       ├─ orchestrator_planning.py    → .capabilities, .json_extraction (pure functions)
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>       └─ orchestrator_factories.py   → (deferred imports at call time)
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>implementations/
+</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>  ├─ agent_loader.py  (registry populated by __init__.py)
+</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>  ├─ claude_agent.py  → base.py
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a>  └─ claude_sdk_agent.py  (standalone)
 </span></code></pre></div>
 <p>No circular imports — <code>OrchestratorAgent</code> uses late-binding factory lookup to avoid importing concrete agents at module load.</p>
 <hr />
@@ -4618,7 +4705,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 18, 2026 17:45:06 UTC">June 18, 2026</span>
   </span>
 
     

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-path-first-workflow-io-contracts/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-039-cloud-model-discovery/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>ADR-023: Path-First File I/O Contracts for Multi-Step Workflows - Agentic Runtime Platform</title>
+        <title>ADR-039: Live Model Discovery for Keyed Cloud Providers - Agentic Runtime Platform</title>
       
     
     
@@ -63,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADR-023: Path-First File I/O Contracts for Multi-Step Workflows - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-039: Live Model Discovery for Keyed Cloud Providers - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-path-first-workflow-io-contracts.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-039-cloud-model-discovery.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-023-path-first-workflow-io-contracts/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-039-cloud-model-discovery/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADR-023: Path-First File I/O Contracts for Multi-Step Workflows - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-039: Live Model Discovery for Keyed Cloud Providers - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-023-path-first-workflow-io-contracts.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-039-cloud-model-discovery.png" />
 </head>
   
   
@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-023-path-first-file-io-contracts-for-multi-step-workflows" class="md-skip">
+        <a href="#adr-039-live-model-discovery-for-keyed-cloud-providers" class="md-skip">
           Skip to content
         </a>
       
@@ -127,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-023: Path-First File I/O Contracts for Multi-Step Workflows
+              ADR-039: Live Model Discovery for Keyed Cloud Providers
             
           </span>
         </div>
@@ -2771,47 +2771,14 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contract-shape-authoring-standard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contract Shape (Authoring Standard)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#consequences" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Consequences
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Consequences">
+    <nav class="md-nav" aria-label="Decision">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#positive" class="md-nav__link">
+  <a href="#no-llm-gating" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#negative" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Negative
+        No-LLM gating
       
     </span>
   </a>
@@ -2824,43 +2791,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alternatives-considered" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Alternatives Considered
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rollout-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rollout Plan
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation references
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#review-cadence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Review Cadence
+        Consequences
       
     </span>
   </a>
@@ -2884,7 +2818,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-023-path-first-workflow-io-contracts.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-039-cloud-model-discovery.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2893,116 +2827,77 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-023-path-first-workflow-io-contracts.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-039-cloud-model-discovery.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-023-path-first-file-io-contracts-for-multi-step-workflows">ADR-023: Path-First File I/O Contracts for Multi-Step Workflows<a class="headerlink" href="#adr-023-path-first-file-io-contracts-for-multi-step-workflows" title="Permanent link">&para;</a></h1>
-<p><strong>Status:</strong> Proposed
-<strong>Date:</strong> 2026-05-24
-<strong>Related:</strong> ADR-014 (wire-format contract discipline)</p>
+<h1 id="adr-039-live-model-discovery-for-keyed-cloud-providers">ADR-039: Live Model Discovery for Keyed Cloud Providers<a class="headerlink" href="#adr-039-live-model-discovery-for-keyed-cloud-providers" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted
+<strong>Date:</strong> 2026-06-23
+<strong>Related:</strong> <code>agentic_v2/models/cloud_discovery.py</code> (new),
+<code>agentic_v2/langchain/models.py</code> (<code>enumerate_known_models</code>, <code>_merge_cloud_models</code>),
+<code>ui/src/pages/ModelFinderPage.tsx</code>. Completes the discovery story begun in
+ADR-037 (Ollama) and ADR-038 (LM Studio + ONNX) by extending it to the hosted
+providers.</p>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Several runtime workflows chain multiple LLM/tool-driven steps where one step generates code artifacts and downstream steps (tests/review/assembly) consume them. In practice, handoffs can drift when only semantic keys are exchanged (for example, <code>api_code</code> vs <code>backend_code</code>) and no canonical file path contract exists.</p>
-<p>Current pain points:</p>
-<ul>
-<li>Output key drift can break downstream step inputs even when content exists.</li>
-<li>Downstream tool usage (<code>read</code>, <code>search</code>, <code>test</code>, <code>assemble</code>) is less deterministic without an explicit artifact location.</li>
-<li>Retry/rework loops can accidentally overwrite or ambiguously reference artifacts.</li>
-<li>Run observability is harder when artifacts are not tied to a stable run-scoped path.</li>
-</ul>
-<p>The platform already has robust expression resolution (<code>coalesce(...)</code>) and structured outputs, but it needs a consistent file artifact contract at workflow boundaries.</p>
-<hr />
+<p>ADR-037/038 made the model-router probe reflect what the <strong>local</strong> providers
+(Ollama, LM Studio, ONNX) can actually run. The hosted providers the runtime
+already builds backends for — OpenAI, Anthropic, Google Gemini, GitHub Models —
+remained represented only by the one or two ids pinned in the static tier
+chains. An operator with a valid key could invoke any model the key reaches, but
+the console listed almost none of them, so the cloud groups looked nearly empty
+next to the (now full) Ollama group.</p>
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p>Adopt a <strong>path-first I/O contract</strong> for file-bearing workflow steps.</p>
-<ol>
-<li>For every file-producing output, define an explicit <code>*_path</code> field (for example <code>backend_code_path</code>, <code>frontend_code_path</code>, <code>migrations_path</code>, <code>integration_tests_path</code>).</li>
-<li>Keep content fields (for example <code>backend_code</code>) as optional compatibility payloads, but treat <code>*_path</code> as authoritative for downstream file/tool operations.</li>
-<li>Use run-scoped artifact layout rooted at:</li>
-<li><code>artifacts/{workflow_name}/{run_id}/backend/</code></li>
-<li><code>artifacts/{workflow_name}/{run_id}/frontend/</code></li>
-<li><code>artifacts/{workflow_name}/{run_id}/migrations/</code></li>
-<li><code>artifacts/{workflow_name}/{run_id}/tests/</code></li>
-<li>Each workflow step consuming generated files should prefer path inputs first, then optional content fallback only where necessary.</li>
-<li>For migration safety, use bounded compatibility expressions (<code>coalesce(old_key, new_key)</code>) during transition windows, then remove aliases when all producers/consumers align.</li>
-<li>Apply this pattern to <code>fullstack_generation</code> first, then roll out to other code-producing workflows.</li>
-</ol>
-<hr />
-<h2 id="contract-shape-authoring-standard">Contract Shape (Authoring Standard)<a class="headerlink" href="#contract-shape-authoring-standard" title="Permanent link">&para;</a></h2>
-<p>For file-bearing artifacts, steps should expose both:</p>
+<p>Add <code>agentic_v2/models/cloud_discovery.py</code> with one best-effort discovery
+function per provider, aggregated by <code>discover_cloud_models()</code> and merged into
+<code>enumerate_known_models()</code> via <code>_merge_cloud_models()</code>. Each provider is probed
+<strong>only when its key env var is set</strong> (no key → no network call):</p>
 <ul>
-<li><code>artifact_path</code>: canonical file location for downstream steps/tools</li>
-<li><code>artifact_content</code> (optional): inline payload for non-file-aware consumers</li>
+<li><strong>OpenAI</strong> (<code>openai:</code>) — <code>GET {base}/models</code>, <code>Authorization: Bearer
+  $OPENAI_API_KEY</code>. <code>OPENAI_BASE_URL</code> / <code>OPENAI_API_BASE</code> honored for
+  proxies/Azure; <code>OPENAI_ORG_ID</code> forwarded.</li>
+<li><strong>Anthropic</strong> (<code>anthropic:</code>) — <code>GET https://api.anthropic.com/v1/models</code>,
+  <code>x-api-key</code> + <code>anthropic-version</code> headers.</li>
+<li><strong>Google Gemini</strong> (<code>gemini:</code>) — <code>GET …/v1beta/models?key=…</code>, filtered to
+  models advertising <code>generateContent</code>; the <code>models/</code> name prefix is stripped.</li>
+<li><strong>GitHub Models</strong> (<code>gh:</code>) — <code>GET https://models.github.ai/catalog/models</code>,
+  <code>Authorization: Bearer $GITHUB_TOKEN</code>. Ids keep their <code>publisher/model</code> form
+  (e.g. <code>gh:openai/gpt-4.1</code>) to match the <code>gh:</code> backend's name resolution.</li>
 </ul>
-<p>Example canonical keys:</p>
-<ul>
-<li><code>backend_code_path</code></li>
-<li><code>frontend_code_path</code></li>
-<li><code>migrations_path</code></li>
-<li><code>integration_tests_path</code></li>
-<li><code>review_report_path</code> (when persisted as file)</li>
-</ul>
-<p>The <code>*_path</code> keys are the required interoperability surface for multi-step workflows.</p>
-<hr />
+<p>A shared name-heuristic filters obvious non-chat ids (embeddings, speech, image,
+rerank, …); the filter is deliberately conservative (a discovery console
+tolerates an over-listed model better than a silently-dropped one). Discovered
+ids absent from every tier chain are appended at <code>tier 0</code>, <code>available: True</code>
+(plain ids — no cloud/running metadata). The UI groups by provider prefix, so
+the existing <code>openai</code> / <code>anthropic</code> / <code>gemini</code> / <code>gh</code> groups simply fill out
+with <strong>no UI change</strong>.</p>
+<h3 id="no-llm-gating">No-LLM gating<a class="headerlink" href="#no-llm-gating" title="Permanent link">&para;</a></h3>
+<p><code>_merge_cloud_models()</code> is skipped entirely when <code>AGENTIC_NO_LLM</code> is set. That
+mode routes every tier to the deterministic placeholder, so a live cloud listing
+would be misleading; gating there also makes the unit suite (which runs with
+<code>AGENTIC_NO_LLM=1</code>) hermetic without per-test patching, and avoids needless
+network/cost on the no-key CI baseline. Local discovery (localhost, free) stays
+ungated; cloud discovery (internet, metered) does not.</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
-<h3 id="positive">Positive<a class="headerlink" href="#positive" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Deterministic step handoffs for file operations.</li>
-<li>Reduced breakage from output-key naming drift.</li>
-<li>Better retry/idempotency behavior with run-scoped locations.</li>
-<li>Improved debugging and auditability (artifact-to-run traceability).</li>
+<li>The model router now lists what <strong>every configured key</strong> can reach, across all
+  local and cloud providers — the console reflects the operator's real surface.</li>
+<li>Each rescan performs up to four extra HTTPS calls (only for keyed providers),
+  each bounded by an 8 s timeout and guarded so a failure (network, auth, schema
+  drift) contributes nothing rather than failing the probe. Keys are sent as
+  auth headers/params and never logged.</li>
+<li>The chat-vs-non-chat split is a name heuristic, not an authoritative
+  capability check; a provider renaming conventions could mis-classify a model
+  until the marker list is updated. This is cosmetic (console listing only) — it
+  never blocks invoking a model by id.</li>
+<li>No wire-format change: the probe endpoint already returns
+  <code>list[dict[str, Any]]</code> and the UI <code>ProbedModel</code> type already carries the
+  optional fields, so no schema/TS regeneration is required.</li>
 </ul>
-<h3 id="negative">Negative<a class="headerlink" href="#negative" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Slightly larger workflow schemas (extra path fields).</li>
-<li>Temporary dual-key complexity during migration (<code>coalesce</code> aliases).</li>
-<li>Requires discipline to keep path contracts consistent across workflows.</li>
-</ul>
-<hr />
-<h2 id="alternatives-considered">Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Alternative</th>
-<th>Disposition</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Content-only contracts (<code>*_code</code> only, no file path fields)</td>
-<td>Rejected — brittle for tool-driven downstream steps and harder to audit.</td>
-</tr>
-<tr>
-<td>Auto-discovery by scanning artifact directories</td>
-<td>Rejected — ambiguous and non-deterministic under retries/concurrency.</td>
-</tr>
-<tr>
-<td>Step-local ad hoc naming without run scope</td>
-<td>Rejected — collision risk and weak traceability.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="rollout-plan">Rollout Plan<a class="headerlink" href="#rollout-plan" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Phase 1 (pilot):</strong> Apply path-first contract to <code>fullstack_generation</code>.</li>
-<li><strong>Phase 2:</strong> Validate with targeted workflow tests + sample runs.</li>
-<li><strong>Phase 3:</strong> Extend pattern to other file-producing workflows.</li>
-<li><strong>Phase 4:</strong> Remove temporary compatibility aliases once all consumers are aligned.</li>
-</ol>
-<hr />
-<h2 id="implementation-references">Implementation references<a class="headerlink" href="#implementation-references" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Workflow definition pilot target: <code>agentic-workflows-v2/agentic_v2/workflows/definitions/fullstack_generation.yaml</code></li>
-<li>Expression/evaluation support: <code>agentic-workflows-v2/agentic_v2/engine/expressions.py</code></li>
-<li>Step mapping and context handoff: <code>agentic-workflows-v2/agentic_v2/engine/step.py</code></li>
-</ul>
-<hr />
-<h2 id="review-cadence">Review Cadence<a class="headerlink" href="#review-cadence" title="Permanent link">&para;</a></h2>
-<p>Re-evaluate after pilot rollout on <code>fullstack_generation</code> and at completion of cross-workflow migration.</p>
 
 
 
@@ -3025,7 +2920,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 24, 2026 03:25:47 UTC">June 24, 2026</span>
   </span>
 
     
@@ -3035,7 +2930,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 24, 2026 03:25:47 UTC">June 24, 2026</span>
   </span>
 
     
