@@ -35,7 +35,6 @@ def _base_registry_dict() -> dict:
             "judge_default": "gemini:gemini-2.5-flash",
             "notebooklm_fallback": "gemini:gemini-2.5-flash",
             "tier_ultimate_fallback": "ollama:qwen3:8b",
-            "gh_backup_models": [],
         },
     }
 
@@ -69,8 +68,6 @@ def test_production_registry_has_no_dangling_references():
             assert model_id in ids, f"agents[{name}].fallback -> undeclared {model_id}"
     for slot in ("judge_default", "notebooklm_fallback", "tier_ultimate_fallback"):
         assert getattr(registry.special, slot) in ids
-    for model_id in registry.special.gh_backup_models:
-        assert model_id in ids
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +93,6 @@ def test_agent_accessors():
 def test_special_accessor():
     assert mr.special("judge_default") == "gh:openai/gpt-4o"
     assert mr.special("tier_ultimate_fallback") == "ollama:qwen3:8b"
-    assert isinstance(mr.special("gh_backup_models"), tuple)
     with pytest.raises(AttributeError):
         mr.special("not_a_slot")
 

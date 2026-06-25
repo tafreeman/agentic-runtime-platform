@@ -88,7 +88,6 @@ class SpecialModels(BaseModel):
     judge_default: str
     notebooklm_fallback: str
     tier_ultimate_fallback: str
-    gh_backup_models: tuple[str, ...] = ()
 
 
 class Registry(BaseModel):
@@ -198,11 +197,6 @@ def _validate(registry: Registry) -> None:
         mid = getattr(registry.special, slot)
         if mid not in ids:
             dangling.append(f"special.{slot} -> {mid}")
-    dangling += [
-        f"special.gh_backup_models -> {mid}"
-        for mid in registry.special.gh_backup_models
-        if mid not in ids
-    ]
 
     if dangling:
         raise ValueError(

@@ -401,7 +401,7 @@ class LLMJudge:
     def __init__(
         self,
         *,
-        model: str = "gh:openai/gpt-4o",
+        model: str | None = None,
         model_version: str | None = None,
         prompt_version: str = "judge-v1",
         temperature: float = 0.1,
@@ -409,6 +409,12 @@ class LLMJudge:
         client: LLMClientWrapper | None = None,
         response_provider: JudgeResponseProvider | None = None,
     ) -> None:
+        if model is None:
+            # Default judge model is curated in the registry (ADR-040).
+            from ..models.model_registry import special
+
+            resolved = special("judge_default")
+            model = resolved if isinstance(resolved, str) else "gh:openai/gpt-4o"
         self.model = model
         self.model_version = model_version or model
         self.prompt_version = prompt_version

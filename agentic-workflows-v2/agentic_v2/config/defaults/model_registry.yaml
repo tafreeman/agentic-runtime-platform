@@ -194,11 +194,10 @@ agents:
     default: gemini:gemini-2.5-flash
     fallback: [gemini:gemini-2.5-flash-lite]
 
-# Special-purpose ids referenced by individual call sites.
+# Special-purpose ids referenced by individual call sites. (The GitHub-backup
+# fallback list stays in langchain/model_utils.GH_BACKUP_MODELS next to the
+# provider gate it belongs to; its ids are already declared in models: above.)
 special:
   judge_default: gh:openai/gpt-4o
   notebooklm_fallback: gemini:gemini-2.5-pro
   tier_ultimate_fallback: ollama:qwen3:8b
-  gh_backup_models:
-    - gh:openai/gpt-4o-mini
-    - gh:openai/gpt-4o

@@ -76,7 +76,13 @@ def _resolve_notebooklm_model_name(model_name: str) -> str:
     if env_model:
         return env_model
 
-    return "gemini-2.5-pro"
+    # Default NotebookLM model is curated in the registry (ADR-040); strip the
+    # provider prefix since this helper returns a bare gemini model name.
+    from ..models.model_registry import special
+
+    value = special("notebooklm_fallback")
+    fallback = value if isinstance(value, str) else "gemini:gemini-2.5-pro"
+    return fallback.split(":", 1)[-1]
 
 
 # ---------------------------------------------------------------------------
