@@ -4,7 +4,7 @@
 **Date:** 2026-06-17
 **Related:** `agentic_v2/scoring/` (new package), `agentic_v2/server/`
 (`evaluation.py`, `datasets.py`, `execution.py`); parallel lightweight record
-[ADR 0007](../../agentic-workflows-v2/docs/adr/0007-extract-scoring-package.md);
+ADR 0007 (historical reference — from predecessor workspace, not included in this docs build);
 PR #101
 
 ---
