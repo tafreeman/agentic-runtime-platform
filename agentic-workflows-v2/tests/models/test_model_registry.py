@@ -25,12 +25,6 @@ def _base_registry_dict() -> dict:
             {"id": "ollama:qwen3:8b", "provider": "ollama", "tiers": [1]},
         ],
         "tiers": {1: ["gemini:gemini-2.5-flash", "ollama:qwen3:8b"]},
-        "agents": {
-            "architect": {
-                "default": "gemini:gemini-2.5-flash",
-                "fallback": ["ollama:qwen3:8b"],
-            }
-        },
         "special": {
             "judge_default": "gemini:gemini-2.5-flash",
             "notebooklm_fallback": "gemini:gemini-2.5-flash",
@@ -62,10 +56,6 @@ def test_production_registry_has_no_dangling_references():
     for tier, chain in registry.tiers.items():
         for model_id in chain:
             assert model_id in ids, f"tiers[{tier}] -> undeclared {model_id}"
-    for name, agent in registry.agents.items():
-        assert agent.default in ids, f"agents[{name}].default -> undeclared"
-        for model_id in agent.fallback:
-            assert model_id in ids, f"agents[{name}].fallback -> undeclared {model_id}"
     for slot in ("judge_default", "notebooklm_fallback", "tier_ultimate_fallback"):
         assert getattr(registry.special, slot) in ids
 
@@ -81,13 +71,6 @@ def test_tier_chain_order_and_escalation():
     assert "anthropic:claude-opus-4-6" in mr.tier_chain(5)
     assert "gemini:gemini-2.5-pro" in mr.tier_chain(5)
     assert mr.tier_chain(99) == ()
-
-
-def test_agent_accessors():
-    assert mr.agent_default("architect") == "gemini:gemini-2.5-flash"
-    assert "ollama:qwen2.5-coder:14b" in mr.agent_fallbacks("coder")
-    assert mr.agent_default("does-not-exist") is None
-    assert mr.agent_fallbacks("does-not-exist") == ()
 
 
 def test_special_accessor():

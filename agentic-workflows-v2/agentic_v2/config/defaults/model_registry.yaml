@@ -126,16 +126,6 @@ models:
     price_out: null
     context_window: null
 
-  # --- agent-only ids (referenced by agents:, not in any tier chain) ---
-  - id: ollama:qwen2.5-coder:14b
-    provider: ollama
-    tiers: []
-    capability: local
-    status: active
-    price_in: 0.0
-    price_out: 0.0
-    context_window: null
-
 # Ordered fallback chains per tier. Reconciled from the previously divergent
 # router.DEFAULT_CHAINS (escalating, cloud-only) and langchain._TIER_FALLBACK_CHAINS
 # (flat, +local). Resolution = cloud-capability-first then a local Ollama tail;
@@ -172,27 +162,10 @@ tiers:
     - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
 
-# Per-agent model selection (migrated out of agents.yaml; behavioral fields --
-# name/role/tools/prompt_file -- stay in agents.yaml).
-agents:
-  architect:
-    default: gemini:gemini-2.5-flash
-    fallback: [gemini:gemini-2.5-flash-lite]
-  planner:
-    default: gemini:gemini-2.5-flash
-    fallback: [gemini:gemini-2.5-flash-lite]
-  coder:
-    default: gemini:gemini-2.5-flash
-    fallback: [ollama:qwen2.5-coder:14b]
-  reviewer:
-    default: gemini:gemini-2.5-flash
-    fallback: [gemini:gemini-2.5-flash-lite]
-  tester:
-    default: gemini:gemini-2.5-flash
-    fallback: [ollama:qwen2.5-coder:14b]
-  validator:
-    default: gemini:gemini-2.5-flash
-    fallback: [gemini:gemini-2.5-flash-lite]
+# NOTE: named-agent model selection is NOT in this registry. Agents resolve
+# their model via their tier (the chains above); the default_model/fallback_models
+# fields in agents.yaml are vestigial display config (the /api/agents route reads
+# only name/description/tier). See ADR-040.
 
 # Special-purpose ids referenced by individual call sites. (The GitHub-backup
 # fallback list stays in langchain/model_utils.GH_BACKUP_MODELS next to the

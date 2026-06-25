@@ -71,15 +71,6 @@ class RegisteredModel(BaseModel):
     context_window: int | None = None
 
 
-class AgentModels(BaseModel):
-    """Model selection for one named agent."""
-
-    model_config = ConfigDict(frozen=True)
-
-    default: str
-    fallback: tuple[str, ...] = ()
-
-
 class SpecialModels(BaseModel):
     """Special-purpose model ids referenced by individual call sites."""
 
@@ -98,7 +89,6 @@ class Registry(BaseModel):
     version: int = 1
     models: tuple[RegisteredModel, ...]
     tiers: dict[int, tuple[str, ...]]
-    agents: dict[str, AgentModels]
     special: SpecialModels
 
     def by_id(self) -> dict[str, RegisteredModel]:
@@ -185,14 +175,6 @@ def _validate(registry: Registry) -> None:
     dangling: list[str] = []
     for tier, chain in registry.tiers.items():
         dangling += [f"tiers[{tier}] -> {mid}" for mid in chain if mid not in ids]
-    for name, agent in registry.agents.items():
-        if agent.default not in ids:
-            dangling.append(f"agents[{name}].default -> {agent.default}")
-        dangling += [
-            f"agents[{name}].fallback -> {mid}"
-            for mid in agent.fallback
-            if mid not in ids
-        ]
     for slot in ("judge_default", "notebooklm_fallback", "tier_ultimate_fallback"):
         mid = getattr(registry.special, slot)
         if mid not in ids:
@@ -239,18 +221,6 @@ def clear_cache() -> None:
 def tier_chain(tier: int) -> tuple[str, ...]:
     """Return the ordered fallback chain for ``tier`` (empty if unknown)."""
     return load_registry().tiers.get(tier, ())
-
-
-def agent_default(agent: str) -> str | None:
-    """Return the default model id for a named agent, or ``None`` if absent."""
-    entry = load_registry().agents.get(agent)
-    return entry.default if entry else None
-
-
-def agent_fallbacks(agent: str) -> tuple[str, ...]:
-    """Return the fallback model ids for a named agent (empty if absent)."""
-    entry = load_registry().agents.get(agent)
-    return entry.fallback if entry else ()
 
 
 def special(name: str) -> str | tuple[str, ...]:
