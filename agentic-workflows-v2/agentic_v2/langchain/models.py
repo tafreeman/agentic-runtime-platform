@@ -264,9 +264,13 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
         return DriftReport()
 
     reg = registry.load_registry()
-    prior = registry.quarantined_ids()
+    # Snapshot quarantine before the network call; re-read after and union both
+    # so quarantines added by a concurrent probe during discovery are not lost.
+    prior_snapshot = registry.quarantined_ids()
     live_ids = {info.id for info in discover_cloud_models()}
     checked_providers = {registry.provider_for(mid) for mid in live_ids}
+    # Union: any id quarantined by a concurrent probe during the network window.
+    all_prior = prior_snapshot | registry.quarantined_ids()
 
     # Retired among providers we actually got a listing for this round.
     newly_retired = sorted(
@@ -279,7 +283,7 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     # contains the id again un-quarantines it -- an inconclusive probe must not
     # make a retired id routable.
     preserved = sorted(
-        mid for mid in prior if registry.provider_for(mid) not in checked_providers
+        mid for mid in all_prior if registry.provider_for(mid) not in checked_providers
     )
     quarantined = sorted(set(newly_retired) | set(preserved))
     missing_pricing = [
