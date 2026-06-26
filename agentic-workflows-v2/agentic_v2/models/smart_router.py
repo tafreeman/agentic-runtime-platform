@@ -14,6 +14,7 @@ from typing import Any, Awaitable, Callable
 
 from filelock import FileLock
 
+from .model_registry import is_quarantined
 from .model_stats import CircuitState, ModelStats
 from .rate_limit_tracker import RateLimitTracker, _extract_provider
 from .redis_state import _COUNTER_FIELDS, RedisCircuitBreakerStore
@@ -382,6 +383,8 @@ class SmartModelRouter(ModelRouter):
         candidates: list[tuple[str, ModelStats]] = []
 
         for model in chain:
+            if is_quarantined(model):
+                continue  # retired at provider (ADR-040 drift detection)
             if not self.is_model_available(model):
                 continue
             stats = self._get_stats(model)
@@ -494,6 +497,12 @@ class SmartModelRouter(ModelRouter):
         stats = self._get_stats(model)
 
         # Check obvious blockers
+        if is_quarantined(model):
+            return {
+                "available": False,
+                "confidence": 1.0,
+                "reason": "quarantined",
+            }
         if not self.is_model_available(model):
             return {
                 "available": False,

@@ -557,3 +557,58 @@ class TestRegistryDriftDetection:
         finally:
             lcm._TIER_DEFAULTS.clear()
             lcm._TIER_DEFAULTS.update(saved)
+
+    def test_smart_router_excludes_quarantined(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The production native path (SmartModelRouter._find_candidates_in_tier)
+        drops quarantined ids, not just the base ModelRouter."""
+        from agentic_v2.models import model_registry as mr
+        from agentic_v2.models.router import ModelTier
+        from agentic_v2.models.smart_router import SmartModelRouter
+
+        router = SmartModelRouter()
+        router.set_health_checker(lambda _m: True)  # all providers available
+        target = mr.tier_chain(1)[0]
+        mr.set_quarantine([target])
+        candidates = [c[0] for c in router._find_candidates_in_tier(ModelTier.TIER_1)]
+        assert target not in candidates
+        assert candidates  # non-quarantined candidates remain
+
+    def test_preserves_quarantine_when_listing_inconclusive(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A provider that fails its listing on re-probe must not drop its prior
+        quarantine (else the retired id becomes routable again)."""
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import model_registry as mr
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        self._patch_cloud(monkeypatch, ["gemini:gemini-3-pro"])
+        r1 = lcm.detect_registry_drift()
+        assert "gemini:gemini-2.5-flash" in r1.quarantined
+
+        # gemini now returns nothing (auth/network failure) -> keep prior quarantine
+        self._patch_cloud(monkeypatch, [])
+        r2 = lcm.detect_registry_drift()
+        assert "gemini:gemini-2.5-flash" in r2.quarantined
+        assert mr.is_quarantined("gemini:gemini-2.5-flash")
+
+    def test_successful_relisting_unquarantines(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Once a provider lists an id again, it is un-quarantined."""
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import model_registry as mr
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        self._patch_cloud(monkeypatch, ["gemini:gemini-3-pro"])
+        lcm.detect_registry_drift()
+        assert mr.is_quarantined("gemini:gemini-2.5-flash")
+
+        # gemini lists all its registry ids again -> nothing retired, un-quarantined
+        gem_ids = [m.id for m in mr.load_registry().models if m.provider == "gemini"]
+        self._patch_cloud(monkeypatch, gem_ids)
+        report = lcm.detect_registry_drift()
+        assert not mr.is_quarantined("gemini:gemini-2.5-flash")
+        assert "gemini:gemini-2.5-flash" not in report.quarantined
