@@ -612,3 +612,45 @@ class TestRegistryDriftDetection:
         report = lcm.detect_registry_drift()
         assert not mr.is_quarantined("gemini:gemini-2.5-flash")
         assert "gemini:gemini-2.5-flash" not in report.quarantined
+
+    def test_concurrent_probe_quarantine_not_overwritten(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A slower probe must not erase quarantines added by a faster concurrent
+        probe during the network-discovery window.
+
+        Simulation: probe A snapshots an empty quarantine, then during its
+        discovery step a concurrent probe B quarantines a model.  When probe A
+        finishes it should preserve the quarantine from B rather than overwriting
+        the global set with the stale empty snapshot.
+        """
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import model_registry as mr
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+
+        # inject_concurrent_quarantine simulates probe B adding a quarantine
+        # mid-discovery by calling set_quarantine() on the side.
+        concurrent_id = "gemini:gemini-2.5-flash"
+
+        def discover_with_side_effect() -> list[CloudModelInfo]:
+            # While probe A is "doing network I/O", B quarantines concurrent_id.
+            mr.set_quarantine([concurrent_id])
+            # Probe A itself sees a different (unrelated) provider's listing --
+            # gemini is NOT in its checked_providers this round.
+            return [CloudModelInfo(id="anthropic:claude-3-7-sonnet-20250219")]
+
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models",
+            discover_with_side_effect,
+        )
+
+        report = lcm.detect_registry_drift()
+
+        # Probe A checked anthropic, not gemini -- so B's gemini quarantine must
+        # be preserved in the final set, not silently dropped.
+        assert mr.is_quarantined(concurrent_id), (
+            "quarantine added by concurrent probe was overwritten"
+        )
+        assert concurrent_id in report.quarantined
