@@ -174,25 +174,28 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     available_providers = [p for p, ok in availability.items() if ok]
     unavailable_providers = [p for p, ok in availability.items() if not ok]
 
+    # Configure the native engine router with the same env-var checker.
+    _configure_native_router(availability)
+
+    # Reconcile the curated registry against what each keyed provider actually
+    # lists right now: quarantine retired pinned ids so neither engine routes to
+    # them (ADR-040). Run BEFORE resolving tier defaults so a quarantined model is
+    # never chosen as a default. No-op in no-LLM mode and for unkeyed providers.
+    drift = detect_registry_drift()
+
+    from ..models.model_registry import is_quarantined
+
     resolved: dict[int, str] = {}
     for tier, chain in _TIER_FALLBACK_CHAINS.items():
         for model_id in chain:
             p = provider_prefix(model_id)
-            if is_provider_available(p):
+            if is_provider_available(p) and not is_quarantined(model_id):
                 resolved[tier] = model_id
                 break
         else:
             resolved[tier] = _TIER_DEFAULTS.get(tier, chain[-1])
 
     _TIER_DEFAULTS.update(resolved)
-
-    # Also configure the native engine router with the same env-var checker
-    _configure_native_router(availability)
-
-    # Reconcile the curated registry against what each keyed provider actually
-    # lists right now: quarantine retired pinned ids so neither engine routes to
-    # them (ADR-040). No-op in no-LLM mode and for unkeyed providers.
-    drift = detect_registry_drift()
 
     summary = {
         "available_providers": available_providers,
@@ -256,8 +259,8 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     from ..models import model_registry as registry
     from ..settings import is_agentic_no_llm_enabled
 
-    registry.clear_quarantine()
     if is_agentic_no_llm_enabled():
+        registry.clear_quarantine()
         return DriftReport()
 
     reg = registry.load_registry()
@@ -273,15 +276,18 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
         m.id for m in reg.models if m.price_in is None or m.price_out is None
     ]
 
-    if quarantined:
-        registry.quarantine(quarantined)
-        for mid in quarantined:
-            logger.warning(
-                "model %s is no longer listed by provider %s; quarantined "
-                "(dropped from routing) -- update model_registry.yaml",
-                mid,
-                provider_prefix(mid),
-            )
+    # Swap the quarantine set atomically AFTER discovery completes. The previous
+    # quarantine stays in force during the (up to ~8s) network window, so a
+    # concurrent request can never route through an empty set mid-probe.
+    registry.set_quarantine(quarantined)
+
+    for mid in quarantined:
+        logger.warning(
+            "model %s is no longer listed by provider %s; quarantined "
+            "(dropped from routing) -- update model_registry.yaml",
+            mid,
+            provider_prefix(mid),
+        )
 
     strict_mode = _registry_strict_enabled() if strict is None else strict
     if strict_mode and quarantined:
