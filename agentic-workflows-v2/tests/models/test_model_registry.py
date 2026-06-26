@@ -24,7 +24,9 @@ def _base_registry_dict() -> dict:
             {"id": "gemini:gemini-2.5-flash", "provider": "gemini", "tiers": [1]},
             {"id": "ollama:qwen3:8b", "provider": "ollama", "tiers": [1]},
         ],
-        "tiers": {1: ["gemini:gemini-2.5-flash", "ollama:qwen3:8b"]},
+        "tiers": {
+            t: ["gemini:gemini-2.5-flash", "ollama:qwen3:8b"] for t in range(1, 6)
+        },
         "special": {
             "judge_default": "gemini:gemini-2.5-flash",
             "notebooklm_fallback": "gemini:gemini-2.5-flash",
@@ -142,3 +144,37 @@ def test_validate_rejects_unknown_provider():
     registry = mr.Registry.model_validate(payload)
     with pytest.raises(ValueError, match="unknown providers"):
         mr._validate(registry)
+
+
+def test_validate_rejects_missing_tier():
+    """A registry missing a tier chain fails loudly at load, not as a later
+    KeyError in ModelRouter.get_chain's DEFAULT_CHAINS[TIER_2] fallback."""
+    payload = _base_registry_dict()
+    del payload["tiers"][2]
+    registry = mr.Registry.model_validate(payload)
+    with pytest.raises(ValueError, match="missing a non-empty fallback chain"):
+        mr._validate(registry)
+
+
+# ---------------------------------------------------------------------------
+# load_registry error contract (malformed YAML / invalid schema -> ValueError)
+# ---------------------------------------------------------------------------
+
+
+def test_load_registry_raises_valueerror_on_malformed_yaml(tmp_path, monkeypatch):
+    bad = tmp_path / "model_registry.yaml"
+    bad.write_text("version: 1\nmodels: [unclosed\n", encoding="utf-8")
+    monkeypatch.setattr(mr, "_resolve_registry_path", lambda _root: bad)
+    mr.clear_cache()
+    with pytest.raises(ValueError, match="[Mm]alformed YAML"):
+        mr.load_registry()
+
+
+def test_load_registry_raises_valueerror_on_invalid_schema(tmp_path, monkeypatch):
+    bad = tmp_path / "model_registry.yaml"
+    # valid YAML, but missing the required tiers/special sections
+    bad.write_text("version: 1\nmodels: []\n", encoding="utf-8")
+    monkeypatch.setattr(mr, "_resolve_registry_path", lambda _root: bad)
+    mr.clear_cache()
+    with pytest.raises(ValueError, match="invalid model registry schema"):
+        mr.load_registry()
