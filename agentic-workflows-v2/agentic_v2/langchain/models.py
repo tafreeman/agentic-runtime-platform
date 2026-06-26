@@ -183,12 +183,12 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     # never chosen as a default. No-op in no-LLM mode and for unkeyed providers.
     drift = detect_registry_drift()
 
-    from ..models.model_registry import is_quarantined
+    from ..models.model_registry import is_quarantined, provider_for
 
     resolved: dict[int, str] = {}
     for tier, chain in _TIER_FALLBACK_CHAINS.items():
         for model_id in chain:
-            p = provider_prefix(model_id)
+            p = provider_for(model_id)
             if is_provider_available(p) and not is_quarantined(model_id):
                 resolved[tier] = model_id
                 break
@@ -266,7 +266,7 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     reg = registry.load_registry()
     prior = registry.quarantined_ids()
     live_ids = {info.id for info in discover_cloud_models()}
-    checked_providers = {provider_prefix(mid) for mid in live_ids}
+    checked_providers = {registry.provider_for(mid) for mid in live_ids}
 
     # Retired among providers we actually got a listing for this round.
     newly_retired = sorted(
@@ -279,7 +279,7 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     # contains the id again un-quarantines it -- an inconclusive probe must not
     # make a retired id routable.
     preserved = sorted(
-        mid for mid in prior if provider_prefix(mid) not in checked_providers
+        mid for mid in prior if registry.provider_for(mid) not in checked_providers
     )
     quarantined = sorted(set(newly_retired) | set(preserved))
     missing_pricing = [
@@ -296,7 +296,7 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
             "model %s is no longer listed by provider %s; quarantined "
             "(dropped from routing) -- update model_registry.yaml",
             mid,
-            provider_prefix(mid),
+            registry.provider_for(mid),
         )
 
     strict_mode = _registry_strict_enabled() if strict is None else strict
@@ -693,13 +693,13 @@ def get_model_candidates_for_tier(
         return dedupe_keep_order(ordered_pinned + ordered_fallback)
 
     # Drop ids quarantined by drift detection (retired at provider; ADR-040).
-    from ..models.model_registry import is_quarantined
+    from ..models.model_registry import is_quarantined, provider_for
 
     ordered_pinned = [m for m in ordered_pinned if not is_quarantined(m)]
     filtered_fallback = [
         m
         for m in ordered_fallback
-        if is_provider_available(provider_prefix(m)) and not is_quarantined(m)
+        if is_provider_available(provider_for(m)) and not is_quarantined(m)
     ]
     return dedupe_keep_order(ordered_pinned + filtered_fallback)
 

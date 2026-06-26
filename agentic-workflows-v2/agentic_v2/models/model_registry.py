@@ -343,8 +343,9 @@ def quarantined_ids() -> frozenset[str]:
 
 
 def clear_quarantine() -> None:
-    """Clear all quarantine state (called at the start of each drift run)."""
-    _quarantined.clear()
+    """Clear all quarantine state."""
+    global _quarantined
+    _quarantined = set()
 
 
 class RegistryDriftError(RuntimeError):
