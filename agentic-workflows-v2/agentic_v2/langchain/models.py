@@ -43,6 +43,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -188,10 +189,16 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     # Also configure the native engine router with the same env-var checker
     _configure_native_router(availability)
 
+    # Reconcile the curated registry against what each keyed provider actually
+    # lists right now: quarantine retired pinned ids so neither engine routes to
+    # them (ADR-040). No-op in no-LLM mode and for unkeyed providers.
+    drift = detect_registry_drift()
+
     summary = {
         "available_providers": available_providers,
         "unavailable_providers": unavailable_providers,
         "tier_defaults": dict(_TIER_DEFAULTS),
+        "drift": drift.to_dict(),
     }
 
     logger.info(
@@ -203,6 +210,90 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
         logger.info("  Tier %d -> %s", tier, model_id)
 
     return summary
+
+
+@dataclass(frozen=True)
+class DriftReport:
+    """Result of probe-time registry drift detection (ADR-040)."""
+
+    quarantined: tuple[str, ...] = ()
+    missing_pricing: tuple[str, ...] = ()
+    checked_providers: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, list[str]]:
+        """Serialize to a plain dict for the probe API response (additive)."""
+        return {
+            "quarantined": list(self.quarantined),
+            "missing_pricing": list(self.missing_pricing),
+            "checked_providers": list(self.checked_providers),
+        }
+
+
+def _registry_strict_enabled() -> bool:
+    """Whether ``AGENTIC_REGISTRY_STRICT`` makes drift fatal (default off)."""
+    return os.environ.get("AGENTIC_REGISTRY_STRICT", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
+    """Diff the curated registry against live provider listings; quarantine retired ids.
+
+    For every curated model whose provider returned a live listing, if its id is
+    no longer in that listing the model is QUARANTINED (dropped from routing by
+    both engines) and logged at WARNING. A provider that returned nothing (no key
+    or a failed probe) is skipped entirely -- a missing listing means "unknown",
+    never "everything retired". Newly discovered ids are never auto-promoted into
+    a chain (curated-for-judgments; see ADR-040).
+
+    Skipped in no-LLM mode (no network). When ``strict`` (or
+    ``AGENTIC_REGISTRY_STRICT``) is set and any id is quarantined, raises
+    :class:`agentic_v2.models.model_registry.RegistryDriftError` so a CI/probe
+    job fails loudly on a retired pinned id instead of only warning.
+    """
+    from ..models import model_registry as registry
+    from ..settings import is_agentic_no_llm_enabled
+
+    registry.clear_quarantine()
+    if is_agentic_no_llm_enabled():
+        return DriftReport()
+
+    reg = registry.load_registry()
+    live_ids = {info.id for info in discover_cloud_models()}
+    checked_providers = {provider_prefix(mid) for mid in live_ids}
+
+    quarantined = [
+        m.id
+        for m in reg.models
+        if m.provider in checked_providers and m.id not in live_ids
+    ]
+    missing_pricing = [
+        m.id for m in reg.models if m.price_in is None or m.price_out is None
+    ]
+
+    if quarantined:
+        registry.quarantine(quarantined)
+        for mid in quarantined:
+            logger.warning(
+                "model %s is no longer listed by provider %s; quarantined "
+                "(dropped from routing) -- update model_registry.yaml",
+                mid,
+                provider_prefix(mid),
+            )
+
+    strict_mode = _registry_strict_enabled() if strict is None else strict
+    if strict_mode and quarantined:
+        raise registry.RegistryDriftError(
+            f"model registry drift: retired pinned id(s) {sorted(quarantined)}"
+        )
+
+    return DriftReport(
+        quarantined=tuple(quarantined),
+        missing_pricing=tuple(missing_pricing),
+        checked_providers=tuple(sorted(checked_providers)),
+    )
 
 
 def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
@@ -585,8 +676,14 @@ def get_model_candidates_for_tier(
     if include_unavailable:
         return dedupe_keep_order(ordered_pinned + ordered_fallback)
 
+    # Drop ids quarantined by drift detection (retired at provider; ADR-040).
+    from ..models.model_registry import is_quarantined
+
+    ordered_pinned = [m for m in ordered_pinned if not is_quarantined(m)]
     filtered_fallback = [
-        m for m in ordered_fallback if is_provider_available(provider_prefix(m))
+        m
+        for m in ordered_fallback
+        if is_provider_available(provider_prefix(m)) and not is_quarantined(m)
     ]
     return dedupe_keep_order(ordered_pinned + filtered_fallback)
 

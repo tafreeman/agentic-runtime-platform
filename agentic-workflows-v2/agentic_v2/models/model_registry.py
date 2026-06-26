@@ -29,6 +29,7 @@ observed token usage into a dollar figure, or ``None`` when a price is unknown.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -224,9 +225,10 @@ def load_registry() -> Registry:
 
 
 def clear_cache() -> None:
-    """Clear the cached registry (used by the test suite for isolation)."""
+    """Clear the cached registry and runtime quarantine (test isolation)."""
     load_registry.cache_clear()
     _warned_unknown_price.clear()
+    _quarantined.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -299,3 +301,38 @@ def compute_spend(
         prompt_tokens / _TOKENS_PER_MTOK * price_in
         + completion_tokens / _TOKENS_PER_MTOK * price_out
     )
+
+
+# ---------------------------------------------------------------------------
+# Runtime quarantine — populated by probe-time drift detection (ADR-040)
+# ---------------------------------------------------------------------------
+# Ids the probe found retired at their provider (the live listing no longer
+# includes them). Quarantined ids are filtered out of routing by both engines.
+# This is RUNTIME state, distinct from the curated registry, and is reset on
+# clear_cache() and at the start of each drift run.
+
+_quarantined: set[str] = set()
+
+
+def quarantine(ids: Iterable[str]) -> None:
+    """Mark model ids as quarantined (drop them from routing)."""
+    _quarantined.update(ids)
+
+
+def is_quarantined(model_id: str) -> bool:
+    """Return True if ``model_id`` is currently quarantined."""
+    return model_id in _quarantined
+
+
+def quarantined_ids() -> frozenset[str]:
+    """Return the set of currently-quarantined model ids."""
+    return frozenset(_quarantined)
+
+
+def clear_quarantine() -> None:
+    """Clear all quarantine state (called at the start of each drift run)."""
+    _quarantined.clear()
+
+
+class RegistryDriftError(RuntimeError):
+    """Raised by drift detection in strict mode when a pinned id is retired."""

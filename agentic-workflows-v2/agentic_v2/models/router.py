@@ -22,6 +22,8 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Callable, Sequence
 
+from .model_registry import is_quarantined
+
 
 class ModelTier(IntEnum):
     """Model capability tiers.
@@ -230,6 +232,8 @@ class ModelRouter:
         """
         chain = self.get_chain(tier)
         for model in chain:
+            if is_quarantined(model):
+                continue  # retired at provider (ADR-040 drift detection)
             if self.is_model_available(model):
                 return model
         return None
@@ -247,7 +251,7 @@ class ModelRouter:
         chain = self.get_chain(tier)
         found_current = False
         for m in chain:
-            if found_current and self.is_model_available(m):
+            if found_current and not is_quarantined(m) and self.is_model_available(m):
                 return m
             if m == model:
                 found_current = True
