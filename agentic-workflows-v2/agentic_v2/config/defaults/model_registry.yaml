@@ -1,0 +1,176 @@
+# Curated single source-of-truth model registry (ADR-040).
+#
+# This file is the ONE place model identifiers, tier fallback chains, per-agent
+# model defaults, and per-token prices are declared. router.py, langchain/models.py,
+# and the named-agent loader all read from here -- adding or retiring a model is a
+# deliberate, human-reviewed edit to this file.
+#
+# Design principle: dynamic for FACTS the runtime verifies (availability, health,
+# rate-limit state); curated for JUDGMENTS a human owns (tier membership,
+# capability, price). The probe WARNS + QUARANTINES retired ids; it never
+# auto-promotes a new one into a chain.
+#
+# price_in / price_out are USD per 1,000,000 tokens (per-Mtok); null = unknown
+# (spend is reported as None for that model, never guessed). Populating real
+# numbers is a follow-up; provider /models endpoints do not expose pricing.
+version: 1
+
+models:
+  # --- tier 1: fast / cheap (summarisation, extraction, simple tasks) ---
+  - id: gemini:gemini-2.5-flash-lite
+    provider: gemini
+    tiers: [1]
+    capability: fast
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: gh:openai/gpt-4o-mini
+    provider: gh
+    tiers: [1]
+    capability: fast
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: openai:gpt-4o-mini
+    provider: openai
+    tiers: [1]
+    capability: fast
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: anthropic:claude-haiku-4-5-20251001
+    provider: anthropic
+    tiers: [1]
+    capability: fast
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: ollama:gemma3:4b
+    provider: ollama
+    tiers: [1]
+    capability: local
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+
+  # --- tier 2-3: balanced (code review, moderate reasoning) ---
+  - id: gemini:gemini-2.5-flash
+    provider: gemini
+    tiers: [2, 3]
+    capability: balanced
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: gh:openai/gpt-4o
+    provider: gh
+    tiers: [2, 3, 4, 5]
+    capability: balanced
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: openai:gpt-4o
+    provider: openai
+    tiers: [2, 3, 4, 5]
+    capability: balanced
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: anthropic:claude-sonnet-4-6-20260219
+    provider: anthropic
+    tiers: [2, 3, 4]
+    capability: balanced
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: ollama:qwen3:8b
+    provider: ollama
+    tiers: [2]
+    capability: local
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+  - id: ollama:qwen3-coder:30b
+    provider: ollama
+    tiers: [3, 4, 5]
+    capability: local
+    status: active
+    price_in: 0.0
+    price_out: 0.0
+    context_window: null
+
+  # --- tier 4-5: capability escalation (hard problems, deep analysis) ---
+  - id: gemini:gemini-2.5-pro
+    provider: gemini
+    tiers: [4, 5]
+    capability: reasoning
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: anthropic:claude-opus-4-6
+    provider: anthropic
+    tiers: [5]
+    capability: reasoning
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+
+# Ordered fallback chains per tier. Reconciled from the previously divergent
+# router.DEFAULT_CHAINS (escalating, cloud-only) and langchain._TIER_FALLBACK_CHAINS
+# (flat, +local). Resolution = cloud-capability-first then a local Ollama tail;
+# tiers 4-5 escalate to gemini-2.5-pro / claude-opus-4-6 (ADR-040).
+tiers:
+  1:
+    - gemini:gemini-2.5-flash-lite
+    - gh:openai/gpt-4o-mini
+    - openai:gpt-4o-mini
+    - anthropic:claude-haiku-4-5-20251001
+    - ollama:gemma3:4b
+  2:
+    - gemini:gemini-2.5-flash
+    - gh:openai/gpt-4o
+    - openai:gpt-4o
+    - anthropic:claude-sonnet-4-6-20260219
+    - ollama:qwen3:8b
+  3:
+    - gemini:gemini-2.5-flash
+    - anthropic:claude-sonnet-4-6-20260219
+    - openai:gpt-4o
+    - gh:openai/gpt-4o
+    - ollama:qwen3-coder:30b
+  4:
+    - gemini:gemini-2.5-pro
+    - anthropic:claude-sonnet-4-6-20260219
+    - openai:gpt-4o
+    - gh:openai/gpt-4o
+    - ollama:qwen3-coder:30b
+  5:
+    - gemini:gemini-2.5-pro
+    - anthropic:claude-opus-4-6
+    - openai:gpt-4o
+    - gh:openai/gpt-4o
+    - ollama:qwen3-coder:30b
+
+# NOTE: named-agent model selection is NOT in this registry. Agents resolve
+# their model via their tier (the chains above); the default_model/fallback_models
+# fields in agents.yaml are vestigial display config (the /api/agents route reads
+# only name/description/tier). See ADR-040.
+
+# Special-purpose ids referenced by individual call sites. (The GitHub-backup
+# fallback list stays in langchain/model_utils.GH_BACKUP_MODELS next to the
+# provider gate it belongs to; its ids are already declared in models: above.)
+special:
+  judge_default: gh:openai/gpt-4o
+  notebooklm_fallback: gemini:gemini-2.5-pro
+  tier_ultimate_fallback: ollama:qwen3:8b

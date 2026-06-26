@@ -99,6 +99,28 @@ def clear_workflow_cache():
 
 
 @pytest.fixture(autouse=True)
+def _reset_model_registry_cache():
+    """Clear the curated model-registry cache around every test (ADR-040).
+
+    ``load_registry`` is ``lru_cache``-d and ``compute_spend`` keeps a per-process
+    warn-once set; both must reset between tests so a fixture-mutated registry or
+    a prior unknown-price warning never leaks into a later test. Lazy + best-effort
+    import, mirroring the other reset fixtures.
+    """
+
+    def _reset() -> None:
+        try:
+            from agentic_v2.models.model_registry import clear_cache
+        except ImportError:
+            return
+        clear_cache()
+
+    _reset()
+    yield
+    _reset()
+
+
+@pytest.fixture(autouse=True)
 def _reset_global_routers():
     """Reset the module-global router singletons around every test.
 

@@ -81,15 +81,9 @@ from .model_utils import (
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# String constants (extracted to satisfy python:S1192 — define once, reuse)
-# ---------------------------------------------------------------------------
-
-MODEL_GEMINI_FLASH = "gemini:gemini-2.5-flash"
-MODEL_GH_GPT4O = "gh:openai/gpt-4o"
-MODEL_OPENAI_GPT4O = "openai:gpt-4o"
-MODEL_ANTHROPIC_CLAUDE_SONNET = "anthropic:claude-sonnet-4-6-20260219"
-MODEL_OLLAMA_QWEN3 = "ollama:qwen3-coder:30b"
+# Model id literals now live in the curated registry
+# (config/defaults/model_registry.yaml); the tier chains and defaults below are
+# built from it via _build_tier_* (ADR-040).
 
 # ---------------------------------------------------------------------------
 # Load .env so API keys are available when invoked via uvicorn directly
@@ -108,61 +102,36 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# Tier defaults (updated dynamically by probe_and_update_tier_defaults)
+# Tier chains + defaults — sourced from the curated model registry (ADR-040)
 # ---------------------------------------------------------------------------
+# The single source of truth is config/defaults/model_registry.yaml (shared with
+# the native ModelRouter and the named-agent loader). _TIER_DEFAULTS is seeded
+# from the first model in each chain and then refined in place at server startup
+# by probe_and_update_tier_defaults().
 
-_TIER_DEFAULTS: dict[int, str] = {
-    1: "gemini:gemini-2.5-flash-lite",
-    2: "gemini:gemini-2.5-flash",
-    3: MODEL_GEMINI_FLASH,
-    4: MODEL_GEMINI_FLASH,
-    5: MODEL_GEMINI_FLASH,
-}
 
-# Models ranked by reasoning capability per tier.
-# First available provider wins during probe.
-_TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
-    # Tier 1: fast / cheap -- summarisation, extraction, simple tasks
-    1: [
-        "gemini:gemini-2.5-flash-lite",
-        "gh:openai/gpt-4o-mini",
-        "openai:gpt-4o-mini",
-        "anthropic:claude-haiku-4-5-20251001",
-        "ollama:gemma3:4b",
-    ],
-    # Tier 2: balanced -- code review, moderate reasoning
-    2: [
-        "gemini:gemini-2.5-flash",
-        MODEL_GH_GPT4O,
-        MODEL_OPENAI_GPT4O,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        "ollama:qwen3:8b",
-    ],
-    # Tier 3: strong reasoning -- architecture, complex code gen
-    3: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-    # Tier 4: top-tier -- hard problems, multi-step planning
-    4: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-    # Tier 5: best available -- research, deep analysis
-    5: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-}
+def _build_tier_fallback_chains() -> dict[int, list[str]]:
+    """Per-tier fallback chains, read from the curated model registry."""
+    from ..models.model_registry import tier_chain
+
+    return {tier: list(tier_chain(tier)) for tier in range(1, 6)}
+
+
+def _build_tier_defaults() -> dict[int, str]:
+    """Seed each tier's default with the first id in its chain (probe refines)."""
+    return {tier: chain[0] for tier, chain in _TIER_FALLBACK_CHAINS.items() if chain}
+
+
+def _ultimate_fallback() -> str:
+    """Last-resort model id when no tier default resolves (registry-sourced)."""
+    from ..models.model_registry import special
+
+    value = special("tier_ultimate_fallback")
+    return value if isinstance(value, str) else "ollama:qwen3:8b"
+
+
+_TIER_FALLBACK_CHAINS: dict[int, list[str]] = _build_tier_fallback_chains()
+_TIER_DEFAULTS: dict[int, str] = _build_tier_defaults()
 
 # NOTE: probe_and_update_tier_defaults() is intentionally NOT called here.
 # It is called once from the FastAPI lifespan handler in server/app.py so that
@@ -602,7 +571,7 @@ def get_model_candidates_for_tier(
     if env_val:
         pinned.append(env_val)
 
-    default_id = _TIER_DEFAULTS.get(tier, _TIER_DEFAULTS.get(2, "ollama:qwen3:8b"))
+    default_id = _TIER_DEFAULTS.get(tier, _TIER_DEFAULTS.get(2, _ultimate_fallback()))
     if default_id:
         pinned.append(default_id)
 
