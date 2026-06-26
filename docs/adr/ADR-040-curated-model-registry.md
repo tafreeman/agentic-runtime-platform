@@ -7,7 +7,7 @@
 (`DEFAULT_CHAINS`), `agentic_v2/langchain/models.py` (`_TIER_FALLBACK_CHAINS`,
 `_TIER_DEFAULTS`), `agentic_v2/scoring/judge.py`,
 `agentic_v2/langchain/model_builders.py`. Builds on the discovery story of
-ADR-037/038/039; sets up the probe-time drift detection planned as a follow-up.
+ADR-037/038/039; includes the probe-time drift detection it set up.
 
 ---
 
@@ -104,11 +104,19 @@ chain → `GH_BACKUP_MODELS`.
 - Behavior change: both engines now use the reconciled chains; tiers 4–5 escalate
   to `gemini-2.5-pro` / `claude-opus-4-6` (a cost/capability shift for the
   LangChain engine's high tiers).
-- The registry is the foundation for **probe-time drift detection** (planned
-  follow-up): diff the curated catalog against the live `discover_cloud_models()`
-  listings on probe and *warn + quarantine* a pinned id the provider no longer
-  lists — automatically catching the next `gemini-2.0-flash`. The probe will
-  **warn and filter, never auto-promote** a newly discovered id into a chain.
+- **Probe-time drift detection** (implemented): `detect_registry_drift()` runs
+  inside `probe_and_update_tier_defaults()` (so at server startup and on every
+  `/api/models/probe`). It diffs the curated catalog against the live
+  `discover_cloud_models()` listings and *warns + quarantines* any pinned id a
+  keyed provider no longer lists — automatically catching the next
+  `gemini-2.0-flash`. Quarantined ids are dropped from routing by both engines
+  (native router skips them; the LangChain candidate list filters them). It
+  **warns and filters, never auto-promotes** a newly discovered id into a chain.
+  A provider that returns no listing is treated as *unknown*, never "all
+  retired", so an absent key cannot mass-quarantine. No-op under `AGENTIC_NO_LLM`;
+  `AGENTIC_REGISTRY_STRICT=1` raises `RegistryDriftError` instead of warning so a
+  CI/probe job fails loudly. The `DriftReport` is surfaced as an additive `drift`
+  key in the probe response (no wire-format change).
 
 ## Alternatives considered
 
