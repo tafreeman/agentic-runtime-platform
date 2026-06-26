@@ -533,3 +533,27 @@ class TestRegistryDriftDetection:
         self._patch_cloud(monkeypatch, ["gemini:gemini-3-pro"])
         with pytest.raises(RegistryDriftError):
             lcm.detect_registry_drift()
+
+    def test_probe_tier_defaults_skip_quarantined(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """probe_and_update_tier_defaults runs drift first, so a quarantined model
+        is never reported/used as a tier default (no misleading tier_defaults)."""
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models import model_registry as mr
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setenv("GOOGLE_API_KEY", "test-key")  # gemini available
+        # live gemini listing missing the registry's gemini ids -> they quarantine
+        self._patch_cloud(monkeypatch, ["gemini:gemini-3-pro"])
+
+        saved = dict(lcm._TIER_DEFAULTS)
+        try:
+            summary = lcm.probe_and_update_tier_defaults()
+            for _tier, model_id in summary["tier_defaults"].items():
+                assert not mr.is_quarantined(model_id), (
+                    f"tier default {model_id} is quarantined"
+                )
+        finally:
+            lcm._TIER_DEFAULTS.clear()
+            lcm._TIER_DEFAULTS.update(saved)
