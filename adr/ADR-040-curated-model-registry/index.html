@@ -2886,7 +2886,7 @@
 (<code>DEFAULT_CHAINS</code>), <code>agentic_v2/langchain/models.py</code> (<code>_TIER_FALLBACK_CHAINS</code>,
 <code>_TIER_DEFAULTS</code>), <code>agentic_v2/scoring/judge.py</code>,
 <code>agentic_v2/langchain/model_builders.py</code>. Builds on the discovery story of
-ADR-037/038/039; sets up the probe-time drift detection planned as a follow-up.</p>
+ADR-037/038/039; includes the probe-time drift detection it set up.</p>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p>Model identifiers were declared independently in three places that drifted apart:</p>
@@ -2971,11 +2971,19 @@ chain → <code>GH_BACKUP_MODELS</code>.</p>
 <li>Behavior change: both engines now use the reconciled chains; tiers 4–5 escalate
   to <code>gemini-2.5-pro</code> / <code>claude-opus-4-6</code> (a cost/capability shift for the
   LangChain engine's high tiers).</li>
-<li>The registry is the foundation for <strong>probe-time drift detection</strong> (planned
-  follow-up): diff the curated catalog against the live <code>discover_cloud_models()</code>
-  listings on probe and <em>warn + quarantine</em> a pinned id the provider no longer
-  lists — automatically catching the next <code>gemini-2.0-flash</code>. The probe will
-  <strong>warn and filter, never auto-promote</strong> a newly discovered id into a chain.</li>
+<li><strong>Probe-time drift detection</strong> (implemented): <code>detect_registry_drift()</code> runs
+  inside <code>probe_and_update_tier_defaults()</code> (so at server startup and on every
+  <code>/api/models/probe</code>). It diffs the curated catalog against the live
+  <code>discover_cloud_models()</code> listings and <em>warns + quarantines</em> any pinned id a
+  keyed provider no longer lists — automatically catching the next
+  <code>gemini-2.0-flash</code>. Quarantined ids are dropped from routing by both engines
+  (native router skips them; the LangChain candidate list filters them). It
+  <strong>warns and filters, never auto-promotes</strong> a newly discovered id into a chain.
+  A provider that returns no listing is treated as <em>unknown</em>, never "all
+  retired", so an absent key cannot mass-quarantine. No-op under <code>AGENTIC_NO_LLM</code>;
+  <code>AGENTIC_REGISTRY_STRICT=1</code> raises <code>RegistryDriftError</code> instead of warning so a
+  CI/probe job fails loudly. The <code>DriftReport</code> is surfaced as an additive <code>drift</code>
+  key in the probe response (no wire-format change).</li>
 </ul>
 <h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3008,7 +3016,7 @@ chain → <code>GH_BACKUP_MODELS</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2026 00:34:06 UTC">June 26, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2026 03:20:24 UTC">June 26, 2026</span>
   </span>
 
     
