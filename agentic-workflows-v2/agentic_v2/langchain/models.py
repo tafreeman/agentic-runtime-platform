@@ -264,14 +264,24 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
         return DriftReport()
 
     reg = registry.load_registry()
+    prior = registry.quarantined_ids()
     live_ids = {info.id for info in discover_cloud_models()}
     checked_providers = {provider_prefix(mid) for mid in live_ids}
 
-    quarantined = [
+    # Retired among providers we actually got a listing for this round.
+    newly_retired = sorted(
         m.id
         for m in reg.models
         if m.provider in checked_providers and m.id not in live_ids
-    ]
+    )
+    # Preserve prior quarantines for providers we could NOT list this round
+    # (no key / network / schema failure). Only a successful listing that
+    # contains the id again un-quarantines it -- an inconclusive probe must not
+    # make a retired id routable.
+    preserved = sorted(
+        mid for mid in prior if provider_prefix(mid) not in checked_providers
+    )
+    quarantined = sorted(set(newly_retired) | set(preserved))
     missing_pricing = [
         m.id for m in reg.models if m.price_in is None or m.price_out is None
     ]
@@ -281,7 +291,7 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     # concurrent request can never route through an empty set mid-probe.
     registry.set_quarantine(quarantined)
 
-    for mid in quarantined:
+    for mid in newly_retired:
         logger.warning(
             "model %s is no longer listed by provider %s; quarantined "
             "(dropped from routing) -- update model_registry.yaml",
@@ -290,9 +300,9 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
         )
 
     strict_mode = _registry_strict_enabled() if strict is None else strict
-    if strict_mode and quarantined:
+    if strict_mode and newly_retired:
         raise registry.RegistryDriftError(
-            f"model registry drift: retired pinned id(s) {sorted(quarantined)}"
+            f"model registry drift: retired pinned id(s) {newly_retired}"
         )
 
     return DriftReport(
