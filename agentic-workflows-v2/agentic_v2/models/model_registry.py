@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -153,11 +153,21 @@ def _authoritative_providers() -> frozenset[str]:
 
 
 def _validate(registry: Registry) -> None:
-    """Raise ``ValueError`` on dangling references or unknown providers.
+    """Raise ``ValueError`` on missing tiers, dangling references, or unknown providers.
 
-    Catches the failure mode the registry exists to prevent: a tier chain,
-    agent, or special slot pointing at an id that has no ``models:`` entry.
+    Catches the failure modes the registry exists to prevent: a missing tier
+    chain (which would surface later as a cryptic ``KeyError`` in
+    ``ModelRouter.get_chain``'s ``DEFAULT_CHAINS[TIER_2]`` fallback), or a tier
+    chain / special slot pointing at an id that has no ``models:`` entry.
     """
+    required_tiers = {1, 2, 3, 4, 5}
+    missing_tiers = sorted(t for t in required_tiers if not registry.tiers.get(t))
+    if missing_tiers:
+        raise ValueError(
+            "model_registry.yaml is missing a non-empty fallback chain for "
+            f"required tier(s): {missing_tiers}"
+        )
+
     ids = {m.id for m in registry.models}
     providers = _authoritative_providers()
 
@@ -198,11 +208,17 @@ def load_registry() -> Registry:
     path = _resolve_registry_path(_resolve_project_root())
     if not path.exists():
         raise FileNotFoundError(f"model registry not found at {path}")
-    with path.open("r", encoding="utf-8") as handle:
-        raw = yaml.safe_load(handle)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            raw = yaml.safe_load(handle)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"malformed YAML in model registry {path}: {exc}") from exc
     if not isinstance(raw, dict):
         raise ValueError(f"model_registry.yaml must be a mapping, got {type(raw)}")
-    registry = Registry.model_validate(raw)
+    try:
+        registry = Registry.model_validate(raw)
+    except ValidationError as exc:
+        raise ValueError(f"invalid model registry schema: {exc}") from exc
     _validate(registry)
     return registry
 

@@ -117,9 +117,9 @@ def _build_tier_fallback_chains() -> dict[int, list[str]]:
     return {tier: list(tier_chain(tier)) for tier in range(1, 6)}
 
 
-def _build_tier_defaults() -> dict[int, str]:
+def _build_tier_defaults(fallback_chains: dict[int, list[str]]) -> dict[int, str]:
     """Seed each tier's default with the first id in its chain (probe refines)."""
-    return {tier: chain[0] for tier, chain in _TIER_FALLBACK_CHAINS.items() if chain}
+    return {tier: chain[0] for tier, chain in fallback_chains.items() if chain}
 
 
 def _ultimate_fallback() -> str:
@@ -131,7 +131,7 @@ def _ultimate_fallback() -> str:
 
 
 _TIER_FALLBACK_CHAINS: dict[int, list[str]] = _build_tier_fallback_chains()
-_TIER_DEFAULTS: dict[int, str] = _build_tier_defaults()
+_TIER_DEFAULTS: dict[int, str] = _build_tier_defaults(_TIER_FALLBACK_CHAINS)
 
 # NOTE: probe_and_update_tier_defaults() is intentionally NOT called here.
 # It is called once from the FastAPI lifespan handler in server/app.py so that
