@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
-> **Last updated:** 2026-06-23
-> **Total ADRs:** 35 (28 Accepted, 5 Proposed, 2 Superseded)
+> **Last updated:** 2026-06-25
+> **Total ADRs:** 36 (29 Accepted, 5 Proposed, 2 Superseded)
 
 ---
 
@@ -44,6 +44,7 @@
 | **037** | Live Ollama model discovery via the raw REST API (`/api/tags`+`/api/ps`, cloud via `remote_host`) | Accepted | [ADR-037](ADR-037-live-ollama-model-discovery.md) |
 | **038** | Live discovery for LM Studio (native `/api/v0/models`, multi-port) and ONNX (multi-root `genai_config.json`) local models | Accepted | [ADR-038](ADR-038-lmstudio-onnx-discovery.md) |
 | **039** | Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models) | Accepted | [ADR-039](ADR-039-cloud-model-discovery.md) |
+| **040** | Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains) | Accepted | [ADR-040](ADR-040-curated-model-registry.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 

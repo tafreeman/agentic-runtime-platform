@@ -6,6 +6,11 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Curated model registry (2026-06-25)
+
+- Added a single source-of-truth model registry (`config/defaults/model_registry.yaml` + `models/model_registry.py`). Tier fallback chains, the special-purpose model ids (judge default, NotebookLM fallback, ultimate fallback), and a per-token price table now live in one place that feeds both the native router (`DEFAULT_CHAINS`) and the LangChain engine (`_TIER_FALLBACK_CHAINS` / `_TIER_DEFAULTS`), plus the judge and NotebookLM call sites. Eliminates the triple-maintained model-id lists behind the retired-`gemini-2.0` 404 incident; a dangling id reference now fails loudly at load time.
+- Reconciled the previously divergent native-router and LangChain tier chains into one canonical chain per tier (cloud-capability-first with a local Ollama tail; tiers 4–5 escalate to `gemini-2.5-pro` / `claude-opus-4-6`). See ADR-040.
+
 ### CI Test Fixes (2026-05-27)
 
 - `test_path_safety_fallback_branch_without_is_relative_to`: replaced hardcoded Windows-style paths with `os.sep`-based paths so the fallback branch passes on Linux CI and Windows.
