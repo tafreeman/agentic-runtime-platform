@@ -141,7 +141,7 @@ GEMINI_API_KEY=your_gemini_key          # Free tier available
 | `AGENTIC_API_KEY` | Bearer token for API authentication. When unset, all routes are public. | (unset = open) |
 | `AGENTIC_CORS_ORIGINS` | Comma-separated list of allowed CORS origins. | localhost:5173, :8000, :8010 |
 | `AGENTIC_FILE_BASE_DIR` | Base directory for all file operations. Prevents path traversal. Set in production. | (unset = unrestricted) |
-| `AGENTIC_BLOCK_PRIVATE_IPS` | Block HTTP tool requests to private IP ranges. Set to `1` in production. | (unset) |
+| `AGENTIC_BLOCK_PRIVATE_IPS` | Block HTTP tool requests to private IP ranges (SSRF protection). On by default; set to `0` to opt out. | (unset = blocked) |
 | `AGENTIC_EXTERNAL_AGENTS_DIR` | Path to directory containing additional agent definitions. | (unset) |
 | `AGENTIC_MEMORY_PATH` | Path for persistent memory store. | (unset = in-memory only) |
 
