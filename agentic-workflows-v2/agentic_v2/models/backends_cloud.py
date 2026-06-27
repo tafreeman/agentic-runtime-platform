@@ -4,6 +4,7 @@ Concrete backends for cloud-hosted model APIs:
 
 - ``GitHubModelsBackend`` — GitHub Models (Azure AI Inference endpoint)
 - ``OpenAIBackend``        — OpenAI API
+- ``NvidiaBackend``        — NVIDIA NIM (OpenAI-compatible cloud + on-prem)
 - ``AnthropicBackend``     — Anthropic Claude API
 - ``GeminiBackend``        — Google Gemini API
 
@@ -14,8 +15,9 @@ variables and communicates with the provider over ``httpx.AsyncClient``.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 
@@ -28,6 +30,10 @@ from .secrets import get_first_secret, get_secret
 
 CONTENT_TYPE_JSON = "application/json"
 CHAT_COMPLETIONS_PATH = "/chat/completions"
+
+# Non-secret placeholder for self-hosted NVIDIA NIM, which does not validate the
+# API key. A non-empty value is still required so the Bearer header is well-formed.
+_LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
 
 
 def _to_anthropic_tool_choice(
@@ -178,6 +184,10 @@ class GitHubModelsBackend(LLMBackend):
 class OpenAIBackend(LLMBackend):
     """Backend for OpenAI API."""
 
+    # Prefix stripped from the model id before it hits the wire. Subclasses for
+    # other OpenAI-compatible providers (e.g. NVIDIA NIM) override this.
+    _provider_prefix: ClassVar[str] = "openai:"
+
     api_key: str = field(
         default_factory=lambda: get_secret("OPENAI_API_KEY", default="") or "",
         repr=False,
@@ -228,7 +238,7 @@ class OpenAIBackend(LLMBackend):
     ) -> dict[str, Any]:
         client = await self._get_client()
 
-        model_name = model.removeprefix("openai:")
+        model_name = model.removeprefix(self._provider_prefix)
 
         payload: dict[str, Any] = {
             "model": model_name,
@@ -260,6 +270,53 @@ class OpenAIBackend(LLMBackend):
     async def close(self) -> None:
         if self._client and not self._client.is_closed:
             await self._client.aclose()
+
+
+# ---------------------------------------------------------------------------
+# NVIDIA NIM
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class NvidiaBackend(OpenAIBackend):
+    """Backend for NVIDIA NIM (OpenAI-compatible ``/v1`` surface).
+
+    NIM speaks the OpenAI wire protocol for both the public cloud
+    (``integrate.api.nvidia.com``) and self-hosted containers, so this is just
+    :class:`OpenAIBackend` with NVIDIA credentials and base-URL resolution.
+
+    Two NVIDIA-specific behaviors:
+
+    - Model ids keep their ``publisher/model`` form (e.g.
+      ``meta/llama-3.3-70b-instruct``); only the ``nvidia:`` prefix is stripped,
+      never the publisher segment, so a discovered id round-trips unchanged.
+    - The cloud endpoint requires ``NVIDIA_API_KEY``; a self-hosted NIM selected
+      via ``NVIDIA_BASE_URL`` does not validate the key, so a non-secret
+      placeholder is substituted there rather than raising.
+    """
+
+    _provider_prefix: ClassVar[str] = "nvidia:"
+
+    api_key: str = field(
+        default_factory=lambda: get_secret("NVIDIA_API_KEY", default="") or "",
+        repr=False,
+    )
+    # Resolved in __post_init__ via the shared discovery helper so backend and
+    # probe always target the same host.
+    base_url: str = ""
+
+    def __post_init__(self) -> None:
+        from .cloud_discovery import resolve_nvidia_base_url
+
+        if not self.base_url:
+            self.base_url = resolve_nvidia_base_url()
+        if not self.api_key:
+            if not os.environ.get("NVIDIA_BASE_URL"):
+                raise ValueError(
+                    "NVIDIA_API_KEY environment variable required for NVIDIA NIM cloud"
+                )
+            # Self-hosted NIM ignores the key; a non-empty value keeps the header valid.
+            self.api_key = _LOCAL_NIM_PLACEHOLDER_KEY
 
 
 # ---------------------------------------------------------------------------

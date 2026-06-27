@@ -21,6 +21,7 @@ from agentic_v2.models.cloud_discovery import (
     discover_github_models,
     discover_nvidia_models,
     discover_openai_models,
+    resolve_nvidia_base_url,
 )
 
 _OPENAI = "https://api.openai.com/v1/models"
@@ -272,10 +273,39 @@ class TestNVIDIA:
         ]
         assert calls[0][0] == "http://nim.local:8000/v1/models"
 
+    def test_base_url_without_v1_suffix_gets_v1_appended(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A NVIDIA_BASE_URL missing /v1 must still hit /v1/models (Gemini review #132)."""
+        monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
+        monkeypatch.setenv("NVIDIA_BASE_URL", "http://nim.local:8000")
+        calls = _route(
+            monkeypatch,
+            {
+                "http://nim.local:8000/v1/models": _Resp(
+                    {"data": [{"id": "meta/llama-3.1-8b-instruct"}]}
+                )
+            },
+        )
+        assert [m.id for m in discover_nvidia_models()] == [
+            "nvidia:meta/llama-3.1-8b-instruct"
+        ]
+        assert calls[0][0] == "http://nim.local:8000/v1/models"
+
     def test_server_error_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
         _route(monkeypatch, {_NVIDIA: _Resp(None, status=401)})
         assert discover_nvidia_models() == []
+
+    def test_resolve_base_url_default_and_normalization(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The shared resolver guarantees a single trailing /v1 segment."""
+        assert resolve_nvidia_base_url() == "https://integrate.api.nvidia.com/v1"
+        monkeypatch.setenv("NVIDIA_BASE_URL", "http://nim.local:8000/v1/")
+        assert resolve_nvidia_base_url() == "http://nim.local:8000/v1"
+        monkeypatch.setenv("NVIDIA_BASE_URL", "http://nim.local:8000")
+        assert resolve_nvidia_base_url() == "http://nim.local:8000/v1"
 
 
 class TestAggregate:

@@ -11,6 +11,7 @@ Supported providers
 -------------------
 - GitHub Models     — ``build_github_model``
 - OpenAI            — ``build_openai_model``
+- NVIDIA NIM        — ``build_nvidia_model``
 - Anthropic         — ``build_anthropic_model``
 - Gemini            — ``build_gemini_model``
 - NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
@@ -30,6 +31,10 @@ logger = logging.getLogger(__name__)
 
 # GitHub Models base URL — used by build_github_model
 _GH_BASE_URL = "https://models.inference.ai.azure.com"
+
+# Non-secret placeholder for self-hosted NVIDIA NIM, which does not validate the
+# API key. A non-empty value is still required by the OpenAI client.
+_LOCAL_NIM_PLACEHOLDER_KEY = "not-needed-for-local-nim"
 
 # Module-level flag so ``build_placeholder_model`` warns once per process
 # rather than once per agent step (MED-1 from Sprint B #5 review).
@@ -185,6 +190,68 @@ def build_openai_model(model_name: str, temperature: float) -> Any:
 
     logger.debug("Using OpenAI model: %s", model_name)
     return ChatOpenAI(**kwargs)
+
+
+def build_nvidia_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance pointed at NVIDIA NIM.
+
+    NVIDIA NIM exposes an OpenAI-compatible ``/v1`` surface for both the public
+    cloud (``integrate.api.nvidia.com``) and self-hosted containers, so a
+    ``ChatOpenAI`` with a swapped ``base_url`` is the whole backend. The base
+    URL is resolved by :func:`resolve_nvidia_base_url` — the same helper
+    discovery uses — so a model surfaced by the probe is reachable here.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``nvidia:`` prefix. NIM expects the full
+        ``publisher/model`` id (e.g. ``meta/llama-3.3-70b-instruct``), so it is
+        passed through verbatim — unlike GitHub Models, the publisher segment is
+        **not** stripped.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance configured for the NIM endpoint.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    ValueError
+        If ``NVIDIA_API_KEY`` is unset and no on-prem ``NVIDIA_BASE_URL`` is
+        configured (cloud NIM requires a key; a self-hosted NIM does not
+        validate one).
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for NVIDIA NIM models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    from ..models.cloud_discovery import resolve_nvidia_base_url
+
+    base_url = resolve_nvidia_base_url()
+    api_key = os.environ.get("NVIDIA_API_KEY")
+    if not api_key:
+        if not os.environ.get("NVIDIA_BASE_URL"):
+            raise ValueError(
+                "NVIDIA_API_KEY environment variable is required for NVIDIA NIM "
+                "cloud. Set NVIDIA_BASE_URL to target a self-hosted NIM instead."
+            )
+        # Self-hosted NIM does not validate the key; send a non-empty placeholder.
+        api_key = _LOCAL_NIM_PLACEHOLDER_KEY
+
+    logger.debug("Using NVIDIA NIM: %s at %s", model_name, base_url)
+    return ChatOpenAI(
+        model=model_name,
+        base_url=base_url,
+        api_key=api_key,
+        temperature=temperature,
+    )
 
 
 def build_anthropic_model(model_name: str, temperature: float) -> Any:

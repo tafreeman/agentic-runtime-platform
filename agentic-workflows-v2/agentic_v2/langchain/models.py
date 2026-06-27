@@ -65,6 +65,7 @@ from .model_builders import (
     build_local_api_model,
     build_local_onnx_model,
     build_notebooklm_model,
+    build_nvidia_model,
     build_ollama_model,
     build_openai_model,
     build_placeholder_model,
@@ -462,6 +463,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("gh:", build_github_model),
     ("ollama:", build_ollama_model),
     ("openai:", build_openai_model),
+    ("nvidia:", build_nvidia_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -477,6 +479,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
 # start with any of these is treated as an Ollama local model.
 _KNOWN_PREFIXES: tuple[str, ...] = (
     "openai:",
+    "nvidia:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -639,6 +642,7 @@ __all__ = [
     # re-exported from model_builders
     "build_github_model",
     "build_openai_model",
+    "build_nvidia_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",

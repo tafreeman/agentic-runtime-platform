@@ -134,6 +134,7 @@ class TestPrefixMap:
         expected = {
             "gh:",
             "openai:",
+            "nvidia:",
             "anthropic:",
             "gemini:",
             "azure:",
