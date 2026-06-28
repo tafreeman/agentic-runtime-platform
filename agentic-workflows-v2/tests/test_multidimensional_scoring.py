@@ -12,8 +12,11 @@ They verify:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 
+import agentic_v2.scoring.multidimensional_scoring as scoring_module
 from agentic_v2.scoring.multidimensional_scoring import (
     RESEARCH_DIMENSIONS,
     MultidimensionalGateResult,
@@ -65,6 +68,66 @@ class TestClassifyDimension:
     @pytest.mark.parametrize("dim", RESEARCH_DIMENSIONS)
     def test_all_dimensions_classified(self, dim: str) -> None:
         assert classify_dimension(dim, 0.80) == ResearchTier.HIGH
+
+
+# ---------------------------------------------------------------------------
+# Recency classification contract (ADR-007)
+# ---------------------------------------------------------------------------
+
+
+class TestRecencyClassification:
+    """Pin the documented recency behaviour.
+
+    Recency is a normalised 0-1 ``recency_score`` classified by the same tier
+    thresholds as every other dimension, plus a ``recent_sources_count`` hard
+    floor. There is no separate date-based ``_classify_recency`` classifier;
+    the module docstring must not promise one.
+    """
+
+    @pytest.mark.parametrize(
+        ("recency_score", "expected_tier"),
+        [
+            (0.90, ResearchTier.ELITE),
+            (0.75, ResearchTier.HIGH),
+            (0.50, ResearchTier.MEDIUM),
+            (0.49, ResearchTier.LOW),
+        ],
+    )
+    def test_recency_classified_like_other_dimensions(
+        self, recency_score: float, expected_tier: ResearchTier
+    ) -> None:
+        # Recency shares the default (0.90, 0.75, 0.50) thresholds, so it lands
+        # in the same tier a generic dimension would at the same score.
+        assert classify_dimension("recency", recency_score) == expected_tier
+        assert classify_dimension("coverage", recency_score) == expected_tier
+
+    def test_recent_sources_floor_gates_when_below_minimum(self) -> None:
+        # All five dimensions are High but the recent-sources count is under the
+        # floor, so the conjunctive gate must fail on the floor alone.
+        result = evaluate_research_round(
+            **_all_high(),
+            recent_sources_count=9,  # < default min_recent_sources of 10
+            critical_contradictions=0,
+        )
+        assert result.sources_floor_passed is False
+        assert result.all_dimensions_high is True
+        assert result.gate_passed is False
+
+    def test_recent_sources_floor_passes_at_minimum(self) -> None:
+        result = evaluate_research_round(
+            **_all_high(),
+            recent_sources_count=10,  # exactly at the default floor
+            critical_contradictions=0,
+        )
+        assert result.sources_floor_passed is True
+        assert result.gate_passed is True
+
+    def test_no_separate_recency_classifier_referenced(self) -> None:
+        # The earlier docstring falsely promised a date-based ``_classify_recency``
+        # helper; the code never defined one. Guard against the dead reference
+        # creeping back in.
+        source = inspect.getsource(scoring_module)
+        assert "_classify_recency" not in source
 
 
 # ---------------------------------------------------------------------------
