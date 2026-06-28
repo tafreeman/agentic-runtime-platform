@@ -93,14 +93,18 @@ class ResearchTier(str, Enum):
 
 
 #: Default tier thresholds for normalised 0-1 dimension scores.
-#: Recency uses a separate date-based classifier (``_classify_recency``).
+#: Recency is not special-cased: its ``recency_score`` is a normalised 0-1 value
+#: classified through these same thresholds as every other dimension. The
+#: separate ``recent_sources_count >= min_recent_sources`` hard floor (see
+#: :class:`MultidimensionalGateResult.sources_floor_passed`) gates the round
+#: independently of the recency tier.
 _SCORE_THRESHOLDS: dict[str, tuple[float, float, float]] = {
     # dimension: (elite_floor, high_floor, medium_floor)
     "coverage": (0.90, 0.75, 0.50),
     "source_quality": (0.90, 0.75, 0.50),
     "agreement": (0.90, 0.75, 0.50),
     "verification": (0.90, 0.75, 0.50),
-    "recency": (0.90, 0.75, 0.50),  # overridden by recency_score 0-1
+    "recency": (0.90, 0.75, 0.50),  # recency_score, normalised 0-1
 }
 
 
