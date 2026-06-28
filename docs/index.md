@@ -115,7 +115,7 @@ Eight providers supported: OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Fou
 
 ### Rubric-based evaluation
 
-LLM outputs resist binary pass/fail evaluation. The `agentic-v2-eval` package provides YAML-defined rubrics with weighted criteria, multidimensional scoring (S/A/B/C/D/F tiers), LLM-as-judge integration, and 0.0–10.0 scoring across eight rubric profiles. Production gating is driven by `coverage_score >= 0.80` — not string-match assertions.
+LLM outputs resist binary pass/fail evaluation. The `agentic-v2-eval` package provides YAML-defined rubrics with weighted criteria, multidimensional scoring (Elite/High/Medium/Low tiers), LLM-as-judge integration, and 0.0–10.0 scoring across eight rubric profiles. Production gating is driven by `coverage_score >= 0.80` — not string-match assertions.
 
 ### React 19 live dashboard
 
