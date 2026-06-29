@@ -23,6 +23,15 @@ from .router import ModelRouter, ModelTier
 logger = logging.getLogger(__name__)
 
 
+# HTTP status codes that authoritatively classify a provider error.  A real
+# status is preferred over message-substring matching: only these mark a model
+# permanently unavailable, so a transient "model not found" message can no
+# longer evict a healthy model (see SmartModelRouter._classify_and_record_error).
+_PERMANENT_HTTP_STATUS = frozenset({401, 403, 404})
+_RATE_LIMIT_HTTP_STATUS = 429
+_TIMEOUT_HTTP_STATUS = 408
+
+
 class CircuitResolvedError(Exception):
     """Signal: a preceding probe resolved the HALF_OPEN circuit.
 
@@ -847,19 +856,51 @@ class SmartModelRouter(ModelRouter):
             return self._coerce_headers(getattr(response, "headers", None))
         return None
 
+    def _status_code_from_error(self, error: Exception) -> int | None:
+        """Extract an HTTP status code from common provider exception shapes.
+
+        Mirrors :meth:`_headers_from_error`: prefer a top-level ``status_code``
+        attribute (OpenAI-style), then fall back to ``error.response.status_code``
+        (httpx-style).  Returns ``None`` when no integer status is present.
+        """
+        status = getattr(error, "status_code", None)
+        if isinstance(status, int):
+            return status
+
+        response = getattr(error, "response", None)
+        if response is not None:
+            status = getattr(response, "status_code", None)
+            if isinstance(status, int):
+                return status
+        return None
+
     def _classify_and_record_error(self, model: str, error: Exception) -> None:
-        """Classify error and record with appropriate cooldown."""
+        """Classify a provider error and record it with the right cooldown.
+
+        HTTP status is authoritative: ``401/403/404`` mark the model permanently
+        unavailable, ``429`` is a rate limit, ``408`` is a timeout.  Message
+        substrings are only a fallback for providers that do not surface a status
+        code -- and a bare "not found"/"no access" message is treated as
+        *transient*, so a briefly-unavailable model is no longer permanently
+        evicted on a substring match (only a real 4xx status evicts it).
+        """
         error_str = str(error).lower()
         headers_dict = self._headers_from_error(error)
         if headers_dict is not None:
             self.rate_limit_tracker.update_from_headers(model, headers_dict)
 
-        if "rate limit" in error_str or "429" in error_str:
-            self.record_rate_limit(model, headers_dict)
-        elif "timeout" in error_str:
-            self.record_timeout(model)
-        elif "not found" in error_str or "no access" in error_str:
+        # Local import: ``core`` eagerly imports ``engine`` which imports
+        # ``models``, so a module-level import here would be circular.
+        from ..core.errors import ErrorCode, classify_error
+
+        status = self._status_code_from_error(error)
+        code, _ = classify_error(error_str)
+        if status in _PERMANENT_HTTP_STATUS:
             self.record_failure(model, "permanent", is_permanent=True)
+        elif status == _RATE_LIMIT_HTTP_STATUS or code is ErrorCode.RATE_LIMITED:
+            self.record_rate_limit(model, headers_dict)
+        elif status == _TIMEOUT_HTTP_STATUS or "timeout" in error_str:
+            self.record_timeout(model)
         else:
             self.record_failure(model, type(error).__name__)
 
