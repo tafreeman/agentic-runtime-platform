@@ -1649,7 +1649,7 @@
 <h3 id="full-rag-pipeline">Full RAG pipeline<a class="headerlink" href="#full-rag-pipeline" title="Permanent link">¶</a></h3>
 <p><code>agentic_v2/rag/</code> is a complete retrieval-augmented generation pipeline: document loading (PDF, DOCX, Markdown, code), recursive chunking, content-hash-deduplicated embedding, cosine similarity vector store, BM25 keyword indexing, hybrid retrieval with Reciprocal Rank Fusion, cross-encoder and LLM reranking, and token-budget context assembly. Every stage is instrumented with OpenTelemetry spans.</p>
 <h3 id="rubric-based-evaluation">Rubric-based evaluation<a class="headerlink" href="#rubric-based-evaluation" title="Permanent link">¶</a></h3>
-<p>LLM outputs resist binary pass/fail evaluation. The <code>agentic-v2-eval</code> package provides YAML-defined rubrics with weighted criteria, multidimensional scoring (S/A/B/C/D/F tiers), LLM-as-judge integration, and 0.0–10.0 scoring across eight rubric profiles. Production gating is driven by <code>coverage_score &gt;= 0.80</code> — not string-match assertions.</p>
+<p>LLM outputs resist binary pass/fail evaluation. The <code>agentic-v2-eval</code> package provides YAML-defined rubrics with weighted criteria, multidimensional scoring (Elite/High/Medium/Low tiers), LLM-as-judge integration, and 0.0–10.0 scoring across eight rubric profiles. Production gating is driven by <code>coverage_score &gt;= 0.80</code> — not string-match assertions.</p>
 <h3 id="react-19-live-dashboard">React 19 live dashboard<a class="headerlink" href="#react-19-live-dashboard" title="Permanent link">¶</a></h3>
 <p>The React 19 SPA streams workflow execution events over WebSocket. DAG nodes animate through queued → running → complete / error states in real time. A drill-down panel on each node shows inputs, outputs, timing, and errors as the step executes. TanStack Query manages all server state; <code>@xyflow/react</code> renders interactive DAG visualizations.</p>
 <h3 id="zero-credential-development-mode">Zero-credential development mode<a class="headerlink" href="#zero-credential-development-mode" title="Permanent link">¶</a></h3>
@@ -1784,7 +1784,7 @@
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 18, 2026 17:45:06 UTC">June 18, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 28, 2026 17:52:21 UTC">June 28, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">
