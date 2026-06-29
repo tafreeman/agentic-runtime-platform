@@ -270,6 +270,32 @@ class TestResolveLmStudioHost:
         )
         assert resolve_lmstudio_host() == "http://127.0.0.1:12340"
 
+    def test_rescan_evicts_cached_resolution(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A rescan must drop the cached host so inference re-targets the new port.
+
+        Without eviction, a process that first resolved :12340 keeps sending
+        inference there even after LM Studio restarts on :1234 and a rescan
+        surfaces the :1234 models (Codex review #132).
+        """
+        # First inference resolves to :12340 (only it is up) and caches it.
+        _route(
+            monkeypatch,
+            {f"http://127.0.0.1:12340{_NATIVE}": _Resp({"data": []})},
+        )
+        assert resolve_lmstudio_host() == "http://127.0.0.1:12340"
+
+        # LM Studio moves to :1234. A rescan lists the new host's models...
+        _route(
+            monkeypatch,
+            {f"http://127.0.0.1:1234{_NATIVE}": _Resp({"data": [{"id": "moved"}]})},
+        )
+        assert [info.id for info in discover_lmstudio_models()] == ["lmstudio:moved"]
+
+        # ...and inference must follow it there, not the stale cached :12340.
+        assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
+
 
 # ---------------------------------------------------------------------------
 # ONNX

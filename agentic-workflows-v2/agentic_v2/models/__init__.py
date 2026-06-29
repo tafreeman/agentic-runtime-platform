@@ -19,6 +19,7 @@ from .backends import (
     GitHubModelsBackend,
     MockBackend,
     MultiBackend,
+    NvidiaBackend,
     OllamaBackend,
     OnnxBackend,
     OpenAIBackend,
@@ -106,6 +107,7 @@ __all__ = [
     # Backends
     "GitHubModelsBackend",
     "OpenAIBackend",
+    "NvidiaBackend",
     "AnthropicBackend",
     "GeminiBackend",
     "AzureOpenAIBackend",

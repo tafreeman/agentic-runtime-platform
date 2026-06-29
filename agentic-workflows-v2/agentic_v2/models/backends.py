@@ -44,6 +44,7 @@ from .backends_cloud import (
     AzureOpenAIBackend,
     GeminiBackend,
     GitHubModelsBackend,
+    NvidiaBackend,
     OpenAIBackend,
 )
 from .backends_local import OllamaBackend, OnnxBackend
@@ -60,6 +61,7 @@ logger = logging.getLogger(__name__)
 PREFIX_MAP: dict[str, str] = {
     "gh:": "github",
     "openai:": "openai",
+    "nvidia:": "nvidia",
     "anthropic:": "anthropic",
     "gemini:": "gemini",
     "azure:": "azure",
@@ -348,6 +350,19 @@ def _register_cloud_backends(
             "Registered OpenAI backend",
         )
 
+    # NVIDIA NIM — cloud needs NVIDIA_API_KEY; a self-hosted NIM needs only
+    # NVIDIA_BASE_URL (it does not validate the key). Register when either is set
+    # so a discovered ``nvidia:`` id is actually runnable, not just advertised.
+    nvidia_api_key = get_secret("NVIDIA_API_KEY", provider=active_provider)
+    nvidia_base_url = get_secret("NVIDIA_BASE_URL", provider=active_provider)
+    if nvidia_api_key or nvidia_base_url:
+        _try_register_backend(
+            backends,
+            "nvidia",
+            lambda: NvidiaBackend(api_key=nvidia_api_key or ""),
+            "Registered NVIDIA NIM backend",
+        )
+
     # Anthropic
     anthropic_api_key = get_secret("ANTHROPIC_API_KEY", provider=active_provider)
     if anthropic_api_key:
@@ -457,6 +472,7 @@ __all__ = [
     "LLMBackend",
     "GitHubModelsBackend",
     "OpenAIBackend",
+    "NvidiaBackend",
     "AnthropicBackend",
     "GeminiBackend",
     "AzureOpenAIBackend",

@@ -238,6 +238,22 @@ def discover_github_models() -> list[CloudModelInfo]:
 _NVIDIA_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
 
 
+def resolve_nvidia_base_url() -> str:
+    """Resolve the NVIDIA NIM OpenAI-compatible ``/v1`` base URL.
+
+    Honors ``NVIDIA_BASE_URL`` for on-prem NIM deployments (e.g. a self-hosted
+    Llama NIM on ``http://nim.local:8000``); falls back to the public cloud
+    endpoint. The ``/v1`` segment is appended when the operator omits it so
+    callers can append ``/models`` or ``/chat/completions`` unconditionally.
+    This is the single source of truth shared by discovery and the runtime
+    backend, so a discovered id is reachable at the host inference targets.
+    """
+    base = (os.environ.get("NVIDIA_BASE_URL") or _NVIDIA_DEFAULT_BASE).rstrip("/")
+    if not base.endswith("/v1"):
+        base = f"{base}/v1"
+    return base
+
+
 def discover_nvidia_models() -> list[CloudModelInfo]:
     """List NVIDIA NIM chat models the configured key can reach (best-effort).
 
@@ -249,8 +265,7 @@ def discover_nvidia_models() -> list[CloudModelInfo]:
     api_key = os.environ.get("NVIDIA_API_KEY")
     if not api_key:
         return []
-    base = (os.environ.get("NVIDIA_BASE_URL") or _NVIDIA_DEFAULT_BASE).rstrip("/")
-    url = f"{base}/models"
+    url = f"{resolve_nvidia_base_url()}/models"
     payload = _get_json(url, headers={"Authorization": f"Bearer {api_key}"})
     return _dedup_prefixed("nvidia", _data_ids(payload))
 
@@ -289,4 +304,5 @@ __all__ = [
     "discover_github_models",
     "discover_nvidia_models",
     "discover_openai_models",
+    "resolve_nvidia_base_url",
 ]
