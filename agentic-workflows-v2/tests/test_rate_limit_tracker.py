@@ -302,6 +302,14 @@ class TestRateLimitTracker:
 # ── SmartModelRouter hardening tests ─────────────────────────────────────────
 
 
+class _StatusError(RuntimeError):
+    """A provider error carrying an HTTP ``status_code`` (OpenAI-style)."""
+
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
 class TestSmartModelRouterHardening:
     """Tests for ADR-002 hardening features in SmartModelRouter."""
 
@@ -458,11 +466,30 @@ class TestSmartModelRouterHardening:
         assert stats.timeout_count == 1
 
     def test_classify_error_permanent(self) -> None:
+        # Only a real 4xx status marks the model permanently unavailable.
         router = self._make_router()
         model = "openai:gpt-4o-mini"
-        error = RuntimeError("model not found")
+        error = _StatusError("model not found", status_code=404)
         router._classify_and_record_error(model, error)
         assert not router.is_model_available(model)
+
+    def test_classify_error_transient_not_found_not_permanent(self) -> None:
+        # A bare "not found" message with no HTTP status is transient: a briefly
+        # unavailable model must not be evicted permanently on a substring match.
+        router = self._make_router()
+        model = "openai:gpt-4o-mini"
+        error = RuntimeError("model not found, retrying")
+        router._classify_and_record_error(model, error)
+        assert router.is_model_available(model)
+
+    def test_classify_error_rate_limit_by_status(self) -> None:
+        # A 429 status is a rate limit even when the message text says nothing.
+        router = self._make_router()
+        model = "openai:gpt-4o-mini"
+        error = _StatusError("upstream rejected the request", status_code=429)
+        router._classify_and_record_error(model, error)
+        stats = router._get_stats(model)
+        assert stats.rate_limit_count == 1
 
     @pytest.mark.asyncio
     async def test_execute_call_uses_semaphore(self) -> None:
