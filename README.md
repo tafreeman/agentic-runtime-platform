@@ -29,7 +29,7 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 |-----------|-------------|
 | **DAG Executor** | Kahn's algorithm scheduling with `asyncio` parallel dispatch — diamond dependencies, conditional execution, iterative refinement |
 | **Tiered Model Router** | Health-weighted selection across 8+ providers with adaptive cooldowns and circuit breakers — no single-provider lock-in |
-| **Evaluation Framework** | YAML-defined rubrics, multidimensional scoring (S/A/B/C/D/F tiers), LLM-as-judge integration for subjective quality |
+| **Evaluation Framework** | YAML-defined rubrics, multidimensional scoring (Elite/High/Medium/Low tiers), LLM-as-judge integration for subjective quality |
 | **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, token usage tracking, historical runs |
 | **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — the full test suite passes without API keys |
 
@@ -184,7 +184,7 @@ The `SmartModelRouter` extends this with health-weighted selection, adaptive coo
 
 ### Why Rubric-Based Scoring?
 
-LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across five orthogonal dimensions (coverage, source quality, agreement, verification, recency) into lettered tiers (S/A/B/C/D/F).
+LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across five orthogonal dimensions (coverage, source quality, agreement, verification, recency) into DORA-inspired performance tiers (Elite, High, Medium, Low), gating on a non-compensatory High floor across all dimensions.
 
 ## Workflow Definitions
 

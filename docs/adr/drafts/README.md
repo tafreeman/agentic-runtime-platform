@@ -12,7 +12,7 @@ The collision was resolved on 2026-06-17:
   [`../ADR-023-executionkit-runtime-contract-relationship.md`](../ADR-023-executionkit-runtime-contract-relationship.md).
 - A second genuine architectural decision that was incorrectly filed under
   `ADR-023` was promoted to its own number:
-  [`../ADR-032-path-first-workflow-io-contracts.md`](../ADR-032-path-first-workflow-io-contracts.md).
+  [`../ADR-034-path-first-workflow-io-contracts.md`](../ADR-034-path-first-workflow-io-contracts.md).
 - The five files below are purely operational / investigative documents. They
   were moved here to keep the ADR directory clean while preserving the
   full migration history.

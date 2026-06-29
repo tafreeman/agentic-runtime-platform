@@ -43,6 +43,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -82,15 +83,9 @@ from .model_utils import (
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# String constants (extracted to satisfy python:S1192 — define once, reuse)
-# ---------------------------------------------------------------------------
-
-MODEL_GEMINI_FLASH = "gemini:gemini-2.5-flash"
-MODEL_GH_GPT4O = "gh:openai/gpt-4o"
-MODEL_OPENAI_GPT4O = "openai:gpt-4o"
-MODEL_ANTHROPIC_CLAUDE_SONNET = "anthropic:claude-sonnet-4-6-20260219"
-MODEL_OLLAMA_QWEN3 = "ollama:qwen3-coder:30b"
+# Model id literals now live in the curated registry
+# (config/defaults/model_registry.yaml); the tier chains and defaults below are
+# built from it via _build_tier_* (ADR-040).
 
 # ---------------------------------------------------------------------------
 # Load .env so API keys are available when invoked via uvicorn directly
@@ -109,61 +104,36 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# Tier defaults (updated dynamically by probe_and_update_tier_defaults)
+# Tier chains + defaults — sourced from the curated model registry (ADR-040)
 # ---------------------------------------------------------------------------
+# The single source of truth is config/defaults/model_registry.yaml (shared with
+# the native ModelRouter and the named-agent loader). _TIER_DEFAULTS is seeded
+# from the first model in each chain and then refined in place at server startup
+# by probe_and_update_tier_defaults().
 
-_TIER_DEFAULTS: dict[int, str] = {
-    1: "gemini:gemini-2.0-flash-lite",
-    2: "gemini:gemini-2.0-flash",
-    3: MODEL_GEMINI_FLASH,
-    4: MODEL_GEMINI_FLASH,
-    5: MODEL_GEMINI_FLASH,
-}
 
-# Models ranked by reasoning capability per tier.
-# First available provider wins during probe.
-_TIER_FALLBACK_CHAINS: dict[int, list[str]] = {
-    # Tier 1: fast / cheap -- summarisation, extraction, simple tasks
-    1: [
-        "gemini:gemini-2.0-flash-lite",
-        "gh:openai/gpt-4o-mini",
-        "openai:gpt-4o-mini",
-        "anthropic:claude-haiku-4-5-20251001",
-        "ollama:gemma3:4b",
-    ],
-    # Tier 2: balanced -- code review, moderate reasoning
-    2: [
-        "gemini:gemini-2.0-flash",
-        MODEL_GH_GPT4O,
-        MODEL_OPENAI_GPT4O,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        "ollama:qwen3:8b",
-    ],
-    # Tier 3: strong reasoning -- architecture, complex code gen
-    3: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-    # Tier 4: top-tier -- hard problems, multi-step planning
-    4: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-    # Tier 5: best available -- research, deep analysis
-    5: [
-        MODEL_GEMINI_FLASH,
-        MODEL_ANTHROPIC_CLAUDE_SONNET,
-        MODEL_OPENAI_GPT4O,
-        MODEL_GH_GPT4O,
-        MODEL_OLLAMA_QWEN3,
-    ],
-}
+def _build_tier_fallback_chains() -> dict[int, list[str]]:
+    """Per-tier fallback chains, read from the curated model registry."""
+    from ..models.model_registry import tier_chain
+
+    return {tier: list(tier_chain(tier)) for tier in range(1, 6)}
+
+
+def _build_tier_defaults(fallback_chains: dict[int, list[str]]) -> dict[int, str]:
+    """Seed each tier's default with the first id in its chain (probe refines)."""
+    return {tier: chain[0] for tier, chain in fallback_chains.items() if chain}
+
+
+def _ultimate_fallback() -> str:
+    """Last-resort model id when no tier default resolves (registry-sourced)."""
+    from ..models.model_registry import special
+
+    value = special("tier_ultimate_fallback")
+    return value if isinstance(value, str) else "ollama:qwen3:8b"
+
+
+_TIER_FALLBACK_CHAINS: dict[int, list[str]] = _build_tier_fallback_chains()
+_TIER_DEFAULTS: dict[int, str] = _build_tier_defaults(_TIER_FALLBACK_CHAINS)
 
 # NOTE: probe_and_update_tier_defaults() is intentionally NOT called here.
 # It is called once from the FastAPI lifespan handler in server/app.py so that
@@ -205,11 +175,22 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     available_providers = [p for p, ok in availability.items() if ok]
     unavailable_providers = [p for p, ok in availability.items() if not ok]
 
+    # Configure the native engine router with the same env-var checker.
+    _configure_native_router(availability)
+
+    # Reconcile the curated registry against what each keyed provider actually
+    # lists right now: quarantine retired pinned ids so neither engine routes to
+    # them (ADR-040). Run BEFORE resolving tier defaults so a quarantined model is
+    # never chosen as a default. No-op in no-LLM mode and for unkeyed providers.
+    drift = detect_registry_drift()
+
+    from ..models.model_registry import is_quarantined, provider_for
+
     resolved: dict[int, str] = {}
     for tier, chain in _TIER_FALLBACK_CHAINS.items():
         for model_id in chain:
-            p = provider_prefix(model_id)
-            if is_provider_available(p):
+            p = provider_for(model_id)
+            if is_provider_available(p) and not is_quarantined(model_id):
                 resolved[tier] = model_id
                 break
         else:
@@ -217,13 +198,11 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
 
     _TIER_DEFAULTS.update(resolved)
 
-    # Also configure the native engine router with the same env-var checker
-    _configure_native_router(availability)
-
     summary = {
         "available_providers": available_providers,
         "unavailable_providers": unavailable_providers,
         "tier_defaults": dict(_TIER_DEFAULTS),
+        "drift": drift.to_dict(),
     }
 
     logger.info(
@@ -235,6 +214,107 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
         logger.info("  Tier %d -> %s", tier, model_id)
 
     return summary
+
+
+@dataclass(frozen=True)
+class DriftReport:
+    """Result of probe-time registry drift detection (ADR-040)."""
+
+    quarantined: tuple[str, ...] = ()
+    missing_pricing: tuple[str, ...] = ()
+    checked_providers: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict[str, list[str]]:
+        """Serialize to a plain dict for the probe API response (additive)."""
+        return {
+            "quarantined": list(self.quarantined),
+            "missing_pricing": list(self.missing_pricing),
+            "checked_providers": list(self.checked_providers),
+        }
+
+
+def _registry_strict_enabled() -> bool:
+    """Whether ``AGENTIC_REGISTRY_STRICT`` makes drift fatal (default off)."""
+    return os.environ.get("AGENTIC_REGISTRY_STRICT", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
+def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
+    """Diff the curated registry against live provider listings; quarantine retired ids.
+
+    For every curated model whose provider returned a live listing, if its id is
+    no longer in that listing the model is QUARANTINED (dropped from routing by
+    both engines) and logged at WARNING. A provider that returned nothing (no key
+    or a failed probe) is skipped entirely -- a missing listing means "unknown",
+    never "everything retired". Newly discovered ids are never auto-promoted into
+    a chain (curated-for-judgments; see ADR-040).
+
+    Skipped in no-LLM mode (no network). When ``strict`` (or
+    ``AGENTIC_REGISTRY_STRICT``) is set and any id is quarantined, raises
+    :class:`agentic_v2.models.model_registry.RegistryDriftError` so a CI/probe
+    job fails loudly on a retired pinned id instead of only warning.
+    """
+    from ..models import model_registry as registry
+    from ..settings import is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        registry.clear_quarantine()
+        return DriftReport()
+
+    reg = registry.load_registry()
+    # Snapshot quarantine before the network call; re-read after and union both
+    # so quarantines added by a concurrent probe during discovery are not lost.
+    prior_snapshot = registry.quarantined_ids()
+    live_ids = {info.id for info in discover_cloud_models()}
+    checked_providers = {registry.provider_for(mid) for mid in live_ids}
+    # Union: any id quarantined by a concurrent probe during the network window.
+    all_prior = prior_snapshot | registry.quarantined_ids()
+
+    # Retired among providers we actually got a listing for this round.
+    newly_retired = sorted(
+        m.id
+        for m in reg.models
+        if m.provider in checked_providers and m.id not in live_ids
+    )
+    # Preserve prior quarantines for providers we could NOT list this round
+    # (no key / network / schema failure). Only a successful listing that
+    # contains the id again un-quarantines it -- an inconclusive probe must not
+    # make a retired id routable.
+    preserved = sorted(
+        mid for mid in all_prior if registry.provider_for(mid) not in checked_providers
+    )
+    quarantined = sorted(set(newly_retired) | set(preserved))
+    missing_pricing = [
+        m.id for m in reg.models if m.price_in is None or m.price_out is None
+    ]
+
+    # Swap the quarantine set atomically AFTER discovery completes. The previous
+    # quarantine stays in force during the (up to ~8s) network window, so a
+    # concurrent request can never route through an empty set mid-probe.
+    registry.set_quarantine(quarantined)
+
+    for mid in newly_retired:
+        logger.warning(
+            "model %s is no longer listed by provider %s; quarantined "
+            "(dropped from routing) -- update model_registry.yaml",
+            mid,
+            registry.provider_for(mid),
+        )
+
+    strict_mode = _registry_strict_enabled() if strict is None else strict
+    if strict_mode and newly_retired:
+        raise registry.RegistryDriftError(
+            f"model registry drift: retired pinned id(s) {newly_retired}"
+        )
+
+    return DriftReport(
+        quarantined=tuple(quarantined),
+        missing_pricing=tuple(missing_pricing),
+        checked_providers=tuple(sorted(checked_providers)),
+    )
 
 
 def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
@@ -605,7 +685,7 @@ def get_model_candidates_for_tier(
     if env_val:
         pinned.append(env_val)
 
-    default_id = _TIER_DEFAULTS.get(tier, _TIER_DEFAULTS.get(2, "ollama:qwen3:8b"))
+    default_id = _TIER_DEFAULTS.get(tier, _TIER_DEFAULTS.get(2, _ultimate_fallback()))
     if default_id:
         pinned.append(default_id)
 
@@ -619,8 +699,14 @@ def get_model_candidates_for_tier(
     if include_unavailable:
         return dedupe_keep_order(ordered_pinned + ordered_fallback)
 
+    # Drop ids quarantined by drift detection (retired at provider; ADR-040).
+    from ..models.model_registry import is_quarantined, provider_for
+
+    ordered_pinned = [m for m in ordered_pinned if not is_quarantined(m)]
     filtered_fallback = [
-        m for m in ordered_fallback if is_provider_available(provider_prefix(m))
+        m
+        for m in ordered_fallback
+        if is_provider_available(provider_for(m)) and not is_quarantined(m)
     ]
     return dedupe_keep_order(ordered_pinned + filtered_fallback)
 

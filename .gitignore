@@ -11,6 +11,9 @@ local.settings.json
 
 # Local-only secrets (never commit)
 
+# Machine-specific hardware profile for the model finder (gitignored by design)
+**/hardware_override.yaml
+
 
 # User-specific files
 *.suo

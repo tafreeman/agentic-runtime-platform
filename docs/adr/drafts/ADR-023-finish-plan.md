@@ -3,7 +3,7 @@
 > **Created:** 2026-06-01
 > **Status:** Plan — not yet executed. No code changes have been made under this plan.
 > **Companion to:**
-> - [`ADR-023-executionkit-runtime-contract-relationship.md`](ADR-023-executionkit-runtime-contract-relationship.md)
+> - [`ADR-023-executionkit-runtime-contract-relationship.md`](../ADR-023-executionkit-runtime-contract-relationship.md)
 > - [`ADR-023-migration-plan.md`](ADR-023-migration-plan.md) (the original P0–P7 plan)
 > - [`ADR-023-migration-notes.md`](ADR-023-migration-notes.md) (phase tracker + open decisions + blockers B-1/B-2)
 > - [`ADR-023-preservation-matrix.md`](ADR-023-preservation-matrix.md)

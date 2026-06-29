@@ -10,7 +10,7 @@ agents:
     role: System & Solution Architect
     description: Expert at designing architectures and algorithms
     default_model: "gemini:gemini-2.5-flash"
-    fallback_models: ["gemini:gemini-2.0-flash"]
+    fallback_models: ["gemini:gemini-2.5-flash-lite"]
     tools: ["diagram_generator", "complexity_analyzer", "adr_generator"]
     prompt_file: "prompts/architect.md"
     
@@ -19,7 +19,7 @@ agents:
     role: Strategic Planner & Coordinator
     description: Expert at creating plans and roadmaps
     default_model: "gemini:gemini-2.5-flash"
-    fallback_models: ["gemini:gemini-2.0-flash-lite"]
+    fallback_models: ["gemini:gemini-2.5-flash-lite"]
     tools: ["gantt_generator", "dependency_resolver", "risk_assessor"]
     prompt_file: "prompts/planner.md"
     
@@ -37,7 +37,7 @@ agents:
     role: Security & Code Quality Expert
     description: Expert at code review and security analysis
     default_model: "gemini:gemini-2.5-flash"
-    fallback_models: ["gemini:gemini-2.0-flash"]
+    fallback_models: ["gemini:gemini-2.5-flash-lite"]
     tools: ["static_analyzer", "dependency_scanner", "secret_detector"]
     prompt_file: "prompts/reviewer.md"
     
@@ -55,7 +55,7 @@ agents:
     role: Quality Assurance & Validation
     description: Expert at validating outputs and ensuring quality
     default_model: "gemini:gemini-2.5-flash"
-    fallback_models: ["gemini:gemini-2.0-flash"]
+    fallback_models: ["gemini:gemini-2.5-flash-lite"]
     tools: ["test_runner", "diff_comparator", "schema_validator"]
     prompt_file: "prompts/validator.md"
     

@@ -498,7 +498,7 @@ The following table lists every variable in `.env.example` in one place for quic
 | `AGENTIC_NO_LLM` | [Runtime and Local Development](#runtime-and-local-development) | `0` |
 | `AGENTIC_EXTERNAL_AGENTS_DIR` | [Runtime and Local Development](#runtime-and-local-development) | — |
 | `SHELL` | [Runtime and Local Development](#runtime-and-local-development) | `/bin/bash` |
-| `AGENTIC_BLOCK_PRIVATE_IPS` | [Runtime and Local Development](#runtime-and-local-development) | `0` |
+| `AGENTIC_BLOCK_PRIVATE_IPS` | [Runtime and Local Development](#runtime-and-local-development) | `1` |
 | `AGENTIC_MEMORY_PATH` | [Runtime and Local Development](#runtime-and-local-development) | — |
 | `AGENTIC_DEFAULT_ADAPTER` | [Runtime and Local Development](#runtime-and-local-development) | `langchain` |
 | `AGENTIC_METRICS` | [Operational Settings](#operational-settings) | `0` |

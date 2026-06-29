@@ -137,7 +137,6 @@ nav:
       - Server & API: deep-dive-server.md
       - Agents: deep-dive-agents.md
       - RAG Pipeline: rag/index.md
-      - Governance: ARCHITECTURE.md#9-governance-module-agentic_v2governance
       - Evaluation Engine: deep-dive-agentic-v2-eval.md
   - API Reference:
       - REST Endpoints: api-contracts-runtime.md
