@@ -355,7 +355,7 @@ class StepExecutor:
         self._salvage_review_report(step_def, result)
         self._normalize_review_report(result)
         await self._map_outputs(step_def, ctx, result)
-        self._store_step_view(step_def, ctx, result)
+        await self._store_step_view(step_def, ctx, result)
 
         # Run post-hooks
         for hook in step_def.post_hooks:
@@ -556,7 +556,7 @@ class StepExecutor:
                 await ctx.set(ctx_var, result.output_data[step_output])
 
     @staticmethod
-    def _store_step_view(
+    async def _store_step_view(
         step_def: StepDefinition,
         ctx: ExecutionContext,
         result: StepResult,
@@ -565,17 +565,15 @@ class StepExecutor:
 
         This enables ``${steps.<name>.outputs.<key>}`` in when conditions.
         """
-        step_view = {
+        step_view: dict[str, Any] = {
             "status": result.status.value,
             "outputs": result.output_data,
         }
-        # Store under a shared nested "steps" namespace so expressions
-        # like ${steps.review_code.outputs.foo} resolve correctly.
-        steps_state = ctx.get_sync("steps")
-        if not isinstance(steps_state, dict):
-            steps_state = {}
-        steps_state[step_def.name] = step_view
-        ctx.set_sync("steps", steps_state)
+        # Store under a shared nested "steps" namespace so expressions like
+        # ${steps.review_code.outputs.foo} resolve correctly. The read-modify-write
+        # is held under one lock so concurrent steps (max_concurrency > 1) don't
+        # lose each other's entries.
+        await ctx.merge_step_view(step_def.name, step_view)
 
     async def _run_verification_gate(
         self,

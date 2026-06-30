@@ -65,6 +65,31 @@ class TestConcurrentContextIsolation:
         observed_by_run = dict(results)
         assert observed_by_run == {"run-a": "run-a", "run-b": "run-b"}
 
+    async def test_merge_step_view_concurrent_keeps_every_entry(self) -> None:
+        """Concurrent merge_step_view calls all survive — no torn update.
+
+        The read-modify-write of the shared ``steps`` namespace is held under the
+        context lock, so N steps merging concurrently each keep their entry. (The
+        prior sync get/set path was already atomic under asyncio's single thread;
+        this guards the invariant should an ``await`` ever be introduced into the
+        critical section.)
+        """
+        ctx = ExecutionContext()
+        n = 50
+        await asyncio.gather(
+            *(
+                ctx.merge_step_view(
+                    f"step_{i}", {"status": "success", "outputs": {"i": i}}
+                )
+                for i in range(n)
+            )
+        )
+
+        steps = ctx.get_sync("steps")
+        assert isinstance(steps, dict)
+        assert len(steps) == n
+        assert all(f"step_{i}" in steps for i in range(n))
+
     async def test_lazy_get_context_is_per_task(self) -> None:
         """Lazy get_context() in two tasks creates two distinct contexts."""
         ready = asyncio.Barrier(2)
