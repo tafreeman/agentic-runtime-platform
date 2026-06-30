@@ -489,7 +489,9 @@ class StepExecutor:
                 result.metadata["tokens_used"] = meta["tokens_used"]
 
     @staticmethod
-    def _salvage_review_report(step_def: StepDefinition, result: StepResult) -> None:
+    def _salvage_review_report(
+        step_def: StepDefinition, result: StepResult
+    ) -> None:
         """Salvage review_report from raw_response when reviewer output is text.
 
         Reviewer outputs sometimes arrive as raw_response (e.g. fenced/truncated
@@ -521,7 +523,9 @@ class StepExecutor:
             raw_status = status_match.group(1).strip()
         elif approved_match:
             raw_status = (
-                "APPROVED" if approved_match.group(1).lower() == "true" else None
+                "APPROVED"
+                if approved_match.group(1).lower() == "true"
+                else None
             )
         else:
             raw_status = None  # normalize() defaults to NEEDS_FIXES
@@ -632,7 +636,9 @@ class StepExecutor:
         if loop_iteration < step_def.loop_max:
             from .expressions import ExpressionEvaluator
 
-            satisfied = ExpressionEvaluator(ctx, {}).evaluate(step_def.loop_until)
+            satisfied = ExpressionEvaluator(ctx, {}).evaluate(
+                step_def.loop_until
+            )
             if not satisfied:
                 result.metadata["loop_iteration"] = loop_iteration + 1
                 result.status = StepStatus.RUNNING

@@ -321,7 +321,9 @@ class ExecutionContext:
         self._validate_variable_key(key)
         self._variables[key] = value
 
-    async def merge_step_view(self, step_name: str, step_view: dict[str, Any]) -> None:
+    async def merge_step_view(
+        self, step_name: str, step_view: dict[str, Any]
+    ) -> None:
         """Atomically record a step's view under the shared ``steps`` namespace.
 
         Read-modify-write of the nested ``steps`` dict is held under a single
