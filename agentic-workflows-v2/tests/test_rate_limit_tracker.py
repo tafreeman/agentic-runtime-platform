@@ -491,6 +491,29 @@ class TestSmartModelRouterHardening:
         stats = router._get_stats(model)
         assert stats.rate_limit_count == 1
 
+    def test_classify_error_timeout_by_status(self) -> None:
+        # A 408 status is a timeout even when the message text says nothing.
+        router = self._make_router()
+        model = "openai:gpt-4o-mini"
+        error = _StatusError("upstream gateway timeout", status_code=408)
+        router._classify_and_record_error(model, error)
+        stats = router._get_stats(model)
+        assert stats.timeout_count == 1
+        assert stats.rate_limit_count == 0
+
+    def test_classify_error_status_408_beats_rate_limit_message(self) -> None:
+        # HTTP status is authoritative: a 408 (timeout) whose body happens to
+        # mention "rate limit" must be recorded as a timeout, not a rate limit.
+        # Guards the precedence inversion where the message-derived code beat the
+        # status and applied the longer, header-driven rate-limit cooldown.
+        router = self._make_router()
+        model = "openai:gpt-4o-mini"
+        error = _StatusError("rate limit exceeded", status_code=408)
+        router._classify_and_record_error(model, error)
+        stats = router._get_stats(model)
+        assert stats.timeout_count == 1
+        assert stats.rate_limit_count == 0
+
     @pytest.mark.asyncio
     async def test_execute_call_uses_semaphore(self) -> None:
         router = self._make_router()

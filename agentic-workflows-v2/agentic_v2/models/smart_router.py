@@ -894,12 +894,25 @@ class SmartModelRouter(ModelRouter):
         from ..core.errors import ErrorCode, classify_error
 
         status = self._status_code_from_error(error)
+        # ``should_retry`` is intentionally discarded: a bare "not found"/"no
+        # access" *message* is treated as transient (only a real 4xx status
+        # evicts), so the router does not act on classify_error's retry verdict
+        # for the message-only path.
         code, _ = classify_error(error_str)
+        # HTTP status is authoritative — exhaust every known status before
+        # falling back to message substrings. Otherwise a 408 (timeout) whose
+        # body happens to mention "rate limit" would be miscounted as a rate
+        # limit (longer, header-driven cooldown) instead of a timeout, because
+        # the message-derived ``code`` would win over the status.
         if status in _PERMANENT_HTTP_STATUS:
             self.record_failure(model, "permanent", is_permanent=True)
-        elif status == _RATE_LIMIT_HTTP_STATUS or code is ErrorCode.RATE_LIMITED:
+        elif status == _RATE_LIMIT_HTTP_STATUS:
             self.record_rate_limit(model, headers_dict)
-        elif status == _TIMEOUT_HTTP_STATUS or "timeout" in error_str:
+        elif status == _TIMEOUT_HTTP_STATUS:
+            self.record_timeout(model)
+        elif code is ErrorCode.RATE_LIMITED:
+            self.record_rate_limit(model, headers_dict)
+        elif "timeout" in error_str:
             self.record_timeout(model)
         else:
             self.record_failure(model, type(error).__name__)
