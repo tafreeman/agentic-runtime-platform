@@ -894,28 +894,31 @@ class SmartModelRouter(ModelRouter):
         from ..core.errors import ErrorCode, classify_error
 
         status = self._status_code_from_error(error)
-        # ``should_retry`` is intentionally discarded: a bare "not found"/"no
-        # access" *message* is treated as transient (only a real 4xx status
-        # evicts), so the router does not act on classify_error's retry verdict
-        # for the message-only path.
-        code, _ = classify_error(error_str)
         # HTTP status is authoritative — exhaust every known status before
         # falling back to message substrings. Otherwise a 408 (timeout) whose
         # body happens to mention "rate limit" would be miscounted as a rate
         # limit (longer, header-driven cooldown) instead of a timeout, because
-        # the message-derived ``code`` would win over the status.
+        # the message-derived code would win over the status. classify_error is
+        # only consulted in the fallback below, so it is not called when a known
+        # status already decides the outcome.
         if status in _PERMANENT_HTTP_STATUS:
             self.record_failure(model, "permanent", is_permanent=True)
         elif status == _RATE_LIMIT_HTTP_STATUS:
             self.record_rate_limit(model, headers_dict)
         elif status == _TIMEOUT_HTTP_STATUS:
             self.record_timeout(model)
-        elif code is ErrorCode.RATE_LIMITED:
-            self.record_rate_limit(model, headers_dict)
-        elif "timeout" in error_str:
-            self.record_timeout(model)
         else:
-            self.record_failure(model, type(error).__name__)
+            # No authoritative status — fall back to the message. ``should_retry``
+            # is intentionally discarded: a bare "not found"/"no access" message
+            # is treated as transient (only a real 4xx status evicts), so the
+            # router does not act on classify_error's retry verdict here.
+            code, _ = classify_error(error_str)
+            if code is ErrorCode.RATE_LIMITED:
+                self.record_rate_limit(model, headers_dict)
+            elif "timeout" in error_str:
+                self.record_timeout(model)
+            else:
+                self.record_failure(model, type(error).__name__)
 
     async def call_with_fallback(
         self,
