@@ -215,6 +215,18 @@ class Settings(BaseSettings):
             "AGENTIC_REQUIRE_TOOL_APPROVAL override."
         ),
     )
+    agentic_approval_timeout_seconds: float = Field(
+        default=1800.0,
+        description=(
+            "Max seconds to wait for the registered ApprovalProvider to decide "
+            "before failing closed (DENIED). Bounds a hung or unreachable "
+            "provider so it cannot block a gated tool indefinitely and burn the "
+            "step's whole timeout budget. Default 1800 (30 min) is generous for "
+            "a human approver; set to 0 or a negative value to disable the "
+            "timeout and wait indefinitely (the prior behavior). FAIL-CLOSED: a "
+            "timeout DENIES the call, it is never executed."
+        ),
+    )
 
     # --- Security: agent-loop sanitization ---
     agentic_sanitize_agent_loop: bool = Field(

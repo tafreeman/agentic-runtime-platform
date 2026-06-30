@@ -13,6 +13,7 @@ stub pattern in ``tests/test_agent_react_loop.py``. All offline, no network.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -29,6 +30,7 @@ from agentic_v2.governance.approval import (
     AutoDenyProvider,
     CallbackApprovalProvider,
     PolicyApprovalProvider,
+    evaluate_tool_approval,
     set_approval_provider,
     tool_requires_approval,
 )
@@ -515,3 +517,39 @@ def test_approval_request_redacts_long_args() -> None:
     assert "redacted" in text
     assert "/tmp/a" in text  # short value not redacted
     assert "file_write" in text
+
+
+async def test_approval_times_out_and_denies_fail_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A hung provider must fail closed (DENIED) within the configured timeout.
+
+    Without a bound, ``evaluate_tool_approval`` would await ``request_approval``
+    forever, blocking the gated tool and consuming the step's whole timeout
+    budget. With ``agentic_approval_timeout_seconds`` set, the gate denies on
+    timeout instead of hanging.
+    """
+    import agentic_v2.settings as settings_mod
+
+    monkeypatch.setenv("AGENTIC_APPROVAL_TIMEOUT_SECONDS", "0.05")
+    settings_mod.get_settings.cache_clear()
+
+    class _HangingProvider:
+        async def request_approval(
+            self, request: ApprovalRequest
+        ) -> ApprovalDecision:
+            await asyncio.sleep(60)  # never resolves within the test's timeout
+            return ApprovalDecision.APPROVED
+
+    set_approval_provider(_HangingProvider())
+    tool = _SpyTool(requires_approval=True)
+
+    # Outer 5s bound so a regression (no timeout) fails fast instead of hanging.
+    outcome = await asyncio.wait_for(
+        evaluate_tool_approval(tool, tool.name, {"text": "hi"}, "call-1", None),
+        timeout=5.0,
+    )
+
+    assert outcome.allowed is False
+    assert outcome.decision is ApprovalDecision.DENIED
+    assert "timed out" in (outcome.error_message or "")
