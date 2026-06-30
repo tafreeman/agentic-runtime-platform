@@ -321,6 +321,23 @@ class ExecutionContext:
         self._validate_variable_key(key)
         self._variables[key] = value
 
+    async def merge_step_view(
+        self, step_name: str, step_view: dict[str, Any]
+    ) -> None:
+        """Atomically record a step's view under the shared ``steps`` namespace.
+
+        Read-modify-write of the nested ``steps`` dict is held under a single
+        lock so concurrent steps (``max_concurrency`` > 1) cannot lose each
+        other's entries: a locked get followed by a locked set would still race
+        in the gap between them. The dict is replaced copy-on-write rather than
+        mutated in place, per the immutability convention.
+        """
+        async with self._lock:
+            existing = self._variables.get("steps")
+            steps_state = dict(existing) if isinstance(existing, dict) else {}
+            steps_state[step_name] = step_view
+            self._variables["steps"] = steps_state
+
     async def set_internal(self, key: str, value: Any) -> None:
         """Set an engine-owned variable, including protected lifecycle keys.
 
