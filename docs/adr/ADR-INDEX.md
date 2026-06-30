@@ -45,6 +45,7 @@
 | **038** | Live discovery for LM Studio (native `/api/v0/models`, multi-port) and ONNX (multi-root `genai_config.json`) local models | Accepted | [ADR-038](ADR-038-lmstudio-onnx-discovery.md) |
 | **039** | Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models) | Accepted | [ADR-039](ADR-039-cloud-model-discovery.md) |
 | **040** | Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains) | Accepted | [ADR-040](ADR-040-curated-model-registry.md) |
+| **041** | Bounded human-approval gate timeout — a hung ApprovalProvider fails closed (DENIED) within a configurable bound (default 30 min) instead of blocking the gated tool indefinitely | Accepted | [ADR-041](ADR-041-approval-gate-timeout.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 

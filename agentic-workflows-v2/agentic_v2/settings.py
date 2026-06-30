@@ -22,6 +22,7 @@ Usage::
 from __future__ import annotations
 
 import logging
+import math
 import os
 from functools import lru_cache
 from typing import Annotated, Any
@@ -40,6 +41,7 @@ _FALSE_LITERALS = frozenset({"", "0", "false", "no", "off"})
 # A class-level ``_NAME = True`` would be captured by pydantic as a
 # ``ModelPrivateAttr`` wrapper, not the bare bool.
 _EK_PROVIDER_DEFAULT = True
+_APPROVAL_TIMEOUT_DEFAULT = 1800.0
 
 
 def _coerce_env_flag(raw: Any, *, var_name: str) -> bool:
@@ -215,6 +217,42 @@ class Settings(BaseSettings):
             "AGENTIC_REQUIRE_TOOL_APPROVAL override."
         ),
     )
+    agentic_approval_timeout_seconds: float = Field(
+        default=_APPROVAL_TIMEOUT_DEFAULT,
+        description=(
+            "Max seconds to wait for the registered ApprovalProvider to decide "
+            "before failing closed (DENIED). Bounds a hung or unreachable "
+            "provider so it cannot block a gated tool indefinitely and burn the "
+            "step's whole timeout budget. Default 1800 (30 min) is generous for "
+            "a human approver; set to 0 or a negative value to disable the "
+            "timeout and wait indefinitely (the prior behavior). A non-finite "
+            "value (nan/inf) is coerced back to the default. FAIL-CLOSED: a "
+            "timeout DENIES the call, it is never executed."
+        ),
+    )
+
+    @field_validator("agentic_approval_timeout_seconds", mode="after")
+    @classmethod
+    def _finite_approval_timeout(cls, v: float) -> float:
+        """Coerce a non-finite approval timeout back to the protective default.
+
+        A non-finite value silently disables the gate: ``nan > 0`` is ``False``
+        (so the bound is skipped and the gate waits forever) and ``inf`` routes
+        through ``asyncio.wait_for`` with no effective bound. Rather than let a
+        bad env value disable the safety, fall back to the default and log it so
+        operators find out via the log, not a silent hang. Use ``0`` or a
+        negative value to disable the timeout explicitly.
+        """
+        if not math.isfinite(v):
+            logger.warning(
+                "AGENTIC_APPROVAL_TIMEOUT_SECONDS=%s is not finite; using the "
+                "default %.0fs. Set 0 or a negative value to disable the timeout "
+                "explicitly.",
+                v,
+                _APPROVAL_TIMEOUT_DEFAULT,
+            )
+            return _APPROVAL_TIMEOUT_DEFAULT
+        return v
 
     # --- Security: agent-loop sanitization ---
     agentic_sanitize_agent_loop: bool = Field(

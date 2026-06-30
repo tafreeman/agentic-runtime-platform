@@ -33,11 +33,14 @@ not introduce that complexity here; swap the provider at process start.
 
 from __future__ import annotations
 
+import asyncio
 import enum
 import inspect
 import logging
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Protocol, runtime_checkable
+
+from ..settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -194,8 +197,6 @@ def tool_requires_approval(tool: Any, tool_name: str) -> bool:
     if bool(getattr(tool, "requires_approval", False)):
         return True
 
-    from ..settings import get_settings
-
     settings = get_settings()
     if settings.agentic_require_tool_approval:
         return True
@@ -274,7 +275,43 @@ async def evaluate_tool_approval(
     label = type(provider).__name__
     # Request at WARNING; never log full args (redacted in the request repr).
     logger.warning("Approval required: %s (provider=%s)", request, label)
-    decision = await provider.request_approval(request)
+
+    # Bound the wait: a hung or unreachable provider must not block a gated tool
+    # indefinitely (it would otherwise consume the whole step timeout before the
+    # tool runs). On timeout, fail closed (DENIED) — the same posture as a
+    # missing provider. A non-positive timeout disables the bound (wait forever).
+    timeout_s = get_settings().agentic_approval_timeout_seconds
+    try:
+        if timeout_s > 0:
+            # asyncio.wait_for cancels the provider coroutine at the deadline and
+            # awaits its cleanup, so a provider that suppresses or shields
+            # cancellation can still block past timeout_s. Providers are an
+            # external contract and MUST be cancellable for this bound to hold
+            # (see ADR-041); abandoning the task on deadline was considered and
+            # rejected because it leaks the provider coroutine and its resources.
+            decision = await asyncio.wait_for(
+                provider.request_approval(request), timeout=timeout_s
+            )
+        else:
+            decision = await provider.request_approval(request)
+    except TimeoutError:
+        logger.warning(
+            "Approval timed out after %ss for tool %r (call_id=%s, provider=%s); "
+            "denying (fail-closed).",
+            timeout_s,
+            tool_name,
+            call_id,
+            label,
+        )
+        return ApprovalOutcome(
+            allowed=False,
+            decision=ApprovalDecision.DENIED,
+            error_message=(
+                f"Tool '{tool_name}' requires approval: timed out after "
+                f"{timeout_s}s waiting for {label} (fail-closed)."
+            ),
+            provider_label=label,
+        )
     logger.info(
         "Approval decision for tool %r (call_id=%s): %s (provider=%s)",
         tool_name,
