@@ -331,10 +331,22 @@ class ExecutionContext:
         other's entries: a locked get followed by a locked set would still race
         in the gap between them. The dict is replaced copy-on-write rather than
         mutated in place, per the immutability convention.
+
+        On a fork/child context the baseline ``steps`` live in the parent, so
+        seed from the inherited view when this context has not written its own
+        ``steps`` yet -- otherwise the first forked step would replace the
+        inherited dict with a single-entry one and shadow it (``all_variables()``
+        shallow-merges, so ``${steps.<earlier>.outputs...}`` would then fail to
+        resolve on the fork). ``get_sync`` resolves ``steps`` with the documented
+        read-through-parent semantics and takes no async lock, so reading it
+        before acquiring ``self._lock`` avoids the parent/child lock-inversion
+        that ``get()`` documents.
         """
+        inherited = self.get_sync("steps")
         async with self._lock:
             existing = self._variables.get("steps")
-            steps_state = dict(existing) if isinstance(existing, dict) else {}
+            base = existing if isinstance(existing, dict) else inherited
+            steps_state = dict(base) if isinstance(base, dict) else {}
             steps_state[step_name] = step_view
             self._variables["steps"] = steps_state
 

@@ -90,6 +90,44 @@ class TestConcurrentContextIsolation:
         assert len(steps) == n
         assert all(f"step_{i}" in steps for i in range(n))
 
+    async def test_merge_step_view_on_child_preserves_inherited_steps(self) -> None:
+        """A fork/child must not shadow the parent's prior step views.
+
+        merge_step_view seeds from the inherited ``steps`` (read through the
+        parent) so an expression referencing a pre-fork step still resolves after
+        the fork records its own step. Guards the regression where the child's
+        single-entry ``steps`` dict replaced the inherited one — ``all_variables``
+        shallow-merges, so ``${steps.design...}`` would otherwise stop resolving.
+        """
+        from agentic_v2.engine.expressions import ExpressionEvaluator
+
+        parent = ExecutionContext()
+        await parent.merge_step_view(
+            "design", {"status": "success", "outputs": {"architecture": "ARCH-V1"}}
+        )
+
+        child = parent.child("code")
+        await child.merge_step_view(
+            "code", {"status": "success", "outputs": {"impl": "done"}}
+        )
+
+        # Both the inherited and the fork-local view are present on the child.
+        child_steps = child.get_sync("steps")
+        assert isinstance(child_steps, dict)
+        assert set(child_steps) == {"design", "code"}
+
+        # The real consumer (ExpressionEvaluator -> all_variables) still resolves
+        # the inherited step's output on the child, plus the fork's own step.
+        evaluator = ExpressionEvaluator(child)
+        assert (
+            evaluator.resolve_variable("steps.design.outputs.architecture")
+            == "ARCH-V1"
+        )
+        assert evaluator.resolve_variable("steps.code.outputs.impl") == "done"
+
+        # The parent baseline is untouched — the fork writes locally.
+        assert set(parent.get_sync("steps")) == {"design"}
+
     async def test_lazy_get_context_is_per_task(self) -> None:
         """Lazy get_context() in two tasks creates two distinct contexts."""
         ready = asyncio.Barrier(2)
