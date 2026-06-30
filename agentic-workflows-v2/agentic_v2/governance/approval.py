@@ -40,6 +40,8 @@ import logging
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Protocol, runtime_checkable
 
+from ..settings import get_settings
+
 logger = logging.getLogger(__name__)
 
 # Redaction bound for argument values surfaced in request reprs/logs. Tool args
@@ -195,8 +197,6 @@ def tool_requires_approval(tool: Any, tool_name: str) -> bool:
     if bool(getattr(tool, "requires_approval", False)):
         return True
 
-    from ..settings import get_settings
-
     settings = get_settings()
     if settings.agentic_require_tool_approval:
         return True
@@ -280,8 +280,6 @@ async def evaluate_tool_approval(
     # indefinitely (it would otherwise consume the whole step timeout before the
     # tool runs). On timeout, fail closed (DENIED) — the same posture as a
     # missing provider. A non-positive timeout disables the bound (wait forever).
-    from ..settings import get_settings
-
     timeout_s = get_settings().agentic_approval_timeout_seconds
     try:
         if timeout_s > 0:
