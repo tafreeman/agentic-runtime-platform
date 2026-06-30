@@ -283,6 +283,12 @@ async def evaluate_tool_approval(
     timeout_s = get_settings().agentic_approval_timeout_seconds
     try:
         if timeout_s > 0:
+            # asyncio.wait_for cancels the provider coroutine at the deadline and
+            # awaits its cleanup, so a provider that suppresses or shields
+            # cancellation can still block past timeout_s. Providers are an
+            # external contract and MUST be cancellable for this bound to hold
+            # (see ADR-041); abandoning the task on deadline was considered and
+            # rejected because it leaks the provider coroutine and its resources.
             decision = await asyncio.wait_for(
                 provider.request_approval(request), timeout=timeout_s
             )
