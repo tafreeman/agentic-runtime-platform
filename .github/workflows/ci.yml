@@ -410,3 +410,33 @@ jobs:
             echo "::error::ci-constraints.txt is out of sync with uv.lock. Regenerate with 'uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt' and commit the result."
             exit 1
           fi
+
+  dockerfile-constraints:
+    # Reproducible Docker builds: every `pip install` in the Dockerfile must
+    # pin to `-c ci-constraints.txt` (see lockfile-constraints above), or two
+    # builds of the same commit can resolve different transitive dependency
+    # versions. This job fails if any real `pip install` line in the
+    # Dockerfile omits the constraints file.
+    name: Dockerfile pip installs pin to ci-constraints.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify every pip install pins ci-constraints.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          dockerfile="Dockerfile"
+          failed=0
+          while IFS= read -r line; do
+            if [[ "$line" == *"pip install"* ]] && [[ "$line" != *"--upgrade pip"* ]]; then
+              if ! [[ "$line" =~ -c[[:space:]]+ci-constraints\.txt ]]; then
+                echo "::error::Dockerfile pip install line missing '-c ci-constraints.txt': ${line}"
+                failed=1
+              fi
+            fi
+          done < "$dockerfile"
+          if [[ "$failed" -eq 1 ]]; then
+            echo "One or more 'pip install' lines in $dockerfile do not pin to ci-constraints.txt. Add '-c ci-constraints.txt' to each (except the 'pip install --upgrade pip' bootstrap line)."
+            exit 1
+          fi
+          echo "All pip install lines in $dockerfile reference ci-constraints.txt."
