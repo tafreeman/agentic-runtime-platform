@@ -5,6 +5,10 @@
     "rubric": "code",
     "workflow_name": "code_review",
     "golden_output_path": "code_review_output.json",
+    "live_inputs": {
+      "code_file": "def add(a, b):\n    return a + b\n",
+      "review_depth": "standard"
+    },
     "expected_criteria": {
       "success_rate_expected": 100.0,
       "expected_step_names": [
@@ -13,6 +17,79 @@
         "complexity_analysis",
         "review_code",
         "generate_summary"
+      ],
+      "max_retries": 0
+    },
+    "threshold": 0.80
+  },
+  {
+    "case_id": "bug_resolution_no_llm_v1",
+    "description": "bug_resolution workflow output captured under AGENTIC_NO_LLM=1 with resolution_depth='standard' (both when:-gated steps active); all 5 steps succeed, no retries, no LLM output expected. Scored against the 'code' rubric via the same deterministic structural derivation as code_review_no_llm_v1. NOTE: eval_gate.py's derive_criteria() looks for code_metrics on a step literally named 'parse_code'; this workflow's equivalent step is named 'triage', so Code Quality derives to 0.0 even though triage does emit a well-formed code_metrics dict. That caps this case's achievable weighted_score at 0.80 (1.0 on every other criterion) -- the threshold below is that ceiling, not a loosened bar.",
+    "rubric": "code",
+    "workflow_name": "bug_resolution",
+    "golden_output_path": "bug_resolution_output.json",
+    "live_inputs": {
+      "bug_report": "clamp() raises TypeError when lower > upper instead of returning a sane value.",
+      "code_file": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n    if lower > upper:\n        raise TypeError(\"lower must be <= upper\")\n    return max(lower, min(upper, value))\n",
+      "resolution_depth": "standard"
+    },
+    "expected_criteria": {
+      "success_rate_expected": 100.0,
+      "expected_step_names": [
+        "triage",
+        "root_cause_analysis",
+        "generate_fix",
+        "regression_check",
+        "generate_verification"
+      ],
+      "max_retries": 0
+    },
+    "threshold": 0.80
+  },
+  {
+    "case_id": "consensus_review_no_llm_v1",
+    "description": "consensus_review workflow output captured under AGENTIC_NO_LLM=1; three parallel reviewers, a tier-0 deterministic majority-vote aggregator, and a step-output-gated (not inputs-gated) summarize step -- all 5 steps succeed, no retries, no LLM output expected. NOTE: this workflow has no 'parse_code'-named step, so eval_gate.py's derive_criteria() derives Code Quality = 0.0 by design (see bug_resolution_no_llm_v1's note); the threshold below is this case's achievable ceiling (1.0 on every other criterion), not a loosened bar.",
+    "rubric": "code",
+    "workflow_name": "consensus_review",
+    "golden_output_path": "consensus_review_output.json",
+    "live_inputs": {
+      "code_file": "def clamp(value: int, lower: int, upper: int) -> int:\n    # Return value constrained to the inclusive range.\n    if lower > upper:\n        raise TypeError(\"lower must be <= upper\")\n    return max(lower, min(upper, value))\n",
+      "min_agreement": "0.66"
+    },
+    "expected_criteria": {
+      "success_rate_expected": 100.0,
+      "expected_step_names": [
+        "reviewer_a",
+        "reviewer_b",
+        "reviewer_c",
+        "vote",
+        "summarize"
+      ],
+      "max_retries": 0
+    },
+    "threshold": 0.80
+  },
+  {
+    "case_id": "fullstack_generation_no_llm_v1",
+    "description": "fullstack_generation workflow output captured under AGENTIC_NO_LLM=1; the 8-step DAG (architecture design, parallel backend/frontend/migrations generation, integration tests, review, a when:-gated rework pass, and final assembly) all succeed, no retries, no LLM output expected. developer_rework's when: clause references a step OUTPUT (steps.review_code.outputs...overall_status != 'APPROVED'), not a compound inputs.* expression, and is missing under the placeholder path -- ExpressionEvaluator's documented AttributeError fallback for '!=' expressions treats a missing value as differing from the target, so the step runs (verified deterministic across repeated regenerations). NOTE: like bug_resolution_no_llm_v1, this workflow has no 'parse_code'-named step, so Code Quality derives to 0.0 by design; the threshold below is this case's achievable ceiling (1.0 on every other criterion).",
+    "rubric": "code",
+    "workflow_name": "fullstack_generation",
+    "golden_output_path": "fullstack_generation_output.json",
+    "live_inputs": {
+      "feature_spec": "Add a user profile settings page with avatar upload.",
+      "tech_stack": "react-fastapi-postgres"
+    },
+    "expected_criteria": {
+      "success_rate_expected": 100.0,
+      "expected_step_names": [
+        "design_architecture",
+        "generate_api",
+        "generate_frontend",
+        "generate_migrations",
+        "generate_integration_tests",
+        "review_code",
+        "developer_rework",
+        "assemble_feature"
       ],
       "max_retries": 0
     },

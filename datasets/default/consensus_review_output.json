@@ -1,0 +1,193 @@
+{
+  "failed_steps": [],
+  "final_output": {
+    "consensus_agreement": 1.0,
+    "consensus_met": true,
+    "consensus_verdict": null,
+    "steps": {
+      "reviewer_a": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+          "review_report": {
+            "overall_status": "NEEDS_FIXES"
+          }
+        },
+        "status": "success"
+      },
+      "reviewer_b": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+          "review_report": {
+            "overall_status": "NEEDS_FIXES"
+          }
+        },
+        "status": "success"
+      },
+      "reviewer_c": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+          "review_report": {
+            "overall_status": "NEEDS_FIXES"
+          }
+        },
+        "status": "success"
+      },
+      "summarize": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "vote": {
+        "outputs": {
+          "agreement": 1.0,
+          "meets_threshold": true,
+          "tied": false,
+          "total_samples": 3,
+          "votes": {
+            "None": 3
+          },
+          "winner": null
+        },
+        "status": "success"
+      }
+    }
+  },
+  "metadata": {},
+  "overall_status": "success",
+  "steps": [
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "code_file": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2108
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+        "review_report": {
+          "overall_status": "NEEDS_FIXES"
+        }
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "reviewer_a",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "code_file": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2108
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+        "review_report": {
+          "overall_status": "NEEDS_FIXES"
+        }
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "reviewer_b",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "code_file": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2108
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+        "review_report": {
+          "overall_status": "NEEDS_FIXES"
+        }
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "reviewer_c",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "min_agreement": null,
+        "samples": [
+          "${steps.reviewer_a.outputs.verdict}",
+          "${steps.reviewer_b.outputs.verdict}",
+          "${steps.reviewer_c.outputs.verdict}"
+        ]
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {},
+      "model_used": null,
+      "output_data": {
+        "agreement": 1.0,
+        "meets_threshold": true,
+        "tied": false,
+        "total_samples": 3,
+        "votes": {
+          "None": 3
+        },
+        "winner": null
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "vote",
+      "tier": 0
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "agreement": 1.0,
+        "verdict": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 663
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "summarize",
+      "tier": 2
+    }
+  ],
+  "success_rate": 100.0,
+  "total_retries": 0,
+  "workflow_name": "consensus_review"
+}

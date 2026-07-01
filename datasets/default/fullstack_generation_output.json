@@ -1,0 +1,264 @@
+{
+  "failed_steps": [],
+  "final_output": {
+    "code_review": {
+      "overall_status": "NEEDS_FIXES"
+    },
+    "steps": {
+      "assemble_feature": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "design_architecture": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "developer_rework": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "generate_api": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "generate_frontend": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "generate_integration_tests": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "generate_migrations": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "review_code": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+          "review_report": {
+            "overall_status": "NEEDS_FIXES"
+          }
+        },
+        "status": "success"
+      }
+    }
+  },
+  "metadata": {},
+  "overall_status": "success",
+  "steps": [
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "spec": null,
+        "stack": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2847
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "design_architecture",
+      "tier": 3
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "api_spec": null,
+        "db_schema": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 3395
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_api",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "api_spec": null,
+        "components": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 3394
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_frontend",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "schema": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 410
+      },
+      "model_used": "gemini:gemini-2.5-flash-lite",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_migrations",
+      "tier": 1
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "backend": null,
+        "frontend": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2179
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_integration_tests",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "backend": null,
+        "frontend": null,
+        "migrations": null,
+        "tests": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2390
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.",
+        "review_report": {
+          "overall_status": "NEEDS_FIXES"
+        }
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "review_code",
+      "tier": 3
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "backend": null,
+        "frontend": null,
+        "migrations": null,
+        "review_report": {
+          "overall_status": "NEEDS_FIXES"
+        },
+        "suggested_fixes": null,
+        "tests": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 3712
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "developer_rework",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "backend": null,
+        "frontend": null,
+        "migrations": null,
+        "tests": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 710
+      },
+      "model_used": "gemini:gemini-2.5-flash-lite",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "assemble_feature",
+      "tier": 1
+    }
+  ],
+  "success_rate": 100.0,
+  "total_retries": 0,
+  "workflow_name": "fullstack_generation"
+}
