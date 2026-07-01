@@ -79,9 +79,17 @@ def _extract_prompt_completion_tokens(
     prompt = usage.get("prompt_tokens", usage.get("input_tokens"))
     completion = usage.get("completion_tokens", usage.get("output_tokens"))
 
-    input_tokens = int(prompt) if isinstance(prompt, (int, float)) else 0
-    output_tokens = int(completion) if isinstance(completion, (int, float)) else 0
+    input_tokens = _safe_int(prompt)
+    output_tokens = _safe_int(completion)
     return max(0, input_tokens), max(0, output_tokens)
+
+
+def _safe_int(value: object) -> int:
+    """Best-effort ``int`` cast; returns ``0`` for missing or unparsable values."""
+    try:
+        return int(value) if value is not None else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 # Metrics instrumentation — all calls are no-ops when metrics are not enabled

@@ -83,11 +83,12 @@ def count_suppressions(config: dict[str, Any]) -> dict[str, int]:
     mypy_overrides: list[dict[str, Any]] = config.get("tool", {}).get(
         "mypy", {}
     ).get("overrides", [])
-    ignore_errors_modules = sum(
-        len(override.get("module", []))
-        for override in mypy_overrides
-        if override.get("ignore_errors") is True
-    )
+    ignore_errors_modules = 0
+    for override in mypy_overrides:
+        if override.get("ignore_errors") is not True:
+            continue
+        module = override.get("module", [])
+        ignore_errors_modules += 1 if isinstance(module, str) else len(module)
 
     return {
         "ruff_lint_ignore": len(ruff_ignore),
@@ -239,7 +240,16 @@ def main() -> int:
         )
         return 2
 
-    baseline = load_baseline(baseline_path)
+    try:
+        baseline = load_baseline(baseline_path)
+    except (json.JSONDecodeError, KeyError, ValueError) as err:
+        print(
+            f"ERROR: failed to load or parse baseline file {baseline_path}: {err}\n"
+            "Regenerate it with: python scripts/check_suppression_ratchet.py "
+            "--update-baseline",
+            file=sys.stderr,
+        )
+        return 2
 
     print("Suppression counts (current vs. baseline):")
     for key in _COUNT_KEYS:
