@@ -805,8 +805,9 @@ class LLMClientWrapper:
             tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
         latency = (time.monotonic() - start) * 1000
 
-        # Record success
-        self.router.record_success(selected_model, latency)
+        # Record success (threads real provider token usage onto the
+        # llm_tokens_total metric when the backend reported one)
+        self.router.record_success(selected_model, latency, usage=usage)
 
         # Update budget
         if self.budget:

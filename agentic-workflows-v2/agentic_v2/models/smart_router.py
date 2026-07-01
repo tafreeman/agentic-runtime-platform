@@ -59,6 +59,31 @@ def _counter_snapshot(stats: ModelStats) -> dict[str, int]:
     return {field_name: stats_dict.get(field_name, 0) for field_name in _COUNTER_FIELDS}
 
 
+def _extract_prompt_completion_tokens(
+    usage: Mapping[str, Any] | None,
+) -> tuple[int, int]:
+    """Best-effort ``(input_tokens, output_tokens)`` extraction from a usage map.
+
+    Backends in :mod:`agentic_v2.models.backends_cloud` normalize their raw
+    provider payload to an OpenAI-shaped ``usage`` dict — ``prompt_tokens`` /
+    ``completion_tokens`` (Anthropic, OpenAI, GitHub Models, Azure) or the
+    already-renamed Gemini equivalents. A bare ``input_tokens`` /
+    ``output_tokens`` pair is accepted too, for callers that pass a raw
+    provider ``usage`` object before normalization. Missing or non-numeric
+    values fall back to ``0`` rather than raising, so a call site can always
+    pass an unvalidated ``usage`` value through safely.
+    """
+    if not isinstance(usage, Mapping):
+        return 0, 0
+
+    prompt = usage.get("prompt_tokens", usage.get("input_tokens"))
+    completion = usage.get("completion_tokens", usage.get("output_tokens"))
+
+    input_tokens = int(prompt) if isinstance(prompt, (int, float)) else 0
+    output_tokens = int(completion) if isinstance(completion, (int, float)) else 0
+    return max(0, input_tokens), max(0, output_tokens)
+
+
 # Metrics instrumentation — all calls are no-ops when metrics are not enabled
 try:
     from ..integrations.metrics import (
@@ -259,16 +284,35 @@ class SmartModelRouter(ModelRouter):
             except Exception:
                 logger.exception("Degraded model selection callback failed")
 
-    def record_success(self, model: str, latency_ms: float) -> None:
-        """Record a successful call and emit latency metric."""
+    def record_success(
+        self,
+        model: str,
+        latency_ms: float,
+        usage: Mapping[str, Any] | None = None,
+    ) -> None:
+        """Record a successful call and emit latency + token metrics.
+
+        Args:
+            model: The model identifier that served the request.
+            latency_ms: Call latency in milliseconds.
+            usage: Optional provider ``usage`` mapping (OpenAI-shaped keys:
+                ``prompt_tokens``/``completion_tokens``, or ``input_tokens``/
+                ``output_tokens``). When omitted or unrecognized, the token
+                counters are simply not incremented for this call — latency
+                is still recorded either way.
+        """
         stats = self._get_stats(model)
         stats.record_success(latency_ms)
         self.mark_available(model)
 
-        # Emit LLM latency metric (convert ms → seconds)
+        input_tokens, output_tokens = _extract_prompt_completion_tokens(usage)
+
+        # Emit LLM latency + token metrics (convert ms → seconds)
         _record_llm_request(
             provider=_extract_provider(model),
             duration_seconds=latency_ms / 1000.0,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
         )
 
         if self._auto_save and self._should_persist:
@@ -945,7 +989,11 @@ class SmartModelRouter(ModelRouter):
             try:
                 response = await self._execute_call(caller, model, prompt)
                 latency = (time.monotonic() - start_mono) * 1000
-                self.record_success(model, latency)
+                # ``caller`` may return a bare completion string (legacy text
+                # path) or a chat-completion dict carrying a provider ``usage``
+                # map; only the latter has tokens to report.
+                usage = response.get("usage") if isinstance(response, dict) else None
+                self.record_success(model, latency, usage=usage)
                 return model, response
             except asyncio.CancelledError:
                 raise
