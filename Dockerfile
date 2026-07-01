@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM python:3.14-slim AS python-base
+FROM python:3.13-slim AS python-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -18,9 +18,9 @@ FROM python-base AS backend-dev
 COPY . /workspace
 
 RUN python -m pip install --upgrade pip \
-    && pip install --no-cache-dir -e . \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" \
-    && pip install --no-cache-dir -e "./agentic-v2-eval[dev]"
+    && pip install --no-cache-dir -e . -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
 
 # Run as non-root user (S6471)
 RUN groupadd --system appgroup \
@@ -40,8 +40,8 @@ COPY . /workspace
 
 # Install only runtime extras — no dev/test tooling (pytest, mypy, black, etc.)
 RUN python -m pip install --upgrade pip \
-    && pip install --no-cache-dir -e . \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[server,tracing]"
+    && pip install --no-cache-dir -e . -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[server,tracing]" -c ci-constraints.txt
 
 # Run as non-root user (S6471) — mirrors the dev stage setup
 RUN groupadd --system appgroup \
@@ -69,9 +69,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 COPY . /workspace
 
 RUN python -m pip install --upgrade pip \
-    && pip install --no-cache-dir -e . \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" \
-    && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" \
+    && pip install --no-cache-dir -e . -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" -c ci-constraints.txt \
     && npm --prefix /workspace/agentic-workflows-v2/ui install \
     && groupadd --system appgroup \
     && useradd --system --gid appgroup --no-create-home appuser \
