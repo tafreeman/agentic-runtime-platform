@@ -660,6 +660,13 @@ async def _dispatch_single_tool_call(
         tool_result = await tool.execute(**tool_args)
         return serialize_tool_result(tool_result)
     except Exception as exc:
+        # ``asyncio.CancelledError`` and ``KeyboardInterrupt`` derive from
+        # ``BaseException`` (not ``Exception``), so they already propagate
+        # through this handler untouched — cancellation and interrupt signals
+        # are never swallowed here. Log the traceback before serializing so a
+        # real tool failure is diagnosable from logs instead of only the
+        # truncated str(exc) sent back to the LLM.
+        logger.exception("Tool execution error for %s", tool_name)
         return json.dumps(
             {
                 "success": False,
