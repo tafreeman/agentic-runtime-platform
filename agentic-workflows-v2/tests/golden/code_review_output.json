@@ -26,7 +26,7 @@
             "reason": "llm_unavailable"
           },
           "description": "Analyze code complexity",
-          "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+          "note": "No LLM backend configured",
           "status": "llm_unavailable"
         },
         "status": "success"
@@ -35,7 +35,7 @@
         "outputs": {
           "agent": "tier2_summarizer",
           "description": "Generate human-readable review summary",
-          "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+          "note": "No LLM backend configured",
           "status": "llm_unavailable",
           "summary": {
             "key": "summary",
@@ -68,7 +68,7 @@
         "outputs": {
           "agent": "tier2_reviewer",
           "description": "Deep code review with suggestions",
-          "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+          "note": "No LLM backend configured",
           "review": {
             "key": "review",
             "placeholder": true,
@@ -90,7 +90,7 @@
             "placeholder": true,
             "reason": "llm_unavailable"
           },
-          "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+          "note": "No LLM backend configured",
           "status": "llm_unavailable"
         },
         "status": "success"
@@ -158,7 +158,7 @@
           "placeholder": true,
           "reason": "llm_unavailable"
         },
-        "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+        "note": "No LLM backend configured",
         "status": "llm_unavailable"
       },
       "retry_count": 0,
@@ -186,7 +186,7 @@
           "reason": "llm_unavailable"
         },
         "description": "Analyze code complexity",
-        "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+        "note": "No LLM backend configured",
         "status": "llm_unavailable"
       },
       "retry_count": 0,
@@ -219,7 +219,7 @@
       "output_data": {
         "agent": "tier2_reviewer",
         "description": "Deep code review with suggestions",
-        "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+        "note": "No LLM backend configured",
         "review": {
           "key": "review",
           "placeholder": true,
@@ -254,7 +254,7 @@
       "output_data": {
         "agent": "tier2_summarizer",
         "description": "Generate human-readable review summary",
-        "note": "react_loop() requires a ToolCallingProvider. Ensure the provider has supports_tools = True.",
+        "note": "No LLM backend configured",
         "status": "llm_unavailable",
         "summary": {
           "key": "summary",
