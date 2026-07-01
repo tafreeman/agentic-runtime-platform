@@ -31,6 +31,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+# scripts/eval_gate.py imports agentic_v2_eval, a separate workspace package that
+# is not installed in the unit-test job's venv. Skip this whole module when it is
+# unavailable (eval_gate is exercised by the eval-package CI job instead) so
+# loading eval_gate does not raise a collection-time ModuleNotFoundError.
+pytest.importorskip("agentic_v2_eval")
+
+import pytest
+
 from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 
 _SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "eval_gate.py"
