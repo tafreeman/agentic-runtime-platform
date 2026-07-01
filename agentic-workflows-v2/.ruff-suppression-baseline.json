@@ -1,0 +1,7 @@
+{
+  "ruff_lint_ignore": 42,
+  "ruff_per_file_ignores_files": 2,
+  "ruff_per_file_ignores_rules": 6,
+  "mypy_override_blocks": 2,
+  "mypy_ignore_errors_modules": 7
+}

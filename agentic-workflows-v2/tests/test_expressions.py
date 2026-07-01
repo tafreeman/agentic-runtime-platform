@@ -223,6 +223,57 @@ class TestExpressionEvaluatorBooleanOps:
         evaluator = ExpressionEvaluator(ctx)
         assert evaluator.evaluate("${(ctx.a > 5) and (ctx.b or ctx.c)}") is True
 
+    def test_compound_and_two_distinct_input_paths(self):
+        """Two separate ``${inputs.*}`` tokens joined by a bare ``and``.
+
+        Regression test for the ``deployment_readiness`` step in
+        ``conditional_branching.yaml``:
+
+            when: >-
+              ${inputs.target_env} == 'production'
+              and ${inputs.review_depth} != 'quick'
+
+        This is the "hybrid template" form (Case 3 in :meth:`evaluate`'s
+        docstring): unlike ``test_boolean_and`` above (a single ``${...}``
+        token wrapping the whole ``and`` expression), here TWO separate
+        ``${...}`` tokens are substituted independently via
+        ``VARIABLE_PATTERN.sub`` before the resulting literal-only string is
+        evaluated. Exercises both-true (runs), both-false (skips), and
+        mixed (skips) — the full truth table for a two-variable ``and``.
+        """
+        expr = (
+            "${inputs.target_env} == 'production' "
+            "and ${inputs.review_depth} != 'quick'"
+        )
+
+        # Both true: env is production AND review_depth is not quick.
+        ctx = ExecutionContext()
+        ctx.set_sync(
+            "inputs", {"target_env": "production", "review_depth": "thorough"}
+        )
+        evaluator = ExpressionEvaluator(ctx)
+        assert evaluator.evaluate(expr) is True
+
+        # Both false: not production, and review_depth IS quick.
+        ctx = ExecutionContext()
+        ctx.set_sync("inputs", {"target_env": "staging", "review_depth": "quick"})
+        evaluator = ExpressionEvaluator(ctx)
+        assert evaluator.evaluate(expr) is False
+
+        # Mixed: production but review_depth is quick -> second clause fails.
+        ctx = ExecutionContext()
+        ctx.set_sync("inputs", {"target_env": "production", "review_depth": "quick"})
+        evaluator = ExpressionEvaluator(ctx)
+        assert evaluator.evaluate(expr) is False
+
+        # Mixed: thorough review but not production -> first clause fails.
+        ctx = ExecutionContext()
+        ctx.set_sync(
+            "inputs", {"target_env": "staging", "review_depth": "thorough"}
+        )
+        evaluator = ExpressionEvaluator(ctx)
+        assert evaluator.evaluate(expr) is False
+
 
 class TestExpressionEvaluatorStepResults:
     """Tests for accessing step results."""

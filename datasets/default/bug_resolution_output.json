@@ -1,0 +1,184 @@
+{
+  "failed_steps": [],
+  "final_output": {
+    "steps": {
+      "generate_fix": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "generate_verification": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "regression_check": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "root_cause_analysis": {
+        "outputs": {
+          "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+        },
+        "status": "success"
+      },
+      "triage": {
+        "outputs": {
+          "code_metrics": {
+            "chars": 0,
+            "class_count": 0,
+            "function_count": 0,
+            "import_count": 0,
+            "lines": 0
+          },
+          "parsed_ast": {
+            "classes": [],
+            "functions": [],
+            "imports": [],
+            "language": "python",
+            "raw_source": ""
+          }
+        },
+        "status": "success"
+      }
+    }
+  },
+  "metadata": {},
+  "overall_status": "success",
+  "steps": [
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "bug_report": null,
+        "file_path": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {},
+      "model_used": null,
+      "output_data": {
+        "code_metrics": {
+          "chars": 0,
+          "class_count": 0,
+          "function_count": 0,
+          "import_count": 0,
+          "lines": 0
+        },
+        "parsed_ast": {
+          "classes": [],
+          "functions": [],
+          "imports": [],
+          "language": "python",
+          "raw_source": ""
+        }
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "triage",
+      "tier": 0
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "affected_components": null,
+        "symptoms": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2227
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "root_cause_analysis",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "file_path": null,
+        "root_cause": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 2271
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_fix",
+      "tier": 2
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "affected_components": null,
+        "fix": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 574
+      },
+      "model_used": "gemini:gemini-2.5-flash-lite",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "regression_check",
+      "tier": 1
+    },
+    {
+      "agent_role": null,
+      "error": null,
+      "error_type": null,
+      "input_data": {
+        "fix": null,
+        "regression_risks": null,
+        "root_cause": null
+      },
+      "is_complete": true,
+      "is_failed": false,
+      "is_success": true,
+      "metadata": {
+        "tokens_used": 633
+      },
+      "model_used": "gemini:gemini-2.5-flash",
+      "output_data": {
+        "raw_response": "[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output."
+      },
+      "retry_count": 0,
+      "status": "success",
+      "step_name": "generate_verification",
+      "tier": 2
+    }
+  ],
+  "success_rate": 100.0,
+  "total_retries": 0,
+  "workflow_name": "bug_resolution"
+}

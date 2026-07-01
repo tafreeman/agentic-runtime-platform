@@ -15,6 +15,11 @@ on:
       - 'uv.lock'
   pull_request:
     branches: [main, agenticv2]
+    # 'labeled' is added (on top of the default opened/synchronize/reopened)
+    # so that adding the run-live-eval label to an ALREADY-OPEN PR re-triggers
+    # this workflow -- without it, a label added after the PR was opened would
+    # never fire the eval-live-gate job below until the next push.
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'agentic-v2-eval/**'
       - 'tools/**'
@@ -24,6 +29,12 @@ on:
       - 'pyproject.toml'
       - 'ci-constraints.txt'
       - 'uv.lock'
+  schedule:
+    # Nightly real-model eval-live-gate run on main, independent of the label
+    # gate below. 06:00 UTC -- outside the 07:00 UTC nightly.yml E2E window
+    # (see .github/workflows/nightly.yml) so the two nightly jobs don't
+    # contend for runner capacity or provider rate limits at the same minute.
+    - cron: '0 6 * * *'
 
 defaults:
   run:
@@ -160,3 +171,65 @@ jobs:
           AGENTIC_NO_LLM: "1"
         run: |
           python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80
+
+  eval-live-gate:
+    # Real-model eval-live-gate: runs scripts/eval_gate.py --live, which
+    # replaces the mocked golden-file comparison with 3x real runs per case
+    # through agentic_v2.workflows.run_workflow (SmartModelRouter / the shared
+    # model client), scored by median weighted_score. This is NOT the
+    # every-commit floor -- eval-golden-gate above stays deterministic,
+    # key-free, and runs on every push/PR. This job only runs when a human
+    # deliberately opts in:
+    #   (a) a PR carries the 'run-live-eval' label, or
+    #   (b) the nightly schedule (06:00 UTC, see the 'on.schedule' cron above)
+    #       fires on main.
+    # Everywhere else it is collected (visible in the Actions UI as a job of
+    # this workflow) but SKIPPED via the 'if:' below, matching
+    # scripts/eval_gate.py --live's own collected-but-skipped-without-a-key
+    # behavior at the script level -- the two are independent, complementary
+    # guards against running this unintentionally.
+    #
+    # No API keys are assumed to be configured in this repo's secrets; if
+    # none of ANTHROPIC_API_KEY / OPENAI_API_KEY / GEMINI_API_KEY /
+    # AZURE_OPENAI_API_KEY / AZURE_FOUNDRY_API_KEY are set as repo secrets,
+    # eval_gate.py --live itself exits 0 with a clear SKIPPED message rather
+    # than failing the job -- see the --live docstring in scripts/eval_gate.py.
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'pull_request' &&
+      contains(github.event.pull_request.labels.*.name, 'run-live-eval')) ||
+      github.event_name == 'schedule'
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2" -c ci-constraints.txt
+
+      - name: Run live eval gate (real model, median of 3 runs per case)
+        env:
+          # AGENTIC_NO_LLM is deliberately left unset here (never "0" -- unset,
+          # so eval_gate.py's is_agentic_no_llm_enabled() reads False without
+          # relying on a specific falsy string). Provider keys come from repo
+          # secrets; any that are not configured resolve to an empty string,
+          # which scripts/eval_gate.py's _has_live_provider_credentials()
+          # treats the same as "not configured" -- so this step degrades to a
+          # clean skip rather than a failure when no secrets are set.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_FOUNDRY_API_KEY: ${{ secrets.AZURE_FOUNDRY_API_KEY }}
+        run: |
+          python scripts/eval_gate.py --cases datasets/default/golden_cases.json --threshold 0.80 --live

@@ -84,6 +84,26 @@ jobs:
             exit 1
           fi
 
+  suppression-ratchet:
+    # ARP-9: prevents the ruff `ignore` list, `per-file-ignores`, and mypy
+    # `ignore_errors` overrides in pyproject.toml from silently growing.
+    # Counts may shrink freely; a PR that adds a new suppression beyond the
+    # committed baseline (agentic-workflows-v2/.ruff-suppression-baseline.json)
+    # fails here. Uses only the stdlib (tomllib/json/argparse), so no package
+    # install is required.
+    name: Suppression ratchet (ruff ignores + mypy overrides)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check suppression counts against committed baseline
+        run: |
+          cd agentic-workflows-v2
+          python scripts/check_suppression_ratchet.py
+
   typecheck-core-contracts:
     name: Mypy (strict engine + contracts)
     runs-on: ubuntu-latest

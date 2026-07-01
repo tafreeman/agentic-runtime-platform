@@ -364,6 +364,75 @@ class TestSmartRouterMetrics:
         # 250 ms → 0.25 s
         assert abs(calls[0]["duration_seconds"] - 0.25) < 1e-9
 
+    def test_record_success_with_usage_threads_tokens(self) -> None:
+        """ARP-5: a provider ``usage`` dict on the success path reaches
+        _record_llm_request as non-zero input/output tokens, so
+        llm_tokens_total actually increments instead of staying dead.
+        """
+        router = self._make_router()
+        calls: list[dict[str, Any]] = []
+
+        def fake_record_llm(
+            provider: str,
+            duration_seconds: float,
+            input_tokens: int = 0,
+            output_tokens: int = 0,
+        ) -> None:
+            calls.append(
+                {
+                    "provider": provider,
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                }
+            )
+
+        import agentic_v2.models.smart_router as sr_module
+
+        # Mocked backend response shape: OpenAI-flavoured usage dict, exactly
+        # what backends_cloud.py's complete_chat implementations return.
+        mocked_usage = {"prompt_tokens": 42, "completion_tokens": 17, "total_tokens": 59}
+
+        orig = sr_module._record_llm_request
+        try:
+            sr_module._record_llm_request = fake_record_llm
+            router.record_success("anthropic:claude-3-5-sonnet", 100.0, usage=mocked_usage)
+        finally:
+            sr_module._record_llm_request = orig
+
+        assert len(calls) == 1
+        assert calls[0]["provider"] == "anthropic"
+        assert calls[0]["input_tokens"] > 0
+        assert calls[0]["output_tokens"] > 0
+        assert calls[0]["input_tokens"] == mocked_usage["prompt_tokens"]
+        assert calls[0]["output_tokens"] == mocked_usage["completion_tokens"]
+
+    def test_record_success_without_usage_reports_zero_tokens(self) -> None:
+        """Omitting usage (legacy text-completion callers) is still safe —
+        tokens report as 0 rather than raising, preserving prior behavior.
+        """
+        router = self._make_router()
+        calls: list[dict[str, Any]] = []
+
+        def fake_record_llm(
+            provider: str,
+            duration_seconds: float,
+            input_tokens: int = 0,
+            output_tokens: int = 0,
+        ) -> None:
+            calls.append({"input_tokens": input_tokens, "output_tokens": output_tokens})
+
+        import agentic_v2.models.smart_router as sr_module
+
+        orig = sr_module._record_llm_request
+        try:
+            sr_module._record_llm_request = fake_record_llm
+            router.record_success("ollama:phi4", 10.0)
+        finally:
+            sr_module._record_llm_request = orig
+
+        assert calls[0]["input_tokens"] == 0
+        assert calls[0]["output_tokens"] == 0
+
     def test_record_failure_emits_circuit_breaker_trip(self) -> None:
         """record_failure calls _record_cb_trip with provider and state."""
         router = self._make_router()
