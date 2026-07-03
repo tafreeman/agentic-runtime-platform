@@ -2,18 +2,14 @@
 
 # Agentic Runtime Platform
 
-**Multi-agent AI orchestration — DAG execution, tiered model routing, rubric-based evaluation. Works with 8+ LLM providers.**
+**Multi-agent AI orchestration with a fail-closed governance layer — circuit-breaker model routing, human-in-the-loop approval gates, bias-aware LLM-as-judge evaluation, and a default-on SSRF guard. Works with 8+ LLM providers.**
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Nightly E2E](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 ![coverage](https://img.shields.io/badge/coverage-80%25%20gated%20subset-brightgreen)
-[![Coverage visibility: whole repo](https://img.shields.io/badge/coverage%20visibility-whole%20repo-informational.svg)](.github/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-MkDocs-blue.svg)](https://tafreeman.github.io/agentic-runtime-platform/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Linting: ruff](https://img.shields.io/badge/linting-ruff-261230.svg)](https://github.com/astral-sh/ruff)
-[![Type checking](https://img.shields.io/badge/type%20checking-eval%20strict%20%7C%20runtime%20in%20progress-blue.svg)](docs/KNOWN_LIMITATIONS.md)
 
 [Documentation](https://tafreeman.github.io/agentic-runtime-platform/) • [Quick Start](https://tafreeman.github.io/agentic-runtime-platform/ONBOARDING/) • [Architecture](https://tafreeman.github.io/agentic-runtime-platform/ARCHITECTURE/) • [Docs Site](https://tafreeman.github.io/agentic-runtime-platform/)
 
@@ -21,16 +17,21 @@
 
 ---
 
-Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent occupies a specific role (planner, coder, reviewer) and operates at a defined capability tier. Workflows are authored as declarative YAML files and compiled into executable DAGs with automatic parallel scheduling, conditional branching, iterative loops, and failure cascade propagation.
+Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent occupies a specific role (planner, coder, reviewer) and operates at a defined capability tier. Workflows are authored as declarative YAML files and compiled into executable DAGs with automatic parallel scheduling, conditional branching, iterative loops, and failure cascade propagation. The LLM/deterministic boundary is enforced operationally: high-impact tool calls pass through a fail-closed human-approval gate, outbound HTTP is screened by a default-on SSRF guard, and execution is observable via opt-in OpenTelemetry tracing.
 
 ## What's in the Box
 
 | Component | What it does |
 |-----------|-------------|
 | **DAG Executor** | Kahn's algorithm scheduling with `asyncio` parallel dispatch — diamond dependencies, conditional execution, iterative refinement |
-| **Tiered Model Router** | Health-weighted selection across 8+ providers with adaptive cooldowns and circuit breakers — no single-provider lock-in |
-| **Evaluation Framework** | YAML-defined rubrics, multidimensional scoring (Elite/High/Medium/Low tiers), LLM-as-judge integration for subjective quality |
-| **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, token usage tracking, historical runs |
+| **Circuit-Breaker Model Router** | Bulkhead-isolated, health-weighted selection across 8+ providers with adaptive exponential cooldowns and HALF_OPEN single-probe circuit breakers — no single-provider lock-in |
+| **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed |
+| **Bias-Aware LLM-as-Judge** | Seeded criterion-shuffle positional-bias mitigation, swapped-order consistency checks, and MAE calibration against human-labeled fixtures |
+| **Non-Compensatory Gated Evaluation** | YAML-defined rubrics, DORA-inspired Elite/High/Medium/Low tiers, gated on a non-compensatory floor across all scoring dimensions |
+| **SSRF Guard (DNS-rebinding pinning)** | Default-on egress guard — resolves DNS, validates every returned address, and pins the connection to defeat rebinding, incl. cloud-metadata blocklisting |
+| **Self-Consistency Ensembling** | Majority-vote / self-consistency consensus across sampled completions for higher-stakes outputs |
+| **Structured Human-Escalation** | Dead-letter-style handoff path that routes unresolved or out-of-policy cases to a human reviewer instead of failing silently |
+| **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, OpenTelemetry-traced token usage tracking, historical runs |
 | **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — the full test suite passes without API keys |
 
 **Engine defaults:** CLI, server, and dashboard requests use the LangGraph adapter (`adapter=langchain`) for named YAML workflows during the migration window. Use `--adapter native` or request `adapter: "native"` for the dependency-light native DAG/Pipeline path. Runtime-generated DAGs use the native engine by default. `AGENTIC_NO_LLM=1` changes provider calls to deterministic placeholders; it does not change engine selection.
@@ -214,7 +215,7 @@ agentic-runtime-platform/
 │   │   ├── rag/                   # Full RAG pipeline
 │   │   └── contracts/             # Pydantic I/O models
 │   ├── ui/                        # React 19 dashboard
-│   └── tests/                     # 100+ test files
+│   └── tests/                     # Full runtime test suite (unit, integration, E2E)
 │
 ├── agentic-v2-eval/               # Evaluation framework
 │   └── src/agentic_v2_eval/
@@ -235,7 +236,7 @@ agentic-runtime-platform/
 - **Rubric-based evaluation** with YAML-defined criteria and LLM-as-judge
 - **Zero-credential dev mode**: Run all tests and workflows without API keys
 - **Type-safe interfaces**: Full Pydantic v2 contracts; `mypy --strict` is enforced for `agentic-v2-eval`, with broader runtime coverage in progress
-- **Production-ready core**: The DAG executor, model router, and evaluation framework are hardened with pre-commit hooks (black, ruff, mypy for `agentic-v2-eval`), 100+ tests, and 80%+ coverage. RAG, Redis state, and some provider adapters are explicitly in-progress — see [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
+- **Production-ready core**: The DAG executor, model router, and evaluation framework are hardened with pre-commit hooks (black, ruff, mypy for `agentic-v2-eval`), the full runtime test suite (see [CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml) for current pass/fail and coverage), and an 80%+ gated coverage floor. RAG, Redis state, and some provider adapters are explicitly in-progress — see [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)
 - **Rate limiting + 401 throttle**: `slowapi` global limiter (`AGENTIC_RATE_LIMIT_DEFAULT`, default `60/minute`); per-IP sliding-window lockout after repeated auth failures (`AGENTIC_AUTH_LOCKOUT_THRESHOLD`, `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS`, `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS`)
 - **DAG executor timeout watchdog**: pass `timeout=` to the executor; in-flight tasks are cancelled structurally, downstream steps are cascade-skipped, and a `workflow.timeout_exceeded` OTEL span attribute is emitted
 
@@ -280,7 +281,7 @@ cp ../.env.example ../.env
 ### Running Tests
 
 ```bash
-# Runtime tests (100+ test files)
+# Runtime tests (full suite)
 cd agentic-workflows-v2
 pytest tests/ -v --cov=agentic_v2
 
@@ -332,7 +333,7 @@ ExecutionKit and Agentic Runtime Platform occupy different layers of the same st
 
 | Area | Artifact | Description |
 |------|----------|-------------|
-| Architecture decisions | [ADR Index](docs/adr/ADR-INDEX.md) | 13 decisions with lineage chains and implementation tracking |
+| Architecture decisions | [ADR Index](docs/adr/ADR-INDEX.md) | Full decision log with lineage chains and implementation tracking |
 | Known debt | [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | Honest accounting with severity, workaround, and upstream-fix fields |
 | Security | [SECURITY.md](agentic-workflows-v2/SECURITY.md) | Coordinated disclosure policy and hardening guidance; includes rate-limit and per-IP 401 lockout configuration |
 | Supply chain | [Dependabot](.github/dependabot.yml) | Automated updates for pip, npm, and GitHub Actions |
