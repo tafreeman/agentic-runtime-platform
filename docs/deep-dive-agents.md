@@ -289,7 +289,7 @@ Each agent has a `.md` persona definition that is loaded as the system prompt. P
 4. **Output format** — Expected response structure.
 
 The shipped personas are kept in sync with the named constants in
-`agentic_v2/prompts/__init__.py` (call `list_prompts()` for the live list):
+`agentic-workflows-v2/agentic_v2/prompts/__init__.py` (call `list_prompts()` for the live list):
 `architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, and
 `validator`.
 
