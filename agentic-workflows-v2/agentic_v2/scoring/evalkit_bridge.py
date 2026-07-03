@@ -3,7 +3,7 @@
 This module is the ARP half of the evalkit integration described in
 ``docs/adr/ADR-042-agentic-evalkit-adoption.md``. ``agentic-evalkit`` is a
 standalone evaluation framework developed independently of this repository
-(see ``C:\\Users\\tandf\\source\\agentic-evalkit`` in the wider workspace) and
+(see ../agentic-evalkit in the wider workspace) and
 does not yet have a public git remote, so it is treated as an **optional**
 dependency here: CI for ``agentic-workflows-v2`` must stay green whether or
 not it is installed. Every public symbol in this module degrades gracefully
