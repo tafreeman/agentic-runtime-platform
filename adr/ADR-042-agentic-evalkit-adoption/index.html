@@ -10,13 +10,9 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-042-agentic-evalkit-adoption/">
       
       
-        <link rel="prev" href="../../CHANGELOG/">
-      
-      
-        <link rel="next" href="../../CONTRIBUTING/">
       
       
         
@@ -27,7 +23,7 @@
     
     
       
-        <title>ADRs - Agentic Runtime Platform</title>
+        <title>ADR-042: Adopt agentic-evalkit as ARP's Evaluation Framework (Sliced Migration) - Agentic Runtime Platform</title>
       
     
     
@@ -67,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-042: Adopt agentic-evalkit as ARP's Evaluation Framework (Sliced Migration) - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-042-agentic-evalkit-adoption.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-INDEX/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-042-agentic-evalkit-adoption/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADRs - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-042: Adopt agentic-evalkit as ARP's Evaluation Framework (Sliced Migration) - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-INDEX.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-042-agentic-evalkit-adoption.png" />
 </head>
   
   
@@ -97,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-index-agentic-workflows-v2" class="md-skip">
+        <a href="#adr-042-adopt-agentic-evalkit-as-arps-evaluation-framework-sliced-migration" class="md-skip">
           Skip to content
         </a>
       
@@ -131,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADRs
+              ADR-042: Adopt agentic-evalkit as ARP's Evaluation Framework (Sliced Migration)
             
           </span>
         </div>
@@ -464,12 +460,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../../project-overview/" class="md-tabs__link">
           
   
@@ -2494,10 +2488,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -2517,22 +2509,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
             
   
   
@@ -2550,7 +2539,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2649,37 +2638,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ADRs
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../ADR-INDEX/" class="md-nav__link">
         
   
   
@@ -2695,70 +2657,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick-Access Deck
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lineage Chains
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Implementation Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supporting Documents
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2854,10 +2752,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-access-deck" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick-Access Deck
+        Context
       
     </span>
   </a>
@@ -2865,10 +2763,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#lineage-chains" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lineage Chains
+        Decision
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-mechanism-ladder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install-mechanism ladder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-hard-dependency-invariant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The hard dependency invariant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slice-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slice plan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-evalkit-stays-optional-in-arp-until-the-remote-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why evalkit stays optional in ARP until the remote exists
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
       
     </span>
   </a>
@@ -2876,21 +2835,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#implementation-status" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implementation Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supporting-documents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supporting Documents
+        Alternatives considered
       
     </span>
   </a>
@@ -2914,7 +2862,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-INDEX.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-042-agentic-evalkit-adoption.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2923,544 +2871,233 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-INDEX.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-042-agentic-evalkit-adoption.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-index-agentic-workflows-v2">ADR Index — agentic-workflows-v2<a class="headerlink" href="#adr-index-agentic-workflows-v2" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Last updated:</strong> 2026-07-03
-<strong>Total ADRs:</strong> 37 (29 Accepted, 6 Proposed, 2 Superseded)</p>
-</blockquote>
-<hr />
-<h2 id="quick-access-deck">Quick-Access Deck<a class="headerlink" href="#quick-access-deck" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>ADR</th>
-<th>Title</th>
-<th>Status</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>001</strong></td>
-<td>Dual Execution Engine (LangGraph vs. Kahn's DAG)</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>002</strong></td>
-<td>SmartModelRouter Circuit-Breaker Hardening</td>
-<td>Accepted</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>003</strong></td>
-<td>Deep Research Supervisor / CI Gating</td>
-<td>Superseded → 007</td>
-<td><a href="../ADR-001-002-003-architecture-decisions/">ADR-001-002-003</a></td>
-</tr>
-<tr>
-<td><strong>007</strong></td>
-<td>Multidimensional Classification Matrix &amp; Stop Policy</td>
-<td>Proposed</td>
-<td><a href="../ADR-007-classification-matrix-stop-policy/">ADR-007</a></td>
-</tr>
-<tr>
-<td><strong>008</strong></td>
-<td>Testing Approach Overhaul (Value Taxonomy)</td>
-<td>Accepted</td>
-<td><a href="../ADR-008-testing-approach-overhaul/">ADR-008</a></td>
-</tr>
-<tr>
-<td><strong>009</strong></td>
-<td>Scoring Enhancements (Exponential Decay, Lexicographic)</td>
-<td>Accepted</td>
-<td><a href="../ADR-009-scoring-enhancements/">ADR-009</a></td>
-</tr>
-<tr>
-<td><strong>010</strong></td>
-<td>Commit-Driven A/B Eval Harness Methodology</td>
-<td>Proposed</td>
-<td><a href="../ADR-010-eval-harness-methodology/">ADR-010</a></td>
-</tr>
-<tr>
-<td><strong>011</strong></td>
-<td>Eval Harness API &amp; Interface Design</td>
-<td>Proposed</td>
-<td><a href="../ADR-011-eval-harness-api-interface/">ADR-011</a></td>
-</tr>
-<tr>
-<td><strong>012</strong></td>
-<td>UI Evaluation Hub &amp; A/B Comparison</td>
-<td>Proposed</td>
-<td><a href="../ADR-012-ui-evaluation-hub/">ADR-012</a></td>
-</tr>
-<tr>
-<td><strong>014</strong></td>
-<td>Pydantic Discriminated Union as Execution Event Wire Format</td>
-<td>Accepted</td>
-<td><a href="../ADR-014-pydantic-wire-format/">ADR-014</a></td>
-</tr>
-<tr>
-<td><strong>015</strong></td>
-<td>SLO Rolling Window Stored in Git</td>
-<td>Accepted</td>
-<td><a href="../ADR-015-slo-in-git-rolling-window/">ADR-015</a></td>
-</tr>
-<tr>
-<td><strong>016</strong></td>
-<td>GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider</td>
-<td>Accepted</td>
-<td><a href="../ADR-016-github-token-as-default-e2e-llm/">ADR-016</a></td>
-</tr>
-<tr>
-<td><strong>017</strong></td>
-<td>Dataset Identifiers as Query Parameters, Not Path Segments</td>
-<td>Accepted</td>
-<td><a href="../ADR-017-dataset-id-query-params/">ADR-017</a></td>
-</tr>
-<tr>
-<td><strong>018</strong></td>
-<td>API Rate Limiting and Per-IP Auth Throttle</td>
-<td>Accepted</td>
-<td><a href="../ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a></td>
-</tr>
-<tr>
-<td><strong>019</strong></td>
-<td>DAG Executor Top-Level Timeout Watchdog</td>
-<td>Accepted</td>
-<td><a href="../ADR-019-dag-executor-top-level-timeout/">ADR-019</a></td>
-</tr>
-<tr>
-<td><strong>020</strong></td>
-<td>LangChain Adapter Eager Validation at FastAPI Startup</td>
-<td>Accepted</td>
-<td><a href="../ADR-020-langchain-adapter-eager-validation/">ADR-020</a></td>
-</tr>
-<tr>
-<td><strong>021</strong></td>
-<td>JWT OIDC Authentication for API Routes</td>
-<td>Accepted</td>
-<td><a href="../ADR-021-jwt-oidc-authentication/">ADR-021</a></td>
-</tr>
-<tr>
-<td><strong>022</strong></td>
-<td>Tenant-Scoped Run and Dataset Isolation</td>
-<td>Accepted</td>
-<td><a href="../ADR-022-tenant-isolation/">ADR-022</a></td>
-</tr>
-<tr>
-<td><strong>023</strong></td>
-<td>ExecutionKit ↔ Runtime Execution-Contract Relationship (Option A′: single <code>executionkit</code> package)</td>
-<td>Accepted</td>
-<td><a href="../ADR-023-executionkit-runtime-contract-relationship/">ADR-023</a> · <a href="../drafts/">working notes</a></td>
-</tr>
-<tr>
-<td><strong>024</strong></td>
-<td>Expression Evaluation via AST Interpreter (eliminate <code>eval()</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-024-expression-evaluator-ast-sandbox/">ADR-024</a></td>
-</tr>
-<tr>
-<td><strong>025</strong></td>
-<td>SDK <code>Task</code>-Tool Orchestration (counterpart to the asyncio orchestrator)</td>
-<td>Accepted</td>
-<td><a href="../ADR-025-sdk-task-orchestration/">ADR-025</a></td>
-</tr>
-<tr>
-<td><strong>026</strong></td>
-<td><code>--resume</code> / <code>fork_session</code> and the summary-seeded-session tradeoff</td>
-<td>Accepted</td>
-<td><a href="../ADR-026-resume-vs-summary-session/">ADR-026</a></td>
-</tr>
-<tr>
-<td><strong>027</strong></td>
-<td>Forced / <code>any</code> / <code>auto</code> <code>tool_choice</code> and cross-role <code>verify_fact</code></td>
-<td>Accepted</td>
-<td><a href="../ADR-027-forced-tool-choice/">ADR-027</a></td>
-</tr>
-<tr>
-<td><strong>028</strong></td>
-<td>Tool descriptions are the primary tool-selection mechanism</td>
-<td>Accepted</td>
-<td><a href="../ADR-028-tool-descriptions-as-selection-mechanism/">ADR-028</a></td>
-</tr>
-<tr>
-<td><strong>029</strong></td>
-<td>Adaptive decomposition (investigate → per-file → cross-file)</td>
-<td>Accepted</td>
-<td><a href="../ADR-029-adaptive-decomposition/">ADR-029</a></td>
-</tr>
-<tr>
-<td><strong>030</strong></td>
-<td>SSRF guard pins the connection target in both modes (opt-out too)</td>
-<td>Accepted</td>
-<td><a href="../ADR-030-unconditional-connection-pinning/">ADR-030</a></td>
-</tr>
-<tr>
-<td><strong>031</strong></td>
-<td>Native DAG as Single Supported Execution Engine (salvaged from <code>agentic-systems-lab</code>; single-engine proposal NOT adopted — the LangGraph adapter is retained)</td>
-<td>Superseded</td>
-<td><a href="../ADR-031-native-dag-single-engine/">ADR-031</a></td>
-</tr>
-<tr>
-<td><strong>032</strong></td>
-<td>Extract Scoring/Judge Domain into <code>agentic_v2.scoring</code> (break the server "god package", fix dependency direction)</td>
-<td>Accepted</td>
-<td><a href="../ADR-032-extract-scoring-package/">ADR-032</a></td>
-</tr>
-<tr>
-<td><strong>033</strong></td>
-<td>Defensive Import-Time Project-Root Resolution in Scoring Eval-Config Loader</td>
-<td>Accepted</td>
-<td><a href="../ADR-033-eval-config-project-root-resolution/">ADR-033</a></td>
-</tr>
-<tr>
-<td><strong>034</strong></td>
-<td>Path-First File I/O Contracts for Multi-Step Workflows</td>
-<td>Proposed</td>
-<td><a href="../ADR-034-path-first-workflow-io-contracts/">ADR-034</a></td>
-</tr>
-<tr>
-<td><strong>035</strong></td>
-<td>RAG Pipeline Architecture (LanceDB + Voyage 4 Hybrid Search)</td>
-<td>Accepted</td>
-<td><a href="../ADR-035-rag-pipeline-architecture/">ADR-035</a></td>
-</tr>
-<tr>
-<td><strong>036</strong></td>
-<td><code>OllamaBackend</code> uses the official <code>ollama</code> client (contained SDK swap)</td>
-<td>Accepted</td>
-<td><a href="../ADR-036-ollama-sdk-backend/">ADR-036</a></td>
-</tr>
-<tr>
-<td><strong>037</strong></td>
-<td>Live Ollama model discovery via the raw REST API (<code>/api/tags</code>+<code>/api/ps</code>, cloud via <code>remote_host</code>)</td>
-<td>Accepted</td>
-<td><a href="../ADR-037-live-ollama-model-discovery/">ADR-037</a></td>
-</tr>
-<tr>
-<td><strong>038</strong></td>
-<td>Live discovery for LM Studio (native <code>/api/v0/models</code>, multi-port) and ONNX (multi-root <code>genai_config.json</code>) local models</td>
-<td>Accepted</td>
-<td><a href="../ADR-038-lmstudio-onnx-discovery/">ADR-038</a></td>
-</tr>
-<tr>
-<td><strong>039</strong></td>
-<td>Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models)</td>
-<td>Accepted</td>
-<td><a href="../ADR-039-cloud-model-discovery/">ADR-039</a></td>
-</tr>
-<tr>
-<td><strong>040</strong></td>
-<td>Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains)</td>
-<td>Accepted</td>
-<td><a href="../ADR-040-curated-model-registry/">ADR-040</a></td>
-</tr>
-<tr>
-<td><strong>041</strong></td>
-<td>Bounded human-approval gate timeout — a hung ApprovalProvider fails closed (DENIED) within a configurable bound (default 30 min) instead of blocking the gated tool indefinitely</td>
-<td>Accepted</td>
-<td><a href="../ADR-041-approval-gate-timeout/">ADR-041</a></td>
-</tr>
-<tr>
-<td><strong>042</strong></td>
-<td>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework, superseding in-tree <code>agentic-v2-eval</code>, via a sliced migration (A: dependency, B: bridge module, C: cut over step_scoring, D: deprecate+delete agentic-v2-eval, E: CI cutover); evalkit stays optional until it has a public remote</td>
-<td>Proposed</td>
-<td><a href="../ADR-042-agentic-evalkit-adoption/">ADR-042</a></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Note:</strong> ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the <code>agentic-systems-lab</code> fork was salvaged into this repo as <strong>ADR-031</strong>, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to <a href="../drafts/"><code>drafts/</code></a> on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.</p>
-<hr />
-<h2 id="lineage-chains">Lineage Chains<a class="headerlink" href="#lineage-chains" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Engine Domain:
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ADR-001 (Dual Engine) ─── standalone
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Models Domain:
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ADR-002 (Circuit Breaker) ─── standalone
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ADR-016 (GitHub Models default) ─── standalone (CI policy)
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Research Domain:
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  ADR-003 (CI Gating) ──superseded-by──&gt; ADR-007 (Classification Matrix)
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                              └──extended-by──&gt; ADR-009 (Scoring Enhancements)
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>Testing Domain:
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  ADR-008 (Test Value Taxonomy) ─── standalone
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>Evaluation Domain:
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  ADR-010 (Harness Methodology) ──extended-by──&gt; ADR-011 (API Interface)
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                                      └──extended-by──&gt; ADR-012 (UI Hub)
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>Observability Domain:
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  ADR-014 (Event Wire Format) ─── standalone
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  ADR-015 (SLO Rolling Window) ─── standalone
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>Evaluation Surface Domain:
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>  ADR-017 (Dataset ID Query Params) ─── standalone (ratification)
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>Security / Reliability Domain (Sprint 1):
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>  ADR-018 (Rate Limiting + Auth Throttle) ─── standalone; cluster mode deferred to Sprint 2
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>  ADR-019 (DAG Top-Level Timeout) ─── standalone; composes additively with step-level timeouts
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  ADR-020 (Adapter Eager Validation) ─── standalone; narrows ADR-001 startup behavior
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  ADR-021 (JWT OIDC Auth) ─── extends ADR-018 auth boundary; preserves API-key fallback
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  ADR-022 (Tenant Isolation) ─── extends ADR-021 identity boundary with data scoping
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  ADR-024 (AST Expression Interpreter) ─── standalone; eliminates eval() in the engine condition evaluator
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>Execution Kernel Domain:
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>  ADR-023 (EK as OpenAI-message-format kernel, Option A′) ─── builds on ADR-002 (router) + ADR-014 (additive-only wire format); single `executionkit` package; `executionkit-contracts` retired; aligns runtime LLMBackend onto EK LLMProvider via ek_adapters bridge
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>Workflow I/O Domain:
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>  ADR-034 (Path-First I/O Contracts) ─── extends ADR-014 wire-format discipline to file artifact handoffs
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>RAG / Retrieval Domain:
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>  ADR-035 (RAG Pipeline Architecture) ─── builds on ADR-014 (Pydantic contracts) + ADR-002 (SmartModelRouter) + ADR-019 (DAG timeout); promoted from RAG-pipeline-blueprint.md
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>Eval / Scoring Domain:
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>  ADR-032 (Extract Scoring Package) ─── standalone; removes server &quot;god package&quot; coupling
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>  ADR-033 (Eval-Config Project-Root Resolution) ─── extends ADR-032; import-time path fix
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>  ADR-042 (Adopt agentic-evalkit, sliced migration) ─── supersedes agentic-v2-eval;
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>    builds on ADR-032&#39;s scoring package as the landing site for the new bridge module;
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>    follows the external-package precedent set by ADR-023 (ExecutionKit)
-</span></code></pre></div>
-<hr />
-<h2 id="implementation-status">Implementation Status<a class="headerlink" href="#implementation-status" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>ADR</th>
-<th style="text-align: center;">Decision</th>
-<th style="text-align: center;">Implemented</th>
-<th style="text-align: center;">Tests</th>
-<th>Last Audit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>001</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~65%</td>
-<td style="text-align: center;">Protocol + adapter tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>002</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~80%</td>
-<td style="text-align: center;">Extensive router/rate-limit tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>003</td>
-<td style="text-align: center;">Superseded</td>
-<td style="text-align: center;">Legacy fragments only</td>
-<td style="text-align: center;">Legacy scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>007</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~50%</td>
-<td style="text-align: center;">Unit + wiring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>008</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~90%</td>
-<td style="text-align: center;">Phase 0-3 complete: cleanup (-23), +539 new tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>009</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">~85%</td>
-<td style="text-align: center;">CI + multidimensional scoring tests</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>010</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (primitives only)</td>
-<td style="text-align: center;">Reused primitives only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>011</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~15% (partial eval infra)</td>
-<td style="text-align: center;">Adjacent route/UI helpers only</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>012</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">~10% (existing evaluations table only)</td>
-<td style="text-align: center;">None specific</td>
-<td>2026-03-17</td>
-</tr>
-<tr>
-<td>014</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (contracts + schema-drift gate)</td>
-<td style="text-align: center;">test_schemas.py, golden output</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>015</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (rolling windows, nightly gate)</td>
-<td style="text-align: center;">slo measurement tests</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>016</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (GITHUB_TOKEN wiring, fork-skip guards)</td>
-<td style="text-align: center;">CI workflow invariants</td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>017</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (shape already live; ADR ratifies)</td>
-<td style="text-align: center;">Sample-list route tests in <code>tests/server/</code></td>
-<td>2026-04-22</td>
-</tr>
-<tr>
-<td>018</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (slowapi middleware + AuthThrottle)</td>
-<td style="text-align: center;">Rate-limit + throttle unit tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>019</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (asyncio.timeout + BFS cascade)</td>
-<td style="text-align: center;">DAG executor timeout tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>020</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (validate_selected + lifespan hook)</td>
-<td style="text-align: center;">Adapter registry startup tests</td>
-<td>2026-05-14</td>
-</tr>
-<tr>
-<td>021</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (OIDC JWT middleware + API-key fallback)</td>
-<td style="text-align: center;">OIDC auth middleware tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>022</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (tenant context + scoped runs/datasets)</td>
-<td style="text-align: center;">Tenant isolation + OIDC claim tests</td>
-<td>2026-05-18</td>
-</tr>
-<tr>
-<td>023</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">F0–F5 landed (Option A′: single <code>executionkit</code> package; <code>executionkit-contracts</code> retired; B-1/B-2 fixed; <code>AGENTIC_EK_PROVIDER</code> opt-in)</td>
-<td style="text-align: center;">81 EK bridge tests green; flag-OFF floor held</td>
-<td>2026-06-01</td>
-</tr>
-<tr>
-<td>024</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (AST interpreter replaces eval() in the engine condition evaluator)</td>
-<td style="text-align: center;">test_expressions.py (128 cases incl. dunder/DoS vectors)</td>
-<td>2026-06-13</td>
-</tr>
-<tr>
-<td>032</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>agentic_v2/scoring/</code> package live)</td>
-<td style="text-align: center;">scoring unit tests</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>033</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (import-time root resolution in eval_config.py)</td>
-<td style="text-align: center;">scoring eval-config tests</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>034</td>
-<td style="text-align: center;">Proposed</td>
-<td style="text-align: center;">0% (pilot on fullstack_generation workflow pending)</td>
-<td style="text-align: center;">—</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>035</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>agentic_v2/rag/</code> thirteen modules live)</td>
-<td style="text-align: center;">rag/ unit + retrieval tests</td>
-<td>2026-06-17</td>
-</tr>
-<tr>
-<td>036</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>OllamaBackend</code> on <code>ollama.AsyncClient</code>; <code>ollama</code> promoted to core dep)</td>
-<td style="text-align: center;">test_ollama_canonical.py (SDK-stubbed)</td>
-<td>2026-06-21</td>
-</tr>
-<tr>
-<td>037</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>models/ollama_discovery.py</code> raw probe; merged into <code>enumerate_known_models</code>; UI badges)</td>
-<td style="text-align: center;">test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx</td>
-<td>2026-06-21</td>
-</tr>
-<tr>
-<td>038</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>models/local_discovery.py</code> LM Studio <code>/v1/models</code> + ONNX <code>genai_config.json</code>; merged into <code>enumerate_known_models</code>)</td>
-<td style="text-align: center;">test_local_discovery.py, test_langchain_models_unit.py</td>
-<td>2026-06-21</td>
-</tr>
-<tr>
-<td>042</td>
-<td style="text-align: center;">Partial</td>
-<td style="text-align: center;">Slice B only: <code>agentic_v2/scoring/evalkit_bridge.py</code> (additive, not wired into <code>step_scoring.py</code>)</td>
-<td style="text-align: center;">test_evalkit_bridge.py (skips without evalkit installed)</td>
-<td>2026-07-03</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="supporting-documents">Supporting Documents<a class="headerlink" href="#supporting-documents" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Document</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../RAG-pipeline-blueprint/">RAG-pipeline-blueprint.md</a></td>
-<td>Research blueprint and full implementation rationale for ADR-035. Retained alongside the formal ADR for deep reference.</td>
-</tr>
-<tr>
-<td><a href="../drafts/">drafts/</a></td>
-<td>Superseded ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix). Not formal ADRs; retained for historical reference.</td>
-</tr>
-</tbody>
-</table>
-<p><em>Previously listed supporting audit files were removed during the 2026-04-22 docs cleanup because they had fallen out of sync with the ADRs themselves. This index is now the canonical source.</em></p>
+<h1 id="adr-042-adopt-agentic-evalkit-as-arps-evaluation-framework-sliced-migration">ADR-042: Adopt <code>agentic-evalkit</code> as ARP's Evaluation Framework (Sliced Migration)<a class="headerlink" href="#adr-042-adopt-agentic-evalkit-as-arps-evaluation-framework-sliced-migration" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Proposed
+<strong>Date:</strong> 2026-07-03
+<strong>Related:</strong> <code>agentic-v2-eval/</code> (in-tree package being superseded),
+<code>agentic_v2/scoring/step_scoring.py</code>, <code>agentic_v2/scoring/evalkit_bridge.py</code>
+(new, this slice), <code>agentic_v2/models/llm.py</code>, ADR-032 (extract scoring
+package), ADR-033 (eval-config root resolution), ADR-023 (ExecutionKit
+external-package precedent)</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p><code>agentic-v2-eval</code> is ARP's in-tree evaluation package: rubric-YAML scoring
+(<code>Scorer</code>), an LLM-as-judge, dataset adapters, sandboxed execution, and
+multi-format reporting. It is a monorepo workspace member
+(<code>[tool.uv.workspace] members</code> in the root <code>pyproject.toml</code>) installed
+directly into CI (<code>.github/workflows/ci.yml</code>).</p>
+<p>A standalone library, <code>agentic-evalkit</code>, has been built independently (see
+<code>agentic-evalkit</code> in the wider workspace) as a general-purpose evaluation
+framework: typed, frozen Pydantic contracts (<code>EvalSample</code>,
+<code>NormalizedExecutionResult</code>, <code>GradeResult</code>), a structural <code>ExecutionTarget</code>
+protocol with callable/subprocess/HTTP adapters, composable graders
+(<code>Rubric</code>/<code>RubricCriterion</code>, <code>CompositeGrader</code>/<code>WeightedGrader</code>, schema and
+judge graders), dataset presets, and multi-format reporting. It enforces its
+own architectural boundary with an AST-based contract test: evalkit code may
+never import <code>agentic_v2</code>, <code>tools</code>, or <code>executionkit</code>. It has <strong>no public git
+remote yet</strong> — it exists only as a local checkout.</p>
+<p>ARP already consumes one piece of evalkit's design lineage today in reverse:
+<code>agentic_v2/models/llm.py</code> imports <code>LLMClientProtocol</code> <strong>from</strong>
+<code>agentic_v2_eval.interfaces</code> (the in-tree package), not the other way
+around — <code>agentic-v2-eval</code>'s own docs describe this as "exports
+<code>LLMClientProtocol</code> -&gt; consumed by agentic-workflows-v2." Any migration must
+account for that existing ARP -&gt; <code>agentic_v2_eval</code> dependency edge, not just
+the <code>agentic_v2 -&gt; agentic_v2_eval</code> scoring call sites.</p>
+<p>We have a working precedent for absorbing an external, independently-versioned
+library into ARP: ADR-023 moved <code>executionkit</code> from a co-located sibling path
+to a published PyPI dependency (<code>[tool.uv.sources]</code> no longer points at a
+local path; <code>ek = ["executionkit&gt;=0.1.0,&lt;0.3.0"]</code> is a normal version-pinned
+extra). <code>agentic-evalkit</code> is earlier in that same lifecycle — pre-remote,
+pre-publish — so the adoption path mirrors ADR-023's ladder but starts one
+rung lower.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Adopt <code>agentic-evalkit</code> as ARP's evaluation framework, <strong>superseding</strong>
+in-tree <code>agentic-v2-eval</code>, via a sliced migration rather than a single
+cutover PR. Each slice is independently mergeable and leaves CI green.</p>
+<h3 id="install-mechanism-ladder">Install-mechanism ladder<a class="headerlink" href="#install-mechanism-ladder" title="Permanent link">&para;</a></h3>
+<p><code>agentic-evalkit</code>'s installation method advances as the library matures,
+mirroring the ExecutionKit precedent (ADR-023):</p>
+<ol>
+<li><strong>Today (Slices A-B): local path dependency, dev-only.</strong> Added as an
+   optional <code>uv</code> workspace/path source for local development
+   (<code>pip install -e '../agentic-evalkit'</code>, analogous to how <code>ek</code> was
+   consumed before ADR-023's PyPI cutover). Not installed in CI.</li>
+<li><strong>Once evalkit has a public remote (Slice C onward): pinned git
+   dependency.</strong> <code>agentic-evalkit @ git+https://github.com/&lt;org&gt;/agentic-evalkit@&lt;SHA&gt;</code>,
+   pinned to a specific commit SHA (not a branch) for reproducibility — the
+   same discipline ARP already applies to its own dependency pins
+   (<code>ci-constraints.txt</code>).</li>
+<li><strong>Once evalkit publishes to PyPI: version-range pin.</strong> <code>agentic-evalkit&gt;=X.Y,&lt;Z</code>
+   as a normal <code>[project.optional-dependencies]</code> extra, replacing the git
+   pin — the end state ADR-023 already reached for <code>executionkit</code>.</li>
+</ol>
+<h3 id="the-hard-dependency-invariant">The hard dependency invariant<a class="headerlink" href="#the-hard-dependency-invariant" title="Permanent link">&para;</a></h3>
+<p><code>agentic-evalkit</code> must never import <code>agentic_v2</code>, <code>tools</code>, or <code>executionkit</code>.
+This is enforced <strong>inside evalkit itself</strong> by its own AST-based boundary
+contract test, not by anything in this repository. The practical consequence
+for ARP: all adaptation logic between the two systems must live on the ARP
+side of the boundary. <code>agentic_v2/scoring/evalkit_bridge.py</code> (this slice) is
+that adapter; evalkit's public API is never modified to accommodate ARP.</p>
+<h3 id="slice-plan">Slice plan<a class="headerlink" href="#slice-plan" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Slice A — dependency.</strong> Add <code>agentic-evalkit</code> as an optional, dev-only
+  local-path dependency. No behavior change; nothing imports it yet.</li>
+<li><strong>Slice B — bridge (this ADR/PR).</strong> Add
+  <code>agentic_v2/scoring/evalkit_bridge.py</code>: rubric-YAML -&gt; evalkit <code>Rubric</code>
+  conversion, a <code>score_criteria</code> weighted-score function reproducing legacy
+  <code>Scorer</code> semantics via evalkit's <code>Rubric</code> model, and a
+  <code>workflow_callable_target</code> factory wrapping an ARP workflow-run coroutine as
+  an evalkit <code>CallableTarget</code>. <strong>Additive only</strong> — <code>step_scoring.py</code> is
+  untouched, nothing calls the bridge yet, and evalkit stays optional (not
+  installed in CI).</li>
+<li><strong>Slice C — cutover.</strong> Rewire <code>step_scoring.py</code> to call
+  <code>evalkit_bridge.rubric_from_yaml_dict</code> / <code>score_criteria</code> instead of
+  <code>agentic_v2_eval.rubrics.load_rubric</code> / <code>agentic_v2_eval.scorer.Scorer</code>,
+  behind the same <code>_EVAL_AVAILABLE</code>-style guard (renamed to reflect the new
+  optional dependency). Retire the direct <code>agentic_v2_eval</code> imports from
+  <code>agentic_v2/scoring/</code>. <code>agentic_v2/models/llm.py</code>'s
+  <code>agentic_v2_eval.interfaces.LLMClientProtocol</code> import is handled
+  separately — see Risks below.</li>
+<li><strong>Slice D — deprecate and delete <code>agentic-v2-eval</code>.</strong> Once Slice C ships
+  and nothing under <code>agentic_v2/</code> imports <code>agentic_v2_eval</code> directly,
+  <code>agentic-v2-eval</code> becomes a thin deprecated re-export shim (each public
+  name re-exported from evalkit, with a <code>DeprecationWarning</code>) for one release
+  window, then the package is deleted entirely: removed from
+  <code>[tool.uv.workspace] members</code>, its directory deleted, its CI job
+  (<code>.github/workflows/eval-package-ci.yml</code>) removed.</li>
+<li><strong>Slice E — CI cutover.</strong> Once evalkit is the only evaluation dependency,
+  update <code>.github/workflows/ci.yml</code> at its exact <code>agentic-v2-eval</code> references:</li>
+<li><strong>Line 27</strong> (<code>python-smoke</code> job): <code>pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt</code>
+    -&gt; replaced with the evalkit install per the then-current rung of the
+    install-mechanism ladder.</li>
+<li><strong>Lines 167, 170, 175</strong> (<code>test-coverage</code> job, "Report whole-repo coverage"
+    step): the <code>pip install -e "agentic-v2-eval/[dev]"</code> install, the
+    <code>agentic-v2-eval/tests</code> path fed to the whole-repo pytest invocation, and
+    the <code>--cov=agentic-v2-eval/src/agentic_v2_eval</code> coverage target all need
+    updating or removing once <code>agentic-v2-eval</code> no longer exists.</li>
+<li><strong><code>pyproject.toml</code> <code>[tool.uv.workspace] members</code></strong> (currently
+    <code>["agentic-workflows-v2", "agentic-v2-eval"]</code>): drop <code>"agentic-v2-eval"</code>
+    once Slice D deletes the package.</li>
+</ul>
+<p>This ADR covers the <em>decision</em> and Slice A/B's scope in detail; Slices C-E
+are recorded here as the committed plan but implemented in their own PRs.</p>
+<h3 id="why-evalkit-stays-optional-in-arp-until-the-remote-exists">Why evalkit stays optional in ARP until the remote exists<a class="headerlink" href="#why-evalkit-stays-optional-in-arp-until-the-remote-exists" title="Permanent link">&para;</a></h3>
+<p><code>agentic-evalkit</code> has no public git remote today. A hard dependency on an
+unpublished local checkout cannot be installed by CI (no clone target, no
+package index entry), so:</p>
+<ul>
+<li>Slices A and B keep <code>agentic-evalkit</code> <strong>optional</strong> — guarded-import,
+  mirroring the existing <code>_EVAL_AVAILABLE</code> pattern in <code>step_scoring.py</code>
+  (<code>EVALKIT_AVAILABLE</code> here, deliberately public rather than
+  underscore-prefixed since this module's whole purpose is to be
+  evalkit-facing).</li>
+<li>CI for <code>agentic-workflows-v2</code> does not install <code>agentic-evalkit</code> and must
+  stay green without it — every public function in <code>evalkit_bridge.py</code> raises
+  a clear <code>RuntimeError</code> (not an import-time failure) when called with
+  evalkit absent, and <code>tests/test_evalkit_bridge.py</code> uses
+  <code>pytest.importorskip("agentic_evalkit")</code> at module level so the whole test
+  file skips cleanly rather than erroring.</li>
+<li>The optional status is lifted only once the install-mechanism ladder
+  reaches a rung CI can actually resolve (a real remote for the git pin, or a
+  PyPI release).</li>
+</ul>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>step_scoring.py</code>'s graceful-degradation contract is preserved
+  unchanged in this slice.</strong> Slice B adds a new module; it does not touch
+  <code>step_scoring.py</code>'s existing <code>_EVAL_AVAILABLE</code> guard, <code>AGENT_RUBRIC_MAP</code>,
+  or scoring behavior. Slice C is where that guard is repointed, and it must
+  preserve the same "returns <code>None</code>/disables scoring when the dependency is
+  absent" behavior <code>step_scoring.py</code> already has today — this ADR treats that
+  as a hard requirement for Slice C's acceptance, not a nice-to-have.</li>
+<li><strong>Benchmark preset coverage gap.</strong> evalkit's built-in dataset presets
+  (<code>agentic_evalkit.datasets.presets</code>) currently number far fewer than ARP's
+  benchmark surface via <code>tools.agents.benchmarks</code> (HumanEval, MBPP, SWE-bench,
+  etc.) — 7 of ARP's 9 benchmark presets have no evalkit-side equivalent yet.
+  Those 7 stay ARP-side (continue to load through the existing
+  <code>tools.agents.benchmarks</code> lazy-import path) until evalkit's preset catalog
+  grows to cover them; this is not blocking for Slices A/B, which touch
+  rubric/criterion scoring and workflow execution wrapping only, not dataset
+  loading.</li>
+<li><strong><code>LLMClientProtocol</code> does not move.</strong> <code>agentic_v2_eval.interfaces.LLMClientProtocol</code>
+  is a small, ARP-consumed structural protocol (<code>generate_text(model_name,
+  prompt, temperature, max_tokens, **kwargs) -&gt; str</code>) that predates and is
+  orthogonal to evalkit's typed contracts (<code>EvalSample</code>,
+  <code>NormalizedExecutionResult</code>, etc.) — it is a synchronous, string-in/string-out
+  LLM-call shape, not an evaluation contract. It is <strong>not</strong> an ARP-internal
+  utility as might be assumed by analogy with the rest of this migration —
+  it is currently defined inside <code>agentic_v2_eval</code> and imported <em>by</em> ARP
+  (<code>agentic_v2/models/llm.py</code>). Moving it into evalkit would import
+  <code>agentic_v2_eval</code>'s only remaining ARP-facing export into a library whose
+  entire premise is zero ARP awareness, which is backwards. When Slice D
+  deletes <code>agentic-v2-eval</code>, <code>LLMClientProtocol</code> needs a landing spot
+  decided explicitly (candidates: inline into <code>agentic_v2/models/llm.py</code>
+  since ARP is its only consumer, or a small ARP-owned protocols module) —
+  it does <strong>not</strong> default to moving into <code>agentic-evalkit</code>. Flagged here so
+  Slice D does not silently drop or mis-home it.</li>
+<li><strong>New module, no wiring yet.</strong> <code>agentic_v2/scoring/evalkit_bridge.py</code> and
+  <code>tests/test_evalkit_bridge.py</code> ship in this slice; no existing ARP code
+  path changes behavior. The bridge is exercised only by its own tests until
+  Slice C.</li>
+<li><strong>Score parity is exact, not approximate, for the ported aggregation.</strong>
+  <code>evalkit_bridge.score_criteria</code> reproduces <code>agentic_v2_eval.scorer.Scorer.score(...)
+  .weighted_score</code> bit-for-bit (verified against the legacy <code>Scorer</code> across
+  every ARP rubric YAML that defines <code>criteria</code>, including missing-criterion,
+  zero-weight-criterion, and out-of-range-value edge cases). This required
+  computing the weighted mean directly from the converted <code>Rubric</code>'s
+  criteria rather than driving evalkit's <code>CompositeGrader</code>, because
+  <code>CompositeGrader</code>'s aggregation excludes a missing/non-definitive
+  criterion's weight from <em>both</em> the numerator and denominator, while legacy
+  <code>Scorer</code> fixes the denominator over <em>all</em> criteria weights up front and
+  excludes a missing criterion from the numerator only — the two are not
+  interchangeable for that case. See <code>evalkit_bridge.score_criteria</code>'s
+  docstring for the full derivation.</li>
+<li><strong>Rubric shape is lossy in one direction.</strong> ARP's rubric YAML carries
+  fields evalkit's <code>Rubric</code>/<code>RubricCriterion</code> has no slot for: per-level
+  rubric text (<code>levels: {5: "...", ..., 0: "..."}</code>, documentation only —
+  <code>Scorer</code> never reads it), rubric-level <code>thresholds</code> (<code>pass</code>/<code>excellent</code>/
+  <code>warning</code> — a caller concern, not a per-criterion concept), and
+  <code>metadata</code>. None of these affect <code>score_criteria</code>'s numeric output;
+  <code>rubric_from_yaml_dict</code>'s docstring documents each dropped field and why.</li>
+</ul>
+<h2 id="alternatives-considered">Alternatives considered<a class="headerlink" href="#alternatives-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Single-PR cutover (dependency + bridge + step_scoring rewire + delete
+  agentic-v2-eval all at once)</strong> — rejected: too large to review safely, and
+  couples "add an optional dependency" with "delete a package <code>models/llm.py</code>
+  still imports from," which would break the build mid-PR. The ADR-032
+  scoring-package extraction and ADR-023 EK migration both took a staged
+  approach for the same reason; this repo's own history favors slices over
+  big-bang migrations.</li>
+<li><strong>Wire <code>step_scoring.py</code> directly to evalkit in this slice (skip the
+  bridge)</strong> — rejected: <code>step_scoring.py</code>'s <code>Scorer(rubric_data).score(scores)
+  .weighted_score</code> call site is small and stable; rewriting it to speak
+  evalkit's richer, execution-result-shaped grading API directly (rather than
+  through an adapter) would spread evalkit-specific object construction
+  through scoring call sites instead of concentrating it in one bridge
+  module, making the eventual <code>agentic-v2-eval</code> deletion (Slice D) touch more
+  files instead of fewer.</li>
+<li><strong>Drive <code>score_criteria</code> through evalkit's <code>CompositeGrader</code>/<code>WeightedGrader</code>
+  instead of computing the weighted mean directly</strong> — rejected: as detailed
+  in Consequences, <code>CompositeGrader</code>'s missing-component semantics
+  (exclude from numerator <em>and</em> denominator) diverge from legacy <code>Scorer</code>'s
+  (exclude from numerator only) whenever a criterion is missing from the
+  input scores, which would silently change scoring behavior for exactly the
+  case Slice C's callers (e.g. <code>step_scoring.score_step</code>, which always scores
+  every criterion in <code>scorer.criteria</code> today but need not forever) most need
+  to be safe against.</li>
+<li><strong>Require evalkit unconditionally starting now, add it to CI immediately</strong>
+  — rejected: evalkit has no public remote; CI cannot install an unpublished
+  local-only checkout. This would either break CI outright or force a
+  path-hack that only works on the author's machine — neither is acceptable
+  for a shared repo.</li>
+</ul>
 
 
 
@@ -3493,7 +3130,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 3, 2026 18:34:03 UTC">July 3, 2026</span>
   </span>
 
     
@@ -3523,44 +3160,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../../CHANGELOG/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Changelog">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Changelog
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../../CONTRIBUTING/" class="md-footer__link md-footer__link--next" aria-label="Next: Contributing">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Contributing
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
