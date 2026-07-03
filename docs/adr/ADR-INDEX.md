@@ -1,7 +1,7 @@
 # ADR Index — agentic-workflows-v2
 
-> **Last updated:** 2026-06-25
-> **Total ADRs:** 36 (29 Accepted, 5 Proposed, 2 Superseded)
+> **Last updated:** 2026-07-03
+> **Total ADRs:** 37 (29 Accepted, 6 Proposed, 2 Superseded)
 
 ---
 
@@ -46,6 +46,7 @@
 | **039** | Live model discovery for keyed cloud providers (OpenAI / Anthropic / Gemini / GitHub Models) | Accepted | [ADR-039](ADR-039-cloud-model-discovery.md) |
 | **040** | Curated single-source model registry (one YAML + loader feeds both engines; reconciles divergent tier chains) | Accepted | [ADR-040](ADR-040-curated-model-registry.md) |
 | **041** | Bounded human-approval gate timeout — a hung ApprovalProvider fails closed (DENIED) within a configurable bound (default 30 min) instead of blocking the gated tool indefinitely | Accepted | [ADR-041](ADR-041-approval-gate-timeout.md) |
+| **042** | Adopt `agentic-evalkit` as ARP's evaluation framework, superseding in-tree `agentic-v2-eval`, via a sliced migration (A: dependency, B: bridge module, C: cut over step_scoring, D: deprecate+delete agentic-v2-eval, E: CI cutover); evalkit stays optional until it has a public remote | Proposed | [ADR-042](ADR-042-agentic-evalkit-adoption.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 
@@ -99,6 +100,9 @@ RAG / Retrieval Domain:
 Eval / Scoring Domain:
   ADR-032 (Extract Scoring Package) ─── standalone; removes server "god package" coupling
   ADR-033 (Eval-Config Project-Root Resolution) ─── extends ADR-032; import-time path fix
+  ADR-042 (Adopt agentic-evalkit, sliced migration) ─── supersedes agentic-v2-eval;
+    builds on ADR-032's scoring package as the landing site for the new bridge module;
+    follows the external-package precedent set by ADR-023 (ExecutionKit)
 ```
 
 ---
@@ -134,6 +138,7 @@ Eval / Scoring Domain:
 | 036 | Yes | 100% (`OllamaBackend` on `ollama.AsyncClient`; `ollama` promoted to core dep) | test_ollama_canonical.py (SDK-stubbed) | 2026-06-21 |
 | 037 | Yes | 100% (`models/ollama_discovery.py` raw probe; merged into `enumerate_known_models`; UI badges) | test_ollama_discovery.py, test_langchain_models_unit.py, ModelFinderPage.test.tsx | 2026-06-21 |
 | 038 | Yes | 100% (`models/local_discovery.py` LM Studio `/v1/models` + ONNX `genai_config.json`; merged into `enumerate_known_models`) | test_local_discovery.py, test_langchain_models_unit.py | 2026-06-21 |
+| 042 | Partial | Slice B only: `agentic_v2/scoring/evalkit_bridge.py` (additive, not wired into `step_scoring.py`) | test_evalkit_bridge.py (skips without evalkit installed) | 2026-07-03 |
 
 ---
 
