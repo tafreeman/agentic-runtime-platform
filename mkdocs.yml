@@ -49,6 +49,7 @@ theme:
 extra_css:
   - stylesheets/tokens.css
   - stylesheets/ember.css
+  - stylesheets/landing.css
   - stylesheets/extra.css
 
 # Files excluded from the built site (gitignore-style patterns relative to docs/).

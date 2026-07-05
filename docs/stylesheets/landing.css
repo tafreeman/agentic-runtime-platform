@@ -1,0 +1,444 @@
+/*
+  Agentic Runtime Platform — landing page components
+
+  Every rule here is scoped to components used by docs/index.md and is built
+  exclusively from the ember/console design tokens in tokens.css (loaded
+  before this file via mkdocs.yml extra_css). Material chrome mapping lives
+  in ember.css; general typeset refinements live in extra.css.
+*/
+
+/* ============================================================
+   1. Hero
+   ============================================================ */
+
+.ember-hero {
+  margin: 0 0 1.25rem;
+  padding: 3rem 2.5rem 2.5rem;
+  background:
+    radial-gradient(ellipse at 15% 0%, var(--accent-soft) 0%, transparent 55%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-top: var(--border-accent); /* 3px ember signal stripe */
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.ember-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+.ember-hero .eyebrow svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ember-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+  margin: 0 0 0.75rem;
+}
+
+.ember-hero .hero-sub {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--fg-2);
+  line-height: var(--lh-body);
+  max-width: 62ch;
+  margin: 0 0 1.6rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1.75rem;
+}
+
+.hero-actions .md-button {
+  margin: 0;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  padding: 0.25em 0.65em;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.status-badge::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+/* Terminal prompt line */
+.term {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--fg-2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.5em 0.9em;
+  margin: 0;
+  max-width: 100%;
+}
+
+.term .term-prompt {
+  color: var(--accent);
+  user-select: none;
+}
+
+.term .term-cmd {
+  color: var(--fg-1);
+  font-weight: 500;
+}
+
+.term .term-comment {
+  color: var(--fg-3);
+}
+
+/* ============================================================
+   2. Trusted stack badges
+   ============================================================ */
+
+.trusted-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 2.5rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.trusted-stack span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   3. Section kickers and forward links
+   ============================================================ */
+
+.section-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 3rem 0 0;
+}
+
+.md-typeset .section-kicker + h2 {
+  margin-top: 0.35rem;
+}
+
+.md-typeset a.link-forward {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.md-typeset a.link-forward::after {
+  content: " →";
+}
+
+/* ============================================================
+   4. Feature grid
+   ============================================================ */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1rem;
+  margin: 1.4rem 0 1rem;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 1.4rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.feature-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.fc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 0.9rem;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--accent);
+}
+
+.fc-icon svg {
+  width: 19px;
+  height: 19px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.md-typeset .fc-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-title);
+  line-height: var(--lh-card);
+  color: var(--fg-1);
+  margin: 0 0 0.5rem;
+}
+
+.md-typeset .feature-card .fc-body {
+  flex: 1;
+  font-size: 0.85rem;
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  margin: 0 0 0.9rem;
+}
+
+.md-typeset a.fc-link {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.md-typeset a.fc-link::after {
+  content: " →";
+}
+
+/* ============================================================
+   5. Stat strip
+   ============================================================ */
+
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 1rem;
+  padding: 1.4rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: var(--border-accent); /* ember signal stripe */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+}
+
+.stat-strip .stat-item {
+  padding: 0.4rem;
+}
+
+.stat-strip .stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-strip .stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--fg-2);
+}
+
+/* ============================================================
+   6. Documentation nav cards
+   ============================================================ */
+
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1rem;
+  margin: 1.4rem 0 1rem;
+}
+
+.doc-card {
+  padding: 1.3rem 1.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.md-typeset .dc-title {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--fg-2);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.55rem;
+  margin: 0 0 0.75rem;
+}
+
+.md-typeset .doc-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-typeset .doc-card ul li {
+  margin: 0 0 0.55rem;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: var(--lh-caption);
+  color: var(--fg-2);
+}
+
+.md-typeset .doc-card ul li:last-child {
+  margin-bottom: 0;
+}
+
+.md-typeset .doc-card ul li a {
+  font-weight: 600;
+}
+
+/* ============================================================
+   7. CTA card
+   ============================================================ */
+
+.cta-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 3rem 0 1rem;
+  padding: 1.8rem 2rem;
+  background:
+    radial-gradient(ellipse at 100% 0%, var(--accent-soft) 0%, transparent 55%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-left: var(--border-accent); /* ember signal stripe */
+  border-radius: var(--radius-lg);
+}
+
+.md-typeset .cta-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--fg-1);
+}
+
+.md-typeset .cta-card p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--fg-2);
+}
+
+/* ============================================================
+   8. Mobile responsiveness
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .ember-hero {
+    padding: 1.75rem 1.25rem 1.5rem;
+  }
+
+  .ember-hero h1 {
+    font-size: 1.65rem;
+  }
+
+  .term {
+    font-size: 0.72rem;
+  }
+
+  .trusted-stack {
+    padding: 0.6rem;
+  }
+
+  .trusted-stack span {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+  }
+
+  .stat-strip .stat-value {
+    font-size: 1.4rem;
+  }
+
+  .cta-card {
+    padding: 1.3rem 1.25rem;
+  }
+}
