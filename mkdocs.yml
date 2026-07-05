@@ -10,19 +10,11 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  # Console design system is a g100 dark-only language — no light scheme.
   palette:
-    - scheme: slate
-      primary: amber
-      accent: amber
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    - scheme: default
-      primary: amber
-      accent: amber
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+    scheme: slate
+    primary: black
+    accent: cyan
   features:
     - navigation.tabs
     - navigation.sections
@@ -43,14 +35,13 @@ theme:
   icon:
     repo: fontawesome/brands/github
   font:
-    text: Inter
-    code: JetBrains Mono
+    text: IBM Plex Sans
+    code: IBM Plex Mono
 
 extra_css:
   - stylesheets/tokens.css
-  - stylesheets/ember.css
+  - stylesheets/console.css
   - stylesheets/landing.css
-  - stylesheets/extra.css
 
 # Files excluded from the built site (gitignore-style patterns relative to docs/).
 # OWASP_LLM_THREAT_MODEL.md uses docs/-prefixed internal links that are
@@ -77,9 +68,9 @@ plugins:
   - social:
       cards: !ENV [CARDS, true]
       cards_layout_options:
-        background_color: "#08080c"
-        color: "#ececde"
-        font_family: "JetBrains Mono"
+        background_color: "#161616"
+        color: "#f4f4f4"
+        font_family: "IBM Plex Mono"
 
 markdown_extensions:
   - pymdownx.superfences:
@@ -119,63 +110,63 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started:
+  - Getting started:
       - Overview: getting-started/index.md
       - Installation: getting-started/installation.md
-      - Quick Start: getting-started/quickstart.md
-      - First Workflow: getting-started/first-workflow.md
-      - Development Guide: development-guide.md
-      - No-LLM Dev Mode: NO_LLM_MODE.md
+      - Quick start: getting-started/quickstart.md
+      - First workflow: getting-started/first-workflow.md
+      - Development guide: development-guide.md
+      - No-LLM dev mode: NO_LLM_MODE.md
       - Onboarding: ONBOARDING.md
   - Architecture:
       - Overview: ARCHITECTURE.md
-      - Runtime Engine: architecture-runtime.md
-      - UI Dashboard: architecture-ui.md
-      - Evaluation Framework: architecture-eval.md
-      - Tools & Providers: architecture-tools.md
+      - Runtime engine: architecture-runtime.md
+      - UI dashboard: architecture-ui.md
+      - Evaluation framework: architecture-eval.md
+      - Tools & providers: architecture-tools.md
       - Integration: integration-architecture.md
-  - Deep Dives:
+  - Deep dives:
       - Server & API: deep-dive-server.md
       - Agents: deep-dive-agents.md
-      - RAG Pipeline: rag/index.md
-      - Evaluation Engine: deep-dive-agentic-v2-eval.md
-  - API Reference:
-      - REST Endpoints: api-contracts-runtime.md
-      - Data Models: data-models-runtime.md
-      - UI Components: component-inventory-ui.md
-      - UI Pages: ui/pages.md
-      - UI API Integration: ui/api-integration.md
+      - RAG pipeline: rag/index.md
+      - Evaluation engine: deep-dive-agentic-v2-eval.md
+  - API reference:
+      - REST endpoints: api-contracts-runtime.md
+      - Data models: data-models-runtime.md
+      - UI components: component-inventory-ui.md
+      - UI pages: ui/pages.md
+      - UI API integration: ui/api-integration.md
   - Workflows:
-      - Authoring Guide: WORKFLOW_AUTHORING.md
-      - Pattern Catalog: PATTERN_CATALOG.md
+      - Authoring guide: WORKFLOW_AUTHORING.md
+      - Pattern catalog: PATTERN_CATALOG.md
       - Reference: workflows/index.md
   - Evaluation:
       - Framework: architecture-eval.md
       - Rubrics: evaluation/rubrics.md
       - LLM-as-Judge: evaluation/judge.md
-      - Production Gating: evaluation/gating.md
+      - Production gating: evaluation/gating.md
       - Runners: evaluation/runners.md
       - Datasets: evaluation/datasets.md
   - Tools:
       - Overview: tools/index.md
       - Architecture: architecture-tools.md
-      - LLM Client: tools/llm-client.md
-      - Local ONNX Models: tools/local-models.md
+      - LLM client: tools/llm-client.md
+      - Local ONNX models: tools/local-models.md
       - Windows AI: tools/windows-ai.md
-      - Model Probing: tools/model-probing.md
-      - Provider Limits: tools/provider-limits.md
+      - Model probing: tools/model-probing.md
+      - Provider limits: tools/provider-limits.md
       - Benchmarks: tools/benchmarks.md
   - Operations:
       - Overview: operations/index.md
-      - Deployment Guide: deployment-guide.md
-      - Security Hardening: operations/security-hardening.md
+      - Deployment guide: deployment-guide.md
+      - Security hardening: operations/security-hardening.md
       - Troubleshooting: operations/troubleshooting.md
   - Reference:
-      - Configuration Reference: configuration.md
+      - Configuration reference: configuration.md
       - Glossary: GLOSSARY.md
-      - Coding Standards: CODING_STANDARDS.md
-      - Known Limitations: KNOWN_LIMITATIONS.md
-      - AI Risk Management: AI_RISK_MANAGEMENT.md
+      - Coding standards: CODING_STANDARDS.md
+      - Known limitations: KNOWN_LIMITATIONS.md
+      - AI risk management: AI_RISK_MANAGEMENT.md
       - Migrations: MIGRATIONS.md
   - Project:
       - Overview: project-overview.md

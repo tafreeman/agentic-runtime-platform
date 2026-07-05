@@ -1,174 +1,169 @@
 /*
-  Agentic Runtime Platform — landing page components
+  Agentic Runtime Platform — landing page components (Console)
 
-  Every rule here is scoped to components used by docs/index.md and is built
-  exclusively from the ember/console design tokens in tokens.css (loaded
-  before this file via mkdocs.yml extra_css). Material chrome mapping lives
-  in ember.css; general typeset refinements live in extra.css.
+  Components used by docs/index.md, composed from the Console design
+  system: cinematic hero under a scrim, mono eyebrows, Carbon tiles
+  (square, hairline, flat), tag pills, and the horizon rule (styled
+  globally on `hr` in console.css). No glows, no gradients in chrome,
+  no rounded corners — status dots and tag pills are the only circles.
+
+  Note on units: MkDocs Material sets a 20px root, so px-true sizes are
+  written as scaled rem here rather than the tokens' composite styles.
 */
 
 /* ============================================================
-   1. Hero
+   1. Hero — cinematic imagery, bottom-anchored content on a scrim
    ============================================================ */
 
-.ember-hero {
-  margin: 0 0 1.25rem;
-  padding: 3rem 2.5rem 2.5rem;
-  background:
-    radial-gradient(ellipse at 15% 0%, var(--accent-soft) 0%, transparent 55%),
-    var(--surface);
-  border: 1px solid var(--border);
-  border-top: var(--border-accent); /* 3px ember signal stripe */
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+.console-hero {
   position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 26rem;
+  margin: 0 0 0.2rem;
+  border: 1px solid var(--border-subtle-00);
+  border-radius: var(--radius-0);
+  background:
+    var(--gradient-scrim),
+    url("../assets/hero-cinematic.jpg") center / cover no-repeat,
+    var(--void);
   overflow: hidden;
+}
+
+.console-hero .hero-inner {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 2rem 1.8rem;
+  max-width: 46rem;
 }
 
 .hero-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: 0.8rem;
+  margin-bottom: 0.9rem;
 }
 
-.ember-hero .eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.hero-eyebrow {
   font-family: var(--font-mono);
-  font-size: var(--fs-eyebrow);
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-eyebrow);
+  font-size: 0.6rem;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--accent);
-  margin: 0;
+  color: var(--horizon-30);
 }
 
-.ember-hero .eyebrow svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.console-hero h1 {
+  font-family: var(--font-sans);
+  font-size: clamp(1.7rem, 4.5vw, 2.7rem);
+  font-weight: var(--fw-light);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.13;
+  color: var(--text-primary);
+  margin: 0 0 0.8rem;
 }
 
-.ember-hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 4.5vw, 3rem);
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-hero);
-  line-height: var(--lh-snug);
-  color: var(--fg-1);
-  margin: 0 0 0.75rem;
-}
-
-.ember-hero .hero-sub {
-  font-family: var(--font-mono);
-  font-size: 1rem;
-  color: var(--fg-2);
-  line-height: var(--lh-body);
-  max-width: 62ch;
-  margin: 0 0 1.6rem;
+.console-hero .hero-sub {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: var(--tracking-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 34rem;
+  margin: 0 0 1.3rem;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin: 0 0 1.75rem;
+  margin: 0 0 1.4rem;
 }
 
 .hero-actions .md-button {
   margin: 0;
 }
 
-/* Status badge */
-.status-badge {
+/* Status tag — outline tag with a live dot (dots: the only circles) */
+.status-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.35rem;
+  height: 1.1rem;
+  padding: 0 0.5rem;
   font-family: var(--font-mono);
-  font-size: var(--fs-eyebrow);
-  font-weight: var(--fw-semi);
-  letter-spacing: var(--tracking-label);
+  font-size: 0.6rem;
+  letter-spacing: var(--tracking-caption);
+  border: 1px solid var(--border-strong-01);
+  border-radius: var(--radius-full);
+  color: var(--green-30);
+  background: transparent;
   text-transform: uppercase;
-  padding: 0.25em 0.65em;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--success) 12%, transparent);
-  color: var(--success);
-  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
 }
 
-.status-badge::before {
+.status-tag::before {
   content: "";
-  display: inline-block;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 6px var(--success);
+  border-radius: var(--radius-full);
+  background: var(--support-success);
+  animation: status-breathe 700ms var(--ease-expressive) infinite alternate;
 }
 
-/* Terminal prompt line */
+@keyframes status-breathe {
+  from { opacity: 1; }
+  to   { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-tag::before { animation: none; }
+}
+
+/* Terminal line — code-02 on a near-black field */
 .term {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
-  color: var(--fg-2);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  font-size: 0.66rem;
+  letter-spacing: var(--tracking-caption);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--border-subtle-00);
+  border-radius: var(--radius-0);
   padding: 0.5em 0.9em;
   margin: 0;
   max-width: 100%;
 }
 
-.term .term-prompt {
-  color: var(--accent);
-  user-select: none;
-}
-
-.term .term-cmd {
-  color: var(--fg-1);
-  font-weight: 500;
-}
-
-.term .term-comment {
-  color: var(--fg-3);
-}
+.term .term-prompt { color: var(--horizon-40); user-select: none; }
+.term .term-cmd    { color: var(--text-primary); }
+.term .term-comment { color: var(--text-helper); }
 
 /* ============================================================
-   2. Trusted stack badges
+   2. Stack tags — outline tag pills in a hairline-topped row
    ============================================================ */
 
 .trusted-stack {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 2.5rem;
-  padding: 0.85rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  gap: 0.4rem;
+  margin: 0 0 2.6rem;
+  padding: 0.8rem 0 0;
 }
 
 .trusted-stack span {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: var(--surface-2);
+  height: 1.1rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border-strong-01);
+  border-radius: var(--radius-full);
+  background: transparent;
   font-family: var(--font-mono);
-  font-size: 0.76rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--fg-2);
+  font-size: 0.6rem;
+  letter-spacing: var(--tracking-caption);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -178,22 +173,21 @@
 
 .section-kicker {
   font-family: var(--font-mono);
-  font-size: var(--fs-eyebrow);
-  font-weight: var(--fw-bold);
-  letter-spacing: var(--tracking-eyebrow);
+  font-size: 0.6rem;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-helper);
   margin: 3rem 0 0;
 }
 
 .md-typeset .section-kicker + h2 {
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
 }
 
 .md-typeset a.link-forward {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.66rem;
+  letter-spacing: var(--tracking-caption);
 }
 
 .md-typeset a.link-forward::after {
@@ -201,81 +195,67 @@
 }
 
 /* ============================================================
-   4. Feature grid
+   4. Feature grid — Carbon tiles
    ============================================================ */
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.8rem;
   margin: 1.4rem 0 1rem;
 }
 
 .feature-card {
   display: flex;
   flex-direction: column;
-  padding: 1.4rem 1.4rem 1.2rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition:
-    border-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
-    transform var(--dur-base) var(--ease-out);
+  padding: 1rem;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle-00);
+  border-radius: var(--radius-0);
+  transition: background-color var(--duration-fast-02) var(--ease-productive),
+              border-color var(--duration-fast-02) var(--ease-productive);
 }
 
 .feature-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  box-shadow: var(--shadow-glow);
-  transform: translateY(-2px);
+  background: var(--layer-hover-01);
 }
 
 .fc-icon {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  margin-bottom: 0.9rem;
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
-  border-radius: var(--radius-md);
-  color: var(--accent);
+  width: 20px;
+  height: 20px;
+  margin-bottom: 0.7rem;
+  color: var(--icon-secondary);
 }
 
 .fc-icon svg {
-  width: 19px;
-  height: 19px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
 }
 
 .md-typeset .fc-title {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: var(--fw-semi);
-  letter-spacing: var(--tracking-title);
-  line-height: var(--lh-card);
-  color: var(--fg-1);
-  margin: 0 0 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: var(--fw-regular);
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin: 0 0 0.45rem;
 }
 
 .md-typeset .feature-card .fc-body {
   flex: 1;
-  font-size: 0.85rem;
-  line-height: var(--lh-body);
-  color: var(--fg-2);
-  margin: 0 0 0.9rem;
+  font-size: 0.7rem;
+  letter-spacing: var(--tracking-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0 0 0.8rem;
 }
 
 .md-typeset a.fc-link {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.62rem;
+  letter-spacing: var(--tracking-caption);
 }
 
 .md-typeset a.fc-link::after {
@@ -283,76 +263,71 @@
 }
 
 /* ============================================================
-   5. Stat strip
+   5. Stat strip — data callouts, hairline column dividers
    ============================================================ */
 
 .stat-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   margin: 1.5rem 0 1rem;
-  padding: 1.4rem 1.2rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: var(--border-accent); /* ember signal stripe */
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
-  text-align: center;
+  border-top: 1px solid var(--border-subtle-00);
+  border-bottom: 1px solid var(--border-subtle-00);
 }
 
 .stat-strip .stat-item {
-  padding: 0.4rem;
+  padding: 1rem 1rem 1.1rem;
+  border-left: 1px solid var(--border-subtle-00);
+}
+
+.stat-strip .stat-item:first-child {
+  border-left: none;
 }
 
 .stat-strip .stat-value {
   font-family: var(--font-mono);
-  font-size: 1.8rem;
-  font-weight: var(--fw-bold);
-  line-height: 1;
-  margin-bottom: 0.35rem;
-  background: var(--gradient-brand);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.4rem;
+  font-weight: var(--fw-regular);
+  line-height: 1.1;
+  color: var(--text-highlight);
+  margin-bottom: 0.3rem;
 }
 
 .stat-strip .stat-label {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  text-transform: uppercase;
+  font-size: 0.6rem;
   letter-spacing: var(--tracking-label);
-  color: var(--fg-2);
+  text-transform: uppercase;
+  color: var(--text-helper);
 }
 
 /* ============================================================
-   6. Documentation nav cards
+   6. Documentation nav cards — tiles with mono headers
    ============================================================ */
 
 .doc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.8rem;
   margin: 1.4rem 0 1rem;
 }
 
 .doc-card {
-  padding: 1.3rem 1.4rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 1rem 1.1rem;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle-00);
+  border-radius: var(--radius-0);
 }
 
 .md-typeset .dc-title {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: var(--fw-semi);
+  font-size: 0.62rem;
+  font-weight: var(--fw-regular);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--fg-2);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.55rem;
-  margin: 0 0 0.75rem;
+  color: var(--text-helper);
+  border-bottom: 1px solid var(--border-subtle-00);
+  padding-bottom: 0.5rem;
+  margin: 0 0 0.7rem;
 }
 
 .md-typeset .doc-card ul {
@@ -362,83 +337,71 @@
 }
 
 .md-typeset .doc-card ul li {
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.5rem;
   padding: 0;
-  font-size: 0.85rem;
-  line-height: var(--lh-caption);
-  color: var(--fg-2);
+  font-size: 0.68rem;
+  letter-spacing: var(--tracking-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
 
 .md-typeset .doc-card ul li:last-child {
   margin-bottom: 0;
 }
 
-.md-typeset .doc-card ul li a {
-  font-weight: 600;
-}
-
 /* ============================================================
-   7. CTA card
+   7. CTA card — selected-tile pattern (3px horizon left bar)
    ============================================================ */
 
 .cta-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.6rem;
+  gap: 0.5rem;
   margin: 3rem 0 1rem;
-  padding: 1.8rem 2rem;
-  background:
-    radial-gradient(ellipse at 100% 0%, var(--accent-soft) 0%, transparent 55%),
-    var(--surface);
-  border: 1px solid var(--border);
-  border-left: var(--border-accent); /* ember signal stripe */
-  border-radius: var(--radius-lg);
+  padding: 1.4rem 1.6rem;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle-00);
+  border-left: 3px solid var(--horizon-40);
+  border-radius: var(--radius-0);
 }
 
 .md-typeset .cta-card h3 {
   margin: 0;
-  font-size: 1.25rem;
-  color: var(--fg-1);
+  font-size: 1rem;
+  font-weight: var(--fw-regular);
+  color: var(--text-primary);
 }
 
 .md-typeset .cta-card p {
   margin: 0;
-  max-width: 62ch;
-  color: var(--fg-2);
+  max-width: 34rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
 }
 
 /* ============================================================
-   8. Mobile responsiveness
+   8. Mobile
    ============================================================ */
 
 @media (max-width: 600px) {
-  .ember-hero {
-    padding: 1.75rem 1.25rem 1.5rem;
+  .console-hero .hero-inner {
+    padding: 3rem 1rem 1.2rem;
   }
 
-  .ember-hero h1 {
-    font-size: 1.65rem;
+  .console-hero h1 {
+    font-size: 1.5rem;
   }
 
   .term {
-    font-size: 0.72rem;
-  }
-
-  .trusted-stack {
-    padding: 0.6rem;
-  }
-
-  .trusted-stack span {
-    font-size: 0.72rem;
-    padding: 0.2rem 0.55rem;
+    font-size: 0.58rem;
   }
 
   .stat-strip .stat-value {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
   }
 
   .cta-card {
-    padding: 1.3rem 1.25rem;
+    padding: 1.1rem 1rem;
   }
 }

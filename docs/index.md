@@ -5,24 +5,22 @@ hide:
   - toc
 ---
 
-<div class="ember-hero" markdown="1">
+<div class="console-hero" markdown="1">
+<div class="hero-inner" markdown="1">
 
 <div class="hero-meta">
-  <span class="eyebrow">
-    <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
-    Multi-agent orchestration platform
-  </span>
-  <span class="status-badge">Actively maintained</span>
+  <span class="hero-eyebrow">L2 · platform · multi-agent orchestration</span>
+  <span class="status-tag">status: active</span>
 </div>
 
 # Agentic Runtime Platform
 
-<p class="hero-sub">Production-grade orchestration for multi-agent AI systems. Declarative YAML workflows compile to executable DAGs, route across eight LLM providers with health-aware failover, and are scored by rubric-based evaluation — observable end to end.</p>
+<p class="hero-sub">Declarative YAML workflows compile to executable DAGs. Tiered routing across eight LLM providers with health-aware failover, rubric-scored evaluation, and OpenTelemetry traces on every stage. Deterministic core; the LLM sits at the boundary.</p>
 
 <div class="hero-actions" markdown>
 [Get started](getting-started/quickstart.md){ .md-button .md-button--primary }
 [Read the architecture](ARCHITECTURE.md){ .md-button }
-[View on GitHub](https://github.com/tafreeman/agentic-runtime-platform){ .md-button }
+[View source](https://github.com/tafreeman/agentic-runtime-platform){ .md-button }
 </div>
 
 <div class="term">
@@ -31,6 +29,7 @@ hide:
   <span class="term-comment"># zero-credential dev mode</span>
 </div>
 
+</div>
 </div>
 
 <div class="trusted-stack" markdown>
@@ -43,7 +42,7 @@ hide:
 <span>mypy --strict</span>
 </div>
 
-<p class="section-kicker">Get running</p>
+<p class="section-kicker">get running</p>
 
 ## Quick start in 60 seconds
 
@@ -65,11 +64,13 @@ echo '{"task":"hello"}' > /tmp/test-input.json
 agentic run test_deterministic --input /tmp/test-input.json
 ```
 
-In under a minute you will see the DAG executor emit a structured run record — step timings, tool calls, and a final scored artifact. No provider credentials required.
+In under a minute the DAG executor emits a structured run record — step timings, tool calls, and a final scored artifact. No provider credentials required.
 
 [Full walkthrough](getting-started/quickstart.md){ .link-forward }
 
-<p class="section-kicker">Pipeline</p>
+---
+
+<p class="section-kicker">pipeline</p>
 
 ## How it works
 
@@ -84,76 +85,80 @@ flowchart LR
     E --> F[(Provider)]
     F -.observation.-> D
     D --> G[Artifacts<br/><small>Pydantic contracts</small>]
-    style A fill:#16161e,color:#ececde,stroke:#d97757
-    style F fill:#16161e,color:#ececde,stroke:#6ea8d8
-    style G fill:#16161e,color:#ececde,stroke:#4ade80
+    style A fill:#262626,color:#f4f4f4,stroke:#33b1ff
+    style F fill:#262626,color:#f4f4f4,stroke:#4589ff
+    style G fill:#262626,color:#f4f4f4,stroke:#42be65
 ```
 
-<p class="section-kicker">Capabilities</p>
+---
+
+<p class="section-kicker">capabilities</p>
 
 ## Built for production from the first commit
 
 <div class="feature-grid" markdown>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="9" height="7" rx="1"></rect><rect x="13" y="14" width="9" height="7" rx="1"></rect><path d="M6.5 10v4a2 2 0 0 0 2 2H13"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="m20,6c0,1.8587,1.2795,3.4109,3,3.858v4.142c0,1.6543-1.3457,3-3,3h-8c-1.1299,0-2.1617.391-3,1.0256v-8.1676c1.7203-.4471,3-1.9993,3-3.858,0-2.2061-1.7944-4-4-4s-4,1.7939-4,4c0,1.8587,1.2797,3.4108,3,3.858v12.142s0,.142,0,.142c-1.7203.4473-3,1.9997-3,3.858,0,2.2056,1.7944,4,4,4s4-1.7944,4-4c0-1.8583-1.2797-3.4107-3-3.858v-.142c0-1.6543,1.3457-3,3-3h8c2.7568,0,5-2.2432,5-5v-4.142c1.7205-.4471,3-1.9993,3-3.858,0-2.2061-1.7939-4-4-4s-4,1.7939-4,4Zm-14,0c0-1.1025.897-2,2-2s2,.8975,2,2c0,1.1025-.897,2-2,2s-2-.8975-2-2Zm4,20c0,1.103-.897,2-2,2s-2-.897-2-2,.897-2,2-2,2,.897,2,2ZM26,6c0,1.1025-.8975,2-2,2s-2-.8975-2-2c0-1.1025.8975-2,2-2s2,.8975,2,2Z"></path></svg></div>
 <h3 class="fc-title">Dual execution engines</h3>
-<p class="fc-body">Run any workflow through the native DAG executor or the LangGraph-backed engine. Both produce structurally equivalent output, and <code>agentic compare</code> diffs them side by side.</p>
+<p class="fc-body">Run any workflow through the native DAG executor or the LangGraph-backed engine. Both produce structurally equivalent output; <code>agentic compare</code> diffs them side by side.</p>
 [Architecture overview](ARCHITECTURE.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16"></path><path d="M4 12h10"></path><path d="M4 18h6"></path><circle cx="19" cy="15" r="3"></circle></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M27,22.14V17a2,2,0,0,0-2-2H17V9.86a4,4,0,1,0-2,0V15H7a2,2,0,0,0-2,2v5.14a4,4,0,1,0,2,0V17H25v5.14a4,4,0,1,0,2,0ZM8,26a2,2,0,1,1-2-2A2,2,0,0,1,8,26ZM14,6a2,2,0,1,1,2,2A2,2,0,0,1,14,6ZM26,28a2,2,0,1,1,2-2A2,2,0,0,1,26,28Z"></path></svg></div>
 <h3 class="fc-title">Tiered model routing</h3>
-<p class="fc-body">Steps declare a capability tier, not a model name. The <code>SmartRouter</code> resolves the best available provider at runtime with circuit breakers, adaptive cooldowns, and automatic fallback chains.</p>
+<p class="fc-body">Steps declare a capability tier, not a model name. The <code>SmartRouter</code> resolves the best available provider at runtime — circuit breakers, adaptive cooldowns, automatic fallback chains.</p>
 [Runtime engine](architecture-runtime.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30,30H22V22h8Zm-6-2h4V24H24Z"></path><path d="M20,27H8A6,6,0,0,1,8,15h2v2H8a4,4,0,0,0,0,8H20Z"></path><path d="M20,20H12V12h8Zm-6-2h4V14H14Z"></path><path d="M24,17H22V15h2a4,4,0,0,0,0-8H12V5H24a6,6,0,0,1,0,12Z"></path><path d="M10,10H2V2h8ZM4,8H8V4H4Z"></path></svg></div>
 <h3 class="fc-title">Eight LLM providers</h3>
-<p class="fc-body">OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models, Ollama, and local ONNX / Windows AI — all behind one client with per-provider bulkhead concurrency limits.</p>
-[Tools &amp; providers](architecture-tools.md){ .fc-link }
+<p class="fc-body">OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models, Ollama, and local ONNX / Windows AI — one client, per-provider bulkhead concurrency limits.</p>
+[Tools & providers](architecture-tools.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M8 9h8"></path><path d="M8 13h5"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M26,2H8A2,2,0,0,0,6,4V8H4v2H6v5H4v2H6v5H4v2H6v4a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V4A2,2,0,0,0,26,2Zm0,26H8V24h2V22H8V17h2V15H8V10h2V8H8V4H26Z" transform="translate(0 0)"></path><rect x="14" y="8" width="8" height="2"></rect><rect x="14" y="15" width="8" height="2"></rect><rect x="14" y="22" width="8" height="2"></rect></svg></div>
 <h3 class="fc-title">Full RAG pipeline</h3>
-<p class="fc-body">Document loading, recursive chunking, deduplicated embedding, hybrid retrieval with Reciprocal Rank Fusion, cross-encoder and LLM reranking, and token-budget context assembly.</p>
+<p class="fc-body">Document loading, recursive chunking, deduplicated embedding, hybrid retrieval with Reciprocal Rank Fusion, cross-encoder and LLM reranking, token-budget context assembly.</p>
 [RAG pipeline](rag/index.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3l8-8"></path><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><polygon points="13 24 4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24"></polygon></svg></div>
 <h3 class="fc-title">Rubric-based evaluation</h3>
-<p class="fc-body">YAML-defined rubrics with weighted criteria, LLM-as-judge integration, and 0.0–10.0 multidimensional scoring. Production gating is driven by <code>coverage_score &gt;= 0.80</code>, not string matches.</p>
+<p class="fc-body">YAML-defined rubrics with weighted criteria, LLM-as-judge integration, 0.0–10.0 multidimensional scoring. Production gating is <code>coverage_score >= 0.80</code> — not string matches.</p>
 [Evaluation framework](architecture-eval.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path><path d="M7 10l3 3l5-6"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M7,28a1,1,0,0,1-1-1V5a1,1,0,0,1,1.4819-.8763l20,11a1,1,0,0,1,0,1.7525l-20,11A1.0005,1.0005,0,0,1,7,28ZM8,6.6909V25.3088L24.9248,16Z" transform="translate(0)"></path></svg></div>
 <h3 class="fc-title">Live dashboard</h3>
-<p class="fc-body">A React 19 SPA streams execution events over WebSocket. DAG nodes animate through queued → running → complete in real time, with per-step drill-down into inputs, outputs, and timing.</p>
+<p class="fc-body">A React 19 SPA streams execution events over WebSocket. DAG nodes move through queued → running → complete in real time, with per-step drill-down into inputs, outputs, and timing.</p>
 [UI dashboard](architecture-ui.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,2v4H6V6ZM6,26V12H26V26Z" transform="translate(0 0.01)"></path><polygon points="10.76 16.18 13.58 19.01 10.76 21.84 12.17 23.25 16.41 19.01 12.17 14.77 10.76 16.18"></polygon></svg></div>
 <h3 class="fc-title">Zero-credential dev mode</h3>
-<p class="fc-body"><code>AGENTIC_NO_LLM=1</code> installs deterministic placeholder providers at both engine chokepoints. The full test suite passes without provider credentials — federal-friendly by default.</p>
+<p class="fc-body"><code>AGENTIC_NO_LLM=1</code> installs deterministic placeholder providers at both engine chokepoints. The full test suite passes with zero provider credentials.</p>
 [No-LLM dev mode](NO_LLM_MODE.md){ .fc-link }
 </div>
 
 <div class="feature-card" markdown>
-<div class="fc-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18"></path><path d="M7 15l2 2l4-4"></path></svg></div>
+<div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z" transform="translate(0 0)"></path><path d="M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z" transform="translate(0 0)"></path></svg></div>
 <h3 class="fc-title">Windows-first support</h3>
-<p class="fc-body">The runtime and all tooling are validated on Windows in CI. <code>scripts/setup-dev.ps1</code> is a one-command bring-up, and the Windows AI Bridge (Phi Silica) is first-class.</p>
+<p class="fc-body">Runtime and tooling validated on Windows in CI. <code>scripts/setup-dev.ps1</code> is a one-command bring-up; the Windows AI Bridge (Phi Silica) is first-class.</p>
 [Development guide](development-guide.md){ .fc-link }
 </div>
 
 </div>
 
-<p class="section-kicker">Metrics</p>
+---
+
+<p class="section-kicker">metrics</p>
 
 ## By the numbers
 
@@ -171,7 +176,7 @@ flowchart LR
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">8+</div>
+  <div class="stat-value">8</div>
   <div class="stat-label">LLM providers</div>
 </div>
 <div class="stat-item">
@@ -180,7 +185,9 @@ flowchart LR
 </div>
 </div>
 
-<p class="section-kicker">Workflows</p>
+---
+
+<p class="section-kicker">workflows</p>
 
 ## Production workflow definitions
 
@@ -197,7 +204,9 @@ The engine ships with six production workflow definitions:
 
 [Workflow reference](workflows/index.md){ .link-forward }
 
-<p class="section-kicker">Documentation</p>
+---
+
+<p class="section-kicker">documentation</p>
 
 ## Where to go next
 
@@ -208,38 +217,38 @@ The engine ships with six production workflow definitions:
 
 - [Overview](getting-started/index.md) — install paths and the 60-second tour
 - [Installation](getting-started/installation.md) — Python, Node, and provider setup
-- [Quick Start](getting-started/quickstart.md) — your first workflow run, narrated
-- [First Workflow](getting-started/first-workflow.md) — write a two-step DAG from scratch
+- [Quick start](getting-started/quickstart.md) — your first workflow run, narrated
+- [First workflow](getting-started/first-workflow.md) — write a two-step DAG from scratch
 - [Onboarding](ONBOARDING.md) — 5-minute to 1-hour onboarding path
 </div>
 
 <div class="doc-card" markdown>
 <h3 class="dc-title">Architecture</h3>
 
-- [Architecture Overview](ARCHITECTURE.md) — system map across the four packages
-- [Runtime Engine](architecture-runtime.md) — DAG executor, model router, RAG pipeline
-- [Evaluation Framework](architecture-eval.md) — rubrics, evaluators, runners
-- [UI Dashboard](architecture-ui.md) — React 19 SPA and live streaming
-- [Integration Architecture](integration-architecture.md) — cross-package contracts
+- [Architecture overview](ARCHITECTURE.md) — system map across the four packages
+- [Runtime engine](architecture-runtime.md) — DAG executor, model router, RAG pipeline
+- [Evaluation framework](architecture-eval.md) — rubrics, evaluators, runners
+- [UI dashboard](architecture-ui.md) — React 19 SPA and live streaming
+- [Integration architecture](integration-architecture.md) — cross-package contracts
 </div>
 
 <div class="doc-card" markdown>
 <h3 class="dc-title">Deep dives</h3>
 
-- [Server &amp; API](deep-dive-server.md) — FastAPI endpoints, WebSocket, auth middleware
+- [Server & API](deep-dive-server.md) — FastAPI endpoints, WebSocket, auth middleware
 - [Agents](deep-dive-agents.md) — agent lifecycle, personas, capability declarations
-- [RAG Pipeline](rag/index.md) — ingestion, chunking, retrieval, reranking
-- [Evaluation Engine](deep-dive-agentic-v2-eval.md) — standalone eval package internals
+- [RAG pipeline](rag/index.md) — ingestion, chunking, retrieval, reranking
+- [Evaluation engine](deep-dive-agentic-v2-eval.md) — standalone eval package internals
 </div>
 
 <div class="doc-card" markdown>
 <h3 class="dc-title">Reference</h3>
 
-- [Workflow Reference](workflows/index.md) — every production workflow described
-- [Pattern Catalog](PATTERN_CATALOG.md) — reusable agentic patterns
-- [API Contracts](api-contracts-runtime.md) — REST endpoint reference
-- [ADR Index](adr/ADR-INDEX.md) — every architecture decision, dated and rationalized
-- [Known Limitations](KNOWN_LIMITATIONS.md) — honest accounting of caveats
+- [Workflow reference](workflows/index.md) — every production workflow described
+- [Pattern catalog](PATTERN_CATALOG.md) — reusable agentic patterns
+- [API contracts](api-contracts-runtime.md) — REST endpoint reference
+- [ADR index](adr/ADR-INDEX.md) — every architecture decision, dated and rationalized
+- [Known limitations](KNOWN_LIMITATIONS.md) — honest accounting of caveats
 </div>
 
 </div>
