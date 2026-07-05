@@ -1,4 +1,4 @@
-# UI API Integration Reference
+# UI API integration reference
 
 **Source root:** `agentic-workflows-v2/ui/src/`
 **Data layer:** TanStack Query v5 (REST) + native WebSocket (streaming execution)
@@ -8,21 +8,21 @@ This document describes how the React UI communicates with the backend. It cover
 
 ---
 
-## Table of Contents
+## Table of contents
 
-1. [REST API Client](#rest-api-client)
-2. [TanStack Query Configuration](#tanstack-query-configuration)
-3. [Query Hooks Reference](#query-hooks-reference)
-4. [Mutation Hooks Reference](#mutation-hooks-reference)
-5. [WebSocket: Execution Stream](#websocket-execution-stream)
-6. [WebSocket: Node Config Updates](#websocket-node-config-updates)
-7. [TypeScript Contract: Event Types](#typescript-contract-event-types)
-8. [Error Handling Patterns](#error-handling-patterns)
-9. [Caching and Invalidation](#caching-and-invalidation)
+1. [REST API client](#rest-api-client)
+2. [TanStack Query configuration](#tanstack-query-configuration)
+3. [Query hooks reference](#query-hooks-reference)
+4. [Mutation hooks reference](#mutation-hooks-reference)
+5. [WebSocket: execution stream](#websocket-execution-stream)
+6. [WebSocket: node config updates](#websocket-node-config-updates)
+7. [TypeScript contract: event types](#typescript-contract-event-types)
+8. [Error handling patterns](#error-handling-patterns)
+9. [Caching and invalidation](#caching-and-invalidation)
 
 ---
 
-## REST API Client
+## REST API client
 
 **File:** `api/client.ts`
 
@@ -36,15 +36,15 @@ fetchJSON<T>(path: string, options?: RequestInit): Promise<T>
 - Throws `Error` if `response.ok` is false (status >= 400), using the response body text as the error message where available
 - Returns the parsed JSON body typed as `T`
 
-### Complete API Function Inventory
+### Complete API function inventory
 
 | Function | Method | Endpoint | Return type |
 |---|---|---|---|
-| `fetchWorkflows()` | GET | `/api/workflows` | `{ name, description }[]` |
+| `fetchWorkflows()` | GET | `/api/workflows` | `{ workflows: string[] }` |
 | `fetchWorkflowDAG(name)` | GET | `/api/workflows/:name/dag` | `DAGResponse` |
 | `fetchWorkflowEditor(name)` | GET | `/api/workflows/:name/editor` | `WorkflowEditorDocument` |
 | `saveWorkflow(name, req)` | PUT | `/api/workflows/:name` | `WorkflowEditorSaveResponse` |
-| `validateWorkflow(name, req)` | POST | `/api/workflows/:name/validate` | `WorkflowEditorValidateResponse` |
+| `validateWorkflow(name, req)` | POST | `/api/workflows/validate` | `WorkflowEditorValidateResponse` |
 | `fetchRuns()` | GET | `/api/runs` | `RunSummary[]` |
 | `fetchRunDetail(filename)` | GET | `/api/runs/:filename` | `RunDetail` |
 | `fetchRunsSummary()` | GET | `/api/runs/summary` | `RunsSummary` |
@@ -57,7 +57,7 @@ fetchJSON<T>(path: string, options?: RequestInit): Promise<T>
 
 ---
 
-## TanStack Query Configuration
+## TanStack Query configuration
 
 **File:** `main.tsx`
 
@@ -83,7 +83,7 @@ new QueryClient({
 
 ---
 
-## Query Hooks Reference
+## Query hooks reference
 
 All query hooks are defined in `hooks/useWorkflows.ts`, `hooks/useRuns.ts`, and `hooks/useDatasets.ts`.
 
@@ -92,7 +92,7 @@ All query hooks are defined in `hooks/useWorkflows.ts`, `hooks/useRuns.ts`, and 
 **File:** `hooks/useWorkflows.ts`
 
 ```
-useWorkflows(): UseQueryResult<{ name: string, description: string }[]>
+useWorkflows(): UseQueryResult<string[]>
 ```
 
 | Field | Value |
@@ -103,6 +103,8 @@ useWorkflows(): UseQueryResult<{ name: string, description: string }[]>
 | staleTime | Default (10 s) |
 | refetchInterval | None |
 | Used by | `WorkflowsPage`, `DashboardPage` |
+
+The endpoint returns `{ workflows: string[] }`; the hook unwraps the `workflows` array, so consumers receive a bare `string[]` of workflow names.
 
 ---
 
@@ -289,7 +291,7 @@ Returns full sample fields, `workflow_preview`, and `dataset_meta`.
 
 ---
 
-## Mutation Hooks Reference
+## Mutation hooks reference
 
 Mutations are created inline within page components using `useMutation` from TanStack Query. They are not extracted into custom hooks.
 
@@ -330,7 +332,7 @@ On success the page navigates to `/live/:run_id`. In batch mode the page runs th
 
 ```
 useMutation({
-  mutationFn: (req) => validateWorkflow(name, req),   // POST /api/workflows/:name/validate
+  mutationFn: (req) => validateWorkflow(name, req),   // POST /api/workflows/validate
 })
 ```
 
@@ -360,7 +362,7 @@ On success, two query keys are invalidated: `workflow-dag` and `workflow-editor`
 
 ---
 
-## WebSocket: Execution Stream
+## WebSocket: execution stream
 
 **File:** `api/websocket.ts`
 **Consumer hook:** `hooks/useWorkflowStream.ts`
@@ -386,7 +388,7 @@ connectExecutionStream(
 
 The function opens a native browser `WebSocket`, attaches message/close/error handlers, and returns a cleanup function that calls `ws.close()`. JSON parsing errors are caught and suppressed to prevent a single malformed frame from tearing down the connection.
 
-### Reconnection Logic
+### Reconnection logic
 
 The reconnection loop is implemented inside `useWorkflowStream`, not in `connectExecutionStream`:
 
@@ -462,14 +464,18 @@ interface StepState {
 
 ---
 
-## WebSocket: Node Config Updates
+## WebSocket: node config updates
 
 **File:** `api/websocket.ts` (secondary connection)
 **Consumer hook:** `hooks/useNodeConfigUpdate.ts`
 
-A secondary WebSocket connection that allows live runtime configuration overrides on a running step. This is separate from the execution stream to avoid mixing control messages with event telemetry.
+A secondary WebSocket connection intended to allow live runtime configuration overrides on a running step, separate from the execution stream to avoid mixing control messages with event telemetry.
+
+> **Not implemented on the backend.** The server registers only the execution-stream route (`/ws/execution/{run_id}` in `server/websocket.py`); there is no `/ws/node-config/` route. The client hook below exists but is unused — connecting to the URL shown would fail. This section documents the intended client-side contract for a feature that is not yet wired up end to end.
 
 ### Connection URL
+
+The hook targets the following URL, which the backend does **not** currently serve:
 
 ```
 ws[s]://<host>/ws/node-config/<runId>
@@ -510,7 +516,7 @@ Connects when both `runId` and `stepName` are non-null. Reconnects on close with
 
 ---
 
-## TypeScript Contract: Event Types
+## TypeScript contract: event types
 
 **File:** `api/events.generated.ts`
 
@@ -526,7 +532,7 @@ python scripts/generate_ts_types.py
 npm run generate:types
 ```
 
-### CI Enforcement
+### CI enforcement
 
 The `wire-format-drift` CI job runs on every PR. It regenerates the TypeScript types from the committed JSON Schema (`tests/schemas/events.schema.json`) and diffs the result against the committed `events.generated.ts`. Any mismatch fails the job, blocking merge.
 
@@ -535,7 +541,7 @@ The `wire-format-drift` CI job runs on every PR. It regenerates the TypeScript t
 2. Running `npm run generate:types`
 3. Committing the updated `events.generated.ts`
 
-### Generated Event Union
+### Generated event union
 
 ```typescript
 export type ExecutionEvent =
@@ -550,7 +556,7 @@ export type ExecutionEvent =
   | EvaluationCompleteEvent;
 ```
 
-### Event Type Reference
+### Event type reference
 
 | Type | Key fields | Direction |
 |---|---|---|
@@ -581,7 +587,7 @@ export type ExecutionEvent = WireExecutionEvent | ChannelEvent;
 
 ---
 
-## Error Handling Patterns
+## Error handling patterns
 
 ### REST errors
 
@@ -607,7 +613,7 @@ No global toast or notification system is present. Errors are surfaced inline wi
 
 ---
 
-## Caching and Invalidation
+## Caching and invalidation
 
 ### Default stale-time
 

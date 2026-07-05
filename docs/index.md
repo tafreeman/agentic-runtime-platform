@@ -129,7 +129,7 @@ flowchart LR
 <div class="feature-card" markdown>
 <div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><polygon points="13 24 4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24"></polygon></svg></div>
 <h3 class="fc-title">Rubric-based evaluation</h3>
-<p class="fc-body">YAML-defined rubrics with weighted criteria, LLM-as-judge integration, 0.0–10.0 multidimensional scoring. Production gating is <code>coverage_score >= 0.80</code> — not string matches.</p>
+<p class="fc-body">YAML-defined rubrics with weighted criteria and LLM-as-judge integration — each criterion scored on a normalized 0–1 scale, then weighted into a composite. Production gating is <code>coverage_score >= 0.80</code> — not string matches.</p>
 [Evaluation framework](architecture-eval.md){ .fc-link }
 </div>
 

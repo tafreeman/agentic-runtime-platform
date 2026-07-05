@@ -1,29 +1,29 @@
-# UI Component Inventory: React Dashboard
+# UI component inventory: React dashboard
 
 **Source root:** `agentic-workflows-v2/ui/src/`
 **Component count:** 40+ (pages, layout, common primitives, DAG, runs, live, evaluations, datasets, states)
-**Last audited:** 2026-05-02
+**Last audited:** 2026-07-05
 
-This catalog lists every component in the codebase. For each entry the record includes: source file, purpose, all props with types and whether they are required, internal sub-components, and which application pages consume the component.
-
----
-
-## Table of Contents
-
-1. [Layout Components](#layout-components)
-2. [Common Primitive Components](#common-primitive-components)
-3. [DAG Visualization Components](#dag-visualization-components)
-4. [Run Components](#run-components)
-5. [Live Execution Components](#live-execution-components)
-6. [Evaluation Components](#evaluation-components)
-7. [Dataset Components](#dataset-components)
-8. [State / Error Components](#state--error-components)
-9. [Page Components](#page-components)
-10. [Component Dependency Matrix](#component-dependency-matrix)
+This inventory maps the React dashboard that ships with the Agentic Runtime Platform UI, grouped by subsystem. It documents the primary components rather than every file — some smaller state, error, and dashboard helpers (for example `ConsoleStatus`, `ErrorBanner`, `InlineError`, `NotFoundPage`, `RunSummaryCards`, and `GettingStartedCard`) are not catalogued below. For each entry the record includes: source file, purpose, all props with types and whether they are required, internal sub-components, and which application pages consume the component.
 
 ---
 
-## Layout Components
+## Table of contents
+
+1. [Layout components](#layout-components)
+2. [Common primitive components](#common-primitive-components)
+3. [DAG visualization components](#dag-visualization-components)
+4. [Run components](#run-components)
+5. [Live execution components](#live-execution-components)
+6. [Evaluation components](#evaluation-components)
+7. [Dataset components](#dataset-components)
+8. [State / error components](#state--error-components)
+9. [Page components](#page-components)
+10. [Component dependency matrix](#component-dependency-matrix)
+
+---
+
+## Layout components
 
 ### Sidebar
 
@@ -66,7 +66,7 @@ Theme toggle buttons emit `applyTheme('dark' | 'paper' | 'bolt')`.
 
 ---
 
-## Common Primitive Components
+## Common primitive components
 
 ### BBox
 
@@ -217,7 +217,7 @@ Theme toggle buttons emit `applyTheme('dark' | 'paper' | 'bolt')`.
 
 ---
 
-## DAG Visualization Components
+## DAG visualization components
 
 ### WorkflowDAG
 
@@ -337,7 +337,7 @@ The component receives its payload via the `data` field on the React Flow `Node`
 
 ---
 
-## Run Components
+## Run components
 
 ### RunConfigForm
 
@@ -403,7 +403,7 @@ Each row displays: `StatusBadge`, step name, `DurationDisplay`, model name, toke
 
 ---
 
-## Live Execution Components
+## Live execution components
 
 ### LiveStepDetails
 
@@ -489,7 +489,7 @@ Renders as a single-line monospace stat: `tokens {n} · {m} models`.
 
 ---
 
-## Evaluation Components
+## Evaluation components
 
 ### EvaluationRubricAccordion
 
@@ -545,7 +545,7 @@ Renders as a single-line monospace stat: `tokens {n} · {m} models`.
 
 ---
 
-## Dataset Components
+## Dataset components
 
 ### DatasetBrowser
 
@@ -558,18 +558,18 @@ Renders as a single-line monospace stat: `tokens {n} · {m} models`.
 |---|---|---|---|
 | None | — | — | Fully self-contained; queries `useEvaluationDatasets()`, `useDatasetSamples()`, `useDatasetSampleDetail()` internally |
 
-**Internal sub-components (same file):**
+**Sub-components (separate files under `components/datasets/`):**
 
-| Sub-component | Purpose |
-|---|---|
-| `SampleIndexGrid` | Paginated grid of sample summary cards for the selected dataset |
-| `DatasetDetailPane` | Full sample detail view with field expansion and workflow preview |
+| Sub-component | File | Purpose |
+|---|---|---|
+| `SampleIndexGrid` | `components/datasets/SampleIndexGrid.tsx` | Paginated grid of sample summary cards for the selected dataset |
+| `DatasetDetailPane` | `components/datasets/DatasetDetailPane.tsx` | Full sample detail view with field expansion and workflow preview |
 
 **Used by:** `DatasetsPage`
 
 ---
 
-## State and Error Components { #state--error-components }
+## State and error components { #state--error-components }
 
 ### AppErrorBoundary
 
@@ -602,7 +602,7 @@ Renders as a single-line monospace stat: `tokens {n} · {m} models`.
 
 ---
 
-## Page Components
+## Page components
 
 All pages reside in `src/pages/`. None use `React.lazy`. None have authentication guards. All are registered in the flat `<Routes>` block in `App.tsx`.
 
@@ -728,7 +728,7 @@ All pages reside in `src/pages/`. None use `React.lazy`. None have authenticatio
 
 ---
 
-## Component Dependency Matrix
+## Component dependency matrix
 
 The table below maps each page to the shared components it directly renders. Transitive dependencies (e.g., `EvaluationRubricAccordion` → `CriterionRow`) are not shown.
 

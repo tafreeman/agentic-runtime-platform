@@ -1,4 +1,4 @@
-# UI Pages Reference
+# UI pages reference
 
 **Source root:** `agentic-workflows-v2/ui/src/pages/`
 **Router:** react-router-dom v7 (`BrowserRouter`, flat `<Routes>` block in `App.tsx`)
@@ -8,7 +8,7 @@ This document describes each application page: its route, purpose, which compone
 
 ---
 
-## Route Map
+## Route map
 
 | Page | Route | Real-time |
 |---|---|---|
@@ -51,7 +51,7 @@ The landing page. Displays aggregate statistics across all runs, per-workflow ac
 └──────────────────────────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -62,7 +62,7 @@ The landing page. Displays aggregate statistics across all runs, per-workflow ac
 
 All queries use the default `staleTime: 10 000 ms` and no `refetchInterval`.
 
-### Key Components
+### Key components
 
 - `BTopBar` — page breadcrumb
 - `BBox` — stat card wrappers
@@ -72,14 +72,14 @@ All queries use the default `staleTime: 10 000 ms` and no `refetchInterval`.
 - `DurationDisplay` — run duration formatting
 - `BDagMini` — workflow thumbnail SVGs in quick list
 
-### Keyboard Shortcuts
+### Keyboard shortcuts
 
 | Key | Action |
 |---|---|
 | `/` | Focus the filter input (bound via `useHotkeys`) |
 | `Escape` | Blur active filter input |
 
-### Real-time Features
+### Real-time features
 
 None. Data is fetched once on mount with default stale-time caching.
 
@@ -109,7 +109,7 @@ Browsable, searchable list of all registered workflows. Each card shows the work
 └──────────────────────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint |
 |---|---|---|
@@ -119,14 +119,14 @@ Browsable, searchable list of all registered workflows. Each card shows the work
 
 DAG queries are issued once per unique workflow name to provide `BDagMini` thumbnails.
 
-### Key Components
+### Key components
 
 - `BTopBar` — page breadcrumb with inline `/` search shortcut label
 - `BDagMini` — static workflow DAG thumbnail
 - `BPill` — latest run status indicator
 - `EmptyState` — shown when no workflows are registered
 
-### Real-time Features
+### Real-time features
 
 None.
 
@@ -157,7 +157,7 @@ Detail view for a single workflow. Provides a static DAG preview, a run configur
 
 The Edit button is conditionally rendered: `isWorkflowBuilderEnabled() && <Link to="edit">`.
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -166,7 +166,7 @@ The Edit button is conditionally rendered: `isWorkflowBuilderEnabled() && <Link 
 | `useMutation(runWorkflow)` | — | `POST /api/run` | Form submission; navigates to `/live/:runId` on success |
 | `useEvaluationDatasets()` | `['eval-datasets']` | `GET /api/eval/datasets` | Loaded lazily when eval toggle enabled in RunConfigForm |
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with optional Edit link
 - `WorkflowDAG` — static preview (no `stepStates`)
@@ -174,7 +174,7 @@ The Edit button is conditionally rendered: `isWorkflowBuilderEnabled() && <Link 
 - `RunList` — recent run history
 - `BBox` — section wrappers
 
-### Real-time Features
+### Real-time features
 
 None on this page. After form submission the page navigates to `LivePage`.
 
@@ -184,7 +184,6 @@ None on this page. After form submission the page navigates to `LivePage`.
 
 **Route:** `/workflows/:name/edit`
 **File:** `pages/WorkflowEditorPage.tsx`
-**Feature flag:** Only rendered when `isWorkflowBuilderEnabled()` returns `true`
 
 ### Purpose
 
@@ -206,17 +205,17 @@ Split-pane workflow editor. Left pane is a live DAG preview (re-renders as YAML 
 └────────────────────────────┴─────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
 | `useWorkflowEditor(name)` | `['workflow-editor', name]` | `GET /api/workflows/:name/editor` | Loads workflow YAML source |
-| `useMutation(validateWorkflow)` | — | `POST /api/workflows/:name/validate` | Lint-only, no save |
+| `useMutation(validateWorkflow)` | — | `POST /api/workflows/validate` | Lint-only, no save |
 | `useMutation(saveWorkflow)` | — | `PUT /api/workflows/:name` | Saves YAML; on success invalidates `workflow-dag` and `workflow-editor` query keys |
 
 After a successful save `queryClient.invalidateQueries(['workflow-dag', name])` is called to refresh the DAG preview and any other pages showing that workflow.
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with Save and Validate buttons
 - `WorkflowDAG` — live preview (props derived from parsed YAML, not the saved API response)
@@ -224,7 +223,7 @@ After a successful save `queryClient.invalidateQueries(['workflow-dag', name])` 
 - `BPill` — validation issue severity badges
 - `StepInspector` — inline sub-component (not exported); shows selected node's fields from the parsed YAML
 
-### Real-time Features
+### Real-time features
 
 None. The DAG preview is driven by local YAML parse state, not a WebSocket.
 
@@ -253,7 +252,7 @@ Complete run history table. Supports status filtering via tabs (all / success / 
 └──────────────────────────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -262,7 +261,7 @@ Complete run history table. Supports status filtering via tabs (all / success / 
 
 `useRuns` is the only hook in the application that uses `refetchInterval`. Polling is unconditional (not paused when tab is hidden or user is inactive).
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with search input
 - `BPill` — per-run status badge
@@ -270,7 +269,7 @@ Complete run history table. Supports status filtering via tabs (all / success / 
 - `DurationDisplay` — run duration
 - `EmptyState` — shown when no runs match the active filter
 
-### Real-time Features
+### Real-time features
 
 Soft real-time via 5-second polling. Not a WebSocket — the entire run list is re-fetched on interval.
 
@@ -303,7 +302,7 @@ Static post-run analysis page. Renders the completed run's workflow as a DAG wit
 └────────────────────────────────┴────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -311,7 +310,7 @@ Static post-run analysis page. Renders the completed run's workflow as a DAG wit
 | `useWorkflowDAG(name)` | `['workflow-dag', name]` | `GET /api/workflows/:name/dag` | DAG structure for the canvas |
 | `useRunEvaluationDetail(filename)` | `['run-eval', filename]` | `GET /api/runs/:filename/evaluation` | Only fetched if `run.extra?.evaluation` is non-null |
 
-### Computed State (useMemo)
+### Computed state (useMemo)
 
 Two values are computed from the raw run data rather than fetched:
 
@@ -321,7 +320,7 @@ Two values are computed from the raw run data rather than fetched:
 
 **`kickbackEdges`** — a `Set<string>` of edge keys (`"source->target"`) where the source matches `/(review|test)/i` and the target matches `/(rework|developer|generate|fix)/i`. These edges receive violet styling in the DAG canvas.
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with ESC back button
 - `WorkflowDAG` — completed-run overlay mode
@@ -332,7 +331,7 @@ Two values are computed from the raw run data rather than fetched:
 - `RunDetailSteps` — expandable step accordion with I/O viewers
 - `EvaluationRubricAccordion` — detailed criterion breakdown
 
-### Real-time Features
+### Real-time features
 
 None. This page displays completed run data only.
 
@@ -368,7 +367,7 @@ Real-time execution monitoring page. The central feature of the application. Con
 └────────────────────────────────────┴────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -400,7 +399,7 @@ The hook returns `WorkflowStreamState`:
 
 **Auto-select running step:** `LivePage` watches `stepStates` for the first entry with status `running` and calls `setSelectedStep(name)` to drive `LiveStepDetails` selection and the DAG `selectedStep` prop.
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb
 - `WorkflowDAG` — live mode (auto-pan, optimistic status promotion)
@@ -409,7 +408,7 @@ The hook returns `WorkflowStreamState`:
 - `StepLogPanel` — timestamped event log
 - `EvaluationCard` — inline sub-component (not exported); rendered when `evaluation` is non-null
 
-### Real-time Features
+### Real-time features
 
 Full real-time via WebSocket. The page is the primary consumer of the streaming execution pipeline.
 
@@ -435,7 +434,7 @@ Dataset browser shell. The page itself is thin — it renders `DatasetBrowser` a
 └──────────────────────────────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 All queries are delegated to `DatasetBrowser` and its internal hooks:
 
@@ -447,12 +446,12 @@ All queries are delegated to `DatasetBrowser` and its internal hooks:
 
 `DatasetsPage` itself calls `useEvaluationDatasets()` once at the top level to extract the total count for the subtitle.
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with dataset count subtitle
 - `DatasetBrowser` — full 3-pane dataset UI (contains `SampleIndexGrid` and `DatasetDetailPane`)
 
-### Real-time Features
+### Real-time features
 
 None.
 
@@ -485,7 +484,7 @@ Evaluation results overview. Displays a 20-bucket score distribution histogram, 
 └──────────────────────────────────────────────────────┘
 ```
 
-### API Calls
+### API calls
 
 | Hook | Query key | Endpoint | Notes |
 |---|---|---|---|
@@ -494,7 +493,7 @@ Evaluation results overview. Displays a 20-bucket score distribution histogram, 
 
 Score histogram and pass-rate bars are computed client-side via `useMemo` from the `runs` array — no separate aggregation endpoint.
 
-### Key Components
+### Key components
 
 - `BTopBar` — breadcrumb with workflow filter
 - `BBox` — section wrappers
@@ -503,6 +502,6 @@ Score histogram and pass-rate bars are computed client-side via `useMemo` from t
 - `DurationDisplay` — run duration in table rows
 - `EvaluationRubricAccordion` — lazy-loaded detail accordion per expanded row
 
-### Real-time Features
+### Real-time features
 
 None.
