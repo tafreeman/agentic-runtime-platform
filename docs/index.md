@@ -15,7 +15,7 @@ hide:
 
 # Agentic Runtime Platform
 
-<p class="hero-sub">Declarative YAML workflows compile to executable DAGs. Tiered routing across eight LLM providers with health-aware failover, rubric-scored evaluation, and OpenTelemetry traces on every stage. Deterministic core; the LLM sits at the boundary.</p>
+<p class="hero-sub">Declarative YAML workflows compile to executable DAGs — tiered routing across eight LLM providers, rubric-scored evaluation, and OpenTelemetry on every stage. Deterministic core; the LLM sits at the boundary. Built solo to production discipline: every consequential decision has an ADR, every quality gate is enforced in CI.</p>
 
 <div class="hero-actions" markdown>
 [Get started](getting-started/quickstart.md){ .md-button .md-button--primary }
@@ -172,6 +172,10 @@ flowchart LR
   <div class="stat-label">Tests passing</div>
 </div>
 <div class="stat-item">
+  <div class="stat-value">80%</div>
+  <div class="stat-label">Coverage gate, CI-enforced</div>
+</div>
+<div class="stat-item">
   <div class="stat-value">31</div>
   <div class="stat-label">ADRs</div>
 </div>
@@ -183,6 +187,42 @@ flowchart LR
   <div class="stat-value">6</div>
   <div class="stat-label">Production workflows</div>
 </div>
+</div>
+
+---
+
+<p class="section-kicker">engineering practice</p>
+
+## How it's built is the point
+
+The platform is the demonstration; the practices are the argument. Everything below is committed, versioned, and CI-enforced — not described.
+
+<div class="feature-grid practice-grid" markdown>
+
+<div class="feature-card" markdown>
+<h3 class="fc-title">A written decision record</h3>
+<p class="fc-body">31 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
+[ADR index](adr/ADR-INDEX.md){ .fc-link }
+</div>
+
+<div class="feature-card" markdown>
+<h3 class="fc-title">Correctness gated in CI</h3>
+<p class="fc-body">An 80% coverage gate (79.93% fails — no rounding up), ruff and strict mypy on the engine and contracts, and a wire-format drift job that regenerates JSON schemas and TypeScript types and fails on any mismatch.</p>
+[Contributing &amp; gates](CONTRIBUTING.md){ .fc-link }
+</div>
+
+<div class="feature-card" markdown>
+<h3 class="fc-title">Proven under load</h3>
+<p class="fc-body">The Redis-CAS circuit breaker and horizontal scale-out are load-tested with k6 against a multi-replica stack, and the report is generated from committed results — numbers, not adjectives.</p>
+[Load proof](load-report.md){ .fc-link }
+</div>
+
+<div class="feature-card" markdown>
+<h3 class="fc-title">Governance, honestly scoped</h3>
+<p class="fc-body">A living NIST AI RMF alignment document, an OWASP-informed threat model, security hardening notes, and a maintained known-limitations page that says plainly what this platform does not do.</p>
+[AI risk management](AI_RISK_MANAGEMENT.md){ .fc-link }
+</div>
+
 </div>
 
 ---
@@ -248,15 +288,19 @@ The engine ships with six production workflow definitions:
 - [Pattern catalog](PATTERN_CATALOG.md) — reusable agentic patterns
 - [API contracts](api-contracts-runtime.md) — REST endpoint reference
 - [ADR index](adr/ADR-INDEX.md) — every architecture decision, dated and rationalized
+- [Security hardening](operations/security-hardening.md) — operational security posture
 - [Known limitations](KNOWN_LIMITATIONS.md) — honest accounting of caveats
 </div>
 
 </div>
 
 <div class="cta-card" markdown>
-### Read the architecture deep-dive
+### Evaluating this codebase? Start with the decision record.
 
-The runtime engine combines two execution backends, an adapter registry, a tiered model router, and a full RAG pipeline. The architecture document is the canonical map of how those pieces fit together.
+The fastest way to judge an engineering effort is the trail it leaves. The architecture overview maps the system as it stands; the ADR index shows how it got there — every trade-off dated, argued, and owned.
 
-[Open the architecture overview](ARCHITECTURE.md){ .md-button .md-button--primary }
+<div class="hero-actions" markdown>
+[Read the ADR index](adr/ADR-INDEX.md){ .md-button .md-button--primary }
+[Open the architecture overview](ARCHITECTURE.md){ .md-button }
+</div>
 </div>

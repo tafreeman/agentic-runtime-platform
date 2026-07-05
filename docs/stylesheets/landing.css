@@ -266,6 +266,11 @@
   content: " →";
 }
 
+/* Engineering-practice variant: four cards as a deliberate 2×2 */
+.feature-grid.practice-grid {
+  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+}
+
 /* ============================================================
    5. Stat strip — data callouts, hairline column dividers
    ============================================================ */
