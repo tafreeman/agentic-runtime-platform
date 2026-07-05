@@ -17,6 +17,20 @@ members = [
 ]
 
 [[package]]
+name = "agentic-evalkit"
+version = "0.1.0"
+source = { git = "https://github.com/tafreeman/agentic-evalkit?rev=v0.1.0#3a8fef32e9197ab82050b8ddbfa0cdc410fc432e" }
+dependencies = [
+    { name = "httpx" },
+    { name = "huggingface-hub" },
+    { name = "jinja2" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[[package]]
 name = "agentic-tools"
 version = "0.1.0"
 source = { editable = "." }
@@ -152,6 +166,9 @@ devex = [
 ek = [
     { name = "executionkit" },
 ]
+eval = [
+    { name = "agentic-evalkit" },
+]
 langchain = [
     { name = "langchain" },
     { name = "langchain-anthropic" },
@@ -198,6 +215,7 @@ tracing = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agentic-evalkit", marker = "extra == 'eval'", git = "https://github.com/tafreeman/agentic-evalkit?rev=v0.1.0" },
     { name = "agentic-tools", editable = "." },
     { name = "aiofiles", specifier = ">=23.0,<26" },
     { name = "aiohttp", specifier = ">=3.9,<4" },
@@ -256,7 +274,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.23,<1" },
     { name = "websockets", marker = "extra == 'mcp'", specifier = ">=12.0,<17" },
 ]
-provides-extras = ["ek", "dev", "server", "langchain", "tracing", "claude", "rag", "devex", "mcp", "redis", "sqlite", "postgres"]
+provides-extras = ["ek", "eval", "dev", "server", "langchain", "tracing", "claude", "rag", "devex", "mcp", "redis", "sqlite", "postgres"]
 
 [[package]]
 name = "aiofiles"
