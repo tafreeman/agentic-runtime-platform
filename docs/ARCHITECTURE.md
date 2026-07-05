@@ -130,11 +130,28 @@ Fifteen modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runt
 
 - **Blueprint:** [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md).
 
+### 3.6 Core protocols
+
+The seams above are held together by a small set of `typing.Protocol` contracts in [`agentic_v2/core/protocols.py`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/core/protocols.py). Implementations are structurally typed against these, so an engine, tool, or middleware can be swapped without touching call sites:
+
+| Protocol | Contract |
+|----------|----------|
+| `ExecutionEngine` | Runs a compiled workflow graph; the seam the adapter registry resolves (`native`, `langchain`). |
+| `SupportsStreaming` | Optional capability — an engine that emits incremental execution events. |
+| `SupportsCheckpointing` | Optional capability — an engine that persists and resumes run state. |
+| `AgentProtocol` | A single agent step: takes context, returns a typed result. |
+| `ToolProtocol` | An invocable tool exposed to agents through the MCP client stack. |
+| `DetectorProtocol` | A sanitization/threat detector applied to inbound content. |
+| `MiddlewareProtocol` | An ASGI-layer request/response interceptor (auth, rate limit, sanitization). |
+| `VerifierProtocol` | A post-step check that gates whether a result is accepted. |
+
+A CI drift check (`scripts/check-doc-drift.py`) fails any PR where a protocol defined in source is missing from this section.
+
 ---
 
 ## 4. The decision record
 
-Every architecturally significant decision is captured as an ADR. The record currently spans **39 decisions across 36 files** — from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
+Every architecturally significant decision is captured as an ADR. The record currently spans **38 decisions across 36 files** — from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
 
 The full, maintained index — with status, one-line summaries, and a suggested reading order — is [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md). This page deliberately does not duplicate that table.
 
