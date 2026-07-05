@@ -1,11 +1,11 @@
 ---
-title: Quick Start
-description: A narrated 60-second walkthrough — install, enable No-LLM mode, run a workflow, read the artifacts.
+title: Quick start
+description: A narrated 60-second walkthrough — install, enable No-LLM mode, run a workflow, read the output.
 tags:
   - getting-started
 ---
 
-# Quick Start
+# Quick start
 
 This page expands the 60-second flow on the landing page into a narrated
 walkthrough. Each step explains what is happening under the hood and what
@@ -15,7 +15,7 @@ By the end you will have:
 
 - The runtime installed in editable mode
 - `AGENTIC_NO_LLM=1` enabled (no provider keys needed)
-- A `test_deterministic` workflow run with a structured artifact
+- A `test_deterministic` workflow run with a structured result
 - An understanding of how to read the run output
 
 ## Step 1 — Clone and install
@@ -26,21 +26,23 @@ cd agentic-runtime-platform/agentic-workflows-v2
 pip install -e ".[dev,server]"
 ```
 
-Two extras are pulled in here. `dev` brings the test toolchain and pre-commit
-hooks; `server` brings FastAPI and the async HTTP clients used by the
-provider router. Neither extra requires a network call to any LLM provider.
+Two extras are pulled in here. `dev` brings the test and lint toolchain
+(pytest, ruff, mypy, black); `server` brings FastAPI and uvicorn for the
+REST/WebSocket API. Neither extra requires a network call to any LLM
+provider.
 
 **Expected output:** pip prints the dependency resolution and installs
 about 50 packages. The `agentic` console script becomes available on
 `$PATH`. Verify with:
 
 ```bash
-agentic --version
+agentic version
 ```
 
-If `agentic` is not found, your virtualenv is not active or the editable
-install did not register the entry point. Re-run `pip install -e ".[dev,server]"`
-and check the printout for warnings.
+This prints `agentic-workflows-v2 version <x.y.z>`. If `agentic` is not
+found, your virtualenv is not active or the editable install did not
+register the entry point. Re-run `pip install -e ".[dev,server]"` and check
+the printout for warnings.
 
 ## Step 2 — Enable zero-credential mode
 
@@ -54,8 +56,8 @@ $env:AGENTIC_NO_LLM=1
 
 This single environment variable flips the model router to a deterministic
 placeholder backend. The rest of the runtime — DAG executor, contract
-validation, tool registry, evaluation harness — runs unchanged. No API
-calls leave your machine, and no credentials are read from disk.
+validation, tool registry — runs unchanged. No API calls leave your
+machine, and no credentials are read from disk.
 
 This is the same mode CI uses for every test in the suite. If a workflow
 runs cleanly under `AGENTIC_NO_LLM=1`, the only remaining variables when
@@ -66,79 +68,89 @@ plumbing has already been exercised.
 
 ## Step 3 — Run a workflow
 
-The `--input` flag expects a JSON **file path**. Create a one-liner input file first:
+The `--input` flag expects a JSON **file path**. `test_deterministic`
+declares one required input, `input_text`, so create a one-liner input
+file first:
 
 ```bash
 # Linux/macOS
-echo '{"task":"hello"}' > /tmp/test-input.json
+echo '{"input_text": "hello"}' > /tmp/test-input.json
 agentic run test_deterministic --input /tmp/test-input.json
 ```
 
 ```powershell
 # Windows PowerShell
-'{"task":"hello"}' | Out-File -Encoding utf8 test-input.json
+'{"input_text": "hello"}' | Out-File -Encoding utf8 test-input.json
 agentic run test_deterministic --input test-input.json
 ```
 
 `test_deterministic` is the simplest workflow shipped with the runtime: a
-three-step DAG with no LLM calls and no tool side effects. It exists
-specifically so you can confirm the executor, contract validator, and run
-recorder all work before introducing any moving parts.
+two-step DAG with no LLM calls and no tool side effects. `step1`
+(agent `tier0_process`) processes the input text, and `step2`
+(agent `tier0_counter`) counts its characters. It exists specifically so
+you can confirm the executor and contract validator work before
+introducing any moving parts.
 
-**Expected output:** the CLI prints a structured run record. Abbreviated:
-
-```
-Run: 0d4f...   workflow=test_deterministic   status=succeeded
-  step=parse        agent=parser    duration=12ms   status=succeeded
-  step=transform    agent=mapper    duration=8ms    status=succeeded
-  step=summarize    agent=summary   duration=11ms   status=succeeded
-
-Final artifact:
-{
-  "task": "hello",
-  "summary": "...",
-  "rubric_score": 0.93
-}
-```
-
-If you see `status=succeeded` for every step, you have a working install.
-
-## Step 4 — Read the artifacts
-
-Every run writes a structured record to `runs/<run-id>/`:
+**Expected output:**
 
 ```
-runs/0d4f.../
-├── manifest.json         # Workflow definition snapshot
-├── inputs.json           # The input you passed
-├── outputs.json          # The final artifact
-├── timeline.json         # Step-by-step timing and status
-├── traces/               # OpenTelemetry spans (if tracing enabled)
-└── steps/<step-name>/    # Per-step inputs, outputs, and tool calls
+╭────────────────── Workflow ──────────────────╮
+│ test_deterministic                           │
+│ Simple deterministic workflow for testing    │
+│ (no LLM calls)                               │
+╰──────────────────────────────────────────────╯
+- Executing test_deterministic...
+
+Status: SUCCESS
+Elapsed: 0.0s
+
+Outputs:
+  processed_text: hello
+  step_count: 5
 ```
 
-The `manifest.json` is the exact YAML the executor saw, frozen at
-submission time — re-running it from this manifest is bit-for-bit
-reproducible (under `AGENTIC_NO_LLM=1`). This is how the evaluation
-harness gates on artifacts: it loads the manifest, replays the run, and
-scores the outputs against a rubric.
+Add `--verbose` to also print the execution plan (the DAG levels) and a
+per-step results table. If you see `Status: SUCCESS`, you have a working
+install.
+
+## Step 4 — Read the output
+
+By default the CLI prints the result to the console. To keep a structured
+record, pass `--output`:
+
+```bash
+agentic run test_deterministic --input /tmp/test-input.json --output result.json
+```
+
+The written JSON contains the workflow name, overall status, the resolved
+`outputs`, per-step results, any errors, and the elapsed time.
+
+Runs executed through the FastAPI server are additionally logged by the
+run logger as flat JSON files under the repo-root `runs/` directory, one
+file per run, named
+`<timestamp>_<workflow>_<run-id>_<status>.json`. Each record captures the
+run id, status, score, per-step inputs/outputs, durations, retries, and
+the final output — this is the record the evaluation harness consumes.
 
 ## Step 5 — Try a real workflow
 
-Once the deterministic run succeeds, try one of the production workflows:
+Once the deterministic run succeeds, try one of the production workflows.
+Each declares its own inputs, so create a matching input file:
 
 ```bash
 # Code review pipeline — five steps including LLM-dependent review
-agentic run code_review --input examples/code_review_input.json
+echo '{"code_file": "agentic_v2/cli/main.py", "review_depth": "quick"}' > /tmp/review-input.json
+agentic run code_review --input /tmp/review-input.json
 
-# Conditional branching — gates downstream steps on a quick triage
-agentic run conditional_branching --input examples/conditional_input.json
+# Conditional branching — gates downstream steps on input parameters
+echo '{"feature_spec": "Add rate limiting to the API", "review_depth": "thorough", "target_env": "staging"}' > /tmp/cond-input.json
+agentic run conditional_branching --input /tmp/cond-input.json
 ```
 
 In `AGENTIC_NO_LLM=1` mode, the LLM steps return canned placeholder
-responses that satisfy the Pydantic contracts. To exercise a real provider,
-unset the variable, set a provider key (for example `GITHUB_TOKEN` for the
-free GitHub Models tier), and rerun.
+responses. To exercise a real provider, unset the variable, set a provider
+key (for example `GITHUB_TOKEN` for the free GitHub Models tier), and
+rerun.
 
 [Full workflow reference →](../workflows/index.md)
 
@@ -147,11 +159,11 @@ free GitHub Models tier), and rerun.
 You have:
 
 - A working editable install with the dev toolchain
-- Confirmation that the DAG executor, contracts, and run recorder are healthy
-- An end-to-end run with structured artifacts on disk
+- Confirmation that the DAG executor and contracts are healthy
+- An end-to-end run with a structured result
 - A starting point for switching to a real provider when you are ready
 
 Next up: write your own workflow with the
-[First Workflow](first-workflow.md) walkthrough, or read the
-[Architecture Overview](../ARCHITECTURE.md) to see how the pieces fit
+[First workflow](first-workflow.md) walkthrough, or read the
+[Architecture overview](../ARCHITECTURE.md) to see how the pieces fit
 together.

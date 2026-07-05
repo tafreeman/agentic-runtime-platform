@@ -1,16 +1,16 @@
 ---
-title: Your First Workflow
+title: Your first workflow
 description: Author a two-step DAG from scratch — YAML grammar, contracts, validation, and execution explained.
 tags:
   - getting-started
   - workflow
 ---
 
-# Your First Workflow
+# Your first workflow
 
 This page walks through writing a custom workflow from an empty file to a
 successful run. The result is a small two-step DAG — `summarize` then
-`grade` — that demonstrates every piece of the YAML grammar you'll need
+`review` — that demonstrates every piece of the YAML grammar you'll need
 for real work.
 
 By the end you will have:
@@ -22,48 +22,73 @@ By the end you will have:
 
 ## Anatomy of a workflow
 
-Every workflow is a YAML document with four top-level keys:
+Every workflow is a YAML document with top-level `name`, `description`,
+`version`, `inputs`, `outputs`, and `steps` keys:
 
 ```yaml
 name: my_first_workflow
-description: A two-step example — summarize an input, then score the summary.
+description: A two-step example - summarize an input, then review the summary.
 version: "1.0"
+
+inputs:
+  task:
+    type: string
+    description: The text to summarize
+    required: true
+
+outputs:
+  summary:
+    from: ${steps.summarize.outputs.summary}
+  review:
+    from: ${steps.review.outputs.review}
 
 steps:
   - name: summarize
-    agent: summarizer
+    agent: tier1_summarizer
     description: Produce a one-paragraph summary of the input task.
-    depends_on: []
     inputs:
-      task: "${input.task}"
+      task: ${inputs.task}
     outputs:
-      summary: string
+      summary: task_summary
 
-  - name: grade
-    agent: grader
-    description: Score the summary against the rubric.
+  - name: review
+    agent: tier2_reviewer
+    description: Review the summary for accuracy and clarity.
     depends_on: [summarize]
     inputs:
-      summary: "${steps.summarize.outputs.summary}"
+      summary: ${steps.summarize.outputs.summary}
     outputs:
-      score: number
-      rationale: string
+      review: summary_review
 ```
+
+The top-level blocks:
+
+- **`inputs`** — the workflow's input schema. Each entry declares a `type`,
+  a `description`, and optionally `required: true` or a `default`.
+- **`outputs`** — the workflow's final artifact. Each entry maps an output
+  name to a `from:` expression that pulls a value out of a step
+  (`optional: true` marks outputs that a skipped step may not produce).
 
 Each step requires:
 
 - **`name`** — a unique identifier within the workflow
-- **`agent`** — the persona that runs this step (resolved from
-  `agentic_v2/prompts/<agent>.md`)
+- **`agent`** — the agent that runs this step. The name follows the
+  tier-prefix convention used by every shipped workflow:
+  `tier0_*` agents are deterministic (no LLM), `tier1_*` route to a fast
+  model, `tier2_*` route to a capable model. The suffix (`summarizer`,
+  `reviewer`, …) names the role.
 - **`description`** — human-readable purpose; surfaces in the UI and traces
 - **`depends_on`** — list of step names that must complete before this step
-  is eligible to run; the executor uses this to compute the topological order
+  is eligible to run; the executor uses this to compute the topological
+  order (omit it, as `summarize` does, for entry steps)
 - **`inputs`** — a mapping of names to value expressions; expressions can
-  reference workflow inputs (`${input.*}`) or earlier step outputs
+  reference workflow inputs (`${inputs.*}`) or earlier step outputs
   (`${steps.<name>.outputs.<field>}`)
-- **`outputs`** — a typed schema declaring the keys and types this step
-  promises to produce; the executor validates the agent response against
-  this schema before downstream steps run
+- **`outputs`** — a mapping from the output name downstream steps reference
+  to an alias used internally (for example `summary: task_summary`). This
+  is a name→alias mapping, not a type declaration — compare
+  `code_review.yaml`, where `review: code_review` is consumed downstream as
+  `${steps.review_code.outputs.review}`.
 
 ## Step 1 — Create the file
 
@@ -80,67 +105,37 @@ cd agentic-workflows-v2
 agentic validate my_first_workflow
 ```
 
-`validate` runs three checks:
+`validate` runs two tiers of checks:
 
-1. **Schema validation** — the YAML matches the workflow Pydantic model
-2. **DAG validation** — `depends_on` references resolve, and the graph is
-   acyclic
-3. **Contract preflight** — every input expression resolves against the
-   declared upstream outputs
+1. **Structural lint** — YAML syntax, step shape, and dependency
+   references (no extras required)
+2. **Graph compilation** — the definition is loaded into the workflow
+   config model and compiled through LangGraph to catch graph-level errors
+   such as cycles (this tier requires the `langchain` extra:
+   `pip install -e ".[langchain]"`)
 
-A successful run prints `Workflow 'my_first_workflow' is valid.` Errors
-include the offending step and the field that failed; fix and re-run.
+A successful run prints:
 
-## Step 3 — Author the personas
-
-Each agent referenced by `agent:` must have a persona file at
-`agentic-workflows-v2/agentic_v2/prompts/<agent>.md`. Create two minimal
-personas:
-
-```markdown
-<!-- agentic_v2/prompts/summarizer.md -->
-# Summarizer
-
-
-## Expertise
-Concise paraphrasing of structured tasks into one short paragraph.
-
-## Boundaries
-- Do not invent facts not present in the input.
-- Do not include lists, code blocks, or markdown formatting.
-
-## Critical rules
-- Output JSON with a single `summary` key.
-- The summary must be one paragraph and at most three sentences.
-
-## Output format
-```json
-{ "summary": "..." }
+```
+OK Workflow 'my_first_workflow' is valid!
 ```
 
-```markdown
-<!-- agentic_v2/prompts/grader.md -->
-# Grader
+Errors include the offending step and the field that failed; fix and
+re-run. Add `--verbose` to print the step, input, and output counts plus
+the execution plan.
 
-## Expertise
-Rubric-based evaluation of short prose against a quality rubric.
+## Step 3 — About agents and personas
 
-## Boundaries
-- Score only the supplied summary; do not infer about the original input.
-- Do not edit or rewrite the summary.
+You do not need to author a prompt file for this workflow. The tier prefix
+in the agent name (`tier1_`, `tier2_`) selects the model tier, and in
+`AGENTIC_NO_LLM=1` mode the placeholder backend answers for any LLM-backed
+agent.
 
-## Critical rules
-- Output JSON with `score` (0.0–1.0) and `rationale` (one sentence).
-- A summary that introduces facts not in scope must score below 0.5.
-
-## Output format
-```json
-{ "score": 0.0, "rationale": "..." }
-```
-
-These personas are the same files used by the LLM router when a real
-provider is wired up. In `AGENTIC_NO_LLM=1` mode, the placeholder backend
-returns deterministic JSON that conforms to the declared output schema.
+For richer behavior, the runtime ships seven agent personas as markdown
+files under `agentic-workflows-v2/agentic_v2/prompts/`: `architect`,
+`coder`, `orchestrator`, `planner`, `reviewer`, `tester`, and `validator`.
+See the persona-authoring section of [ONBOARDING.md](../ONBOARDING.md) for
+the required sections and an example of adding your own.
 
 ## Step 4 — Run the workflow
 
@@ -160,11 +155,20 @@ $env:AGENTIC_NO_LLM = "1"
 agentic run my_first_workflow --input first-workflow-input.json
 ```
 
-You should see two steps in the timeline (`summarize`, `grade`), each
-marked `succeeded`, followed by a final artifact containing both the
-summary and the score. If the run record lands in `runs/<run-id>/`, the
-DAG executor, contract validator, and persona resolver are all working as
-expected.
+You should see `Status: SUCCESS` and, with `--verbose`, both steps
+(`summarize`, `review`) marked `success` in the step results table. Two
+no-LLM caveats are expected and harmless here:
+
+- Each LLM-backed step reports a `raw_response` output — the placeholder
+  backend returns a fixed string rather than the structured JSON a real
+  model would produce.
+- The CLI warns `Output 'summary' could not be resolved` (and likewise for
+  `review`), because the named step outputs cannot be extracted from the
+  unstructured placeholder. With a real provider key the outputs resolve
+  normally.
+
+If the run reports `SUCCESS`, the DAG executor, contract validator, and
+agent resolution are all working as expected.
 
 ## Step 5 — Try a parallel branch
 
@@ -172,20 +176,19 @@ To prove the parallel-dispatch story, add a second downstream step:
 
 ```yaml
   - name: tone_check
-    agent: grader
-    description: Independent tone evaluation, runs in parallel with grade.
+    agent: tier1_analyzer
+    description: Independent tone evaluation, runs in parallel with review.
     depends_on: [summarize]
     inputs:
-      summary: "${steps.summarize.outputs.summary}"
+      summary: ${steps.summarize.outputs.summary}
     outputs:
-      tone: string
-      confidence: number
+      tone: tone_report
 ```
 
-`grade` and `tone_check` both depend only on `summarize`, so the executor
-will dispatch them concurrently. Re-run with `agentic run` and inspect
-`timeline.json` — the two steps will overlap in wall-clock time even
-though their start order is deterministic.
+`review` and `tone_check` both depend only on `summarize`, so the executor
+dispatches them concurrently. Re-run with `agentic run --verbose` — the
+execution plan shows both steps at the same level, and their wall-clock
+times overlap even though the plan order is deterministic.
 
 ## Going further
 
@@ -202,6 +205,6 @@ though their start order is deterministic.
   expression namespace.
 
 The full grammar reference is in the
-[Workflow Authoring Guide](../WORKFLOW_AUTHORING.md), and the production
-workflows in [Workflow Reference](../workflows/index.md) are the best
+[Workflow authoring guide](../WORKFLOW_AUTHORING.md), and the production
+workflows in [Workflow reference](../workflows/index.md) are the best
 real-world examples to study next.

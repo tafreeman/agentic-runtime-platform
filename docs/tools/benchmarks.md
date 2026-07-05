@@ -1,4 +1,4 @@
-# Benchmark Pipeline, LLM-as-Judge & Bakeoff
+# Benchmark pipeline, LLM-as-judge and bakeoff
 
 > Modules: `tools.agents.benchmarks.*` · `tools.llm.model_bakeoff` · `tools.llm.bakeoff_tasks` · `tools.llm.bakeoff_reporting` · `tools.llm.rank_models`
 
@@ -6,11 +6,11 @@
 
 The benchmark infrastructure in `agentic-tools` serves two related but distinct purposes:
 
-1. **Model Bakeoff** (`tools/llm/model_bakeoff.py`) — a repeatable capability comparison that
+1. **Model bakeoff** (`tools/llm/model_bakeoff.py`) — a repeatable capability comparison that
    runs a fixed task set across discovered models and recommends environment variable values for
    `DEEP_RESEARCH_SMALL_MODEL` and `DEEP_RESEARCH_HEAVY_MODEL`.
 
-2. **Benchmark Runner + LLM-as-Judge** (`tools/agents/benchmarks/`) — a general-purpose
+2. **Benchmark runner + LLM-as-judge** (`tools/agents/benchmarks/`) — a general-purpose
    evaluation framework that executes benchmark tasks (HumanEval, SWE-bench, custom) against a
    model and scores the output on a five-dimension rubric using a second LLM as the judge.
 
@@ -19,7 +19,7 @@ checking, but they operate independently.
 
 ---
 
-## Model Bakeoff
+## Model bakeoff
 
 ### Purpose
 
@@ -29,7 +29,7 @@ which one should be assigned to the `SMALL` (fast/cheap) and `HEAVY` (quality/ca
 It is designed to run from PowerShell on Windows without WSL, using whatever models are already
 available locally or via configured cloud endpoints.
 
-### Running a Bakeoff
+### Running a bakeoff
 
 ```bash
 # Default: discover local ONNX + Ollama + AI Toolkit + OpenAI models
@@ -57,7 +57,7 @@ python -m tools.llm.model_bakeoff --max-models 8 --max-models-per-provider 3
 python -m tools.llm.model_bakeoff --force-probe
 ```
 
-### CLI Options
+### CLI options
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -75,7 +75,7 @@ python -m tools.llm.model_bakeoff --force-probe
 | `--dry-run` | off | Probe/select only; do not run prompts |
 | `--verbose` / `-v` | off | Debug-level discovery/probe logs |
 
-### Bakeoff Task Set
+### Bakeoff task set
 
 Tasks are defined as `TaskSpec` dataclasses in `tools/llm/bakeoff_tasks.py`. Each task specifies
 a prompt, expected response format, required keys (for JSON responses), required terms (for text
@@ -91,7 +91,7 @@ responses), and a scoring weight.
 **System prompt used for all bakeoff tasks**:
 > "You are a pragmatic senior AI/software architect. Provide concise, technically precise outputs."
 
-### Scoring Formula
+### Scoring formula
 
 Each task is scored out of 100 points:
 
@@ -118,7 +118,7 @@ overall_score = clamp(task_score + (success_rate × 10.0) - (avg_latency × 0.2)
 
 Results are sorted descending by `(overall_score, task_score, success_rate, -avg_latency)`.
 
-### Alignment Recommendation
+### Alignment recommendation
 
 After ranking, `_recommend_alignment()` selects:
 
@@ -137,7 +137,7 @@ AGENTIC_MODEL_TIER_3=local:phi4
 AGENTIC_MODEL_TIER_4=local:phi4
 ```
 
-### Bakeoff Report Formats
+### Bakeoff report formats
 
 Two files are written per run, suffixed with a UTC timestamp (`YYYYMMDD-HHMMSSz`):
 
@@ -170,30 +170,21 @@ DEEP_RESEARCH_HEAVY_MODEL=local:phi4
 
 ---
 
-## Model Ranking (`rank_models.py`)
+## Model ranking (`rank_models.py`)
 
 `rank_models.py` combines probe output with provider limit check data to produce a prioritized
 model ranking JSON file. It is a post-processing step separate from the bakeoff.
-For the full probe, limit-check, and ranking workflow, see
-[Provider Rate Limits & Model Ranking](provider-limits.md).
 
 ```bash
 python -m tools.llm.rank_models \
-  --probe-file tools/llm/output44.json \
+  --probe-file runs/probe_output.json \
   --limits-file runs/provider_limits.json \
   --out runs/model_ranking.json
 ```
 
-Rankings prioritize:
-
-1. **Local ONNX** — score 100 (no quota, free, highest throughput)
-2. **LM Studio** — score 90 (local, OpenAI-compatible)
-3. **AI Toolkit** — score 88 (local, VS Code managed)
-4. **Ollama** — score 85 (local, REST API)
-5. **GitHub Models** — score 70 (remote, rate-limited, free)
-6. **Azure Foundry / Azure OpenAI** — score 65 (remote, billable, enterprise)
-7. **OpenAI direct** — score 60 (remote, billable)
-8. **Gemini** — score 55 (remote, billable)
+For the full probe, limit-check, and ranking workflow — including the provider score table
+generated from `rank_models.py` — see
+[Provider rate limits and model ranking](provider-limits.md#ranking-algorithm).
 
 ---
 

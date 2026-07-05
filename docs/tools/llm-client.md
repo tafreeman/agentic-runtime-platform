@@ -1,12 +1,15 @@
-# LLM Client & Provider Reference
+# LLM client and provider reference
 
 > Module: `tools.llm.llm_client` | Entry point: `LLMClient.generate_text()`
 
 ## Overview
 
-`LLMClient` is a static-method facade that routes text-generation requests to one of ten provider
-backends based on a name prefix in the model string. The facade is stateless — no instance is
-ever created. All provider-specific transport logic lives in `tools/llm/provider_adapters.py`.
+`LLMClient` is a static-method facade that routes text-generation requests to eight providers
+across nine routing backends (Azure has two: Azure OpenAI and Azure AI Foundry) based on a name
+prefix in the model string. The facade is stateless — no instance is ever created. All
+provider-specific transport logic lives in `tools/llm/provider_adapters.py`. Note this count is
+specific to the `tools` package; the `agentic_v2` runtime selects providers separately via its
+own `SmartModelRouter`.
 
 ```python
 from tools.llm.llm_client import LLMClient
@@ -22,7 +25,7 @@ text = LLMClient.generate_text(
 
 ---
 
-## Method Reference
+## Method reference
 
 ### `LLMClient.generate_text`
 
@@ -79,7 +82,7 @@ response. Returns `[]` if `GEMINI_API_KEY` / `GOOGLE_API_KEY` is absent.
 
 ---
 
-## Error Type
+## Error type
 
 ```python
 class LLMClientError(RuntimeError):
@@ -102,7 +105,7 @@ except LLMClientError as e:
 
 ---
 
-## Provider Routing
+## Provider routing
 
 Model name parsing is performed left-to-right on the prefix. Inferred providers (bare `gpt*`,
 `gemini*`, `claude*`) are checked last as substring matches.
@@ -127,7 +130,7 @@ model_name string
 
 ---
 
-## Provider Details
+## Provider details
 
 ### Local ONNX (`local:*`)
 
@@ -212,7 +215,8 @@ For bridge setup, LAF token troubleshooting, and availability checks, see
 - `winrt-runtime` Python package
 
 !!! note "AMD NPU status"
-    As of Windows build 26220, AMD XDNA NPU support for Phi Silica is not yet fully enabled.
+    As of mid-2025 Windows Insider builds (e.g. build 26220), AMD XDNA NPU support for Phi
+    Silica is not yet fully enabled — this may have changed on newer builds.
     The LAF (Limited Access Feature) unlock returns `Unavailable` on AMD hardware. See
     `tools/llm/windows_ai_bridge/PHI_SILICA_STATUS.md` for the current status and workarounds.
 
@@ -340,9 +344,9 @@ LLMClient.generate_text("gemini-1.5-pro", "...")  # inferred
 ```
 
 Uses `google.generativeai` SDK. Requires `GEMINI_API_KEY` or `GOOGLE_API_KEY`. Must enable
-`PROMPTEVAL_ALLOW_REMOTE=1`. System instruction is prepended inline as
-`"System Instruction: {system}\n\n{prompt}"` because the SDK's `system_instruction` parameter
-is not used to maintain simplicity.
+`PROMPTEVAL_ALLOW_REMOTE=1`. The system instruction is prepended inline as
+`"System Instruction: {system}\n\n{prompt}"`; the adapter deliberately skips the SDK's
+`system_instruction` parameter to keep the call path uniform across providers.
 
 ---
 
@@ -350,7 +354,7 @@ is not used to maintain simplicity.
 
 ```python
 LLMClient.generate_text("claude:claude-sonnet-4-6", "Review this code.")
-LLMClient.generate_text("claude-3-haiku-20240307", "...")  # inferred
+LLMClient.generate_text("claude-haiku-4-5", "...")  # inferred
 ```
 
 Uses the `anthropic.Anthropic` SDK. Requires `ANTHROPIC_API_KEY` or `CLAUDE_API_KEY`. System
@@ -359,7 +363,7 @@ instruction is passed as the `system` parameter in the Messages API. Must enable
 
 ---
 
-## LangChain Adapter
+## LangChain adapter
 
 `tools/llm/langchain_adapter.py` provides a thin shim for LangChain integration.
 
@@ -384,7 +388,7 @@ is not present, it returns a simple dict with a `generations` key.
 
 ---
 
-## Remote Provider Gate
+## Remote provider gate
 
 ```python
 # All of these raise RuntimeError when PROMPTEVAL_ALLOW_REMOTE is unset:
@@ -403,7 +407,7 @@ LLMClient.generate_text("windows-ai:phi-silica", "...")
 
 ---
 
-## Response Cache
+## Response cache
 
 The cache is applied transparently inside `generate_text()`. The cache key is the SHA-256 hash of
 `(model_name, prompt, system_instruction, temperature, max_tokens)`.

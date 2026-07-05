@@ -37,7 +37,3 @@ If the server is not starting, see [Troubleshooting](troubleshooting.md) for sta
 failure patterns. The most common cause is a missing LangChain extras install; the
 [Security Hardening](security-hardening.md#5-adapter-eager-validation) page explains
 how to bypass this with `AGENTIC_DEFAULT_ADAPTER=native`.
-
-!!! note "mkdocs.yml nav"
-    Navigation wiring for this section is maintained separately in `mkdocs.yml`.
-    If you add a new page here, update the nav block there.

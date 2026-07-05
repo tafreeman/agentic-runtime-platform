@@ -1,10 +1,10 @@
-# Local ONNX Models
+# Local ONNX models
 
 > Modules: `tools.llm.local_model` · `tools.llm.local_model_cli` · `tools.llm.local_model_discovery`
 
 ## Overview
 
-The local model stack provides fast, free, offline LLM inference using ONNX models cached locally by the [Windows AI Gallery](https://learn.microsoft.com/windows/ai/model-gallery) or installed manually. No API key or internet connection is required once a model is downloaded.
+The local model stack provides fast, free, offline LLM inference using ONNX models cached locally by the [AI Dev Gallery](https://aka.ms/ai-dev-gallery) or installed manually. No API key or internet connection is required once a model is downloaded.
 
 Three modules work together:
 
@@ -18,9 +18,9 @@ For most callers, the higher-level `LLMClient` (see [llm-client.md](llm-client.m
 
 ---
 
-## Supported Models
+## Supported models
 
-| Key | AI Gallery directory | Notes |
+| Key | AI Dev Gallery directory | Notes |
 |-----|---------------------|-------|
 | `phi4` / `phi4mini` | `microsoft--Phi-4-mini-instruct-onnx` | Default fallback |
 | `phi3` | `microsoft--Phi-3-mini-4k-instruct-onnx` | |
@@ -31,7 +31,7 @@ Models are resolved in the order `phi4mini → phi3.5 → phi3 → mistral` when
 
 ---
 
-## Quick Start
+## Quick start
 
 ```python
 from tools.llm.local_model import LocalModel
@@ -54,11 +54,13 @@ result = model.evaluate_prompt(prompt_text)
 
 ---
 
-## Model Discovery
+## Model discovery
 
 ### How paths are resolved
 
-`local_model_discovery._resolve_model_path(model_key)` implements a two-pass lookup:
+The public resolver is `tools.llm.provider_adapters.resolve_local_model_path(model_key, local_models=...)` — this is what `LLMClient`'s `local:` routing uses. It maps the key through the `LOCAL_MODELS` catalog, then locates a directory containing `.onnx` files under `~/.cache/aigallery` (an absolute catalog path is used as-is), preferring candidate subdirectories that match a `-gpu`/`-dml`/`-cpu` variant hint.
+
+`LocalModel` itself uses the module-private helper `local_model_discovery._resolve_model_path(model_key)`, which implements a two-pass lookup:
 
 1. **Key lookup** — if `model_key` is provided (e.g. `"phi4"`), maps to a list of known directory names under `_AI_GALLERY_ROOT` and returns the first match that contains a `*.onnx` file.
 2. **Auto-fallback** — if no key is given or the key is unknown, iterates `["phi4mini", "phi3.5", "phi3", "mistral"]` in order and returns the first available.
@@ -104,7 +106,7 @@ if check_model_available():
 
 ---
 
-## `LocalModel` Class
+## `LocalModel` class
 
 ```python
 from tools.llm.local_model import LocalModel
@@ -123,7 +125,7 @@ LocalModel(
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `model_path` | `str \| None` | Explicit path to an ONNX model directory. Takes priority over `model_key`. |
-| `model_key` | `str \| None` | Short model name (`"phi4"`, `"mistral"`, etc.). Resolved via `_resolve_model_path`. |
+| `model_key` | `str \| None` | Short model name (`"phi4"`, `"mistral"`, etc.). Resolved via the discovery module's path lookup. |
 | `verbose` | `bool` | Enable debug-level logging of model load and generation steps. |
 
 Raises `FileNotFoundError` if no model can be located.  
@@ -267,11 +269,11 @@ Only one variant should be installed at a time.
 
 ### Installing a model
 
-Models are installed via the Windows AI Gallery tooling or manually:
+Models are installed via the AI Dev Gallery tooling or manually:
 
 ```bash
-# Windows AI Gallery (recommended on Windows)
-# Open the AI Gallery in VS Code or AITK and download a model.
+# AI Dev Gallery (recommended on Windows)
+# Open the AI Dev Gallery app (or the VS Code AI Toolkit) and download a model.
 # It will be placed under ~/.cache/aigallery/
 
 # Manual — place your ONNX model directory under _AI_GALLERY_ROOT:
@@ -284,14 +286,14 @@ Models are installed via the Windows AI Gallery tooling or manually:
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `FileNotFoundError: No local ONNX model found` | No model in `~/.cache/aigallery` | Install a model via AI Gallery or pass `--model-path` |
+| `FileNotFoundError: No local ONNX model found` | No model in `~/.cache/aigallery` | Install a model via the AI Dev Gallery or pass `--model-path` |
 | `ImportError: onnxruntime-genai not installed` | Package missing | `pip install onnxruntime-genai` |
 | `RuntimeError: Failed to load model` | Corrupt or incompatible ONNX files | Re-download the model |
 | Low-quality output | Temperature too high | Try `--temperature 0.3` or `0.0` for deterministic output |
 
 ---
 
-## See Also
+## See also
 
 - [llm-client.md](llm-client.md) — use `LLMClient` with `local:phi4` prefix for most cases
 - [model-probing.md](model-probing.md) — check availability before loading with `probe.check_model("local:phi4")`

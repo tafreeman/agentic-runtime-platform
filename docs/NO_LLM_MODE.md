@@ -1,4 +1,4 @@
-# No-LLM Mode
+# No-LLM dev mode
 
 ## What it does
 
@@ -6,30 +6,32 @@ Set `AGENTIC_NO_LLM=1` to run the native and LangChain engines without provider 
 
 ## How to enable
 
-**Bash / PowerShell:**
+**Bash:**
 
 ```bash
 export AGENTIC_NO_LLM=1
-agentic run test_deterministic
+echo '{"input_text": "hello"}' > input.json
+agentic run test_deterministic --input input.json
 ```
 
 **Windows PowerShell:**
 
 ```powershell
 $env:AGENTIC_NO_LLM = "1"
-agentic run test_deterministic
+'{"input_text": "hello"}' | Out-File -Encoding utf8 input.json
+agentic run test_deterministic --input input.json
 ```
 
 Expected output: the workflow runs to completion, all steps emit placeholder text, and the process exits with status 0. No provider credentials required.
 
-> **LangChain engine requires an extra.** The native DAG executor works with just the base `pip install -e .` — that's the common case. If you want to exercise the LangChain adapter under this flag (`--engine langchain`), install with the extra: `pip install -e .[langchain]`. Without it, `get_chat_model()` raises `ImportError: langchain-core is required...` even when the flag is set. Accepted values for the env var (case-insensitive): `1`/`true`/`yes`/`on` are true; empty/`0`/`false`/`no`/`off` are false; anything else is coerced to false with a logged warning.
+> **LangChain engine requires an extra.** The native DAG executor works with just the base `pip install -e .` — that's the common case. If you want to exercise the LangChain adapter under this flag (`--adapter langchain`), install with the extra: `pip install -e .[langchain]`. Without it, `get_chat_model()` raises `ImportError: langchain-core is required...` even when the flag is set. Accepted values for the env var (case-insensitive): `1`/`true`/`yes`/`on` are true; empty/`0`/`false`/`no`/`off` are false; anything else is coerced to false with a logged warning.
 
 The UI also works: run `agentic serve` + `npm run dev` under this flag. DAG streaming shows placeholder content at each node.
 
 ## What works
 
 - **Native DAG executor** (both YAML workflow execution and agent-step paths)
-- **LangChain adapter** (`--engine langchain` in CLI or config)
+- **LangChain adapter** (`--adapter langchain` in CLI or config)
 - **DAG streaming over WebSocket/SSE** (one chunk per message; the entire placeholder is a single chunk)
 - **UI demos end-to-end**
 - **CLI validation commands** (`agentic list` and `agentic validate` don't invoke an LLM regardless of this flag; `agentic compare` exercises workflows and honors the flag)

@@ -2,11 +2,13 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-06-10
+> **Last verified:** 2026-07-05
 
 This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.
 
 Each item includes a **Status** (reflecting how we're treating it today) and an **Upstream fix** field pointing at the relevant ticket, workaround, or follow-up.
+
+> **Note on item IDs:** entries below cite the Sprint 1 story IDs (`S1-n`) they shipped under. [`ROADMAP.md`](ROADMAP.md) tracks the same work under the two-sprint plan's T-series IDs — e.g. S1-1 = T1-1 (wire-format gate extension), S1-2 = T1-4 (rate limiting + auth throttle), S1-6 = T3-2 (eager adapter validation).
 
 ---
 
@@ -16,7 +18,7 @@ Each item includes a **Status** (reflecting how we're treating it today) and an 
 
 `agentic_v2/contracts/events.py` defines the execution-event discriminated union in Python; `ui/src/api/types.ts` mirrors it by hand. Drift is caught by reviewer eyeball, not by automation.
 
-Sprint 1 (S1-1) extended the schema-drift CI gate to cover six HTTP response shapes — `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, `RunsSummaryResponse`, `ExecutionEvent`, and `StepResultRecord`. These six shapes now have committed JSON schema snapshots under `tests/schemas/` and the gate regenerates them in CI. Other endpoint payloads (beyond these six) remain hand-mirrored without an automated drift check.
+Sprint 1 (S1-1 / ROADMAP T1-1) added four HTTP response shapes to the schema-drift CI gate — `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, and `RunsSummaryResponse` — joining the previously covered `ExecutionEvent` and `StepResultRecord` for six gated shapes in total. These six shapes have committed JSON schema snapshots under `tests/schemas/` and the gate regenerates them in CI. Other endpoint payloads (beyond these six) remain hand-mirrored without an automated drift check.
 
 - **Surface:** Any new event field in the uncovered endpoints requires an edit in both files.
 - **Risk:** Silent shape mismatches between backend emit and frontend decode for endpoints not yet covered by the drift gate.

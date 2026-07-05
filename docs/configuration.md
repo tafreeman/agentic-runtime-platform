@@ -1,12 +1,12 @@
-# Configuration Reference
+# Configuration reference
 
-The `agentic-workflows-v2` server reads all configuration from environment variables, which may be supplied directly in the shell environment or via a `.env` file at the repository root. A fully annotated template with copy-pasteable defaults is available at [`.env.example`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example) in the repository root.
+The Agentic Runtime Platform server (`agentic-workflows-v2`) reads all configuration from environment variables, which may be supplied directly in the shell environment or via a `.env` file at the repository root. A fully annotated template with copy-pasteable defaults is available at [`.env.example`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example) in the repository root.
 
 All variables are read **once at server startup** unless noted otherwise in this document. Changes to any variable require a server restart to take effect — the only exception is `AGENTIC_API_KEY`, which is re-read on every request to support key rotation without downtime (see [Runtime and Local Development](#runtime-and-local-development) for details).
 
 ---
 
-## How Configuration Is Loaded
+## How configuration is loaded
 
 ### Engine: pydantic-settings
 
@@ -36,7 +36,7 @@ A small number of variables — notably those owned by the auth and rate-limitin
 
 ---
 
-## LLM Provider Keys
+## LLM provider keys
 
 At least one provider key is required for the server to handle real workflow requests. The runtime probes configured providers at startup and logs which tiers are available.
 
@@ -87,7 +87,7 @@ Free and Tier 1 Anthropic accounts are limited to 5 RPM across all Claude models
 
 ---
 
-## Tracing and Observability
+## Tracing and observability
 
 Distributed tracing is opt-in. The platform integrates with the VS Code AI Toolkit collector by default and is compatible with any OTLP-capable backend (Jaeger, Tempo, Honeycomb, etc.).
 
@@ -123,7 +123,7 @@ Distributed tracing is opt-in. The platform integrates with the VS Code AI Toolk
 
 ---
 
-## Runtime and Local Development
+## Runtime and local development
 
 | Variable | Default | Required? | Description |
 | --- | --- | --- | --- |
@@ -157,7 +157,7 @@ Valid values: `langchain` (default), `native`.
 
 ---
 
-## Security and Sandboxing
+## Security and sandboxing
 
 These variables control the containment boundaries for agent tool execution. They protect the host system from agents attempting path traversal, arbitrary shell execution, or prompt injection.
 
@@ -197,7 +197,7 @@ Rate limiting is outermost so abusive clients are rejected before any authentica
 
 ---
 
-## OIDC Authentication
+## OIDC authentication
 
 The server supports **OpenID Connect (OIDC) JWT authentication** as an alternative to the static `AGENTIC_API_KEY` bearer token. When OIDC is enabled, the `APIKeyMiddleware` validates incoming JWTs against the configured identity provider (IdP) instead of comparing a shared secret.
 
@@ -233,7 +233,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8010/api/agents
 
 ---
 
-## Operational Settings
+## Operational settings
 
 These variables control runtime infrastructure integrations — logging format, metrics exposure, audit logging, and the optional Redis backend. They are independent of LLM providers and can be configured without any API keys.
 
@@ -293,12 +293,12 @@ Sample output:
 
 ---
 
-## Rate Limiting and Auth Throttle
+## Rate limiting and auth throttle
 
 These variables configure two complementary in-process controls added in Sprint 1 (see [ADR-018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md)).
 
 !!! note "In-process state"
-    Both the rate limiter and the auth throttle store state in-process memory only. State is not shared across server replicas and is reset on server restart. In a multi-replica deployment, the effective per-IP limits are multiplied by the replica count. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) §4.3 and §4.4 for details. A Redis-backed cluster-wide implementation is planned for Sprint 2.
+    Both the rate limiter and the auth throttle store state in-process memory only. State is not shared across server replicas and is reset on server restart. In a multi-replica deployment, the effective per-IP limits are multiplied by the replica count. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) §4.1 and §4.2 for details. A Redis-backed cluster-wide implementation remains deferred — Sprint 2 shipped a Redis backend for the circuit breaker only, not for the rate limiter or auth throttle.
 
 ### Global rate limiter (`slowapi`)
 
@@ -337,17 +337,16 @@ For more permissive local development or stricter production deployments, tune t
 For the security rationale and multi-replica caveats, see:
 - [ADR-018: API Rate Limiting and Per-IP Auth Throttle](adr/ADR-018-api-rate-limiting-and-auth-throttle.md)
 - [Operations: Security Hardening](operations/security-hardening.md) (for operational runbooks)
-- [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) §4.3 (multi-replica rate limit bypass), §4.4 (restart resets throttle)
+- [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) §4.1 (multi-replica rate limit bypass), §4.2 (multi-replica auth-throttle bypass)
 
 ---
 
-## Additional Settings
+## Additional settings
 
 The following settings appear in `settings.py` but are not currently listed in `.env.example`. They are documented here for completeness.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `OTEL_SERVICE_NAME` | `agentic-workflows-v2` | Service name attached to all OTLP spans. Override to distinguish multiple deployments in the same tracing backend. |
 | `AGENTIC_CHECKPOINTER_URL` | — (in-memory) | PostgreSQL connection URL for LangGraph workflow checkpointing (e.g. `postgresql://user:pass@host:5432/db`). When set, `WorkflowRunner` uses `AsyncPostgresSaver` instead of the default `MemorySaver`. Requires the `[postgres]` extra: `pip install 'agentic-workflows-v2[postgres]'`. |
 | `MAX_MCP_OUTPUT_TOKENS` | — (no cap) | Token budget cap for MCP tool output. When set, MCP tool responses that exceed this limit are truncated. Useful for preventing large tool outputs from consuming the model's context window. |
 | `AGENTIC_STRICT_MODEL_VERIFY` | `0` | Set to `1` to block loading models whose SHA-256 hash does not match the expected value in `models/model_hashes.json`. Enables supply-chain integrity checking for local ONNX models. |
@@ -356,7 +355,7 @@ The following settings appear in `settings.py` but are not currently listed in `
 
 ---
 
-## Quick Recipes
+## Quick recipes
 
 ### Run locally with no provider keys
 
@@ -471,7 +470,7 @@ The following settings appear in `settings.py` but are not currently listed in `
 
 ---
 
-## Complete Variable Index
+## Complete variable index
 
 The following table lists every variable in `.env.example` in one place for quick reference. Click the section link for full documentation of each variable.
 
@@ -522,14 +521,14 @@ The following table lists every variable in `.env.example` in one place for quic
 
 ---
 
-## See Also
+## See also
 
 - [`.env.example`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example) — copy-pasteable template with inline comments for every variable.
 - [Operations: Security Hardening](operations/security-hardening.md) — operational runbooks for auth key rotation, SSRF hardening, and rate limit tuning.
 - [ADR-018: API Rate Limiting and Per-IP Auth Throttle](adr/ADR-018-api-rate-limiting-and-auth-throttle.md) — design rationale, alternatives considered, and known limitations for the Sprint 1 rate-limiting implementation.
 - [ADR-014: Pydantic Wire Format](adr/ADR-014-pydantic-wire-format.md) — execution event wire format; relevant context for WebSocket/SSE consumers.
 - [ADR-020: LangChain Adapter Eager Validation](adr/ADR-020-langchain-adapter-eager-validation.md) — why `AGENTIC_DEFAULT_ADAPTER` triggers a startup-time dependency check.
-- [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) — honest accounting of known caveats, including rate-limit multi-replica limitations (§4.3, §4.4).
+- [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) — honest accounting of known caveats, including rate-limit multi-replica limitations (§4.1, §4.2).
 - [NO_LLM_MODE.md](NO_LLM_MODE.md) — full documentation for `AGENTIC_NO_LLM=1` placeholder mode.
 - [deployment-guide.md](deployment-guide.md) — server startup, health checks, and infrastructure considerations.
 - [architecture-runtime.md](architecture-runtime.md) — dual-engine architecture, middleware stack, and server layer details.

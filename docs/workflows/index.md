@@ -1,14 +1,15 @@
 ---
-title: Workflow Reference
-description: Every production workflow shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML.
+title: Workflow reference
+description: Every workflow definition shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML.
 tags:
   - workflow
 ---
 
-# Workflow Reference
+# Workflow reference
 
-Six workflow definitions ship with the runtime today. Each is a real,
-runnable YAML file under
+Eight workflow definitions ship with the runtime today — six production
+workflows plus two deterministic test fixtures. Each is a real, runnable
+YAML file under
 [`agentic-workflows-v2/agentic_v2/workflows/definitions/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/workflows/definitions).
 They are deployed alongside the runtime and exercised by the test suite, so
 they double as the canonical examples for every grammar feature the engine
@@ -23,12 +24,14 @@ supports.
 | [`fullstack_generation`](#fullstack_generation) | Parallel sub-DAG with rework | 8 | 6 | Generate API + frontend + tests in parallel, then review and rework |
 | [`iterative_review`](#iterative_review) | Bounded loop with rework gate | 5 | 4 | Review/rework until quality gate passes or loop_max trips |
 | [`conditional_branching`](#conditional_branching) | Conditional fan-out with assembly | 6 | 4 | Branch on requirements; only execute the gates that matter |
-| [`test_deterministic`](#test_deterministic) | Tier-0 only (no LLM) | 3 | 2 | Smoke test for the executor itself; no provider needed |
+| [`consensus_review`](#consensus_review) | Ensemble with majority vote | 5 | 3 | Three independent reviewers vote; summarize only on agreement |
+| [`test_deterministic`](#test_deterministic) | Tier-0 only (no LLM) | 2 | 2 | Smoke test for the executor itself; no provider needed |
+| [`test_workflow`](#test_workflow) | Tier-0 only (no LLM) | 2 | 2 | Fixture for server and evaluation tests |
 
-The columns mean exactly what they appear to mean: **Steps** counts entries
-under `steps:`; **Agents** counts the unique `agent:` values referenced; and
-**Pattern** is the dominant control-flow shape — every workflow combines
-features, but each leans on one shape more than the others.
+**Steps** counts entries under `steps:`; **Agents** counts the unique
+`agent:` values referenced; and **Pattern** is the dominant control-flow
+shape — every workflow combines features, but each leans on one shape more
+than the others.
 
 ## `code_review`
 
@@ -117,22 +120,61 @@ assembler at the end coalesces whatever results are present.
 
 [View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/conditional_branching.yaml){ .md-button }
 
+## `consensus_review`
+
+A self-consistency / ensemble review pattern. Three independent tier-2
+reviewers answer the same prompt in parallel; a deterministic tier-0
+aggregator majority-votes their verdicts; a final summary step runs only
+when the vote clears the `min_agreement` threshold (default 0.66). The
+workflow's own description calls it "a usable production pattern, not a
+demo" — point any verdict-producing reviewer agents at it and tune
+`min_agreement`.
+
+- **Pattern:** Ensemble with majority vote
+- **Steps:** (`reviewer_a` ‖ `reviewer_b` ‖ `reviewer_c`) → `vote` →
+  `summarize` (gated on `meets_threshold`)
+- **Agents:** `tier0_consensus`, `tier2_reviewer`, `tier2_summarizer`
+- **Inputs:** `code_file`, `min_agreement`
+- **Outputs:** `verdict`, `agreement`, `summary` (optional)
+- **When to reach for it:** a single reviewer's verdict is too noisy and
+  you want agreement across independent samples before acting on it
+
+[View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml){ .md-button }
+
 ## `test_deterministic`
 
-The smallest workflow: three steps with two tier-0 agents and no LLM
+The smallest workflow: two steps with two tier-0 agents and no LLM
 calls. Used by the test suite to assert the executor, contract validator,
 and run recorder all work in isolation. It is also the workflow the
 [Quick Start](../getting-started/quickstart.md) page asks you to run
 first.
 
 - **Pattern:** Tier-0 only (no LLM)
-- **Steps:** `step1` → `step2` (plus internal probe step)
+- **Steps:** `step1` → `step2`
 - **Agents:** `tier0_counter`, `tier0_process`
-- **Inputs:** `input_text`
+- **Inputs:** `input_text` (required)
+- **Outputs:** `processed_text`, `step_count`
 - **When to reach for it:** smoke-testing a fresh install before swapping
   in real provider keys
 
 [View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml){ .md-button }
+
+## `test_workflow`
+
+A test fixture that mirrors `test_deterministic` — the same two tier-0
+steps (process, then count) — but with `input_text` optional and
+defaulting to an empty string, so server and evaluation tests can run it
+with no inputs at all.
+
+- **Pattern:** Tier-0 only (no LLM)
+- **Steps:** `step1` → `step2`
+- **Agents:** `tier0_counter`, `tier0_process`
+- **Inputs:** `input_text` (optional, default `""`)
+- **Outputs:** `processed_text`, `step_count`
+- **When to reach for it:** you need a zero-input, zero-key workflow as a
+  fixture in server or evaluation tests
+
+[View YAML →](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_workflow.yaml){ .md-button }
 
 ## What to read next
 

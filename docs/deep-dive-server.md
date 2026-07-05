@@ -1,14 +1,31 @@
-# Deep-Dive: Server Internals
+# Deep-dive: server internals
 
 > **Package:** `agentic-workflows-v2/agentic_v2/server/`
 > **Audience:** Backend engineers extending the server, security reviewers, and DevOps engineers deploying the service.
 
-**Generated:** 2026-05-02 (updated 2026-06-17)
+**Generated:** 2026-05-02 (updated 2026-07-05)
 **Key source files:** `server/app.py`, `server/auth.py`, `server/websocket.py`, `server/middleware/__init__.py`, `server/routes/`, `server/execution.py`, `server/_step_events.py`, `server/_stream_merge.py`
 
 ---
 
-## 1. Application Factory
+## Overview
+
+The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflows-v2` runtime. It wraps the execution engines, agent registry, and evaluation pipeline behind a FastAPI application that serves both the REST API and the Vite-built React SPA.
+
+**Responsibilities:**
+
+- HTTP API for workflows, agents, runs, datasets, evaluation (`routes/`)
+- Async workflow execution and event broadcast (`execution.py` + `_step_events.py` + `_stream_merge.py`)
+- WebSocket/SSE streaming hub with replay buffer (`websocket.py`)
+- Auth (bearer + X-API-Key) with constant-time comparison (`auth.py`)
+- Prompt sanitization middleware (`middleware/__init__.py`)
+- Evaluation pipeline delegation — hard gates → criterion scoring → optional LLM judge; domain logic lives in `agentic_v2.scoring` (see ADR-032), `evaluation.py` is now a thin orchestration layer
+- Dataset discovery, loading, matching, adaptation (`datasets.py`; `dataset_matching.py` moved to `agentic_v2.scoring`)
+- Pydantic request/response contracts (`models.py`)
+
+---
+
+## 1. Application factory
 
 Source: `server/app.py`
 
@@ -18,13 +35,16 @@ The server is assembled by `create_app()`, a factory function that returns a con
 app = create_app()
 ```
 
-**Assembly order (matters for middleware precedence):**
+**Middleware order (outermost → innermost, i.e. request processing order):**
 
-1. `CORSMiddleware` — configured via `get_allowed_origins()` which reads `AGENTIC_CORS_ORIGINS`.
-2. `APIKeyMiddleware` — bearer-token gate on all `/api/` routes.
-3. `SanitizationASGIMiddleware` — prompt injection and secret scrubbing on JSON request bodies.
-4. Route groups: `health`, `agents`, `models`, `workflows`, `evaluation_routes`, `runs`, `websocket`.
-5. Static file mount (if `ui/dist/` exists) with SPA fallback to `index.html`.
+1. `CORSMiddleware` — handles preflight OPTIONS before any other layer; configured via `get_allowed_origins()` which reads `AGENTIC_CORS_ORIGINS`.
+2. `SlowAPIMiddleware` — global per-IP rate limiting (slowapi; see `middleware/rate_limit.py`).
+3. `MetricsMiddleware` — HTTP request duration and count recording.
+4. `TraceparentMiddleware` — W3C traceparent response-header injection.
+5. `SanitizationASGIMiddleware` — prompt injection and secret scrubbing on JSON request bodies.
+6. `APIKeyMiddleware` — bearer-token gate on `/api/` routes plus per-IP 401 throttle (innermost). Replaced by `OIDCAuthMiddleware` when `AGENTIC_OIDC_ENABLED` is set.
+
+Route groups (`health`, `agents`, `models`, `workflows`, `evaluation_routes`, `model_finder`, `runs`) are registered under the `/api` prefix; the WebSocket router mounts at the root. A static file mount (if `ui/dist/` exists) provides SPA fallback to `index.html`.
 
 **SPA path traversal guard:**
 
@@ -38,9 +58,9 @@ The `.resolve()` call followed by a parent-check blocks directory traversal atte
 
 ---
 
-## 2. Lifespan Handler
+## 2. Lifespan handler
 
-The `lifespan` async context manager runs at startup and shutdown.
+The `lifespan` async context manager (in `server/lifespan.py`) runs at startup and shutdown.
 
 **Startup sequence:**
 
@@ -55,7 +75,7 @@ The `lifespan` async context manager runs at startup and shutdown.
 
 ---
 
-## 3. Authentication Middleware
+## 3. Authentication middleware
 
 Source: `server/auth.py`
 
@@ -72,7 +92,7 @@ token matches api_key    →  pass through
 otherwise                →  HTTP 401 {"detail": "Invalid or missing API key"}
 ```
 
-Public prefixes that bypass auth: `/api/health`, `/docs`, `/openapi.json`, `/redoc`. All non-`/api/` routes (UI static files, WebSocket upgrade) also bypass auth.
+Public prefixes that bypass auth: `/api/health`, `/docs`, `/openapi.json`, `/redoc` (plus the exact path `/metrics`). All non-`/api/` routes (UI static files, WebSocket upgrade) also bypass auth.
 
 **Token extraction priority:**
 
@@ -81,13 +101,18 @@ Public prefixes that bypass auth: `/api/health`, `/docs`, `/openapi.json`, `/red
 
 Token comparison uses `secrets.compare_digest()` to prevent timing side-channels.
 
+**Brute-force throttle (`AuthThrottle`):**
+
+After `AGENTIC_AUTH_LOCKOUT_THRESHOLD` (default 5) failed attempts within `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` (default 60), the middleware returns HTTP 429 with a `Retry-After` header for `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` (default 300). State is per-IP, in-process only, and resets on successful authentication.
+
 **Key rotation without restart:**
 
 `_get_api_key()` reads `AGENTIC_API_KEY` on every request via `get_secret()`. Rotating the environment variable takes effect for the next request without a server restart.
 
-### CORS Configuration
+### CORS configuration
 
 `get_allowed_origins()` reads `AGENTIC_CORS_ORIGINS` (comma-separated). Default origins:
+
 - `http://localhost:5173` (Vite dev server)
 - `http://127.0.0.1:5173`
 - `http://localhost:8000`
@@ -98,7 +123,7 @@ Token comparison uses `secrets.compare_digest()` to prevent timing side-channels
 Allowed methods: `GET, POST, PUT, DELETE, OPTIONS`
 Allowed headers: `Authorization, X-API-Key, Content-Type, Accept`
 
-### WebSocket Origin Validation
+### WebSocket origin validation
 
 `is_websocket_origin_allowed()` implements a layered check:
 
@@ -112,7 +137,7 @@ Query-string token auth (`?token=...`) is explicitly rejected for WebSocket conn
 
 ---
 
-## 4. Sanitization Middleware
+## 4. Sanitization middleware
 
 Source: `server/middleware/__init__.py`
 
@@ -139,7 +164,7 @@ The `run_workflow` route handler calls `_sanitize_inputs()` which re-runs saniti
 
 ---
 
-## 5. WebSocket and SSE Hub
+## 5. WebSocket and SSE hub
 
 Source: `server/websocket.py`
 
@@ -169,7 +194,7 @@ When a WebSocket client connects after a run has started, `replay()` immediately
 
 The `GET /api/runs/{run_id}/stream` route creates a bounded `asyncio.Queue`, registers it via `register_sse_listener`, and yields events as `data: <json>\n\n` lines. A 30-second `wait_for` timeout yields keepalive events. On termination (`workflow_end` or `evaluation_complete` event received), the queue is unregistered.
 
-### WebSocket Endpoint
+### WebSocket endpoint
 
 ```
 WS /ws/execution/{run_id}
@@ -202,7 +227,7 @@ while True:
 
 ---
 
-## 6. Background Execution
+## 6. Background execution
 
 Source: `server/execution.py` (referenced from routes)
 
@@ -217,51 +242,70 @@ The background task runs in the same event loop as the server. It does not use a
 
 ---
 
-## 7. Route Architecture
+## 7. API surface
 
-```
-/api/health          →  routes/health.py       (HealthResponse)
-/api/agents          →  routes/agents.py        (ListAgentsResponse)
-/api/models/probe    →  routes/models.py        (tier mapping dict)
-/api/workflows       →  routes/workflows.py     (ListWorkflowsResponse)
-/api/adapters        →  routes/workflows.py     (adapters list)
-/api/workflows/{n}/dag          → workflows.py
-/api/workflows/{n}/capabilities → workflows.py
-/api/workflows/{n}/editor       → workflows.py
-/api/workflows/validate         → workflows.py  (POST)
-/api/run             →  routes/workflows.py     (WorkflowRunResponse)
-/api/runs            →  routes/runs.py          (list[RunSummaryModel])
-/api/runs/summary    →  routes/runs.py          (RunsSummaryResponse)
-/api/runs/{f}        →  routes/runs.py          (raw run log)
-/api/runs/{f}/evaluation → runs.py             (RunEvaluationDetailResponse)
-/api/runs/{id}/stream   → runs.py              (SSE)
-/api/eval/datasets   →  routes/evaluation_routes.py
-/api/eval/datasets/sample-list   → evaluation_routes.py
-/api/eval/datasets/sample-detail → evaluation_routes.py
-/api/workflows/{n}/preview-dataset-inputs → evaluation_routes.py
-/ws/execution/{id}   →  websocket.py            (WebSocket)
-```
+### REST endpoints (25)
+
+All routes are mounted under the `/api` prefix (`app.py`). "API key" means the route requires a valid key only when `AGENTIC_API_KEY` is set; otherwise the server runs in open local-development mode.
+
+| Method | Path | Auth | Purpose | Source |
+|---|---|---|---|---|
+| GET | `/api/health` | public | Liveness probe | `routes/health.py` |
+| GET | `/api/health/ready` | public | Readiness probe | `routes/health.py` |
+| GET | `/api/agents` | API key | Agent discovery from YAML | `routes/agents.py` |
+| GET | `/api/models/probe` | API key | Provider availability + tier mapping | `routes/models.py` |
+| GET | `/api/workflows` | API key | List available workflows | `routes/workflows.py` |
+| GET | `/api/adapters` | API key | List execution adapters | `routes/workflows.py` |
+| GET | `/api/workflows/{name}/dag` | API key | DAG nodes/edges/schema | `routes/workflows.py` |
+| GET | `/api/workflows/{name}/capabilities` | API key | Workflow I/O declarations | `routes/workflows.py` |
+| GET | `/api/workflows/{name}/editor` | API key | Load workflow YAML | `routes/workflows.py` |
+| PUT | `/api/workflows/{name}` | API key | Save workflow YAML | `routes/workflows.py` |
+| POST | `/api/workflows/validate` | API key | Validate a workflow document without persisting | `routes/workflows.py` |
+| POST | `/api/run` | API key | Execute workflow (async) | `routes/workflows.py` |
+| GET | `/api/runs` | API key | Paginated run history | `routes/runs.py` |
+| GET | `/api/runs/summary` | API key | Aggregate run statistics | `routes/runs.py` |
+| GET | `/api/runs/{filename}` | API key | Full run detail | `routes/runs.py` |
+| GET | `/api/runs/{filename}/evaluation` | API key | Rubric evaluation detail for a scored run | `routes/runs.py` |
+| GET | `/api/runs/{run_id}/stream` | API key | SSE event stream | `routes/runs.py` |
+| GET | `/api/eval/datasets` | API key | Repository + local dataset discovery | `routes/evaluation_routes.py` |
+| GET | `/api/eval/datasets/sample-list` | API key | Dataset sample listing (deprecated) | `routes/evaluation_routes.py` |
+| GET | `/api/eval/datasets/sample-detail` | API key | Dataset sample detail (deprecated) | `routes/evaluation_routes.py` |
+| GET | `/api/eval/datasets/{source}/{dataset_id}/samples` | API key | Dataset sample listing | `routes/evaluation_routes.py` |
+| GET | `/api/eval/datasets/{source}/{dataset_id}/samples/{sample_index}` | API key | Dataset sample detail | `routes/evaluation_routes.py` |
+| GET | `/api/workflows/{workflow_name}/preview-dataset-inputs` | API key | Dataset-field mapping preview | `routes/evaluation_routes.py` |
+| GET | `/api/model-finder/profile` | API key | Model-finder hardware profile | `routes/model_finder.py` |
+| GET | `/api/model-finder/recommendations` | API key | Model recommendations | `routes/model_finder.py` |
+
+### WebSocket
+
+| Path | Auth | Purpose |
+|---|---|---|
+| `/ws/execution/{run_id}` | header token + origin check | Real-time step/workflow/evaluation events |
+
+The SSE stream (`GET /api/runs/{run_id}/stream`, listed above) mirrors the WebSocket stream over a different transport.
 
 ---
 
-## 8. Security Hardening Reference
+## 8. Security hardening reference
 
-See [Architecture Runtime §8](architecture-runtime.md#8-security-hardening-sprint-1-s1-01-through-s1-07) for the complete Sprint 1 security hardening table.
+See [security hardening in the runtime architecture](architecture-runtime.md#8-security-hardening-sprint-1-s1-01-through-s1-07) for the complete hardening table.
 
 Key items that directly affect the server layer:
 
-**S1-01** — `SanitizationASGIMiddleware` is fail-closed. Any unexpected exception in the detector returns HTTP 500 rather than letting the unvalidated request proceed. Opt-out via `AGENTIC_SANITIZER_FAIL_OPEN=1`.
+**Fail-closed sanitization** — `SanitizationASGIMiddleware` is fail-closed. Any unexpected exception in the detector returns HTTP 500 rather than letting the unvalidated request proceed. Opt-out via `AGENTIC_SANITIZER_FAIL_OPEN=1`.
 
-**S1-03** — `run_id` input validation:
+**`run_id` input validation:**
+
 ```python
 if not re.match(r"^[a-zA-Z0-9_-]{1,128}$", v):
     raise ValueError("run_id must be 1-128 characters...")
 ```
+
 This regex intentionally excludes `/`, `.`, `%`, `\`, `\0`, and unicode normalization sequences.
 
 ---
 
-## 9. Development Quick Reference
+## 9. Development quick reference
 
 ```bash
 # Start backend (from agentic-workflows-v2/)
@@ -272,163 +316,106 @@ python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
 #   5173  — Vite frontend (npm run dev in ui/)
 #   6006  — Storybook
 
-# Check if port is in use (Windows)
+# Check if port is in use (Linux/macOS)
+lsof -i :8010
+
+# Check if port is in use (Windows PowerShell)
 Get-NetTCPConnection -LocalPort 8010
 
 # No-LLM smoke test
 AGENTIC_NO_LLM=1 python -m uvicorn agentic_v2.server.app:app --port 8010
 ```
-**Target type:** folder
-**Scan mode:** exhaustive
 
 ---
 
-## Overview
+## Module inventory
 
-The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflows-v2` runtime. It wraps the execution engines, agent registry, and evaluation pipeline behind a FastAPI application that serves both the REST API and the Vite-built React SPA.
-
-**Responsibilities:**
-- HTTP API for workflows, agents, runs, datasets, evaluation (`routes/`)
-- Async workflow execution and event broadcast (`execution.py` + `_step_events.py` + `_stream_merge.py`)
-- WebSocket/SSE streaming hub with replay buffer (`websocket.py`)
-- Auth (bearer + X-API-Key) with constant-time comparison (`auth.py`)
-- Prompt sanitization middleware (`middleware/__init__.py`)
-- Evaluation pipeline delegation — hard gates → criterion scoring → optional LLM judge; domain logic lives in `agentic_v2.scoring` (see ADR-032), `evaluation.py` is now a thin orchestration layer
-- Dataset discovery, loading, matching, adaptation (`datasets.py`; `dataset_matching.py` moved to `agentic_v2.scoring`)
-- Pydantic request/response contracts (`models.py`)
-
----
-
-## API Surface
-
-### REST Endpoints (16)
-
-| Method | Path | Auth | Purpose | Source |
-|---|---|---|---|---|
-| GET | `/api/health` | public | Liveness probe | `routes/health.py` |
-| GET | `/api/agents` | optional | Agent discovery from YAML | `routes/agents.py` |
-| GET | `/api/workflows` | optional | List available workflows | `routes/workflows.py` |
-| GET | `/api/workflows/{name}/dag` | optional | DAG nodes/edges/schema | `routes/workflows.py` |
-| GET | `/api/workflows/{name}/capabilities` | optional | Workflow I/O declarations | `routes/workflows.py` |
-| GET | `/api/workflows/{name}/editor` | optional | Load workflow YAML | `routes/workflows.py` |
-| PUT | `/api/workflows/{name}/editor` | optional | Save workflow YAML | `routes/workflows.py` |
-| GET | `/api/adapters` | optional | List execution adapters | `routes/workflows.py` |
-| POST | `/api/run` | optional | Execute workflow (async) | `routes/runs.py` |
-| GET | `/api/runs` | optional | Paginated run history | `routes/runs.py` |
-| GET | `/api/runs/summary` | optional | Aggregate run statistics | `routes/runs.py` |
-| GET | `/api/runs/{filename}` | optional | Full run detail | `routes/runs.py` |
-| GET | `/api/runs/{run_id}/stream` | optional | SSE event stream | `execution.py` |
-| GET | `/api/eval/datasets` | optional | Repository + local dataset discovery | `routes/evaluation_routes.py` |
-| GET | `/api/workflows/{name}/preview-dataset-inputs` | optional | Dataset-field mapping preview | `routes/evaluation_routes.py` |
-| POST | `/api/eval/run` | optional | Evaluation run | `routes/evaluation_routes.py` |
-
-### WebSocket
-
-| Path | Auth | Purpose |
-|---|---|---|
-| `/ws/execution/{run_id}` | required (token + origin) | Real-time step/workflow/evaluation events |
-
-### SSE
-
-| Path | Auth | Purpose |
-|---|---|---|
-| `/api/runs/{run_id}/stream` | optional | Server-sent events mirroring WS stream |
-
----
-
-## Module Inventory
-
-### `__init__.py` — 7 LOC
+### `__init__.py`
 - **Purpose:** Package marker; re-exports FastAPI app factory.
 - **Exports:** `create_app` (re-export).
 - **Used by:** `python -m uvicorn agentic_v2.server.app:app` entry.
 
-### `app.py` — 171 LOC
-- **Purpose:** FastAPI application factory. Wires CORS, auth dependency, sanitization middleware, router registration, SPA static serving, and lifespan for startup/shutdown.
-- **Key exports:** `create_app() -> FastAPI`, `app` (module-level instance), `get_auth_dependency()`.
-- **Imports:** `fastapi`, `fastapi.middleware.cors`, `..middleware.sanitization`, `.auth`, `.routes`, `..integrations.otel` (optional).
+### `app.py`
+- **Purpose:** FastAPI application factory. Wires CORS, rate limiting, metrics, tracing, sanitization, and auth middleware; registers routers; mounts `/metrics` and the SPA.
+- **Key exports:** `create_app() -> FastAPI`, `app` (module-level instance).
+- **Imports:** `fastapi`, `fastapi.middleware.cors`, `.auth`, `.auth_oidc`, `.lifespan`, `.middleware.*`, `.routes`, `.spa`.
 - **Used by:** uvicorn entry point; tests via `from agentic_v2.server.app import create_app`.
-- **Implementation details:** conditional OTEL instrumentation; lifespan manages `WorkflowRunner` singleton creation; serves `ui/dist/` when built.
-- **Side effects:** starts background tasks, opens OTEL exporters.
-- **Risks:** global `_lc_runner` singleton — no re-init protection; SPA mount hides API 404s as HTML.
-- **Verification:** `curl localhost:8010/api/health`; ensure `ui/dist` exists before building prod image.
-- **Suggested tests:** lifespan startup/teardown, CORS preflight, SPA fallback routing.
+- **Side effects:** builds the module-level `app` singleton at import time.
 
-### `auth.py` — 234 LOC
-- **Purpose:** Bearer token + `X-API-Key` authentication dependency with constant-time comparison. Also validates WebSocket origin headers.
-- **Key exports:** `AuthSettings`, `verify_token()`, `require_auth()` (FastAPI dependency), `validate_websocket_origin()`.
-- **Imports:** `hmac`, `secrets`, `fastapi.Security`, `pydantic_settings`.
-- **Implementation:** reads `AGENTIC_API_TOKEN` env; empty token disables auth (dev mode); uses `hmac.compare_digest` to prevent timing attacks.
-- **Risks:** Origin whitelist from env — misconfig allows CSRF via WS.
-- **Suggested tests:** timing-attack unit test (fixed latency); origin allow/deny matrix.
+### `auth.py`
+- **Purpose:** `APIKeyMiddleware` bearer/`X-API-Key` authentication with constant-time comparison, per-IP brute-force throttle, CORS origin config, and WebSocket origin/token helpers.
+- **Key exports:** `APIKeyMiddleware`, `AuthThrottle`, `is_token_authorized()`, `is_websocket_origin_allowed()`, `extract_websocket_token()`, `websocket_uses_query_token()`, `get_allowed_origins()`.
+- **Implementation:** reads `AGENTIC_API_KEY` via `get_secret()` on each request (rotation without restart); unset key disables auth (dev mode); uses `secrets.compare_digest` to prevent timing attacks; per-IP 401 throttle returns 429 with `Retry-After`.
+- **Risks:** origin allowlist from env — misconfig allows CSRF via WS.
+- **Suggested tests:** timing-attack unit test (fixed latency); origin allow/deny matrix; lockout threshold/expiry.
 
-### `datasets.py` — 444 LOC
+### `auth_oidc.py`
+- **Purpose:** Opt-in OAuth2/OIDC JWT bearer-token middleware; replaces `APIKeyMiddleware` when `AGENTIC_OIDC_ENABLED` is set, keeping `AGENTIC_API_KEY` as a fallback.
+
+### `audit_log.py`
+- **Purpose:** Tamper-evident audit logging — structured JSON events linked by a SHA-256 hash chain; records auth successes, failures, and throttle events.
+
+### `datasets.py`
 - **Purpose:** Dataset discovery and loading. Supports repository (HuggingFace/GitHub), local JSON files, and predefined eval sets. Flexible sample extraction from top-level list, or dict with `tasks`/`samples`/`items` keys.
 - **Key exports:** `list_datasets()`, `load_dataset(name)`, `resolve_local_dataset(path)`, `DatasetDescriptor`.
-- **Imports:** `httpx` (optional), `pathlib`, `json`.
 - **Used by:** `routes/evaluation_routes.py`, `evaluation.py`.
-- **Risks:** Path traversal possible if caller doesn't sanitize `name`; uses `is_within_base()` guard.
+- **Risks:** path traversal possible if caller doesn't sanitize `name`; uses `is_within_base()` guard.
 - **Suggested tests:** malformed JSON (non-list, non-dict), missing files, symlink escape, network failure for HF/GitHub.
 
 ### `dataset_matching.py` — **moved to `agentic_v2.scoring`** (ADR-032)
 - Now at `agentic_v2/scoring/dataset_matching.py`. Heuristic field-name mapping between dataset sample fields and workflow input schema. The `server/` package imports this from `agentic_v2.scoring`.
-- **Risks:** Silent failures if sample structure unexpected — prefer explicit field map in workflow YAML.
-- **Suggested tests:** edge cases (nested fields, arrays, None values), file materialization with weird extensions, traversal attempts.
+- **Risks:** silent failures if sample structure unexpected — prefer explicit field map in workflow YAML.
 
-### `evaluation.py` — 144 LOC
-- **Purpose:** Orchestrates the 3-stage evaluation pipeline: hard gates → criterion scoring → LLM judge. Thin glue layer.
+### `evaluation.py`
+- **Purpose:** Orchestrates the 3-stage evaluation pipeline: hard gates → criterion scoring → LLM judge. Thin glue layer over `agentic_v2.scoring`.
 - **Key exports:** `evaluate_workflow_result(result, criteria, judge)`, `EvaluationOutcome`.
 - **Used by:** `execution.py`, `routes/evaluation_routes.py`.
-- **Side effects:** Optional LLM call if judge configured.
-- **Suggested tests:** pipeline ordering, short-circuit on hard-gate failure.
+- **Side effects:** optional LLM call if judge configured.
 
 ### `evaluation_scoring.py` — **moved to `agentic_v2.scoring`** (ADR-032)
-- This module has been extracted to `agentic_v2/scoring/evaluation_scoring.py`. The `server/` package imports from `agentic_v2.scoring` rather than hosting the logic directly. `server/evaluation.py` remains as a thin orchestration wrapper.
-- See [Scoring Package](architecture-runtime.md#scoring-package) in the runtime architecture doc.
+- Extracted to `agentic_v2/scoring/evaluation_scoring.py`. The `server/` package imports from `agentic_v2.scoring` rather than hosting the logic directly. `server/evaluation.py` remains as a thin orchestration wrapper.
+- See [Scoring package](architecture-runtime.md#scoring-package) in the runtime architecture doc.
 
-### `execution.py` — background execution core
+### `execution.py`
 - **Purpose:** Async workflow execution orchestrator. Handles LangGraph runner singleton lifecycle, stream payload materialization, LangGraph streaming orchestration (`_stream_and_run`), native adapter execution (`_run_via_native_adapter`), and the full background task lifecycle (`_run_and_evaluate`).
 - **Key exports:** `_get_lc_runner()`, `_run_and_evaluate()`, `_run_via_native_adapter()`, `_stream_and_run()`, `_stream_dict` (payload materializer).
-- **Imports:** `..langchain.WorkflowRunner`, `..engine.context.ExecutionContext`, `..adapters`, `.websocket`, `.result_normalization`, `._step_events` (set `_stream_dict_ref` after own definition), `._stream_merge`.
-- **Risks:** Global `_lc_runner` singleton — not thread-safe; assumes single event loop.
+- **Risks:** global `_lc_runner` singleton — not thread-safe; assumes single event loop.
 - **Suggested tests:** concurrent run isolation, event ordering under load, adapter fallback.
 
-### `_step_events.py` — step event builders (extracted from `execution.py`)
+### `_step_events.py`
 - **Purpose:** Step-event builders and WebSocket broadcast logic for LangGraph streaming. Builds `step_start`/`step_end` broadcast payloads, computes step duration, walks node updates and emits per-step events (`_broadcast_node_steps`, `_process_streamed_step`).
-- **Key exports:** `_broadcast_node_steps()`, `_process_streamed_step()`, `_step_start_event()`, `_step_end_event()`.
 - **Dependency injection:** `_stream_dict_ref` is injected by `execution.py` immediately after it defines `_stream_dict`, avoiding a circular import.
-- **Suggested tests:** step payload shape, duration calculation, injection guard (raises if `_stream_dict_ref` unset).
 
-### `_stream_merge.py` — stream state merge helpers (extracted from `execution.py`)
+### `_stream_merge.py`
 - **Purpose:** Pure, stateless helpers for incrementally merging LangGraph node update payloads into the aggregate run state dict. Merges `context`, `outputs`, `steps`, and `errors` without side effects.
-- **Key exports:** `_merge_stream_state()`, `_merge_stream_payload()`.
-- **Design:** No imports from other server modules — purely a set of dict-manipulation functions, making it safe to test in complete isolation.
+- **Design:** no imports from other server modules — safe to test in complete isolation.
 
-### `judge.py` — 579 LOC
-- **Purpose:** LLM-as-judge with anchored 1–5 Likert rubric. Positional bias mitigation via deterministic criteria shuffling. Optional pairwise consistency check. Strict JSON schema validation. Temperature clamped [0.0, 0.1].
-- **Key exports:** `LLMJudge`, `judge_result()`, `detect_calibration_drift()`.
-- **Imports:** `..models.client`, Pydantic for validation.
-- **Risks:** Pairwise 2x LLM calls expensive; positional bias not fully eliminated.
-- **Suggested tests:** calibration MAE on human-labeled fixtures, schema rejection of malformed judge output, shuffle determinism.
+### `judge.py` — **moved to `agentic_v2.scoring`** (ADR-032)
+- Now at `agentic_v2/scoring/judge.py`. LLM-as-judge with anchored 1–5 Likert rubric, positional-bias mitigation via deterministic criteria shuffling, optional pairwise consistency check, strict JSON schema validation, temperature clamped [0.0, 0.1].
+- **Risks:** pairwise 2x LLM calls expensive; positional bias not fully eliminated.
 
-### `models.py` — 396 LOC
+### `lifespan.py`
+- **Purpose:** FastAPI lifespan context manager and startup helpers — provider probing, sanitization state, audit logger construction, rate-limit availability enforcement.
+
+### `models.py`
 - **Purpose:** Pydantic v2 schemas for all REST contracts (request + response). Central source of truth for API types.
-- **Key exports:** `RunRequest`, `RunResponse`, `WorkflowDescriptor`, `EvalRequest`, `JudgeConfig`, ~30 more.
 - **Used by:** all `routes/` modules.
-- **Risks:** Contract models are additive-only — never remove fields.
+- **Risks:** contract models are additive-only — never remove fields.
 - **Suggested tests:** schema round-trip, optional-field defaults, enum coverage.
 
 ### `multidimensional_scoring.py` — **moved to `agentic_v2.scoring`** (ADR-032)
 - Now at `agentic_v2/scoring/multidimensional_scoring.py`. See the scoring package documentation.
 
-### `normalization.py` — 35 LOC
+### `normalization.py`
 - **Purpose:** Thin re-export facade for `result_normalization` (backward-compat).
-- **Used by:** external imports referencing legacy path.
 
-### `result_normalization.py` — 448 LOC
+### `replay_store.py`
+- **Purpose:** Durable replay-buffer backends for per-run WebSocket event history, so late-connecting clients can catch up across restarts.
+
+### `result_normalization.py`
 - **Purpose:** Converts runner-specific result shapes (LangChain, native engine) to contract `WorkflowResult`. Handles nested `AgentOutput`, tool traces, step metadata.
 - **Key exports:** `normalize_langchain_result()`, `normalize_native_result()`.
-- **Risks:** Breaking schema drift in runners → silent field loss; add schema version assertions.
+- **Risks:** breaking schema drift in runners → silent field loss; add schema version assertions.
 
 ### `scoring_criteria.py` — **moved to `agentic_v2.scoring`** (ADR-032)
 - Now at `agentic_v2/scoring/scoring_criteria.py`.
@@ -436,51 +423,64 @@ The `server/` package is the HTTP/WebSocket/SSE boundary of the `agentic-workflo
 ### `scoring_profiles.py` — **moved to `agentic_v2.scoring`** (ADR-032)
 - Now at `agentic_v2/scoring/scoring_profiles.py`.
 
-### `websocket.py` — 261 LOC
+### `spa.py`
+- **Purpose:** SPA static-file serving helpers — mounts `ui/dist/` with an `index.html` fallback and the path-traversal guard shown above.
+
+### `websocket.py`
 - **Purpose:** Pub/sub hub. Bounded deque (500 events) for replay; async fan-out to WS + SSE subscribers.
-- **Key exports:** `WebSocketHub`, `publish_event()`, `subscribe(run_id)`.
-- **Risks:** Server restart loses history; deque truncation silently drops old events.
+- **Key exports:** `ConnectionManager`, module-level `manager` singleton, `broadcast()`, `connect()`, `disconnect()`, `replay()`, `register_sse_listener()`.
+- **Risks:** in-memory buffer — server restart loses history unless a durable `replay_store` backend is configured; deque truncation silently drops old events.
 - **Suggested tests:** backpressure, subscriber drop mid-stream, replay correctness.
 
-### `middleware/__init__.py` — 58 LOC
-- **Purpose:** ASGI sanitization wrapper. Applies prompt-sanitization rules from `..middleware.sanitization`.
-- **Risks:** May redact legitimate model code/pseudocode in prompts.
+### `middleware/__init__.py`
+- **Purpose:** ASGI sanitization wrapper. Applies prompt-sanitization rules from `..middleware.sanitization`. Sibling modules: `rate_limit.py` (slowapi), `metrics.py`, `tracing.py`.
+- **Risks:** may redact legitimate model code/pseudocode in prompts.
 
-### `routes/__init__.py` — 14 LOC
-- **Purpose:** Router aggregation. Exports `router` including health, agents, workflows, runs, evaluation.
+### `routes/__init__.py`
+- **Purpose:** Router aggregation for health, agents, models, workflows, evaluation, model-finder, and runs.
 
-### `routes/agents.py` — 74 LOC
+### `routes/agents.py`
 - **Purpose:** `GET /api/agents` — enumerates agents from `prompts/*.md` with metadata (persona, capabilities).
 
-### `routes/evaluation_routes.py` — 156 LOC
-- **Purpose:** Evaluation endpoints — dataset listing, dataset preview mapping, evaluation run trigger.
+### `routes/evaluation_routes.py`
+- **Purpose:** Evaluation dataset endpoints — dataset listing, sample browsing, and dataset-field mapping preview.
 
-### `routes/health.py` — 21 LOC
-- **Purpose:** `GET /api/health` → `{"status": "ok", "version": ...}`.
+### `routes/health.py`
+- **Purpose:** `GET /api/health` liveness and `GET /api/health/ready` readiness probes.
 
-### `routes/runs.py` — 191 LOC
-- **Purpose:** Run history, pagination, filesystem-backed run log reading. Uses `is_within_base()` path guard.
-- **Risks:** Path traversal via symlinks — ensure `resolve()` before `is_relative_to()`.
+### `routes/model_finder.py`
+- **Purpose:** `GET /api/model-finder/profile` and `GET /api/model-finder/recommendations` — hardware profiling and local-model recommendations.
 
-### `routes/workflows.py` — 335 LOC
-- **Purpose:** Workflow discovery, DAG visualization, capabilities, YAML editor (GET/PUT), adapter listing.
+### `routes/models.py`
+- **Purpose:** `GET /api/models/probe` — provider availability and tier mapping.
+
+### `routes/runs.py`
+- **Purpose:** Run history, pagination, filesystem-backed run log reading, per-run evaluation detail, and the SSE stream. Uses `is_within_base()` path guard.
+- **Risks:** path traversal via symlinks — ensure `resolve()` before `is_relative_to()`.
+
+### `routes/workflows.py`
+- **Purpose:** Workflow discovery, DAG visualization, capabilities, YAML editor (`GET /api/workflows/{name}/editor`, `PUT /api/workflows/{name}`), stateless validation (`POST /api/workflows/validate`), adapter listing, and `POST /api/run`.
 - **Risks:** PUT endpoint writes YAML to disk — YAML injection risk if auth disabled.
 - **Suggested tests:** YAML round-trip, invalid YAML rejection, adapter enumeration.
 
 ---
 
-## Dependency Graph (within `server/`)
+## Dependency graph (within `server/`)
 
 ```
 app.py
   ├─ routes/__init__.py
   │   ├─ routes/health.py
   │   ├─ routes/agents.py
+  │   ├─ routes/models.py
+  │   ├─ routes/model_finder.py
   │   ├─ routes/workflows.py → models.py
   │   ├─ routes/runs.py → execution.py → websocket.py, result_normalization.py
   │   └─ routes/evaluation_routes.py → datasets.py, evaluation.py
-  ├─ auth.py
-  ├─ middleware/__init__.py
+  ├─ auth.py / auth_oidc.py
+  ├─ lifespan.py
+  ├─ middleware/ (sanitization, rate_limit, metrics, tracing)
+  ├─ spa.py
   └─ websocket.py
 
 execution.py
@@ -505,23 +505,25 @@ No circular dependencies. `models.py` is leaf-shared by all route modules.
 
 ---
 
-## Data Flow
+## Data flow
 
 **Inbound HTTP → response:**
-1. Client → FastAPI → CORS → sanitization middleware → auth dependency → router.
+
+1. Client → FastAPI → CORS → rate limiting → sanitization middleware → auth middleware → router.
 2. Router validates request via `models.py` Pydantic schema.
-3. For `POST /api/run`: handler kicks off `_run_and_evaluate()` (in `execution.py`) as a `BackgroundTask`, then returns run_id immediately.
+3. For `POST /api/run`: handler kicks off `_run_and_evaluate()` (in `execution.py`) as a `BackgroundTask`, then returns the run_id immediately with status `"pending"`.
 4. `execution.py` invokes `WorkflowRunner` (LangChain / `_stream_and_run`) or native engine adapter (`_run_via_native_adapter`). Per-step events are built by `_step_events.py` and state is merged by `_stream_merge.py`.
-5. Events flow: engine → `websocket.publish_event()` → deque + fan-out to all subscribers.
+5. Events flow: engine → `manager.broadcast()` → deque + fan-out to all subscribers.
 6. On completion: `result_normalization` → `evaluation.evaluate_workflow_result()` (delegates to `agentic_v2.scoring` if evaluation requested) → persisted to run log (`RunLogger`).
 
 **Streaming:**
+
 - WebSocket: client subscribes `/ws/execution/{run_id}` → auth/origin check → subscribe to hub → receive replay buffer + live events.
 - SSE: `GET /api/runs/{run_id}/stream` → same hub, different transport.
 
 ---
 
-## Integration Points
+## Integration points
 
 - **`..contracts`**: `WorkflowResult`, `AgentOutput`, `StepResult` (additive-only Pydantic models).
 - **`..langchain`**: `WorkflowRunner` (LangGraph wrapper) — optional dependency.
@@ -535,13 +537,13 @@ No circular dependencies. `models.py` is leaf-shared by all route modules.
 
 ---
 
-## Risks & Gotchas
+## Risks and gotchas
 
 1. **Global `_lc_runner` singleton** in `execution.py` — not thread-safe; presumes single-threaded event loop.
-2. **In-memory event buffer** (`websocket.py`) — bounded deque; server restart loses history.
+2. **In-memory event buffer** (`websocket.py`) — bounded deque; server restart loses history unless a durable `replay_store` backend is configured.
 3. **Optional LangChain dependency** — many routes return 501 if `[langchain]` extras not installed.
-4. **Heuristic field matching** (`dataset_matching.py`) — best-effort; surface mapping preview in UI.
-5. **Hard-gate enforcement** (`evaluation_scoring.py`) — any single gate failure forces grade F.
+4. **Heuristic field matching** (`scoring/dataset_matching.py`) — best-effort; surface mapping preview in UI.
+5. **Hard-gate enforcement** (`scoring/evaluation_scoring.py`) — any single gate failure forces grade F.
 6. **Judge pairwise consistency** — 2x LLM calls; doesn't fully eliminate positional bias.
 7. **Path traversal** in `routes/runs.py` — relies on `is_within_base()`; resolve symlinks before check.
 8. **Sanitization middleware** — may redact legitimate code/pseudocode in prompts.
@@ -550,7 +552,7 @@ No circular dependencies. `models.py` is leaf-shared by all route modules.
 
 ---
 
-## Verification Steps
+## Verification steps
 
 Before shipping changes to `server/`:
 
@@ -564,10 +566,10 @@ Before shipping changes to `server/`:
 
 ---
 
-## Suggested Tests
+## Suggested tests
 
-- **Auth**: timing-attack fixed-latency assert; malformed `Authorization` header rejection.
-- **WebSocket**: concurrent subscribers, replay buffer correctness, origin whitelist.
+- **Auth**: timing-attack fixed-latency assert; malformed `Authorization` header rejection; lockout threshold and expiry.
+- **WebSocket**: concurrent subscribers, replay buffer correctness, origin allowlist.
 - **Execution**: isolated run IDs under load (100+ concurrent `POST /api/run`).
 - **Evaluation**: hard-gate strictness, grade band boundaries, judge calibration MAE.
 - **Datasets**: malformed JSON, path traversal, symlink escape, HF/GitHub network failure.
@@ -579,10 +581,10 @@ Before shipping changes to `server/`:
 
 ---
 
-## Related Code & Reuse Opportunities
+## Related code and reuse opportunities
 
-- **`tools.agents.benchmarks.llm_evaluator`** mirrors judge.py rubric scoring — consider unifying.
-- **`agentic_v2_eval.runners`** has parallel streaming runner — extract shared streaming abstraction.
+- **`tools.agents.benchmarks.llm_evaluator`** mirrors the rubric scoring in `agentic_v2/scoring/judge.py` — consider unifying.
+- **`agentic_v2_eval.runners`** has a parallel streaming runner — extract shared streaming abstraction.
 - **`agentic_v2.adapters`** `AdapterRegistry` pattern is reusable for other plugin points (scorer backends, judge backends).
 - **Event hub** in `websocket.py` could be generalized into `core/events.py` for non-HTTP pub/sub.
 - **Path-guard** `is_within_base()` should be promoted to `core/paths.py` and unit-tested against symlink attacks.

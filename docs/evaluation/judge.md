@@ -1,27 +1,27 @@
 ---
-title: LLM-as-Judge
+title: LLM-as-judge
 description: How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts.
 tags:
   - evaluation
 ---
 
-# LLM-as-Judge
+# LLM-as-judge
 
 Agentic Runtime Platform uses two complementary LLM-as-judge systems depending on the context:
 
-1. **`LLMJudge`** (in `agentic-workflows-v2`) — the server-side judge used for production workflow evaluation. Scores on a 1–5 Likert scale per criterion, includes positional-bias mitigation, and exposes a `GET /runs/{filename}/evaluation` endpoint.
+1. **`LLMJudge`** (in `agentic-workflows-v2`) — the runtime judge used for production workflow evaluation. Scores on a 1–5 Likert scale per criterion, includes positional-bias mitigation, and exposes a `GET /api/runs/{filename}/evaluation` endpoint.
 
 2. **Eval-package evaluators** (`LLMEvaluator`, `QualityEvaluator`, `StandardEvaluator`, `PatternEvaluator` in `agentic-v2-eval`) — standalone evaluators used by the CLI and batch/streaming runners. These use a discrete choice model (1–5 → 0.0–1.0) or a 0–10 JSON scoring scheme.
 
-Both systems are described here. For production workflow scoring, see also `docs/evaluation/gating.md`.
+Both systems are described here. For production workflow scoring, see also [Production gating](gating.md).
 
 ---
 
-## System 1: Server-Side `LLMJudge`
+## System 1: runtime `LLMJudge`
 
-### What It Scores
+### What it scores
 
-`LLMJudge` (at `agentic-workflows-v2/agentic_v2/server/judge.py`) scores a **candidate output** against an **expected output** on a set of named criteria. Each criterion is defined by:
+`LLMJudge` (at `agentic-workflows-v2/agentic_v2/scoring/judge.py`) scores a **candidate output** against an **expected output** on a set of named criteria. Each criterion is defined by:
 
 - `name` — criterion identifier (e.g., `"correctness"`)
 - `definition` — human-readable description of what this criterion measures
@@ -29,7 +29,7 @@ Both systems are described here. For production workflow scoring, see also `docs
 
 The judge returns a normalized score per criterion and an overall score, all on the [0.0, 1.0] scale (internally uses a 1–5 Likert scale that is then normalized).
 
-### Scoring Scale
+### Scoring scale
 
 Raw scores from the judge are on the 1–5 Likert scale. These are normalized to [0.0, 1.0] via `normalize_score(raw, "likert_1_5")`:
 
@@ -45,7 +45,7 @@ The overall score is the mean of all criterion normalized scores.
 
 The final `score` field in the evaluation payload is `normalized_score * 100.0` (0–100 scale for human readability).
 
-### Prompt Design
+### Prompt design
 
 The judge prompt is assembled by `_build_prompt()` with this structure:
 
@@ -71,7 +71,7 @@ Score each criterion on anchored 1..5 scale.
 
 The system message is `"Return strict JSON only for rubric scoring."` Temperature is clamped to [0.0, 0.1] regardless of what the caller requests.
 
-### Positional Bias Mitigation
+### Positional bias mitigation
 
 LLM judges are susceptible to positional bias — a tendency to favor content presented first (or last) in a prompt. `LLMJudge` mitigates this with two mechanisms:
 
@@ -79,7 +79,7 @@ LLM judges are susceptible to positional bias — a tendency to favor content pr
 
 **2. Pairwise consistency check** (optional). When `pairwise_reference_output` is provided to `evaluate()`, the judge is called twice: once with the original presentation order, and once with `candidate_output` and `pairwise_reference_output` swapped. `check_swapped_order_consistency()` flags criteria where the absolute score delta between the two presentations exceeds `max_delta=1.0`. Inconsistent criteria are recorded in `JudgeEvaluationResult.inconsistency_reasons`.
 
-### Output Schema Validation
+### Output schema validation
 
 `validate_judge_structured_output()` validates the judge's JSON response before processing. It checks:
 
@@ -93,12 +93,12 @@ Validation failures raise `ValueError` with a description of each error. The cal
 _build_prompt() → _invoke_prompt() → validate_judge_structured_output() → [optional pairwise check] → JudgeEvaluationResult
 ```
 
-### Calibration Drift Detection
+### Calibration drift detection
 
 `evaluate_calibration_set(judge, fixtures, tolerance)` runs the judge on a list of human-labeled fixtures and computes mean absolute error (MAE) between judge-assigned and human-assigned raw scores. If MAE exceeds `tolerance` (default 0.5), `within_tolerance=False` is returned.
 
 ```python
-from agentic_workflows_v2.agentic_v2.server.judge import LLMJudge, evaluate_calibration_set
+from agentic_v2.scoring.judge import LLMJudge, evaluate_calibration_set
 
 judge = LLMJudge(model="gh:openai/gpt-4o")
 
@@ -118,7 +118,7 @@ print(result)
 # {"samples": 1, "mae": 0.0, "within_tolerance": True, "tolerance": 0.5}
 ```
 
-### Sync/Async Bridge
+### Sync/async bridge
 
 `LLMJudge.evaluate()` is synchronous. Internally it calls `_run_coro_sync(coro)` to bridge to the async LLM client:
 
@@ -127,11 +127,11 @@ print(result)
 
 ---
 
-## System 2: Eval-Package Evaluators
+## System 2: eval-package evaluators
 
 The four evaluators in `agentic-v2-eval` use a simpler choice-extraction model rather than strict JSON schema validation.
 
-### `LLMEvaluator` — Choice-Anchored Scoring
+### `LLMEvaluator` — choice-anchored scoring
 
 **Scoring model:** 5-point discrete scale extracted from free-text LLM output.
 
@@ -180,7 +180,7 @@ On LLM exception:
 }
 ```
 
-### `QualityEvaluator` — Five-Dimension Output Quality
+### `QualityEvaluator` — five-dimension output quality
 
 Each of the five dimensions (Coherence, Fluency, Relevance, Groundedness, Similarity) uses the same 5-point choice extraction scheme as `LLMEvaluator`. The prompts are loaded from `rubrics/quality.yaml` at module import time.
 
@@ -224,7 +224,7 @@ score = evaluator.evaluate(
 )
 ```
 
-### `StandardEvaluator` — Prompt Quality Grading (0–10)
+### `StandardEvaluator` — prompt quality grading (0–10)
 
 Unlike the 5-point choice model, `StandardEvaluator` uses a structured JSON response. The judge prompt explicitly instructs the LLM to return a JSON object with:
 
@@ -247,7 +247,7 @@ Prompts longer than 18,000 characters are truncated before being sent to the jud
 
 This preserves the prompt header (most important for structure evaluation) and the prompt footer (often contains output format instructions).
 
-### `PatternEvaluator` — Structural Pattern Conformance
+### `PatternEvaluator` — structural pattern conformance
 
 This evaluator scores whether an output follows one of four agentic reasoning patterns. It returns `PatternScore` — a rich dataclass with 17 fields capturing universal and pattern-specific dimensions, hard gate results, run statistics, and failure descriptions.
 
@@ -301,18 +301,18 @@ Note that PR is compared against 0.75 (a proportion), not 4 (an integer scale). 
 
 ---
 
-## Research Gating
+## Research gating
 
 When the eval framework is used for **deep research pipelines** (Profile E workflows), two additional thresholds govern whether research output is accepted:
 
 - `coverage_score >= 0.80` — the research must cover at least 80% of the expected scope.
 - `source_quality_score >= 0.80` — the sources cited must meet quality standards.
 
-These are enforced as hard gates within `score_workflow_result_impl` for Profile E scoring. See `docs/evaluation/gating.md` for the full production gating specification.
+These are enforced as hard gates within `score_workflow_result_impl` for Profile E scoring. See [Production gating](gating.md) for the full production gating specification.
 
 ---
 
-## How to Write Evaluatable Prompts
+## How to write evaluatable prompts
 
 ### For `StandardEvaluator`
 
@@ -369,7 +369,7 @@ Design your prompts and expected outputs so the five quality dimensions are inde
 
 ---
 
-## Integrating the Judge into a Custom Evaluation
+## Integrating the judge into a custom evaluation
 
 ```python
 from agentic_v2_eval import Scorer, QualityEvaluator, COHERENCE, RELEVANCE

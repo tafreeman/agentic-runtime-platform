@@ -1,50 +1,62 @@
-# Deployment Guide
+# Deployment guide
 
 This guide covers the CI/CD pipeline, Docker containerization, environment variable configuration for production, security hardening, and observability setup for the `agentic-runtime-platform` monorepo.
 
 ---
 
-## CI/CD Pipeline
+## CI/CD pipeline
 
 The primary CI workflow is defined in `.github/workflows/ci.yml`. It runs on every push to `main` and `agenticv2`, and on all pull requests targeting those branches.
 
-### Pipeline Jobs
+### Pipeline jobs
 
-The `ci.yml` workflow contains eight jobs. All jobs run on `ubuntu-latest`.
+The `ci.yml` workflow contains fourteen jobs. All jobs run on `ubuntu-latest`.
 
-| Job | Trigger | Key Steps |
-|---|---|---|
-| `lint-and-test` | Every push/PR | pre-commit hooks, pytest --cov (80% gate), docs reference check |
-| `frontend` | Every push/PR | `npm ci`, TypeScript + Vite build, Vitest coverage |
-| `eval-tests` | Every push/PR | Install eval package, pytest on `agentic-v2-eval/tests/` |
-| `tools-tests` | Every push/PR | Install tools package, pytest --cov (70% gate) |
-| `type-check` | Every push/PR | mypy on `agentic_v2/` with `--ignore-missing-imports` |
-| `integration` | Every push/PR | Validate all YAML workflow definitions, run deterministic examples, verify critical imports |
-| `cross-package-e2e` | Every push/PR | Install all three packages, run `tests/e2e/test_cross_package.py -m e2e` |
-| `security` | Every push/PR | bandit SAST scan, pip-audit CVE scan |
+| Job | What it does |
+|---|---|
+| `python-smoke` | Installs all three packages, verifies critical imports, runs the unit suite (`-m "not integration and not slow"`, e2e excluded) |
+| `frontend-build` | `npm ci` and production Vite build of the UI |
+| `lint` | Ruff on `agentic_v2/` and `tests/`; also fails if `ruff check --fix` would still change anything |
+| `suppression-ratchet` | Fails a PR that grows the ruff/mypy suppression counts beyond the committed baseline |
+| `typecheck-core-contracts` | Strict mypy on `agentic_v2/engine` and `agentic_v2/contracts` (`--disallow-untyped-defs --warn-return-any`) |
+| `test-coverage` | Unit suite with coverage on `agentic_v2`, then enforces the 80% gate in a dedicated `coverage report --fail-under=80` step; also uploads a whole-repo coverage report for visibility |
+| `wire-format-drift` | Regenerates JSON schemas and TypeScript types from the Pydantic contracts and fails on any diff |
+| `e2e-streaming` | Runs the Playwright streaming spec 5× with `AGENTIC_NO_LLM=1` |
+| `no-llm-smoke` | Validates and runs a deterministic workflow plus the full unit suite with `AGENTIC_NO_LLM=1` and zero API keys |
+| `validate-workflows` | Validates all workflow YAML definitions against the schema |
+| `check-doc-drift` | Checks that protocol names appear in `ARCHITECTURE.md` |
+| `pydocstyle` | Google-convention docstring checks on `agentic_v2/core/` and `agentic_v2/contracts/` |
+| `lockfile-constraints` | Regenerates `ci-constraints.txt` from `uv.lock` and fails on drift |
+| `dockerfile-constraints` | Verifies every `pip install` line in the Dockerfile pins `-c ci-constraints.txt` |
 
 A single job failure blocks the merge. There are no bypass mechanisms for CI failures.
 
-### Additional Workflow Files
+### Additional workflow files
+
+The other workflows in `.github/workflows/`:
 
 | File | Purpose |
 |---|---|
-| `deploy.yml` | Production deployment (triggered manually or on release tags) |
-| `dependency-review.yml` | Dependency license and vulnerability review on every PR |
-| `docs-verify.yml` | Validates internal documentation cross-references |
-| `eval-package-ci.yml` | Isolated CI for the eval package |
-| `tools-ci.yml` | Isolated CI for the tools package |
-| `performance-benchmark.yml` | LLM latency and throughput benchmarks (scheduled) |
-| `prompt-quality-gate.yml` | Automated prompt quality scoring |
-| `prompt-validation.yml` | YAML workflow definition validation |
-| `eval-poc.yml` | Evaluation proof-of-concept runs |
-| `manifest-temperature-check.yml` | Detects drift in model configuration defaults |
+| `codeql.yml` | CodeQL static analysis on push and PR |
+| `dependabot-auto-merge.yml` | Auto-merges passing Dependabot PRs |
+| `dependency-audit.yml` | pip-audit (Python packages) and npm audit (UI) CVE scans |
+| `dependency-review.yml` | Dependency license and vulnerability review on PRs |
+| `deploy.yml` | Release pipeline, triggered on version tags (`v*`) |
+| `devcontainer-validate.yml` | Validates the devcontainer on changes to `.devcontainer/` |
+| `docs.yml` | Builds and deploys the docs site to GitHub Pages |
+| `eval-package-ci.yml` | Isolated CI for the `agentic-v2-eval` package |
+| `infra-deploy.yml` | Reference infrastructure deployment workflow (manual dispatch only; never run automatically) |
+| `load-report-pages.yml` | Deploys the load report to GitHub Pages |
+| `manifest-temperature-check.yml` | Detects drift in `run-manifest.yaml` model temperature defaults |
+| `nightly.yml` | Nightly E2E reliability run (scheduled) |
+| `sbom.yml` | SBOM generation on release and weekly |
+| `windows-workflows-ci.yml` | Windows workflow verification |
 
 ---
 
-## Pre-commit Hooks
+## Pre-commit hooks
 
-Pre-commit hooks run automatically before every local commit. The CI `lint-and-test` job also runs `pre-commit run --all-files` to enforce identical checks.
+Pre-commit hooks run automatically before every local commit. CI does not run pre-commit directly — the `lint` job in `ci.yml` enforces the same ruff rules, and `pre-commit run --all-files` is a required local gate before opening a PR (see `.claude/rules/ci.md`).
 
 | Hook | Tool | Purpose |
 |---|---|---|
@@ -62,37 +74,35 @@ Run all hooks manually: `pre-commit run --all-files`
 
 ---
 
-## Security Scanning
+## Security scanning
 
 ### SAST — bandit
 
-`bandit` scans all Python source for common security anti-patterns (hardcoded passwords, unsafe use of subprocess, SQL injection sinks, etc.).
+`bandit` scans Python source for common security anti-patterns (hardcoded passwords, unsafe use of subprocess, SQL injection sinks, etc.). It is not currently wired into a CI job — run it manually during security audits:
 
 ```bash
 bandit -r agentic-workflows-v2/agentic_v2/ agentic-v2-eval/src/agentic_v2_eval/ tools/ -ll -q
 ```
 
-The `-ll` flag reports issues at MEDIUM severity and above. LOW severity findings are suppressed in CI to reduce noise; they should still be reviewed during security audits.
+The `-ll` flag reports issues at MEDIUM severity and above. LOW severity findings should still be reviewed during security audits.
 
-### Dependency Audit — pip-audit
+### Dependency audit — pip-audit
 
-`pip-audit` checks all installed package versions against the OSV database for known CVEs.
+`pip-audit` checks installed package versions against the OSV database for known CVEs. It runs in the `dependency-audit.yml` workflow on every push and PR (alongside `npm audit` for the UI), and the audit results JSON is retained as a build artifact.
 
 ```bash
 pip-audit --progress-spinner off --desc
 ```
 
-Any known vulnerability at any severity level fails the CI security job.
-
-### Secret Detection — detect-secrets
+### Secret detection — detect-secrets
 
 `detect-secrets` scans file content for patterns matching API keys, tokens, passwords, and other credentials before every commit. A `.secrets.baseline` file in the repository root contains approved false positives.
 
 ---
 
-## Docker Builds
+## Docker builds
 
-### Backend Image
+### Backend image
 
 Build:
 
@@ -100,9 +110,9 @@ Build:
 docker build -t prompts-backend:latest -f Dockerfile .
 ```
 
-The `Dockerfile` installs the `agentic-workflows-v2` package with `[server,langchain,rag]` extras and starts `uvicorn agentic_v2.server.app:app`.
+The `Dockerfile` installs the repo-root `agentic-tools` package plus `agentic-workflows-v2` with `[server,tracing]` extras (the dev target adds `[dev]`), pinned to `ci-constraints.txt`, and starts `uvicorn agentic_v2.server.app:app` on port 8010.
 
-### Frontend Image
+### Frontend image
 
 Build:
 
@@ -112,26 +122,28 @@ docker build -t prompts-ui:latest -f Dockerfile.ui .
 
 The `Dockerfile.ui` runs `npm ci && npm run build` and serves the resulting `dist/` directory via nginx.
 
-### Full Stack with Docker Compose
+### Full stack with Docker Compose
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
-The `docker-compose.yml` starts:
+The `docker-compose.yml` starts four services:
 
-- `backend` — FastAPI server on port 8010
+- `backend` — FastAPI server on port 8010 (uvicorn with `--reload`)
+- `frontend` — Vite dev server on port 5173, proxying API calls to `backend`
 - `otel-collector` — OpenTelemetry Collector (OTLP gRPC on 4317, HTTP on 4318)
-
-The frontend image is not included in the default Compose stack because the backend serves `ui/dist/` statically in production mode.
+- `jaeger` — Jaeger all-in-one for trace viewing (UI on 16686)
 
 ---
 
-## Environment Variable Reference (Production)
+## Environment variable reference (production)
 
 Set these in your deployment environment (Kubernetes secrets, cloud provider secrets manager, or `.env` file for Docker Compose).
 
-### Required — at Least One LLM Provider Key
+### LLM provider keys
+
+Configure at least one of the following:
 
 | Variable | Description |
 |---|---|
@@ -141,20 +153,17 @@ Set these in your deployment environment (Kubernetes secrets, cloud provider sec
 | `GEMINI_API_KEY` | Google Gemini 2.5 family |
 | `AZURE_OPENAI_API_KEY_0` | Azure OpenAI key (supports `_0`–`_n` for failover) |
 | `AZURE_OPENAI_ENDPOINT_0` | Azure OpenAI endpoint URL |
-| `AZURE_AI_SERVICES_ENDPOINT` | Azure AI Services endpoint (optional) |
-| `AZURE_COGNITIVE_ENDPOINT` | Azure Cognitive Services endpoint (optional) |
-| `LOCAL_MODEL_PATH` | Path to ONNX model directory (optional) |
 
-### Server Security
+### Server security
 
-| Variable | Description | Production Requirement |
+| Variable | Description | Production requirement |
 |---|---|---|
 | `AGENTIC_API_KEY` | Bearer token for all `/api/` routes. Both `Authorization: Bearer <key>` and `X-API-Key: <key>` headers are accepted. Token comparison uses `secrets.compare_digest` to prevent timing attacks. | **Mandatory** |
 | `AGENTIC_CORS_ORIGINS` | Comma-separated list of allowed CORS origins. Example: `https://app.example.com,https://admin.example.com` | **Mandatory** — restrict to actual frontend origins |
 | `AGENTIC_FILE_BASE_DIR` | Base directory for all file operations via the `file_ops` built-in tool. When set, all file paths are resolved relative to this directory and any attempt to traverse outside it is rejected. Example: `/app/data` | **Strongly recommended** — prevents path traversal |
 | `AGENTIC_BLOCK_PRIVATE_IPS` | Default **ON** (`1`). Blocks HTTP tool requests to private/loopback/link-local/reserved IPs, performs DNS resolution to catch hostname-based SSRF, and re-validates each redirect hop. Set to `0` only when workflows need internal network access and you have applied compensating controls. | Default ON — opt out with `0` only with explicit justification |
 
-### Agent Configuration
+### Agent configuration
 
 | Variable | Description |
 |---|---|
@@ -173,7 +182,7 @@ Set these in your deployment environment (Kubernetes secrets, cloud provider sec
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint. For gRPC: `http://collector:4317`. For HTTP: `http://collector:4318/v1/traces` | `http://localhost:4317` |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` or `http/protobuf` | `grpc` |
 
-### Windows AI (Optional)
+### Windows AI (optional)
 
 | Variable | Description |
 |---|---|
@@ -183,23 +192,24 @@ Set these in your deployment environment (Kubernetes secrets, cloud provider sec
 
 ---
 
-## Port Configuration
+## Port configuration
 
 | Service | Port | Protocol | Configuration |
 |---|---|---|---|
-| FastAPI backend | 8010 | HTTP / WebSocket | `uvicorn --port 8010` or `AGENTIC_PORT` |
+| FastAPI backend | 8010 | HTTP / WebSocket | `uvicorn --port 8010` |
 | Vite dev server | 5173 | HTTP | Configured in `vite.config.ts` |
 | Storybook | 6006 | HTTP | Not installed by default |
 | OTLP gRPC | 4317 | gRPC | `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | OTLP HTTP | 4318 | HTTP/protobuf | Use with `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` |
+| Jaeger UI | 16686 | HTTP | Docker Compose `jaeger` service |
 
 ---
 
-## Production Configuration Checklist
+## Production configuration checklist
 
 Before deploying to a production or shared environment, verify the following:
 
-### Authentication and Network
+### Authentication and network
 
 - [ ] `AGENTIC_API_KEY` is set to a strong random value (minimum 32 characters)
 - [ ] `AGENTIC_CORS_ORIGINS` is restricted to the actual frontend origin(s)
@@ -207,13 +217,13 @@ Before deploying to a production or shared environment, verify the following:
 - [ ] TLS termination is in place upstream of the FastAPI server (nginx, ALB, etc.)
 - [ ] The backend is not publicly accessible on port 8010 without TLS
 
-### File and Path Safety
+### File and path safety
 
 - [ ] `AGENTIC_FILE_BASE_DIR` is set to an appropriate restricted directory
 - [ ] The directory specified in `AGENTIC_FILE_BASE_DIR` does not contain sensitive system files
 - [ ] Workflow definitions have been reviewed for tool allowlists — high-risk tools (`shell_ops`, `git_ops`, `file_delete`) require explicit per-step allowlisting
 
-### LLM Provider Keys
+### LLM provider keys
 
 - [ ] All API keys are stored in a secrets manager or environment injection — never in source code or Docker images
 - [ ] Unused provider keys are not configured (reduces attack surface)
@@ -233,11 +243,11 @@ Before deploying to a production or shared environment, verify the following:
 
 ---
 
-## Coverage Gates Summary
+## Coverage gates summary
 
 | Package | Tool | Gate |
 |---|---|---|
-| `agentic-workflows-v2` | pytest | 80% (`--cov-fail-under=80`) |
+| `agentic-workflows-v2` | pytest + coverage | 80% on `agentic_v2` — CI collects coverage without `--cov-fail-under` and enforces the gate in a dedicated `coverage report --fail-under=80` step (pytest-cov 7.x does not propagate the failure exit code reliably) |
 | `agentic-v2-eval` | pytest | No explicit gate in current CI (tests must pass) |
-| `agentic-tools` | pytest | 70% (`--cov-fail-under=70`) |
-| `agentic-workflows-v2/ui` | Vitest | 60% threshold (configured in vitest config) |
+| `agentic-tools` | pytest | No per-package gate — included in the whole-repo coverage report for visibility only |
+| `agentic-workflows-v2/ui` | Vitest | 60% threshold (configured in `ui/vitest.config.ts`) |

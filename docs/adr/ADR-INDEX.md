@@ -1,11 +1,22 @@
-# ADR Index — agentic-workflows-v2
+# ADR index — Agentic Runtime Platform
 
-> **Last updated:** 2026-07-03
-> **Total ADRs:** 37 (29 Accepted, 6 Proposed, 2 Superseded)
+> **Last updated:** 2026-07-05
+> **Total ADRs:** 38 decisions across 36 files (30 Accepted, 6 Proposed, 2 Superseded)
+
+Architecture Decision Records capture the load-bearing choices behind the
+Agentic Runtime Platform — what was decided, what alternatives were rejected,
+and what it costs. The corpus currently holds **38 decisions** (numbers
+001–042; 004–006 and 013 are intentionally unused gaps). If you read only five:
+
+- **[ADR-001](ADR-001-002-003-architecture-decisions.md)** — the dual execution engine (LangGraph adapter alongside the native Kahn's-DAG executor).
+- **[ADR-002](ADR-001-002-003-architecture-decisions.md)** — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).
+- **[ADR-014](ADR-014-pydantic-wire-format.md)** — the Pydantic discriminated-union wire format that every event contract and the drift CI gate build on.
+- **[ADR-023](ADR-023-executionkit-runtime-contract-relationship.md)** — how the runtime relates to the external ExecutionKit kernel (single `executionkit` package).
+- **[ADR-042](ADR-042-agentic-evalkit-adoption.md)** — the in-flight sliced migration from in-tree `agentic-v2-eval` to the external `agentic-evalkit` framework.
 
 ---
 
-## Quick-Access Deck
+## Quick-access deck
 
 | ADR | Title | Status | File |
 |-----|-------|--------|------|
@@ -52,7 +63,7 @@
 
 ---
 
-## Lineage Chains
+## Lineage chains
 
 ```
 Engine Domain:
@@ -107,7 +118,12 @@ Eval / Scoring Domain:
 
 ---
 
-## Implementation Status
+## Implementation status
+
+> **Scope note:** This table covers the ADRs that have received a formal
+> implementation audit: 001–024, 032–038, and 042. ADRs 025–031 and 039–041
+> have not yet been audited and are intentionally absent — their absence is
+> not a statement about implementation state.
 
 | ADR | Decision | Implemented | Tests | Last Audit |
 |-----|:---:|:---:|:---:|---|
@@ -142,7 +158,7 @@ Eval / Scoring Domain:
 
 ---
 
-## Supporting Documents
+## Supporting documents
 
 | Document | Description |
 |----------|-------------|

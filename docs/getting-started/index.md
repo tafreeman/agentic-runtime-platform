@@ -1,11 +1,11 @@
 ---
-title: Getting Started
+title: Getting started
 description: Three install paths into Agentic Runtime Platform — pick the one that matches what you are evaluating.
 tags:
   - getting-started
 ---
 
-# Getting Started
+# Getting started
 
 Agentic Runtime Platform is a monorepo. Three different audiences typically pick three
 different entry points; this page lays out which path suits which goal so you
@@ -22,8 +22,8 @@ artifacts before committing real reading time.
 - **Credentials:** none — `AGENTIC_NO_LLM=1` runs the full DAG against
   deterministic placeholders
 - **Output:** a structured run record with step timings, tool calls, and a
-  scored final artifact
-- **Continue with:** [Quick Start](quickstart.md)
+  final artifact
+- **Continue with:** [Quick start](quickstart.md)
 
 ### 2. The workflow author
 
@@ -34,8 +34,8 @@ seen the demo and want to understand the YAML grammar and step contracts.
 - **Credentials:** still optional — `AGENTIC_NO_LLM=1` lets you iterate on
   graph shape and contracts before any provider is wired
 - **Output:** a custom workflow definition that runs end-to-end
-- **Continue with:** [First Workflow](first-workflow.md), then the
-  [Workflow Authoring Guide](../WORKFLOW_AUTHORING.md)
+- **Continue with:** [First workflow](first-workflow.md), then the
+  [Workflow authoring guide](../WORKFLOW_AUTHORING.md)
 
 ### 3. The platform integrator
 
@@ -48,7 +48,7 @@ into a longer-lived environment — staging, demo, or a customer trial.
   Gemini, Azure OpenAI, Azure Foundry, GitHub Models, Ollama, or local ONNX)
 - **Output:** a running server on port `8010` with the live UI on `5173`
 - **Continue with:** [Installation](installation.md), then the
-  [Architecture Overview](../ARCHITECTURE.md)
+  [Architecture overview](../ARCHITECTURE.md)
 
 ## What you'll have when you're done
 
@@ -64,10 +64,9 @@ Whichever path you take, the install gives you the same surface area:
 
 ## Prerequisites
 
-- **Python 3.11 or newer.** The runtime exercises `asyncio.TaskGroup`, the
-  PEP 695 generics syntax, and `Self` from `typing` — there is no fallback
-  path for 3.10 or older.
-- **Node 20+ and npm 10+** for the dashboard. The frontend uses Vite 6 and
+- **Python 3.11 or newer.** The runtime exercises `asyncio.TaskGroup` and
+  `Self` from `typing` — there is no fallback path for 3.10 or older.
+- **Node 20+ and npm 10+** for the dashboard. The frontend uses Vite 8 and
   React 19, both of which require modern toolchains.
 - **Git** with the ability to fetch full history. The
   `git-revision-date-localized` plugin embeds last-modified dates into the
@@ -87,8 +86,9 @@ agentic list agents
 # Validate a workflow definition without executing it
 agentic validate code_review
 
-# Compare native and LangGraph engines on the same input
-agentic compare code_review --input examples/sample.json
+# Compare native and LangGraph adapters on the same input
+# (run from agentic-workflows-v2/; the fixture ships with the test suite)
+agentic compare test_deterministic --input tests/fixtures/deterministic_input.json
 ```
 
 If you get stuck, the [Known Limitations](../KNOWN_LIMITATIONS.md) page is

@@ -8,7 +8,7 @@ tags:
 
 # Architecture: agentic-v2-eval
 
-## Executive Summary
+## Executive summary
 
 `agentic-v2-eval` (v0.3.0) is the rubric-driven evaluation framework for the `agentic-runtime-platform` monorepo. It turns LLM outputs — prose responses, agent workflow results, code artifacts, prompt templates — into reproducible, weighted scores and human-readable reports.
 
@@ -25,7 +25,7 @@ The package is a `uv` workspace member. `agentic-tools` supplies the concrete `L
 
 ---
 
-## Technology Stack
+## Technology stack
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
@@ -35,103 +35,46 @@ The package is a `uv` workspace member. `agentic-tools` supplies the concrete `L
 | LLM access | `agentic-tools` workspace dep | Lazy-loaded; optional at import |
 | Test runner | pytest + pytest-asyncio | `asyncio_mode = "auto"` |
 | Coverage gate | pytest-cov | `fail_under = 80`, branch coverage on |
-| Static analysis | mypy `--strict` | All findings cleared as of Sprint B |
+| Static analysis | mypy `--strict` | Zero findings on `src/agentic_v2_eval/` |
 | Linting | ruff | Rules: E, F, W, I, N, UP, S, B, A, C4, SIM, TCH, RUF |
 
 ---
 
-## System Architecture
+## System architecture
 
-### Pipeline Overview
+### Pipeline overview
 
 ```mermaid
-C4Container
-title Container diagram for Agentic Workflows Platform
+graph LR
+    subgraph Inputs["Inputs"]
+        RUNS["Run artifacts<br/><i>runs/*.json from the runtime</i>"]
+        DATASETS["Benchmark datasets<br/><i>tools.agents.benchmarks (lazy bridge)</i>"]
+        RUBRICS["Rubrics<br/><i>rubrics/*.yaml</i>"]
+    end
 
-Person(engineer, "Engineer / Operator", "Uses the dashboard and CLI to run workflows, inspect runs, and review evaluations")
-Person(api_consumer, "External API Caller", "Integrates with the runtime over REST, WebSocket, and SSE")
-Person(ci_user, "Engineer / CI Pipeline", "Runs offline and batch evaluations against saved run artifacts")
+    subgraph Eval["agentic-v2-eval"]
+        RUNNER["Runners<br/><i>BatchRunner · StreamingRunner · AsyncStreamingRunner</i>"]
+        EVALS["Evaluators<br/><i>LLMEvaluator · PatternEvaluator · QualityEvaluator · StandardEvaluator</i>"]
+        SCORER["Scorer<br/><i>YAML-rubric weighted scoring</i>"]
+        METRICS["Metrics<br/><i>accuracy · performance · quality (no LLM)</i>"]
+        REPORTERS["Reporters<br/><i>JSON · Markdown · HTML</i>"]
+    end
 
-System_Ext(llm_providers, "LLM Providers", "OpenAI, Anthropic, Gemini, GitHub Models, Azure, Ollama, ONNX, Windows AI")
-System_Ext(otel, "OTEL Collector", "Receives OTLP traces from runtime and RAG spans")
+    LLM["LLMClient<br/><i>agentic-tools, via LLMClientProtocol</i>"]
+    REPORTS["Reports<br/><i>reports/*.{json,md,html}</i>"]
 
-Container_Boundary(agentic, "Agentic Workflows Platform") {
-    Container(ui, "Dashboard UI", "React 19 · Vite 6 · TypeScript · TanStack Query · @xyflow/react", "Web dashboard for live execution, workflows, datasets, runs, and evaluations")
-    Container(cli, "agentic CLI", "Python · Typer", "Command-line client for launching workflows and selecting execution adapters")
-    Container(api, "Runtime API Server", "FastAPI · REST · WebSocket · SSE", "Primary HTTP entry point for workflow execution, metadata, and run retrieval")
-    Container(event_hub, "Execution Event Hub", "Python · WebSocket · SSE", "Broadcasts validated workflow and step events with replay for reconnecting clients")
-    Container(registry, "AdapterRegistry", "Python singleton", "Resolves the configured execution engine at runtime")
-    Container(native_engine, "Native DAG Engine", "Python asyncio", "Kahn-based DAG executor with parallel fan-out and cascade skip")
-    Container(langgraph_engine, "LangGraph Engine", "LangGraph · LangChain", "StateGraph-based execution engine with checkpointing support")
-    Container(agent_layer, "Agent Layer", "Python typed agents", "BaseAgent, Coder, Reviewer, Architect, and Orchestrator workflow steps")
-    Container(rag_pipeline, "RAG Pipeline", "Python", "Loads, chunks, embeds, retrieves, reranks, and assembles context")
-    Container(model_router, "SmartModelRouter", "Python", "Capability-tier routing, health weighting, cooldowns, and circuit breakers")
-    Container(llm_client, "LLMClient", "Python · agentic-tools", "Shared multi-provider facade and provider adapter layer")
-    Container(dataset_loader, "Benchmark Dataset Loader", "Python · agentic-tools", "Loads shared benchmark definitions and dataset samples for runtime and evaluation")
-    Container(server_eval, "In-Server Evaluation Service", "Python", "Runtime-side scoring, hard gates, LLM judge calls, and evaluation endpoints")
-    Container(eval_runners, "Evaluation Runners", "Python", "BatchRunner, StreamingRunner, and AsyncStreamingRunner for offline or CI evaluation")
-    Container(eval_scorer, "Evaluation Scorer", "Python", "Rubric loader, evaluator registry, and rubric, pattern, quality, and LLM-based scoring")
-    Container(eval_reporters, "Evaluation Reporters", "Python", "Generates JSON, Markdown, and HTML evaluation outputs")
-    ContainerDb(run_store, "Run Artifact Store", "JSON files", "Persists workflow runs, step results, and execution records")
-    ContainerDb(report_store, "Evaluation Report Store", "JSON · Markdown · HTML files", "Persists generated evaluation reports")
-    ContainerDb(cache_store, "Response Cache", "Disk-backed SHA-256 cache", "Caches provider responses and probe results")
-    ContainerDb(dataset_store, "Benchmark Dataset Store", "JSONL · YAML", "Shared benchmark definitions and evaluation dataset samples")
-    ContainerDb(rubric_store, "Rubric Store", "YAML files", "Rubrics and scoring profile definitions")
-}
-
-Rel(engineer, ui, "Uses for workflow control, live monitoring, datasets, and evaluations", "HTTPS")
-Rel(engineer, cli, "Runs workflows and selects adapters", "CLI")
-Rel(api_consumer, api, "Starts workflows and retrieves run data", "REST / WebSocket / SSE")
-Rel(ci_user, eval_runners, "Starts offline and batch evaluations", "CLI / Python API")
-
-Rel(ui, api, "Reads metadata, launches runs, and fetches history", "REST/JSON")
-Rel(ui, event_hub, "Subscribes to live workflow and step events", "WebSocket / SSE")
-
-Rel(cli, registry, "Selects execution adapter by name", "Python API")
-Rel(api, registry, "Resolves selected engine for a run", "Python API")
-Rel(api, event_hub, "Publishes validated execution events", "Python callbacks")
-Rel(api, dataset_loader, "Lists datasets and previews workflow inputs", "Python API")
-Rel(api, server_eval, "Requests scoring for evaluation endpoints", "Python API")
-Rel(api, run_store, "Writes run results and reads run history", "File I/O")
-
-Rel(registry, native_engine, "Returns native engine instance", "Python API")
-Rel(registry, langgraph_engine, "Returns langgraph engine instance", "Python API")
-
-Rel(native_engine, agent_layer, "Executes workflow steps", "asyncio")
-Rel(langgraph_engine, agent_layer, "Executes graph nodes", "LangGraph")
-Rel(native_engine, event_hub, "Emits step lifecycle events", "callbacks")
-Rel(langgraph_engine, event_hub, "Emits step lifecycle events", "callbacks")
-
-Rel(agent_layer, rag_pipeline, "Requests retrieval context when configured", "Python API")
-Rel(agent_layer, model_router, "Requests model selection and inference", "Python API")
-Rel(rag_pipeline, llm_client, "Requests embeddings and reranking when enabled", "Python API")
-Rel(model_router, llm_client, "Dispatches provider calls with fallback and circuit breaking", "Python API")
-
-Rel(llm_client, cache_store, "Reads and writes cached completions", "Disk I/O")
-Rel(llm_client, llm_providers, "Invokes completions, embeddings, and model probes", "HTTPS / SDK / subprocess")
-
-Rel(dataset_loader, dataset_store, "Loads benchmark metadata and samples", "File I/O")
-
-Rel(server_eval, run_store, "Reads completed runs for runtime scoring", "File I/O")
-Rel(server_eval, rubric_store, "Loads scoring profiles and rubrics", "File I/O")
-Rel(server_eval, llm_client, "Calls LLM judge when enabled", "Python API")
-
-Rel(eval_runners, run_store, "Reads completed run artifacts", "File I/O")
-Rel(eval_runners, dataset_loader, "Loads benchmark datasets", "Python API")
-Rel(eval_runners, eval_scorer, "Submits results for scoring", "Python API")
-Rel(eval_scorer, rubric_store, "Loads rubric definitions", "File I/O")
-Rel(eval_scorer, llm_client, "Uses LLM-as-judge when configured", "Python API")
-Rel(eval_scorer, eval_reporters, "Passes scored results", "In-memory objects")
-Rel(eval_reporters, report_store, "Writes evaluation reports", "File I/O")
-
-Rel(api, otel, "Exports server request and execution spans", "OTLP")
-Rel(rag_pipeline, otel, "Exports retrieval and context assembly spans", "OTLP")
-Rel(native_engine, otel, "Exports workflow execution spans", "OTLP")
-
-UpdateLayoutConfig($c4ShapeInRow="4", $c4BoundaryInRow="1")
+    RUNS --> RUNNER
+    DATASETS --> RUNNER
+    RUNNER --> EVALS
+    EVALS -->|judge calls| LLM
+    EVALS --> METRICS
+    RUBRICS --> SCORER
+    EVALS --> SCORER
+    SCORER --> REPORTERS
+    REPORTERS --> REPORTS
 ```
 
-### Key Design Decisions
+### Key design decisions
 
 **Structural protocols instead of abstract base classes for the LLM boundary.** `LLMClientProtocol` uses `typing.Protocol` with `@runtime_checkable`. Any object whose `generate_text` method matches the signature satisfies the protocol — no import-time coupling between the eval package and `agentic-tools`. This means the eval package can be imported in environments where `agentic-tools` is not installed, reducing test setup friction.
 
@@ -141,16 +84,16 @@ UpdateLayoutConfig($c4ShapeInRow="4", $c4BoundaryInRow="1")
 
 **Median aggregation over multiple judge runs.** Both `PatternEvaluator` and `StandardEvaluator` optionally run the judge prompt `N` times (default 20 for pattern, 1 for standard) and report the median across runs. This reduces the impact of stochastic LLM output on the final score. The `runs` parameter is the primary handle for trading cost against variance.
 
-**Discriminated union return type for async evaluation.** `AsyncStreamingRunner._eval_one` returns `tuple[Literal[True], R] | tuple[Literal[False], Exception]` — a discriminated union that avoids raising exceptions across `asyncio.Task` boundaries. This was the design pattern introduced in Sprint B #1 to clear the 35 mypy findings.
+**Discriminated union return type for async evaluation.** `AsyncStreamingRunner._eval_one` returns `tuple[Literal[True], R] | tuple[Literal[False], Exception]` — a discriminated union that avoids raising exceptions across `asyncio.Task` boundaries. This pattern keeps the runner fully typed under `mypy --strict`.
 
 ---
 
-## Package Structure
+## Package structure
 
 ```
 agentic-v2-eval/
 ├── src/agentic_v2_eval/
-│   ├── __init__.py          # 16 public exports; version 0.3.0
+│   ├── __init__.py          # 17 public exports; version 0.3.0
 │   ├── __main__.py          # CLI: evaluate + report subcommands
 │   ├── interfaces.py        # LLMClientProtocol + Evaluator protocols
 │   ├── scorer.py            # YAML-rubric weighted scoring engine
@@ -188,26 +131,29 @@ agentic-v2-eval/
 │   └── sandbox/
 │       ├── base.py          # BaseSandbox abstract class
 │       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
-└── tests/
+└── tests/                   # 13 test files
     ├── conftest.py
     ├── test_adapters.py
     ├── test_benchmarks.py
     ├── test_datasets_bridge.py
     ├── test_eval.py
+    ├── test_evaluator_parse_caps.py
+    ├── test_llm_evaluator.py
     ├── test_metrics.py
     ├── test_pattern_evaluator.py
     ├── test_quality_evaluator.py
     ├── test_reporters.py
     ├── test_rubrics.py
     ├── test_sandbox.py
+    ├── test_standard_evaluator.py
     └── verify_p2.py
 ```
 
 ---
 
-## Evaluator System
+## Evaluator system
 
-### Class Hierarchy
+### Class hierarchy
 
 ```
 abc.ABC
@@ -294,7 +240,7 @@ Input content longer than 18,000 characters is truncated: the first 16,000 chara
 
 ---
 
-## Scoring Engine
+## Scoring engine
 
 `scorer.py` implements `Scorer` and `ScoringResult`. The scorer:
 
@@ -307,7 +253,7 @@ Input content longer than 18,000 characters is truncated: the first 16,000 chara
 
 ---
 
-## Runner Architecture
+## Runner architecture
 
 All runners are generic over `T` (test case type) and `R` (result type), accepting any callable `evaluator: Callable[[T], R]`.
 
@@ -325,7 +271,7 @@ All runners are generic over `T` (test case type) and `R` (result type), accepti
 
 ---
 
-## Reporter Architecture
+## Reporter architecture
 
 All reporters share `calculate_summary()` from `reporters/_summary.py`, which computes mean/min/max for numeric fields plus a total count.
 
@@ -339,7 +285,7 @@ All reporters share `calculate_summary()` from `reporters/_summary.py`, which co
 
 ---
 
-## Metrics Modules
+## Metrics modules
 
 ### accuracy.py
 
@@ -375,7 +321,7 @@ The sandbox prevents path-escape by rejecting absolute paths outside the configu
 
 ---
 
-## Dataset Bridge
+## Dataset bridge
 
 `datasets.py` provides a lazy facade over `tools.agents.benchmarks`. The benchmark modules are imported only on first access, not at package import time.
 
@@ -401,7 +347,7 @@ for task in tasks:
 
 ---
 
-## Server-Side Integration
+## Server-side integration
 
 The `agentic-workflows-v2` server runs its own three-stage evaluation pipeline that is architecturally parallel to but distinct from the standalone `agentic-v2-eval` package. The integration point is the `GET /runs/{filename}/evaluation` API endpoint.
 
@@ -409,7 +355,7 @@ See `docs/evaluation/gating.md` for the full server-side scoring pipeline, scori
 
 ---
 
-## CLI Reference
+## CLI reference
 
 The CLI is the `__main__.py` entry point, available as `python -m agentic_v2_eval` or via the `agentic-v2-eval` console script registered in `pyproject.toml`.
 
@@ -439,7 +385,7 @@ The `evaluate` command accepts a JSON file containing either a list of result di
 
 ## Public API
 
-The package exports 16 symbols from its top-level `__init__.py`:
+The package exports 17 symbols from its top-level `__init__.py`:
 
 | Symbol | Type | Description |
 |--------|------|-------------|
@@ -459,6 +405,7 @@ The package exports 16 symbols from its top-level `__init__.py`:
 | `ScoringResult` | Dataclass | `(total_score, weighted_score, criterion_scores, missing_criteria)` |
 | `StandardEvaluator` | Class | Five-dimension prompt quality evaluator with letter grade |
 | `StandardScore` | Dataclass | `(prompt_file, scores, overall_score, grade, passed, improvements, ...)` |
+| `__version__` | `str` | Package version string |
 
 ---
 
@@ -484,23 +431,9 @@ ruff check src/agentic_v2_eval/
 
 | Property | Value |
 |----------|-------|
-| Test files | 11 |
+| Test files | 13 |
 | Approximate test count | ~215 |
 | asyncio mode | auto |
 | Coverage gate | 80%, branch coverage on |
 | Live API calls in tests | None — all mock `LLMClientProtocol` |
-| mypy findings | 0 (cleared Sprint B #1) |
-
----
-
-## Sprint B Changelog (Eval Package)
-
-**Sprint B #1 — All 35 mypy findings cleared** (`ed78ee2`). Key changes:
-
-- `types-PyYAML` stub package added (2 errors resolved).
-- `runners/streaming.py` refactored to use discriminated union `tuple[Literal[True], R] | tuple[Literal[False], Exception]` for `_eval_one` return type (6 errors).
-- `datasets.py` optional-import guards added via `_require_*_module()` helpers (6 union-attr + 1 no-any-return error).
-- 10 missing annotations added throughout.
-- 10 `no-any-return` violations fixed via typed locals.
-- One `# type: ignore[return-value]` at `runners/streaming.py:199` retained with justification (mypy cannot narrow `inspect.isawaitable`).
-- CI `continue-on-error: true` dropped from `eval-package-ci.yml` simultaneously.
+| mypy findings | 0 |
