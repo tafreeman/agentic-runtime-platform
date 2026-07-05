@@ -129,7 +129,7 @@ flowchart LR
 <div class="feature-card" markdown>
 <div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><polygon points="13 24 4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24"></polygon></svg></div>
 <h3 class="fc-title">Rubric-based evaluation</h3>
-<p class="fc-body">YAML-defined rubrics with weighted criteria, LLM-as-judge integration, 0.0–10.0 multidimensional scoring. Production gating is <code>coverage_score >= 0.80</code> — not string matches.</p>
+<p class="fc-body">YAML-defined rubrics with weighted criteria and LLM-as-judge integration — each criterion scored on a normalized 0–1 scale, then weighted into a composite. Production gating is <code>coverage_score >= 0.80</code> — not string matches.</p>
 [Evaluation framework](architecture-eval.md){ .fc-link }
 </div>
 
@@ -176,7 +176,7 @@ flowchart LR
   <div class="stat-label">Coverage gate, CI-enforced</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">31</div>
+  <div class="stat-value">38</div>
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
@@ -201,7 +201,7 @@ The platform is the demonstration; the practices are the argument. Everything be
 
 <div class="feature-card" markdown>
 <h3 class="fc-title">A written decision record</h3>
-<p class="fc-body">31 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
+<p class="fc-body">38 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
 [ADR index](adr/ADR-INDEX.md){ .fc-link }
 </div>
 

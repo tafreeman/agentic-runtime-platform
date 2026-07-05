@@ -6,7 +6,8 @@ behavior, and practical recipes for tuning it to your environment.
 
 **This page is NOT** an ADR, a code specification, or a threat model. For decision rationale
 see the linked ADRs; for the formal threat model see
-[`docs/OWASP_LLM_THREAT_MODEL.md`](../OWASP_LLM_THREAT_MODEL.md). For the complete env-var
+[`docs/OWASP_LLM_THREAT_MODEL.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md)
+(excluded from the built site). For the complete env-var
 index see the [Configuration Reference](../configuration.md).
 
 ---
@@ -178,7 +179,7 @@ AGENTIC_RATE_LIMIT_DEFAULT=120/minute
     counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
     / API-gateway layer for multi-replica deployments.
 
-    See [KNOWN_LIMITATIONS.md §4.3](../KNOWN_LIMITATIONS.md#41-rate-limiting-is-in-process-only).
+    See [KNOWN_LIMITATIONS.md §4.1](../KNOWN_LIMITATIONS.md#41-rate-limiting-is-in-process-only).
 
 !!! note "Reference"
     See [ADR-018](../adr/ADR-018-api-rate-limiting-and-auth-throttle.md) for the design
@@ -241,7 +242,7 @@ window has also expired.
     attacker who spreads probes across replicas can stay under each replica's threshold while
     collectively exceeding the intended lockout threshold.
 
-    See [KNOWN_LIMITATIONS.md §4.4](../KNOWN_LIMITATIONS.md#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat).
+    See [KNOWN_LIMITATIONS.md §4.2](../KNOWN_LIMITATIONS.md#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat).
     Sprint 2 will migrate to a Redis-backed shared store.
 
 ### Recipe: investigate a locked-out client
@@ -504,10 +505,11 @@ Classification outcomes:
 
 ### AGENTIC_SANITIZER_FAIL_OPEN
 
-!!! warning "BREAKING CHANGE (2026-05-09)"
-    Only the string `"1"` is recognized as enabling fail-open. Previous versions accepted
-    `"true"`, `"yes"`, and other truthy strings. If your deployment scripts set
-    `AGENTIC_SANITIZER_FAIL_OPEN=true`, update them to `AGENTIC_SANITIZER_FAIL_OPEN=1`.
+!!! note "Only the literal `1` enables fail-open"
+    Since 2026-05-09, only the string `"1"` is accepted as enabling fail-open. Earlier
+    versions accepted `"true"`, `"yes"`, and other truthy strings. If your deployment
+    scripts set `AGENTIC_SANITIZER_FAIL_OPEN=true`, update them to
+    `AGENTIC_SANITIZER_FAIL_OPEN=1`.
 
 Setting `AGENTIC_SANITIZER_FAIL_OPEN=1` causes the middleware to pass requests through
 when the sanitization layer is unavailable or encounters an error, rather than returning
@@ -805,7 +807,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 - [ADR-020](../adr/ADR-020-langchain-adapter-eager-validation.md) — LangChain adapter eager
   validation at startup
 - [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md) — in-process caveats, multi-replica
-  behavior (§4.3, §4.4), and deferred Sprint 2 work
+  behavior (§4.1, §4.2), and deferred Sprint 2 work
 - [Troubleshooting](troubleshooting.md) — common failure modes and diagnostic recipes
 - [Deployment Guide](../deployment-guide.md) — CI/CD pipeline, Docker, environment setup,
   and production observability checklist

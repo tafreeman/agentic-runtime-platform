@@ -14,9 +14,11 @@ There are eight rubrics in the canonical set. They split into two families:
 - **Scoring rubrics** — define named criteria with numeric weights. Used by the `Scorer` engine and the CLI `evaluate` subcommand.
 - **Judge rubrics** — define LLM prompt templates. Used by `QualityEvaluator`, `StandardEvaluator`, and `PatternEvaluator` at evaluation time.
 
+There is no single "scoring scale" across these rubrics: criterion `weight` values are 0–1 mixing coefficients that sum to 1.0, the level descriptors are a 0–5 human-reference anchor per criterion, and `prompt_standard` scores its five dimensions on a 0–10 judge scale — so read each rubric's scale in its own section rather than assuming one applies everywhere.
+
 ---
 
-## Loading Rubrics Programmatically
+## Loading rubrics programmatically
 
 ```python
 from agentic_v2_eval.rubrics import load_rubric, list_rubrics, get_rubric_path
@@ -60,11 +62,11 @@ python -m agentic_v2_eval evaluate results.json --rubric rubrics/agent.yaml
 
 ---
 
-## Family 1 — Scoring Rubrics
+## Family 1 — scoring rubrics
 
 These rubrics drive the `Scorer` engine. Each criterion has a `weight` (must sum to 1.0 within the rubric), an optional description, and optional level descriptors (0–5 scale for human reference).
 
-### `default.yaml` — General Purpose
+### `default.yaml` — general purpose
 
 **Purpose:** Quick evaluation of any result set where domain-specific rubrics are not yet defined.
 
@@ -80,7 +82,7 @@ These rubrics drive the `Scorer` engine. Each criterion has a `weight` (must sum
 
 ---
 
-### `agent.yaml` — Agent Output Quality
+### `agent.yaml` — agent output quality
 
 **Purpose:** General-purpose scoring for AI agent outputs — prose answers, summaries, explanations, and multi-step reasoning outputs.
 
@@ -110,7 +112,7 @@ These rubrics drive the `Scorer` engine. Each criterion has a `weight` (must sum
 
 ---
 
-### `code.yaml` — Code Generation Quality
+### `code.yaml` — code generation quality
 
 **Purpose:** Scoring code generation artifacts — functions, classes, modules, and complete programs.
 
@@ -139,7 +141,7 @@ These rubrics drive the `Scorer` engine. Each criterion has a `weight` (must sum
 
 ---
 
-### `coding_standards.yaml` — Python/ML Coding Standards
+### `coding_standards.yaml` — Python/ML coding standards
 
 **Purpose:** Automated scoring of code artifacts against the 27-rule Python and AI/ML coding standards documented in `docs/CODING_STANDARDS.md`.
 
@@ -179,7 +181,7 @@ This rubric is also the default for the `code-reviewer` and `python-reviewer` ag
 
 ---
 
-### `pattern.yaml` — Agentic Pattern Adherence
+### `pattern.yaml` — agentic pattern adherence
 
 **Purpose:** Scoring whether an output correctly follows a defined agentic reasoning pattern (ReAct, CoVe, Reflexion, RAG). This rubric is used by `PatternEvaluator` indirectly — the evaluator loads pattern data from `prompt_pattern.yaml` and applies hard gate logic that mirrors this rubric's structure.
 
@@ -206,11 +208,11 @@ A hard gate failure blocks passing regardless of the weighted score. The three g
 
 ---
 
-## Family 2 — Judge Rubrics
+## Family 2 — judge rubrics
 
 These rubrics define LLM prompt templates and scoring instructions. They are consumed by evaluator classes, not by the `Scorer` engine directly.
 
-### `quality.yaml` — Output Quality Dimensions
+### `quality.yaml` — output quality dimensions
 
 **Purpose:** Defines five LLM judge calls for `QualityEvaluator`. Each definition includes a `system_prompt`, a `prompt_template` with `{{variable}}` placeholders, and a `choices_type`.
 
@@ -251,7 +253,7 @@ print(f"Relevance: {relevance:.2f}")  # e.g. 1.0
 
 ---
 
-### `prompt_standard.yaml` — Standard Prompt Quality
+### `prompt_standard.yaml` — standard prompt quality
 
 **Purpose:** Defines the judge prompt for `StandardEvaluator`. Instructs the LLM to evaluate a prompt template on five 0–10 dimensions and return a JSON object.
 
@@ -301,7 +303,7 @@ evaluator = StandardEvaluator(llm_client=get_llm_client())
 result = evaluator.score_prompt(
     prompt_name="my_agent_prompt",
     prompt_content=open("agentic_v2/prompts/coder.md").read(),
-    model="gh:gpt-4o",
+    model="gh:openai/gpt-4o",
     runs=3,        # run 3 times, take median
     temperature=0.1,
 )
@@ -315,7 +317,7 @@ for improvement in result.improvements:
 
 ---
 
-### `prompt_pattern.yaml` — Pattern Judge Prompts
+### `prompt_pattern.yaml` — pattern judge prompts
 
 **Purpose:** Defines the master judge prompt template plus per-pattern data for `PatternEvaluator`.
 
@@ -353,7 +355,7 @@ score = evaluator.score_pattern(
     prompt_content=open("agentic_v2/prompts/react_agent.md").read(),
     model_output="Thought: I need to search...\nAction: search('capital of France')\nObservation: Paris\nFinal Answer: Paris",
     pattern="react",
-    model="gh:gpt-4o",
+    model="gh:openai/gpt-4o",
     runs=20,       # 20 runs for robust median aggregation
     temperature=0.1,
 )
@@ -378,7 +380,7 @@ if score.hard_gate_failures:
 
 ---
 
-## Rubric Quick Reference
+## Rubric quick reference
 
 | Rubric | Criteria Count | Family | Pass Threshold | Primary Evaluator |
 |--------|---------------|--------|----------------|-------------------|
@@ -393,7 +395,7 @@ if score.hard_gate_failures:
 
 ---
 
-## Adding a Custom Rubric
+## Adding a custom rubric
 
 1. Create a YAML file following the schema above.
 2. Place it anywhere accessible at runtime (does not need to be in the packaged `rubrics/` directory).

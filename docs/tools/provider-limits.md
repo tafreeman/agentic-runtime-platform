@@ -1,4 +1,4 @@
-# Provider Rate Limits & Model Ranking
+# Provider rate limits and model ranking
 
 > Modules: `tools.llm.check_provider_limits` · `tools.llm.rank_models`
 
@@ -25,7 +25,7 @@ rank_models.py
 
 ---
 
-## Full Three-Step Pipeline
+## Full three-step pipeline
 
 ```bash
 # Step 1 — Probe model availability
@@ -58,14 +58,17 @@ Reads a model probe JSON file and performs lightweight HTTP checks against each 
 
 ```bash
 python tools/llm/check_provider_limits.py \
-    --probe-file <path>   # default: filename.json
-    --out <path>          # optional: path to write results JSON
+    --probe-file runs/probe_output.json \
+    --out runs/provider_limits.json
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--probe-file` | `filename.json` | Model probe JSON produced by step 1 |
 | `--out` | (stdout) | Output path for the limits JSON |
+
+> **Note:** The built-in `--probe-file` default (`filename.json`) is a leftover development
+> artifact name — always pass your own probe file explicitly, as in the example above.
 
 ### What it checks
 
@@ -184,50 +187,63 @@ python tools/llm/rank_models.py \
 
 ### Ranking algorithm
 
-Providers are scored by a static preference table and filtered by availability data:
+Providers are scored by a static preference table in `tools/llm/rank_models.py` (the source of truth for these values — regenerate this table from there rather than restating scores elsewhere):
 
 | Rank | Provider | Score | Rationale |
 |------|----------|-------|-----------|
-| 1 | `local_onnx` | 100 | No external quota, highest throughput, free |
-| 2 | `lmstudio` | 90 | Local server, no quota |
-| 3 | `ollama` | 88 | Local server, no quota |
-| 4 | `github` | 80 | Free tier with generous quota |
-| 5 | `openai` | 70 | Paid, reliable |
-| 6 | `anthropic` | 65 | Paid, reliable |
-| 7 | `gemini` | 60 | Paid |
-| 8 | `azure` | 55 | Enterprise, higher cost |
-| 9 | `windows_ai` | 50 | Hardware-gated |
+| 1 | `local_onnx` | 100 | Local models on disk; no external quota or billing; highest throughput |
+| 1.5 | `ai_toolkit` | 95 | VS Code AI Toolkit local models available |
+| 2 | `lmstudio` | 90 | LM Studio reachable locally, OpenAI-compatible |
+| 2.5 | `ollama` (reachable) | 85 | Ollama running locally |
+| 3 | `openai` | 80 | API validated and returning models; billable usage |
+| 4 | `github_models` | 70 | GitHub token valid; good fallback for `gh:` models |
+| 5 | `anthropic` | 60 | Keys present; probe lists models |
+| 6 | `gemini` | 50 | Keys present; quota check requires GCP Console |
+| 7 | `ollama` (unreachable) | 30 | Fallback score when the Ollama host check fails (e.g. returns 404) — the provider is still listed, just deprioritized |
 
-Providers with `available: false` in the probe data or `ok: false` in the limits data are excluded from the output.
+Ranks can be fractional (`ai_toolkit` slots in at 1.5, reachable `ollama` at 2.5). Azure and Windows AI are not ranked by this script. A provider is included only when it appears in the probe data; `lmstudio` additionally requires a reachable host, `openai` requires a non-empty model list, and `ai_toolkit` requires at least one local model.
 
 ### Output schema
 
+The output is a JSON object whose `providers` field is a **dict keyed by provider name** (not an array):
+
 ```json
 {
-  "ranked_providers": [
-    {
-      "provider": "local_onnx",
+  "generated_at": "2026-05-21T14:23:00Z",
+  "source_probe": "runs/probe_output.json",
+  "source_checks": "runs/provider_limits.json",
+  "summary": {
+    "total_available": 10,
+    "providers_configured": 2,
+    "note": "Scoring favors local availability, reachable local APIs, then authenticated cloud providers."
+  },
+  "providers": {
+    "local_onnx": {
       "score": 100,
       "rank": 1,
       "reason": "Local models available on disk; no external quota or billing; highest throughput.",
       "available_count": 2,
       "models": ["local:phi4", "local:mistral"]
     },
-    {
-      "provider": "github",
-      "score": 80,
-      "rank": 2,
-      "reason": "GitHub Models API — free tier, generous quota, good model selection.",
+    "github_models": {
+      "score": 70,
+      "rank": 4,
+      "reason": "GitHub token valid. Good fallback for gh: models.",
       "available_count": 8,
-      "models": ["gh:gpt-4o-mini", "gh:gpt-4o", "gh:o1-mini", "..."]
+      "models": ["gh:gpt-4o-mini", "gh:gpt-4o", "..."],
+      "evidence": {"rate_core_limit": 5000, "rate_core_remaining": 4987}
     }
-  ],
-  "recommended_model": "local:phi4",
-  "generated_at": "2026-05-21T14:23:00Z"
+  },
+  "recommended_use_cases": {
+    "high_throughput_low_cost": "local_onnx",
+    "local_api_with_compat": "lmstudio",
+    "best_capability_paid": "openai",
+    "fallback_catalog": "github_models"
+  }
 }
 ```
 
-`recommended_model` is the top-ranked single model, suitable as a default for single-model evaluation tasks.
+Some entries carry an `evidence` field (HTTP status, rate-limit headers) from the limits check. `recommended_use_cases` maps common evaluation scenarios to the preferred provider given what was found.
 
 ### Python API
 
@@ -244,13 +260,11 @@ exit_code = main([
 
 ---
 
-## Integration with `LLMClient`
-
-The `model_ranking.json` file is read by `LLMClient` when it auto-selects a model (when no explicit model is specified). This means running the full three-step pipeline before a batch eval session ensures `LLMClient` picks the best available model automatically.
+The ranking file is a standalone artifact for evaluation planning — `LLMClient` does not read `model_ranking.json`; model selection there is always explicit via the provider-prefixed model name.
 
 ---
 
-## See Also
+## See also
 
 - [model-probing.md](model-probing.md) — step 1 of the pipeline (availability probe)
 - [benchmarks.md](benchmarks.md) — full multi-model bakeoff using probe + limits + rank

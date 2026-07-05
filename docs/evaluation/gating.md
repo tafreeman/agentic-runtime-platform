@@ -1,19 +1,19 @@
 ---
-title: Production Gating
-description: Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /runs/{filename}/evaluation endpoint.
+title: Production gating
+description: Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint.
 tags:
   - evaluation
 ---
 
-# Production Gating
+# Production gating
 
 Production gating is the policy layer that translates a collection of criterion scores into a single pass/fail verdict. When the gate fails, the specific failing dimension is surfaced so the run can be quarantined rather than silently downgraded.
 
-The server-side scoring pipeline lives in `agentic-workflows-v2/agentic_v2/server/evaluation_scoring.py` and is invoked after every workflow run that has a dataset sample associated with it.
+The scoring pipeline lives in `agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py` and is invoked after every workflow run that has a dataset sample associated with it.
 
 ---
 
-## Three-Stage Scoring Pipeline
+## Three-stage scoring pipeline
 
 ```
 Stage 1: Criterion Scoring
@@ -43,7 +43,7 @@ Stage 3: Hybrid Score Composition + Grading
 
 ---
 
-## Hard Gates
+## Hard gates
 
 Hard gates are binary pass/fail checks that must all succeed before a run can receive a passing grade. They are evaluated in `compute_hard_gates()`:
 
@@ -60,19 +60,19 @@ If **any** hard gate fails and `enforce_hard_gates=True` (the production default
 
 **Note:** `HardGateResult.all_passed` is the conjunction of all six gates. Individual gate values are available in `payload["hard_gates"]`.
 
-### `required_outputs_present` Gate
+### `required_outputs_present` gate
 
 Required outputs are those listed in the workflow's `outputs` section that do not have `optional: true`. The gate fails if:
 - The output name appears in `result.metadata["unresolved_required_outputs"]`, or
 - The output value is `None` in `result.final_output`.
 
-### `release_build_verified` Gate
+### `release_build_verified` gate
 
 This gate only applies if the run includes a step named `build_verify_release_*` or `release_build_verify_*`. If no such step exists, the gate automatically passes. If the step exists but has `status=FAILED`, the gate fails. If the step has `ready_for_release` in its output dict that evaluates as falsy, the gate also fails.
 
 ---
 
-## Criterion Floor Violations
+## Criterion floor violations
 
 Floor violations are softer than hard gates — they don't automatically fail a run, but they cap the grade.
 
@@ -101,7 +101,7 @@ Floor violations are surfaced in `payload["floor_violations"]`:
 
 ---
 
-## Scoring Profiles (A–E)
+## Scoring profiles (A–E)
 
 Scoring profiles bind a set of criterion weights to a workflow family. The profile is selected via the `scoring_profile` field in the workflow YAML's `evaluation` section:
 
@@ -136,7 +136,7 @@ When a workflow declares explicit `criteria`, only those criteria names are incl
 
 ---
 
-## Rubric Weight Validation
+## Rubric weight validation
 
 `_validate_rubric_weights()` enforces three constraints before any evaluation:
 
@@ -148,7 +148,7 @@ If the workflow declares explicit criteria, any weight key not matching a declar
 
 ---
 
-## Score Layers
+## Score layers
 
 The evaluation payload includes a `score_layers` dict for transparency:
 
@@ -176,7 +176,7 @@ The hybrid composition weights are reported in `payload["hybrid_weights"]`.
 
 ---
 
-## Grade Mapping
+## Grade mapping
 
 ```
 weighted_score in [0, 100] → letter grade
@@ -201,7 +201,7 @@ The `passed` boolean is separate from the grade. A run passes when:
 
 ---
 
-## `GET /runs/{filename}/evaluation` Endpoint
+## `GET /api/runs/{filename}/evaluation` endpoint
 
 The evaluation result for a completed run is available at:
 
@@ -300,14 +300,13 @@ Where `filename` is the run's log file name (e.g., `run_20260501_143022_abc123.j
 
 ---
 
-## CI Integration
+## CI integration
 
-The evaluation pipeline integrates with CI via the `eval-package-ci.yml` workflow. As of Sprint B:
+The evaluation pipeline integrates with CI via the `eval-package-ci.yml` workflow:
 
-- `continue-on-error: false` — mypy failures block merge
+- mypy runs as a blocking step — type-check failures block merge
 - The eval package is tested independently of the main runtime
-- All 35 mypy findings cleared (Sprint B #1)
-- Coverage gate: 80% (`fail_under = 80` in `pyproject.toml`)
+- Coverage gate: 80% (`fail_under = 80` in `agentic-v2-eval/pyproject.toml`)
 
 To run the full eval-package test suite with coverage:
 
@@ -325,7 +324,7 @@ mypy --strict src/agentic_v2_eval/
 
 ---
 
-## Evaluation Schema Contract
+## Evaluation schema contract
 
 `validate_evaluation_payload_schema(payload)` validates that an evaluation payload conforms to the required structure. Required top-level fields:
 
@@ -347,7 +346,7 @@ Schema validation failure sets `hard_gates.schema_contract_valid = False`, which
 
 ---
 
-## Configuring the Pass Threshold
+## Configuring the pass threshold
 
 The default pass threshold is 70.0. It can be overridden in the `evaluation.yaml` configuration file:
 

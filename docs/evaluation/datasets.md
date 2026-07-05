@@ -1,11 +1,11 @@
 ---
 title: Evaluation Datasets
-description: Dataset sources, JSONL format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI.
+description: Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI.
 tags:
   - evaluation
 ---
 
-# Evaluation Datasets
+# Evaluation datasets
 
 Agentic Runtime Platform draws evaluation data from three sources:
 
@@ -22,7 +22,7 @@ The dataset system is split across two layers:
 
 ---
 
-## Available Benchmark Datasets
+## Available benchmark datasets
 
 The following benchmark IDs are registered in `tools.agents.benchmarks.datasets.BENCHMARK_DEFINITIONS`:
 
@@ -40,9 +40,9 @@ The following benchmark IDs are registered in `tools.agents.benchmarks.datasets.
 
 ---
 
-## Eval-Package Python API
+## Eval-package Python API
 
-### Installation and Import
+### Installation and import
 
 ```python
 from agentic_v2_eval.datasets import (
@@ -168,7 +168,7 @@ for config in configs:
 
 ---
 
-## Lazy Import Architecture
+## Lazy import architecture
 
 The `datasets.py` module never imports `tools.agents.benchmarks` at module load time. Instead:
 
@@ -181,7 +181,7 @@ This design lets `agentic-v2-eval` be used without `tools` installed — any cod
 
 ---
 
-## Local Dataset Format
+## Local dataset format
 
 Local datasets are JSON files. The server scans three directories for `*.json` files:
 
@@ -189,7 +189,7 @@ Local datasets are JSON files. The server scans three directories for `*.json` f
 - `agentic-workflows-v2/evaluation/datasets/`
 - `tools/agents/benchmarks/gold_standards/`
 
-### Supported JSON Structures
+### Supported JSON structures
 
 **Top-level array (most common):**
 
@@ -235,7 +235,7 @@ Local datasets are JSON files. The server scans three directories for `*.json` f
 
 Non-dict array entries are wrapped as `{"value": entry}` for schema consistency.
 
-### Field Discovery
+### Field discovery
 
 The sample summary and detail responses use heuristic field discovery:
 
@@ -243,7 +243,7 @@ The sample summary and detail responses use heuristic field discovery:
 - **`title`:** First non-empty value from `title`, `name`, `problem`, `question`, or `task` fields (truncated at 120 characters).
 - **`summary`:** First non-empty string field that is not an ID field (truncated at 200 characters).
 
-### JSONL Datasets (External Benchmark Tools)
+### JSONL datasets (external benchmark tools)
 
 When loading from benchmark registries via `tools.agents.benchmarks`, the underlying format is JSONL (JSON Lines) — one JSON object per line. The `load_benchmark()` function abstracts this; callers receive `BenchmarkTask` objects regardless of the source format.
 
@@ -260,7 +260,7 @@ Path("dataset.json").write_text(json.dumps(tasks, indent=2))
 
 ---
 
-## Server-Side Dataset APIs
+## Server-side dataset APIs
 
 The FastAPI server exposes four dataset-related endpoints under `/api/eval/`:
 
@@ -447,14 +447,14 @@ When `compatible` is `false`, `reasons` lists the specific mismatches (missing r
 
 ---
 
-## Dataset-to-Workflow Compatibility
+## Dataset-to-workflow compatibility
 
 ### `match_workflow_dataset()`
 
 `match_workflow_dataset(workflow_def, sample)` checks whether a dataset sample provides the inputs required by a workflow:
 
 ```python
-from agentic_v2_eval.server.evaluation import match_workflow_dataset
+from agentic_v2.scoring.dataset_matching import match_workflow_dataset
 
 compatible, reasons = match_workflow_dataset(workflow_def, sample)
 if not compatible:
@@ -469,7 +469,7 @@ The function inspects the workflow's `inputs` section and checks each non-option
 `adapt_sample_to_workflow_inputs()` translates matched sample fields into the workflow's expected input schema:
 
 ```python
-from agentic_v2_eval.server.evaluation import adapt_sample_to_workflow_inputs
+from agentic_v2.scoring.dataset_matching import adapt_sample_to_workflow_inputs
 
 adapted = adapt_sample_to_workflow_inputs(
     workflow_inputs=workflow_def.inputs,
@@ -488,7 +488,7 @@ This function handles:
 
 ---
 
-## Eval Sets
+## Eval sets
 
 Eval sets are predefined groupings of datasets configured in `evaluation.yaml`. They allow you to define named suites for repeatable evaluation runs:
 
@@ -515,11 +515,11 @@ Eval sets appear in the `eval_sets` array of `GET /api/eval/datasets`. They are 
 
 ---
 
-## Dashboard Dataset Browser
+## Dashboard dataset browser
 
 The React dashboard includes a three-pane dataset browser accessible from the evaluation run dialog.
 
-### Pane 1: Dataset Picker
+### Pane 1: dataset picker
 
 The left pane lists available datasets grouped by source (Repository / Local / Eval Sets). Each dataset shows:
 
@@ -529,7 +529,7 @@ The left pane lists available datasets grouped by source (Repository / Local / E
 
 Powered by `GET /api/eval/datasets`. When a workflow is selected in the run dialog, the picker automatically filters to compatible datasets only.
 
-### Pane 2: Sample List
+### Pane 2: sample list
 
 The center pane shows a paginated list of samples from the selected dataset. Each row displays:
 
@@ -540,7 +540,7 @@ The center pane shows a paginated list of samples from the selected dataset. Eac
 
 Powered by `GET /api/eval/datasets/sample-list` with `offset`/`limit` pagination. The frontend increments `offset` by `limit` to load the next page.
 
-### Pane 3: Sample Detail + Workflow Preview
+### Pane 3: sample detail + workflow preview
 
 The right pane shows the full content of the selected sample with two tabs:
 
@@ -554,7 +554,7 @@ The right pane shows the full content of the selected sample with two tabs:
 
 ---
 
-## Using Datasets in Batch Evaluation
+## Using datasets in batch evaluation
 
 ```python
 from agentic_v2_eval.datasets import load_benchmark, BenchmarkTask
@@ -596,7 +596,7 @@ print(f"Failed to evaluate: {result.failed}")
 
 ---
 
-## Security: Path Traversal Protection
+## Security: path traversal protection
 
 Local dataset loading enforces a path allow-list. `_resolve_local_dataset()` verifies that the resolved absolute path falls under one of the three known dataset roots via `_is_under_allowed_root()`. A dataset ID that resolves outside these directories raises `ValueError`, preventing path traversal attacks where a crafted dataset ID might reference arbitrary files on the filesystem.
 

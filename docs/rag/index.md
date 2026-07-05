@@ -1,4 +1,4 @@
-# RAG Pipeline — Complete Reference
+# RAG pipeline
 
 > **Package:** `agentic-workflows-v2/agentic_v2/rag/`
 > **Audience:** Engineers adding RAG context to workflows, contributors extending the pipeline, and operators tuning retrieval for production.
@@ -7,7 +7,7 @@ The RAG (Retrieval-Augmented Generation) pipeline provides document ingestion, h
 
 ---
 
-## 1. Architecture Overview
+## 1. Architecture overview
 
 ```
 Source Documents
@@ -47,7 +47,7 @@ Query ────────┤
 
 ---
 
-## 2. Core Data Contracts
+## 2. Core data contracts
 
 Source: `rag/contracts.py`
 
@@ -175,7 +175,7 @@ RAGConfig(
 
 ---
 
-## 4. Document Loading
+## 4. Document loading
 
 Source: `rag/loaders.py`
 
@@ -196,6 +196,8 @@ Built-in loaders:
 
 ### `IngestionPipeline`
 
+Source: `rag/ingestion.py`
+
 ```python
 pipeline = IngestionPipeline(
     loader=MarkdownLoader(),
@@ -209,7 +211,7 @@ The pipeline wraps load and chunk errors in `IngestionError` with the source pat
 
 ---
 
-## 5. Document Chunking
+## 5. Document chunking
 
 Source: `rag/chunking.py`
 
@@ -257,7 +259,7 @@ The `Chunk.content_hash` (SHA-256) is used for deduplication at ingestion time. 
 
 ---
 
-## 7. Vector Stores
+## 7. Vector stores
 
 Source: `rag/vectorstore.py`
 
@@ -299,7 +301,7 @@ store = LanceDBVectorStore(db_path=config.db_path, collection=config.collection_
 
 ---
 
-## 8. BM25 Keyword Index
+## 8. BM25 keyword index
 
 Source: `rag/retrieval.py`
 
@@ -336,7 +338,7 @@ tf_norm(t, d)  = tf(t,d) * (k1+1) / (tf(t,d) + k1 * (1 - b + b * |d| / avgdl))
 
 ---
 
-## 9. Hybrid Retrieval and RRF Fusion
+## 9. Hybrid retrieval and RRF fusion
 
 Source: `rag/retrieval.py`
 
@@ -363,7 +365,7 @@ results = await retriever.search("how does the DAG executor work?", top_k=5)
 6. Optionally rerank with cross-encoder or LLM judge.
 7. Return top `top_k` results.
 
-### Reciprocal Rank Fusion (RRF)
+### Reciprocal rank fusion (RRF)
 
 ```python
 from agentic_v2.rag.retrieval import reciprocal_rank_fusion
@@ -389,7 +391,7 @@ Deduplication is by `chunk_id`; the first-seen content and metadata are used for
 
 ---
 
-## 10. Context Assembly
+## 10. Context assembly
 
 Source: `rag/context_assembly.py`
 
@@ -408,7 +410,7 @@ Each chunk is wrapped in `<retrieved_context>` delimiter tags before being injec
 
 **Security: Prompt Injection Defense**
 
-Retrieved documents may contain adversarial content (`"Ignore all previous instructions..."`). Two defense layers are applied:
+Retrieved documents may contain adversarial content (`"Ignore all previous instructions..."`). Four defense layers are applied:
 
 1. **Delimiter blocking**: Any text containing `<retrieved_context>` or `</retrieved_context>` is replaced with `[blocked-retrieved-context-start/end]` before framing.
 2. **Line quoting**: Every line of retrieved content is prefixed with `| ` to visually distinguish it from instructions and signal to the LLM that it is untrusted data.
@@ -439,7 +441,7 @@ RerankerConfig(strategy="cross_encoder", model_name="cross-encoder/ms-marco-Mini
 
 ---
 
-## 12. OTEL Tracing
+## 12. OTEL tracing
 
 Source: `rag/tracing.py`
 
@@ -457,7 +459,7 @@ The RAG pipeline is instrumented with OpenTelemetry spans when tracing is enable
 
 ---
 
-## 13. CLI Usage
+## 13. CLI usage
 
 Source: `cli/rag_commands.py`
 
@@ -501,7 +503,7 @@ Output: Ranked results table with score, source, and content preview.
 
 ---
 
-## 14. RAG Memory Store
+## 14. RAG memory store
 
 Source: `rag/memory.py`
 
@@ -517,7 +519,7 @@ results = await store.search("recent code generation output", top_k=3)
 
 ---
 
-## 15. Integration with Agents
+## 15. Integration with agents
 
 RAG retrieval can augment agent context in two ways:
 
@@ -552,7 +554,7 @@ agent._memory_store = RAGMemoryStore(config=rag_config)
 
 ---
 
-## 16. Production Deployment Checklist
+## 16. Production deployment checklist
 
 - [ ] Set `vectorstore_type="lancedb"` with a durable `db_path` (not in-memory).
 - [ ] Choose `provider="openai"` or `provider="voyage"` — not `InMemoryEmbedder`.

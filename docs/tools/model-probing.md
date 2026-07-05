@@ -1,4 +1,4 @@
-# Model Probing, Inventory & Discovery
+# Model probing, inventory and discovery
 
 > Modules: `tools.llm.model_probe` · `tools.llm.model_inventory` · `tools.llm.probe_*` · `tools.llm.model_locks`
 
@@ -32,7 +32,7 @@ The subsystem is split across four concerns:
 two-level cache (in-memory session cache + persistent JSON on disk), and applies TTL-stratified
 expiry.
 
-### Quick Start
+### Quick start
 
 ```python
 from tools.llm.model_probe import ModelProbe, get_probe
@@ -159,7 +159,7 @@ class ProbeResult:
 
 ---
 
-## Cache Mechanics
+## Cache mechanics
 
 The persistent cache lives at:
 
@@ -193,7 +193,7 @@ summary = probe.get_cache_summary()
 
 ---
 
-## Retry Decorator (`with_retry`)
+## Retry decorator (`with_retry`)
 
 `probe_config.with_retry` is a decorator with exponential backoff + jitter, intended for
 probe functions that may hit transient rate limits or timeouts.
@@ -213,7 +213,7 @@ Jitter: `delay = delay × (0.8 + random() × 0.4)`, preventing thundering-herd o
 
 ---
 
-## Convenience Functions
+## Convenience functions
 
 The module exports three single-call helpers backed by the process singleton:
 
@@ -234,7 +234,7 @@ err = get_model_error("local:mistral")
 
 ---
 
-## Model Discovery
+## Model discovery
 
 `discover_all_models()` performs a comprehensive scan across all configured providers and returns
 an inventory of available models grouped by provider.
@@ -265,7 +265,7 @@ for provider, info in discovered["providers"].items():
 8. `anthropic` — passive check (key present only; no list endpoint used)
 9. `windows_ai` — runs `dotnet run --project PhiSilicaBridge -- --info` if on Win32
 10. `ai_toolkit` — scans `~/.aitk/models/` for VS Code AI Toolkit models
-11. `lmstudio` — probes `http://127.0.0.1:12340/v1/models`
+11. `lmstudio` — probes `http://127.0.0.1:12340/v1/models` (the configured default in `probe_config.py`; note LM Studio's own out-of-the-box port is 1234 — set `LMSTUDIO_HOST` if your server listens there)
 12. `local_openai_compatible` — probes `OPENAI_BASE_URL` / `LOCAL_AI_API_BASE_URL` if set
 
 ### CLI
@@ -293,7 +293,7 @@ python -m tools.llm.model_probe --clear-cache
 
 ---
 
-## Model Inventory (`build_inventory`)
+## Model inventory (`build_inventory`)
 
 `model_inventory.py` provides `build_inventory()`, a conservative capability audit of the current
 environment. Unlike `discover_all_models()`, it defaults to a **passive** scan (environment
@@ -328,7 +328,7 @@ python -m tools.llm.model_inventory --active
 
 ---
 
-## Model Locks
+## Model locks
 
 `model_locks.py` prevents concurrent ONNX model loading conflicts. ONNX models consume large
 amounts of RAM. When multiple evaluation processes run in parallel on the same machine, loading
@@ -356,7 +356,7 @@ clear_all_locks()
 
 ---
 
-## Provider Detection
+## Provider detection
 
 `probe_providers.get_provider(model_name)` maps a model string to a provider name:
 
@@ -377,7 +377,7 @@ clear_all_locks()
 
 ---
 
-## Integration Pattern
+## Integration pattern
 
 The typical integration in an evaluation pipeline:
 

@@ -6,13 +6,12 @@ tags:
   - deep-dive
 ---
 
-# agentic-v2-eval — Deep Dive
+# agentic-v2-eval — Deep dive
 
 **Version:** 0.3.0
 **Scope:** `agentic-v2-eval/`
-**Reading time:** ~45 minutes
 
-This document covers every module and design decision in depth. For a shorter architectural overview, see `docs/architecture-eval.md`. For specific subsystem references, see the `docs/evaluation/` folder.
+This document covers every module and design decision in depth. For a shorter architectural overview, see [`architecture-eval.md`](architecture-eval.md). For specific subsystem references, see the [`evaluation/`](evaluation/) folder.
 
 ---
 
@@ -30,7 +29,7 @@ This document covers every module and design decision in depth. For a shorter ar
 - Subprocess sandbox for executing evaluation-time code
 - Dataset bridge to `tools.agents.benchmarks` (HumanEval, MBPP, SWE-bench, etc.)
 
-### Integration Boundaries
+### Integration boundaries
 
 ```
 agentic-tools
@@ -45,7 +44,7 @@ The package can be imported without `agentic-tools` installed. Tests inject mock
 
 ---
 
-## Module-by-Module Reference
+## Module-by-module reference
 
 ### `__init__.py`
 
@@ -172,7 +171,7 @@ The five built-in definitions are populated by `_load_definitions()` at import t
 
 **`StandardEvaluator.score_prompt()`** — the main entry point. Handles input truncation at 18,000 characters (16,000 head + 1,000 tail). Calls the judge `N` times, collecting parseable JSON responses. Aggregates dimension scores via median. Deduplicates improvement suggestions (preserving insertion order using `dict.fromkeys`). Computes letter grade via `_get_grade()` using the percent-of-10 scale.
 
-The judge prompt is loaded from `rubrics/prompt_standard.yaml` via `_load_standard_prompt()` at module import time. The prompt instructs the judge to return ONLY a JSON object (no markdown fences) with the schema shown in `docs/evaluation/judge.md`.
+The judge prompt is loaded from `rubrics/prompt_standard.yaml` via `_load_standard_prompt()` at module import time. The prompt instructs the judge to return ONLY a JSON object (no markdown fences) with the schema shown in [`evaluation/judge.md`](evaluation/judge.md).
 
 ### `runners/batch.py`
 
@@ -276,7 +275,7 @@ Provides a lazy-loading bridge to `tools.llm.llm_client.LLMClient`. The actual `
 
 ---
 
-## Data Flow: CLI evaluate Command
+## Data flow: CLI evaluate command
 
 ```
 results.json
@@ -296,7 +295,7 @@ The `evaluate` command does not invoke any LLM. It applies only the rubric's wei
 
 ---
 
-## Data Flow: PatternEvaluator
+## Data flow: PatternEvaluator
 
 ```
 score_pattern(prompt_name, prompt_content, model_output, pattern, model, runs, temperature)
@@ -319,7 +318,7 @@ score_pattern(prompt_name, prompt_content, model_output, pattern, model, runs, t
 
 ---
 
-## Data Flow: AsyncStreamingRunner
+## Data flow: AsyncStreamingRunner
 
 ```
 iter_results(test_cases)
@@ -345,7 +344,7 @@ iter_results(test_cases)
 
 ---
 
-## Rubric YAML Format Reference
+## Rubric YAML format reference
 
 A complete rubric YAML file can have the following keys:
 
@@ -381,13 +380,13 @@ Only `criteria[].name` and `criteria[].weight` are required for `Scorer`. All ot
 
 ---
 
-## Known Limitations
+## Known limitations
 
 1. **One `# type: ignore[return-value]`** at `runners/streaming.py:199` — mypy cannot narrow the type through `inspect.isawaitable` at this location. The runtime behavior is correct; the ignore is intentional and documented.
 
 2. **`safe_mode` in `LocalSubprocessSandbox` is code-string scanning, not syscall interception.** It can be bypassed by obfuscated code. Use Docker for stronger isolation.
 
-3. **`PatternEvaluator` defaults to `runs=1`** in the constructor signature. The original design intention was `runs=20` for variance reduction. The default was changed to 1 for speed during development. Callers should explicitly set `runs=20` for production evaluations.
+3. **`PatternEvaluator` defaults to `runs=1`** in the constructor signature. A single run is the fast default suited to local iteration; because the LLM judge is stochastic, production evaluations should set a higher `runs` value (e.g. `runs=20`) so scores are aggregated across runs for variance reduction.
 
 4. **`QualityEvaluator.evaluate()` returns `0.0` on LLM exception** — the exception is logged with `print()` rather than a structured logger. This was flagged in the original code review. Use `logging.getLogger(__name__)` in production wrappers.
 

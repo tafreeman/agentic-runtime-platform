@@ -2,29 +2,30 @@
 
 > Package name: `agentic-tools` | Version: 0.1.0 | Python: 3.11+
 
-## Executive Summary
+## Executive summary
 
 `agentic-tools` is the shared utility layer for the `tafreeman/agentic-runtime-platform` monorepo. It
-provides a multi-provider LLM client abstraction (ten provider backends), a disk-backed SHA-256
+provides a multi-provider LLM client abstraction (eight providers across nine routing backends), a disk-backed SHA-256
 response cache, model probing and provider discovery, a model bakeoff runner, a benchmark and
 LLM-as-judge evaluation framework, a structured error taxonomy, and script bootstrap helpers.
 
-The package is also the `uv` workspace root. Members `agentic-workflows-v2` and `agentic-v2-eval`
-declare it as a workspace dependency.
+The package is defined by the **repo-root** `pyproject.toml` (project name `agentic-tools`), which is
+also the `uv` workspace root; there is no `tools/pyproject.toml`. Members `agentic-workflows-v2` and
+`agentic-v2-eval` declare `agentic-tools` as a workspace dependency.
 
 The central design choice is a **static facade + provider adapters + two-level cache** pattern.
 Callers never instantiate a client object; they call `LLMClient.generate_text(model_name, prompt)`
-as a static method. The method dispatches to one of ten provider backends based on a name prefix
+as a static method. The method dispatches to one of nine routing backends (local ONNX and Windows AI are distinct local backends) based on a name prefix
 in the model string. A 24-hour, SHA-256-keyed disk cache sits in front of all provider calls when
 enabled.
 
 ---
 
-## Dependency Diagram
+## Dependency diagram
 
 ```mermaid
 graph TD
-    subgraph workspace["uv workspace root: tools/"]
+    subgraph workspace["agentic-tools (tools/, defined by the repo-root pyproject.toml)"]
         core["tools/core\nconfig · errors · cache\nresponse_cache · prompt_db"]
         llm["tools/llm\nLLMClient · provider_adapters\nModelProbe · ModelInventory\nbakeoff · rank_models"]
         bench["tools/agents/benchmarks\nBenchmarkRunner · llm_evaluator\nevaluation_pipeline · registry"]
@@ -45,34 +46,34 @@ graph TD
 
 ---
 
-## Technology Stack
+## Technology stack
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | Language | Python 3.11+ | `from __future__ import annotations` throughout |
 | Build backend | hatchling | `pyproject.toml` as single config source |
-| Workspace manager | uv | Root package; members: agentic-workflows-v2, agentic-v2-eval |
+| Workspace manager | uv | Workspace root is the repo-root `pyproject.toml`; members: agentic-workflows-v2, agentic-v2-eval |
 | HTTP (sync) | `urllib.request` stdlib | Ollama, Azure Foundry, Azure OpenAI adapters |
 | HTTP (async) | `aiohttp` | Available for async provider backends |
 | Data validation | Pydantic v2 | `model_dump()` / `model_validate()` — not `.dict()` / `.parse_obj()` |
-| OpenAI SDK | `openai >=1.0,<3` | OpenAI and Azure OpenAI providers |
-| Anthropic SDK | `anthropic >=0.40,<1` | Claude provider |
-| Numeric | `numpy >=1.24,<3` | Upper bound for semver safety |
+| OpenAI SDK | `openai >=2.41.1,<3` | OpenAI and Azure OpenAI providers |
+| Anthropic SDK | `anthropic >=0.109.1,<1` | Claude provider |
+| Numeric | `numpy >=1.26.4,<3` | Upper bound for semver safety |
 | Optional: Google | `google-generativeai` | Gemini provider |
 | Optional: ONNX | `onnxruntime-genai` | Local ONNX model inference |
 | Optional: Windows AI | .NET bridge + WinRT | Phi Silica NPU (Copilot+ PC) |
 | GitHub Models | `gh` CLI subprocess | Rate-limit-aware; `GITHUB_TOKEN` required |
-| LangChain | `langchain` (optional) | Thin adapter in `langchain_adapter.py` |
+| LangChain | `langchain-core >=1.4.7,<2` | Thin adapter in `langchain_adapter.py` |
 
 ---
 
-## Package Structure
+## Package structure
 
 ```
+pyproject.toml                        # Repo root: package definition (agentic-tools) + uv workspace root
 tools/
-├── pyproject.toml                    # Package definition + uv workspace root
 ├── __init__.py
-├── llm/                              # 22 modules — LLM client and provider layer
+├── llm/                              # 25 modules — LLM client and provider layer
 │   ├── llm_client.py                 # LLMClient static facade — primary entry point
 │   ├── provider_adapters.py          # All provider adapter functions
 │   ├── langchain_adapter.py          # LangChain compatibility shim
@@ -81,6 +82,9 @@ tools/
 │   ├── local_model_cli.py            # CLI for local model operations
 │   ├── local_model_discovery.py      # Auto-detect from ~/.cache/aigallery
 │   ├── model_probe.py                # ModelProbe class (slim facade + public API)
+│   ├── model_registry.py             # Curated model registry constants
+│   ├── check_provider_limits.py      # Provider rate-limit inspection CLI
+│   ├── list_gemini.py                # Gemini model listing helper
 │   ├── probe_config.py               # ProbeResult dataclass, constants, cache I/O, with_retry
 │   ├── probe_providers.py            # Per-provider probe dispatch
 │   ├── probe_providers_cloud.py      # Cloud probe logic (GitHub, OpenAI, Gemini, Claude, Azure)
@@ -93,6 +97,7 @@ tools/
 │   ├── bakeoff_tasks.py              # TaskSpec dataclass + TASKS list
 │   ├── bakeoff_reporting.py          # _write_reports(), _recommend_alignment()
 │   ├── rank_models.py                # Score-based model ranking from probe + limits data
+│   ├── run_local_concurrency.py      # Local concurrency stress harness
 │   ├── windows_ai.py                 # WindowsAIModel — .NET bridge to Phi Silica
 │   └── windows_ai_bridge/            # C# .NET bridge project (PhiSilicaBridge.csproj)
 ├── core/                             # 9 modules — shared utilities
@@ -106,6 +111,7 @@ tools/
 │   ├── local_media.py                # Local media file handling
 │   └── model_availability.py        # Runtime model availability helpers
 ├── agents/
+│   ├── repo_analyzer/                # Repository analysis agent helpers
 │   └── benchmarks/                   # 11 modules — benchmark infrastructure
 │       ├── registry.py               # BenchmarkRegistry + PRESET_CONFIGS
 │       ├── datasets.py               # BENCHMARK_DEFINITIONS per benchmark
@@ -118,28 +124,29 @@ tools/
 │       ├── evaluator_reporting.py    # summarize_batch_results, save_evaluation_report
 │       ├── evaluation_pipeline.py    # evaluate_task_output_llm, get_gold_standard_for_task
 │       └── workflow_pipeline.py      # extract_workflow_data, save_workflow_phases_md
-├── research/                         # Research library builder
-│   ├── library_builder.py            # build_library() — scan, classify, consolidate
-│   └── helpers.py                    # URL classification, domain allow-lists
-└── tests/                            # Test suite — no live LLM calls
+└── tests/                            # Test suite (14 files) — no live LLM calls
     ├── conftest.py
-    ├── test_llm_client.py
-    ├── test_model_probe.py
-    ├── test_model_inventory.py
-    ├── test_llm_evaluator.py
-    ├── test_evaluation_pipeline.py
     ├── test_benchmark_pipeline.py
-    ├── test_workflow_pipeline.py
     ├── test_config.py
     ├── test_errors.py
-    └── test_tool_init.py
+    ├── test_evaluation_pipeline.py
+    ├── test_llm_client.py
+    ├── test_llm_evaluator.py
+    ├── test_local_model_parsing.py
+    ├── test_model_inventory.py
+    ├── test_model_probe.py
+    ├── test_model_registry_constants.py
+    ├── test_probe_discovery_cloud.py
+    ├── test_repo_analyzer.py
+    ├── test_tool_init.py
+    └── test_workflow_pipeline.py
 ```
 
 ---
 
-## LLM Client
+## LLM client
 
-### Core Interface
+### Core interface
 
 ```python
 from tools.llm.llm_client import LLMClient
@@ -157,7 +164,7 @@ response = LLMClient.generate_text(
 `LLMClient` is a pure static-method facade. No instance state exists. Thread safety is delegated
 to the `ResponseCache` layer, which uses a `threading.Lock` on all read/write operations.
 
-### Call Flow
+### Call flow
 
 ```
 Caller
@@ -177,7 +184,7 @@ Caller
                   └─ ResponseCache.set(sha256_key, response)
 ```
 
-### Provider Routing Table
+### Provider routing table
 
 | Prefix | Provider | Transport | Required Env Var(s) |
 |--------|----------|-----------|---------------------|
@@ -194,7 +201,7 @@ Caller
 | bare `gemini*` | Google Gemini (inferred) | `google.generativeai` | `GEMINI_API_KEY` |
 | bare `claude*` | Anthropic (inferred) | `anthropic.Anthropic` | `ANTHROPIC_API_KEY` |
 
-### Remote Provider Gate
+### Remote provider gate
 
 Remote providers (OpenAI, Anthropic, Gemini, Azure variants) are **disabled by default**. This
 prevents accidental API spend during local development and CI runs.
@@ -210,11 +217,11 @@ LLMClient.generate_text("ollama:llama3", "Hello")       # OK
 LLMClient.generate_text("windows-ai:phi-silica", "Hi") # OK
 ```
 
-Set `PROMPTEVAL_ALLOW_REMOTE=1` to enable all ten providers.
+Set `PROMPTEVAL_ALLOW_REMOTE=1` to enable the remote providers (OpenAI, Anthropic, Gemini, and the Azure variants).
 
 ---
 
-## Response Cache
+## Response cache
 
 | Property | Value |
 |----------|-------|
@@ -232,7 +239,7 @@ variable without restarting the process.
 
 ---
 
-## Model Probing Subsystem
+## Model probing subsystem
 
 `ModelProbe` provides runtime availability checking before evaluation runs. Rather than attempting
 an inference that may fail or incur cost, the probe sends a minimal test request and caches the
@@ -257,7 +264,7 @@ build_inventory(active_probes=False) → dict # passive + active capability inve
 
 ---
 
-## Model Bakeoff
+## Model bakeoff
 
 `model_bakeoff.py` runs a repeatable capability comparison across discovered models and recommends
 values for `DEEP_RESEARCH_SMALL_MODEL` and `DEEP_RESEARCH_HEAVY_MODEL`.
@@ -270,7 +277,7 @@ Output: JSON + Markdown reports written to `runs/` with a timestamp suffix.
 
 ---
 
-## Benchmark Infrastructure
+## Benchmark infrastructure
 
 `tools/agents/benchmarks/` provides an LLM-as-judge evaluation framework usable independently of
 the bakeoff. The primary entry point is `evaluate_with_llm()` in `llm_evaluator.py`, which scores
@@ -283,7 +290,7 @@ Research gating thresholds (enforced by `agentic-v2-eval`):
 
 ---
 
-## Error Taxonomy
+## Error taxonomy
 
 `tools.core.errors` defines a `StrEnum` with ten values, two membership sets, and a heuristic
 classifier.
@@ -310,7 +317,7 @@ code, should_retry = classify_error("Rate limit exceeded")
 
 ---
 
-## Core Configuration
+## Core configuration
 
 ```python
 from tools.core.config import default_config
@@ -327,11 +334,11 @@ default_config.models.refiner_temp      # 0.5
 
 ---
 
-## Dependency Installation
+## Dependency installation
 
 ```bash
-# Core (no optional providers)
-pip install -e "tools/"
+# Core (no optional providers) — run from the repo root, which owns the package
+pip install -e .
 
 # With Google Gemini support
 pip install google-generativeai
@@ -343,12 +350,12 @@ pip install onnxruntime-genai
 pip install winrt-runtime
 
 # Dev dependencies (test, lint, typecheck)
-pip install -e "tools/[dev]"
+pip install -e ".[dev]"
 ```
 
 ---
 
-## Environment Variables Reference
+## Environment variables reference
 
 | Variable | Provider / Feature | Notes |
 |----------|--------------------|-------|

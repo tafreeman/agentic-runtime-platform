@@ -5,7 +5,7 @@ tags:
   - evaluation
 ---
 
-# Evaluation Runners
+# Evaluation runners
 
 The `agentic-v2-eval` package provides three runner classes for executing evaluation functions over collections of test cases. Each runner wraps a caller-supplied `evaluator` function, handles errors, and delivers results in a different model: batch-at-once, sync-streaming, or async-concurrent.
 
@@ -13,7 +13,7 @@ All three runners are generic over the test case type `T` and the result type `R
 
 ---
 
-## Choosing a Runner
+## Choosing a runner
 
 | Concern | BatchRunner | StreamingRunner | AsyncStreamingRunner |
 |---------|-------------|-----------------|----------------------|
@@ -23,7 +23,7 @@ All three runners are generic over the test case type `T` and the result type `R
 | When your evaluator is CPU-bound or fast | Good | Good | Adds overhead |
 | When you need bounded concurrency | No | No | Yes (semaphore) |
 | When your evaluator is async | No | No | Yes |
-| Simplest API surface | Highest | Medium | Lower |
+| API complexity | Low | Medium | High |
 
 **Rule of thumb:** Use `BatchRunner` for small offline suites where you post-process all results together. Use `StreamingRunner` for live progress display with a synchronous evaluator. Use `AsyncStreamingRunner` whenever the evaluator issues network calls (LLM providers, APIs) and you want to saturate available parallelism without blocking.
 
@@ -53,7 +53,7 @@ runner = BatchRunner(
 | `on_error` | `Callable[[int, T, Exception], None] \| None` | `None` | Called on exception as `(index, test_case, error)` |
 | `continue_on_error` | `bool` | `True` | If `False`, re-raises the first exception and halts |
 
-### `run()` Method
+### `run()` method
 
 ```python
 result: BatchResult[R] = runner.run(test_cases)
@@ -74,7 +74,7 @@ class BatchResult(Generic[R]):
     success_rate: float                 # successful / total (property)
 ```
 
-### `run_batch_evaluation()` Function
+### `run_batch_evaluation()` function
 
 A simpler function interface that returns only the successful results:
 
@@ -88,7 +88,7 @@ results: list[R] = run_batch_evaluation(
 )
 ```
 
-### Code Examples
+### Code examples
 
 **Basic batch run with progress bar:**
 
@@ -176,7 +176,7 @@ runner = StreamingRunner(
 | `on_error` | `Callable[[T, Exception], None] \| None` | `None` | Callback invoked for each failure, with the test case and exception |
 | `continue_on_error` | `bool` | `True` | If `False`, re-raises on first exception |
 
-### `run()` Method
+### `run()` method
 
 ```python
 stats: StreamingStats = runner.run(test_cases)
@@ -184,7 +184,7 @@ stats: StreamingStats = runner.run(test_cases)
 
 Iterates all test cases to completion, invoking `on_result` and `on_error` as results arrive. Returns `StreamingStats` when done.
 
-### `iter_results()` Generator
+### `iter_results()` generator
 
 ```python
 for result in runner.iter_results(test_cases):
@@ -204,7 +204,7 @@ class StreamingStats:
     success_rate: float  # successful / processed (property)
 ```
 
-### `run_streaming_evaluation()` Function
+### `run_streaming_evaluation()` function
 
 ```python
 from agentic_v2_eval.runners.streaming import run_streaming_evaluation
@@ -216,7 +216,7 @@ run_streaming_evaluation(
 )
 ```
 
-### Code Examples
+### Code examples
 
 **Writing results to JSONL as they arrive:**
 
@@ -298,7 +298,7 @@ runner = AsyncStreamingRunner(
 | `continue_on_error` | `bool` | `True` | If `False`, re-raises on first error |
 | `max_concurrency` | `int` | `5` | Maximum tasks running concurrently; clamped to `max(1, value)` |
 
-### `iter_results()` AsyncIterator
+### `iter_results()` async iterator
 
 ```python
 async for result in runner.iter_results(test_cases):
@@ -307,7 +307,7 @@ async for result in runner.iter_results(test_cases):
 
 `iter_results()` accepts sync lists, sync iterators, or async iterators. It creates up to `max_concurrency` tasks at once and drains completed tasks using `asyncio.FIRST_COMPLETED` before accepting new ones, ensuring the queue never grows beyond `max_concurrency`.
 
-### Error Handling: Discriminated Union
+### Error handling: discriminated union
 
 Internally, each task returns a discriminated union:
 
@@ -315,11 +315,11 @@ Internally, each task returns a discriminated union:
 tuple[Literal[True], R] | tuple[Literal[False], Exception]
 ```
 
-The first element is a boolean tag. When `True`, the second element is the result `R`. When `False`, it is the exception. This eliminates `isinstance` checks and produces a precise type narrowing that mypy and pyright can verify statically — this was introduced in Sprint B #1 to clear the 35 mypy findings in the runner module.
+The first element is a boolean tag. When `True`, the second element is the result `R`. When `False`, it is the exception. This eliminates `isinstance` checks and produces a precise type narrowing that mypy and pyright can verify statically.
 
 The runner handles errors transparently: failed tasks emit a `WARNING` log and are either re-raised (when `continue_on_error=False`) or silently skipped (when `True`), without interrupting the in-flight tasks.
 
-### Code Examples
+### Code examples
 
 **Async evaluator with LLM calls:**
 
@@ -403,7 +403,7 @@ async def main():
 
 ---
 
-## Error Handling Patterns
+## Error handling patterns
 
 All three runners follow the same `continue_on_error` contract:
 
@@ -440,9 +440,9 @@ if failed_cases:
 
 ---
 
-## Runner Internals
+## Runner internals
 
-### Concurrency Model (AsyncStreamingRunner)
+### Concurrency model (AsyncStreamingRunner)
 
 The async runner implements a bounded producer-consumer pattern:
 
@@ -453,13 +453,13 @@ The async runner implements a bounded producer-consumer pattern:
 
 This ensures `pending` never exceeds `max_concurrency` tasks, limiting both memory usage and concurrency pressure on external services.
 
-### Thread Safety
+### Thread safety
 
 `BatchRunner` and `StreamingRunner` are not thread-safe. Each instance should be used from a single thread. `AsyncStreamingRunner` is safe within a single event loop but should not be shared across threads.
 
 ---
 
-## Integration with Reporters
+## Integration with reporters
 
 All runners produce results compatible with the reporter classes:
 
@@ -490,7 +490,7 @@ HtmlReporter().generate(results, "report.html")
 
 ---
 
-## CLI Integration
+## CLI integration
 
 The `agentic_v2_eval` CLI uses `BatchRunner` internally:
 

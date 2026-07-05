@@ -2,7 +2,7 @@
 
 > **Audience:** Anyone landing their first PR on this monorepo.
 > **Outcome:** After reading this, you can clone, change code, pass local gates, and open a merge-ready PR.
-> **Last verified:** 2026-04-22
+> **Last verified:** 2026-07-05
 
 If you just want to run the platform, start at [`docs/ONBOARDING.md`](ONBOARDING.md) — it takes ~5 minutes to a first workflow run. This file is for contributors who intend to land code.
 
@@ -70,6 +70,8 @@ The CI job `no-llm-smoke` (in `.github/workflows/ci.yml`) validates that the cod
 
 This ensures contributors without provider access can still validate their changes locally before opening a PR. For details on what works and what doesn't in no-LLM mode, see [`docs/NO_LLM_MODE.md`](NO_LLM_MODE.md).
 
+If you run without any provider key and without setting `AGENTIC_NO_LLM=1`, the router raises a `NoProviderConfiguredError` with actionable guidance on which environment variable to set.
+
 ---
 
 ## 3. Development workflow
@@ -132,7 +134,7 @@ If you only touched one package, you can narrow the run:
 | Gate | What it enforces | Source |
 |------|------------------|--------|
 | Ruff lint | `E,F,W,I,N,UP,S,B,A,C4,SIM,TCH,RUF` — no warnings in changed files | `.github/workflows/ci.yml` |
-| Mypy | `mypy --strict` on `agentic-workflows-v2/agentic_v2/`. `agentic-v2-eval` runs with 35 known findings (Sprint B) — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md). Note: mypy config is relaxed while type debt is being paid down (see `pyproject.toml` `[tool.mypy]`). | `ci.yml`, `eval-package-ci.yml` |
+| Mypy | Strict checks (`--disallow-untyped-defs --warn-return-any`) on `agentic_v2/engine` and `agentic_v2/contracts`; the rest of the runtime runs the relaxed baseline in `pyproject.toml` `[tool.mypy]` while type debt is paid down. `agentic-v2-eval` runs mypy strict clean — its 35 Sprint-B findings were cleared in Sprint 2 (T1-5, see [`ROADMAP.md`](ROADMAP.md)). | `ci.yml`, `eval-package-ci.yml` |
 | Coverage floor | 80% on `agentic-workflows-v2/`, 60% on `ui/` | `ci.yml` |
 | Schema drift | Snapshot test on `contracts/` Pydantic models — any wire-format change must be explicitly accepted by regenerating the snapshot | `scripts/generate_schemas.py`, see [ADR-014](adr/ADR-014-pydantic-wire-format.md) |
 | Playwright streaming (5×) | End-to-end streaming flow runs 5× per PR. One failure blocks merge | `ci.yml` |
@@ -146,20 +148,9 @@ If you only touched one package, you can narrow the run:
 
 Full CI job catalogue: [`.github/workflows/`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/.github/workflows/).
 
-## 4a. Running CI Without API Keys
+## 4a. Running CI without API keys
 
-Contributors can run the full CI suite locally without any API key by enabling **no-LLM placeholder mode**:
-
-```bash
-AGENTIC_NO_LLM=1 python -m pytest tests/ -q -m "not integration and not slow"
-AGENTIC_NO_LLM=1 python -m agentic_v2.cli run test_deterministic --input tests/fixtures/deterministic_input.json
-```
-
-In this mode the native DAG and LangChain engines return deterministic placeholder strings instead of making real LLM calls. The `no-llm-smoke` CI job runs exactly this configuration on every pull request with zero secrets — no `GITHUB_TOKEN`, no provider API keys.
-
-If you run without any provider key and without setting `AGENTIC_NO_LLM=1`, the router raises a `NoProviderConfiguredError` with actionable guidance on which environment variable to set.
-
-See `docs/NO_LLM_MODE.md` for full documentation.
+Covered in [Running CI without API keys](#running-ci-without-api-keys) under Local setup — in short, set `AGENTIC_NO_LLM=1` for deterministic placeholder mode (the same zero-secret configuration the `no-llm-smoke` CI job runs on every pull request), and see [`docs/NO_LLM_MODE.md`](NO_LLM_MODE.md) for full documentation.
 
 ---
 
@@ -194,14 +185,14 @@ Attribution (`Co-Authored-By`) is intentionally disabled for this repo. Do not r
 
 ## 6. When to write an ADR
 
-Open an Architecture Decision Record under [`docs/adr/`](adr/) when you:
+Open an Architecture Decision Record under [`docs/adr/`](adr/ADR-INDEX.md) when you:
 
 - Introduce a new wire-format contract (request/response schema, event shape, persistence format).
 - Add, replace, or deprecate an execution engine, provider adapter, or storage backend.
 - Change a security boundary (tool allowlist, secret source, auth model).
 - Pick a pattern that future contributors might reasonably challenge (a new rolling-window design, a retry strategy, an SLO methodology).
 
-Use the existing ADR numbering scheme. Next free number is **017** as of 2026-04-22. Skip to the next free integer if you land in a race. ADRs 004-006 are deliberately unused and **should not be reclaimed** — the numbering gap is documented in [`docs/adr/ADR-INDEX.md`](adr/ADR-INDEX.md).
+Use the existing ADR numbering scheme. Check [`docs/adr/ADR-INDEX.md`](adr/ADR-INDEX.md) for the next free number, and skip to the next free integer if you land in a race. ADRs 004-006 and 013 are deliberately unused and **should not be reclaimed** — the numbering gaps are documented in the index.
 
 An ADR is **not** required for:
 

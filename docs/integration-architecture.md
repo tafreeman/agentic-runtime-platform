@@ -1,10 +1,10 @@
-# Integration Architecture — `tafreeman/agentic-runtime-platform`
+# Integration architecture — Agentic Runtime Platform
 
 This document describes every cross-package communication boundary, the data contracts at each boundary, port allocations, shared dependencies, and the end-to-end data flow from workflow execution to UI visualization to offline evaluation.
 
 ---
 
-## Package Dependency Map
+## Package dependency map
 
 ```
 agentic-tools  ──────────────────────────────┐
@@ -24,7 +24,7 @@ Dependency direction is always downward or lateral. `agentic-workflows-v2` does 
 
 ## Runtime ↔ UI
 
-### Transport Layer
+### Transport layer
 
 | Channel | Protocol | Path | Port |
 |---|---|---|---|
@@ -32,7 +32,7 @@ Dependency direction is always downward or lateral. `agentic-workflows-v2` does 
 | Run streaming | HTTP/SSE | `/api/runs/{run_id}/stream` | 8010 |
 | Execution streaming | WebSocket | `/ws/execution/{run_id}` | 8010 |
 
-### Development Proxy
+### Development proxy
 
 The Vite development server (`vite.config.ts`) proxies all `/api/` and `/ws/` requests to the backend:
 
@@ -48,7 +48,7 @@ proxy: {
 
 The proxy target is overridden by the `VITE_API_PROXY_TARGET` environment variable, allowing the frontend to point at a remote or Docker-hosted backend during development.
 
-### Production Static Serving
+### Production static serving
 
 When a production build of the frontend exists under `agentic-workflows-v2/ui/dist/`, the FastAPI server mounts it directly:
 
@@ -57,7 +57,7 @@ When a production build of the frontend exists under `agentic-workflows-v2/ui/di
 
 This means a single `uvicorn` process can serve both the API and the UI, with no separate web server required.
 
-### REST API Endpoint Reference
+### REST API endpoint reference
 
 All endpoints are prefixed with `/api/`. Authentication is controlled by `AGENTIC_API_KEY` (see [Deployment Guide](deployment-guide.md)).
 
@@ -71,30 +71,42 @@ All endpoints are prefixed with `/api/`. Authentication is controlled by `AGENTI
 | `GET` | `/workflows/{name}/capabilities` | Workflow I/O declarations (input/output schema) |
 | `GET` | `/workflows/{name}/editor` | Full workflow document for the visual editor |
 | `PUT` | `/workflows/{name}` | Save an edited workflow document |
-| `POST` | `/workflows/{name}/validate` | Validate a workflow YAML document |
+| `POST` | `/workflows/validate` | Validate a workflow document |
 | `POST` | `/run` | Execute a workflow asynchronously; returns `run_id` |
 | `GET` | `/runs` | List recent run summaries |
 | `GET` | `/runs/summary` | Aggregate statistics across all runs |
 | `GET` | `/runs/{filename}` | Full result for a specific run (by filename) |
+| `GET` | `/runs/{filename}/evaluation` | In-server evaluation detail for a run |
 | `GET` | `/runs/{run_id}/stream` | SSE stream of events for a completed or in-progress run |
 | `GET` | `/eval/datasets` | List available evaluation datasets |
 | `GET` | `/workflows/{name}/preview-dataset-inputs` | Preview dataset inputs for a workflow |
 
-### WebSocket Protocol
+### WebSocket protocol
 
 `POST /api/run` starts asynchronous execution and returns a `run_id`. The UI connects to `ws://host/ws/execution/{run_id}` to receive step lifecycle events in real-time.
 
-WebSocket message format (JSON):
+Every frame is one event from the Pydantic discriminated union in `agentic_v2/contracts/events.py` — the single source of truth for the wire format (ADR-014). The `type` discriminator takes one of twelve values:
+
+```text
+workflow_start · step_start · step_end · token_delta · step_complete · step_error
+workflow_end · error · evaluation_start · evaluation_complete
+approval_required · approval_decision
+```
+
+All events carry `run_id` and `timestamp`; step-scoped events add `step`, and the step result events (`step_end`, `step_complete`, `step_error`) add `status`, `duration_ms`, and optional `model_used`/`tokens_used`/`tier`/`input`/`output`/`error` fields. Example:
 
 ```json
 {
-  "type": "step_started" | "step_completed" | "step_failed" | "run_completed" | "run_failed",
-  "run_id": "string",
-  "step_name": "string",
-  "timestamp": "ISO-8601",
-  "data": {}
+  "type": "step_end",
+  "run_id": "…",
+  "step": "analyze",
+  "status": "success",
+  "duration_ms": 1234.5,
+  "timestamp": "2026-07-05T12:00:00Z"
 }
 ```
+
+The TypeScript mirror (`ui/src/api/events.generated.ts`) is generated from this contract; the `wire-format-drift` CI job blocks divergence. Client-only transport events (`keepalive`, `connection_established`) are defined by hand in `ui/src/api/types.ts` and are not part of the Python contract.
 
 The `useWorkflowStream` hook in `ui/src/hooks/useWorkflowStream.ts` implements the client-side state machine that maps these events to React state updates.
 
@@ -104,7 +116,7 @@ The `useWorkflowStream` hook in `ui/src/hooks/useWorkflowStream.ts` implements t
 
 `agentic-workflows-v2` imports from `agentic-tools` in three places.
 
-### LLM Client
+### LLM client
 
 **Import location:** `agentic_v2/models/llm.py`
 
@@ -114,22 +126,23 @@ from tools.llm.llm_client import LLMClient as LegacyClient
 
 `LegacyClient` is the alias used inside the runtime for the shared `LLMClient`. The runtime's `ModelRouter` and `SmartRouter` use this as the underlying async completion client. Provider credentials are injected at runtime via the `SecretProvider` abstraction in `models/secrets.py`.
 
-### LangChain Adapter
+### LangGraph model builders
 
 **Import location:** `agentic_v2/langchain/model_builders.py`
 
 ```python
-from tools.llm.langchain_adapter import build_langchain_llm
+from tools.llm.llm_client import LLMClient
 ```
 
-The LangGraph engine requires LangChain-compatible model objects. `tools.llm.langchain_adapter` wraps `LLMClient` in a LangChain `BaseChatModel` interface. This import is guarded by the `[langchain]` optional extra; if LangGraph is not installed, the import is skipped.
+The LangGraph engine's model builders import the shared `LLMClient` lazily (inside `_import_repo_llm_client()`) to back the local ONNX provider path. The import is deferred and error-guarded, so the runtime works without the shared package installed as long as no local ONNX model is requested.
 
-### Benchmarks and Datasets
+### Benchmarks and datasets
 
 **Import location:** `agentic_v2/server/datasets.py`
 
 ```python
-from tools.agents.benchmarks import registry, loader
+from tools.agents.benchmarks.datasets import BENCHMARK_DEFINITIONS
+from tools.agents.benchmarks.loader import load_benchmark
 ```
 
 The server exposes evaluation datasets (listed at `GET /api/eval/datasets`) that are drawn from the shared benchmark definitions in `tools/agents/benchmarks/`. The `dataset_matching.py` module uses heuristics to match a named workflow to the most relevant dataset for automated evaluation.
@@ -140,7 +153,7 @@ The server exposes evaluation datasets (listed at `GET /api/eval/datasets`) that
 
 `agentic-v2-eval` uses lazy imports for all `agentic-tools` dependencies to keep the eval package installable in environments where the full tools package is not present.
 
-### LLM Client (Lazy Import)
+### LLM client (lazy import)
 
 **Import location:** `agentic_v2_eval/adapters/llm_client.py`
 
@@ -152,7 +165,7 @@ def get_llm_client():
 
 The LLM evaluator (`evaluators/llm.py`) calls `get_llm_client()` at evaluation time. If `agentic-tools` is not installed, this raises `ImportError` with a clear message directing the user to install the `[llm]` extra.
 
-### Benchmarks (Lazy Import)
+### Benchmarks (lazy import)
 
 **Import location:** `agentic_v2_eval/datasets.py`
 
@@ -182,28 +195,28 @@ This separation is intentional. It allows the eval framework to be used for offl
                     reports/{run_id}.{json|md|html}
 ```
 
-The `agentic-workflows-v2/server/evaluation.py` and `evaluation_scoring.py` modules implement scoring logic independently from the eval package. This is an in-server scoring capability used when the `POST /api/run` request includes evaluation parameters — it does not depend on `agentic-v2-eval`.
+The runtime's in-server scoring lives in `agentic_v2/server/evaluation.py` (orchestration) and the transport-free `agentic_v2/scoring/` package (`evaluation_scoring.py`, `judge.py`, and friends — extracted per ADR-032). It implements scoring logic independently from the eval package and is used when the `POST /api/run` request includes evaluation parameters — it does not depend on `agentic-v2-eval`.
 
 ---
 
-## Shared Dependencies
+## Shared dependencies
 
 The following dependencies are declared across multiple packages and must remain version-compatible.
 
-| Dependency | Runtime | Eval | Tools |
+| Dependency | Runtime (`agentic-workflows-v2`) | Eval (`agentic-v2-eval`) | Tools (`agentic-tools`, repo-root `pyproject.toml`) |
 |---|---|---|---|
-| `pydantic>=2.0` | Yes | Yes | Yes |
-| `pyyaml>=6.0` | Yes | Yes | (via runtime) |
-| `aiohttp>=3.9` | Yes | No | Yes |
-| `openai>=1.0,<2` | Yes (optional) | No | Yes |
-| `anthropic>=0.40,<1` | Yes (optional) | No | Yes |
-| `numpy>=1.24.0,<3` | No | No | Yes |
+| `pydantic` | `>=2.0,<3` | (via `agentic-tools`) | `>=2.13.4` |
+| `pyyaml` | `>=6.0,<7` | `>=6.0` | `>=6.0.3` |
+| `aiohttp` | `>=3.9,<4` | No | `>=3.14.1` |
+| `openai` | No (only `langchain-openai` via the `[langchain]` extra) | No | `>=2.41.1,<3` |
+| `anthropic` | `>=0.40,<1` (optional `[claude]` extra) | No | `>=0.109.1,<1` |
+| `numpy` | No | No | `>=1.26.4,<3` |
 
 All packages use Pydantic v2 APIs exclusively (`model_dump()`, `model_validate()`, `model_fields`). The legacy Pydantic v1 `.dict()` and `.parse_obj()` methods are not used anywhere.
 
 ---
 
-## End-to-End Data Flow
+## End-to-end data flow
 
 The following describes the complete lifecycle of a workflow execution request, from browser click to evaluated result.
 
@@ -211,6 +224,13 @@ The following describes the complete lifecycle of a workflow execution request, 
 Browser (React UI)
     │
     │  POST /api/run { workflow: "code_review", input: {...}, engine: "native" }
+    ▼
+Sanitization ASGI middleware (server/middleware/ + agentic_v2/middleware/)
+    │     ├── secrets detector
+    │     ├── PII detector
+    │     ├── injection detector
+    │     └── unicode anomaly detector
+    │     (BLOCKED requests are rejected with 400 before any route handler runs)
     ▼
 FastAPI /api/run route (server/routes/workflows.py)
     │
@@ -221,12 +241,6 @@ FastAPI /api/run route (server/routes/workflows.py)
     │  (Browser connects to ws://.../ws/execution/{run_id})
     ▼
 Background Execution (server/execution.py)
-    │
-    ├── Sanitization middleware (middleware/sanitization.py)
-    │     ├── secrets detector
-    │     ├── PII detector
-    │     ├── injection detector
-    │     └── unicode normalizer
     │
     ├── Adapter dispatch (adapters/registry.py)
     │     └── native → engine/executor.py  OR  langchain → langchain/runner.py
@@ -244,8 +258,8 @@ Background Execution (server/execution.py)
     │
     ├── Result serialization → runs/{run_id}.json
     │
-    └── Optional inline scoring (server/evaluation_scoring.py)
-          └── LLM judge (server/judge.py → tools/llm/llm_client.py)
+    └── Optional inline scoring (agentic_v2/scoring/evaluation_scoring.py)
+          └── LLM judge (agentic_v2/scoring/judge.py → tools/llm/llm_client.py)
     │
     ▼
 Browser receives real-time step events via WebSocket
@@ -285,7 +299,7 @@ Sensitive data (prompt text, LLM outputs, tool arguments) is excluded from spans
 
 ---
 
-## Port Allocation
+## Port allocation
 
 | Service | Port | Protocol | Notes |
 |---|---|---|---|

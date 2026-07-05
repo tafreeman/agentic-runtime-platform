@@ -1,50 +1,40 @@
-# Pattern Catalog
+# Pattern catalog
 
-**Mapping agentic AI patterns to their codebase implementations.**
-
-This document is a navigational guide. For each pattern, it identifies the specific files, classes, and line numbers where the pattern is implemented. Use it to locate how a pattern works without reading the full codebase.
-
-**Source:** Originally derived from an internal `ml-ai-patterns-review.md` analysis (since removed from the repo). The patterns themselves are still implemented; the analysis document is no longer the canonical reference.
-**Last updated:** 2026-03-09 (**Note:** content frozen at this date. Epic 1-6 April 2026 changes may have drifted the file/line references below. Trust current code over this doc when mismatched. Some referenced workflow and prompt files have since been removed and are explicitly marked `*(removed)*`.)
+This document maps agentic AI patterns to their implementations in the Agentic Runtime Platform codebase. For each pattern it identifies the specific files, classes, and functions involved, so you can locate how a pattern works without reading the full codebase. Patterns whose implementations have since been removed from the repository are listed separately at the [end](#previously-implemented-removed).
 
 ---
 
-## Table of Contents
+## Table of contents
 
-- [Orchestration Patterns](#orchestration-patterns)
-  - [1. Tool Use](#1-tool-use)
-  - [2. Task Decomposition](#2-task-decomposition)
-  - [3. Capability Matching](#3-capability-matching)
-  - [4. Multi-Agent Coordination](#4-multi-agent-coordination)
-  - [5. Bounded Iteration](#5-bounded-iteration)
-- [Prompting Patterns](#prompting-patterns)
-  - [6. Chain-of-Thought Scaffolding](#6-chain-of-thought-scaffolding)
-  - [7. Tree-of-Thought](#7-tree-of-thought)
-  - [8. ReAct](#8-react)
-  - [9. Chain-of-Verification](#9-chain-of-verification)
-  - [10. Adversarial Review](#10-adversarial-review)
-- [Retrieval Patterns](#retrieval-patterns)
-  - [11. Hybrid Retrieval](#11-hybrid-retrieval)
-  - [12. Conversational Memory](#12-conversational-memory)
-- [Routing Patterns](#routing-patterns)
-  - [13. Circuit Breaker](#13-circuit-breaker)
-- [Evaluation Patterns](#evaluation-patterns)
-  - [14. Confidence Gating](#14-confidence-gating)
-  - [15. Self-Reflection](#15-self-reflection)
-  - [16. Domain-Adaptive Recency](#16-domain-adaptive-recency)
-- [Safety Patterns](#safety-patterns)
-  - [17. Prompt Injection Defense](#17-prompt-injection-defense)
+- [Orchestration patterns](#orchestration-patterns)
+  - [1. Tool use](#1-tool-use)
+  - [2. Task decomposition](#2-task-decomposition)
+  - [3. Capability matching](#3-capability-matching)
+  - [4. Multi-agent coordination](#4-multi-agent-coordination)
+  - [5. Bounded iteration](#5-bounded-iteration)
+- [Prompting patterns](#prompting-patterns)
+  - [6. Chain-of-thought scaffolding](#6-chain-of-thought-scaffolding)
+- [Retrieval patterns](#retrieval-patterns)
+  - [7. Hybrid retrieval](#7-hybrid-retrieval)
+  - [8. Conversational memory](#8-conversational-memory)
+- [Routing patterns](#routing-patterns)
+  - [9. Circuit breaker](#9-circuit-breaker)
+- [Evaluation patterns](#evaluation-patterns)
+  - [10. Self-reflection](#10-self-reflection)
+- [Safety patterns](#safety-patterns)
+  - [11. Prompt injection defense](#11-prompt-injection-defense)
+- [Previously implemented (removed)](#previously-implemented-removed)
 
 ---
 
-## Orchestration Patterns
+## Orchestration patterns
 
-### 1. Tool Use
+### 1. Tool use
 
 **Category:** Orchestration
 **Implementation:** `agentic-workflows-v2/agentic_v2/agents/base.py` -- `BaseAgent._bind_tools()`, `_handle_tool_calls()`, `_get_tool_schemas()`
-**How It Works:** During initialization, `BaseAgent._bind_tools()` (line 660) iterates the global `ToolRegistry` and binds every tool whose tier is at or below the agent's configured `default_tier`. When the LLM response contains `tool_calls`, `_handle_tool_calls()` (line 696) dispatches each call to the matching bound tool, executes it, and injects the result back into conversation memory as a `"tool"` role message so the LLM can incorporate it in the next iteration.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/base.py:660` (`_bind_tools`), `:696` (`_handle_tool_calls`)
+**How It Works:** During initialization, `BaseAgent._bind_tools()` iterates the global `ToolRegistry` and binds every tool whose tier is at or below the agent's configured `default_tier`. When the LLM response contains `tool_calls`, `_handle_tool_calls()` dispatches each call to the matching bound tool, executes it, and injects the result back into conversation memory as a `"tool"` role message so the LLM can incorporate it in the next iteration.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/base.py` (`_bind_tools`, `_handle_tool_calls`)
 **Example:**
 ```python
 # Tier-filtered binding at agent init
@@ -57,12 +47,12 @@ async def _bind_tools(self) -> None:
 
 ---
 
-### 2. Task Decomposition
+### 2. Task decomposition
 
 **Category:** Orchestration
 **Implementation:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py` -- `OrchestratorAgent._parse_output()`, `decompose_task()`
-**How It Works:** The `OrchestratorAgent` sends the task description and a list of registered agents (with their capabilities) to the LLM via a system prompt requesting structured JSON decomposition (line 103). The LLM returns a JSON plan with subtasks, each declaring required `capabilities` and `dependencies`. The orchestrator parses this with `_extract_json()` (delegating to balanced-brace extraction in `json_extraction.py`) and builds `SubTask` objects with dependency edges for downstream scheduling.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py:103` (system prompt), `:275` (`_parse_output`), `:475` (`decompose_task`)
+**How It Works:** The `OrchestratorAgent` sends the task description and a list of registered agents (with their capabilities) to the LLM via a system prompt requesting structured JSON decomposition. The LLM returns a JSON plan with subtasks, each declaring required `capabilities` and `dependencies`. The orchestrator parses this with `_extract_json()` (delegating to balanced-brace extraction in `json_extraction.py`) and builds `SubTask` objects with dependency edges for downstream scheduling.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py` (`decompose_task`, `_parse_output`)
 **Example:**
 ```json
 {
@@ -87,12 +77,12 @@ async def _bind_tools(self) -> None:
 
 ---
 
-### 3. Capability Matching
+### 3. Capability matching
 
 **Category:** Orchestration
 **Implementation:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py` -- `CapabilitySet.score_match()`, `get_agent_capabilities()`
-**How It Works:** Each agent declares capabilities via mixin classes (`CodeGenerationMixin`, `CodeReviewMixin`, etc.) that return a `CapabilitySet`. When the orchestrator needs to assign an agent to a subtask, `score_match()` (line 161) computes a 0.0-1.0 match score by averaging `min(1.0, agent_proficiency / required_proficiency)` across all required capability types. `get_agent_capabilities()` (line 352) walks the agent's MRO to aggregate capabilities from all mixin bases. The orchestrator builds a ranked candidate list sorted by score and stores fallback chains for resilience.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py:161` (`score_match`), `:352` (`get_agent_capabilities`)
+**How It Works:** Each agent declares capabilities via mixin classes (`CodeGenerationMixin`, `CodeReviewMixin`, etc.) that return a `CapabilitySet`. When the orchestrator needs to assign an agent to a subtask, `score_match()` computes a 0.0-1.0 match score by averaging `min(1.0, agent_proficiency / required_proficiency)` across all required capability types. `get_agent_capabilities()` walks the agent's MRO to aggregate capabilities from all mixin bases. The orchestrator builds a ranked candidate list sorted by score and stores fallback chains for resilience.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py` (`score_match`, `get_agent_capabilities`)
 **Example:**
 ```python
 # Scoring: proficiency ratio averaged across requirements
@@ -107,12 +97,12 @@ def score_match(self, required: "CapabilitySet") -> float:
 
 ---
 
-### 4. Multi-Agent Coordination
+### 4. Multi-agent coordination
 
 **Category:** Orchestration
 **Implementation:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py` -- `OrchestratorAgent.execute_as_dag()`, `_execute_plan()`; `agentic-workflows-v2/agentic_v2/engine/dag_executor.py` -- `DAGExecutor.execute()`
-**How It Works:** The orchestrator registers specialized agents, decomposes the task, assigns agents via capability scoring, and then executes the resulting plan. The preferred path is `execute_as_dag()` (line 518) which builds a `DAG` object from subtask dependencies and delegates to the `DAGExecutor`. The DAG executor implements Kahn's algorithm (line 114 of `dag_executor.py`), tracking in-degrees and scheduling steps via `asyncio.wait(FIRST_COMPLETED)` for maximum parallelism. A fallback chain tries alternative agents if the primary assignment fails (line 420 of `orchestrator.py`).
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py:518` (`execute_as_dag`), `:399` (`_execute_plan` with fallback); `agentic-workflows-v2/agentic_v2/engine/dag_executor.py:49` (`DAGExecutor.execute`)
+**How It Works:** The orchestrator registers specialized agents, decomposes the task, assigns agents via capability scoring, and then executes the resulting plan. The preferred path is `execute_as_dag()`, which builds a `DAG` object from subtask dependencies and delegates to the `DAGExecutor`. The DAG executor implements Kahn's algorithm, tracking in-degrees and scheduling steps via `asyncio.wait(FIRST_COMPLETED)` for maximum parallelism. A fallback chain in `_execute_plan()` tries alternative agents if the primary assignment fails.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/orchestrator.py` (`execute_as_dag`, `_execute_plan`); `agentic-workflows-v2/agentic_v2/engine/dag_executor.py` (`DAGExecutor.execute`)
 **Example:**
 ```python
 # DAG executor: Kahn's algorithm with asyncio parallelism
@@ -127,32 +117,33 @@ while len(completed) < len(dag.steps):
 
 ---
 
-### 5. Bounded Iteration
+### 5. Bounded iteration
 
 **Category:** Orchestration
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/loader.py` -- `loop_max` parsing (line 513); `agentic-workflows-v2/agentic_v2/workflows/definitions/tdd_codegen_e2e.yaml` *(removed)* -- `loop_max: 2` (line 500); `agentic-workflows-v2/agentic_v2/workflows/definitions/fullstack_generation_bounded_rereview.yaml` *(removed)* -- conditional `when:` guards
-**How It Works:** Workflow steps can declare a `loop_until` expression and a `loop_max` integer. The workflow loader (line 513) parses `loop_max` (default 3, minimum 1) and attaches it to the `StepDefinition`. At runtime, the step re-executes until the `loop_until` condition is satisfied or `loop_max` iterations are reached, preventing infinite agent loops. The bounded rereview workflow demonstrates a different approach: explicit conditional steps (`when:` guards) that cap review-rework cycles at 2 passes maximum.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/loader.py:513` (loop_max parsing); `agentic-workflows-v2/agentic_v2/workflows/definitions/tdd_codegen_e2e.yaml:500` *(removed)* (loop_max usage)
+**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/loader.py` -- `loop_max` parsing; `agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml` -- `review_rework_loop` step (`loop_until` + `loop_max`)
+**How It Works:** Workflow steps can declare a `loop_until` expression and a `loop_max` integer. The workflow loader parses `loop_max` (default 3, minimum 1) and attaches it to the `StepDefinition`. At runtime, the step re-executes until the `loop_until` condition is satisfied or `loop_max` iterations are reached, preventing infinite agent loops. The shipped `iterative_review` workflow demonstrates this: its `review_rework_loop` step reviews and reworks generated code until the review status is approved or the iteration cap trips, with a post-loop `escalation_notice` step that fires only when the loop never approved.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/loader.py` (`loop_max` parsing); `agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml` (`review_rework_loop`)
 **Example:**
 ```yaml
-# tdd_codegen_e2e.yaml -- bounded QA loop
-- name: qa_rework_loop
+# iterative_review.yaml -- bounded review/rework loop
+- name: review_rework_loop
+  agent: tier3_reviewer
+  depends_on: [implement]
   loop_until: >-
-    ${steps.qa_rework_loop.outputs.review_report.overall_status} in ['APPROVED']
-    and ${steps.qa_rework_loop.outputs.overall_test_status} in ['PASS']
-  loop_max: 2
+    ${steps.review_rework_loop.outputs.review_status} in ['APPROVED', 'APPROVED_WITH_NOTES']
+  loop_max: ${inputs.max_review_rounds}
 ```
 
 ---
 
-## Prompting Patterns
+## Prompting patterns
 
-### 6. Chain-of-Thought Scaffolding
+### 6. Chain-of-thought scaffolding
 
 **Category:** Prompting
-**Implementation:** All 24 persona files in `agentic-workflows-v2/agentic_v2/prompts/*.md` -- `## Reasoning Protocol` sections
-**How It Works:** Every agent persona includes a `## Reasoning Protocol` section with a domain-specific 5-step cognitive workflow that instructs the LLM to reason through the task before generating output. These are not generic "think step-by-step" prompts -- each is tailored to the persona's function. For example, the coder persona uses stack-identification-first reasoning, the debugger uses trace-backward root-cause analysis, the antagonist_implementation uses FMEA failure-mode enumeration, and the task_planner uses WBS decomposition.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/coder.md:15` (Reasoning Protocol); `agentic-workflows-v2/agentic_v2/prompts/reasoner.md:11` *(removed)* (Reasoning Protocol)
+**Implementation:** All 7 persona files in `agentic-workflows-v2/agentic_v2/prompts/*.md` (`architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, `validator`) -- `## Reasoning Protocol` sections
+**How It Works:** Every agent persona includes a `## Reasoning Protocol` section with a domain-specific multi-step cognitive workflow that instructs the LLM to reason through the task before generating output. These are not generic "think step-by-step" prompts -- each is tailored to the persona's function. For example, the coder persona uses stack-identification-first reasoning, while the reviewer, tester, and validator personas each define their own review, test-design, and verification protocols.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/coder.md` (`## Reasoning Protocol` section; the other six personas follow the same convention)
 **Example:**
 ```markdown
 ## Reasoning Protocol  (from coder.md)
@@ -162,111 +153,19 @@ Before generating your response:
 2. Read any existing code, review findings, or rework instructions to understand what must change
 3. Plan the file structure: which files to create vs. modify, and in what dependency order
 4. For each file, determine imports, types, and error handling before writing implementation
-5. Verify all artifacts are complete -- no TODOs, no missing imports, no placeholder logic
+5. Verify all artifacts are complete — no TODOs, no missing imports, no placeholder logic
 ```
 
 ---
 
-### 7. Tree-of-Thought
+## Retrieval patterns
 
-**Category:** Prompting
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml` *(removed)* -- `hypothesis_tree_tot_roundN` steps (lines 138, 237, 336, 436)
-**How It Works:** In each research round, a `hypothesis_tree_tot` step instructs a `tier3_reasoner` agent to build a search plan organized as a tree of hypotheses with disconfirming paths. The agent receives the scoped research goal, prior search plans (from previous rounds), and unresolved questions, then outputs a structured `search_plan` with branching hypotheses. Each hypothesis includes both confirming and disconfirming evidence paths, forcing the LLM to explore multiple reasoning branches rather than committing to the first plausible answer. YAML anchors (`&hypothesis_step`) provide DRY template reuse across all 4 rounds.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml:138` *(removed)* (round 1), `:237` (round 2), `:336` (round 3), `:436` (round 4)
-**Example:**
-```yaml
-- <<: *hypothesis_step
-  name: hypothesis_tree_tot_round1
-  description: Build a Tree-of-Thought search plan with hypotheses and disconfirming paths (round 1)
-  depends_on: [source_policy]
-  inputs:
-    scoped_goal: ${steps.intake_scope.outputs.scoped_goal}
-    source_policy: ${steps.source_policy.outputs.source_policy}
-    objectives: ${steps.intake_scope.outputs.research_objectives}
-  outputs:
-    search_plan: search_plan_round1
-    hypotheses: hypotheses_round1
-    open_questions: open_questions_round1
-```
-
----
-
-### 8. ReAct
-
-**Category:** Prompting
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml` *(removed)* -- `retrieval_react_roundN` steps (lines 151, 251, 351, 451)
-**How It Works:** Each `retrieval_react` step assigns a `tier2_researcher` agent with tool access (`web_search`, `http_get`, `context_store`) to execute a Reason+Act retrieval loop. The agent receives the search plan from the Tree-of-Thought step and iteratively reasons about what evidence to gather next, acts by invoking search tools, observes the results, and decides whether to search further or stop. This implements the classic ReAct (Reason + Act) prompting pattern where the LLM alternates between thinking and tool use within a single step execution.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml:151` *(removed)* (round 1), `:251` (round 2)
-**Example:**
-```yaml
-- <<: *retrieval_step
-  name: retrieval_react_round1
-  description: Run ReAct retrieval loop to gather evidence and source metadata (round 1)
-  depends_on: [hypothesis_tree_tot_round1]
-  tools: [web_search, http_get, context_store]
-  inputs:
-    search_plan: ${steps.hypothesis_tree_tot_round1.outputs.search_plan}
-    source_policy: ${steps.source_policy.outputs.source_policy}
-    recency_window_days: ${inputs.recency_window_days}
-  outputs:
-    sources: sources_round1
-    evidence_bundle: evidence_round1
-```
-
----
-
-### 9. Chain-of-Verification
-
-**Category:** Prompting
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml` *(removed)* -- `cove_verify_roundN` steps (lines 190, 290, 390, 490)
-**How It Works:** After parallel AI and SWE specialist analyses in each round, a `cove_verify` step assigns a `tier3_reviewer` agent (with `web_search`, `http_get`, `context_store` tools) to independently verify claims from both analyses against fresh evidence. The step receives the AI analysis, SWE analysis, and evidence bundle, then cross-checks factual claims, identifies contradictions, produces a verification score, and surfaces unresolved questions that feed into the next round's hypothesis tree. This implements Chain-of-Verification (CoVe) by requiring independent re-verification of LLM-generated claims.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml:190` *(removed)* (round 1), `:290` (round 2)
-**Example:**
-```yaml
-- <<: *cove_verify_step
-  name: cove_verify_round1
-  description: Perform Chain-of-Verification checks against independent evidence (round 1)
-  depends_on: [analyst_ai_round1, analyst_swe_round1]
-  inputs:
-    ai_analysis: ${steps.analyst_ai_round1.outputs.ai_analysis}
-    swe_analysis: ${steps.analyst_swe_round1.outputs.swe_analysis}
-    evidence_bundle: ${steps.retrieval_react_round1.outputs.evidence_bundle}
-  outputs:
-    verified_claims: verified_claims_round1
-    contradictions: contradictions_round1
-    verification_score: verification_score_round1
-    unresolved_questions: unresolved_questions_round1
-```
-
----
-
-### 10. Adversarial Review
-
-**Category:** Prompting
-**Implementation:** `agentic-workflows-v2/agentic_v2/prompts/antagonist_implementation.md` *(removed)* (87 lines); `agentic-workflows-v2/agentic_v2/prompts/antagonist_systemic.md` *(removed)* (115 lines)
-**How It Works:** Two orthogonal antagonist personas attack plans from non-overlapping angles. The **Implementation Failure Analyst** (`antagonist_implementation.md`) applies NASA Standing Review Board / FMEA methodology -- enumerating concrete failure modes, tracing cascade chains, and calculating risk priority (Likelihood x Severity x Detection difficulty). Its boundaries strictly limit it to internal mechanical feasibility. The **Systemic Risk Analyst** (`antagonist_systemic.md`) applies Gary Klein's Pre-Mortem technique -- assuming the project has already failed 12 months from now and working backward to identify fragile assumptions, YAGNI risk, irreversibility, and second-order effects. Its boundaries strictly exclude internal code quality. Together they provide comprehensive adversarial coverage without overlap.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/antagonist_implementation.md:1` *(removed)* (FMEA persona); `agentic-workflows-v2/agentic_v2/prompts/antagonist_systemic.md:1` *(removed)* (Pre-Mortem persona)
-**Example:**
-```markdown
-## Reasoning Protocol  (from antagonist_implementation.md)
-
-1. Read the plan end-to-end and list every explicit dependency, assumption, and time estimate
-2. For each task, ask: "What specific thing could go wrong here?" -- enumerate concrete failure modes
-3. Trace cascade chains: if task X fails, which downstream tasks are blocked or corrupted?
-4. Classify each failure: Fatal, Recoverable, or Cosmetic
-5. Calculate risk priority: Likelihood x Severity x Detection difficulty
-```
-
----
-
-## Retrieval Patterns
-
-### 11. Hybrid Retrieval
+### 7. Hybrid retrieval
 
 **Category:** Retrieval
 **Implementation:** `agentic-workflows-v2/agentic_v2/rag/retrieval.py` -- `BM25Index`, `reciprocal_rank_fusion()`, `HybridRetriever`
-**How It Works:** The `HybridRetriever` (line 227) combines two independent retrieval signals. Dense retrieval embeds the query via `EmbeddingProtocol` and searches a `VectorStoreProtocol` backend using cosine similarity. Keyword retrieval uses a pure-Python `BM25Index` (line 31) implementing Okapi BM25 with k1=1.5 and b=0.75, including proper IDF with Laplace smoothing. Both ranked lists are merged via `reciprocal_rank_fusion()` (line 169), which computes `score = sum(1/(k+rank))` with k=60 (per Cormack et al. 2009) and deduplicates by `chunk_id`. This dual-signal approach improves recall over either method alone.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/rag/retrieval.py:31` (`BM25Index`), `:169` (`reciprocal_rank_fusion`), `:227` (`HybridRetriever`), `:266` (`retrieve` method)
+**How It Works:** The `HybridRetriever` combines two independent retrieval signals. Dense retrieval embeds the query via `EmbeddingProtocol` and searches a `VectorStoreProtocol` backend using cosine similarity. Keyword retrieval uses a pure-Python `BM25Index` implementing Okapi BM25 with k1=1.5 and b=0.75, including proper IDF with Laplace smoothing. Both ranked lists are merged via `reciprocal_rank_fusion()`, which computes `score = sum(1/(k+rank))` with k=60 (per Cormack et al. 2009) and deduplicates by `chunk_id`. This dual-signal approach improves recall over either method alone.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/rag/retrieval.py` (`BM25Index`, `reciprocal_rank_fusion`, `HybridRetriever.retrieve`)
 **Example:**
 ```python
 # HybridRetriever.retrieve() -- dual signal + RRF fusion
@@ -281,12 +180,12 @@ async def retrieve(self, query: str, *, top_k: int = 5) -> list[RetrievalResult]
 
 ---
 
-### 12. Conversational Memory
+### 8. Conversational memory
 
 **Category:** Retrieval
-**Implementation:** `agentic-workflows-v2/agentic_v2/agents/base.py` -- `ConversationMemory` class (line 131)
-**How It Works:** `ConversationMemory` maintains a sliding window of messages (default 50) with a token budget (default 8000 tokens). When the window exceeds either limit, `_summarize_and_trim()` (line 274) compacts older messages into textual summaries, preserving the system prompt and most recent messages. Summaries are prepended to the LLM message list as system context (line 194). The summary budget is itself bounded (`max_summaries=5`, line 263) to prevent unbounded growth. Token counting uses a `len(text) // 4` heuristic with an optional pluggable `token_counter` callable for precise counting.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/base.py:131` (`ConversationMemory`), `:274` (`_summarize_and_trim`), `:189` (`get_messages` with summary injection)
+**Implementation:** `agentic-workflows-v2/agentic_v2/agents/memory.py` -- `ConversationMemory` class
+**How It Works:** `ConversationMemory` maintains a sliding window of messages (default 50) with a token budget (default 8000 tokens). When the window exceeds either limit, `_summarize_and_trim()` compacts older messages into textual summaries, preserving the system prompt and most recent messages. Summaries are prepended to the LLM message list as system context by `get_messages()`. The summary budget is itself bounded (`max_summaries=5`) to prevent unbounded growth. Token counting uses a `len(text) // 4` heuristic with an optional pluggable `token_counter` callable for precise counting.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/memory.py` (`ConversationMemory`, `_summarize_and_trim`, `get_messages`)
 **Example:**
 ```python
 # Automatic summarization when window overflows
@@ -300,14 +199,14 @@ def add(self, role: str, content: str, **kwargs) -> ConversationMessage:
 
 ---
 
-## Routing Patterns
+## Routing patterns
 
-### 13. Circuit Breaker
+### 9. Circuit breaker
 
 **Category:** Routing
 **Implementation:** `agentic-workflows-v2/agentic_v2/models/model_stats.py` -- `ModelStats`, `CircuitState`; `agentic-workflows-v2/agentic_v2/models/smart_router.py` -- `SmartModelRouter`
-**How It Works:** Each model has a per-model `ModelStats` instance with a `CircuitState` FSM: `CLOSED` (normal) -> `OPEN` (after 5 consecutive failures, line 242 of `model_stats.py`) -> `HALF_OPEN` (after recovery timeout, line 291). The `SmartModelRouter` layers production hardening on top: health-weighted selection scoring `success_rate x 0.6 + latency_score x 0.2 + recency_score x 0.2` (line 331 of `smart_router.py`), adaptive cooldowns with `base x 1.5^consecutive_failures` capped at 600s (line 217), per-provider bulkhead semaphores preventing cascade failures (line 119), probe lock serialization for HALF_OPEN recovery (line 132), cross-tier degradation preferring cheaper tiers first (line 236), and rate-limit header parsing (line 182). Latency is measured with `time.monotonic()` to avoid wall-clock jumps.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/models/model_stats.py:19` (`CircuitState`), `:49` (`ModelStats`), `:280` (`check_circuit`); `agentic-workflows-v2/agentic_v2/models/smart_router.py:63` (`SmartModelRouter`), `:528` (`call_with_fallback`)
+**How It Works:** Each model has a per-model `ModelStats` instance with a `CircuitState` FSM: `CLOSED` (normal) -> `OPEN` (after 5 consecutive failures) -> `HALF_OPEN` (after the recovery timeout). The `SmartModelRouter` layers production hardening on top: health-weighted selection scoring `success_rate x 0.6 + latency_score x 0.2 + recency_score x 0.2`, adaptive cooldowns with `base x 1.5^consecutive_failures` capped at 600s, per-provider bulkhead semaphores preventing cascade failures, probe lock serialization for HALF_OPEN recovery, cross-tier degradation preferring cheaper tiers first, and rate-limit header parsing. Latency is measured with `time.monotonic()` to avoid wall-clock jumps.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/models/model_stats.py` (`CircuitState`, `ModelStats`, `check_circuit`); `agentic-workflows-v2/agentic_v2/models/smart_router.py` (`SmartModelRouter`, `call_with_fallback`)
 **Example:**
 ```python
 # Circuit state transition in ModelStats
@@ -321,35 +220,14 @@ def record_failure(self, error_type: str = "unknown") -> None:
 
 ---
 
-## Evaluation Patterns
+## Evaluation patterns
 
-### 14. Confidence Gating
-
-**Category:** Evaluation
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml` *(removed)* -- `coverage_confidence_audit_roundN` steps (lines 207, 307, 407, 507); conditional `when:` expressions on subsequent rounds
-**How It Works:** At the end of each research round, a `coverage_confidence_audit` step computes a multi-dimensional confidence index (CI) from five dimensions: `coverage_score`, `source_quality_score`, `agreement_score`, `verification_score`, and `recency_score`. The step outputs a `gate_passed` boolean indicating whether the CI meets the `min_ci` threshold (default 0.8). Subsequent rounds are gated by `when: not ${steps.coverage_confidence_audit_roundN.outputs.gate_passed}` -- they only execute if the gate has not been passed. This prevents unnecessary computation when confidence is already sufficient and bounds the maximum research depth to 4 rounds.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml:207` *(removed)* (audit round 1), `:240` (gate condition on round 2)
-**Example:**
-```yaml
-# Conditional execution gated on confidence score
-- name: hypothesis_tree_tot_round2
-  depends_on: [coverage_confidence_audit_round1]
-  when: ${inputs.max_rounds} >= 2 and not ${steps.coverage_confidence_audit_round1.outputs.gate_passed}
-
-# Audit step outputs used for gating
-outputs:
-  ci_score: ci_score_round1
-  gate_passed: gate_passed_round1
-```
-
----
-
-### 15. Self-Reflection
+### 10. Self-reflection
 
 **Category:** Evaluation
-**Implementation:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py` -- `SelfReflectionMixin` (line 296); `agentic-workflows-v2/agentic_v2/agents/coder.py` -- `CoderAgent.reflect()` (line 273)
-**How It Works:** `SelfReflectionMixin` declares the `SELF_REFLECTION` capability type and defines an abstract `async reflect(output, criteria)` method. `CoderAgent` (line 50 of `coder.py`) inherits both `CodeGenerationMixin` and `SelfReflectionMixin`, and provides a concrete `reflect()` implementation (line 273) that sends the generated code back to the LLM with a reflection prompt requesting a JSON critique with `needs_revision`, `issues`, and optional `revised_output` fields. The reflection result is parsed via `extract_json()` for structured consumption. This enables the agent to critique its own output before returning it.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py:296` (`SelfReflectionMixin`); `agentic-workflows-v2/agentic_v2/agents/coder.py:50` (class declaration), `:273` (`reflect` implementation)
+**Implementation:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py` -- `SelfReflectionMixin`; `agentic-workflows-v2/agentic_v2/agents/coder.py` -- `CoderAgent.reflect()`
+**How It Works:** `SelfReflectionMixin` declares the `SELF_REFLECTION` capability type and defines an abstract `async reflect(output, criteria)` method. `CoderAgent` inherits both `CodeGenerationMixin` and `SelfReflectionMixin`, and provides a concrete `reflect()` implementation that sends the generated code back to the LLM with a reflection prompt requesting a JSON critique with `needs_revision`, `issues`, and optional `revised_output` fields. The reflection result is parsed via `extract_json()` for structured consumption. This enables the agent to critique its own output before returning it.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/agents/capabilities.py` (`SelfReflectionMixin`); `agentic-workflows-v2/agentic_v2/agents/coder.py` (`CoderAgent.reflect`)
 **Example:**
 ```python
 # CoderAgent.reflect() -- self-critique via LLM
@@ -368,36 +246,14 @@ async def reflect(self, output: str, criteria: str = "correctness") -> dict[str,
 
 ---
 
-### 16. Domain-Adaptive Recency
+## Safety patterns
 
-**Category:** Evaluation
-**Implementation:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml` *(removed)* -- `inputs.domain` (line 72), `inputs.recency_window_days` (line 88), propagation through `retrieval_react` steps
-**How It Works:** The `deep_research` workflow accepts a `domain` input with an enum of research domains (`ai_ml`, `cloud_infrastructure`, `programming_languages`, `academic_research`, `default`, `ai_software`). Each domain maps to a different implicit recency window that determines how old a source can be and still count as "recent." The `recency_window_days` input (default 183 days / ~6 months) can override the domain default. This value propagates to every `retrieval_react` step as an input, and the `coverage_confidence_audit` steps count `recent_source_count` against a `min_recent_sources` threshold. The recency score contributes to the multi-dimensional CI, ensuring fast-moving domains like AI/ML require more recent evidence than stable academic domains.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/workflows/definitions/deep_research.yaml:72` *(removed)* (domain enum), `:88` (recency_window_days), `:161` (recency propagation to retrieval)
-**Example:**
-```yaml
-inputs:
-  domain:
-    type: string
-    description: Research domain for adaptive recency window
-    enum: [ai_ml, cloud_infrastructure, programming_languages, academic_research, default, ai_software]
-    default: default
-  recency_window_days:
-    type: number
-    description: Number of days considered recent (overrides domain-based default when set)
-    default: 183
-```
-
----
-
-## Safety Patterns
-
-### 17. Prompt Injection Defense
+### 11. Prompt injection defense
 
 **Category:** Safety
 **Implementation:** `agentic-workflows-v2/agentic_v2/rag/context_assembly.py` -- `frame_content()`, `TokenBudgetAssembler` with `frame_results=True`
-**How It Works:** Retrieved documents may contain adversarial content designed to hijack LLM behavior (e.g., "Ignore all previous instructions..."). The `frame_content()` function (line 39) wraps each chunk in `<retrieved_context>` / `</retrieved_context>` delimiter tags, signaling to the LLM that the enclosed content is untrusted user-provided data and should not be interpreted as instructions. The `TokenBudgetAssembler` (line 66) applies this framing by default (`frame_results=True`) when assembling retrieval results, and accounts for the framing overhead in its token budget calculation. The system prompt instructs the model to treat content within these tags as data only.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/rag/context_assembly.py:29` (delimiter constants), `:39` (`frame_content`), `:66` (`TokenBudgetAssembler`), `:138` (framing applied during assembly)
+**How It Works:** Retrieved documents may contain adversarial content designed to hijack LLM behavior (e.g., "Ignore all previous instructions..."). The `frame_content()` function wraps each chunk in `<retrieved_context>` / `</retrieved_context>` delimiter tags, signaling to the LLM that the enclosed content is untrusted user-provided data and should not be interpreted as instructions. The `TokenBudgetAssembler` applies this framing by default (`frame_results=True`) when assembling retrieval results, and accounts for the framing overhead in its token budget calculation. The system prompt instructs the model to treat content within these tags as data only.
+**Code Reference:** `agentic-workflows-v2/agentic_v2/rag/context_assembly.py` (`frame_content`, `TokenBudgetAssembler`)
 **Example:**
 ```python
 # Delimiter framing for prompt injection defense
@@ -418,26 +274,33 @@ if self._frame_results:
 
 ---
 
-## Cross-Reference: Pattern to File Index
+## Cross-reference: pattern to file index
 
-| Pattern | Primary File(s) | Key Line(s) |
+| Pattern | Primary file(s) | Key symbols |
 |---------|-----------------|-------------|
-| Tool Use | `agents/base.py` | 660, 696 |
-| Task Decomposition | `agents/orchestrator.py` | 103, 275 |
-| Capability Matching | `agents/capabilities.py` | 161, 352 |
-| Multi-Agent Coordination | `agents/orchestrator.py`, `engine/dag_executor.py` | 518, 399; 49 |
-| Bounded Iteration | `workflows/loader.py`, YAML definitions | 513; yaml:500 |
-| Chain-of-Thought Scaffolding | `prompts/*.md` (all 24) | Reasoning Protocol sections |
-| Tree-of-Thought | `workflows/definitions/deep_research.yaml` *(removed)* | 138, 237, 336, 436 |
-| ReAct | `workflows/definitions/deep_research.yaml` *(removed)* | 151, 251, 351, 451 |
-| Chain-of-Verification | `workflows/definitions/deep_research.yaml` *(removed)* | 190, 290, 390, 490 |
-| Adversarial Review | `prompts/antagonist_implementation.md` *(removed)*, `prompts/antagonist_systemic.md` *(removed)* | full files |
-| Hybrid Retrieval | `rag/retrieval.py` | 31, 169, 227, 266 |
-| Conversational Memory | `agents/base.py` | 131, 274, 189 |
-| Circuit Breaker | `models/model_stats.py`, `models/smart_router.py` | 19, 49, 280; 63, 528 |
-| Confidence Gating | `workflows/definitions/deep_research.yaml` *(removed)* | 207, 240 |
-| Self-Reflection | `agents/capabilities.py`, `agents/coder.py` | 296; 50, 273 |
-| Domain-Adaptive Recency | `workflows/definitions/deep_research.yaml` *(removed)* | 72, 88, 161 |
-| Prompt Injection Defense | `rag/context_assembly.py` | 29, 39, 66, 138 |
+| Tool use | `agents/base.py` | `_bind_tools`, `_handle_tool_calls` |
+| Task decomposition | `agents/orchestrator.py` | `decompose_task`, `_parse_output` |
+| Capability matching | `agents/capabilities.py` | `score_match`, `get_agent_capabilities` |
+| Multi-agent coordination | `agents/orchestrator.py`, `engine/dag_executor.py` | `execute_as_dag`, `_execute_plan`; `DAGExecutor.execute` |
+| Bounded iteration | `workflows/loader.py`, `workflows/definitions/iterative_review.yaml` | `loop_max` parsing; `review_rework_loop` |
+| Chain-of-thought scaffolding | `prompts/*.md` (all 7) | `## Reasoning Protocol` sections |
+| Hybrid retrieval | `rag/retrieval.py` | `BM25Index`, `reciprocal_rank_fusion`, `HybridRetriever` |
+| Conversational memory | `agents/memory.py` | `ConversationMemory`, `_summarize_and_trim` |
+| Circuit breaker | `models/model_stats.py`, `models/smart_router.py` | `CircuitState`, `ModelStats`; `SmartModelRouter`, `call_with_fallback` |
+| Self-reflection | `agents/capabilities.py`, `agents/coder.py` | `SelfReflectionMixin`; `CoderAgent.reflect` |
+| Prompt injection defense | `rag/context_assembly.py` | `frame_content`, `TokenBudgetAssembler` |
 
 All file paths above are relative to `agentic-workflows-v2/agentic_v2/`.
+
+---
+
+## Previously implemented (removed)
+
+The following patterns were implemented by files that have since been removed from the repository — principally the `deep_research.yaml` workflow and the two antagonist persona prompts. They are documented here for historical reference only; there is no current in-repo implementation to cite. Git history contains the removed files if you want to resurrect one.
+
+- **Tree-of-thought** *(removed)* — `deep_research.yaml`'s `hypothesis_tree_tot_roundN` steps had a `tier3_reasoner` agent build a search plan as a tree of hypotheses with confirming and disconfirming evidence paths, forcing exploration of multiple reasoning branches per round.
+- **ReAct** *(removed)* — `deep_research.yaml`'s `retrieval_react_roundN` steps ran a Reason+Act loop: a `tier2_researcher` agent alternated between reasoning about what evidence to gather and invoking `web_search` / `http_get` / `context_store` tools.
+- **Chain-of-verification** *(removed)* — `deep_research.yaml`'s `cove_verify_roundN` steps had a `tier3_reviewer` agent independently re-verify claims from the parallel analyst steps against fresh evidence, producing a verification score and unresolved questions for the next round.
+- **Adversarial review** *(removed)* — two orthogonal antagonist personas (`antagonist_implementation.md`, FMEA-style failure-mode enumeration; `antagonist_systemic.md`, pre-mortem systemic risk analysis) attacked plans from non-overlapping angles.
+- **Confidence gating** *(removed)* — `deep_research.yaml`'s `coverage_confidence_audit_roundN` steps computed a multi-dimensional confidence index and emitted a `gate_passed` boolean; later rounds ran only `when:` the gate had not yet passed. The shipped `iterative_review` and `consensus_review` workflows use related (but simpler) status- and agreement-based gates.
+- **Domain-adaptive recency** *(removed)* — `deep_research.yaml` accepted a `domain` enum and a `recency_window_days` input that propagated to every retrieval step, so fast-moving domains required more recent sources than stable ones.

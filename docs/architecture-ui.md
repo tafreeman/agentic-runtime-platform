@@ -1,33 +1,32 @@
-# UI Architecture — Agentic Workflows Dashboard
+# UI architecture — Agentic Runtime Platform dashboard
 
 > **Scope:** `agentic-workflows-v2/ui/`
-> **Stack:** React 19 · Vite 6 · TanStack Query 5 · @xyflow/react 12 · react-router-dom 7 · Tailwind CSS 3 · TypeScript 6
+> **Stack:** React 19 · Vite 8 · TanStack Query 5 · @xyflow/react 12 · react-router-dom 7 · Tailwind CSS 3 · TypeScript 6
 > **Themes:** dark (default) · paper (warm cream) · bolt (cobalt blue)
 
 ---
 
-## Table of Contents
+## Table of contents
 
-1. [Executive Summary](#executive-summary)
-2. [Technology Stack](#technology-stack)
-3. [Application Bootstrap](#application-bootstrap)
-4. [Routing Architecture](#routing-architecture)
-5. [Layout System](#layout-system)
-6. [Design System](#design-system)
-7. [Theme System](#theme-system)
-8. [DAG Rendering Engine](#dag-rendering-engine)
-9. [Real-time Architecture — WebSocket](#real-time-architecture)
-10. [Data Layer — TanStack Query](#data-layer)
-11. [Keyboard Shortcuts](#keyboard-shortcuts)
+1. [Executive summary](#executive-summary)
+2. [Technology stack](#technology-stack)
+3. [Application bootstrap](#application-bootstrap)
+4. [Routing architecture](#routing-architecture)
+5. [Layout system](#layout-system)
+6. [Design system](#design-system)
+7. [Theme system](#theme-system)
+8. [DAG rendering engine](#dag-rendering-engine)
+9. [Real-time architecture — WebSocket](#real-time-architecture)
+10. [Data layer — TanStack Query](#data-layer)
+11. [Keyboard shortcuts](#keyboard-shortcuts)
 12. [Accessibility](#accessibility)
-13. [Feature Flags](#feature-flags)
-14. [Error Handling](#error-handling)
-15. [Build and Development](#build-and-development)
-16. [Screenshots Reference](#screenshots-reference)
+13. [Feature flags](#feature-flags)
+14. [Error handling](#error-handling)
+15. [Build and development](#build-and-development)
 
 ---
 
-## Executive Summary
+## Executive summary
 
 The dashboard is a single-page application that serves as the observability and control plane for the multi-agent workflow runtime. It covers six top-level domains:
 
@@ -46,7 +45,7 @@ All data fetching goes through **TanStack Query** backed by a thin REST API clie
 
 ---
 
-## Technology Stack
+## Technology stack
 
 ```
 agentic-workflows-v2/ui/
@@ -54,15 +53,15 @@ agentic-workflows-v2/ui/
 ├── react-router-dom 7 — SPA routing (BrowserRouter, declarative routes)
 ├── TanStack Query 5   — server state, caching, polling
 ├── @xyflow/react 12   — interactive DAG canvas (ReactFlow provider pattern)
-├── Vite 6             — dev server (HMR), production build (Rollup)
+├── Vite 8             — dev server (HMR), production build (Rollup)
 ├── Tailwind CSS 3     — utility-first styling, CSS variable token bridge
 ├── TypeScript 6       — strict mode, all function signatures typed
-├── Vitest 2           — unit and component tests
+├── Vitest 4           — unit and component tests
 ├── Playwright         — E2E tests
-└── lucide-react 1.8   — icon library (SVG, tree-shakeable)
+└── lucide-react ^1.22 — icon library (SVG, tree-shakeable)
 ```
 
-### Notable Version Choices
+### Notable version choices
 
 **React 19** — Hooks-first throughout; no class components except `AppErrorBoundary` (required by React's error boundary API).
 
@@ -74,7 +73,7 @@ agentic-workflows-v2/ui/
 
 ---
 
-## Application Bootstrap
+## Application bootstrap
 
 **File:** `agentic-workflows-v2/ui/src/main.tsx`
 
@@ -100,7 +99,7 @@ The `AppErrorBoundary` wraps the entire tree so any unhandled render-time except
 
 ---
 
-## Routing Architecture
+## Routing architecture
 
 **File:** `agentic-workflows-v2/ui/src/App.tsx`
 
@@ -126,7 +125,7 @@ The `<main>` element carries `id="main-content"` and `tabIndex={-1}`. The skip-l
 
 ---
 
-## Layout System
+## Layout system
 
 ### Sidebar (`components/layout/Sidebar.tsx`)
 
@@ -149,7 +148,7 @@ Active links receive `border-l-2 border-b-clay bg-b-clay-soft text-b-clay`. All 
 
 A 36 px breadcrumb bar rendered at the top of each page. Displays `PROMPTS : ~/<path>` in monospace with a blinking cursor (`animate-b-blink`). A right-slot `children` prop receives action buttons.
 
-### Page Layout Contract
+### Page layout contract
 
 Every page follows a consistent three-zone structure:
 
@@ -167,7 +166,7 @@ Two-panel pages (WorkflowDetail, RunDetail, LivePage, WorkflowEditor) split the 
 
 ---
 
-## Design System
+## Design system
 
 The UI implements a custom ASCII-influenced design language called **Direction B**. It lives entirely in CSS custom properties defined in `src/styles/tokens.css` and is wired into Tailwind through semantic class names prefixed with `b-`.
 
@@ -237,7 +236,7 @@ A collapsible tree viewer for arbitrary JSON. Features:
 
 ---
 
-## Theme System
+## Theme system
 
 **Files:** `src/hooks/useTheme.ts`, `src/styles/tokens.css`
 
@@ -272,9 +271,9 @@ The `useTheme()` hook returns `[theme, setTheme]`. `applyTheme(theme)` is export
 
 ---
 
-## DAG Rendering Engine
+## DAG rendering engine
 
-### Component Hierarchy
+### Component hierarchy
 
 The DAG canvas appears on four pages: WorkflowDetailPage, WorkflowEditorPage, RunDetailPage, and LivePage.
 
@@ -290,7 +289,7 @@ WorkflowDAG (ReactFlowProvider wrapper)
 BDagMini (static SVG thumbnail — no xyflow dependency)
 ```
 
-### Layout Algorithm (`components/dag/dagLayout.ts`)
+### Layout algorithm (`components/dag/dagLayout.ts`)
 
 `layoutDAG(nodes, edges)` computes positions using **Kahn's topological sort**:
 
@@ -303,7 +302,7 @@ Constants: `NODE_WIDTH = 240`, `NODE_HEIGHT = 120`, `H_GAP = 60`, `V_GAP = 80`.
 
 These constants are duplicated in `BDagMini` (`NODE_W = 240`, `NODE_H = 120`) to keep thumbnail geometry consistent with the full canvas.
 
-### WorkflowDAG Component (`components/dag/WorkflowDAG.tsx`)
+### WorkflowDAG component (`components/dag/WorkflowDAG.tsx`)
 
 Props:
 
@@ -348,9 +347,9 @@ A static SVG thumbnail. Shares `layoutDAG` for positions but renders plain `<rec
 
 ---
 
-## Real-time Architecture
+## Real-time architecture
 
-### WebSocket Connection (`api/websocket.ts`)
+### WebSocket connection (`api/websocket.ts`)
 
 `connectExecutionStream(runId, onEvent, options)` opens a WebSocket to `ws[s]://<host>/ws/execution/<runId>`.
 
@@ -358,7 +357,7 @@ A static SVG thumbnail. Shares `layoutDAG` for positions but renders plain `<rec
 
 **Reconnection:** Exponential backoff with configurable parameters (defaults: `maxRetries = 5`, `retryDelayMs = 1000`). Retry sequence: 1 s, 2 s, 4 s, 8 s, 16 s (31 s total). Malformed JSON frames are logged (first 200 chars) and dropped; the stream continues.
 
-### useWorkflowStream Hook (`hooks/useWorkflowStream.ts`)
+### useWorkflowStream hook (`hooks/useWorkflowStream.ts`)
 
 The primary consumer of the WebSocket stream for live execution. Returns `WorkflowStreamState`:
 
@@ -390,11 +389,11 @@ Terminal status normalisation: `"success"` / `"completed"` / `"ok"` → `"comple
 
 The hook resets all state (new `Map()`, empty events array, null evaluation) each time `runId` changes.
 
-### useNodeConfigUpdate Hook (`hooks/useNodeConfigUpdate.ts`)
+### useNodeConfigUpdate hook (`hooks/useNodeConfigUpdate.ts`)
 
 A secondary WebSocket hook used by `NodeConfigOverlay`. Connects to the same execution endpoint and sends `{type: "node_config_update", step_name, config}` messages to override LLM parameters for a running step. Parameters supported: `model`, `system_prompt`, `temperature`, `max_tokens`, `top_p`, `tool_names`. Reconnects with a 3 s fixed delay on close.
 
-### Event Type Contract
+### Event type contract
 
 WebSocket event types are **auto-generated** from the Python Pydantic contract:
 
@@ -407,9 +406,9 @@ A CI job (`wire-format-drift`) blocks any PR that modifies the Python contract w
 
 ---
 
-## Data Layer
+## Data layer
 
-### REST API Client (`api/client.ts`)
+### REST API client (`api/client.ts`)
 
 A minimal typed wrapper around `fetch`. Base URL is `/api`; the Vite dev proxy forwards to port 8010.
 
@@ -417,7 +416,7 @@ Non-2xx responses throw `Error("API {status}: {text}")` which TanStack Query sur
 
 Full endpoint table — see [API Integration doc](./ui/api-integration.md).
 
-### TanStack Query Hooks
+### TanStack Query hooks
 
 | Hook | File | Poll? | Notes |
 |------|------|-------|-------|
@@ -436,7 +435,7 @@ Full endpoint table — see [API Integration doc](./ui/api-integration.md).
 
 ---
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 **File:** `src/hooks/useHotkeys.ts`
 
@@ -476,7 +475,7 @@ Page-level hotkey bindings:
 
 ---
 
-## Feature Flags
+## Feature flags
 
 **File:** `src/config/featureFlags.ts`
 
@@ -496,7 +495,7 @@ export function isWorkflowBuilderEnabled(): boolean {
 
 ---
 
-## Error Handling
+## Error handling
 
 ### AppErrorBoundary (`components/states/AppErrorBoundary.tsx`)
 
@@ -517,9 +516,9 @@ Terminal-style empty state with Unicode box-drawing art and `$ no <entity> yet`.
 
 ---
 
-## Build and Development
+## Build and development
 
-### Dev Server
+### Dev server
 
 ```bash
 # Backend (from agentic-workflows-v2/)
@@ -531,7 +530,7 @@ npm run dev   # Vite dev server on :5173
 
 Vite proxies `/api` → `http://localhost:8010/api`. WebSocket connections bypass the proxy by using `VITE_API_PROXY_TARGET` directly.
 
-### Production Build
+### Production build
 
 ```bash
 npm run build   # TypeScript typecheck + Vite/Rollup bundle
@@ -539,7 +538,7 @@ npm run build   # TypeScript typecheck + Vite/Rollup bundle
 
 > **Rollup `.ts` resolution caveat:** Vite dev auto-resolves `.js` imports to `.ts` files. Rollup (production) does not. Any file renamed `.js` → `.ts` requires all import paths to be updated.
 
-### Type Generation
+### Type generation
 
 ```bash
 npm run generate:types   # Regenerate events.generated.ts from JSON Schema
@@ -552,25 +551,3 @@ npm run test         # Vitest unit + component tests
 npm run test:e2e     # Playwright E2E
 ```
 
----
-
-## Screenshots Reference
-
-Screenshots are in `docs/screenshots/b-redesign/`:
-
-| File | Description |
-|------|-------------|
-| `01-dashboard-dark.png` | Dashboard, dark theme, empty state |
-| `02-dashboard-paper.png` | Dashboard, paper theme |
-| `03-dashboard-bolt.png` | Dashboard, bolt theme |
-| `04-workflows-dark.png` | Workflows list |
-| `05-datasets-dark.png` | Datasets page |
-| `06-evaluations-dark.png` | Evaluations page, empty |
-| `07-live-dark.png` | Live execution page |
-| `11-dashboard-dark-populated.png` | Dashboard with run data |
-| `12-workflows-dark-populated.png` | Workflows with run status badges |
-| `13-datasets-dark-populated.png` | Dataset browser with sample selected |
-| `14-run-detail-dark-populated.png` | Run detail with evaluation score |
-| `15-dashboard-paper-populated.png` | Dashboard, paper theme, populated |
-| `16-evaluations-dark-populated.png` | Evaluations histogram |
-| `17-dashboard-bolt-populated.png` | Dashboard, bolt theme, populated |

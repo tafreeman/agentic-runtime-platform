@@ -2,7 +2,7 @@
 
 > **Audience:** Engineers orienting to the monorepo for design or review work.
 > **Outcome:** After reading, you know which package owns which concern, how they communicate, and where to dive deeper.
-> **Last verified:** 2026-05-15
+> **Last verified:** 2026-07-05
 
 This document is the umbrella. It does not re-derive system internals — it points at the existing per-package architecture docs and the ADRs that ratify each decision. If you are new to the repo, read this in full first; if you are in a specific area, jump to the per-package link.
 
@@ -14,7 +14,7 @@ This document is the umbrella. It does not re-derive system internals — it poi
 graph TB
     subgraph Clients["Clients"]
         CLI["agentic CLI<br/><i>Typer</i>"]
-        UI["React 19 Dashboard<br/><i>Vite 6 · @xyflow/react</i>"]
+        UI["React 19 Dashboard<br/><i>Vite 8 · @xyflow/react</i>"]
         EXT["External callers<br/><i>REST · WS · SSE</i>"]
     end
 
@@ -29,13 +29,13 @@ graph TB
     end
 
     subgraph Eval["agentic-v2-eval/"]
-        SCORER["Scorer<br/><i>rubric-based</i>"]
         RUNNERS["Batch · Streaming · AsyncStreaming Runners"]
+        SCORER["Scorer<br/><i>rubric-based</i>"]
         REPORTER["Reporters<br/><i>json · markdown · html</i>"]
     end
 
     subgraph Shared["tools/ (agentic-tools)"]
-        LLM["LLMClient<br/><i>10 providers</i>"]
+        LLM["LLMClient<br/><i>eight providers · nine routing backends</i>"]
         BENCH["Benchmarks"]
         CACHE["Response cache"]
     end
@@ -51,9 +51,9 @@ graph TB
     AGENTS --> ROUTER
     AGENTS --> RAG
     ROUTER -->|provider calls| LLM
-    API -->|scores| SCORER
-    SCORER --> RUNNERS
-    RUNNERS --> REPORTER
+    API -.->|run JSON artifacts| RUNNERS
+    RUNNERS --> SCORER
+    SCORER --> REPORTER
 
     classDef rt fill:#4a90d9,stroke:#2c5f8a,color:#fff
     classDef ev fill:#00b894,stroke:#008060,color:#fff
@@ -63,10 +63,10 @@ graph TB
     class LLM,BENCH,CACHE sh
 ```
 
-The three Python packages have **zero cross-package imports**. They communicate via:
+The three Python packages have **no source-tree imports between them** — `tools/` is consumed as an installed workspace package (`agentic-tools`), like any other library, by both the runtime and the eval package. Beyond that:
 
-- `tools/` is published as a wheel (`agentic-tools`) — the runtime and eval packages consume it like any other library.
-- The runtime exposes `agentic-v2-eval` through its REST API (`POST /runs/:id/evaluation`, `GET /runs/:id/evaluation`) — the eval framework does not import runtime internals.
+- The runtime and the offline eval harness integrate at the **data level**: the runtime persists run results as JSON artifacts, and `agentic-v2-eval` reads those files as input. Neither package imports the other.
+- The runtime's own in-server scoring (`agentic_v2/scoring/`, exposed via `GET /api/runs/{filename}/evaluation`) is independent of `agentic-v2-eval` — see [`integration-architecture.md`](integration-architecture.md).
 
 ---
 
@@ -82,9 +82,9 @@ The three Python packages have **zero cross-package imports**. They communicate 
 
 Additional supporting documents:
 
-- [`api-contracts-runtime.md`](api-contracts-runtime.md) — 16 REST endpoints + WebSocket + SSE schemas.
-- [`data-models-runtime.md`](data-models-runtime.md) — 38+ Pydantic v2 models across server, contracts, core.
-- [`component-inventory-ui.md`](component-inventory-ui.md) — 17 UI components across 6 categories.
+- [`api-contracts-runtime.md`](api-contracts-runtime.md) — REST endpoint, WebSocket, and SSE schemas.
+- [`data-models-runtime.md`](data-models-runtime.md) — Pydantic v2 models across server, contracts, core.
+- [`component-inventory-ui.md`](component-inventory-ui.md) — UI component inventory.
 - [`development-guide.md`](development-guide.md) — dev environments, CLI, tests.
 - [`deployment-guide.md`](deployment-guide.md) — CI/CD, environment variables, production checklist.
 
@@ -103,9 +103,9 @@ These are the places where a change ripples across the system. Understand these 
 
 ### 3.2 Typed execution-event wire format
 
-`contracts/events.py` defines a Pydantic discriminated union covering `workflow_start`, `step_start`, `step_end`, `step_complete`, `step_error`, `workflow_end`, `evaluation_start`, `evaluation_complete`. WebSocket and SSE broadcasts validate before emit. TypeScript interfaces in `ui/src/api/types.ts` mirror this union by hand — drift is detected by convention, not yet by automation.
+`contracts/events.py` defines a Pydantic discriminated union covering `workflow_start`, `step_start`, `step_end`, `token_delta`, `step_complete`, `step_error`, `workflow_end`, `error`, `evaluation_start`, `evaluation_complete`, `approval_required`, and `approval_decision`. WebSocket and SSE broadcasts validate before emit. The TypeScript union in `ui/src/api/events.generated.ts` is generated from this contract, and the `wire-format-drift` CI job fails any PR where the committed schemas or generated types diverge from the Python source of truth.
 
-Sprint 1 (S1-1) extended the schema-drift CI gate to also cover four HTTP response shapes: `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, and `RunsSummaryResponse`. Their JSON schemas are committed under `tests/schemas/` and regenerated via `scripts/generate_schemas.py`. The `DAGNodeModel.depends_on` and `WorkflowEditorStep.depends_on` fields are now required (no default `[]`) in the wire schema.
+The same drift gate also covers four HTTP response shapes: `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, and `RunsSummaryResponse`. Their JSON schemas are committed under `tests/schemas/` and regenerated via `scripts/generate_schemas.py`.
 
 - **Ratifies:** [ADR-014](adr/ADR-014-pydantic-wire-format.md).
 - **Related:** the 500-event replay buffer in `server/websocket.py` — clients reconnecting mid-run receive missed events.
@@ -119,251 +119,43 @@ Time-to-first-span p95 and nightly flake rate are stored as rolling windows in g
 
 ### 3.4 SmartModelRouter
 
-Maps tier (`tier3_analyst`) → capability → best available model at runtime. Health-weighted selection, exponential cooldowns, circuit breakers, persisted stats across restarts, `Retry-After` header awareness.
+Maps a numeric capability tier (`ModelTier.TIER_0` through `TIER_5` in `models/router.py`) → best available model at runtime. Health-weighted selection, exponential cooldowns, circuit breakers, persisted stats across restarts, `Retry-After` header awareness. Circuit-breaker state can be shared across workers via Redis (`agentic_v2/models/redis_state.py`) with an in-process fallback.
 
 - **Ratifies:** [ADR-002](adr/ADR-001-002-003-architecture-decisions.md).
 - **Provider default for CI:** GitHub Models via `GITHUB_TOKEN` — see [ADR-016](adr/ADR-016-github-token-as-default-e2e-llm.md).
 
 ### 3.5 RAG pipeline
 
-Thirteen modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/rag/): loader → recursive chunker → embedder (content-hash dedup) → cosine vectorstore + BM25 keyword index → RRF hybrid retriever → token-budget assembler. Full OTEL tracing. Memory backed by `MemoryStoreProtocol` (`InMemoryStore` or `RAGMemoryStore`).
+Fifteen modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/rag/): loader → recursive chunker → embedder (content-hash dedup) → cosine vectorstore + BM25 keyword index → RRF hybrid retriever → token-budget assembler. Full OTEL tracing. Memory backed by `MemoryStoreProtocol` (`InMemoryStore` or `RAGMemoryStore`).
 
 - **Blueprint:** [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md).
 
----
+### 3.6 Core protocols
 
-## 6. Core protocols (`core/protocols.py`)
+The seams above are held together by a small set of `typing.Protocol` contracts in [`agentic_v2/core/protocols.py`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/core/protocols.py). Implementations are structurally typed against these, so an engine, tool, or middleware can be swapped without touching call sites:
 
-All protocols use PEP 544 structural subtyping — conformance is checked by shape, not inheritance. Every protocol listed below is `@runtime_checkable`, meaning `isinstance()` checks work at test time.
+| Protocol | Contract |
+|----------|----------|
+| `ExecutionEngine` | Runs a compiled workflow graph; the seam the adapter registry resolves (`native`, `langchain`). |
+| `SupportsStreaming` | Optional capability — an engine that emits incremental execution events. |
+| `SupportsCheckpointing` | Optional capability — an engine that persists and resumes run state. |
+| `AgentProtocol` | A single agent step: takes context, returns a typed result. |
+| `ToolProtocol` | An invocable tool exposed to agents through the MCP client stack. |
+| `DetectorProtocol` | A sanitization/threat detector applied to inbound content. |
+| `MiddlewareProtocol` | An ASGI-layer request/response interceptor (auth, rate limit, sanitization). |
+| `VerifierProtocol` | A post-step check that gates whether a result is accepted. |
 
-| Protocol | Purpose |
-|----------|---------|
-| `ExecutionEngine` | Common interface for workflow execution engines. Any class exposing `execute(workflow, ctx, on_update, **kwargs) -> WorkflowResult` satisfies this protocol. Implementations: `DAGExecutor`, `PipelineExecutor`, `WorkflowExecutor`, `LangChainEngine`. |
-| `AgentProtocol` | Common interface for workflow agents. Requires a `name` property and `run(input_data, ctx) -> object`. Concrete agents use bounded `TypeVar`s (`TInput`/`TOutput`) from `agents.base`. |
-| `ToolProtocol` | Common interface for tools available to agents. Requires `name`, `description` properties and `execute(**kwargs) -> object`. |
-| `MemoryStore` / `MemoryStoreProtocol` | Async key-value store with search capability used by agents and the RAG pipeline. `MemoryStore` in `protocols.py` is a backward-compatible alias for `MemoryStoreProtocol` from `core.memory`. Implementations: `InMemoryStore`, `RAGMemoryStore`. |
-| `SupportsStreaming` | Optional engine capability — exposes `stream(workflow, ctx, **kwargs) -> AsyncIterator[dict]` for event-by-event execution streaming. |
-| `SupportsCheckpointing` | Optional engine capability — exposes `get_checkpoint_state()` and `resume()` so long-running workflows can be interrupted and continued from the last saved state. |
-| `DetectorProtocol` | A pluggable threat-scanner that inspects text for a specific category (secrets, prompt injection, PII, etc.). Requires `name`, `version` properties and `scan(text) -> Sequence[Finding]`. Used by the sanitization middleware pipeline (ADR-002). |
-| `MiddlewareProtocol` | A pipeline middleware that transforms or gates content. Requires `process(content, context) -> SanitizationResult`. Multiple middlewares are chained for layered defense. |
-| `VerifierProtocol` | A post-step quality gate. Requires `verify(step_output, policy) -> VerificationStatus`. Plugged into the execution engine to enforce output quality policies before the next step runs. |
-
----
-
-## 7. Sprint 2 — Operability at Scale
-
-Sprint 2 added production-hardening infrastructure across four areas.
-
-### 7.1 Redis integration (optional)
-
-Two modules use Redis when available, each with graceful fallback:
-
-- **`server/redis_state.py`** — Shared circuit-breaker state for the `SmartModelRouter`. When multiple workers are running, they share per-provider health scores via Redis so one worker's detected failure is immediately visible to all others. Falls back to in-process state when `REDIS_URL` is not set.
-- **`server/replay_store.py`** — Durable WebSocket event history (see §7.3). Falls back to SQLite or in-memory.
-
-Redis is an optional dependency. Install with `pip install -e ".[redis]"`. The server starts without Redis and emits a `logger.info` noting which backend was selected.
-
-### 7.2 Observability stack
-
-- **`integrations/metrics.py`** — OTEL Metrics SDK with a Prometheus-compatible `/metrics` scrape endpoint. All imports are guarded so the module degrades to a no-op when `opentelemetry-exporter-prometheus` is not installed. Enable with `AGENTIC_METRICS=1`. The endpoint is mounted in `create_app()` using `get_metrics_app()`.
-- **`server/middleware/metrics.py` (`MetricsMiddleware`)** — ASGI middleware that records HTTP request duration histograms and request-count counters per route, method, and status code. Added as the innermost metric layer in `create_app()`.
-- **`server/middleware/tracing.py` (`TraceparentMiddleware`)** — Injects W3C `traceparent` / `tracestate` response headers so the browser can correlate frontend and backend OTEL spans. Also injects `Server-Timing` for DevTools visibility.
-- **`integrations/otel.py`** — existing OTEL tracing module; `CORS` headers now expose `traceparent` and `tracestate` so cross-origin frontends can read them.
-
-### 7.3 Replay store
-
-`server/replay_store.py` implements the `ReplayStore` protocol with three backends, auto-selected at startup:
-
-| Backend | Class | Selected when |
-|---------|-------|---------------|
-| Redis | `RedisReplayStore` | `REDIS_URL` set and `redis` package installed |
-| SQLite | `SqliteReplayStore` | `aiosqlite` installed (no Redis) |
-| In-memory | `InMemoryReplayStore` | Fallback — zero dependencies |
-
-`ConnectionManager.initialize_store()` (called in `app.py` lifespan) selects and connects the appropriate backend. The in-process `event_buffers` deque acts as a hot cache; the store is authoritative for replay after restarts or across workers.
-
-### 7.4 Structured logging
-
-`logging_config.py` provides `configure_logging()`, called once at module import in `app.py`. When `LOG_FORMAT=json` the root logger emits newline-delimited JSON (compatible with CloudWatch Logs Insights and Datadog). The default (`LOG_FORMAT=text`) uses the existing human-readable format.
+A CI drift check (`scripts/check-doc-drift.py`) fails any PR where a protocol defined in source is missing from this section.
 
 ---
 
 ## 4. The decision record
 
-| ADR | Domain | Status |
-|-----|--------|--------|
-| [001](adr/ADR-001-002-003-architecture-decisions.md) | Dual execution engine | Accepted |
-| [002](adr/ADR-001-002-003-architecture-decisions.md) | SmartModelRouter circuit breakers | Accepted |
-| [003](adr/ADR-001-002-003-architecture-decisions.md) | Deep research supervisor | Superseded → 007 |
-| [007](adr/ADR-007-classification-matrix-stop-policy.md) | Multidimensional classification + stop policy | Proposed |
-| [008](adr/ADR-008-testing-approach-overhaul.md) | Test value taxonomy | Accepted |
-| [009](adr/ADR-009-scoring-enhancements.md) | Scoring enhancements | Accepted |
-| [010](adr/ADR-010-eval-harness-methodology.md) | Commit-driven A/B eval harness | Proposed |
-| [011](adr/ADR-011-eval-harness-api-interface.md) | Eval harness API design | Proposed |
-| [012](adr/ADR-012-ui-evaluation-hub.md) | UI evaluation hub | Proposed |
-| [014](adr/ADR-014-pydantic-wire-format.md) | Pydantic wire format for execution events | Accepted |
-| [015](adr/ADR-015-slo-in-git-rolling-window.md) | SLO rolling window in git | Accepted |
-| [016](adr/ADR-016-github-token-as-default-e2e-llm.md) | GitHub Models as default E2E provider | Accepted |
-| [018](adr/ADR-018-api-rate-limiting-and-auth-throttle.md) | API rate limiting + per-IP auth throttle | Accepted |
-| [019](adr/ADR-019-dag-executor-top-level-timeout.md) | DAG executor top-level timeout watchdog | Accepted |
-| [020](adr/ADR-020-langchain-adapter-eager-validation.md) | LangChain adapter eager validation at startup | Accepted |
-| [023](adr/ADR-023-executionkit-runtime-contract-relationship.md) | ExecutionKit ↔ runtime contract unification (Option A′: single `executionkit` package) | Accepted |
+Every architecturally significant decision is captured as an ADR. The record currently spans **38 decisions across 36 files** — from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
 
-ADRs 004–006 and 013 are **intentionally unused** — the gap is documented in [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md) and should not be reclaimed.
+The full, maintained index — with status, one-line summaries, and a suggested reading order — is [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md). This page deliberately does not duplicate that table.
 
----
-
-## 8. ADR-023 — ExecutionKit ↔ runtime LLM seam (end state)
-
-The Option A′ migration (ADR-023, F0–F5 landed 2026-06-01) unified the runtime
-and ExecutionKit (EK) LLM contracts onto a single seam using the **single
-`executionkit` package** — the intermediate `executionkit-contracts` package
-was retired (see ADR-023 Amendment). The end state:
-
-- **One runtime backend interface** — the `LLMBackend` ABC in
-  `models/backends_base.py` (re-exported from `models/client.py`). The prior
-  divergent `Protocol` definition was deleted (P2). All concrete backends
-  (OpenAI, Anthropic, Gemini, Ollama, …) implement this one ABC.
-- **One EK provider protocol** — the EK `LLMProvider` protocol. The runtime
-  bridges to it via `SmartRouterProvider` (`models/ek_provider.py`), which
-  wraps the router + backend so the EK kernel sees a uniform
-  `complete(messages) -> LLMResponse`.
-- **`ek_adapters.py` is the sole bridge** — `dict_to_llm_response`,
-  `llm_response_to_dict`, and `map_http_error` (`models/ek_adapters.py`,
-  backed by the `executionkit` package directly) are the only sanctioned
-  translation between OpenAI-shaped backend dicts and the frozen EK value
-  types (`LLMResponse`, `ToolCall`, `TokenUsage`, `LLMError` hierarchy). No
-  mapping logic is reimplemented elsewhere.
-- **Legacy retained, opt-in EK path** — `agentic_ek_provider` defaults to
-  **OFF** (opt-in via `AGENTIC_EK_PROVIDER=1`). `LLMClientWrapper.complete()`
-  routes through the EK path (`_complete_via_ek`) when the flag is set. The
-  legacy text-only branch is **retained** as the rollback path, marked
-  deprecated and slated for removal once the flag-ON full suite is clean.
-
-### Kernel seam scope
-
-The EK kernel seam is **`complete(messages) -> LLMResponse` only**. Streaming
-(`complete_stream`) and per-provider `count_tokens` stay **out of the kernel**;
-they remain reachable on the `LLMBackend` ABC, and the `SupportsStreaming`
-protocol (`core/protocols.py`) already exists for callers that need streaming
-(ADR-023 decision #7, accepted).
-
-### Budget ownership (layered, not merged)
-
-| Dimension | Owner | Mechanism |
-|-----------|-------|-----------|
-| Token-sum ceiling | runtime `TokenBudget` | `TokenBudget.consume(total_tokens)` runs **first** and raises on cap |
-| `llm_calls` count | EK `CostTracker` | two-phase `reserve_call()` / `record_without_call()` |
-
-A cache hit counts as a **0-token recorded call** (`call_count++`, tokens 0).
-The two layers are stacked, never merged.
-
-### Retry ownership
-
-httpx errors translate to EK error classes via `map_http_error`
-(`429 -> RateLimitError(retry_after)`; `401/403/404 -> PermanentError`;
-else `-> ProviderError`) so EK `RetryConfig.should_retry` recognizes them.
-`record_success` / `_classify_and_record_error` fire **exactly once per
-physical HTTP call** — the router and EK each retry, but neither
-double-counts. The EK path is **not** additionally wrapped in
-`retry_with_jitter`.
-
-### Tool-path ownership
-
-| Path | When | Mechanism |
-|------|------|-----------|
-| EK `react_loop` | **default** | uniform retry/budget/structured tool-calling |
-| native | step opts out with `tool_path: native` | `tool_execution.run_tool_calls` |
-
-The two paths are never mixed mid-thread for a single step. Gemini routes
-report `supports_tools=False`; `react_loop` **refuses** rather than silently
-dropping tools.
-
-### Preserved router reliability
-
-The cutover preserves all `SmartModelRouter` reliability machinery: circuit
-breaker, per-provider bulkhead semaphore, rate-limit header cooldown,
-cross-tier fallback, Redis CAS shared state (with in-memory fallback), and
-`supports_tools` delegation.
-
----
-
-## 9. Governance module (`agentic_v2/governance/`)
-
-The governance module provides two cross-cutting policy gates consulted at the
-tool-execution hot path — **before** parameter validation and execution:
-
-### 9.1 Human-approval gate (`approval.py`)
-
-`agentic_v2.governance.approval` intercepts tool calls that require operator
-consent. A tool requires approval when any of the following holds:
-
-- The tool's class sets `requires_approval = True` (high-impact builtins:
-  `shell`, `shell_exec`, `execute_python`, `file_write`, `file_delete`,
-  `file_move`, `directory_create`, `http`, `http_post`).
-- `Settings.agentic_require_tool_approval` is enabled (gates every tool).
-- The tool name appears in `Settings.agentic_approval_required_tools`.
-
-**Fail-closed:** if a tool requires approval and no provider is registered, the
-call is **DENIED** and never executes. Register a provider at process startup:
-
-```python
-from agentic_v2.governance.approval import (
-    set_approval_provider,
-    CallbackApprovalProvider,
-    ApprovalDecision,
-)
-
-async def my_gate(request):
-    # integrate with your operator prompt, queue, or remote approval service
-    return ApprovalDecision.APPROVED
-
-set_approval_provider(CallbackApprovalProvider(my_gate))
-```
-
-Built-in providers: `AutoApproveProvider` (trusted/non-interactive environments),
-`AutoDenyProvider` (hard kill-switch), `PolicyApprovalProvider` (allowlist by
-tool name), `CallbackApprovalProvider` (sync-or-async callable integration point).
-
-The shared entry point for both dispatch points (the engine tool loop in
-`agentic_v2.engine.tool_execution` and the agent loop in
-`agentic_v2.agents.base.BaseAgent`) is `evaluate_tool_approval()`, which returns
-a typed `ApprovalOutcome(allowed, decision, error_message, provider_label)`.
-
-### 9.2 Escalation sink (`escalation.py`)
-
-`agentic_v2.governance.escalation` handles the structured handoff emitted when
-every agent in an orchestrator's fallback chain has failed a subtask. Rather than
-returning a bare `{"error": ...}` that discards context, this module produces a
-`HandoffSummary` carrying `failure_type`, `attempted_agents`, `partial_results`
-(truncated to 500 chars), and `suggested_next_action`.
-
-**Default behavior:** `route_handoff()` logs the summary at WARNING and returns
-it. Register a custom sink to take real action:
-
-```python
-from agentic_v2.governance.escalation import (
-    set_escalation_sink,
-    HandoffSummary,
-    FailureType,
-)
-
-class TicketSink:
-    async def handle_handoff(self, handoff: HandoffSummary) -> None:
-        await my_ticketing_system.create(
-            title=f"Agent fallback exhausted: {handoff.subtask_id}",
-            body=handoff.suggested_next_action,
-        )
-
-set_escalation_sink(TicketSink())
-```
-
-The `HandoffSummary.from_exhausted_chain()` classmethod is the canonical
-constructor for orchestrators — it selects `FailureType.ALL_AGENTS_EXHAUSTED`
-vs `NO_AGENT_AVAILABLE` automatically based on whether any agent was attempted.
-
-Sink failures are caught and logged; they never propagate so that escalation
-never masks the original failure with a new one.
+Deeper mechanism docs that used to live here have moved to the runtime deep dive: core protocols, operability infrastructure (Redis, metrics, replay store, structured logging), the ExecutionKit ↔ runtime LLM seam (ADR-023), and the governance module are all covered in [`architecture-runtime.md`](architecture-runtime.md).
 
 ---
 

@@ -1,15 +1,15 @@
-# Onboarding Guide
+# Onboarding guide
 
 > **Audience:** New contributors on their first clone.
 > **Outcome:** By the end you will have run a workflow, opened the dashboard, scored a result, and know where to find things next time.
-> **Last verified:** 2026-05-21
+> **Last verified:** 2026-07-05
 
 Welcome to `tafreeman/agentic-runtime-platform` -- a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities.
 
 This repository serves a dual mission:
 
 1. **Working platform** -- a production-grade agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.
-2. **Reference implementation** -- a living reference for enterprise team onboarding, demonstrating production-grade practices for regulated and regulated environments.
+2. **Reference implementation** -- a living reference for enterprise team onboarding, demonstrating production-grade practices for regulated and enterprise environments.
 
 This guide has five independent sections. The first (**Quick Start**) gets a workflow running in **about 5 minutes**. Working through all five sections takes roughly **an hour**. Stop wherever you have what you need.
 
@@ -17,7 +17,7 @@ If you prefer a prebuilt environment, open the repository in the provided devcon
 
 ---
 
-## Quick Start (5 minutes)
+## Quick start (5 minutes)
 
 ### Prerequisites
 
@@ -74,7 +74,7 @@ npm --prefix agentic-workflows-v2/ui install
 
 </details>
 
-### Your First Run (no API keys)
+### Your first run (no API keys)
 
 Run the deterministic smoke test — this requires no provider credentials.
 
@@ -97,7 +97,7 @@ Expected output: two steps execute, placeholder text is returned, exit code 0. N
 
 > See [docs/NO_LLM_MODE.md](NO_LLM_MODE.md) for details on what no-LLM mode can and cannot do.
 
-### Next Steps
+### Next steps
 
 - **Configure a provider:** Copy `.env.example` to `.env` and add at least one LLM API key (e.g., `GITHUB_TOKEN`, `OPENAI_API_KEY`) to run full AI workflows.
 - **Explore the dashboard:** Start the local servers using `.\scripts\start-dev.ps1` (Windows) or `just dev` (Mac/Linux) and navigate to `http://localhost:5173`.
@@ -117,7 +117,7 @@ agentic list adapters
 
 ---
 
-## Your First LLM Workflow Run (10 minutes)
+## Your first LLM workflow run (10 minutes)
 
 Now let's run a real LLM-powered workflow like `code_review`.
 
@@ -197,7 +197,7 @@ agentic compare code_review --input code_review_input.json --adapters native,lan
 
 ---
 
-## Understanding the Architecture (15 minutes)
+## Understanding the architecture (15 minutes)
 
 ### Three independent packages
 
@@ -227,13 +227,13 @@ agentic_v2/
 +-- engine/          # Native DAG executor (Kahn's algorithm)
 +-- langchain/       # LangGraph state-machine executor
 +-- models/          # SmartModelRouter -- LLM tier routing across 8+ providers
-+-- rag/             # Full RAG pipeline (13 modules: load, chunk, embed, index, retrieve, assemble)
++-- rag/             # Full RAG pipeline (15 modules: load, chunk, embed, index, retrieve, assemble)
 +-- contracts/       # Pydantic v2 I/O models (additive-only -- never remove fields)
 +-- prompts/         # 7 agent persona definitions (.md files)
 +-- server/          # FastAPI + WebSocket/SSE streaming
-+-- tools/builtin/   # 11 built-in tool modules (file_read, shell, grep, etc.)
++-- tools/builtin/   # 12 built-in tool modules (file_read, shell, grep, etc.)
 +-- workflows/
-    +-- definitions/ # 6 YAML workflow definitions
+    +-- definitions/ # 8 YAML workflow definitions (6 production + 2 test)
 +-- cli/             # Typer CLI (the `agentic` command)
 ```
 
@@ -291,13 +291,13 @@ Workflow YAML  -->  WorkflowConfig (Pydantic model)
 | See how LLM routing works | `agentic_v2/models/smart_router.py` |
 | See protocol definitions | `agentic_v2/core/protocols.py` |
 | Add a new built-in tool | `agentic_v2/tools/builtin/` |
-| Understand the RAG pipeline | `agentic_v2/rag/` (13 modules, start with `protocols.py`) |
+| Understand the RAG pipeline | `agentic_v2/rag/` (15 modules, start with `protocols.py`) |
 | Run or modify evaluations | `agentic-v2-eval/` |
 | Use the shared LLM client | `tools/llm/` (`from tools.llm import LLMClient`) |
 
 ---
 
-## Creating Your First Custom Persona (10 minutes)
+## Creating your first custom persona (10 minutes)
 
 Agent personas are markdown files in `agentic_v2/prompts/`. Each persona defines how an agent behaves when assigned to a workflow step.
 
@@ -375,7 +375,7 @@ Reference the persona in a workflow step via the `agent` field. The agent name c
 
 ---
 
-## Running the Dashboard (5 minutes)
+## Running the dashboard (5 minutes)
 
 The UI is a React 19 application with React Flow for workflow visualization.
 
@@ -392,7 +392,7 @@ In a separate terminal:
 
 ```bash
 cd agentic-workflows-v2
-python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010 --app-dir src
+python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010 --reload
 ```
 
 Or use the CLI shortcut:
@@ -410,7 +410,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser. You should see:
 
-- **Workflow list** -- 6 YAML-defined workflows
+- **Workflow list** -- 8 YAML-defined workflows (6 production + 2 test)
 - **Workflow graph** -- React Flow DAG visualization of steps and dependencies
 - **Execution panel** -- run workflows and see real-time streaming results
 - **Evaluations page** -- view evaluation results and scoring
@@ -424,7 +424,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser. You should 
 
 ---
 
-## Running Evaluations (10 minutes)
+## Running evaluations (10 minutes)
 
 The `agentic-v2-eval` package provides rubric-based scoring for workflow outputs.
 
@@ -501,7 +501,7 @@ The eval framework uses these criteria to score workflow outputs on a 1-5 scale 
 
 ---
 
-## Key Concepts Quick Reference
+## Key concepts quick reference
 
 | Concept | One-line summary | Deep dive |
 |---------|-----------------|-----------|
@@ -524,7 +524,7 @@ Project overview and commands: [README.md on GitHub](https://github.com/tafreema
 
 ---
 
-## Getting Help
+## Getting help
 
 ### Documentation
 

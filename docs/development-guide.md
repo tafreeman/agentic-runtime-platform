@@ -1,4 +1,4 @@
-# Development Guide
+# Development guide
 
 This guide covers everything needed to set up a local development environment, run the full stack, test changes, use the CLI, and follow the project's coding standards for the `agentic-runtime-platform` monorepo.
 
@@ -12,12 +12,14 @@ This guide covers everything needed to set up a local development environment, r
 | Node.js | 20+ | Required by the React dashboard |
 | uv | Latest | Python package and workspace manager — install via `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 | Git | Any recent | Required for pre-commit hooks |
-| pre-commit | Latest | Installed via `pip install pre-commit` or included in dev extras |
+| pre-commit | Latest | Installed via `pip install pre-commit` (not part of the `dev` extra) |
 
 Optional but recommended:
 
 - Docker + Docker Compose — for running the full containerized stack
-- A supported LLM provider key — at least one is required to execute real workflows (see Environment Variables below)
+- A supported LLM provider key — at least one is required to execute real
+  workflows (see Environment variables below). For key-free development,
+  set `AGENTIC_NO_LLM=1` instead — see [NO_LLM_MODE.md](NO_LLM_MODE.md).
 
 ---
 
@@ -46,16 +48,21 @@ For active runtime development, install the full extras set:
 pip install -e "agentic-workflows-v2/[dev,server,langchain]"
 ```
 
-Available extras:
+Available extras (source of truth: `agentic-workflows-v2/pyproject.toml`
+`[project.optional-dependencies]`):
 
 | Extra | Contents |
 |---|---|
-| `dev` | pytest, pytest-asyncio, pytest-cov, black, ruff, mypy, pre-commit |
-| `server` | FastAPI, uvicorn, websockets, python-multipart |
-| `langchain` | langchain-core, langgraph, langchain-openai, langchain-anthropic |
-| `rag` | sentence-transformers, rank_bm25, PyPDF2, python-docx |
-| `tracing` | opentelemetry-sdk, opentelemetry-exporter-otlp |
-| `claude` | anthropic SDK extras for Claude models |
+| `dev` | pytest, pytest-asyncio, pytest-cov, pytest-mock, pytest-timeout, black, ruff, mypy, fakeredis, jsonschema, pydocstyle |
+| `server` | fastapi, uvicorn, python-multipart, slowapi, pyjwt |
+| `langchain` | langchain, langchain-core, langgraph, langchain-openai, langchain-anthropic, langchain-google-genai, langchain-ollama, checkpointers, langsmith |
+| `rag` | lancedb, litellm |
+| `tracing` | opentelemetry-sdk, OTLP + Prometheus exporters, prometheus-client |
+| `claude` | anthropic, claude-agent-sdk |
+| `ek` | executionkit |
+| `devex` | psutil |
+| `mcp` | websockets |
+| `redis` / `sqlite` / `postgres` | redis, aiosqlite, langgraph-checkpoint-postgres + psycopg |
 
 ### 4. Install the eval framework
 
@@ -77,7 +84,7 @@ cd ../..
 pre-commit install
 ```
 
-### Windows Quick Start (alternative to steps 2–5)
+### Windows quick start (alternative to steps 2–5)
 
 On Windows, a single script handles the full bring-up:
 
@@ -87,8 +94,9 @@ cd agentic-workflows-v2
 ```
 
 This checks prerequisites (`uv`, `node`, `npm`), runs `uv sync` with all required extras,
-installs and builds the frontend, validates all 6 bundled workflows, runs a deterministic
-smoke test, and probes the backend health endpoint to confirm the server starts. Flags:
+installs and builds the frontend, validates the bundled workflow definitions, runs a
+deterministic smoke test, and probes the backend health endpoint to confirm the server
+starts. Flags:
 
 - `-SkipSmokeTest` — skip workflow validation, smoke test, and health probe (faster)
 - `-SkipFrontend` — skip `npm install`, `npm run build`, and the node/npm prerequisite checks
@@ -97,7 +105,7 @@ After setup completes, launch the dev servers with `.\scripts\start-dev.ps1`.
 
 ---
 
-## Environment Variables
+## Environment variables
 
 Copy `.env.example` to `.env` and set at least one LLM provider key:
 
@@ -105,7 +113,11 @@ Copy `.env.example` to `.env` and set at least one LLM provider key:
 cp .env.example .env
 ```
 
-Then edit `.env`. The minimum required configuration to run workflows is one provider key:
+Then edit `.env`. The minimum required configuration to run workflows
+against a real model is one provider key (alternatively, set
+`AGENTIC_NO_LLM=1` to run every workflow against the deterministic
+placeholder backend with no keys at all — see
+[NO_LLM_MODE.md](NO_LLM_MODE.md)):
 
 ```
 # Choose at least one:
@@ -115,9 +127,9 @@ ANTHROPIC_API_KEY=your_anthropic_key    # Paid
 GEMINI_API_KEY=your_gemini_key          # Free tier available
 ```
 
-### Full Environment Variable Reference
+### Full environment variable reference
 
-#### LLM Providers
+#### LLM providers
 
 | Variable | Description |
 |---|---|
@@ -134,7 +146,7 @@ GEMINI_API_KEY=your_gemini_key          # Free tier available
 | `PHI_SILICA_LAF_TOKEN` | Windows AI LAF token |
 | `PHI_SILICA_LAF_ATTESTATION` | Windows AI LAF attestation string |
 
-#### Server Configuration
+#### Server configuration
 
 | Variable | Description | Default |
 |---|---|---|
@@ -145,7 +157,7 @@ GEMINI_API_KEY=your_gemini_key          # Free tier available
 | `AGENTIC_EXTERNAL_AGENTS_DIR` | Path to directory containing additional agent definitions. | (unset) |
 | `AGENTIC_MEMORY_PATH` | Path for persistent memory store. | (unset = in-memory only) |
 
-#### LLM Routing
+#### LLM routing
 
 | Variable | Description |
 |---|---|
@@ -164,9 +176,9 @@ GEMINI_API_KEY=your_gemini_key          # Free tier available
 
 ---
 
-## Running Development Servers
+## Running development servers
 
-### ⚡ One-Click Start (Windows — recommended)
+### One-command start (Windows)
 
 From the **repo root**, run one command that starts both the backend and frontend:
 
@@ -193,11 +205,11 @@ Logs are written to `agentic-workflows-v2/.run-logs/` (`backend.out.log`, `backe
 
 ---
 
-### Manual Start (two terminals)
+### Manual start (two terminals)
 
 If you prefer separate terminals for easier log visibility:
 
-#### Terminal 1 — Backend
+#### Terminal 1 — backend
 
 ```bash
 cd agentic-workflows-v2
@@ -212,7 +224,7 @@ Verify the backend is running:
 curl http://localhost:8010/api/health
 ```
 
-#### Terminal 2 — Frontend
+#### Terminal 2 — frontend
 
 ```bash
 cd agentic-workflows-v2/ui
@@ -239,8 +251,10 @@ agentic run code_review --input input.json
 # Validate a workflow YAML file
 agentic validate agentic_v2/workflows/definitions/code_review.yaml
 
-# Start the server (alternative to uvicorn directly)
-agentic serve
+# Start the server (alternative to uvicorn directly). Note: defaults to
+# port 8000 and opens a browser tab; pass --port 8010 to match the UI dev
+# proxy and --no-open to suppress the browser.
+agentic serve --port 8010 --no-open
 
 # Compare native and LangGraph engine outputs for the same workflow
 agentic compare code_review --input input.json
@@ -254,7 +268,7 @@ agentic rag search "how does the DAG executor work"
 
 ## Testing
 
-### Backend Tests
+### Backend tests
 
 ```bash
 cd agentic-workflows-v2
@@ -273,20 +287,20 @@ Skip slow or integration tests for faster local iteration:
 python -m pytest tests/ -m "not integration and not slow" -q
 ```
 
-### Eval Framework Tests
+### Eval framework tests
 
 ```bash
 cd agentic-v2-eval
 python -m pytest tests/ -q
 ```
 
-### Tools Package Tests
+### Tools package tests
 
 ```bash
 python -m pytest tools/tests/ -q --cov=tools --cov-report=term-missing --cov-fail-under=70
 ```
 
-### Frontend Tests
+### Frontend tests
 
 ```bash
 cd agentic-workflows-v2/ui
@@ -299,14 +313,14 @@ Run with coverage (60% threshold):
 npm run test:coverage
 ```
 
-### Cross-Package E2E Tests
+### Cross-package E2E tests
 
 ```bash
 # From the repo root
 python -m pytest tests/e2e/test_cross_package.py -q -m e2e
 ```
 
-### Test Markers
+### Test markers
 
 | Marker | Description |
 |---|---|
@@ -319,7 +333,7 @@ Exclude integration tests: `pytest -m "not integration"`
 
 ---
 
-## Linting and Type Checking
+## Linting and type checking
 
 Run all pre-commit hooks (black, isort, ruff, docformatter, mypy, pydocstyle, detect-secrets):
 
@@ -348,7 +362,7 @@ The `pyproject.toml` at the workspace root defines shared ruff, black, and pytes
 
 ---
 
-## Frontend Build
+## Frontend build
 
 ```bash
 cd agentic-workflows-v2/ui
@@ -359,19 +373,19 @@ This runs TypeScript type checking and then produces a production build in `ui/d
 
 ---
 
-## Common Issues and Solutions
+## Common issues and solutions
 
-### Windows Paths
+### Windows paths
 
 Use forward slashes in all Python `pathlib.Path` operations. The codebase uses `pathlib.Path` throughout, which handles Windows path separators automatically.
 
 Avoid `sys.path` manipulation. Always use proper package imports (`from agentic_v2.core import ...`, not relative `sys.path` hacks).
 
-### pytest-asyncio Auto Mode
+### pytest-asyncio auto mode
 
 All tests in `agentic-workflows-v2/tests/` use `asyncio_mode = "auto"` (configured in `pyproject.toml`). This means async test functions run automatically without `@pytest.mark.asyncio` decorators. Do not add the decorator — it causes a warning.
 
-### Optional LangChain Imports
+### Optional LangChain imports
 
 All imports from `agentic_v2.langchain` must be guarded:
 
@@ -384,7 +398,7 @@ except ImportError:
 
 If the `[langchain]` extra is not installed, these imports will fail. Never make LangGraph a hard dependency from outside the `langchain/` subpackage.
 
-### Port Conflicts
+### Port conflicts
 
 Check for processes using the ports before starting servers:
 
@@ -410,7 +424,7 @@ The codebase uses Pydantic v2 exclusively. The legacy v1 methods are not availab
 | `Model.__fields__` | `Model.model_fields` |
 | `model.copy()` | `model.model_copy()` |
 
-### Vite `.js` to `.ts` Resolution
+### Vite `.js` to `.ts` resolution
 
 Vite's dev server auto-resolves `.js` imports to `.ts` files, but Rollup (used in the production build) does not. When renaming a file from `.js` to `.ts`, update all explicit `.js` import paths, or the production build will fail with a module not found error.
 

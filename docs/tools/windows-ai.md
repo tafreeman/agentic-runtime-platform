@@ -56,7 +56,7 @@ Resources:
 
 ---
 
-## Quick Start
+## Quick start
 
 ```python
 from tools.llm.windows_ai import WindowsAIModel, check_windows_ai_available
@@ -72,7 +72,7 @@ else:
 
 ---
 
-## `WindowsAIModel` Class
+## `WindowsAIModel` class
 
 ```python
 from tools.llm.windows_ai import WindowsAIModel
@@ -117,7 +117,7 @@ Returns the generated text as a string. On bridge errors, returns an error strin
 
 ---
 
-## Utility Functions
+## Utility functions
 
 ### `check_windows_ai_available() → bool`
 
@@ -160,7 +160,7 @@ Low-level function that invokes the C# bridge and returns `(parsed_dict, raw_std
 
 ---
 
-## How the C# Bridge Works
+## How the C# bridge works
 
 The bridge (`tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj`) is a minimal C# console application that:
 
@@ -189,7 +189,7 @@ The C# bridge reads LAF environment variables (`PHI_SILICA_LAF_FEATURE_ID`, `PHI
 
 ## Using via `LLMClient`
 
-`LLMClient` routes to `WindowsAIModel` automatically when model availability probing detects Phi Silica. You can also call it explicitly with a `windows-ai:` prefix (check `llm_client.py` for the current prefix if this changes):
+`LLMClient` routes to `WindowsAIModel` purely by the `windows-ai:` model-name prefix — there is no probe-based auto-routing. If Phi Silica is unavailable, the call fails; use `check_windows_ai_available()` first when you need a fallback:
 
 ```python
 from tools.llm.llm_client import LLMClient
@@ -202,7 +202,7 @@ if check_windows_ai_available():
 
 ---
 
-## See Also
+## See also
 
 - [local-models.md](local-models.md) — ONNX inference via `onnxruntime-genai` (cross-platform)
 - [model-probing.md](model-probing.md) — probe both `local:` and `windows-ai:` models with one call

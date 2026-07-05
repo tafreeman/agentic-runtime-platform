@@ -36,16 +36,21 @@ source .venv/bin/activate
 pip install -e ".[dev,server,langchain]"
 ```
 
-The extras break down as follows:
+The extras break down as follows (source of truth:
+`agentic-workflows-v2/pyproject.toml` `[project.optional-dependencies]`):
 
 | Extra | Pulls in | When you want it |
 |-------|----------|-------------------|
-| `dev` | `pytest`, `pytest-asyncio`, `ruff`, `mypy`, `pre-commit` | Always — required to run the test suite |
-| `server` | `fastapi`, `uvicorn`, `httpx`, `aiohttp` | If you plan to expose the REST/WebSocket API |
-| `langchain` | `langgraph`, `langchain-core` | Only if you want to compare the LangGraph engine alongside the native DAG |
-| `tracing` | `opentelemetry-*` | If you want OTEL traces for every step and tool call |
-| `claude` | `anthropic` SDK | If Anthropic is one of your providers |
-| `rag` | `numpy`, `rank-bm25`, embedding deps | If you plan to use the RAG pipeline (loaders, chunker, vectorstore) |
+| `dev` | `pytest` (+ asyncio/cov/mock/timeout plugins), `black`, `ruff`, `mypy`, `fakeredis`, `jsonschema`, `pydocstyle` | Always — required to run the test suite |
+| `server` | `fastapi`, `uvicorn`, `python-multipart`, `slowapi`, `pyjwt` | If you plan to expose the REST/WebSocket API |
+| `langchain` | `langchain`, `langchain-core`, `langgraph` (+ provider adapters and checkpointers) | The default adapter for named YAML workflows; also enables the deep `agentic validate` check |
+| `tracing` | `opentelemetry-sdk`, OTLP/Prometheus exporters | If you want OTEL traces for every step and tool call |
+| `claude` | `anthropic`, `claude-agent-sdk` | If Anthropic is one of your providers |
+| `rag` | `lancedb`, `litellm` | If you plan to use the RAG pipeline (loaders, chunker, vectorstore) |
+| `ek` | `executionkit` | Optional ExecutionKit execution kernel |
+| `devex` | `psutil` | Developer-experience commands (`agentic devex`) |
+| `mcp` | `websockets` | MCP client transport |
+| `redis` / `sqlite` / `postgres` | `redis`, `aiosqlite`, `psycopg` + checkpointer | Optional storage backends |
 
 ### Verify the install
 
@@ -116,15 +121,26 @@ no provider plugin to install separately, no SDK to pin.
 | **Ollama** | `OLLAMA_BASE_URL` (defaults to `http://localhost:11434`) | Local models, no key required |
 | **Local ONNX** | `LOCAL_MODEL_PATH` | Auto-detected from `~/.cache/aigallery` if unset |
 
-A complete `.env.example` ships at the repo root. Copy it to `.env` and fill
-in only the providers you need — the model router skips providers without
-credentials at startup.
+An `.env.example` ships at the repo root covering the common providers.
+Copy it to `.env` and fill in only the providers you need — the model
+router skips providers without credentials at startup. A few variables
+(such as the `AZURE_FOUNDRY_*` keys) are read from the environment but not
+templated in `.env.example`; set those directly.
 
 ### Verify providers
 
 ```bash
-agentic models probe       # quick latency probe across configured providers
-agentic models list        # show every model the router has discovered
+agentic version            # confirm the CLI entry point resolves
+agentic list workflows     # confirm workflow discovery works
+agentic serve --no-open    # startup probes configured providers and logs which are available
+```
+
+The quickest end-to-end check is a deterministic run that needs no
+credentials at all:
+
+```bash
+echo '{"input_text": "hello"}' > /tmp/test-input.json
+AGENTIC_NO_LLM=1 agentic run test_deterministic --input /tmp/test-input.json
 ```
 
 ## Evaluation harness
@@ -151,14 +167,17 @@ pre-commit run --all-files
 ```
 
 The chain is `black` → `isort` → `ruff` → `docformatter` → `mypy` →
-`pydocstyle` → `detect-secrets`. CI re-runs the same chain — if your local
-hook passes, the PR will too.
+`pydocstyle` → `detect-secrets`. CI re-runs the same chain, but also
+enforces gates the hooks do not cover — the 80% coverage threshold and the
+wire-format drift check — so a passing local hook run is necessary, not
+sufficient. See `.claude/rules/ci.md` and `CONTRIBUTING.md` for the full
+gate list.
 
 ## What's next
 
-- New to the project? [Quick Start](quickstart.md) walks the first run
+- New to the project? [Quick start](quickstart.md) walks the first run
   end-to-end.
-- Want to write your own workflow? [First Workflow](first-workflow.md)
+- Want to write your own workflow? [First workflow](first-workflow.md)
   builds a two-step DAG from scratch.
-- Wiring a longer-lived environment? [Architecture Overview](../ARCHITECTURE.md)
+- Wiring a longer-lived environment? [Architecture overview](../ARCHITECTURE.md)
   explains how the runtime, evaluation harness, and UI interact.

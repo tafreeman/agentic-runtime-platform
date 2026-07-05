@@ -2,13 +2,29 @@
 
 > **Audience:** Contributors resolving build breaks after pulling `main`, and downstream consumers of this repo's packages.
 > **Outcome:** After reading, you know which imports broke, what replaces them, and whether any code change is required.
-> **Last verified:** 2026-04-22
+> **Last verified:** 2026-07-05
 
 This document tracks breaking changes since v0.3.0. One entry per migration, newest first. Every entry names what broke, how to detect the break, and the exact replacement path. If a migration is additive-only and safe, it does not belong here — note it in `CHANGELOG.md` instead.
 
 ---
 
-## 1. `presentation/` system extracted to standalone repo (2026-04-22)
+## 1. `AGENTIC_SANITIZER_FAIL_OPEN` truthiness narrowed to exactly `"1"` (2026-05-09)
+
+### What changed
+
+The sanitization middleware's fail-open switch no longer accepts the broad boolean synonyms. Prior to 2026-05-09, `AGENTIC_SANITIZER_FAIL_OPEN` accepted `"true"` and `"yes"` as truthy in addition to `"1"`. The current implementation (`server/middleware/__init__.py:_fail_open_enabled()`) uses a strict equality check: **only the exact string `"1"` enables fail-open**. Any other value — including `"true"` and `"yes"` — is treated as fail-closed.
+
+### What breaks
+
+Deployments that set `AGENTIC_SANITIZER_FAIL_OPEN=true` or `AGENTIC_SANITIZER_FAIL_OPEN=yes` silently switch to fail-closed behavior: requests are rejected with HTTP 503 when the sanitizer is unavailable and HTTP 500 on sanitizer errors, instead of passing through unsanitized.
+
+### Replacement
+
+Update deployment scripts to `AGENTIC_SANITIZER_FAIL_OPEN=1` (and only for debugging — never in production). Full variable documentation: [`configuration.md`](configuration.md#agentic_sanitizer_fail_open--breaking-change).
+
+---
+
+## 2. `presentation/` system extracted to standalone repo (2026-04-22)
 
 ### What changed
 
@@ -34,25 +50,27 @@ The presentation system was accreting mass unrelated to the core agentic-workflo
 
 ```bash
 # Returns paths if any stale reference remains
+# (this file documents the migration, so it is excluded from its own check)
 grep -rn "presentation/" --include="*.md" --include="*.py" --include="*.ts" --include="*.tsx" \
-    --exclude-dir=".git" --exclude-dir="node_modules" --exclude-dir="dist" .
+    --exclude-dir=".git" --exclude-dir="node_modules" --exclude-dir="dist" \
+    --exclude="MIGRATIONS.md" .
 ```
 
 A clean result is zero matches. As of 2026-04-22 the sweep is in progress; expect isolated stragglers in `docs/` until the stale-docs audit lands.
 
 ### Replacement
 
-- **Building a deck:** use the new `separate presentation-system repository` repo.
+- **Building a deck:** use the presentation system's new home, a private standalone repository.
 - **Referencing theme data from here:** do not. If a workflow genuinely needs theme data, copy it into the workflow's input payload rather than re-introducing a cross-repo dependency.
 - **Referencing a layout family name in a persona or prompt:** remove the reference. No agent in this repo authors presentation content.
 
 ### Rollback posture
 
-This extraction is not reversible without significant rework. Theme data that lived in `raw-themes/` was preserved in `separate presentation-system repository` and is not duplicated here. Do not try to re-import the folder from git history — the history remains in this repo's log, but the active tree is intentionally free of it.
+This extraction is not reversible without significant rework. Theme data that lived in `raw-themes/` was preserved in the private standalone repository and is not duplicated here. Do not try to re-import the folder from git history — the history remains in this repo's log, but the active tree is intentionally free of it.
 
 ---
 
-## 2. `AgentProtocol.run` signature tightened from `Any` to `object` (2026-04-21)
+## 3. `AgentProtocol.run` signature tightened from `Any` to `object` (2026-04-21)
 
 ### What changed
 
@@ -92,7 +110,7 @@ If you need to type-narrow `input_data` inside your implementation, use `isinsta
 
 ---
 
-## 3. Event wire format — `contracts/events.py` discriminated union (2026-04-21)
+## 4. Event wire format — `contracts/events.py` discriminated union (2026-04-21)
 
 ### What changed
 
@@ -116,7 +134,7 @@ External consumers of the WebSocket or SSE stream that previously accepted loose
 ### Replacement
 
 - **Python clients:** import the union and use `model_validate` / `model_dump` on messages.
-- **TypeScript / JS clients:** use the mirrored interfaces in `ui/src/api/types.ts`. These are kept by hand — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) §1.3.
+- **TypeScript / JS clients:** use the mirrored interfaces in `ui/src/api/types.ts`. These are kept by hand — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) §1.1.
 - **Evaluation-related fields:** `EvaluationCompleteEvent` now includes `passed`, `pass_threshold`, and a full `criteria` list (Epic 6 additive extension). Existing code that ignored unknown fields is fine; code that matched on a fixed shape may need updating.
 
 ---

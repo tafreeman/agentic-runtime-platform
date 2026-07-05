@@ -1,4 +1,4 @@
-# Workflow Authoring Guide
+# Workflow authoring guide
 
 How to write, validate, and run YAML workflow definitions for the agentic-workflows-v2 engine.
 
@@ -23,7 +23,7 @@ At runtime the system chains together:
 
 ---
 
-## Workflow Structure
+## Workflow structure
 
 A workflow YAML file has these top-level keys:
 
@@ -70,7 +70,7 @@ outputs:
 
 ---
 
-## Input Declarations
+## Input declarations
 
 Each key under `inputs:` declares a workflow parameter. The loader validates supplied values at runtime and applies defaults.
 
@@ -104,7 +104,7 @@ inputs:
 
 ---
 
-## Output Declarations
+## Output declarations
 
 Each key under `outputs:` maps a workflow-level output name to a `from:` expression that resolves against step results.
 
@@ -128,7 +128,7 @@ outputs:
 
 ---
 
-## Step Definition
+## Step definition
 
 Each entry in `steps:` defines a DAG node. The required and optional fields are:
 
@@ -176,16 +176,18 @@ Agent names follow the pattern `tier{N}_{role}`:
 |---|---|---|---|
 | `tier0` | Deterministic Python (no LLM call) | 0 | `tier0_parser` |
 | `tier1` | Lightweight LLM | 4,096 | `tier1_linter`, `tier1_assembler` |
-| `tier2` | Balanced LLM | 8,192 | `tier2_coder`, `tier2_researcher` |
+| `tier2` | Balanced LLM | 8,192 | `tier2_coder`, `tier2_reviewer` |
 | `tier3` | Strong LLM | 16,384 | `tier3_architect`, `tier3_reviewer` |
-| `tier4` | Heavy LLM | 16,384 | `tier4_writer` |
-| `tier5` | Maximum capability | 32,768 | `tier5_synthesizer` |
+| `tier4` | Heavy LLM | 16,384 | (hypothetical, e.g. `tier4_writer`) |
+| `tier5` | Maximum capability | 32,768 | (hypothetical, e.g. `tier5_synthesizer`) |
 
-The role suffix (e.g. `coder`, `reviewer`) maps to a persona prompt file in `agentic_v2/prompts/{role}.md`. If no matching file exists, `default.md` is used.
+The resolver recognizes the `tier4_` and `tier5_` prefixes, but no shipped workflow currently uses a tier-4 or tier-5 agent.
+
+The role suffix (e.g. `coder`, `reviewer`) maps to a persona prompt file in `agentic_v2/prompts/{role}.md`. If no matching file exists, the loader falls back to `prompts/default.md`; since no `default.md` ships with the runtime, the agent then runs without a persona prompt — only the engine's inline output-format instructions.
 
 ---
 
-## Expression Language
+## Expression language
 
 The engine supports `${...}` expressions for variable references, function calls, and boolean conditions. Expressions are evaluated by `ExpressionEvaluator` using a restricted Python AST whitelist -- no arbitrary code execution is possible.
 
@@ -272,7 +274,7 @@ Internally, `ast.parse()` and `compile()` are used with the restricted whitelist
 
 ---
 
-## Execution Patterns
+## Execution patterns
 
 ### Sequential (depends_on chaining)
 
@@ -309,7 +311,7 @@ steps:
 
 Execution: `parse` -> `analyze` -> `summarize`
 
-### Fan-out / Fan-in (parallel steps merging)
+### Fan-out / fan-in (parallel steps merging)
 
 Multiple steps with the same dependency run in parallel. A downstream step waits for all of them.
 
@@ -427,17 +429,17 @@ Steps with a `when:` condition are skipped (status = `SKIPPED`) when the conditi
 
 ### DAG (complex dependency graphs)
 
-Real workflows combine all patterns. The deep_research workflow, for example, uses:
+Real workflows combine all patterns. The shipped `fullstack_generation` workflow, for example, uses:
 
-- Sequential setup stages (`intake_scope` -> `source_policy`)
-- Per-round fan-out (`analyst_ai` and `analyst_swe` run in parallel)
-- Per-round fan-in (`cove_verify` depends on both analysts)
-- Conditional rounds (`when:` gates on `gate_passed` from the prior round)
-- `coalesce()` in the final synthesis to pick the latest round's outputs
+- A sequential setup stage (`design_architecture` runs first, with no dependencies)
+- Fan-out (`generate_api`, `generate_frontend`, and `generate_migrations` all depend only on `design_architecture` and run in parallel)
+- Staged fan-in (`generate_integration_tests` waits on `generate_api` + `generate_frontend`; `review_code` waits on all four generation steps)
+- A conditional rework pass (`developer_rework` runs only `when:` the review's `overall_status` is not `'APPROVED'`)
+- `coalesce()` throughout its inputs and outputs to fall back across alternate output keys and skipped steps
 
 ---
 
-## Advanced Features
+## Advanced features
 
 ### YAML anchors for DRY templates
 
@@ -477,14 +479,14 @@ Each step inherits `agent` and `tools` from the anchor but defines its own `name
 
 ### Inline evaluation rubrics
 
-Workflows can embed scoring rubrics for automated quality assessment. Each criterion defines a 1-5 scale, weight, and critical floor.
+Workflows can embed scoring rubrics for automated quality assessment. Each criterion defines a 1-5 scale, weight, and critical floor. This excerpt is taken from the shipped `code_review.yaml` (the full file declares four criteria — `correctness_rubric`, `code_quality`, `efficiency`, `documentation` — whose weights sum to 1.0):
 
 ```yaml
 evaluation:
   rubric_id: code_review_v1
   scoring_profile: B
   criteria:
-    - name: correctness
+    - name: correctness_rubric
       definition: Review output correctness and requirement alignment.
       evidence_required:
         - Requirement-to-review mapping
@@ -504,7 +506,10 @@ evaluation:
       evidence_required:
         - Specific issues identified
       scale:
-        "1": No useful feedback
+        "1": No useful quality feedback
+        "2": Limited quality feedback
+        "3": Basic actionable feedback
+        "4": Strong actionable feedback
         "5": Comprehensive high-value feedback
       weight: 0.30
       critical_floor: 0.80
@@ -521,10 +526,10 @@ evaluation:
 The agent tier is inferred from the `tier{N}_` prefix in the agent name. To pin a specific model for a step, use `model_override`:
 
 ```yaml
-- name: source_policy
-  agent: tier2_researcher
-  model_override: env:DEEP_RESEARCH_SMALL_MODEL|gemini:gemini-2.0-flash-lite
-  description: Establish trusted-source policy
+- name: review_code
+  agent: tier3_reviewer
+  model_override: env:REVIEW_MODEL|gemini:gemini-2.5-flash
+  description: Review generated code with a pinned model
 ```
 
 The `model_override` format supports environment variable resolution with a fallback:
@@ -560,7 +565,7 @@ Override the default persona prompt (derived from the agent role) with a specifi
 ```yaml
 - name: implement_shared
   agent: tier2_coder
-  prompt_file: developer.md   # uses prompts/developer.md instead of prompts/coder.md
+  prompt_file: reviewer.md   # uses prompts/reviewer.md instead of prompts/coder.md
 ```
 
 ### Capabilities metadata
@@ -805,7 +810,7 @@ generate -> review_pass1 ─┬─ [APPROVED]     -> assemble
 
 ---
 
-## Quick Reference
+## Quick reference
 
 ### Running a workflow
 

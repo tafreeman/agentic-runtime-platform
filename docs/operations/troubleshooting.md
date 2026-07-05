@@ -69,12 +69,12 @@ Two distinct causes — distinguish by response body and server log.
 
 **Cause A — global rate limit (slowapi).**
 
-- **Identify.** Response body looks like `{"error":"Rate limit exceeded","detail":"60 per 1 minute"}`. No per-IP failure log.
+- **Identify.** Response body looks like `{"detail": "Rate limit exceeded: 60 per 1 minute"}`. No per-IP failure log.
 - **Fix.** Reduce client request rate, OR raise `AGENTIC_RATE_LIMIT_DEFAULT` (e.g., `300/minute`). For tests: `AGENTIC_RATE_LIMIT_DISABLED=1`.
 
 **Cause B — auth brute-force throttle.**
 
-- **Identify.** Response body is `{"detail":"Too many authentication failures. Retry after <n> seconds."}` and the server log shows `Authentication failed for /api/... from <ip>` entries leading up to the lockout.
+- **Identify.** Response body is `{"detail": "Too many failed authentication attempts. Please retry later.", "retry_after": <n>}` and the server log shows `Authentication failed for /api/... from <ip>` entries leading up to the lockout.
 - **Fix.** Wait `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` (default 300) or restart the server to clear in-process state. Then submit a successful request — that clears the IP's failure history.
 - Tune. [AGENTIC_AUTH_LOCKOUT_* vars](../configuration.md#rate-limiting-and-auth-throttle).
 

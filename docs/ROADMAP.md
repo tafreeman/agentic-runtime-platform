@@ -2,7 +2,7 @@
 
 > **Audience:** Contributors, reviewers, and stakeholders asking "what shipped, what's next, and why is Epic 4 missing?"
 > **Outcome:** After reading, you can answer "is this in scope this quarter?" without asking a human.
-> **Last verified:** 2026-05-21
+> **Last verified:** 2026-07-05
 
 This is the in-repo backlog. Day-to-day sprint tracking lives in issues; this file captures the load-bearing multi-week arcs. If you are about to propose a new initiative, add a stub under **Proposed** and open a PR for review — a roadmap entry without a PR is aspiration.
 
@@ -22,10 +22,6 @@ v0.3.0 bundles five epics completed between 2026-04-01 and 2026-04-22. Full chan
 
 Implementation history is summarized below without carrying internal planning artifacts. Epics 3, 5, and 6 did not have formal pre-implementation plans; retrospective notes are summarized in the epic entries.
 
-
-
-
-
 ### The Epic 4 question
 
 **There is no Epic 4.** The epic numbering jumps from Epic 3 to Epic 5 intentionally — no story, plan, commit, branch, or changelog entry uses the label "Epic 4" in this repository. The number was allocated during planning but never authored.
@@ -36,9 +32,8 @@ This is a **tombstone**, not a gap: do not retroactively renumber 5/6 down to 4/
 
 ---
 
-## 2. Shipped in May 2026
+## 2. Shipped in May 2026 — Epic 8: Production Readiness Pack (by 2026-05-11)
 
-### Epic 8 — Production Readiness Pack
 Epic 8 focused on closing the gaps to make the platform "enterprise-grade for regulated production environments."
 - **E8-1**: Mandatory OIDC JWT authentication (`auth_oidc.py`).
 - **E8-2**: Tenant isolation with hard boundaries for runs and datasets (`tenant.py`).
@@ -54,7 +49,7 @@ Sprint 1 ran against the post-v0.3.0 two-sprint engineering plan (T1/T2/T3 item 
 
 | Item | ID | Shipped |
 |------|----|---------|
-| Wire-format type generation extended to `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, `RunsSummaryResponse` | T1-1 | 2026-05-14 (Sprint 1, see CHANGELOG) |
+| Wire-format type generation extended to four additional shapes (`DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, `RunsSummaryResponse`), bringing drift-gate coverage to six shapes total — see [KNOWN_LIMITATIONS §1.1](KNOWN_LIMITATIONS.md) | T1-1 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | Rate limiting + 401 brute-force throttle added to all endpoints | T1-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | DAG executor top-level timeout watchdog | T2-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | Global pytest timeout = 30 s + slow-test audit (`@pytest.mark.slow`) | T3-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
@@ -111,6 +106,22 @@ Epic 7 closed the contributor onboarding gap: from `git clone` to a running work
 | **E7-3** | `NoProviderConfiguredError` added to `core/errors.py`; CLI renders a Rich panel with actionable guidance instead of a traceback; server returns HTTP 503 with JSON guidance; 7 new tests. | 2026-05-21 |
 | **E7-4** | `.github/workflows/devcontainer-validate.yml` PR gate: builds the devcontainer and runs a smoke test on relevant file changes. | 2026-05-21 |
 | **E7-5** | QA audit of onboarding docs: timing confirmed < 10 minutes, all commands verified copy-pasteable. | 2026-05-21 |
+
+---
+
+## 3c. Shipped in June 2026 — engine safety, scoring extraction, RAG, and model discovery
+
+June's work landed as a run of accepted ADRs rather than a named epic; the [ADR index](adr/ADR-INDEX.md) is the source of truth for status and audit detail.
+
+| Work | ADR(s) | Date |
+|------|--------|------|
+| Safe AST expression interpreter replaces `eval()` in the engine condition evaluator | [ADR-024](adr/ADR-024-expression-evaluator-ast-sandbox.md) | 2026-06-13 |
+| Scoring/judge domain extracted into `agentic_v2.scoring` (breaks the server "god package"); import-time project-root resolution fix in the eval-config loader | [ADR-032](adr/ADR-032-extract-scoring-package.md), [ADR-033](adr/ADR-033-eval-config-project-root-resolution.md) | 2026-06-17 |
+| RAG pipeline architecture (`agentic_v2/rag/`, LanceDB + hybrid search) | [ADR-035](adr/ADR-035-rag-pipeline-architecture.md) | 2026-06-17 |
+| Model discovery overhaul: official `ollama` SDK backend, live Ollama discovery, LM Studio + ONNX local discovery, keyed cloud-provider discovery, and a curated single-source model registry with probe-time drift detection | [ADR-036](adr/ADR-036-ollama-sdk-backend.md) – [ADR-040](adr/ADR-040-curated-model-registry.md) | 2026-06-21 → 2026-06-25 |
+| Bounded human-approval gate timeout — a hung `ApprovalProvider` fails closed (DENIED) within a configurable bound (default 30 min) | [ADR-041](adr/ADR-041-approval-gate-timeout.md) | 2026-06-29 |
+
+**In flight:** [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) (Proposed, 2026-07-03) — adopt `agentic-evalkit` as the platform's evaluation framework via a sliced migration, superseding in-tree `agentic-v2-eval`. Slice B (the additive `evalkit_bridge` module) has landed; it is not yet wired into `step_scoring.py`.
 
 ---
 
