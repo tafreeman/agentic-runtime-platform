@@ -13,11 +13,11 @@
 <link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
-<style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
 <link href="../../stylesheets/tokens.css" rel="stylesheet"/>
-<link href="../../stylesheets/ember.css" rel="stylesheet"/>
-<link href="../../stylesheets/extra.css" rel="stylesheet"/>
+<link href="../../stylesheets/console.css" rel="stylesheet"/>
+<link href="../../stylesheets/landing.css" rel="stylesheet"/>
 <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
 <meta content="website" property="og:type"/>
 <meta content="ADR-008: Testing Approach Overhaul — Value-Driven Test Quality and Coverage Strategy - Agentic Runtime Platform" property="og:title"/>
@@ -32,7 +32,7 @@
 <meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." property="twitter:description"/>
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-008-testing-approach-overhaul.png" property="twitter:image"/>
 </head>
-<body data-md-color-accent="amber" data-md-color-primary="amber" data-md-color-scheme="slate" dir="ltr">
+<body data-md-color-accent="cyan" data-md-color-primary="black" data-md-color-scheme="slate" dir="ltr">
 <input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
@@ -67,17 +67,6 @@
 </div>
 </div>
 </div>
-<form class="md-header__option" data-md-component="palette">
-<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
-<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
-</label>
-<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="amber" data-md-color-media="" data-md-color-primary="amber" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
-<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
-</label>
-</form>
-<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
 <label class="md-header__button md-icon" for="__search">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
 </label>
@@ -146,7 +135,7 @@
   
     
   
-  Getting Started
+  Getting started
 
         </a>
 </li>
@@ -168,7 +157,7 @@
   
     
   
-  Deep Dives
+  Deep dives
 
         </a>
 </li>
@@ -179,7 +168,7 @@
   
     
   
-  API Reference
+  API reference
 
         </a>
 </li>
@@ -294,7 +283,7 @@
 <span class="md-ellipsis">
     
   
-    Getting Started
+    Getting started
   
 
     
@@ -309,7 +298,7 @@
 <span class="md-nav__icon md-icon"></span>
             
   
-    Getting Started
+    Getting started
   
 
           </label>
@@ -331,7 +320,7 @@
 <span class="md-ellipsis">
     
   
-    Quick Start
+    Quick start
   
 
     
@@ -343,7 +332,7 @@
 <span class="md-ellipsis">
     
   
-    First Workflow
+    First workflow
   
 
     
@@ -355,7 +344,7 @@
 <span class="md-ellipsis">
     
   
-    Development Guide
+    Development guide
   
 
     
@@ -367,7 +356,7 @@
 <span class="md-ellipsis">
     
   
-    No-LLM Dev Mode
+    No-LLM dev mode
   
 
     
@@ -429,7 +418,7 @@
 <span class="md-ellipsis">
     
   
-    Runtime Engine
+    Runtime engine
   
 
     
@@ -441,7 +430,7 @@
 <span class="md-ellipsis">
     
   
-    UI Dashboard
+    UI dashboard
   
 
     
@@ -453,7 +442,7 @@
 <span class="md-ellipsis">
     
   
-    Evaluation Framework
+    Evaluation framework
   
 
     
@@ -465,7 +454,7 @@
 <span class="md-ellipsis">
     
   
-    Tools &amp; Providers
+    Tools &amp; providers
   
 
     
@@ -494,7 +483,7 @@
 <span class="md-ellipsis">
     
   
-    Deep Dives
+    Deep dives
   
 
     
@@ -509,7 +498,7 @@
 <span class="md-nav__icon md-icon"></span>
             
   
-    Deep Dives
+    Deep dives
   
 
           </label>
@@ -543,7 +532,7 @@
 <span class="md-ellipsis">
     
   
-    Evaluation Engine
+    Evaluation engine
   
 
     
@@ -559,7 +548,7 @@
 <span class="md-ellipsis">
     
   
-    API Reference
+    API reference
   
 
     
@@ -571,7 +560,7 @@
 <span class="md-nav__icon md-icon"></span>
             
   
-    API Reference
+    API reference
   
 
           </label>
@@ -581,7 +570,7 @@
 <span class="md-ellipsis">
     
   
-    REST Endpoints
+    REST endpoints
   
 
     
@@ -593,7 +582,7 @@
 <span class="md-ellipsis">
     
   
-    Data Models
+    Data models
   
 
     
@@ -605,7 +594,7 @@
 <span class="md-ellipsis">
     
   
-    UI Components
+    UI components
   
 
     
@@ -617,7 +606,7 @@
 <span class="md-ellipsis">
     
   
-    UI Pages
+    UI pages
   
 
     
@@ -629,7 +618,7 @@
 <span class="md-ellipsis">
     
   
-    UI API Integration
+    UI API integration
   
 
     
@@ -671,7 +660,7 @@
 <span class="md-ellipsis">
     
   
-    Authoring Guide
+    Authoring guide
   
 
     
@@ -683,7 +672,7 @@
 <span class="md-ellipsis">
     
   
-    Pattern Catalog
+    Pattern catalog
   
 
     
@@ -721,7 +710,7 @@
 <span class="md-ellipsis">
     
   
-    Evaluation Framework
+    Evaluation framework
   
 
     
@@ -757,7 +746,7 @@
 <span class="md-ellipsis">
     
   
-    Production Gating
+    Production gating
   
 
     
@@ -823,7 +812,7 @@
 <span class="md-ellipsis">
     
   
-    Tools &amp; Providers
+    Tools &amp; providers
   
 
     
@@ -835,7 +824,7 @@
 <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM client
   
 
     
@@ -847,7 +836,7 @@
 <span class="md-ellipsis">
     
   
-    Local ONNX Models
+    Local ONNX models
   
 
     
@@ -871,7 +860,7 @@
 <span class="md-ellipsis">
     
   
-    Model Probing
+    Model probing
   
 
     
@@ -883,7 +872,7 @@
 <span class="md-ellipsis">
     
   
-    Provider Limits
+    Provider limits
   
 
     
@@ -937,7 +926,7 @@
 <span class="md-ellipsis">
     
   
-    Deployment Guide
+    Deployment guide
   
 
     
@@ -949,7 +938,7 @@
 <span class="md-ellipsis">
     
   
-    Security Hardening
+    Security hardening
   
 
     
@@ -999,7 +988,7 @@
 <span class="md-ellipsis">
     
   
-    Configuration Reference
+    Configuration reference
   
 
     
@@ -1023,7 +1012,7 @@
 <span class="md-ellipsis">
     
   
-    Coding Standards
+    Coding standards
   
 
     
@@ -1035,7 +1024,7 @@
 <span class="md-ellipsis">
     
   
-    Known Limitations
+    Known limitations
   
 
     
@@ -1047,7 +1036,7 @@
 <span class="md-ellipsis">
     
   
-    AI Risk Management
+    AI risk management
   
 
     

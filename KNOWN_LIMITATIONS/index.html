@@ -27,7 +27,7 @@
     
     
       
-        <title>Known Limitations - Agentic Runtime Platform</title>
+        <title>Known limitations - Agentic Runtime Platform</title>
       
     
     
@@ -48,16 +48,16 @@
         
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
-        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
       
     
     
       <link rel="stylesheet" href="../stylesheets/tokens.css">
     
-      <link rel="stylesheet" href="../stylesheets/ember.css">
+      <link rel="stylesheet" href="../stylesheets/console.css">
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/landing.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -67,7 +67,7 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Known Limitations - Agentic Runtime Platform" />
+<meta property="og:title" content="Known limitations - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/KNOWN_LIMITATIONS.png" />
 <meta property="og:image:type" content="image/png" />
@@ -75,7 +75,7 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/KNOWN_LIMITATIONS/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Known Limitations - Agentic Runtime Platform" />
+<meta property="twitter:title" content="Known limitations - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/KNOWN_LIMITATIONS.png" />
 </head>
@@ -83,12 +83,10 @@
   
     
     
-      
     
     
     
-    
-    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="cyan">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -131,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Known Limitations
+              Known limitations
             
           </span>
         </div>
@@ -139,33 +137,7 @@
     </div>
     
       
-        <form class="md-header__option" data-md-component="palette">
-  
     
-    
-    
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
-    
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-    
-    
-    
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="amber" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
-    
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
-      </label>
-    
-  
-</form>
-      
-    
-    
-      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -276,7 +248,7 @@
   
     
   
-  Getting Started
+  Getting started
 
         </a>
       </li>
@@ -320,7 +292,7 @@
   
     
   
-  Deep Dives
+  Deep dives
 
         </a>
       </li>
@@ -342,7 +314,7 @@
   
     
   
-  API Reference
+  API reference
 
         </a>
       </li>
@@ -605,7 +577,7 @@
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Getting started
   
 
     
@@ -627,7 +599,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Getting Started
+    Getting started
   
 
           </label>
@@ -677,7 +649,7 @@
   <span class="md-ellipsis">
     
   
-    Quick Start
+    Quick start
   
 
     
@@ -705,7 +677,7 @@
   <span class="md-ellipsis">
     
   
-    First Workflow
+    First workflow
   
 
     
@@ -733,7 +705,7 @@
   <span class="md-ellipsis">
     
   
-    Development Guide
+    Development guide
   
 
     
@@ -761,7 +733,7 @@
   <span class="md-ellipsis">
     
   
-    No-LLM Dev Mode
+    No-LLM dev mode
   
 
     
@@ -918,7 +890,7 @@
   <span class="md-ellipsis">
     
   
-    Runtime Engine
+    Runtime engine
   
 
     
@@ -946,7 +918,7 @@
   <span class="md-ellipsis">
     
   
-    UI Dashboard
+    UI dashboard
   
 
     
@@ -974,7 +946,7 @@
   <span class="md-ellipsis">
     
   
-    Evaluation Framework
+    Evaluation framework
   
 
     
@@ -1002,7 +974,7 @@
   <span class="md-ellipsis">
     
   
-    Tools & Providers
+    Tools & providers
   
 
     
@@ -1094,7 +1066,7 @@
   <span class="md-ellipsis">
     
   
-    Deep Dives
+    Deep dives
   
 
     
@@ -1116,7 +1088,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Deep Dives
+    Deep dives
   
 
           </label>
@@ -1194,7 +1166,7 @@
   <span class="md-ellipsis">
     
   
-    Evaluation Engine
+    Evaluation engine
   
 
     
@@ -1257,7 +1229,7 @@
   <span class="md-ellipsis">
     
   
-    API Reference
+    API reference
   
 
     
@@ -1273,7 +1245,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    API Reference
+    API reference
   
 
           </label>
@@ -1293,7 +1265,7 @@
   <span class="md-ellipsis">
     
   
-    REST Endpoints
+    REST endpoints
   
 
     
@@ -1321,7 +1293,7 @@
   <span class="md-ellipsis">
     
   
-    Data Models
+    Data models
   
 
     
@@ -1349,7 +1321,7 @@
   <span class="md-ellipsis">
     
   
-    UI Components
+    UI components
   
 
     
@@ -1377,7 +1349,7 @@
   <span class="md-ellipsis">
     
   
-    UI Pages
+    UI pages
   
 
     
@@ -1405,7 +1377,7 @@
   <span class="md-ellipsis">
     
   
-    UI API Integration
+    UI API integration
   
 
     
@@ -1509,7 +1481,7 @@
   <span class="md-ellipsis">
     
   
-    Authoring Guide
+    Authoring guide
   
 
     
@@ -1537,7 +1509,7 @@
   <span class="md-ellipsis">
     
   
-    Pattern Catalog
+    Pattern catalog
   
 
     
@@ -1640,7 +1612,7 @@
   <span class="md-ellipsis">
     
   
-    Evaluation Framework
+    Evaluation framework
   
 
     
@@ -1724,7 +1696,7 @@
   <span class="md-ellipsis">
     
   
-    Production Gating
+    Production gating
   
 
     
@@ -1896,7 +1868,7 @@
   <span class="md-ellipsis">
     
   
-    Tools & Providers
+    Tools & providers
   
 
     
@@ -1924,7 +1896,7 @@
   <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM client
   
 
     
@@ -1952,7 +1924,7 @@
   <span class="md-ellipsis">
     
   
-    Local ONNX Models
+    Local ONNX models
   
 
     
@@ -2008,7 +1980,7 @@
   <span class="md-ellipsis">
     
   
-    Model Probing
+    Model probing
   
 
     
@@ -2036,7 +2008,7 @@
   <span class="md-ellipsis">
     
   
-    Provider Limits
+    Provider limits
   
 
     
@@ -2172,7 +2144,7 @@
   <span class="md-ellipsis">
     
   
-    Deployment Guide
+    Deployment guide
   
 
     
@@ -2200,7 +2172,7 @@
   <span class="md-ellipsis">
     
   
-    Security Hardening
+    Security hardening
   
 
     
@@ -2334,7 +2306,7 @@
   <span class="md-ellipsis">
     
   
-    Configuration Reference
+    Configuration reference
   
 
     
@@ -2390,7 +2362,7 @@
   <span class="md-ellipsis">
     
   
-    Coding Standards
+    Coding standards
   
 
     
@@ -2427,7 +2399,7 @@
   <span class="md-ellipsis">
     
   
-    Known Limitations
+    Known limitations
   
 
     
@@ -2445,7 +2417,7 @@
   <span class="md-ellipsis">
     
   
-    Known Limitations
+    Known limitations
   
 
     
@@ -2710,7 +2682,7 @@
   <span class="md-ellipsis">
     
   
-    AI Risk Management
+    AI risk management
   
 
     
@@ -3475,7 +3447,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../CODING_STANDARDS/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Coding Standards">
+          <a href="../CODING_STANDARDS/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Coding standards">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3485,20 +3457,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Coding Standards
+                Coding standards
               </div>
             </div>
           </a>
         
         
           
-          <a href="../AI_RISK_MANAGEMENT/" class="md-footer__link md-footer__link--next" aria-label="Next: AI Risk Management">
+          <a href="../AI_RISK_MANAGEMENT/" class="md-footer__link md-footer__link--next" aria-label="Next: AI risk management">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                AI Risk Management
+                AI risk management
               </div>
             </div>
             <div class="md-footer__button md-icon">
