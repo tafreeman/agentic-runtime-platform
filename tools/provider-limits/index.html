@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#provider-rate-limits-model-ranking" class="md-skip">
+        <a href="#provider-rate-limits-and-model-ranking" class="md-skip">
           Skip to content
         </a>
       
@@ -2080,7 +2080,7 @@
   <a href="#full-three-step-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full Three-Step Pipeline
+        Full three-step pipeline
       
     </span>
   </a>
@@ -2232,21 +2232,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integration-with-llmclient" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with LLMClient
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        See also
       
     </span>
   </a>
@@ -2984,7 +2973,7 @@
   <a href="#full-three-step-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full Three-Step Pipeline
+        Full three-step pipeline
       
     </span>
   </a>
@@ -3136,21 +3125,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integration-with-llmclient" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with LLMClient
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        See also
       
     </span>
   </a>
@@ -3190,7 +3168,7 @@
   
 
 
-<h1 id="provider-rate-limits-model-ranking">Provider Rate Limits &amp; Model Ranking<a class="headerlink" href="#provider-rate-limits-model-ranking" title="Permanent link">&para;</a></h1>
+<h1 id="provider-rate-limits-and-model-ranking">Provider rate limits and model ranking<a class="headerlink" href="#provider-rate-limits-and-model-ranking" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p>Modules: <code>tools.llm.check_provider_limits</code> · <code>tools.llm.rank_models</code></p>
 </blockquote>
@@ -3211,7 +3189,7 @@
 </span></code></pre></div>
 <p><code>check_provider_limits</code> and <code>rank_models</code> are standalone CLI scripts designed to be run in sequence. The output files are consumed by the evaluation infrastructure and <code>model_bakeoff.py</code>.</p>
 <hr />
-<h2 id="full-three-step-pipeline">Full Three-Step Pipeline<a class="headerlink" href="#full-three-step-pipeline" title="Permanent link">&para;</a></h2>
+<h2 id="full-three-step-pipeline">Full three-step pipeline<a class="headerlink" href="#full-three-step-pipeline" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Step 1 — Probe model availability</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--discover<span class="w"> </span>--output<span class="w"> </span>runs/probe_output.json
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -3235,8 +3213,8 @@
 <p>Reads a model probe JSON file and performs lightweight HTTP checks against each provider for which an API key or host is configured. Extracts rate-limit headers and model counts.</p>
 <h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>tools/llm/check_provider_limits.py<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--probe-file<span class="w"> </span>&lt;path&gt;<span class="w">   </span><span class="c1"># default: filename.json</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--out<span class="w"> </span>&lt;path&gt;<span class="w">          </span><span class="c1"># optional: path to write results JSON</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--probe-file<span class="w"> </span>runs/probe_output.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--out<span class="w"> </span>runs/provider_limits.json
 </span></code></pre></div>
 <table>
 <thead>
@@ -3259,6 +3237,10 @@
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Note:</strong> The built-in <code>--probe-file</code> default (<code>filename.json</code>) is a leftover development
+artifact name — always pass your own probe file explicitly, as in the example above.</p>
+</blockquote>
 <h3 id="what-it-checks">What it checks<a class="headerlink" href="#what-it-checks" title="Permanent link">&para;</a></h3>
 <p>For each provider where a relevant env var is set, the script issues a single lightweight API call:</p>
 <table>
@@ -3445,7 +3427,7 @@
 <p><strong>Note:</strong> The default <code>--probe-file</code> path (<code>output44.json</code>) is a development artifact name. Always pass your own <code>--probe-file</code> explicitly.</p>
 </blockquote>
 <h3 id="ranking-algorithm">Ranking algorithm<a class="headerlink" href="#ranking-algorithm" title="Permanent link">&para;</a></h3>
-<p>Providers are scored by a static preference table and filtered by availability data:</p>
+<p>Providers are scored by a static preference table in <code>tools/llm/rank_models.py</code> (the source of truth for these values — regenerate this table from there rather than restating scores elsewhere):</p>
 <table>
 <thead>
 <tr>
@@ -3460,84 +3442,96 @@
 <td>1</td>
 <td><code>local_onnx</code></td>
 <td>100</td>
-<td>No external quota, highest throughput, free</td>
+<td>Local models on disk; no external quota or billing; highest throughput</td>
+</tr>
+<tr>
+<td>1.5</td>
+<td><code>ai_toolkit</code></td>
+<td>95</td>
+<td>VS Code AI Toolkit local models available</td>
 </tr>
 <tr>
 <td>2</td>
 <td><code>lmstudio</code></td>
 <td>90</td>
-<td>Local server, no quota</td>
+<td>LM Studio reachable locally, OpenAI-compatible</td>
+</tr>
+<tr>
+<td>2.5</td>
+<td><code>ollama</code> (reachable)</td>
+<td>85</td>
+<td>Ollama running locally</td>
 </tr>
 <tr>
 <td>3</td>
-<td><code>ollama</code></td>
-<td>88</td>
-<td>Local server, no quota</td>
+<td><code>openai</code></td>
+<td>80</td>
+<td>API validated and returning models; billable usage</td>
 </tr>
 <tr>
 <td>4</td>
-<td><code>github</code></td>
-<td>80</td>
-<td>Free tier with generous quota</td>
+<td><code>github_models</code></td>
+<td>70</td>
+<td>GitHub token valid; good fallback for <code>gh:</code> models</td>
 </tr>
 <tr>
 <td>5</td>
-<td><code>openai</code></td>
-<td>70</td>
-<td>Paid, reliable</td>
+<td><code>anthropic</code></td>
+<td>60</td>
+<td>Keys present; probe lists models</td>
 </tr>
 <tr>
 <td>6</td>
-<td><code>anthropic</code></td>
-<td>65</td>
-<td>Paid, reliable</td>
+<td><code>gemini</code></td>
+<td>50</td>
+<td>Keys present; quota check requires GCP Console</td>
 </tr>
 <tr>
 <td>7</td>
-<td><code>gemini</code></td>
-<td>60</td>
-<td>Paid</td>
-</tr>
-<tr>
-<td>8</td>
-<td><code>azure</code></td>
-<td>55</td>
-<td>Enterprise, higher cost</td>
-</tr>
-<tr>
-<td>9</td>
-<td><code>windows_ai</code></td>
-<td>50</td>
-<td>Hardware-gated</td>
+<td><code>ollama</code> (unreachable)</td>
+<td>30</td>
+<td>Fallback score when the Ollama host check fails (e.g. returns 404) — the provider is still listed, just deprioritized</td>
 </tr>
 </tbody>
 </table>
-<p>Providers with <code>available: false</code> in the probe data or <code>ok: false</code> in the limits data are excluded from the output.</p>
+<p>Ranks can be fractional (<code>ai_toolkit</code> slots in at 1.5, reachable <code>ollama</code> at 2.5). Azure and Windows AI are not ranked by this script. A provider is included only when it appears in the probe data; <code>lmstudio</code> additionally requires a reachable host, <code>openai</code> requires a non-empty model list, and <code>ai_toolkit</code> requires at least one local model.</p>
 <h3 id="output-schema_1">Output schema<a class="headerlink" href="#output-schema_1" title="Permanent link">&para;</a></h3>
+<p>The output is a JSON object whose <code>providers</code> field is a <strong>dict keyed by provider name</strong> (not an array):</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;ranked_providers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">      </span><span class="nt">&quot;provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local_onnx&quot;</span><span class="p">,</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">      </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">      </span><span class="nt">&quot;rank&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">      </span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Local models available on disk; no external quota or billing; highest throughput.&quot;</span><span class="p">,</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">      </span><span class="nt">&quot;available_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">      </span><span class="nt">&quot;models&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;local:mistral&quot;</span><span class="p">]</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">&quot;provider&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;github&quot;</span><span class="p">,</span>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">      </span><span class="nt">&quot;rank&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">      </span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GitHub Models API — free tier, generous quota, good model selection.&quot;</span><span class="p">,</span>
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">      </span><span class="nt">&quot;available_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">      </span><span class="nt">&quot;models&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gh:gpt-4o&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gh:o1-mini&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">]</span>
-</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">  </span><span class="nt">&quot;recommended_model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span>
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">  </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-21T14:23:00Z&quot;</span>
-</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="p">}</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-21T14:23:00Z&quot;</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">&quot;source_probe&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;runs/probe_output.json&quot;</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">&quot;source_checks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;runs/provider_limits.json&quot;</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="nt">&quot;total_available&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span><span class="nt">&quot;providers_configured&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span><span class="nt">&quot;note&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Scoring favors local availability, reachable local APIs, then authenticated cloud providers.&quot;</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span><span class="p">},</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="nt">&quot;providers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span><span class="nt">&quot;local_onnx&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">      </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">      </span><span class="nt">&quot;rank&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">      </span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Local models available on disk; no external quota or billing; highest throughput.&quot;</span><span class="p">,</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">      </span><span class="nt">&quot;available_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">      </span><span class="nt">&quot;models&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;local:mistral&quot;</span><span class="p">]</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="w">    </span><span class="p">},</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">    </span><span class="nt">&quot;github_models&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="w">      </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">70</span><span class="p">,</span>
+</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="w">      </span><span class="nt">&quot;rank&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="w">      </span><span class="nt">&quot;reason&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GitHub token valid. Good fallback for gh: models.&quot;</span><span class="p">,</span>
+</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">      </span><span class="nt">&quot;available_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
+</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">      </span><span class="nt">&quot;models&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gh:gpt-4o&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">],</span>
+</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="w">      </span><span class="nt">&quot;evidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;rate_core_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5000</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rate_core_remaining&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4987</span><span class="p">}</span>
+</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">  </span><span class="p">},</span>
+</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">  </span><span class="nt">&quot;recommended_use_cases&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="w">    </span><span class="nt">&quot;high_throughput_low_cost&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local_onnx&quot;</span><span class="p">,</span>
+</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="w">    </span><span class="nt">&quot;local_api_with_compat&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;lmstudio&quot;</span><span class="p">,</span>
+</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="nt">&quot;best_capability_paid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;openai&quot;</span><span class="p">,</span>
+</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">    </span><span class="nt">&quot;fallback_catalog&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;github_models&quot;</span>
+</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="p">}</span>
 </span></code></pre></div>
-<p><code>recommended_model</code> is the top-ranked single model, suitable as a default for single-model evaluation tasks.</p>
+<p>Some entries carry an <code>evidence</code> field (HTTP status, rate-limit headers) from the limits check. <code>recommended_use_cases</code> maps common evaluation scenarios to the preferred provider given what was found.</p>
 <h3 id="python-api_1">Python API<a class="headerlink" href="#python-api_1" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.rank_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
@@ -3549,10 +3543,9 @@
 </span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">])</span>
 </span></code></pre></div>
 <hr />
-<h2 id="integration-with-llmclient">Integration with <code>LLMClient</code><a class="headerlink" href="#integration-with-llmclient" title="Permanent link">&para;</a></h2>
-<p>The <code>model_ranking.json</code> file is read by <code>LLMClient</code> when it auto-selects a model (when no explicit model is specified). This means running the full three-step pipeline before a batch eval session ensures <code>LLMClient</code> picks the best available model automatically.</p>
+<p>The ranking file is a standalone artifact for evaluation planning — <code>LLMClient</code> does not read <code>model_ranking.json</code>; model selection there is always explicit via the provider-prefixed model name.</p>
 <hr />
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../model-probing/">model-probing.md</a> — step 1 of the pipeline (availability probe)</li>
 <li><a href="../benchmarks/">benchmarks.md</a> — full multi-model bakeoff using probe + limits + rank</li>
@@ -3580,7 +3573,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

@@ -1250,7 +1250,7 @@
   <a href="#integration-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration Boundaries
+        Integration boundaries
       
     </span>
   </a>
@@ -1266,12 +1266,12 @@
   <a href="#module-by-module-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module-by-Module Reference
+        Module-by-module reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Module-by-Module Reference">
+    <nav class="md-nav" aria-label="Module-by-module reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1481,7 +1481,7 @@
   <a href="#data-flow-cli-evaluate-command" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: CLI evaluate Command
+        Data flow: CLI evaluate command
       
     </span>
   </a>
@@ -1492,7 +1492,7 @@
   <a href="#data-flow-patternevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: PatternEvaluator
+        Data flow: PatternEvaluator
       
     </span>
   </a>
@@ -1503,7 +1503,7 @@
   <a href="#data-flow-asyncstreamingrunner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: AsyncStreamingRunner
+        Data flow: AsyncStreamingRunner
       
     </span>
   </a>
@@ -1514,7 +1514,7 @@
   <a href="#rubric-yaml-format-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric YAML Format Reference
+        Rubric YAML format reference
       
     </span>
   </a>
@@ -1525,7 +1525,7 @@
   <a href="#known-limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known Limitations
+        Known limitations
       
     </span>
   </a>
@@ -3117,7 +3117,7 @@
   <a href="#integration-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration Boundaries
+        Integration boundaries
       
     </span>
   </a>
@@ -3133,12 +3133,12 @@
   <a href="#module-by-module-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module-by-Module Reference
+        Module-by-module reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Module-by-Module Reference">
+    <nav class="md-nav" aria-label="Module-by-module reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3348,7 +3348,7 @@
   <a href="#data-flow-cli-evaluate-command" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: CLI evaluate Command
+        Data flow: CLI evaluate command
       
     </span>
   </a>
@@ -3359,7 +3359,7 @@
   <a href="#data-flow-patternevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: PatternEvaluator
+        Data flow: PatternEvaluator
       
     </span>
   </a>
@@ -3370,7 +3370,7 @@
   <a href="#data-flow-asyncstreamingrunner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data Flow: AsyncStreamingRunner
+        Data flow: AsyncStreamingRunner
       
     </span>
   </a>
@@ -3381,7 +3381,7 @@
   <a href="#rubric-yaml-format-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric YAML Format Reference
+        Rubric YAML format reference
       
     </span>
   </a>
@@ -3392,7 +3392,7 @@
   <a href="#known-limitations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Known Limitations
+        Known limitations
       
     </span>
   </a>
@@ -3456,11 +3456,10 @@
   
 
 
-<h1 id="agentic-v2-eval-deep-dive">agentic-v2-eval — Deep Dive<a class="headerlink" href="#agentic-v2-eval-deep-dive" title="Permanent link">&para;</a></h1>
+<h1 id="agentic-v2-eval-deep-dive">agentic-v2-eval — Deep dive<a class="headerlink" href="#agentic-v2-eval-deep-dive" title="Permanent link">&para;</a></h1>
 <p><strong>Version:</strong> 0.3.0
-<strong>Scope:</strong> <code>agentic-v2-eval/</code>
-<strong>Reading time:</strong> ~45 minutes</p>
-<p>This document covers every module and design decision in depth. For a shorter architectural overview, see <code>docs/architecture-eval.md</code>. For specific subsystem references, see the <code>docs/evaluation/</code> folder.</p>
+<strong>Scope:</strong> <code>agentic-v2-eval/</code></p>
+<p>This document covers every module and design decision in depth. For a shorter architectural overview, see <a href="../architecture-eval/"><code>architecture-eval.md</code></a>. For specific subsystem references, see the <a href="evaluation/"><code>evaluation/</code></a> folder.</p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p><code>agentic-v2-eval</code> is the evaluation framework for the <code>agentic-runtime-platform</code> monorepo. It scores LLM outputs (prose, prompts, code, agentic workflow runs) against weighted rubrics, using deterministic LLM-as-judge patterns plus static metrics, and produces reproducible reports in JSON, Markdown, or HTML.</p>
@@ -3474,7 +3473,7 @@
 <li>Subprocess sandbox for executing evaluation-time code</li>
 <li>Dataset bridge to <code>tools.agents.benchmarks</code> (HumanEval, MBPP, SWE-bench, etc.)</li>
 </ul>
-<h3 id="integration-boundaries">Integration Boundaries<a class="headerlink" href="#integration-boundaries" title="Permanent link">&para;</a></h3>
+<h3 id="integration-boundaries">Integration boundaries<a class="headerlink" href="#integration-boundaries" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>agentic-tools
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  └── LLMClient                    ← lazy-loaded by adapters/llm_client.py
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
@@ -3484,7 +3483,7 @@
 </span></code></pre></div>
 <p>The package can be imported without <code>agentic-tools</code> installed. Tests inject mocks. Downstream callers (<code>agentic-workflows-v2</code>) import only the protocol types.</p>
 <hr />
-<h2 id="module-by-module-reference">Module-by-Module Reference<a class="headerlink" href="#module-by-module-reference" title="Permanent link">&para;</a></h2>
+<h2 id="module-by-module-reference">Module-by-module reference<a class="headerlink" href="#module-by-module-reference" title="Permanent link">&para;</a></h2>
 <h3 id="__init__py"><code>__init__.py</code><a class="headerlink" href="#__init__py" title="Permanent link">&para;</a></h3>
 <p>Exports 16 public symbols. Defines <code>__version__ = "0.3.0"</code>. Imports are eager for the six evaluator-related symbols and the five quality dimension constants; <code>LLMClientProtocol</code> and <code>Evaluator</code> are imported from <code>interfaces.py</code>.</p>
 <p>The five quality dimension constants (<code>COHERENCE</code>, <code>FLUENCY</code>, <code>RELEVANCE</code>, <code>GROUNDEDNESS</code>, <code>SIMILARITY</code>) are <code>LLMEvaluatorDefinition | None</code>. They are populated from <code>rubrics/quality.yaml</code> at import time. If the YAML load fails, they fall back to empty <code>LLMEvaluatorDefinition</code> placeholders rather than raising, preserving importability in degraded environments.</p>
@@ -3565,7 +3564,7 @@
 <h3 id="evaluatorsstandardpy"><code>evaluators/standard.py</code><a class="headerlink" href="#evaluatorsstandardpy" title="Permanent link">&para;</a></h3>
 <p><strong><code>StandardScore</code></strong> — 10-field result. Key fields: <code>scores: dict[str, float]</code> (clarity/effectiveness/structure/specificity/completeness, each 0–10), <code>overall_score: float</code> (simple mean of five), <code>grade: str</code> (A/B/C/D/F), <code>passed: bool</code> (overall ≥ 7.0), <code>improvements: list[str]</code> (up to 5 deduplicated suggestions), <code>confidence: float</code> (median judge confidence).</p>
 <p><strong><code>StandardEvaluator.score_prompt()</code></strong> — the main entry point. Handles input truncation at 18,000 characters (16,000 head + 1,000 tail). Calls the judge <code>N</code> times, collecting parseable JSON responses. Aggregates dimension scores via median. Deduplicates improvement suggestions (preserving insertion order using <code>dict.fromkeys</code>). Computes letter grade via <code>_get_grade()</code> using the percent-of-10 scale.</p>
-<p>The judge prompt is loaded from <code>rubrics/prompt_standard.yaml</code> via <code>_load_standard_prompt()</code> at module import time. The prompt instructs the judge to return ONLY a JSON object (no markdown fences) with the schema shown in <code>docs/evaluation/judge.md</code>.</p>
+<p>The judge prompt is loaded from <code>rubrics/prompt_standard.yaml</code> via <code>_load_standard_prompt()</code> at module import time. The prompt instructs the judge to return ONLY a JSON object (no markdown fences) with the schema shown in <a href="../evaluation/judge/"><code>evaluation/judge.md</code></a>.</p>
 <h3 id="runnersbatchpy"><code>runners/batch.py</code><a class="headerlink" href="#runnersbatchpy" title="Permanent link">&para;</a></h3>
 <p><strong><code>BatchResult[R]</code></strong> — generic dataclass. <code>results: list[R]</code>, <code>errors: list[tuple[int, Exception]]</code>, <code>total: int</code>, <code>successful: int</code>, <code>failed: int</code>, and computed property <code>success_rate: float</code>.</p>
 <p><strong><code>BatchRunner[T, R]</code></strong> — constructor takes <code>evaluator: Callable[[T], R]</code>, optional <code>on_progress: Callable[[int, int], None]</code>, optional <code>on_error: Callable[[int, T, Exception], None]</code>, and <code>continue_on_error: bool = True</code>.</p>
@@ -3626,7 +3625,7 @@
 <li><code>TimeoutExpired</code> is caught and returned as an error result rather than propagating.</li>
 </ul>
 <hr />
-<h2 id="data-flow-cli-evaluate-command">Data Flow: CLI evaluate Command<a class="headerlink" href="#data-flow-cli-evaluate-command" title="Permanent link">&para;</a></h2>
+<h2 id="data-flow-cli-evaluate-command">Data flow: CLI evaluate command<a class="headerlink" href="#data-flow-cli-evaluate-command" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>results.json
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    └── json.load()
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>         └── [list of dicts] or {&quot;results&quot;: [...]}
@@ -3641,7 +3640,7 @@
 </span></code></pre></div>
 <p>The <code>evaluate</code> command does not invoke any LLM. It applies only the rubric's weighted scoring to pre-computed metrics. For LLM-based scoring, the caller must instantiate an evaluator directly.</p>
 <hr />
-<h2 id="data-flow-patternevaluator">Data Flow: PatternEvaluator<a class="headerlink" href="#data-flow-patternevaluator" title="Permanent link">&para;</a></h2>
+<h2 id="data-flow-patternevaluator">Data flow: PatternEvaluator<a class="headerlink" href="#data-flow-patternevaluator" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>score_pattern(prompt_name, prompt_content, model_output, pattern, model, runs, temperature)
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    ├── validate pattern exists in PATTERN_PHASES
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    ├── escape braces in prompt_content and model_output
@@ -3660,7 +3659,7 @@
 </span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    └── return PatternScore(...)
 </span></code></pre></div>
 <hr />
-<h2 id="data-flow-asyncstreamingrunner">Data Flow: AsyncStreamingRunner<a class="headerlink" href="#data-flow-asyncstreamingrunner" title="Permanent link">&para;</a></h2>
+<h2 id="data-flow-asyncstreamingrunner">Data flow: AsyncStreamingRunner<a class="headerlink" href="#data-flow-asyncstreamingrunner" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>iter_results(test_cases)
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    ├── normalize test_cases to async iterator via _aiter_cases()
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    ├── semaphore = asyncio.Semaphore(max_concurrency)
@@ -3682,7 +3681,7 @@
 </span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>         └── else: log warning + optionally raise outcome[1]
 </span></code></pre></div>
 <hr />
-<h2 id="rubric-yaml-format-reference">Rubric YAML Format Reference<a class="headerlink" href="#rubric-yaml-format-reference" title="Permanent link">&para;</a></h2>
+<h2 id="rubric-yaml-format-reference">Rubric YAML format reference<a class="headerlink" href="#rubric-yaml-format-reference" title="Permanent link">&para;</a></h2>
 <p>A complete rubric YAML file can have the following keys:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;My</span><span class="nv"> </span><span class="s">Rubric&quot;</span><span class="w">          </span><span class="c1"># optional display name</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span><span class="w">             </span><span class="c1"># optional version string</span>
@@ -3712,7 +3711,7 @@
 </span></code></pre></div>
 <p>Only <code>criteria[].name</code> and <code>criteria[].weight</code> are required for <code>Scorer</code>. All other fields are advisory or used by specific evaluator types.</p>
 <hr />
-<h2 id="known-limitations">Known Limitations<a class="headerlink" href="#known-limitations" title="Permanent link">&para;</a></h2>
+<h2 id="known-limitations">Known limitations<a class="headerlink" href="#known-limitations" title="Permanent link">&para;</a></h2>
 <ol>
 <li>
 <p><strong>One <code># type: ignore[return-value]</code></strong> at <code>runners/streaming.py:199</code> — mypy cannot narrow the type through <code>inspect.isawaitable</code> at this location. The runtime behavior is correct; the ignore is intentional and documented.</p>
@@ -3721,7 +3720,7 @@
 <p><strong><code>safe_mode</code> in <code>LocalSubprocessSandbox</code> is code-string scanning, not syscall interception.</strong> It can be bypassed by obfuscated code. Use Docker for stronger isolation.</p>
 </li>
 <li>
-<p><strong><code>PatternEvaluator</code> defaults to <code>runs=1</code></strong> in the constructor signature. The original design intention was <code>runs=20</code> for variance reduction. The default was changed to 1 for speed during development. Callers should explicitly set <code>runs=20</code> for production evaluations.</p>
+<p><strong><code>PatternEvaluator</code> defaults to <code>runs=1</code></strong> in the constructor signature. A single run is the fast default suited to local iteration; because the LLM judge is stochastic, production evaluations should set a higher <code>runs</code> value (e.g. <code>runs=20</code>) so scores are aggregated across runs for variance reduction.</p>
 </li>
 <li>
 <p><strong><code>QualityEvaluator.evaluate()</code> returns <code>0.0</code> on LLM exception</strong> — the exception is logged with <code>print()</code> rather than a structured logger. This was flagged in the original code review. Use <code>logging.getLogger(__name__)</code> in production wrappers.</p>
@@ -3752,7 +3751,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

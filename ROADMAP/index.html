@@ -2656,30 +2656,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-shipped-in-may-2026" class="md-nav__link">
+  <a href="#2-shipped-in-may-2026-epic-8-production-readiness-pack-by-2026-05-11" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Shipped in May 2026
+        2. Shipped in May 2026 — Epic 8: Production Readiness Pack (by 2026-05-11)
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="2. Shipped in May 2026">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#epic-8-production-readiness-pack" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Epic 8 — Production Readiness Pack
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2727,6 +2710,17 @@
     <span class="md-ellipsis">
       
         3b. Shipped in May 2026 — Epic 7: First-Run Experience (2026-05-21)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3c-shipped-in-june-2026-engine-safety-scoring-extraction-rag-and-model-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3c. Shipped in June 2026 — engine safety, scoring extraction, RAG, and model discovery
       
     </span>
   </a>
@@ -2966,30 +2960,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-shipped-in-may-2026" class="md-nav__link">
+  <a href="#2-shipped-in-may-2026-epic-8-production-readiness-pack-by-2026-05-11" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Shipped in May 2026
+        2. Shipped in May 2026 — Epic 8: Production Readiness Pack (by 2026-05-11)
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="2. Shipped in May 2026">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#epic-8-production-readiness-pack" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Epic 8 — Production Readiness Pack
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3037,6 +3014,17 @@
     <span class="md-ellipsis">
       
         3b. Shipped in May 2026 — Epic 7: First-Run Experience (2026-05-21)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3c-shipped-in-june-2026-engine-safety-scoring-extraction-rag-and-model-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3c. Shipped in June 2026 — engine safety, scoring extraction, RAG, and model discovery
       
     </span>
   </a>
@@ -3130,7 +3118,7 @@
 <blockquote>
 <p><strong>Audience:</strong> Contributors, reviewers, and stakeholders asking "what shipped, what's next, and why is Epic 4 missing?"
 <strong>Outcome:</strong> After reading, you can answer "is this in scope this quarter?" without asking a human.
-<strong>Last verified:</strong> 2026-05-21</p>
+<strong>Last verified:</strong> 2026-07-05</p>
 </blockquote>
 <p>This is the in-repo backlog. Day-to-day sprint tracking lives in issues; this file captures the load-bearing multi-week arcs. If you are about to propose a new initiative, add a stub under <strong>Proposed</strong> and open a PR for review — a roadmap entry without a PR is aspiration.</p>
 <hr />
@@ -3178,8 +3166,7 @@
 <p>This is a <strong>tombstone</strong>, not a gap: do not retroactively renumber 5/6 down to 4/5, and do not reclaim "Epic 4" for a future initiative. Future epics continue from Epic 7.</p>
 <p><em>Verification:</em> <code>git log --all --grep="epic.4" -i</code> returns zero matches as of 2026-04-22. A repo-wide grep of source + docs returns the same.</p>
 <hr />
-<h2 id="2-shipped-in-may-2026">2. Shipped in May 2026<a class="headerlink" href="#2-shipped-in-may-2026" title="Permanent link">&para;</a></h2>
-<h3 id="epic-8-production-readiness-pack">Epic 8 — Production Readiness Pack<a class="headerlink" href="#epic-8-production-readiness-pack" title="Permanent link">&para;</a></h3>
+<h2 id="2-shipped-in-may-2026-epic-8-production-readiness-pack-by-2026-05-11">2. Shipped in May 2026 — Epic 8: Production Readiness Pack (by 2026-05-11)<a class="headerlink" href="#2-shipped-in-may-2026-epic-8-production-readiness-pack-by-2026-05-11" title="Permanent link">&para;</a></h2>
 <p>Epic 8 focused on closing the gaps to make the platform "enterprise-grade for regulated production environments."
 - <strong>E8-1</strong>: Mandatory OIDC JWT authentication (<code>auth_oidc.py</code>).
 - <strong>E8-2</strong>: Tenant isolation with hard boundaries for runs and datasets (<code>tenant.py</code>).
@@ -3199,7 +3186,7 @@
 </thead>
 <tbody>
 <tr>
-<td>Wire-format type generation extended to <code>DAGResponse</code>, <code>WorkflowInputSchemaResponse</code>, <code>WorkflowEditorStep</code>, <code>RunsSummaryResponse</code></td>
+<td>Wire-format type generation extended to four additional shapes (<code>DAGResponse</code>, <code>WorkflowInputSchemaResponse</code>, <code>WorkflowEditorStep</code>, <code>RunsSummaryResponse</code>), bringing drift-gate coverage to six shapes total — see <a href="../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS §1.1</a></td>
 <td>T1-1</td>
 <td>2026-05-14 (Sprint 1, see CHANGELOG)</td>
 </tr>
@@ -3380,6 +3367,46 @@
 </tbody>
 </table>
 <hr />
+<h2 id="3c-shipped-in-june-2026-engine-safety-scoring-extraction-rag-and-model-discovery">3c. Shipped in June 2026 — engine safety, scoring extraction, RAG, and model discovery<a class="headerlink" href="#3c-shipped-in-june-2026-engine-safety-scoring-extraction-rag-and-model-discovery" title="Permanent link">&para;</a></h2>
+<p>June's work landed as a run of accepted ADRs rather than a named epic; the <a href="../adr/ADR-INDEX/">ADR index</a> is the source of truth for status and audit detail.</p>
+<table>
+<thead>
+<tr>
+<th>Work</th>
+<th>ADR(s)</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Safe AST expression interpreter replaces <code>eval()</code> in the engine condition evaluator</td>
+<td><a href="../adr/ADR-024-expression-evaluator-ast-sandbox/">ADR-024</a></td>
+<td>2026-06-13</td>
+</tr>
+<tr>
+<td>Scoring/judge domain extracted into <code>agentic_v2.scoring</code> (breaks the server "god package"); import-time project-root resolution fix in the eval-config loader</td>
+<td><a href="../adr/ADR-032-extract-scoring-package/">ADR-032</a>, <a href="../adr/ADR-033-eval-config-project-root-resolution/">ADR-033</a></td>
+<td>2026-06-17</td>
+</tr>
+<tr>
+<td>RAG pipeline architecture (<code>agentic_v2/rag/</code>, LanceDB + hybrid search)</td>
+<td><a href="../adr/ADR-035-rag-pipeline-architecture/">ADR-035</a></td>
+<td>2026-06-17</td>
+</tr>
+<tr>
+<td>Model discovery overhaul: official <code>ollama</code> SDK backend, live Ollama discovery, LM Studio + ONNX local discovery, keyed cloud-provider discovery, and a curated single-source model registry with probe-time drift detection</td>
+<td><a href="../adr/ADR-036-ollama-sdk-backend/">ADR-036</a> – <a href="../adr/ADR-040-curated-model-registry/">ADR-040</a></td>
+<td>2026-06-21 → 2026-06-25</td>
+</tr>
+<tr>
+<td>Bounded human-approval gate timeout — a hung <code>ApprovalProvider</code> fails closed (DENIED) within a configurable bound (default 30 min)</td>
+<td><a href="../adr/ADR-041-approval-gate-timeout/">ADR-041</a></td>
+<td>2026-06-29</td>
+</tr>
+</tbody>
+</table>
+<p><strong>In flight:</strong> <a href="../adr/ADR-042-agentic-evalkit-adoption/">ADR-042</a> (Proposed, 2026-07-03) — adopt <code>agentic-evalkit</code> as the platform's evaluation framework via a sliced migration, superseding in-tree <code>agentic-v2-eval</code>. Slice B (the additive <code>evalkit_bridge</code> module) has landed; it is not yet wired into <code>step_scoring.py</code>.</p>
+<hr />
 <h2 id="4-proposed">4. Proposed<a class="headerlink" href="#4-proposed" title="Permanent link">&para;</a></h2>
 <h3 id="epic-9-multi-run-comparison-candidate">Epic 9 — Multi-Run Comparison (candidate)<a class="headerlink" href="#epic-9-multi-run-comparison-candidate" title="Permanent link">&para;</a></h3>
 <p><strong>Problem statement:</strong> Today the UI shows one run at a time. A frequent workflow during evaluation is comparing two or three runs side by side — same workflow, different prompts or adapters — to spot regressions. Some primitives exist (<code>agentic compare</code>, ADR-012 UI Evaluation Hub proposed), but the full comparison UX has not been built.</p>
@@ -3423,7 +3450,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

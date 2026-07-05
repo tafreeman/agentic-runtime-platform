@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Every production workflow shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML.">
+        <meta name="description" content="Every workflow definition shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Workflow Reference - Agentic Runtime Platform</title>
+        <title>Workflow reference - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Workflow Reference - Agentic Runtime Platform" />
-<meta property="og:description" content="Every production workflow shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML." />
+<meta property="og:title" content="Workflow reference - Agentic Runtime Platform" />
+<meta property="og:description" content="Every workflow definition shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/workflows/index.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/workflows/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Workflow Reference - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Every production workflow shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML." />
+<meta property="twitter:title" content="Workflow reference - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Every workflow definition shipped with Agentic Runtime Platform — pattern type, agent count, typical use case, and a link to the source YAML." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/workflows/index.png" />
 </head>
   
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Workflow Reference
+              Workflow reference
             
           </span>
         </div>
@@ -2801,10 +2801,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#consensus_review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        consensus_review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#test_deterministic" class="md-nav__link">
     <span class="md-ellipsis">
       
         test_deterministic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test_workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_workflow
       
     </span>
   </a>
@@ -2869,9 +2891,10 @@
   
 
 
-<h1 id="workflow-reference">Workflow Reference<a class="headerlink" href="#workflow-reference" title="Permanent link">&para;</a></h1>
-<p>Six workflow definitions ship with the runtime today. Each is a real,
-runnable YAML file under
+<h1 id="workflow-reference">Workflow reference<a class="headerlink" href="#workflow-reference" title="Permanent link">&para;</a></h1>
+<p>Eight workflow definitions ship with the runtime today — six production
+workflows plus two deterministic test fixtures. Each is a real, runnable
+YAML file under
 <a href="https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/workflows/definitions"><code>agentic-workflows-v2/agentic_v2/workflows/definitions/</code></a>.
 They are deployed alongside the runtime and exercised by the test suite, so
 they double as the canonical examples for every grammar feature the engine
@@ -2924,18 +2947,32 @@ supports.</p>
 <td>Branch on requirements; only execute the gates that matter</td>
 </tr>
 <tr>
+<td><a href="#consensus_review"><code>consensus_review</code></a></td>
+<td>Ensemble with majority vote</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td>Three independent reviewers vote; summarize only on agreement</td>
+</tr>
+<tr>
 <td><a href="#test_deterministic"><code>test_deterministic</code></a></td>
 <td>Tier-0 only (no LLM)</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 <td>Smoke test for the executor itself; no provider needed</td>
 </tr>
+<tr>
+<td><a href="#test_workflow"><code>test_workflow</code></a></td>
+<td>Tier-0 only (no LLM)</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td>Fixture for server and evaluation tests</td>
+</tr>
 </tbody>
 </table>
-<p>The columns mean exactly what they appear to mean: <strong>Steps</strong> counts entries
-under <code>steps:</code>; <strong>Agents</strong> counts the unique <code>agent:</code> values referenced; and
-<strong>Pattern</strong> is the dominant control-flow shape — every workflow combines
-features, but each leans on one shape more than the others.</p>
+<p><strong>Steps</strong> counts entries under <code>steps:</code>; <strong>Agents</strong> counts the unique
+<code>agent:</code> values referenced; and <strong>Pattern</strong> is the dominant control-flow
+shape — every workflow combines features, but each leans on one shape more
+than the others.</p>
 <h2 id="code_review"><code>code_review</code><a class="headerlink" href="#code_review" title="Permanent link">&para;</a></h2>
 <p>Multi-tier code review with a fan-out / fan-in shape. The first step
 parses the source file; three downstream steps run in parallel — style,
@@ -3013,21 +3050,56 @@ assembler at the end coalesces whatever results are present.</p>
   request shapes; you want a single definition rather than four near-duplicates</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/conditional_branching.yaml">View YAML →</a></p>
+<h2 id="consensus_review"><code>consensus_review</code><a class="headerlink" href="#consensus_review" title="Permanent link">&para;</a></h2>
+<p>A self-consistency / ensemble review pattern. Three independent tier-2
+reviewers answer the same prompt in parallel; a deterministic tier-0
+aggregator majority-votes their verdicts; a final summary step runs only
+when the vote clears the <code>min_agreement</code> threshold (default 0.66). The
+workflow's own description calls it "a usable production pattern, not a
+demo" — point any verdict-producing reviewer agents at it and tune
+<code>min_agreement</code>.</p>
+<ul>
+<li><strong>Pattern:</strong> Ensemble with majority vote</li>
+<li><strong>Steps:</strong> (<code>reviewer_a</code> ‖ <code>reviewer_b</code> ‖ <code>reviewer_c</code>) → <code>vote</code> →
+  <code>summarize</code> (gated on <code>meets_threshold</code>)</li>
+<li><strong>Agents:</strong> <code>tier0_consensus</code>, <code>tier2_reviewer</code>, <code>tier2_summarizer</code></li>
+<li><strong>Inputs:</strong> <code>code_file</code>, <code>min_agreement</code></li>
+<li><strong>Outputs:</strong> <code>verdict</code>, <code>agreement</code>, <code>summary</code> (optional)</li>
+<li><strong>When to reach for it:</strong> a single reviewer's verdict is too noisy and
+  you want agreement across independent samples before acting on it</li>
+</ul>
+<p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml">View YAML →</a></p>
 <h2 id="test_deterministic"><code>test_deterministic</code><a class="headerlink" href="#test_deterministic" title="Permanent link">&para;</a></h2>
-<p>The smallest workflow: three steps with two tier-0 agents and no LLM
+<p>The smallest workflow: two steps with two tier-0 agents and no LLM
 calls. Used by the test suite to assert the executor, contract validator,
 and run recorder all work in isolation. It is also the workflow the
 <a href="../getting-started/quickstart/">Quick Start</a> page asks you to run
 first.</p>
 <ul>
 <li><strong>Pattern:</strong> Tier-0 only (no LLM)</li>
-<li><strong>Steps:</strong> <code>step1</code> → <code>step2</code> (plus internal probe step)</li>
+<li><strong>Steps:</strong> <code>step1</code> → <code>step2</code></li>
 <li><strong>Agents:</strong> <code>tier0_counter</code>, <code>tier0_process</code></li>
-<li><strong>Inputs:</strong> <code>input_text</code></li>
+<li><strong>Inputs:</strong> <code>input_text</code> (required)</li>
+<li><strong>Outputs:</strong> <code>processed_text</code>, <code>step_count</code></li>
 <li><strong>When to reach for it:</strong> smoke-testing a fresh install before swapping
   in real provider keys</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml">View YAML →</a></p>
+<h2 id="test_workflow"><code>test_workflow</code><a class="headerlink" href="#test_workflow" title="Permanent link">&para;</a></h2>
+<p>A test fixture that mirrors <code>test_deterministic</code> — the same two tier-0
+steps (process, then count) — but with <code>input_text</code> optional and
+defaulting to an empty string, so server and evaluation tests can run it
+with no inputs at all.</p>
+<ul>
+<li><strong>Pattern:</strong> Tier-0 only (no LLM)</li>
+<li><strong>Steps:</strong> <code>step1</code> → <code>step2</code></li>
+<li><strong>Agents:</strong> <code>tier0_counter</code>, <code>tier0_process</code></li>
+<li><strong>Inputs:</strong> <code>input_text</code> (optional, default <code>""</code>)</li>
+<li><strong>Outputs:</strong> <code>processed_text</code>, <code>step_count</code></li>
+<li><strong>When to reach for it:</strong> you need a zero-input, zero-key workflow as a
+  fixture in server or evaluation tests</li>
+</ul>
+<p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_workflow.yaml">View YAML →</a></p>
 <h2 id="what-to-read-next">What to read next<a class="headerlink" href="#what-to-read-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><a href="../WORKFLOW_AUTHORING/">Workflow Authoring Guide</a></strong> — full grammar
@@ -3061,7 +3133,7 @@ first.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

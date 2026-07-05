@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#model-probing-inventory-discovery" class="md-skip">
+        <a href="#model-probing-inventory-and-discovery" class="md-skip">
           Skip to content
         </a>
       
@@ -2064,7 +2064,7 @@
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Quick start
       
     </span>
   </a>
@@ -2113,7 +2113,7 @@
   <a href="#cache-mechanics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cache Mechanics
+        Cache mechanics
       
     </span>
   </a>
@@ -2124,7 +2124,7 @@
   <a href="#retry-decorator-with_retry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retry Decorator (with_retry)
+        Retry decorator (with_retry)
       
     </span>
   </a>
@@ -2135,7 +2135,7 @@
   <a href="#convenience-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Convenience Functions
+        Convenience functions
       
     </span>
   </a>
@@ -2146,12 +2146,12 @@
   <a href="#model-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Discovery
+        Model discovery
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Discovery">
+    <nav class="md-nav" aria-label="Model discovery">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2174,12 +2174,12 @@
   <a href="#model-inventory-build_inventory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Inventory (build_inventory)
+        Model inventory (build_inventory)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Inventory (build_inventory)">
+    <nav class="md-nav" aria-label="Model inventory (build_inventory)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2202,7 +2202,7 @@
   <a href="#model-locks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Locks
+        Model locks
       
     </span>
   </a>
@@ -2213,7 +2213,7 @@
   <a href="#provider-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Detection
+        Provider detection
       
     </span>
   </a>
@@ -2224,7 +2224,7 @@
   <a href="#integration-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration Pattern
+        Integration pattern
       
     </span>
   </a>
@@ -3002,7 +3002,7 @@
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Quick start
       
     </span>
   </a>
@@ -3051,7 +3051,7 @@
   <a href="#cache-mechanics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cache Mechanics
+        Cache mechanics
       
     </span>
   </a>
@@ -3062,7 +3062,7 @@
   <a href="#retry-decorator-with_retry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retry Decorator (with_retry)
+        Retry decorator (with_retry)
       
     </span>
   </a>
@@ -3073,7 +3073,7 @@
   <a href="#convenience-functions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Convenience Functions
+        Convenience functions
       
     </span>
   </a>
@@ -3084,12 +3084,12 @@
   <a href="#model-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Discovery
+        Model discovery
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Discovery">
+    <nav class="md-nav" aria-label="Model discovery">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3112,12 +3112,12 @@
   <a href="#model-inventory-build_inventory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Inventory (build_inventory)
+        Model inventory (build_inventory)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model Inventory (build_inventory)">
+    <nav class="md-nav" aria-label="Model inventory (build_inventory)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3140,7 +3140,7 @@
   <a href="#model-locks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Locks
+        Model locks
       
     </span>
   </a>
@@ -3151,7 +3151,7 @@
   <a href="#provider-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Detection
+        Provider detection
       
     </span>
   </a>
@@ -3162,7 +3162,7 @@
   <a href="#integration-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration Pattern
+        Integration pattern
       
     </span>
   </a>
@@ -3202,7 +3202,7 @@
   
 
 
-<h1 id="model-probing-inventory-discovery">Model Probing, Inventory &amp; Discovery<a class="headerlink" href="#model-probing-inventory-discovery" title="Permanent link">&para;</a></h1>
+<h1 id="model-probing-inventory-and-discovery">Model probing, inventory and discovery<a class="headerlink" href="#model-probing-inventory-and-discovery" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p>Modules: <code>tools.llm.model_probe</code> · <code>tools.llm.model_inventory</code> · <code>tools.llm.probe_*</code> · <code>tools.llm.model_locks</code></p>
 </blockquote>
@@ -3264,7 +3264,7 @@ surfacing a clean <code>usable: bool</code> flag before any inference work begin
 <p><code>ModelProbe</code> is the primary interface. It wraps the per-provider probe functions, maintains a
 two-level cache (in-memory session cache + persistent JSON on disk), and applies TTL-stratified
 expiry.</p>
-<h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
+<h3 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelProbe</span><span class="p">,</span> <span class="n">get_probe</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Use the process-wide singleton (preferred)</span>
@@ -3359,7 +3359,7 @@ expiry.</p>
 </span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
 </span></code></pre></div>
 <hr />
-<h2 id="cache-mechanics">Cache Mechanics<a class="headerlink" href="#cache-mechanics" title="Permanent link">&para;</a></h2>
+<h2 id="cache-mechanics">Cache mechanics<a class="headerlink" href="#cache-mechanics" title="Permanent link">&para;</a></h2>
 <p>The persistent cache lives at:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>~/.cache/prompts-eval/model-probes/probe_cache.json
 </span></code></pre></div>
@@ -3400,7 +3400,7 @@ timeouts are transient by nature and should be retried after a short window.</p>
 </span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># → {&quot;total_entries&quot;: 12, &quot;valid_entries&quot;: 8, &quot;expired_entries&quot;: 4, ...}</span>
 </span></code></pre></div>
 <hr />
-<h2 id="retry-decorator-with_retry">Retry Decorator (<code>with_retry</code>)<a class="headerlink" href="#retry-decorator-with_retry" title="Permanent link">&para;</a></h2>
+<h2 id="retry-decorator-with_retry">Retry decorator (<code>with_retry</code>)<a class="headerlink" href="#retry-decorator-with_retry" title="Permanent link">&para;</a></h2>
 <p><code>probe_config.with_retry</code> is a decorator with exponential backoff + jitter, intended for
 probe functions that may hit transient rate limits or timeouts.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.probe_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">with_retry</span>
@@ -3413,7 +3413,7 @@ probe functions that may hit transient rate limits or timeouts.</p>
 (<code>PERMISSION_DENIED</code>, <code>UNAVAILABLE_MODEL</code>, <code>FILE_NOT_FOUND</code>) propagate immediately.</p>
 <p>Jitter: <code>delay = delay × (0.8 + random() × 0.4)</code>, preventing thundering-herd on parallel probes.</p>
 <hr />
-<h2 id="convenience-functions">Convenience Functions<a class="headerlink" href="#convenience-functions" title="Permanent link">&para;</a></h2>
+<h2 id="convenience-functions">Convenience functions<a class="headerlink" href="#convenience-functions" title="Permanent link">&para;</a></h2>
 <p>The module exports three single-call helpers backed by the process singleton:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_model_usable</span><span class="p">,</span> <span class="n">filter_usable_models</span><span class="p">,</span> <span class="n">get_model_error</span>
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
@@ -3429,7 +3429,7 @@ probe functions that may hit transient rate limits or timeouts.</p>
 </span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="c1"># → &quot;No local ONNX model found for key: mistral&quot; or None if usable</span>
 </span></code></pre></div>
 <hr />
-<h2 id="model-discovery">Model Discovery<a class="headerlink" href="#model-discovery" title="Permanent link">&para;</a></h2>
+<h2 id="model-discovery">Model discovery<a class="headerlink" href="#model-discovery" title="Permanent link">&para;</a></h2>
 <p><code>discover_all_models()</code> performs a comprehensive scan across all configured providers and returns
 an inventory of available models grouped by provider.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_all_models</span>
@@ -3456,7 +3456,7 @@ an inventory of available models grouped by provider.</p>
 <li><code>anthropic</code> — passive check (key present only; no list endpoint used)</li>
 <li><code>windows_ai</code> — runs <code>dotnet run --project PhiSilicaBridge -- --info</code> if on Win32</li>
 <li><code>ai_toolkit</code> — scans <code>~/.aitk/models/</code> for VS Code AI Toolkit models</li>
-<li><code>lmstudio</code> — probes <code>http://127.0.0.1:12340/v1/models</code></li>
+<li><code>lmstudio</code> — probes <code>http://127.0.0.1:12340/v1/models</code> (the configured default in <code>probe_config.py</code>; note LM Studio's own out-of-the-box port is 1234 — set <code>LMSTUDIO_HOST</code> if your server listens there)</li>
 <li><code>local_openai_compatible</code> — probes <code>OPENAI_BASE_URL</code> / <code>LOCAL_AI_API_BASE_URL</code> if set</li>
 </ol>
 <h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
@@ -3480,7 +3480,7 @@ an inventory of available models grouped by provider.</p>
 </span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--clear-cache
 </span></code></pre></div>
 <hr />
-<h2 id="model-inventory-build_inventory">Model Inventory (<code>build_inventory</code>)<a class="headerlink" href="#model-inventory-build_inventory" title="Permanent link">&para;</a></h2>
+<h2 id="model-inventory-build_inventory">Model inventory (<code>build_inventory</code>)<a class="headerlink" href="#model-inventory-build_inventory" title="Permanent link">&para;</a></h2>
 <p><code>model_inventory.py</code> provides <code>build_inventory()</code>, a conservative capability audit of the current
 environment. Unlike <code>discover_all_models()</code>, it defaults to a <strong>passive</strong> scan (environment
 variable checks and DNS resolution only) and does not perform live API calls unless <code>active_probes=True</code>.</p>
@@ -3506,7 +3506,7 @@ variable checks and DNS resolution only) and does not perform live API calls unl
 </span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_inventory<span class="w"> </span>--active
 </span></code></pre></div>
 <hr />
-<h2 id="model-locks">Model Locks<a class="headerlink" href="#model-locks" title="Permanent link">&para;</a></h2>
+<h2 id="model-locks">Model locks<a class="headerlink" href="#model-locks" title="Permanent link">&para;</a></h2>
 <p><code>model_locks.py</code> prevents concurrent ONNX model loading conflicts. ONNX models consume large
 amounts of RAM. When multiple evaluation processes run in parallel on the same machine, loading
 the same model twice can OOM the system.</p>
@@ -3528,7 +3528,7 @@ the same model twice can OOM the system.</p>
 <p><code>get_models_in_use()</code> validates that the PID in each lock file is still running (requires
 <code>psutil</code>). Stale lock files from crashed processes are removed automatically.</p>
 <hr />
-<h2 id="provider-detection">Provider Detection<a class="headerlink" href="#provider-detection" title="Permanent link">&para;</a></h2>
+<h2 id="provider-detection">Provider detection<a class="headerlink" href="#provider-detection" title="Permanent link">&para;</a></h2>
 <p><code>probe_providers.get_provider(model_name)</code> maps a model string to a provider name:</p>
 <table>
 <thead>
@@ -3589,7 +3589,7 @@ the same model twice can OOM the system.</p>
 </tbody>
 </table>
 <hr />
-<h2 id="integration-pattern">Integration Pattern<a class="headerlink" href="#integration-pattern" title="Permanent link">&para;</a></h2>
+<h2 id="integration-pattern">Integration pattern<a class="headerlink" href="#integration-pattern" title="Permanent link">&para;</a></h2>
 <p>The typical integration in an evaluation pipeline:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_probe</span><span class="p">,</span> <span class="n">discover_all_models</span>
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
@@ -3633,7 +3633,7 @@ the same model twice can OOM the system.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

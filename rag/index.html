@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#rag-pipeline-complete-reference" class="md-skip">
+        <a href="#rag-pipeline" class="md-skip">
           Skip to content
         </a>
       
@@ -2738,7 +2738,7 @@
   <a href="#1-architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Architecture Overview
+        1. Architecture overview
       
     </span>
   </a>
@@ -2749,12 +2749,12 @@
   <a href="#2-core-data-contracts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Core Data Contracts
+        2. Core data contracts
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Core Data Contracts">
+    <nav class="md-nav" aria-label="2. Core data contracts">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2871,12 +2871,12 @@
   <a href="#4-document-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Document Loading
+        4. Document loading
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="4. Document Loading">
+    <nav class="md-nav" aria-label="4. Document loading">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2899,7 +2899,7 @@
   <a href="#5-document-chunking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Document Chunking
+        5. Document chunking
       
     </span>
   </a>
@@ -2960,12 +2960,12 @@
   <a href="#7-vector-stores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Vector Stores
+        7. Vector stores
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="7. Vector Stores">
+    <nav class="md-nav" aria-label="7. Vector stores">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2999,7 +2999,7 @@
   <a href="#8-bm25-keyword-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. BM25 Keyword Index
+        8. BM25 keyword index
       
     </span>
   </a>
@@ -3010,19 +3010,19 @@
   <a href="#9-hybrid-retrieval-and-rrf-fusion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. Hybrid Retrieval and RRF Fusion
+        9. Hybrid retrieval and RRF fusion
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="9. Hybrid Retrieval and RRF Fusion">
+    <nav class="md-nav" aria-label="9. Hybrid retrieval and RRF fusion">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#reciprocal-rank-fusion-rrf" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reciprocal Rank Fusion (RRF)
+        Reciprocal rank fusion (RRF)
       
     </span>
   </a>
@@ -3038,12 +3038,12 @@
   <a href="#10-context-assembly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. Context Assembly
+        10. Context assembly
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="10. Context Assembly">
+    <nav class="md-nav" aria-label="10. Context assembly">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3077,7 +3077,7 @@
   <a href="#12-otel-tracing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        12. OTEL Tracing
+        12. OTEL tracing
       
     </span>
   </a>
@@ -3088,12 +3088,12 @@
   <a href="#13-cli-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. CLI Usage
+        13. CLI usage
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="13. CLI Usage">
+    <nav class="md-nav" aria-label="13. CLI usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3127,7 +3127,7 @@
   <a href="#14-rag-memory-store" class="md-nav__link">
     <span class="md-ellipsis">
       
-        14. RAG Memory Store
+        14. RAG memory store
       
     </span>
   </a>
@@ -3138,12 +3138,12 @@
   <a href="#15-integration-with-agents" class="md-nav__link">
     <span class="md-ellipsis">
       
-        15. Integration with Agents
+        15. Integration with agents
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="15. Integration with Agents">
+    <nav class="md-nav" aria-label="15. Integration with agents">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3177,7 +3177,7 @@
   <a href="#16-production-deployment-checklist" class="md-nav__link">
     <span class="md-ellipsis">
       
-        16. Production Deployment Checklist
+        16. Production deployment checklist
       
     </span>
   </a>
@@ -3217,14 +3217,14 @@
   
 
 
-<h1 id="rag-pipeline-complete-reference">RAG Pipeline — Complete Reference<a class="headerlink" href="#rag-pipeline-complete-reference" title="Permanent link">&para;</a></h1>
+<h1 id="rag-pipeline">RAG pipeline<a class="headerlink" href="#rag-pipeline" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Package:</strong> <code>agentic-workflows-v2/agentic_v2/rag/</code>
 <strong>Audience:</strong> Engineers adding RAG context to workflows, contributors extending the pipeline, and operators tuning retrieval for production.</p>
 </blockquote>
 <p>The RAG (Retrieval-Augmented Generation) pipeline provides document ingestion, hybrid retrieval, and context-budget assembly for agent workflows. It is a fully self-contained subsystem with no hard dependency on any specific LLM provider — embedding and retrieval are decoupled from generation.</p>
 <hr />
-<h2 id="1-architecture-overview">1. Architecture Overview<a class="headerlink" href="#1-architecture-overview" title="Permanent link">&para;</a></h2>
+<h2 id="1-architecture-overview">1. Architecture overview<a class="headerlink" href="#1-architecture-overview" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Source Documents
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>      │
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>      ▼
@@ -3260,7 +3260,7 @@
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>       RAGResponse (query, results, total_results, metadata)
 </span></code></pre></div>
 <hr />
-<h2 id="2-core-data-contracts">2. Core Data Contracts<a class="headerlink" href="#2-core-data-contracts" title="Permanent link">&para;</a></h2>
+<h2 id="2-core-data-contracts">2. Core data contracts<a class="headerlink" href="#2-core-data-contracts" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/contracts.py</code></p>
 <p>All RAG models are <strong>immutable</strong> (<code>ConfigDict(frozen=True, extra="forbid")</code>).</p>
 <h3 id="document"><code>Document</code><a class="headerlink" href="#document" title="Permanent link">&para;</a></h3>
@@ -3492,7 +3492,7 @@
 <p>When <code>vectorstore_type="lancedb"</code>, <code>db_path</code> is required. A <code>model_validator</code> raises <code>ValueError</code> if it is missing.</p>
 </div>
 <hr />
-<h2 id="4-document-loading">4. Document Loading<a class="headerlink" href="#4-document-loading" title="Permanent link">&para;</a></h2>
+<h2 id="4-document-loading">4. Document loading<a class="headerlink" href="#4-document-loading" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/loaders.py</code></p>
 <p>Loaders satisfy <code>LoaderProtocol</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LoaderProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -3522,6 +3522,7 @@
 </tbody>
 </table>
 <h3 id="ingestionpipeline"><code>IngestionPipeline</code><a class="headerlink" href="#ingestionpipeline" title="Permanent link">&para;</a></h3>
+<p>Source: <code>rag/ingestion.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">IngestionPipeline</span><span class="p">(</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">loader</span><span class="o">=</span><span class="n">MarkdownLoader</span><span class="p">(),</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">chunker</span><span class="o">=</span><span class="n">RecursiveChunker</span><span class="p">(),</span>   <span class="c1"># optional, defaults to RecursiveChunker()</span>
@@ -3531,7 +3532,7 @@
 </span></code></pre></div>
 <p>The pipeline wraps load and chunk errors in <code>IngestionError</code> with the source path and original exception context.</p>
 <hr />
-<h2 id="5-document-chunking">5. Document Chunking<a class="headerlink" href="#5-document-chunking" title="Permanent link">&para;</a></h2>
+<h2 id="5-document-chunking">5. Document chunking<a class="headerlink" href="#5-document-chunking" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/chunking.py</code></p>
 <p><code>RecursiveChunker</code> splits text on hierarchical separators in order of decreasing granularity:</p>
 <ol>
@@ -3561,7 +3562,7 @@
 <h3 id="deduplication">Deduplication<a class="headerlink" href="#deduplication" title="Permanent link">&para;</a></h3>
 <p>The <code>Chunk.content_hash</code> (SHA-256) is used for deduplication at ingestion time. Vector stores that support content-hash lookup can skip re-embedding identical chunks.</p>
 <hr />
-<h2 id="7-vector-stores">7. Vector Stores<a class="headerlink" href="#7-vector-stores" title="Permanent link">&para;</a></h2>
+<h2 id="7-vector-stores">7. Vector stores<a class="headerlink" href="#7-vector-stores" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/vectorstore.py</code></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">VectorStoreProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">],</span> <span class="n">embeddings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
@@ -3591,7 +3592,7 @@
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">store</span> <span class="o">=</span> <span class="n">LanceDBVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">collection</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">collection_name</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="8-bm25-keyword-index">8. BM25 Keyword Index<a class="headerlink" href="#8-bm25-keyword-index" title="Permanent link">&para;</a></h2>
+<h2 id="8-bm25-keyword-index">8. BM25 keyword index<a class="headerlink" href="#8-bm25-keyword-index" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/retrieval.py</code></p>
 <p><code>BM25Index</code> is a pure-Python in-memory Okapi BM25 implementation with no external dependencies.</p>
 <p><strong>Parameters:</strong>
@@ -3613,7 +3614,7 @@
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>tf_norm(t, d)  = tf(t,d) * (k1+1) / (tf(t,d) + k1 * (1 - b + b * |d| / avgdl))
 </span></code></pre></div>
 <hr />
-<h2 id="9-hybrid-retrieval-and-rrf-fusion">9. Hybrid Retrieval and RRF Fusion<a class="headerlink" href="#9-hybrid-retrieval-and-rrf-fusion" title="Permanent link">&para;</a></h2>
+<h2 id="9-hybrid-retrieval-and-rrf-fusion">9. Hybrid retrieval and RRF fusion<a class="headerlink" href="#9-hybrid-retrieval-and-rrf-fusion" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/retrieval.py</code></p>
 <p><code>HybridRetriever</code> orchestrates the full retrieval pipeline:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">retriever</span> <span class="o">=</span> <span class="n">HybridRetriever</span><span class="p">(</span>
@@ -3635,7 +3636,7 @@
 <li>Optionally rerank with cross-encoder or LLM judge.</li>
 <li>Return top <code>top_k</code> results.</li>
 </ol>
-<h3 id="reciprocal-rank-fusion-rrf">Reciprocal Rank Fusion (RRF)<a class="headerlink" href="#reciprocal-rank-fusion-rrf" title="Permanent link">&para;</a></h3>
+<h3 id="reciprocal-rank-fusion-rrf">Reciprocal rank fusion (RRF)<a class="headerlink" href="#reciprocal-rank-fusion-rrf" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.rag.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">reciprocal_rank_fusion</span>
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
 </span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">fused</span> <span class="o">=</span> <span class="n">reciprocal_rank_fusion</span><span class="p">([</span><span class="n">dense_results</span><span class="p">,</span> <span class="n">sparse_results</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
@@ -3652,7 +3653,7 @@
 <li>Simple to reason about: a result that ranks first in every list gets <code>1/(k+1) * num_lists</code>.</li>
 </ul>
 <hr />
-<h2 id="10-context-assembly">10. Context Assembly<a class="headerlink" href="#10-context-assembly" title="Permanent link">&para;</a></h2>
+<h2 id="10-context-assembly">10. Context assembly<a class="headerlink" href="#10-context-assembly" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/context_assembly.py</code></p>
 <p><code>TokenBudgetAssembler</code> greedily fills a context window up to a token budget.</p>
 <h3 id="frame_content"><code>frame_content()</code><a class="headerlink" href="#frame_content" title="Permanent link">&para;</a></h3>
@@ -3663,7 +3664,7 @@
 </span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="nt">&lt;/retrieved_context&gt;</span>
 </span></code></pre></div>
 <p><strong>Security: Prompt Injection Defense</strong></p>
-<p>Retrieved documents may contain adversarial content (<code>"Ignore all previous instructions..."</code>). Two defense layers are applied:</p>
+<p>Retrieved documents may contain adversarial content (<code>"Ignore all previous instructions..."</code>). Four defense layers are applied:</p>
 <ol>
 <li><strong>Delimiter blocking</strong>: Any text containing <code>&lt;retrieved_context&gt;</code> or <code>&lt;/retrieved_context&gt;</code> is replaced with <code>[blocked-retrieved-context-start/end]</code> before framing.</li>
 <li><strong>Line quoting</strong>: Every line of retrieved content is prefixed with <code>|</code> to visually distinguish it from instructions and signal to the LLM that it is untrusted data.</li>
@@ -3705,7 +3706,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">RerankerConfig</span><span class="p">(</span><span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;cross_encoder&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;cross-encoder/ms-marco-MiniLM-L-6-v2&quot;</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="12-otel-tracing">12. OTEL Tracing<a class="headerlink" href="#12-otel-tracing" title="Permanent link">&para;</a></h2>
+<h2 id="12-otel-tracing">12. OTEL tracing<a class="headerlink" href="#12-otel-tracing" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/tracing.py</code></p>
 <p>The RAG pipeline is instrumented with OpenTelemetry spans when tracing is enabled:</p>
 <table>
@@ -3747,7 +3748,7 @@
 </tbody>
 </table>
 <hr />
-<h2 id="13-cli-usage">13. CLI Usage<a class="headerlink" href="#13-cli-usage" title="Permanent link">&para;</a></h2>
+<h2 id="13-cli-usage">13. CLI usage<a class="headerlink" href="#13-cli-usage" title="Permanent link">&para;</a></h2>
 <p>Source: <code>cli/rag_commands.py</code></p>
 <p>The <code>agentic rag</code> command group provides two subcommands:</p>
 <h3 id="agentic-rag-ingest"><code>agentic rag ingest</code><a class="headerlink" href="#agentic-rag-ingest" title="Permanent link">&para;</a></h3>
@@ -3778,7 +3779,7 @@
 <p>The CLI maintains an in-memory index that is populated by <code>ingest</code> and consumed by <code>search</code> within the same process session. For persistent cross-session retrieval, configure <code>vectorstore_type="lancedb"</code> with a <code>db_path</code>.</p>
 </div>
 <hr />
-<h2 id="14-rag-memory-store">14. RAG Memory Store<a class="headerlink" href="#14-rag-memory-store" title="Permanent link">&para;</a></h2>
+<h2 id="14-rag-memory-store">14. RAG memory store<a class="headerlink" href="#14-rag-memory-store" title="Permanent link">&para;</a></h2>
 <p>Source: <code>rag/memory.py</code></p>
 <p><code>RAGMemoryStore</code> implements the <code>MemoryStore</code> protocol using the RAG pipeline as a backend. This allows agents to store and retrieve memories using semantic similarity rather than exact key lookup.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.rag.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">RAGMemoryStore</span>
@@ -3788,7 +3789,7 @@
 </span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">store</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;recent code generation output&quot;</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="15-integration-with-agents">15. Integration with Agents<a class="headerlink" href="#15-integration-with-agents" title="Permanent link">&para;</a></h2>
+<h2 id="15-integration-with-agents">15. Integration with agents<a class="headerlink" href="#15-integration-with-agents" title="Permanent link">&para;</a></h2>
 <p>RAG retrieval can augment agent context in two ways:</p>
 <h3 id="option-a-pre-step-rag-tool">Option A: Pre-step RAG tool<a class="headerlink" href="#option-a-pre-step-rag-tool" title="Permanent link">&para;</a></h3>
 <p>Configure the <code>rag_search</code> built-in tool for a workflow step:</p>
@@ -3811,7 +3812,7 @@
 </span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="n">agent</span><span class="o">.</span><span class="n">_memory_store</span> <span class="o">=</span> <span class="n">RAGMemoryStore</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">rag_config</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="16-production-deployment-checklist">16. Production Deployment Checklist<a class="headerlink" href="#16-production-deployment-checklist" title="Permanent link">&para;</a></h2>
+<h2 id="16-production-deployment-checklist">16. Production deployment checklist<a class="headerlink" href="#16-production-deployment-checklist" title="Permanent link">&para;</a></h2>
 <ul class="task-list">
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Set <code>vectorstore_type="lancedb"</code> with a durable <code>db_path</code> (not in-memory).</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Choose <code>provider="openai"</code> or <code>provider="voyage"</code> — not <code>InMemoryEmbedder</code>.</li>
@@ -3844,7 +3845,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

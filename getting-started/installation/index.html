@@ -3116,7 +3116,8 @@ is self-contained.</p>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,server,langchain]&quot;</span>
 </span></code></pre></div>
-<p>The extras break down as follows:</p>
+<p>The extras break down as follows (source of truth:
+<code>agentic-workflows-v2/pyproject.toml</code> <code>[project.optional-dependencies]</code>):</p>
 <table>
 <thead>
 <tr>
@@ -3128,33 +3129,53 @@ is self-contained.</p>
 <tbody>
 <tr>
 <td><code>dev</code></td>
-<td><code>pytest</code>, <code>pytest-asyncio</code>, <code>ruff</code>, <code>mypy</code>, <code>pre-commit</code></td>
+<td><code>pytest</code> (+ asyncio/cov/mock/timeout plugins), <code>black</code>, <code>ruff</code>, <code>mypy</code>, <code>fakeredis</code>, <code>jsonschema</code>, <code>pydocstyle</code></td>
 <td>Always — required to run the test suite</td>
 </tr>
 <tr>
 <td><code>server</code></td>
-<td><code>fastapi</code>, <code>uvicorn</code>, <code>httpx</code>, <code>aiohttp</code></td>
+<td><code>fastapi</code>, <code>uvicorn</code>, <code>python-multipart</code>, <code>slowapi</code>, <code>pyjwt</code></td>
 <td>If you plan to expose the REST/WebSocket API</td>
 </tr>
 <tr>
 <td><code>langchain</code></td>
-<td><code>langgraph</code>, <code>langchain-core</code></td>
-<td>Only if you want to compare the LangGraph engine alongside the native DAG</td>
+<td><code>langchain</code>, <code>langchain-core</code>, <code>langgraph</code> (+ provider adapters and checkpointers)</td>
+<td>The default adapter for named YAML workflows; also enables the deep <code>agentic validate</code> check</td>
 </tr>
 <tr>
 <td><code>tracing</code></td>
-<td><code>opentelemetry-*</code></td>
+<td><code>opentelemetry-sdk</code>, OTLP/Prometheus exporters</td>
 <td>If you want OTEL traces for every step and tool call</td>
 </tr>
 <tr>
 <td><code>claude</code></td>
-<td><code>anthropic</code> SDK</td>
+<td><code>anthropic</code>, <code>claude-agent-sdk</code></td>
 <td>If Anthropic is one of your providers</td>
 </tr>
 <tr>
 <td><code>rag</code></td>
-<td><code>numpy</code>, <code>rank-bm25</code>, embedding deps</td>
+<td><code>lancedb</code>, <code>litellm</code></td>
 <td>If you plan to use the RAG pipeline (loaders, chunker, vectorstore)</td>
+</tr>
+<tr>
+<td><code>ek</code></td>
+<td><code>executionkit</code></td>
+<td>Optional ExecutionKit execution kernel</td>
+</tr>
+<tr>
+<td><code>devex</code></td>
+<td><code>psutil</code></td>
+<td>Developer-experience commands (<code>agentic devex</code>)</td>
+</tr>
+<tr>
+<td><code>mcp</code></td>
+<td><code>websockets</code></td>
+<td>MCP client transport</td>
+</tr>
+<tr>
+<td><code>redis</code> / <code>sqlite</code> / <code>postgres</code></td>
+<td><code>redis</code>, <code>aiosqlite</code>, <code>psycopg</code> + checkpointer</td>
+<td>Optional storage backends</td>
 </tr>
 </tbody>
 </table>
@@ -3251,38 +3272,49 @@ no provider plugin to install separately, no SDK to pin.</p>
 </tr>
 </tbody>
 </table>
-<p>A complete <code>.env.example</code> ships at the repo root. Copy it to <code>.env</code> and fill
-in only the providers you need — the model router skips providers without
-credentials at startup.</p>
+<p>An <code>.env.example</code> ships at the repo root covering the common providers.
+Copy it to <code>.env</code> and fill in only the providers you need — the model
+router skips providers without credentials at startup. A few variables
+(such as the <code>AZURE_FOUNDRY_*</code> keys) are read from the environment but not
+templated in <code>.env.example</code>; set those directly.</p>
 <h3 id="verify-providers">Verify providers<a class="headerlink" href="#verify-providers" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>models<span class="w"> </span>probe<span class="w">       </span><span class="c1"># quick latency probe across configured providers</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>agentic<span class="w"> </span>models<span class="w"> </span>list<span class="w">        </span><span class="c1"># show every model the router has discovered</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>version<span class="w">            </span><span class="c1"># confirm the CLI entry point resolves</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows<span class="w">     </span><span class="c1"># confirm workflow discovery works</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--no-open<span class="w">    </span><span class="c1"># startup probes configured providers and logs which are available</span>
+</span></code></pre></div>
+<p>The quickest end-to-end check is a deterministic run that needs no
+credentials at all:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;: &quot;hello&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-input.json
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>/tmp/test-input.json
 </span></code></pre></div>
 <h2 id="evaluation-harness">Evaluation harness<a class="headerlink" href="#evaluation-harness" title="Permanent link">&para;</a></h2>
 <p>The eval harness is its own installable package. Most users do not install
 it directly because the runtime invokes it programmatically, but it can be
 exercised standalone:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>path/to/results.json
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>path/to/results.json<span class="w"> </span>--format<span class="w"> </span>html
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>path/to/results.json
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>path/to/results.json<span class="w"> </span>--format<span class="w"> </span>html
 </span></code></pre></div>
 <h2 id="pre-commit-hooks">Pre-commit hooks<a class="headerlink" href="#pre-commit-hooks" title="Permanent link">&para;</a></h2>
 <p>The repo enforces formatting, linting, type checking, and secret detection
 on every commit. From the repo root:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pre-commit<span class="w"> </span>install
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pre-commit<span class="w"> </span>install
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </span></code></pre></div>
 <p>The chain is <code>black</code> → <code>isort</code> → <code>ruff</code> → <code>docformatter</code> → <code>mypy</code> →
-<code>pydocstyle</code> → <code>detect-secrets</code>. CI re-runs the same chain — if your local
-hook passes, the PR will too.</p>
+<code>pydocstyle</code> → <code>detect-secrets</code>. CI re-runs the same chain, but also
+enforces gates the hooks do not cover — the 80% coverage threshold and the
+wire-format drift check — so a passing local hook run is necessary, not
+sufficient. See <code>.claude/rules/ci.md</code> and <code>CONTRIBUTING.md</code> for the full
+gate list.</p>
 <h2 id="whats-next">What's next<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
-<li>New to the project? <a href="../quickstart/">Quick Start</a> walks the first run
+<li>New to the project? <a href="../quickstart/">Quick start</a> walks the first run
   end-to-end.</li>
-<li>Want to write your own workflow? <a href="../first-workflow/">First Workflow</a>
+<li>Want to write your own workflow? <a href="../first-workflow/">First workflow</a>
   builds a two-step DAG from scratch.</li>
-<li>Wiring a longer-lived environment? <a href="../../ARCHITECTURE/">Architecture Overview</a>
+<li>Wiring a longer-lived environment? <a href="../../ARCHITECTURE/">Architecture overview</a>
   explains how the runtime, evaluation harness, and UI interact.</li>
 </ul>
 
@@ -3307,7 +3339,7 @@ hook passes, the PR will too.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

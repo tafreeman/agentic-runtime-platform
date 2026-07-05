@@ -27,7 +27,7 @@
     
     
       
-        <title>LLM-as-Judge - Agentic Runtime Platform</title>
+        <title>LLM-as-judge - Agentic Runtime Platform</title>
       
     
     
@@ -67,7 +67,7 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="LLM-as-Judge - Agentic Runtime Platform" />
+<meta property="og:title" content="LLM-as-judge - Agentic Runtime Platform" />
 <meta property="og:description" content="How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/judge.png" />
 <meta property="og:image:type" content="image/png" />
@@ -75,7 +75,7 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/judge/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="LLM-as-Judge - Agentic Runtime Platform" />
+<meta property="twitter:title" content="LLM-as-judge - Agentic Runtime Platform" />
 <meta property="twitter:description" content="How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/judge.png" />
 </head>
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              LLM-as-Judge
+              LLM-as-judge
             
           </span>
         </div>
@@ -1726,22 +1726,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-1-server-side-llmjudge" class="md-nav__link">
+  <a href="#system-1-runtime-llmjudge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 1: Server-Side LLMJudge
+        System 1: runtime LLMJudge
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 1: Server-Side LLMJudge">
+    <nav class="md-nav" aria-label="System 1: runtime LLMJudge">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#what-it-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What It Scores
+        What it scores
       
     </span>
   </a>
@@ -1752,7 +1752,7 @@
   <a href="#scoring-scale" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring Scale
+        Scoring scale
       
     </span>
   </a>
@@ -1763,7 +1763,7 @@
   <a href="#prompt-design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompt Design
+        Prompt design
       
     </span>
   </a>
@@ -1774,7 +1774,7 @@
   <a href="#positional-bias-mitigation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positional Bias Mitigation
+        Positional bias mitigation
       
     </span>
   </a>
@@ -1785,7 +1785,7 @@
   <a href="#output-schema-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output Schema Validation
+        Output schema validation
       
     </span>
   </a>
@@ -1796,7 +1796,7 @@
   <a href="#calibration-drift-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Calibration Drift Detection
+        Calibration drift detection
       
     </span>
   </a>
@@ -1807,7 +1807,7 @@
   <a href="#syncasync-bridge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sync/Async Bridge
+        Sync/async bridge
       
     </span>
   </a>
@@ -1823,19 +1823,19 @@
   <a href="#system-2-eval-package-evaluators" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 2: Eval-Package Evaluators
+        System 2: eval-package evaluators
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 2: Eval-Package Evaluators">
+    <nav class="md-nav" aria-label="System 2: eval-package evaluators">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#llmevaluator-choice-anchored-scoring" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLMEvaluator — Choice-Anchored Scoring
+        LLMEvaluator — choice-anchored scoring
       
     </span>
   </a>
@@ -1846,7 +1846,7 @@
   <a href="#qualityevaluator-five-dimension-output-quality" class="md-nav__link">
     <span class="md-ellipsis">
       
-        QualityEvaluator — Five-Dimension Output Quality
+        QualityEvaluator — five-dimension output quality
       
     </span>
   </a>
@@ -1857,7 +1857,7 @@
   <a href="#standardevaluator-prompt-quality-grading-010" class="md-nav__link">
     <span class="md-ellipsis">
       
-        StandardEvaluator — Prompt Quality Grading (0–10)
+        StandardEvaluator — prompt quality grading (0–10)
       
     </span>
   </a>
@@ -1868,7 +1868,7 @@
   <a href="#patternevaluator-structural-pattern-conformance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PatternEvaluator — Structural Pattern Conformance
+        PatternEvaluator — structural pattern conformance
       
     </span>
   </a>
@@ -1884,7 +1884,7 @@
   <a href="#research-gating" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Research Gating
+        Research gating
       
     </span>
   </a>
@@ -1895,12 +1895,12 @@
   <a href="#how-to-write-evaluatable-prompts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Write Evaluatable Prompts
+        How to write evaluatable prompts
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to Write Evaluatable Prompts">
+    <nav class="md-nav" aria-label="How to write evaluatable prompts">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1945,7 +1945,7 @@
   <a href="#integrating-the-judge-into-a-custom-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integrating the Judge into a Custom Evaluation
+        Integrating the judge into a custom evaluation
       
     </span>
   </a>
@@ -3009,22 +3009,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-1-server-side-llmjudge" class="md-nav__link">
+  <a href="#system-1-runtime-llmjudge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 1: Server-Side LLMJudge
+        System 1: runtime LLMJudge
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 1: Server-Side LLMJudge">
+    <nav class="md-nav" aria-label="System 1: runtime LLMJudge">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#what-it-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What It Scores
+        What it scores
       
     </span>
   </a>
@@ -3035,7 +3035,7 @@
   <a href="#scoring-scale" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring Scale
+        Scoring scale
       
     </span>
   </a>
@@ -3046,7 +3046,7 @@
   <a href="#prompt-design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompt Design
+        Prompt design
       
     </span>
   </a>
@@ -3057,7 +3057,7 @@
   <a href="#positional-bias-mitigation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positional Bias Mitigation
+        Positional bias mitigation
       
     </span>
   </a>
@@ -3068,7 +3068,7 @@
   <a href="#output-schema-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output Schema Validation
+        Output schema validation
       
     </span>
   </a>
@@ -3079,7 +3079,7 @@
   <a href="#calibration-drift-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Calibration Drift Detection
+        Calibration drift detection
       
     </span>
   </a>
@@ -3090,7 +3090,7 @@
   <a href="#syncasync-bridge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sync/Async Bridge
+        Sync/async bridge
       
     </span>
   </a>
@@ -3106,19 +3106,19 @@
   <a href="#system-2-eval-package-evaluators" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 2: Eval-Package Evaluators
+        System 2: eval-package evaluators
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 2: Eval-Package Evaluators">
+    <nav class="md-nav" aria-label="System 2: eval-package evaluators">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#llmevaluator-choice-anchored-scoring" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLMEvaluator — Choice-Anchored Scoring
+        LLMEvaluator — choice-anchored scoring
       
     </span>
   </a>
@@ -3129,7 +3129,7 @@
   <a href="#qualityevaluator-five-dimension-output-quality" class="md-nav__link">
     <span class="md-ellipsis">
       
-        QualityEvaluator — Five-Dimension Output Quality
+        QualityEvaluator — five-dimension output quality
       
     </span>
   </a>
@@ -3140,7 +3140,7 @@
   <a href="#standardevaluator-prompt-quality-grading-010" class="md-nav__link">
     <span class="md-ellipsis">
       
-        StandardEvaluator — Prompt Quality Grading (0–10)
+        StandardEvaluator — prompt quality grading (0–10)
       
     </span>
   </a>
@@ -3151,7 +3151,7 @@
   <a href="#patternevaluator-structural-pattern-conformance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PatternEvaluator — Structural Pattern Conformance
+        PatternEvaluator — structural pattern conformance
       
     </span>
   </a>
@@ -3167,7 +3167,7 @@
   <a href="#research-gating" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Research Gating
+        Research gating
       
     </span>
   </a>
@@ -3178,12 +3178,12 @@
   <a href="#how-to-write-evaluatable-prompts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to Write Evaluatable Prompts
+        How to write evaluatable prompts
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How to Write Evaluatable Prompts">
+    <nav class="md-nav" aria-label="How to write evaluatable prompts">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3228,7 +3228,7 @@
   <a href="#integrating-the-judge-into-a-custom-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integrating the Judge into a Custom Evaluation
+        Integrating the judge into a custom evaluation
       
     </span>
   </a>
@@ -3282,28 +3282,28 @@
   
 
 
-<h1 id="llm-as-judge">LLM-as-Judge<a class="headerlink" href="#llm-as-judge" title="Permanent link">&para;</a></h1>
+<h1 id="llm-as-judge">LLM-as-judge<a class="headerlink" href="#llm-as-judge" title="Permanent link">&para;</a></h1>
 <p>Agentic Runtime Platform uses two complementary LLM-as-judge systems depending on the context:</p>
 <ol>
 <li>
-<p><strong><code>LLMJudge</code></strong> (in <code>agentic-workflows-v2</code>) — the server-side judge used for production workflow evaluation. Scores on a 1–5 Likert scale per criterion, includes positional-bias mitigation, and exposes a <code>GET /runs/{filename}/evaluation</code> endpoint.</p>
+<p><strong><code>LLMJudge</code></strong> (in <code>agentic-workflows-v2</code>) — the runtime judge used for production workflow evaluation. Scores on a 1–5 Likert scale per criterion, includes positional-bias mitigation, and exposes a <code>GET /api/runs/{filename}/evaluation</code> endpoint.</p>
 </li>
 <li>
 <p><strong>Eval-package evaluators</strong> (<code>LLMEvaluator</code>, <code>QualityEvaluator</code>, <code>StandardEvaluator</code>, <code>PatternEvaluator</code> in <code>agentic-v2-eval</code>) — standalone evaluators used by the CLI and batch/streaming runners. These use a discrete choice model (1–5 → 0.0–1.0) or a 0–10 JSON scoring scheme.</p>
 </li>
 </ol>
-<p>Both systems are described here. For production workflow scoring, see also <code>docs/evaluation/gating.md</code>.</p>
+<p>Both systems are described here. For production workflow scoring, see also <a href="../gating/">Production gating</a>.</p>
 <hr />
-<h2 id="system-1-server-side-llmjudge">System 1: Server-Side <code>LLMJudge</code><a class="headerlink" href="#system-1-server-side-llmjudge" title="Permanent link">&para;</a></h2>
-<h3 id="what-it-scores">What It Scores<a class="headerlink" href="#what-it-scores" title="Permanent link">&para;</a></h3>
-<p><code>LLMJudge</code> (at <code>agentic-workflows-v2/agentic_v2/server/judge.py</code>) scores a <strong>candidate output</strong> against an <strong>expected output</strong> on a set of named criteria. Each criterion is defined by:</p>
+<h2 id="system-1-runtime-llmjudge">System 1: runtime <code>LLMJudge</code><a class="headerlink" href="#system-1-runtime-llmjudge" title="Permanent link">&para;</a></h2>
+<h3 id="what-it-scores">What it scores<a class="headerlink" href="#what-it-scores" title="Permanent link">&para;</a></h3>
+<p><code>LLMJudge</code> (at <code>agentic-workflows-v2/agentic_v2/scoring/judge.py</code>) scores a <strong>candidate output</strong> against an <strong>expected output</strong> on a set of named criteria. Each criterion is defined by:</p>
 <ul>
 <li><code>name</code> — criterion identifier (e.g., <code>"correctness"</code>)</li>
 <li><code>definition</code> — human-readable description of what this criterion measures</li>
 <li><code>scale</code> — dict mapping score values to anchor descriptions (e.g., <code>{"1": "Major failures", "5": "Excellent"</code>)</li>
 </ul>
 <p>The judge returns a normalized score per criterion and an overall score, all on the [0.0, 1.0] scale (internally uses a 1–5 Likert scale that is then normalized).</p>
-<h3 id="scoring-scale">Scoring Scale<a class="headerlink" href="#scoring-scale" title="Permanent link">&para;</a></h3>
+<h3 id="scoring-scale">Scoring scale<a class="headerlink" href="#scoring-scale" title="Permanent link">&para;</a></h3>
 <p>Raw scores from the judge are on the 1–5 Likert scale. These are normalized to [0.0, 1.0] via <code>normalize_score(raw, "likert_1_5")</code>:</p>
 <table>
 <thead>
@@ -3343,7 +3343,7 @@
 </table>
 <p>The overall score is the mean of all criterion normalized scores.</p>
 <p>The final <code>score</code> field in the evaluation payload is <code>normalized_score * 100.0</code> (0–100 scale for human readability).</p>
-<h3 id="prompt-design">Prompt Design<a class="headerlink" href="#prompt-design" title="Permanent link">&para;</a></h3>
+<h3 id="prompt-design">Prompt design<a class="headerlink" href="#prompt-design" title="Permanent link">&para;</a></h3>
 <p>The judge prompt is assembled by <code>_build_prompt()</code> with this structure:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>You are a strict rubric judge. Return ONLY valid JSON.
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Schema: {&quot;criteria&quot;:[{&quot;name&quot;:&quot;...&quot;,&quot;score&quot;:1-5,&quot;evidence&quot;:&quot;...&quot;}]}
@@ -3364,11 +3364,11 @@
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>Score each criterion on anchored 1..5 scale.
 </span></code></pre></div>
 <p>The system message is <code>"Return strict JSON only for rubric scoring."</code> Temperature is clamped to [0.0, 0.1] regardless of what the caller requests.</p>
-<h3 id="positional-bias-mitigation">Positional Bias Mitigation<a class="headerlink" href="#positional-bias-mitigation" title="Permanent link">&para;</a></h3>
+<h3 id="positional-bias-mitigation">Positional bias mitigation<a class="headerlink" href="#positional-bias-mitigation" title="Permanent link">&para;</a></h3>
 <p>LLM judges are susceptible to positional bias — a tendency to favor content presented first (or last) in a prompt. <code>LLMJudge</code> mitigates this with two mechanisms:</p>
 <p><strong>1. Deterministic criterion shuffling.</strong> Before building the prompt, criteria are shuffled using a deterministic seed derived from <code>sha256(candidate_output || expected_output || prompt_version)</code>. The first 8 hex digits of the digest are used as a 32-bit integer seed for <code>random.Random</code>. This ensures the same inputs always produce the same shuffled order (reproducibility) while breaking any systematic first/last position advantage across different candidate outputs.</p>
 <p><strong>2. Pairwise consistency check</strong> (optional). When <code>pairwise_reference_output</code> is provided to <code>evaluate()</code>, the judge is called twice: once with the original presentation order, and once with <code>candidate_output</code> and <code>pairwise_reference_output</code> swapped. <code>check_swapped_order_consistency()</code> flags criteria where the absolute score delta between the two presentations exceeds <code>max_delta=1.0</code>. Inconsistent criteria are recorded in <code>JudgeEvaluationResult.inconsistency_reasons</code>.</p>
-<h3 id="output-schema-validation">Output Schema Validation<a class="headerlink" href="#output-schema-validation" title="Permanent link">&para;</a></h3>
+<h3 id="output-schema-validation">Output schema validation<a class="headerlink" href="#output-schema-validation" title="Permanent link">&para;</a></h3>
 <p><code>validate_judge_structured_output()</code> validates the judge's JSON response before processing. It checks:</p>
 <ul>
 <li><code>criteria</code> is a non-empty list</li>
@@ -3378,9 +3378,9 @@
 <p>Validation failures raise <code>ValueError</code> with a description of each error. The call chain in <code>evaluate()</code> is:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>_build_prompt() → _invoke_prompt() → validate_judge_structured_output() → [optional pairwise check] → JudgeEvaluationResult
 </span></code></pre></div>
-<h3 id="calibration-drift-detection">Calibration Drift Detection<a class="headerlink" href="#calibration-drift-detection" title="Permanent link">&para;</a></h3>
+<h3 id="calibration-drift-detection">Calibration drift detection<a class="headerlink" href="#calibration-drift-detection" title="Permanent link">&para;</a></h3>
 <p><code>evaluate_calibration_set(judge, fixtures, tolerance)</code> runs the judge on a list of human-labeled fixtures and computes mean absolute error (MAE) between judge-assigned and human-assigned raw scores. If MAE exceeds <code>tolerance</code> (default 0.5), <code>within_tolerance=False</code> is returned.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_workflows_v2.agentic_v2.server.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMJudge</span><span class="p">,</span> <span class="n">evaluate_calibration_set</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMJudge</span><span class="p">,</span> <span class="n">evaluate_calibration_set</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">judge</span> <span class="o">=</span> <span class="n">LLMJudge</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gh:openai/gpt-4o&quot;</span><span class="p">)</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
@@ -3399,16 +3399,16 @@
 </span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1"># {&quot;samples&quot;: 1, &quot;mae&quot;: 0.0, &quot;within_tolerance&quot;: True, &quot;tolerance&quot;: 0.5}</span>
 </span></code></pre></div>
-<h3 id="syncasync-bridge">Sync/Async Bridge<a class="headerlink" href="#syncasync-bridge" title="Permanent link">&para;</a></h3>
+<h3 id="syncasync-bridge">Sync/async bridge<a class="headerlink" href="#syncasync-bridge" title="Permanent link">&para;</a></h3>
 <p><code>LLMJudge.evaluate()</code> is synchronous. Internally it calls <code>_run_coro_sync(coro)</code> to bridge to the async LLM client:</p>
 <ul>
 <li>If no event loop is running: uses <code>asyncio.run(coro)</code>.</li>
 <li>If an event loop is already active (e.g., inside a FastAPI request handler): spawns a daemon thread with its own <code>asyncio.run()</code> to avoid nested-loop errors. A <code>threading.Event</code> is used for synchronization.</li>
 </ul>
 <hr />
-<h2 id="system-2-eval-package-evaluators">System 2: Eval-Package Evaluators<a class="headerlink" href="#system-2-eval-package-evaluators" title="Permanent link">&para;</a></h2>
+<h2 id="system-2-eval-package-evaluators">System 2: eval-package evaluators<a class="headerlink" href="#system-2-eval-package-evaluators" title="Permanent link">&para;</a></h2>
 <p>The four evaluators in <code>agentic-v2-eval</code> use a simpler choice-extraction model rather than strict JSON schema validation.</p>
-<h3 id="llmevaluator-choice-anchored-scoring"><code>LLMEvaluator</code> — Choice-Anchored Scoring<a class="headerlink" href="#llmevaluator-choice-anchored-scoring" title="Permanent link">&para;</a></h3>
+<h3 id="llmevaluator-choice-anchored-scoring"><code>LLMEvaluator</code> — choice-anchored scoring<a class="headerlink" href="#llmevaluator-choice-anchored-scoring" title="Permanent link">&para;</a></h3>
 <p><strong>Scoring model:</strong> 5-point discrete scale extracted from free-text LLM output.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">STANDARD_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>    <span class="c1"># Very poor</span>
@@ -3445,7 +3445,7 @@
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="s2">&quot;Exception during execution&quot;</span><span class="p">,</span>
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
 </span></code></pre></div>
-<h3 id="qualityevaluator-five-dimension-output-quality"><code>QualityEvaluator</code> — Five-Dimension Output Quality<a class="headerlink" href="#qualityevaluator-five-dimension-output-quality" title="Permanent link">&para;</a></h3>
+<h3 id="qualityevaluator-five-dimension-output-quality"><code>QualityEvaluator</code> — five-dimension output quality<a class="headerlink" href="#qualityevaluator-five-dimension-output-quality" title="Permanent link">&para;</a></h3>
 <p>Each of the five dimensions (Coherence, Fluency, Relevance, Groundedness, Similarity) uses the same 5-point choice extraction scheme as <code>LLMEvaluator</code>. The prompts are loaded from <code>rubrics/quality.yaml</code> at module import time.</p>
 <p><strong>Template variables by dimension:</strong></p>
 <table>
@@ -3508,7 +3508,7 @@
 </span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">model_override</span><span class="o">=</span><span class="s2">&quot;anthropic:claude-3-5-haiku&quot;</span><span class="p">,</span>
 </span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span>
 </span></code></pre></div>
-<h3 id="standardevaluator-prompt-quality-grading-010"><code>StandardEvaluator</code> — Prompt Quality Grading (0–10)<a class="headerlink" href="#standardevaluator-prompt-quality-grading-010" title="Permanent link">&para;</a></h3>
+<h3 id="standardevaluator-prompt-quality-grading-010"><code>StandardEvaluator</code> — prompt quality grading (0–10)<a class="headerlink" href="#standardevaluator-prompt-quality-grading-010" title="Permanent link">&para;</a></h3>
 <p>Unlike the 5-point choice model, <code>StandardEvaluator</code> uses a structured JSON response. The judge prompt explicitly instructs the LLM to return a JSON object with:</p>
 <ul>
 <li><code>scores</code>: dict of five dimensions, each 0–10</li>
@@ -3524,7 +3524,7 @@
 - Last 1,000 characters preserved
 - Gap replaced with <code>[...TRUNCATED... tail of prompt follows]</code></p>
 <p>This preserves the prompt header (most important for structure evaluation) and the prompt footer (often contains output format instructions).</p>
-<h3 id="patternevaluator-structural-pattern-conformance"><code>PatternEvaluator</code> — Structural Pattern Conformance<a class="headerlink" href="#patternevaluator-structural-pattern-conformance" title="Permanent link">&para;</a></h3>
+<h3 id="patternevaluator-structural-pattern-conformance"><code>PatternEvaluator</code> — structural pattern conformance<a class="headerlink" href="#patternevaluator-structural-pattern-conformance" title="Permanent link">&para;</a></h3>
 <p>This evaluator scores whether an output follows one of four agentic reasoning patterns. It returns <code>PatternScore</code> — a rich dataclass with 17 fields capturing universal and pattern-specific dimensions, hard gate results, run statistics, and failure descriptions.</p>
 <p><strong>Judge output format:</strong></p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
@@ -3565,15 +3565,15 @@
 </span></code></pre></div>
 <p>Note that PR is compared against 0.75 (a proportion), not 4 (an integer scale). This is different from the 0–5 scale used for POI/PC/CA.</p>
 <hr />
-<h2 id="research-gating">Research Gating<a class="headerlink" href="#research-gating" title="Permanent link">&para;</a></h2>
+<h2 id="research-gating">Research gating<a class="headerlink" href="#research-gating" title="Permanent link">&para;</a></h2>
 <p>When the eval framework is used for <strong>deep research pipelines</strong> (Profile E workflows), two additional thresholds govern whether research output is accepted:</p>
 <ul>
 <li><code>coverage_score &gt;= 0.80</code> — the research must cover at least 80% of the expected scope.</li>
 <li><code>source_quality_score &gt;= 0.80</code> — the sources cited must meet quality standards.</li>
 </ul>
-<p>These are enforced as hard gates within <code>score_workflow_result_impl</code> for Profile E scoring. See <code>docs/evaluation/gating.md</code> for the full production gating specification.</p>
+<p>These are enforced as hard gates within <code>score_workflow_result_impl</code> for Profile E scoring. See <a href="../gating/">Production gating</a> for the full production gating specification.</p>
 <hr />
-<h2 id="how-to-write-evaluatable-prompts">How to Write Evaluatable Prompts<a class="headerlink" href="#how-to-write-evaluatable-prompts" title="Permanent link">&para;</a></h2>
+<h2 id="how-to-write-evaluatable-prompts">How to write evaluatable prompts<a class="headerlink" href="#how-to-write-evaluatable-prompts" title="Permanent link">&para;</a></h2>
 <h3 id="for-standardevaluator">For <code>StandardEvaluator</code><a class="headerlink" href="#for-standardevaluator" title="Permanent link">&para;</a></h3>
 <p>The judge scores five dimensions. Design your prompts to maximize scores in each:</p>
 <p><strong>Clarity (0–10):</strong> Write unambiguous instructions. Avoid conflicting directives. Define technical terms inline if they might be misinterpreted.</p>
@@ -3616,7 +3616,7 @@
 <li><strong>Similarity:</strong> Use reference outputs that are precisely correct — not overly verbose — to get meaningful similarity scores.</li>
 </ul>
 <hr />
-<h2 id="integrating-the-judge-into-a-custom-evaluation">Integrating the Judge into a Custom Evaluation<a class="headerlink" href="#integrating-the-judge-into-a-custom-evaluation" title="Permanent link">&para;</a></h2>
+<h2 id="integrating-the-judge-into-a-custom-evaluation">Integrating the judge into a custom evaluation<a class="headerlink" href="#integrating-the-judge-into-a-custom-evaluation" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span><span class="p">,</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span><span class="p">,</span> <span class="n">RELEVANCE</span>
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_html_report</span>
@@ -3674,7 +3674,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

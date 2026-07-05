@@ -2735,10 +2735,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#llm-client-provider-routing" class="md-nav__link">
+  <a href="#llm-client-and-provider-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM Client &amp; Provider Routing
+        LLM client and provider routing
       
     </span>
   </a>
@@ -2746,10 +2746,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#model-availability-discovery" class="md-nav__link">
+  <a href="#model-availability-and-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Availability &amp; Discovery
+        Model availability and discovery
       
     </span>
   </a>
@@ -2757,10 +2757,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benchmarking-evaluation" class="md-nav__link">
+  <a href="#benchmarking-and-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Benchmarking &amp; Evaluation
+        Benchmarking and evaluation
       
     </span>
   </a>
@@ -2771,12 +2771,12 @@
   <a href="#module-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module Reference
+        Module reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Module Reference">
+    <nav class="md-nav" aria-label="Module reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2832,7 +2832,7 @@
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        See also
       
     </span>
   </a>
@@ -2872,13 +2872,13 @@
   
 
 
-<h1 id="tools-documentation">Tools Documentation<a class="headerlink" href="#tools-documentation" title="Permanent link">&para;</a></h1>
+<h1 id="tools-documentation">Tools documentation<a class="headerlink" href="#tools-documentation" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p>Package: <code>tools</code> — LLM orchestration, local model inference, benchmarking, caching, and utility modules shared across the agentic runtime platform.</p>
+<p>Package: <code>tools</code> — LLM orchestration, local model inference, benchmarking, caching, and utility modules shared across the Agentic Runtime Platform.</p>
 </blockquote>
 <p>This page is the navigation hub for all <code>tools/</code> documentation. If you are looking for a specific capability, use the table below to find the right doc.</p>
 <hr />
-<h2 id="llm-client-provider-routing">LLM Client &amp; Provider Routing<a class="headerlink" href="#llm-client-provider-routing" title="Permanent link">&para;</a></h2>
+<h2 id="llm-client-and-provider-routing">LLM client and provider routing<a class="headerlink" href="#llm-client-and-provider-routing" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -2901,12 +2901,12 @@
 </tr>
 <tr>
 <td>Adapt tools models for LangChain pipelines</td>
-<td><code>tools.llm.langchain_adapter</code> — docs coming</td>
+<td><a href="llm-client/#langchain-adapter">llm-client.md — LangChain adapter</a></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="model-availability-discovery">Model Availability &amp; Discovery<a class="headerlink" href="#model-availability-discovery" title="Permanent link">&para;</a></h2>
+<h2 id="model-availability-and-discovery">Model availability and discovery<a class="headerlink" href="#model-availability-and-discovery" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -2933,12 +2933,12 @@
 </tr>
 <tr>
 <td>Rank available models by preference</td>
-<td><a href="provider-limits/">provider-limits.md — Model Ranking</a></td>
+<td><a href="provider-limits/">provider-limits.md — Model ranking</a></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="benchmarking-evaluation">Benchmarking &amp; Evaluation<a class="headerlink" href="#benchmarking-evaluation" title="Permanent link">&para;</a></h2>
+<h2 id="benchmarking-and-evaluation">Benchmarking and evaluation<a class="headerlink" href="#benchmarking-and-evaluation" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -2953,12 +2953,12 @@
 </tr>
 <tr>
 <td>Run the full probe → limits → rank pipeline</td>
-<td><a href="provider-limits/#full-three-step-pipeline">provider-limits.md — Full Pipeline</a></td>
+<td><a href="provider-limits/#full-three-step-pipeline">provider-limits.md — Full pipeline</a></td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="module-reference">Module Reference<a class="headerlink" href="#module-reference" title="Permanent link">&para;</a></h2>
+<h2 id="module-reference">Module reference<a class="headerlink" href="#module-reference" title="Permanent link">&para;</a></h2>
 <h3 id="toolsllm"><code>tools/llm/</code><a class="headerlink" href="#toolsllm" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -2986,7 +2986,7 @@
 </tr>
 <tr>
 <td><code>local_model_discovery.py</code></td>
-<td>Model path resolution, AI Gallery detection</td>
+<td>Model path resolution, AI Dev Gallery detection</td>
 <td><a href="local-models/#model-discovery">local-models.md — Discovery</a></td>
 </tr>
 <tr>
@@ -3071,12 +3071,12 @@
 </tr>
 <tr>
 <td><code>langchain_adapter.py</code></td>
-<td><code>LangChainAdapter</code> — LangChain integration</td>
-<td>Docs pending</td>
+<td>Minimal LangChain-compatible shim over <code>LLMClient</code></td>
+<td><a href="llm-client/#langchain-adapter">llm-client.md — LangChain adapter</a></td>
 </tr>
 <tr>
 <td><code>provider_adapters.py</code></td>
-<td>Low-level provider call adapters</td>
+<td>Low-level provider call adapters (nine routing backends)</td>
 <td>Internal</td>
 </tr>
 </tbody>
@@ -3087,49 +3087,40 @@
 <tr>
 <th>Module</th>
 <th>Purpose</th>
-<th>Doc</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>config.py</code></td>
-<td><code>Settings</code> — central config via pydantic-settings</td>
-<td>Docs pending</td>
+<td>Dataclass-based configuration for model selection, filesystem paths, and temperature settings, loaded from environment variables</td>
 </tr>
 <tr>
 <td><code>errors.py</code></td>
-<td><code>ErrorCode</code> enum + <code>classify_error()</code></td>
-<td>Docs pending</td>
+<td>Canonical <code>ErrorCode</code> enum, transient/permanent membership sets, and <code>classify_error()</code> for mapping error text to codes</td>
 </tr>
 <tr>
 <td><code>cache.py</code></td>
-<td>Global-instance wrapper for <code>ResponseCache</code></td>
-<td>Docs pending</td>
+<td>Function-based API (<code>get_cached_response</code>, <code>cache_response</code>, …) over a global <code>ResponseCache</code> instance</td>
 </tr>
 <tr>
 <td><code>response_cache.py</code></td>
-<td>SHA-256 keyed TTL cache for LLM responses</td>
-<td>Docs pending</td>
+<td>SHA-256 keyed TTL cache for LLM responses with LRU size eviction</td>
 </tr>
 <tr>
 <td><code>prompt_db.py</code></td>
-<td>Prompt loading from disk</td>
-<td>Docs pending</td>
+<td>JSON-file-backed database for storing prompts, rubrics, and evaluations</td>
 </tr>
 <tr>
 <td><code>model_availability.py</code></td>
-<td>Model availability helpers</td>
-<td>Docs pending</td>
+<td>Model availability checks without importing <code>tools.llm</code> internals</td>
 </tr>
 <tr>
 <td><code>local_media.py</code></td>
-<td>Local file/media loading utilities</td>
-<td>Docs pending</td>
+<td>Local media model runner — image generation and speech-to-text</td>
 </tr>
 <tr>
 <td><code>tool_init.py</code></td>
 <td>Tool initialization helpers</td>
-<td>Docs pending</td>
 </tr>
 </tbody>
 </table>
@@ -3150,15 +3141,16 @@
 </tr>
 <tr>
 <td><code>repo_analyzer/</code></td>
-<td>Repository analysis agent</td>
-<td>Docs pending</td>
+<td>LangGraph-based repository analysis agent</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
 <hr />
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># From repo root — install all tools extras</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;tools/[dev]&quot;</span>
+<p>The <code>tools</code> package is provided by the repo-root <code>agentic-tools</code> project, so install from the repository root:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># From repo root — installs the tools package with dev extras</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># For local ONNX inference</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai<span class="w">          </span><span class="c1"># CPU</span>
@@ -3172,7 +3164,7 @@
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pip<span class="w"> </span>install<span class="w"> </span>langchain
 </span></code></pre></div>
 <hr />
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../architecture-eval/">Evaluation framework</a> — evaluation framework built on top of these tools</li>
 <li><a href="../configuration/">configuration.md</a> — all environment variables including provider API keys</li>
@@ -3200,7 +3192,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 12:30:55 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

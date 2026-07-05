@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#llm-client-provider-reference" class="md-skip">
+        <a href="#llm-client-and-provider-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -1968,12 +1968,12 @@
   <a href="#method-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method Reference
+        Method reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Method Reference">
+    <nav class="md-nav" aria-label="Method reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2018,7 +2018,7 @@
   <a href="#error-type" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Error Type
+        Error type
       
     </span>
   </a>
@@ -2029,7 +2029,7 @@
   <a href="#provider-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Routing
+        Provider routing
       
     </span>
   </a>
@@ -2040,12 +2040,12 @@
   <a href="#provider-details" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Details
+        Provider details
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Provider Details">
+    <nav class="md-nav" aria-label="Provider details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2156,7 +2156,7 @@
   <a href="#langchain-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LangChain Adapter
+        LangChain adapter
       
     </span>
   </a>
@@ -2167,7 +2167,7 @@
   <a href="#remote-provider-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remote Provider Gate
+        Remote provider gate
       
     </span>
   </a>
@@ -2178,7 +2178,7 @@
   <a href="#response-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Response Cache
+        Response cache
       
     </span>
   </a>
@@ -3039,12 +3039,12 @@
   <a href="#method-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method Reference
+        Method reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Method Reference">
+    <nav class="md-nav" aria-label="Method reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3089,7 +3089,7 @@
   <a href="#error-type" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Error Type
+        Error type
       
     </span>
   </a>
@@ -3100,7 +3100,7 @@
   <a href="#provider-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Routing
+        Provider routing
       
     </span>
   </a>
@@ -3111,12 +3111,12 @@
   <a href="#provider-details" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider Details
+        Provider details
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Provider Details">
+    <nav class="md-nav" aria-label="Provider details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3227,7 +3227,7 @@
   <a href="#langchain-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LangChain Adapter
+        LangChain adapter
       
     </span>
   </a>
@@ -3238,7 +3238,7 @@
   <a href="#remote-provider-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remote Provider Gate
+        Remote provider gate
       
     </span>
   </a>
@@ -3249,7 +3249,7 @@
   <a href="#response-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Response Cache
+        Response cache
       
     </span>
   </a>
@@ -3300,14 +3300,17 @@
   
 
 
-<h1 id="llm-client-provider-reference">LLM Client &amp; Provider Reference<a class="headerlink" href="#llm-client-provider-reference" title="Permanent link">&para;</a></h1>
+<h1 id="llm-client-and-provider-reference">LLM client and provider reference<a class="headerlink" href="#llm-client-and-provider-reference" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p>Module: <code>tools.llm.llm_client</code> | Entry point: <code>LLMClient.generate_text()</code></p>
 </blockquote>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>LLMClient</code> is a static-method facade that routes text-generation requests to one of ten provider
-backends based on a name prefix in the model string. The facade is stateless — no instance is
-ever created. All provider-specific transport logic lives in <code>tools/llm/provider_adapters.py</code>.</p>
+<p><code>LLMClient</code> is a static-method facade that routes text-generation requests to eight providers
+across nine routing backends (Azure has two: Azure OpenAI and Azure AI Foundry) based on a name
+prefix in the model string. The facade is stateless — no instance is ever created. All
+provider-specific transport logic lives in <code>tools/llm/provider_adapters.py</code>. Note this count is
+specific to the <code>tools</code> package; the <code>agentic_v2</code> runtime selects providers separately via its
+own <code>SmartModelRouter</code>.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">text</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
@@ -3319,7 +3322,7 @@ ever created. All provider-specific transport logic lives in <code>tools/llm/pro
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="method-reference">Method Reference<a class="headerlink" href="#method-reference" title="Permanent link">&para;</a></h2>
+<h2 id="method-reference">Method reference<a class="headerlink" href="#method-reference" title="Permanent link">&para;</a></h2>
 <h3 id="llmclientgenerate_text"><code>LLMClient.generate_text</code><a class="headerlink" href="#llmclientgenerate_text" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@staticmethod</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_text</span><span class="p">(</span>
@@ -3391,7 +3394,7 @@ the SDK is not installed.</p>
 <p>Return Gemini model IDs that support <code>generateContent</code>, filtered from the <code>genai.list_models()</code>
 response. Returns <code>[]</code> if <code>GEMINI_API_KEY</code> / <code>GOOGLE_API_KEY</code> is absent.</p>
 <hr />
-<h2 id="error-type">Error Type<a class="headerlink" href="#error-type" title="Permanent link">&para;</a></h2>
+<h2 id="error-type">Error type<a class="headerlink" href="#error-type" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LLMClientError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># model identifier that was requested</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">original_error</span><span class="p">:</span> <span class="ne">Exception</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># upstream exception</span>
@@ -3407,7 +3410,7 @@ for inspection or logging.</p>
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Root cause: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">original_error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="provider-routing">Provider Routing<a class="headerlink" href="#provider-routing" title="Permanent link">&para;</a></h2>
+<h2 id="provider-routing">Provider routing<a class="headerlink" href="#provider-routing" title="Permanent link">&para;</a></h2>
 <p>Model name parsing is performed left-to-right on the prefix. Inferred providers (bare <code>gpt*</code>,
 <code>gemini*</code>, <code>claude*</code>) are checked last as substring matches.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>model_name string
@@ -3427,7 +3430,7 @@ for inspection or logging.</p>
 </span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>  └── unknown             → raises LLMClientError(UNAVAILABLE_MODEL)
 </span></code></pre></div>
 <hr />
-<h2 id="provider-details">Provider Details<a class="headerlink" href="#provider-details" title="Permanent link">&para;</a></h2>
+<h2 id="provider-details">Provider details<a class="headerlink" href="#provider-details" title="Permanent link">&para;</a></h2>
 <h3 id="local-onnx-local">Local ONNX (<code>local:*</code>)<a class="headerlink" href="#local-onnx-local" title="Permanent link">&para;</a></h3>
 <p>Runs ONNX models downloaded from AI Dev Gallery to <code>~/.cache/aigallery/</code>. Requires
 <code>onnxruntime-genai</code> (<code>pip install onnxruntime-genai</code>).</p>
@@ -3552,7 +3555,8 @@ not directly accessible from Python.</p>
 - <code>winrt-runtime</code> Python package</p>
 <div class="admonition note">
 <p class="admonition-title">AMD NPU status</p>
-<p>As of Windows build 26220, AMD XDNA NPU support for Phi Silica is not yet fully enabled.
+<p>As of mid-2025 Windows Insider builds (e.g. build 26220), AMD XDNA NPU support for Phi
+Silica is not yet fully enabled — this may have changed on newer builds.
 The LAF (Limited Access Feature) unlock returns <code>Unavailable</code> on AMD hardware. See
 <code>tools/llm/windows_ai_bridge/PHI_SILICA_STATUS.md</code> for the current status and workarounds.</p>
 </div>
@@ -3753,19 +3757,19 @@ model ID before calling the CLI.</p>
 </span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gemini-1.5-pro&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>  <span class="c1"># inferred</span>
 </span></code></pre></div>
 <p>Uses <code>google.generativeai</code> SDK. Requires <code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code>. Must enable
-<code>PROMPTEVAL_ALLOW_REMOTE=1</code>. System instruction is prepended inline as
-<code>"System Instruction: {system}\n\n{prompt}"</code> because the SDK's <code>system_instruction</code> parameter
-is not used to maintain simplicity.</p>
+<code>PROMPTEVAL_ALLOW_REMOTE=1</code>. The system instruction is prepended inline as
+<code>"System Instruction: {system}\n\n{prompt}"</code>; the adapter deliberately skips the SDK's
+<code>system_instruction</code> parameter to keep the call path uniform across providers.</p>
 <hr />
 <h3 id="anthropic-claude-claude-or-bare-claude">Anthropic Claude (<code>claude:*</code> or bare <code>claude*</code>)<a class="headerlink" href="#anthropic-claude-claude-or-bare-claude" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude:claude-sonnet-4-6&quot;</span><span class="p">,</span> <span class="s2">&quot;Review this code.&quot;</span><span class="p">)</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude-3-haiku-20240307&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>  <span class="c1"># inferred</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude-haiku-4-5&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>  <span class="c1"># inferred</span>
 </span></code></pre></div>
 <p>Uses the <code>anthropic.Anthropic</code> SDK. Requires <code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_API_KEY</code>. System
 instruction is passed as the <code>system</code> parameter in the Messages API. Must enable
 <code>PROMPTEVAL_ALLOW_REMOTE=1</code>. <code>max_tokens</code> is fixed at 4096 for Claude calls.</p>
 <hr />
-<h2 id="langchain-adapter">LangChain Adapter<a class="headerlink" href="#langchain-adapter" title="Permanent link">&para;</a></h2>
+<h2 id="langchain-adapter">LangChain adapter<a class="headerlink" href="#langchain-adapter" title="Permanent link">&para;</a></h2>
 <p><code>tools/llm/langchain_adapter.py</code> provides a thin shim for LangChain integration.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.langchain_adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LangChainAdapter</span>
 </span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
@@ -3784,7 +3788,7 @@ instruction is passed as the <code>system</code> parameter in the Messages API. 
 <code>langchain.schema.LLMResult</code> / <code>Generation</code> objects when <code>langchain</code> is installed. If LangChain
 is not present, it returns a simple dict with a <code>generations</code> key.</p>
 <hr />
-<h2 id="remote-provider-gate">Remote Provider Gate<a class="headerlink" href="#remote-provider-gate" title="Permanent link">&para;</a></h2>
+<h2 id="remote-provider-gate">Remote provider gate<a class="headerlink" href="#remote-provider-gate" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># All of these raise RuntimeError when PROMPTEVAL_ALLOW_REMOTE is unset:</span>
 </span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;openai:gpt-4o&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
 </span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude:claude-3-opus&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
@@ -3799,7 +3803,7 @@ is not present, it returns a simple dict with a <code>generations</code> key.</p
 </span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;windows-ai:phi-silica&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="response-cache">Response Cache<a class="headerlink" href="#response-cache" title="Permanent link">&para;</a></h2>
+<h2 id="response-cache">Response cache<a class="headerlink" href="#response-cache" title="Permanent link">&para;</a></h2>
 <p>The cache is applied transparently inside <code>generate_text()</code>. The cache key is the SHA-256 hash of
 <code>(model_name, prompt, system_instruction, temperature, max_tokens)</code>.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -3862,7 +3866,7 @@ Max size: 500 MB (LRU eviction).</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

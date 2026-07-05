@@ -4008,7 +4008,8 @@ It describes every in-process security control, its environment-variable knobs, 
 behavior, and practical recipes for tuning it to your environment.</p>
 <p><strong>This page is NOT</strong> an ADR, a code specification, or a threat model. For decision rationale
 see the linked ADRs; for the formal threat model see
-<a href="../../OWASP_LLM_THREAT_MODEL/"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a>. For the complete env-var
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a>
+(excluded from the built site). For the complete env-var
 index see the <a href="../../configuration/">Configuration Reference</a>.</p>
 <hr />
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
@@ -4203,7 +4204,7 @@ the limit by distributing requests across replicas.</p>
 <p>The planned Sprint 2 Redis migration will replace the in-process store with a shared
 counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
 / API-gateway layer for multi-replica deployments.</p>
-<p>See <a href="../../KNOWN_LIMITATIONS/#41-rate-limiting-is-in-process-only">KNOWN_LIMITATIONS.md §4.3</a>.</p>
+<p>See <a href="../../KNOWN_LIMITATIONS/#41-rate-limiting-is-in-process-only">KNOWN_LIMITATIONS.md §4.1</a>.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Reference</p>
@@ -4272,7 +4273,7 @@ window has also expired.</p>
 <p><code>AuthThrottle</code> state is per-process. In a multi-replica deployment, a distributed
 attacker who spreads probes across replicas can stay under each replica's threshold while
 collectively exceeding the intended lockout threshold.</p>
-<p>See <a href="../../KNOWN_LIMITATIONS/#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat">KNOWN_LIMITATIONS.md §4.4</a>.
+<p>See <a href="../../KNOWN_LIMITATIONS/#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat">KNOWN_LIMITATIONS.md §4.2</a>.
 Sprint 2 will migrate to a Redis-backed shared store.</p>
 </div>
 <h3 id="recipe-investigate-a-locked-out-client">Recipe: investigate a locked-out client<a class="headerlink" href="#recipe-investigate-a-locked-out-client" title="Permanent link">&para;</a></h3>
@@ -4494,11 +4495,12 @@ returns <code>503 Service Unavailable</code> unless <code>AGENTIC_SANITIZER_FAIL
 types pass through unchanged.</p>
 </div>
 <h3 id="agentic_sanitizer_fail_open">AGENTIC_SANITIZER_FAIL_OPEN<a class="headerlink" href="#agentic_sanitizer_fail_open" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">BREAKING CHANGE (2026-05-09)</p>
-<p>Only the string <code>"1"</code> is recognized as enabling fail-open. Previous versions accepted
-<code>"true"</code>, <code>"yes"</code>, and other truthy strings. If your deployment scripts set
-<code>AGENTIC_SANITIZER_FAIL_OPEN=true</code>, update them to <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Only the literal <code>1</code> enables fail-open</p>
+<p>Since 2026-05-09, only the string <code>"1"</code> is accepted as enabling fail-open. Earlier
+versions accepted <code>"true"</code>, <code>"yes"</code>, and other truthy strings. If your deployment
+scripts set <code>AGENTIC_SANITIZER_FAIL_OPEN=true</code>, update them to
+<code>AGENTIC_SANITIZER_FAIL_OPEN=1</code>.</p>
 </div>
 <p>Setting <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> causes the middleware to pass requests through
 when the sanitization layer is unavailable or encounters an error, rather than returning
@@ -4774,7 +4776,7 @@ inject it at runtime — never commit it to the repository.</p>
 <li><a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> — LangChain adapter eager
   validation at startup</li>
 <li><a href="../../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> — in-process caveats, multi-replica
-  behavior (§4.3, §4.4), and deferred Sprint 2 work</li>
+  behavior (§4.1, §4.2), and deferred Sprint 2 work</li>
 <li><a href="../troubleshooting/">Troubleshooting</a> — common failure modes and diagnostic recipes</li>
 <li><a href="../../deployment-guide/">Deployment Guide</a> — CI/CD pipeline, Docker, environment setup,
   and production observability checklist</li>
@@ -4801,7 +4803,7 @@ inject it at runtime — never commit it to the repository.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2026 02:12:49 UTC">June 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

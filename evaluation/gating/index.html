@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /runs/{filename}/evaluation endpoint.">
+        <meta name="description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Production Gating - Agentic Runtime Platform</title>
+        <title>Production gating - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Production Gating - Agentic Runtime Platform" />
-<meta property="og:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /runs/{filename}/evaluation endpoint." />
+<meta property="og:title" content="Production gating - Agentic Runtime Platform" />
+<meta property="og:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/gating.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/gating/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Production Gating - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /runs/{filename}/evaluation endpoint." />
+<meta property="twitter:title" content="Production gating - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/gating.png" />
 </head>
   
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Production Gating
+              Production gating
             
           </span>
         </div>
@@ -1757,7 +1757,7 @@
   <a href="#three-stage-scoring-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three-Stage Scoring Pipeline
+        Three-stage scoring pipeline
       
     </span>
   </a>
@@ -1768,19 +1768,19 @@
   <a href="#hard-gates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hard Gates
+        Hard gates
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Hard Gates">
+    <nav class="md-nav" aria-label="Hard gates">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#required_outputs_present-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        required_outputs_present Gate
+        required_outputs_present gate
       
     </span>
   </a>
@@ -1791,7 +1791,7 @@
   <a href="#release_build_verified-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        release_build_verified Gate
+        release_build_verified gate
       
     </span>
   </a>
@@ -1807,7 +1807,7 @@
   <a href="#criterion-floor-violations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterion Floor Violations
+        Criterion floor violations
       
     </span>
   </a>
@@ -1818,7 +1818,7 @@
   <a href="#scoring-profiles-ae" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring Profiles (A–E)
+        Scoring profiles (A–E)
       
     </span>
   </a>
@@ -1829,7 +1829,7 @@
   <a href="#rubric-weight-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric Weight Validation
+        Rubric weight validation
       
     </span>
   </a>
@@ -1840,7 +1840,7 @@
   <a href="#score-layers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Score Layers
+        Score layers
       
     </span>
   </a>
@@ -1851,7 +1851,7 @@
   <a href="#grade-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grade Mapping
+        Grade mapping
       
     </span>
   </a>
@@ -1859,10 +1859,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-runsfilenameevaluation-endpoint" class="md-nav__link">
+  <a href="#get-apirunsfilenameevaluation-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /runs/{filename}/evaluation Endpoint
+        GET /api/runs/{filename}/evaluation endpoint
       
     </span>
   </a>
@@ -1873,7 +1873,7 @@
   <a href="#ci-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI Integration
+        CI integration
       
     </span>
   </a>
@@ -1884,7 +1884,7 @@
   <a href="#evaluation-schema-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation Schema Contract
+        Evaluation schema contract
       
     </span>
   </a>
@@ -1895,7 +1895,7 @@
   <a href="#configuring-the-pass-threshold" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuring the Pass Threshold
+        Configuring the pass threshold
       
     </span>
   </a>
@@ -2934,7 +2934,7 @@
   <a href="#three-stage-scoring-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three-Stage Scoring Pipeline
+        Three-stage scoring pipeline
       
     </span>
   </a>
@@ -2945,19 +2945,19 @@
   <a href="#hard-gates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hard Gates
+        Hard gates
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Hard Gates">
+    <nav class="md-nav" aria-label="Hard gates">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#required_outputs_present-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        required_outputs_present Gate
+        required_outputs_present gate
       
     </span>
   </a>
@@ -2968,7 +2968,7 @@
   <a href="#release_build_verified-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        release_build_verified Gate
+        release_build_verified gate
       
     </span>
   </a>
@@ -2984,7 +2984,7 @@
   <a href="#criterion-floor-violations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterion Floor Violations
+        Criterion floor violations
       
     </span>
   </a>
@@ -2995,7 +2995,7 @@
   <a href="#scoring-profiles-ae" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring Profiles (A–E)
+        Scoring profiles (A–E)
       
     </span>
   </a>
@@ -3006,7 +3006,7 @@
   <a href="#rubric-weight-validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric Weight Validation
+        Rubric weight validation
       
     </span>
   </a>
@@ -3017,7 +3017,7 @@
   <a href="#score-layers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Score Layers
+        Score layers
       
     </span>
   </a>
@@ -3028,7 +3028,7 @@
   <a href="#grade-mapping" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grade Mapping
+        Grade mapping
       
     </span>
   </a>
@@ -3036,10 +3036,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-runsfilenameevaluation-endpoint" class="md-nav__link">
+  <a href="#get-apirunsfilenameevaluation-endpoint" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /runs/{filename}/evaluation Endpoint
+        GET /api/runs/{filename}/evaluation endpoint
       
     </span>
   </a>
@@ -3050,7 +3050,7 @@
   <a href="#ci-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI Integration
+        CI integration
       
     </span>
   </a>
@@ -3061,7 +3061,7 @@
   <a href="#evaluation-schema-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation Schema Contract
+        Evaluation schema contract
       
     </span>
   </a>
@@ -3072,7 +3072,7 @@
   <a href="#configuring-the-pass-threshold" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuring the Pass Threshold
+        Configuring the pass threshold
       
     </span>
   </a>
@@ -3126,11 +3126,11 @@
   
 
 
-<h1 id="production-gating">Production Gating<a class="headerlink" href="#production-gating" title="Permanent link">&para;</a></h1>
+<h1 id="production-gating">Production gating<a class="headerlink" href="#production-gating" title="Permanent link">&para;</a></h1>
 <p>Production gating is the policy layer that translates a collection of criterion scores into a single pass/fail verdict. When the gate fails, the specific failing dimension is surfaced so the run can be quarantined rather than silently downgraded.</p>
-<p>The server-side scoring pipeline lives in <code>agentic-workflows-v2/agentic_v2/server/evaluation_scoring.py</code> and is invoked after every workflow run that has a dataset sample associated with it.</p>
+<p>The scoring pipeline lives in <code>agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py</code> and is invoked after every workflow run that has a dataset sample associated with it.</p>
 <hr />
-<h2 id="three-stage-scoring-pipeline">Three-Stage Scoring Pipeline<a class="headerlink" href="#three-stage-scoring-pipeline" title="Permanent link">&para;</a></h2>
+<h2 id="three-stage-scoring-pipeline">Three-stage scoring pipeline<a class="headerlink" href="#three-stage-scoring-pipeline" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Stage 1: Criterion Scoring
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    For each criterion in the resolved rubric:
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        raw_score = _compute_criterion_score(criterion, result, expected_text)
@@ -3156,7 +3156,7 @@
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    passed = (weighted_score &gt;= threshold) AND no_floor_violations AND all_hard_gates
 </span></code></pre></div>
 <hr />
-<h2 id="hard-gates">Hard Gates<a class="headerlink" href="#hard-gates" title="Permanent link">&para;</a></h2>
+<h2 id="hard-gates">Hard gates<a class="headerlink" href="#hard-gates" title="Permanent link">&para;</a></h2>
 <p>Hard gates are binary pass/fail checks that must all succeed before a run can receive a passing grade. They are evaluated in <code>compute_hard_gates()</code>:</p>
 <table>
 <thead>
@@ -3194,14 +3194,14 @@
 </table>
 <p>If <strong>any</strong> hard gate fails and <code>enforce_hard_gates=True</code> (the production default), the run is assigned grade <code>F</code> regardless of the weighted score. Hard gate failures are listed in <code>payload["hard_gate_failures"]</code>.</p>
 <p><strong>Note:</strong> <code>HardGateResult.all_passed</code> is the conjunction of all six gates. Individual gate values are available in <code>payload["hard_gates"]</code>.</p>
-<h3 id="required_outputs_present-gate"><code>required_outputs_present</code> Gate<a class="headerlink" href="#required_outputs_present-gate" title="Permanent link">&para;</a></h3>
+<h3 id="required_outputs_present-gate"><code>required_outputs_present</code> gate<a class="headerlink" href="#required_outputs_present-gate" title="Permanent link">&para;</a></h3>
 <p>Required outputs are those listed in the workflow's <code>outputs</code> section that do not have <code>optional: true</code>. The gate fails if:
 - The output name appears in <code>result.metadata["unresolved_required_outputs"]</code>, or
 - The output value is <code>None</code> in <code>result.final_output</code>.</p>
-<h3 id="release_build_verified-gate"><code>release_build_verified</code> Gate<a class="headerlink" href="#release_build_verified-gate" title="Permanent link">&para;</a></h3>
+<h3 id="release_build_verified-gate"><code>release_build_verified</code> gate<a class="headerlink" href="#release_build_verified-gate" title="Permanent link">&para;</a></h3>
 <p>This gate only applies if the run includes a step named <code>build_verify_release_*</code> or <code>release_build_verify_*</code>. If no such step exists, the gate automatically passes. If the step exists but has <code>status=FAILED</code>, the gate fails. If the step has <code>ready_for_release</code> in its output dict that evaluates as falsy, the gate also fails.</p>
 <hr />
-<h2 id="criterion-floor-violations">Criterion Floor Violations<a class="headerlink" href="#criterion-floor-violations" title="Permanent link">&para;</a></h2>
+<h2 id="criterion-floor-violations">Criterion floor violations<a class="headerlink" href="#criterion-floor-violations" title="Permanent link">&para;</a></h2>
 <p>Floor violations are softer than hard gates — they don't automatically fail a run, but they cap the grade.</p>
 <p>A floor violation occurs when a criterion's normalized score falls below its <code>critical_floor</code> value (defined per-criterion in the workflow YAML). Two backstop floors are also applied automatically even when the workflow YAML doesn't declare explicit floors:</p>
 <table>
@@ -3234,7 +3234,7 @@
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">]</span>
 </span></code></pre></div>
 <hr />
-<h2 id="scoring-profiles-ae">Scoring Profiles (A–E)<a class="headerlink" href="#scoring-profiles-ae" title="Permanent link">&para;</a></h2>
+<h2 id="scoring-profiles-ae">Scoring profiles (A–E)<a class="headerlink" href="#scoring-profiles-ae" title="Permanent link">&para;</a></h2>
 <p>Scoring profiles bind a set of criterion weights to a workflow family. The profile is selected via the <code>scoring_profile</code> field in the workflow YAML's <code>evaluation</code> section:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">evaluation</span><span class="p">:</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">scoring_profile</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;A&quot;</span>
@@ -3295,7 +3295,7 @@
 </ol>
 <p>When a workflow declares explicit <code>criteria</code>, only those criteria names are included in the weight map; undeclared criteria from inherited weights are dropped to prevent scoring the wrong rubric silently.</p>
 <hr />
-<h2 id="rubric-weight-validation">Rubric Weight Validation<a class="headerlink" href="#rubric-weight-validation" title="Permanent link">&para;</a></h2>
+<h2 id="rubric-weight-validation">Rubric weight validation<a class="headerlink" href="#rubric-weight-validation" title="Permanent link">&para;</a></h2>
 <p><code>_validate_rubric_weights()</code> enforces three constraints before any evaluation:</p>
 <ol>
 <li>The weights dict must be non-empty.</li>
@@ -3304,7 +3304,7 @@
 </ol>
 <p>If the workflow declares explicit criteria, any weight key not matching a declared criterion name raises <code>ValueError</code> with the list of unknown criteria and the known criteria names.</p>
 <hr />
-<h2 id="score-layers">Score Layers<a class="headerlink" href="#score-layers" title="Permanent link">&para;</a></h2>
+<h2 id="score-layers">Score layers<a class="headerlink" href="#score-layers" title="Permanent link">&para;</a></h2>
 <p>The evaluation payload includes a <code>score_layers</code> dict for transparency:</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;score_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -3348,7 +3348,7 @@
 </table>
 <p>The hybrid composition weights are reported in <code>payload["hybrid_weights"]</code>.</p>
 <hr />
-<h2 id="grade-mapping">Grade Mapping<a class="headerlink" href="#grade-mapping" title="Permanent link">&para;</a></h2>
+<h2 id="grade-mapping">Grade mapping<a class="headerlink" href="#grade-mapping" title="Permanent link">&para;</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>weighted_score in [0, 100] → letter grade
 </span></code></pre></div>
 <table>
@@ -3395,7 +3395,7 @@
 - No floor violations
 - All hard gates pass (when <code>enforce_hard_gates=True</code>)</p>
 <hr />
-<h2 id="get-runsfilenameevaluation-endpoint"><code>GET /runs/{filename}/evaluation</code> Endpoint<a class="headerlink" href="#get-runsfilenameevaluation-endpoint" title="Permanent link">&para;</a></h2>
+<h2 id="get-apirunsfilenameevaluation-endpoint"><code>GET /api/runs/{filename}/evaluation</code> endpoint<a class="headerlink" href="#get-apirunsfilenameevaluation-endpoint" title="Permanent link">&para;</a></h2>
 <p>The evaluation result for a completed run is available at:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GET /api/runs/{filename}/evaluation
 </span></code></pre></div>
@@ -3484,13 +3484,12 @@
 - <code>404</code> — run file not found
 - <code>200</code> with <code>evaluation: null</code> — run found but no evaluation was performed (evaluation not requested or no dataset sample)</p>
 <hr />
-<h2 id="ci-integration">CI Integration<a class="headerlink" href="#ci-integration" title="Permanent link">&para;</a></h2>
-<p>The evaluation pipeline integrates with CI via the <code>eval-package-ci.yml</code> workflow. As of Sprint B:</p>
+<h2 id="ci-integration">CI integration<a class="headerlink" href="#ci-integration" title="Permanent link">&para;</a></h2>
+<p>The evaluation pipeline integrates with CI via the <code>eval-package-ci.yml</code> workflow:</p>
 <ul>
-<li><code>continue-on-error: false</code> — mypy failures block merge</li>
+<li>mypy runs as a blocking step — type-check failures block merge</li>
 <li>The eval package is tested independently of the main runtime</li>
-<li>All 35 mypy findings cleared (Sprint B #1)</li>
-<li>Coverage gate: 80% (<code>fail_under = 80</code> in <code>pyproject.toml</code>)</li>
+<li>Coverage gate: 80% (<code>fail_under = 80</code> in <code>agentic-v2-eval/pyproject.toml</code>)</li>
 </ul>
 <p>To run the full eval-package test suite with coverage:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
@@ -3501,7 +3500,7 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mypy<span class="w"> </span>--strict<span class="w"> </span>src/agentic_v2_eval/
 </span></code></pre></div>
 <hr />
-<h2 id="evaluation-schema-contract">Evaluation Schema Contract<a class="headerlink" href="#evaluation-schema-contract" title="Permanent link">&para;</a></h2>
+<h2 id="evaluation-schema-contract">Evaluation schema contract<a class="headerlink" href="#evaluation-schema-contract" title="Permanent link">&para;</a></h2>
 <p><code>validate_evaluation_payload_schema(payload)</code> validates that an evaluation payload conforms to the required structure. Required top-level fields:</p>
 <table>
 <thead>
@@ -3562,7 +3561,7 @@
 <p>Each criterion entry must have: <code>criterion</code>, <code>raw_score</code>, <code>normalized_score</code>, <code>weight</code>, <code>formula_id</code>, <code>score</code>.</p>
 <p>Schema validation failure sets <code>hard_gates.schema_contract_valid = False</code>, which triggers a hard gate failure.</p>
 <hr />
-<h2 id="configuring-the-pass-threshold">Configuring the Pass Threshold<a class="headerlink" href="#configuring-the-pass-threshold" title="Permanent link">&para;</a></h2>
+<h2 id="configuring-the-pass-threshold">Configuring the pass threshold<a class="headerlink" href="#configuring-the-pass-threshold" title="Permanent link">&para;</a></h2>
 <p>The default pass threshold is 70.0. It can be overridden in the <code>evaluation.yaml</code> configuration file:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">evaluation</span><span class="p">:</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">scoring</span><span class="p">:</span>
@@ -3596,7 +3595,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

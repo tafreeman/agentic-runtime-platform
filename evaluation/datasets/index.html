@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Dataset sources, JSONL format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI.">
+        <meta name="description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Evaluation Datasets - Agentic Runtime Platform" />
-<meta property="og:description" content="Dataset sources, JSONL format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
+<meta property="og:description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/datasets.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/datasets/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Evaluation Datasets - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Dataset sources, JSONL format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
+<meta property="twitter:description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/datasets.png" />
 </head>
   
@@ -1813,7 +1813,7 @@
   <a href="#available-benchmark-datasets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Benchmark Datasets
+        Available benchmark datasets
       
     </span>
   </a>
@@ -1824,19 +1824,19 @@
   <a href="#eval-package-python-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Eval-Package Python API
+        Eval-package Python API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Eval-Package Python API">
+    <nav class="md-nav" aria-label="Eval-package Python API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#installation-and-import" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation and Import
+        Installation and import
       
     </span>
   </a>
@@ -1918,7 +1918,7 @@
   <a href="#lazy-import-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lazy Import Architecture
+        Lazy import architecture
       
     </span>
   </a>
@@ -1929,19 +1929,19 @@
   <a href="#local-dataset-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Local Dataset Format
+        Local dataset format
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Local Dataset Format">
+    <nav class="md-nav" aria-label="Local dataset format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#supported-json-structures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported JSON Structures
+        Supported JSON structures
       
     </span>
   </a>
@@ -1952,7 +1952,7 @@
   <a href="#field-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Field Discovery
+        Field discovery
       
     </span>
   </a>
@@ -1963,7 +1963,7 @@
   <a href="#jsonl-datasets-external-benchmark-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSONL Datasets (External Benchmark Tools)
+        JSONL datasets (external benchmark tools)
       
     </span>
   </a>
@@ -1979,12 +1979,12 @@
   <a href="#server-side-dataset-apis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server-Side Dataset APIs
+        Server-side dataset APIs
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Server-Side Dataset APIs">
+    <nav class="md-nav" aria-label="Server-side dataset APIs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2040,12 +2040,12 @@
   <a href="#dataset-to-workflow-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dataset-to-Workflow Compatibility
+        Dataset-to-workflow compatibility
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Dataset-to-Workflow Compatibility">
+    <nav class="md-nav" aria-label="Dataset-to-workflow compatibility">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2079,7 +2079,7 @@
   <a href="#eval-sets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Eval Sets
+        Eval sets
       
     </span>
   </a>
@@ -2090,19 +2090,19 @@
   <a href="#dashboard-dataset-browser" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard Dataset Browser
+        Dashboard dataset browser
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Dashboard Dataset Browser">
+    <nav class="md-nav" aria-label="Dashboard dataset browser">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#pane-1-dataset-picker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 1: Dataset Picker
+        Pane 1: dataset picker
       
     </span>
   </a>
@@ -2113,7 +2113,7 @@
   <a href="#pane-2-sample-list" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 2: Sample List
+        Pane 2: sample list
       
     </span>
   </a>
@@ -2124,7 +2124,7 @@
   <a href="#pane-3-sample-detail-workflow-preview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 3: Sample Detail + Workflow Preview
+        Pane 3: sample detail + workflow preview
       
     </span>
   </a>
@@ -2140,7 +2140,7 @@
   <a href="#using-datasets-in-batch-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Datasets in Batch Evaluation
+        Using datasets in batch evaluation
       
     </span>
   </a>
@@ -2151,7 +2151,7 @@
   <a href="#security-path-traversal-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security: Path Traversal Protection
+        Security: path traversal protection
       
     </span>
   </a>
@@ -3134,7 +3134,7 @@
   <a href="#available-benchmark-datasets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available Benchmark Datasets
+        Available benchmark datasets
       
     </span>
   </a>
@@ -3145,19 +3145,19 @@
   <a href="#eval-package-python-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Eval-Package Python API
+        Eval-package Python API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Eval-Package Python API">
+    <nav class="md-nav" aria-label="Eval-package Python API">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#installation-and-import" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation and Import
+        Installation and import
       
     </span>
   </a>
@@ -3239,7 +3239,7 @@
   <a href="#lazy-import-architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Lazy Import Architecture
+        Lazy import architecture
       
     </span>
   </a>
@@ -3250,19 +3250,19 @@
   <a href="#local-dataset-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Local Dataset Format
+        Local dataset format
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Local Dataset Format">
+    <nav class="md-nav" aria-label="Local dataset format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#supported-json-structures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported JSON Structures
+        Supported JSON structures
       
     </span>
   </a>
@@ -3273,7 +3273,7 @@
   <a href="#field-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Field Discovery
+        Field discovery
       
     </span>
   </a>
@@ -3284,7 +3284,7 @@
   <a href="#jsonl-datasets-external-benchmark-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSONL Datasets (External Benchmark Tools)
+        JSONL datasets (external benchmark tools)
       
     </span>
   </a>
@@ -3300,12 +3300,12 @@
   <a href="#server-side-dataset-apis" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server-Side Dataset APIs
+        Server-side dataset APIs
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Server-Side Dataset APIs">
+    <nav class="md-nav" aria-label="Server-side dataset APIs">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3361,12 +3361,12 @@
   <a href="#dataset-to-workflow-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dataset-to-Workflow Compatibility
+        Dataset-to-workflow compatibility
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Dataset-to-Workflow Compatibility">
+    <nav class="md-nav" aria-label="Dataset-to-workflow compatibility">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3400,7 +3400,7 @@
   <a href="#eval-sets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Eval Sets
+        Eval sets
       
     </span>
   </a>
@@ -3411,19 +3411,19 @@
   <a href="#dashboard-dataset-browser" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard Dataset Browser
+        Dashboard dataset browser
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Dashboard Dataset Browser">
+    <nav class="md-nav" aria-label="Dashboard dataset browser">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#pane-1-dataset-picker" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 1: Dataset Picker
+        Pane 1: dataset picker
       
     </span>
   </a>
@@ -3434,7 +3434,7 @@
   <a href="#pane-2-sample-list" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 2: Sample List
+        Pane 2: sample list
       
     </span>
   </a>
@@ -3445,7 +3445,7 @@
   <a href="#pane-3-sample-detail-workflow-preview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pane 3: Sample Detail + Workflow Preview
+        Pane 3: sample detail + workflow preview
       
     </span>
   </a>
@@ -3461,7 +3461,7 @@
   <a href="#using-datasets-in-batch-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using Datasets in Batch Evaluation
+        Using datasets in batch evaluation
       
     </span>
   </a>
@@ -3472,7 +3472,7 @@
   <a href="#security-path-traversal-protection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security: Path Traversal Protection
+        Security: path traversal protection
       
     </span>
   </a>
@@ -3526,7 +3526,7 @@
   
 
 
-<h1 id="evaluation-datasets">Evaluation Datasets<a class="headerlink" href="#evaluation-datasets" title="Permanent link">&para;</a></h1>
+<h1 id="evaluation-datasets">Evaluation datasets<a class="headerlink" href="#evaluation-datasets" title="Permanent link">&para;</a></h1>
 <p>Agentic Runtime Platform draws evaluation data from three sources:</p>
 <table>
 <thead>
@@ -3560,7 +3560,7 @@
 <li><strong><code>agentic-workflows-v2</code></strong> server (<code>server/datasets.py</code>, <code>server/routes/evaluation_routes.py</code>) — HTTP API for the dashboard UI and workflow-aligned dataset browsing.</li>
 </ul>
 <hr />
-<h2 id="available-benchmark-datasets">Available Benchmark Datasets<a class="headerlink" href="#available-benchmark-datasets" title="Permanent link">&para;</a></h2>
+<h2 id="available-benchmark-datasets">Available benchmark datasets<a class="headerlink" href="#available-benchmark-datasets" title="Permanent link">&para;</a></h2>
 <p>The following benchmark IDs are registered in <code>tools.agents.benchmarks.datasets.BENCHMARK_DEFINITIONS</code>:</p>
 <table>
 <thead>
@@ -3618,8 +3618,8 @@
 </table>
 <p><code>swe-bench*</code> variants contain real GitHub issues requiring code patches. <code>humaneval</code> and <code>mbpp</code> are function-level Python programming tasks. <code>codeclash</code> contains competitive-programming-style problems.</p>
 <hr />
-<h2 id="eval-package-python-api">Eval-Package Python API<a class="headerlink" href="#eval-package-python-api" title="Permanent link">&para;</a></h2>
-<h3 id="installation-and-import">Installation and Import<a class="headerlink" href="#installation-and-import" title="Permanent link">&para;</a></h3>
+<h2 id="eval-package-python-api">Eval-package Python API<a class="headerlink" href="#eval-package-python-api" title="Permanent link">&para;</a></h2>
+<h3 id="installation-and-import">Installation and import<a class="headerlink" href="#installation-and-import" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">load_benchmark</span><span class="p">,</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">list_benchmarks</span><span class="p">,</span>
@@ -3805,7 +3805,7 @@
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">benchmark_id</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">limit</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="lazy-import-architecture">Lazy Import Architecture<a class="headerlink" href="#lazy-import-architecture" title="Permanent link">&para;</a></h2>
+<h2 id="lazy-import-architecture">Lazy import architecture<a class="headerlink" href="#lazy-import-architecture" title="Permanent link">&para;</a></h2>
 <p>The <code>datasets.py</code> module never imports <code>tools.agents.benchmarks</code> at module load time. Instead:</p>
 <ol>
 <li>Three module-level variables (<code>_datasets_module</code>, <code>_loader_module</code>, <code>_registry_module</code>) are initialised to <code>None</code>.</li>
@@ -3815,14 +3815,14 @@
 </ol>
 <p>This design lets <code>agentic-v2-eval</code> be used without <code>tools</code> installed — any code path that does not call a dataset function will never trigger the import.</p>
 <hr />
-<h2 id="local-dataset-format">Local Dataset Format<a class="headerlink" href="#local-dataset-format" title="Permanent link">&para;</a></h2>
+<h2 id="local-dataset-format">Local dataset format<a class="headerlink" href="#local-dataset-format" title="Permanent link">&para;</a></h2>
 <p>Local datasets are JSON files. The server scans three directories for <code>*.json</code> files:</p>
 <ul>
 <li><code>agentic-workflows-v2/tests/fixtures/datasets/</code></li>
 <li><code>agentic-workflows-v2/evaluation/datasets/</code></li>
 <li><code>tools/agents/benchmarks/gold_standards/</code></li>
 </ul>
-<h3 id="supported-json-structures">Supported JSON Structures<a class="headerlink" href="#supported-json-structures" title="Permanent link">&para;</a></h3>
+<h3 id="supported-json-structures">Supported JSON structures<a class="headerlink" href="#supported-json-structures" title="Permanent link">&para;</a></h3>
 <p><strong>Top-level array (most common):</strong></p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">[</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p">{</span>
@@ -3857,14 +3857,14 @@
 </span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>Non-dict array entries are wrapped as <code>{"value": entry}</code> for schema consistency.</p>
-<h3 id="field-discovery">Field Discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h3>
+<h3 id="field-discovery">Field discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h3>
 <p>The sample summary and detail responses use heuristic field discovery:</p>
 <ul>
 <li><strong><code>sample_id</code>:</strong> Derived from <code>id</code>, <code>sample_id</code>, or <code>task_id</code> fields.</li>
 <li><strong><code>title</code>:</strong> First non-empty value from <code>title</code>, <code>name</code>, <code>problem</code>, <code>question</code>, or <code>task</code> fields (truncated at 120 characters).</li>
 <li><strong><code>summary</code>:</strong> First non-empty string field that is not an ID field (truncated at 200 characters).</li>
 </ul>
-<h3 id="jsonl-datasets-external-benchmark-tools">JSONL Datasets (External Benchmark Tools)<a class="headerlink" href="#jsonl-datasets-external-benchmark-tools" title="Permanent link">&para;</a></h3>
+<h3 id="jsonl-datasets-external-benchmark-tools">JSONL datasets (external benchmark tools)<a class="headerlink" href="#jsonl-datasets-external-benchmark-tools" title="Permanent link">&para;</a></h3>
 <p>When loading from benchmark registries via <code>tools.agents.benchmarks</code>, the underlying format is JSONL (JSON Lines) — one JSON object per line. The <code>load_benchmark()</code> function abstracts this; callers receive <code>BenchmarkTask</code> objects regardless of the source format.</p>
 <p>If you are providing a custom local file in JSONL format, convert it to a JSON array first:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -3875,7 +3875,7 @@
 </span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;dataset.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </span></code></pre></div>
 <hr />
-<h2 id="server-side-dataset-apis">Server-Side Dataset APIs<a class="headerlink" href="#server-side-dataset-apis" title="Permanent link">&para;</a></h2>
+<h2 id="server-side-dataset-apis">Server-side dataset APIs<a class="headerlink" href="#server-side-dataset-apis" title="Permanent link">&para;</a></h2>
 <p>The FastAPI server exposes four dataset-related endpoints under <code>/api/eval/</code>:</p>
 <h3 id="get-apievaldatasets"><code>GET /api/eval/datasets</code><a class="headerlink" href="#get-apievaldatasets" title="Permanent link">&para;</a></h3>
 <p>Lists all available dataset sources for the evaluation picker UI.</p>
@@ -4123,10 +4123,10 @@
 <p>When <code>compatible</code> is <code>false</code>, <code>reasons</code> lists the specific mismatches (missing required fields, type conflicts, etc.) and <code>adapted_inputs</code> is an empty dict.</p>
 <p><strong>Requires:</strong> LangChain extras (<code>pip install -e ".[langchain]"</code>). Returns <code>501</code> if not installed.</p>
 <hr />
-<h2 id="dataset-to-workflow-compatibility">Dataset-to-Workflow Compatibility<a class="headerlink" href="#dataset-to-workflow-compatibility" title="Permanent link">&para;</a></h2>
+<h2 id="dataset-to-workflow-compatibility">Dataset-to-workflow compatibility<a class="headerlink" href="#dataset-to-workflow-compatibility" title="Permanent link">&para;</a></h2>
 <h3 id="match_workflow_dataset"><code>match_workflow_dataset()</code><a class="headerlink" href="#match_workflow_dataset" title="Permanent link">&para;</a></h3>
 <p><code>match_workflow_dataset(workflow_def, sample)</code> checks whether a dataset sample provides the inputs required by a workflow:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.server.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_workflow_dataset</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.dataset_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_workflow_dataset</span>
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
 </span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">compatible</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="n">match_workflow_dataset</span><span class="p">(</span><span class="n">workflow_def</span><span class="p">,</span> <span class="n">sample</span><span class="p">)</span>
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">compatible</span><span class="p">:</span>
@@ -4136,7 +4136,7 @@
 <p>The function inspects the workflow's <code>inputs</code> section and checks each non-optional input against the sample's top-level field names, looking for name matches and compatible value types. It returns <code>(True, [])</code> if all required inputs can be satisfied, or <code>(False, [reason_strings...])</code> listing specific mismatches.</p>
 <h3 id="adapt_sample_to_workflow_inputs"><code>adapt_sample_to_workflow_inputs()</code><a class="headerlink" href="#adapt_sample_to_workflow_inputs" title="Permanent link">&para;</a></h3>
 <p><code>adapt_sample_to_workflow_inputs()</code> translates matched sample fields into the workflow's expected input schema:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.server.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">adapt_sample_to_workflow_inputs</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.dataset_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">adapt_sample_to_workflow_inputs</span>
 </span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
 </span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">adapted</span> <span class="o">=</span> <span class="n">adapt_sample_to_workflow_inputs</span><span class="p">(</span>
 </span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">workflow_inputs</span><span class="o">=</span><span class="n">workflow_def</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
@@ -4153,7 +4153,7 @@
 <li><strong>Empty value handling:</strong> Fields with <code>None</code>, empty string, or empty list values are treated as absent.</li>
 </ul>
 <hr />
-<h2 id="eval-sets">Eval Sets<a class="headerlink" href="#eval-sets" title="Permanent link">&para;</a></h2>
+<h2 id="eval-sets">Eval sets<a class="headerlink" href="#eval-sets" title="Permanent link">&para;</a></h2>
 <p>Eval sets are predefined groupings of datasets configured in <code>evaluation.yaml</code>. They allow you to define named suites for repeatable evaluation runs:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># agentic-workflows-v2/agentic_v2/config/defaults/evaluation.yaml</span>
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nt">evaluation</span><span class="p">:</span>
@@ -4174,9 +4174,9 @@
 </span></code></pre></div>
 <p>Eval sets appear in the <code>eval_sets</code> array of <code>GET /api/eval/datasets</code>. They are informational groupings — selecting an eval set in the UI populates the dataset picker with the constituent datasets.</p>
 <hr />
-<h2 id="dashboard-dataset-browser">Dashboard Dataset Browser<a class="headerlink" href="#dashboard-dataset-browser" title="Permanent link">&para;</a></h2>
+<h2 id="dashboard-dataset-browser">Dashboard dataset browser<a class="headerlink" href="#dashboard-dataset-browser" title="Permanent link">&para;</a></h2>
 <p>The React dashboard includes a three-pane dataset browser accessible from the evaluation run dialog.</p>
-<h3 id="pane-1-dataset-picker">Pane 1: Dataset Picker<a class="headerlink" href="#pane-1-dataset-picker" title="Permanent link">&para;</a></h3>
+<h3 id="pane-1-dataset-picker">Pane 1: dataset picker<a class="headerlink" href="#pane-1-dataset-picker" title="Permanent link">&para;</a></h3>
 <p>The left pane lists available datasets grouped by source (Repository / Local / Eval Sets). Each dataset shows:</p>
 <ul>
 <li>Name and description</li>
@@ -4184,7 +4184,7 @@
 <li>Source badge (Repository / Local)</li>
 </ul>
 <p>Powered by <code>GET /api/eval/datasets</code>. When a workflow is selected in the run dialog, the picker automatically filters to compatible datasets only.</p>
-<h3 id="pane-2-sample-list">Pane 2: Sample List<a class="headerlink" href="#pane-2-sample-list" title="Permanent link">&para;</a></h3>
+<h3 id="pane-2-sample-list">Pane 2: sample list<a class="headerlink" href="#pane-2-sample-list" title="Permanent link">&para;</a></h3>
 <p>The center pane shows a paginated list of samples from the selected dataset. Each row displays:</p>
 <ul>
 <li>Sample index and ID</li>
@@ -4193,7 +4193,7 @@
 <li>Field names badge showing what top-level keys the sample contains</li>
 </ul>
 <p>Powered by <code>GET /api/eval/datasets/sample-list</code> with <code>offset</code>/<code>limit</code> pagination. The frontend increments <code>offset</code> by <code>limit</code> to load the next page.</p>
-<h3 id="pane-3-sample-detail-workflow-preview">Pane 3: Sample Detail + Workflow Preview<a class="headerlink" href="#pane-3-sample-detail-workflow-preview" title="Permanent link">&para;</a></h3>
+<h3 id="pane-3-sample-detail-workflow-preview">Pane 3: sample detail + workflow preview<a class="headerlink" href="#pane-3-sample-detail-workflow-preview" title="Permanent link">&para;</a></h3>
 <p>The right pane shows the full content of the selected sample with two tabs:</p>
 <p><strong>Raw tab:</strong> Full JSON of the <code>sample</code> dict with field labels and values. Large text values are truncated with a "Show more" toggle.</p>
 <p><strong>Workflow Preview tab:</strong> Shows how the sample will be mapped to workflow inputs when a workflow is selected. Uses <code>GET /api/eval/datasets/sample-detail?workflow=&lt;name&gt;</code> to fetch the <code>workflow_preview.adapted_inputs</code> mapping.</p>
@@ -4203,7 +4203,7 @@
 <li>Red error indicators for required fields that cannot be satisfied.</li>
 </ul>
 <hr />
-<h2 id="using-datasets-in-batch-evaluation">Using Datasets in Batch Evaluation<a class="headerlink" href="#using-datasets-in-batch-evaluation" title="Permanent link">&para;</a></h2>
+<h2 id="using-datasets-in-batch-evaluation">Using datasets in batch evaluation<a class="headerlink" href="#using-datasets-in-batch-evaluation" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_benchmark</span><span class="p">,</span> <span class="n">BenchmarkTask</span>
 </span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
 </span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span>
@@ -4241,7 +4241,7 @@
 </span><span id="__span-17-35"><a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to evaluate: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">failed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="security-path-traversal-protection">Security: Path Traversal Protection<a class="headerlink" href="#security-path-traversal-protection" title="Permanent link">&para;</a></h2>
+<h2 id="security-path-traversal-protection">Security: path traversal protection<a class="headerlink" href="#security-path-traversal-protection" title="Permanent link">&para;</a></h2>
 <p>Local dataset loading enforces a path allow-list. <code>_resolve_local_dataset()</code> verifies that the resolved absolute path falls under one of the three known dataset roots via <code>_is_under_allowed_root()</code>. A dataset ID that resolves outside these directories raises <code>ValueError</code>, preventing path traversal attacks where a crafted dataset ID might reference arbitrary files on the filesystem.</p>
 <p>This check is performed on the resolved (symlink-expanded) path, not the raw string, ensuring that symlinks pointing outside the allowed directories are also blocked.</p>
 
@@ -4266,7 +4266,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     

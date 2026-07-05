@@ -3252,15 +3252,18 @@
 <blockquote>
 <p><strong>Audience:</strong> Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 <strong>Outcome:</strong> After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-<strong>Last verified:</strong> 2026-06-10</p>
+<strong>Last verified:</strong> 2026-07-05</p>
 </blockquote>
 <p>This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.</p>
 <p>Each item includes a <strong>Status</strong> (reflecting how we're treating it today) and an <strong>Upstream fix</strong> field pointing at the relevant ticket, workaround, or follow-up.</p>
+<blockquote>
+<p><strong>Note on item IDs:</strong> entries below cite the Sprint 1 story IDs (<code>S1-n</code>) they shipped under. <a href="../ROADMAP/"><code>ROADMAP.md</code></a> tracks the same work under the two-sprint plan's T-series IDs — e.g. S1-1 = T1-1 (wire-format gate extension), S1-2 = T1-4 (rate limiting + auth throttle), S1-6 = T3-2 (eager adapter validation).</p>
+</blockquote>
 <hr />
 <h2 id="1-typed-gates-that-are-not-fully-enforced">1. Typed gates that are not fully enforced<a class="headerlink" href="#1-typed-gates-that-are-not-fully-enforced" title="Permanent link">&para;</a></h2>
 <h3 id="11-python-typescript-wire-format-is-manually-mirrored-partial">1.1 Python ↔ TypeScript wire format is manually mirrored (partial)<a class="headerlink" href="#11-python-typescript-wire-format-is-manually-mirrored-partial" title="Permanent link">&para;</a></h3>
 <p><code>agentic_v2/contracts/events.py</code> defines the execution-event discriminated union in Python; <code>ui/src/api/types.ts</code> mirrors it by hand. Drift is caught by reviewer eyeball, not by automation.</p>
-<p>Sprint 1 (S1-1) extended the schema-drift CI gate to cover six HTTP response shapes — <code>DAGResponse</code>, <code>WorkflowInputSchemaResponse</code>, <code>WorkflowEditorStep</code>, <code>RunsSummaryResponse</code>, <code>ExecutionEvent</code>, and <code>StepResultRecord</code>. These six shapes now have committed JSON schema snapshots under <code>tests/schemas/</code> and the gate regenerates them in CI. Other endpoint payloads (beyond these six) remain hand-mirrored without an automated drift check.</p>
+<p>Sprint 1 (S1-1 / ROADMAP T1-1) added four HTTP response shapes to the schema-drift CI gate — <code>DAGResponse</code>, <code>WorkflowInputSchemaResponse</code>, <code>WorkflowEditorStep</code>, and <code>RunsSummaryResponse</code> — joining the previously covered <code>ExecutionEvent</code> and <code>StepResultRecord</code> for six gated shapes in total. These six shapes have committed JSON schema snapshots under <code>tests/schemas/</code> and the gate regenerates them in CI. Other endpoint payloads (beyond these six) remain hand-mirrored without an automated drift check.</p>
 <ul>
 <li><strong>Surface:</strong> Any new event field in the uncovered endpoints requires an edit in both files.</li>
 <li><strong>Risk:</strong> Silent shape mismatches between backend emit and frontend decode for endpoints not yet covered by the drift gate.</li>
@@ -3402,7 +3405,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2026 02:12:49 UTC">June 11, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
   </span>
 
     
