@@ -19,13 +19,17 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: 26rem;
   margin: 0 0 0.2rem;
   border: 1px solid var(--border-subtle-00);
   border-radius: var(--radius-0);
+  /* Restrained: void black with a dim trace of the brand imagery on the
+     right edge — the content carries the hero, not the backdrop. */
   background:
-    var(--gradient-scrim),
-    url("../assets/hero-cinematic.jpg") center / cover no-repeat,
+    linear-gradient(90deg,
+      var(--void) 0%,
+      rgba(0, 0, 0, 0.94) 55%,
+      rgba(0, 0, 0, 0.68) 100%),
+    url("../assets/hero-cinematic.jpg") right center / cover no-repeat,
     var(--void);
   overflow: hidden;
 }
@@ -33,7 +37,7 @@
 .console-hero .hero-inner {
   position: relative;
   z-index: 1;
-  padding: 4rem 2rem 1.8rem;
+  padding: 2.4rem 2rem 1.6rem;
   max-width: 46rem;
 }
 
