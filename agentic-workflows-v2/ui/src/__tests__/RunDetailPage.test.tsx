@@ -197,6 +197,65 @@ describe("RunDetailPage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("blocks replay when the log captured no inputs but the workflow requires some", () => {
+    // Regression: old run logs carry `inputs: null`; replaying one against a
+    // workflow with a required input produced a doomed run that died on the
+    // live page with "Input validation failed … Missing required input".
+    mockUseRunDetail.mockReturnValue({
+      data: { ...RUN_FIXTURE, inputs: null },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "review_flow",
+        description: "",
+        nodes: [],
+        edges: [],
+        inputs: [
+          { name: "code_file", type: "string", required: true, default: null },
+          { name: "review_depth", type: "string", required: false, default: "standard" },
+        ],
+      },
+    });
+
+    renderAtRoute("run.json");
+
+    const replayButton = screen.getByRole("button", {
+      name: /replay with same inputs/i,
+    });
+    expect(replayButton).toBeDisabled();
+    expect(replayButton).toHaveAttribute(
+      "title",
+      expect.stringContaining("code_file")
+    );
+    fireEvent.click(replayButton);
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("allows replay without captured inputs when no inputs are required", () => {
+    mockUseRunDetail.mockReturnValue({
+      data: { ...RUN_FIXTURE, inputs: null },
+      isLoading: false,
+    });
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "review_flow",
+        description: "",
+        nodes: [],
+        edges: [],
+        inputs: [
+          { name: "review_depth", type: "string", required: false, default: "standard" },
+        ],
+      },
+    });
+
+    renderAtRoute("run.json");
+
+    expect(
+      screen.getByRole("button", { name: /replay with same inputs/i })
+    ).toBeEnabled();
+  });
+
   it("replays the run with its captured inputs and jumps to the live view", async () => {
     mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
     mockUseWorkflowDAG.mockReturnValue({ data: undefined });
