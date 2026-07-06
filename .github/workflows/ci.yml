@@ -423,11 +423,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install "uv==0.11.2"
           uv export --locked --no-hashes --no-emit-workspace \
+            --no-emit-package agentic-evalkit \
             --all-packages --all-extras -o ci-constraints.txt
       - name: Fail on drift
         run: |
           if ! git diff --exit-code -- ci-constraints.txt; then
-            echo "::error::ci-constraints.txt is out of sync with uv.lock. Regenerate with 'uv export --locked --no-hashes --no-emit-workspace --all-packages --all-extras -o ci-constraints.txt' and commit the result."
+            echo "::error::ci-constraints.txt is out of sync with uv.lock. Regenerate with 'uv export --locked --no-hashes --no-emit-workspace --no-emit-package agentic-evalkit --all-packages --all-extras -o ci-constraints.txt' and commit the result."
             exit 1
           fi
 

@@ -45,6 +45,17 @@ agentic-tools = { workspace = true }
 # release. httpx (an EK [httpx] extra) is already a base runtime dependency, so
 # EK's value types + error tree import with no extra.
 ek = ["executionkit>=0.1.0,<0.3.0"]
+# agentic-evalkit: standalone offline eval toolkit (separate private repo),
+# consumed as a PEP 508 direct git reference pinned to a release tag so pip
+# honors it without a [tool.uv.sources] entry. The repo is private: developer
+# machines resolve it via the local git credential store, but GitHub Actions
+# cannot (the built-in GITHUB_TOKEN is scoped to this repo only). CI therefore
+# does not install this extra yet — a cloud-accessible cross-repo credential is
+# a separate decision. Local-first adoption; see the evalkit repo's
+# docs/plans/2026-07-04-arp-integration-analysis.md.
+eval = [
+    "agentic-evalkit @ git+https://github.com/tafreeman/agentic-evalkit@v0.1.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
@@ -124,6 +135,14 @@ exclude = [".venv*", "ui/node_modules"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["agentic_v2"]
+
+[tool.hatch.metadata]
+# The optional `eval` extra pins agentic-evalkit via a git direct reference.
+# Hatchling validates every declared extra at build time and rejects direct
+# references unless this is enabled — so a base editable install (which does
+# not pull the extra) still fails without it. uv tolerates direct refs; pip's
+# hatchling build does not.
+allow-direct-references = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
