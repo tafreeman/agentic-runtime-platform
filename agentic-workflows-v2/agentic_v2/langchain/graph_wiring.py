@@ -181,10 +181,23 @@ def resolve_inputs_into_context(
     """Resolve step input expressions into context and return both."""
     ctx = dict(state.get("context", {}))
     resolved_inputs: dict[str, Any] = {}
+    null_inputs: dict[str, Any] = {}
     for key, expr in step.inputs.items():
         value = resolve_expression(expr, state)
         resolved_inputs[key] = value
         ctx[key] = value
+        if value is None:
+            null_inputs[key] = expr
+
+    if null_inputs:
+        logger.warning(
+            "Step %s will run with null input(s) %s (source expressions: %s); "
+            "the agent will receive missing data for these keys",
+            step.name,
+            list(null_inputs.keys()),
+            null_inputs,
+        )
+
     return ctx, resolved_inputs
 
 

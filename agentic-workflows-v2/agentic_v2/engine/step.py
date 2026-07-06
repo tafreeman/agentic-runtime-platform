@@ -472,11 +472,24 @@ class StepExecutor:
         """Resolve input mappings into a child context and record input_data."""
         child_ctx = ctx.child(step_def.name)
         mapped_inputs: dict[str, Any] = {}
+        null_inputs: dict[str, Any] = {}
         for step_input, ctx_var in step_def.input_mapping.items():
             value = self._resolve_input_mapping_value(ctx, ctx_var)
             mapped_inputs[step_input] = value
             await child_ctx.set(step_input, value)
+            if value is None:
+                null_inputs[step_input] = ctx_var
         result.input_data = mapped_inputs
+
+        if null_inputs:
+            logger.warning(
+                "Step %s will run with null input(s) %s (source mapping: %s); "
+                "the step will receive missing data for these keys",
+                step_def.name,
+                list(null_inputs.keys()),
+                null_inputs,
+            )
+
         return child_ctx
 
     @staticmethod
@@ -489,9 +502,7 @@ class StepExecutor:
                 result.metadata["tokens_used"] = meta["tokens_used"]
 
     @staticmethod
-    def _salvage_review_report(
-        step_def: StepDefinition, result: StepResult
-    ) -> None:
+    def _salvage_review_report(step_def: StepDefinition, result: StepResult) -> None:
         """Salvage review_report from raw_response when reviewer output is text.
 
         Reviewer outputs sometimes arrive as raw_response (e.g. fenced/truncated
@@ -523,9 +534,7 @@ class StepExecutor:
             raw_status = status_match.group(1).strip()
         elif approved_match:
             raw_status = (
-                "APPROVED"
-                if approved_match.group(1).lower() == "true"
-                else None
+                "APPROVED" if approved_match.group(1).lower() == "true" else None
             )
         else:
             raw_status = None  # normalize() defaults to NEEDS_FIXES
@@ -583,8 +592,8 @@ class StepExecutor:
     ) -> bool:
         """Run the verification gate if configured.
 
-        Returns False when a blocking verification failure should abort the
-        step (result already marked FAILED); True otherwise.
+        Returns False when a blocking verification failure should abort
+        the step (result already marked FAILED); True otherwise.
         """
         if step_def.verify is None or not step_def.verify.enabled:
             return True
@@ -626,8 +635,8 @@ class StepExecutor:
     ) -> bool:
         """Loop-until logic (R5): re-execute until condition is satisfied.
 
-        Returns True when the step body should re-run (loop condition not yet
-        satisfied and iteration budget remains).
+        Returns True when the step body should re-run (loop condition
+        not yet satisfied and iteration budget remains).
         """
         if not step_def.loop_until:
             return False
@@ -636,9 +645,7 @@ class StepExecutor:
         if loop_iteration < step_def.loop_max:
             from .expressions import ExpressionEvaluator
 
-            satisfied = ExpressionEvaluator(ctx, {}).evaluate(
-                step_def.loop_until
-            )
+            satisfied = ExpressionEvaluator(ctx, {}).evaluate(step_def.loop_until)
             if not satisfied:
                 result.metadata["loop_iteration"] = loop_iteration + 1
                 result.status = StepStatus.RUNNING
