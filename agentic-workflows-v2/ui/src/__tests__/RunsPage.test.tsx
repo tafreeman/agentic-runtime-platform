@@ -5,31 +5,17 @@ import RunsPage from "../pages/RunsPage";
 import type { RunSummary } from "../api/types";
 
 const mockUseRuns = vi.fn();
-const mockSetCli = vi.fn();
+const mockNavigate = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRuns: () => mockUseRuns(),
 }));
 
-vi.mock("../hooks/useCli", () => ({
-  useCli: () => ({ cli: "agentic runs list --env prod --limit 50", setCli: mockSetCli }),
-}));
-
-// RunDetailPanel's own rendering (DAG/steps/evaluation) is covered by
-// RunDetailPage.test.tsx; here we only need to know RunsPage selected the
-// right run and wired the close handler.
-vi.mock("../components/runs/RunDetailPanel", () => ({
-  default: ({ filename, onClose }: { filename: string; onClose?: () => void }) => (
-    <div>
-      <span>Inspector for {filename}</span>
-      {onClose && (
-        <button type="button" onClick={onClose}>
-          panel-close
-        </button>
-      )}
-    </div>
-  ),
-}));
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 function makeRun(overrides: Partial<RunSummary> = {}): RunSummary {
   return {
@@ -171,7 +157,26 @@ describe("RunsPage", () => {
     expect(screen.queryByText("A")).not.toBeInTheDocument();
   });
 
-  it("keeps the inner workflow link navigating to the workflow when no run is selected", () => {
+  it("exposes each run row as a keyboard-activatable button", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "kbd.json", run_id: "k1", workflow_name: "kbd_flow" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    const row = screen.getByRole("button", { name: "Open run k1" });
+    expect(row).toHaveAttribute("tabindex", "0");
+
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(mockNavigate).toHaveBeenCalledWith("/runs/kbd.json");
+
+    fireEvent.keyDown(row, { key: " " });
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the inner workflow link navigating to the workflow, not the run", () => {
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({ filename: "lnk.json", run_id: "l1", workflow_name: "link_flow" }),
@@ -182,133 +187,9 @@ describe("RunsPage", () => {
 
     const workflowLink = screen.getByRole("link", { name: "link_flow" });
     expect(workflowLink).toHaveAttribute("href", "/workflows/link_flow");
-  });
 
-  it("exposes each run row as a copyable, keyboard-activatable button", () => {
-    mockUseRuns.mockReturnValue({
-      data: [
-        makeRun({ filename: "kbd.json", run_id: "k1", workflow_name: "kbd_flow" }),
-      ],
-      isLoading: false,
-    });
-    renderPage();
-
-    const row = screen.getByRole("button", { name: "Inspect run k1" });
-    expect(row).toHaveAttribute("tabindex", "0");
-
-    // CopyId renders the run id as its own copyable control inside the row.
-    expect(screen.getByRole("button", { name: "k1" })).toBeInTheDocument();
-
-    // Enter/Space directly on a focused row also selects it (independent of
-    // the page-level j/k/↵ cursor nav tested below).
-    fireEvent.keyDown(row, { key: "Enter" });
-    expect(screen.getByText("Inspector for kbd.json")).toBeInTheDocument();
-  });
-
-  describe("master-detail selection", () => {
-    function twoRuns() {
-      return [
-        makeRun({ filename: "a.json", run_id: "a1", workflow_name: "alpha_flow" }),
-        makeRun({ filename: "b.json", run_id: "b2", workflow_name: "beta_flow" }),
-      ];
-    }
-
-    it("clicking a row selects it and opens the inspector instead of navigating", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      expect(screen.queryByText("Inspector for a.json")).not.toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
-
-      expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect a1 --trace");
-    });
-
-    it("shows an empty inspector state before any run is selected", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      expect(screen.getByText(/select a run to inspect/i)).toBeInTheDocument();
-    });
-
-    it("closes the inspector via the panel's close callback", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
-      expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: "panel-close" }));
-      expect(screen.queryByText("Inspector for a.json")).not.toBeInTheDocument();
-    });
-
-    it("closes the inspector on Escape", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
-      expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-
-      fireEvent.keyDown(window, { key: "Escape" });
-      expect(screen.queryByText("Inspector for a.json")).not.toBeInTheDocument();
-    });
-
-    it("narrows the row/column layout once a run is selected", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      // Steps + Time columns are visible before selection…
-      expect(screen.getByText("Steps")).toBeInTheDocument();
-      expect(screen.getByText("Time")).toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
-
-      // …and hidden once the inspector opens, leaving Status/Workflow/Duration/Score.
-      expect(screen.queryByText("Steps")).not.toBeInTheDocument();
-      expect(screen.queryByText("Time")).not.toBeInTheDocument();
-      expect(screen.getByText("Score")).toBeInTheDocument();
-    });
-
-    it("sets a CLI-parity command when a status filter changes", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      fireEvent.click(screen.getByRole("button", { name: /^failed/i }));
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs list --status failed");
-    });
-
-    it("moves the keyboard cursor with j/k and inspects the focused row on Enter", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      // Cursor starts at row 0 (alpha_flow / a1); move to row 1 with "j".
-      fireEvent.keyDown(window, { key: "j" });
-      fireEvent.keyDown(window, { key: "Enter" });
-
-      expect(screen.getByText("Inspector for b.json")).toBeInTheDocument();
-      expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect b2 --trace");
-
-      // Move back up with "k" and inspect row 0.
-      fireEvent.keyDown(window, { key: "k" });
-      fireEvent.keyDown(window, { key: "Enter" });
-
-      expect(screen.getByText("Inspector for a.json")).toBeInTheDocument();
-    });
-
-    it("does not treat j/k/Enter as hotkeys while the search input is focused", () => {
-      mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
-      renderPage();
-
-      const searchInput = screen.getByLabelText(
-        "Search runs by workflow name or run ID",
-      );
-      searchInput.focus();
-
-      fireEvent.keyDown(searchInput, { key: "j" });
-      fireEvent.keyDown(searchInput, { key: "Enter" });
-
-      expect(screen.queryByText(/^Inspector for /)).not.toBeInTheDocument();
-    });
+    // Clicking the inner link must not trigger the row's navigate handler.
+    fireEvent.click(workflowLink);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

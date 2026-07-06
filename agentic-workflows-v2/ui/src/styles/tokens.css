@@ -1,76 +1,72 @@
 /*
- * Console UI — Design Tokens (Console design system)
- * IBM Carbon g100 dark canvas (#161616) with an "event horizon" cyan accent
- * (#33b1ff), square corners, IBM Plex. Dark is the brand default; paper
- * remains as a secondary editorial (light) surface.
+ * Console UI — Design Tokens (Direction B)
+ * Two themes: dark (default, modern sans display) and paper (brutalist, mono display).
  * Apply theme by setting data-theme on <html>.
  */
 
 :root,
 [data-theme="dark"] {
-  --b-bg0: 22 22 22;         /* #161616  Carbon canvas (gray-100)  */
-  --b-bg1: 38 38 38;         /* #262626  layer-01 (gray-90)        */
-  --b-bg2: 51 51 51;         /* #333333  layer hover               */
-  --b-bg3: 57 57 57;         /* #393939  layer-02 (gray-80)        */
-  --b-line: 57 57 57;        /* #393939  border-subtle-00          */
-  --b-line-soft: 38 38 38;   /* #262626                            */
-  --b-text: 244 244 244;     /* #f4f4f4  text-primary (gray-10)    */
-  --b-text-mid: 198 198 198; /* #c6c6c6  text-helper (gray-30)     */
-  /* --b-text-dim: 4.6:1 on --b-bg1 (dark) — passes AA 4.5:1 */
-  --b-text-dim: 141 141 141; /* #8d8d8d  gray-50                   */
-  /* --b-text-faint: below AA 4.5:1; decorative use only */
-  --b-text-faint: 111 111 111; /* #6f6f6f gray-60                  */
-  --b-clay: 51 177 255;      /* #33b1ff  horizon cyan — interactive accent */
-  --b-clay-soft: rgba(51, 177, 255, 0.16);
-  --b-teal: 61 219 217;      /* #3ddbd9  teal — deterministic core / tier  */
-  --b-green: 66 190 101;     /* #42be65  support-success (green-40) */
-  --b-amber: 241 194 27;     /* #f1c21b  support-warning (yellow-30)*/
-  --b-blue: 69 137 255;      /* #4589ff  support-info (blue-50)     */
-  --b-red: 250 77 86;        /* #fa4d56  support-error (red-50)     */
-  --b-purple: 190 149 255;   /* #be95ff  purple-40                 */
-  --b-btn-primary-ink: #000000; /* text on horizon-cyan fills      */
-  --b-scroll-thumb: #393939;
-  --b-ink: #000000;
-  --b-glow: rgba(51, 177, 255, 0); /* Console has no glow */
-  --b-rad-lg: 0px;           /* square corners everywhere */
-  --b-rad-sm: 0px;
+  --b-bg0: 13 12 16;
+  --b-bg1: 21 20 26;
+  --b-bg2: 28 27 35;
+  --b-bg3: 38 36 47;
+  --b-line: 50 47 60;
+  --b-line-soft: 33 31 41;
+  --b-text: 238 236 228;
+  --b-text-mid: 168 164 152;
+  /* --b-text-dim audited 2026-06-20: 4.79:1 on --b-bg1 (dark) — passes AA 4.5:1 */
+  --b-text-dim: 134 130 122;
+  /* --b-text-faint audited 2026-06-20: 2.79:1 on --b-bg1 (dark) — below AA 4.5:1; decorative use only */
+  --b-text-faint: 96 93 88;
+  --b-clay: 224 122 84;
+  --b-clay-soft: rgba(224, 122, 84, 0.16);
+  --b-green: 74 222 128;
+  --b-amber: 251 191 36;
+  --b-blue: 56 189 248;
+  --b-red: 248 113 113;
+  --b-purple: 192 132 252;
+  --b-btn-primary-ink: #0d0c10;
+  --b-scroll-thumb: #2a2a32;
+  --b-ink: #0d0c10;
+  --b-glow: rgba(224, 122, 84, 0.15);
+  --b-rad-lg: 13px;
+  --b-rad-sm: 6px;
   --b-bw: 1px;
-  --b-font-heading: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
+  --b-font-heading: "Space Grotesk", -apple-system, system-ui, sans-serif;
 }
 
 [data-theme="paper"] {
-  --b-bg0: 244 244 244;      /* #f4f4f4  gray-10 */
-  --b-bg1: 255 255 255;      /* #ffffff          */
-  --b-bg2: 224 224 224;      /* #e0e0e0  gray-20 */
-  --b-bg3: 198 198 198;      /* #c6c6c6  gray-30 */
-  --b-line: 22 22 22;        /* #161616          */
-  --b-line-soft: 198 198 198;/* #c6c6c6          */
-  --b-text: 22 22 22;        /* #161616          */
-  --b-text-mid: 57 57 57;    /* #393939          */
-  /* --b-text-dim: passes AA 4.5:1 on paper */
-  --b-text-dim: 82 82 82;    /* #525252  gray-70 */
-  /* --b-text-faint: decorative use only */
-  --b-text-faint: 111 111 111; /* #6f6f6f        */
-  --b-clay: 17 146 232;      /* #1192e8  horizon-50 (contrast on light) */
-  --b-clay-soft: rgba(17, 146, 232, 0.12);
-  --b-teal: 8 189 186;       /* #08bdba  teal-40 */
-  --b-green: 36 161 72;      /* #24a148  green-50 */
-  --b-amber: 141 98 8;       /* #8d6208  yellow, darkened for light */
-  --b-blue: 15 98 254;       /* #0f62fe  blue-60 */
-  --b-red: 218 30 40;        /* #da1e28  red-60 */
-  --b-purple: 138 63 252;    /* #8a3ffc  purple-60 */
-  --b-btn-primary-ink: #ffffff;
-  --b-scroll-thumb: #c6c6c6;
-  --b-ink: #ffffff;
-  --b-glow: rgba(17, 146, 232, 0);
+  --b-bg0: 244 241 233;
+  --b-bg1: 249 246 239;
+  --b-bg2: 236 231 219;
+  --b-bg3: 224 218 202;
+  --b-line: 26 22 14;
+  --b-line-soft: 201 193 173;
+  --b-text: 20 19 12;
+  --b-text-mid: 60 58 46;
+  /* --b-text-dim audited 2026-06-20: 7.39:1 on --b-bg1 (paper) — passes AA 4.5:1 */
+  --b-text-dim: 84 81 66;
+  /* --b-text-faint audited 2026-06-20: 4.31:1 on --b-bg1 (paper) — just below AA 4.5:1; decorative use only */
+  --b-text-faint: 122 116 100;
+  --b-clay: 193 68 14;
+  --b-clay-soft: rgba(193, 68, 14, 0.14);
+  --b-green: 46 111 52;
+  --b-amber: 156 111 16;
+  --b-blue: 29 95 168;
+  --b-red: 168 45 24;
+  --b-purple: 111 63 176;
+  --b-btn-primary-ink: #f4f1e9;
+  --b-scroll-thumb: #c3bba0;
+  --b-ink: #f4f1e9;
+  --b-glow: rgba(193, 68, 14, 0.08);
   --b-rad-lg: 0px;
   --b-rad-sm: 0px;
-  --b-bw: 1px;
-  --b-font-heading: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
+  --b-bw: 1.5px;
+  --b-font-heading: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
-  --b-font-mono: "IBM Plex Mono", "Menlo", "DejaVu Sans Mono", Courier, monospace;
+  --b-font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 /* Scrollbar (all themes) */

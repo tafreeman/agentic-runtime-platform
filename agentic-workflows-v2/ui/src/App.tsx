@@ -13,9 +13,6 @@ import DatasetsPage from "./pages/DatasetsPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
 import ModelFinderPage from "./pages/ModelFinderPage";
 import NotFoundPage from "./components/states/NotFoundPage";
-import CliStrip from "./components/layout/CliStrip";
-import CommandPalette from "./components/common/CommandPalette";
-import { CliProvider } from "./hooks/useCli";
 
 export default function App() {
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
@@ -35,16 +32,14 @@ export default function App() {
   }, [location.pathname]);
 
   return (
-    <CliProvider>
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* Skip-to-main-content: visually hidden until focused via keyboard Tab */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-none focus:bg-b-bg1 focus:px-3 focus:py-1.5 focus:font-mono focus:text-[11px] focus:text-b-clay focus:ring-1 focus:ring-b-clay/50 focus:outline-none"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-sm focus:bg-b-bg1 focus:px-3 focus:py-1.5 focus:font-mono focus:text-[11px] focus:text-b-clay focus:ring-1 focus:ring-b-clay/50 focus:outline-none"
       >
         skip to main content
       </a>
-      <div className="flex min-h-0 flex-1 overflow-hidden">
       <Sidebar />
       <main
         ref={mainRef}
@@ -68,10 +63,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      </div>
-      <CommandPalette />
-      <CliStrip />
     </div>
-    </CliProvider>
   );
 }

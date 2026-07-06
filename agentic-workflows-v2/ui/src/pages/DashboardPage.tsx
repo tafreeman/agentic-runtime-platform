@@ -294,7 +294,7 @@ export default function DashboardPage() {
                     summaryQuery.refetch();
                     workflowsQuery.refetch();
                   }}
-                  className="rounded-none border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-none focus:ring-1 focus:ring-b-amber/50"
+                  className="rounded-sm border border-b-amber/40 px-2 py-0.5 transition-colors hover:bg-b-amber/10 focus:outline-none focus:ring-1 focus:ring-b-amber/50"
                 >
                   retry
                 </button>

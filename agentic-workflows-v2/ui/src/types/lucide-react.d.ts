@@ -18,13 +18,7 @@ declare module "lucide-react" {
   export type LucideIcon = FC<LucideProps>;
 
   export const ArrowLeft: LucideIcon;
-  export const ArrowRight: LucideIcon;
-  export const Check: LucideIcon;
   export const CheckCircle2: LucideIcon;
-  export const Command: LucideIcon;
-  export const CornerDownLeft: LucideIcon;
-  export const Search: LucideIcon;
-  export const Terminal: LucideIcon;
   export const ChevronDown: LucideIcon;
   export const ChevronRight: LucideIcon;
   export const Circle: LucideIcon;
@@ -32,7 +26,6 @@ declare module "lucide-react" {
   export const Copy: LucideIcon;
   export const Cpu: LucideIcon;
   export const Database: LucideIcon;
-  export const ExternalLink: LucideIcon;
   export const Gauge: LucideIcon;
   export const HardDrive: LucideIcon;
   export const LayoutDashboard: LucideIcon;
