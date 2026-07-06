@@ -195,6 +195,29 @@ export default function RunDetailPanel({
 
   const runTone = runStatusTone(run.status);
 
+  // Replay is only offered when it can actually succeed: older run logs
+  // captured no `inputs`, and replaying those against a workflow with
+  // required inputs fails server-side validation after the fact (the run
+  // dies on the live page with "Missing required input"). The DAG response
+  // already carries the declared input schema, so block the doomed case up
+  // front. When the DAG hasn't loaded (or failed), stay enabled — the
+  // server still validates and the live view surfaces any failure.
+  const capturedInputs = (run.inputs ?? {}) as Record<string, unknown>;
+  const missingRequiredInputs = (dag?.inputs ?? [])
+    .filter(
+      (input) =>
+        input.required &&
+        input.default == null &&
+        !(input.name in capturedInputs)
+    )
+    .map((input) => input.name);
+  const replayBlocked = missingRequiredInputs.length > 0;
+  const replayTitle = replayBlocked
+    ? `run log has no captured value for required input${
+        missingRequiredInputs.length > 1 ? "s" : ""
+      }: ${missingRequiredInputs.join(", ")}`
+    : "Start a new run with this run's captured inputs";
+
   const evalData = run.extra?.evaluation;
   const evalPct =
     evalData?.weighted_score === undefined
@@ -264,7 +287,8 @@ export default function RunDetailPanel({
             setCli(`agentic run ${run.workflow_name} --replay ${filename}`);
             replay.mutate();
           }}
-          disabled={replay.isPending || !run.workflow_name}
+          disabled={replay.isPending || !run.workflow_name || replayBlocked}
+          title={replayTitle}
           style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
           className="flex items-center gap-1.5 border border-solid border-b-clay/60 px-2.5 py-1 font-mono text-[10.5px] text-b-clay transition-colors hover:bg-b-clay-soft disabled:cursor-not-allowed disabled:opacity-40"
         >
