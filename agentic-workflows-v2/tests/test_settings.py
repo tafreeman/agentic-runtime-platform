@@ -1,4 +1,5 @@
 """Tests for centralised Settings class."""
+
 from __future__ import annotations
 
 
@@ -91,3 +92,38 @@ def test_require_tool_approval_parses_from_env(monkeypatch):
     s = Settings()
     assert s.agentic_require_tool_approval is True
     assert s.agentic_approval_required_tools == "git_commit, deploy"
+
+
+def test_replay_store_retention_default(monkeypatch):
+    """replay_store_retention_seconds defaults to 3600s (1 hour) unset."""
+    monkeypatch.delenv("REPLAY_STORE_RETENTION_SECONDS", raising=False)
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.replay_store_retention_seconds == 3600
+
+
+def test_replay_store_retention_reads_from_env(monkeypatch):
+    """replay_store_retention_seconds parses from REPLAY_STORE_RETENTION_SECONDS."""
+    monkeypatch.setenv("REPLAY_STORE_RETENTION_SECONDS", "120")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.replay_store_retention_seconds == 120
+
+
+def test_replay_sqlite_path_defaults_to_empty_string(monkeypatch):
+    """replay_sqlite_path defaults to "" unset.
+
+    Resolved to an absolute path downstream by
+    replay_store._resolve_absolute_sqlite_path — not a bare CWD-relative
+    filename.
+    """
+    monkeypatch.delenv("REPLAY_SQLITE_PATH", raising=False)
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.replay_sqlite_path == ""

@@ -24,6 +24,19 @@ Architecture:
     Persistence failures are logged but never propagate to the broadcast
     path — the broadcast always succeeds as long as WebSocket send succeeds.
 
+Retention:
+    ``clear_buffer`` is never called automatically on ``broadcast`` itself --
+    clearing immediately at ``workflow_end`` would break late-joining
+    clients that legitimately replay shortly after completion.  Instead,
+    ``broadcast`` recognises the run's *terminal* events (``workflow_end``,
+    ``error``) and schedules a **delayed** ``clear_buffer`` call
+    ``Settings.replay_store_retention_seconds`` later via a process-lifetime
+    ``asyncio`` task (see ``_schedule_delayed_clear``).  The task sleeps,
+    then clears both the in-memory ``event_buffers`` entry and (through
+    ``clear_buffer``) the durable store rows for that run.  Scheduling --
+    and the sleep/clear task itself -- can never fail the broadcast path:
+    exceptions are caught and logged, not raised.
+
 A module-level singleton ``manager`` is used by both the WebSocket
 endpoint and the workflow execution background task.  Call
 ``await manager.initialize_store()`` once at application startup to
@@ -35,7 +48,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from typing import Any
+from typing import Any, Final
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -56,6 +69,12 @@ from .replay_store import InMemoryReplayStore, ReplayStore
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["streaming"])
+
+# Mirrors Settings.replay_store_retention_seconds' Field(default=...). Used
+# only if settings fail to load; kept as a literal (not a cross-module
+# import) since it must stay valid even when the settings import itself is
+# what failed.
+_FALLBACK_RETENTION_SECONDS: Final[int] = 3600
 
 
 class ConnectionManager:
@@ -82,12 +101,19 @@ class ConnectionManager:
         connections: Mapping of ``run_id`` to active WebSocket list.
         event_buffers: Mapping of ``run_id`` to bounded deque of event dicts.
         _sse_listeners: Mapping of ``run_id`` to SSE queue list.
+        _retention_seconds: Grace period before a completed run's buffer is
+            cleared; see :meth:`_schedule_delayed_clear`.
     """
+
+    #: Event ``type`` values that mark a run as finished. Recognised by
+    #: broadcast() to trigger the delayed clear_buffer() schedule.
+    _TERMINAL_EVENT_TYPES = frozenset({"workflow_end", "error"})
 
     def __init__(
         self,
         max_buffer_size: int = 500,
         replay_store: ReplayStore | None = None,
+        retention_seconds: float | None = None,
     ):
         """Initialize the connection manager.
 
@@ -99,6 +125,15 @@ class ConnectionManager:
                 durable persistence.  When *None*, an :class:`InMemoryReplayStore`
                 is used (same as the in-process deque but behind the protocol).
                 Call :meth:`initialize_store` to swap in a configured backend.
+            retention_seconds: Grace period (seconds) after a terminal event
+                before :meth:`clear_buffer` runs automatically. When *None*
+                (the default), the delay is resolved lazily from
+                ``Settings.replay_store_retention_seconds`` at schedule time
+                — this avoids importing settings at construction time, which
+                matters because the module-level ``manager`` singleton below
+                is built at import time, before env vars are necessarily
+                configured. Pass an explicit value (e.g. a tiny one in
+                tests) to bypass settings entirely.
         """
         # map run_id -> list of websockets
         self.connections: dict[str, list[WebSocket]] = {}
@@ -111,6 +146,12 @@ class ConnectionManager:
         self._replay_store: ReplayStore = replay_store or InMemoryReplayStore(
             max_events=max_buffer_size
         )
+        self._retention_seconds = retention_seconds
+        # Pending delayed-clear tasks, keyed by run_id — tracked so a second
+        # terminal event for the same run cancels/replaces rather than
+        # stacking timers, and so asyncio does not GC a fire-and-forget task
+        # mid-sleep.
+        self._pending_clears: dict[str, asyncio.Task[None]] = {}
 
     async def connect(self, websocket: WebSocket, run_id: str):
         """Accept a WebSocket connection and associate it with a run.
@@ -219,7 +260,10 @@ class ConnectionManager:
         The event is first appended to the run's replay buffer (evicting
         the oldest entry if the buffer exceeds ``_max_buffer_size``), then
         pushed to every WebSocket connection and every SSE queue registered
-        for the given ``run_id``.
+        for the given ``run_id``.  If ``message["type"]`` is a terminal event
+        (``workflow_end`` or ``error``), a delayed :meth:`clear_buffer` is
+        scheduled — see :meth:`_schedule_delayed_clear`.  Retention
+        housekeeping never fails the broadcast itself.
 
         Args:
             run_id: Target workflow run identifier.
@@ -273,6 +317,99 @@ class ConnectionManager:
                 logger.warning(
                     "SSE listener queue full for run %s, dropping event", run_id
                 )
+
+        # Retention: a terminal event means no more events are coming for
+        # this run, so schedule (not immediate — grace period for late
+        # joiners) a clear_buffer(). Housekeeping must never fail broadcast.
+        if message.get("type") in self._TERMINAL_EVENT_TYPES:
+            try:
+                self._schedule_delayed_clear(run_id)
+            except Exception as exc:
+                logger.warning(
+                    "ConnectionManager.broadcast: failed to schedule delayed "
+                    "clear for run %s: %s",
+                    run_id,
+                    exc,
+                )
+
+    def _resolve_retention_seconds(self) -> float:
+        """Return the retention delay: explicit constructor value, else settings.
+
+        Falls back to the same default as the
+        ``Settings.replay_store_retention_seconds`` field if settings cannot
+        be loaded (mirrors :meth:`initialize_store`'s defensive settings-load
+        pattern) so a broken settings import degrades to "still clears
+        eventually" rather than "never clears".
+        """
+        if self._retention_seconds is not None:
+            return self._retention_seconds
+
+        from ..settings import get_settings
+
+        try:
+            return float(get_settings().replay_store_retention_seconds)
+        except Exception as exc:
+            logger.warning(
+                "ConnectionManager: could not load replay_store_retention_seconds "
+                "from settings (%s); using default %ds",
+                exc,
+                _FALLBACK_RETENTION_SECONDS,
+            )
+            return float(_FALLBACK_RETENTION_SECONDS)
+
+    def _schedule_delayed_clear(self, run_id: str) -> None:
+        """Schedule a :meth:`clear_buffer` call after the retention grace period.
+
+        Runs as a process-lifetime ``asyncio`` task (not a background
+        thread/daemon) so it participates in the same event loop as the rest
+        of the server. A second terminal event for the same ``run_id``
+        (e.g. a defensive double-broadcast) cancels the previous timer and
+        reschedules, rather than stacking redundant clears. Safe to call
+        outside a running event loop (e.g. from a sync unit test) — in that
+        case scheduling is skipped, matching :meth:`clear_buffer`'s existing
+        no-event-loop fallback.
+
+        Args:
+            run_id: Run identifier whose buffer should be cleared after the
+                grace period.
+        """
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # No event loop — acceptable in unit tests that don't run one;
+            # production code always calls broadcast() from within a loop.
+            return
+        if not loop.is_running():
+            return
+
+        existing = self._pending_clears.get(run_id)
+        if existing is not None and not existing.done():
+            existing.cancel()
+
+        delay = self._resolve_retention_seconds()
+        task = loop.create_task(self._delayed_clear(run_id, delay))
+        self._pending_clears[run_id] = task
+        task.add_done_callback(lambda _t: self._pending_clears.pop(run_id, None))
+
+    async def _delayed_clear(self, run_id: str, delay: float) -> None:
+        """Sleep for *delay* seconds, then clear the run's buffer.
+
+        Cancellation (from a superseding terminal event) is allowed to
+        propagate so the task ends promptly; any other error is logged,
+        not raised — this task's failure must never surface anywhere
+        else.
+        """
+        try:
+            await asyncio.sleep(delay)
+            self.clear_buffer(run_id)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning(
+                "ConnectionManager._delayed_clear failed for run %s: %s",
+                run_id,
+                exc,
+            )
 
     def register_sse_listener(
         self, run_id: str, queue: asyncio.Queue[dict[str, Any]]
