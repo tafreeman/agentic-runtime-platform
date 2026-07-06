@@ -1,0 +1,2391 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." name="description"/>
+<link href="https://tafreeman.github.io/agentic-runtime-platform/superpowers/specs/2026-07-02-evaluation-framework-design/" rel="canonical"/>
+<link href="../../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.6" name="generator"/>
+<title>Evaluation Framework and Dynamic Benchmark Integration Design - Agentic Runtime Platform</title>
+<link href="../../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+<link href="../../../stylesheets/tokens.css" rel="stylesheet"/>
+<link href="../../../stylesheets/console.css" rel="stylesheet"/>
+<link href="../../../stylesheets/landing.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<meta content="website" property="og:type"/>
+<meta content="Evaluation Framework and Dynamic Benchmark Integration Design - Agentic Runtime Platform" property="og:title"/>
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." property="og:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/superpowers/specs/2026-07-02-evaluation-framework-design.png" property="og:image"/>
+<meta content="image/png" property="og:image:type"/>
+<meta content="1200" property="og:image:width"/>
+<meta content="630" property="og:image:height"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/superpowers/specs/2026-07-02-evaluation-framework-design/" property="og:url"/>
+<meta content="summary_large_image" property="twitter:card"/>
+<meta content="Evaluation Framework and Dynamic Benchmark Integration Design - Agentic Runtime Platform" property="twitter:title"/>
+<meta content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." property="twitter:description"/>
+<meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/superpowers/specs/2026-07-02-evaluation-framework-design.png" property="twitter:image"/>
+</head>
+<body data-md-color-accent="cyan" data-md-color-primary="black" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#evaluation-framework-and-dynamic-benchmark-integration-design">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Agentic Runtime Platform" class="md-header__button md-logo" data-md-component="logo" href="../../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Evaluation Framework and Dynamic Benchmark Integration Design
+            
+          </span>
+</div>
+</div>
+</div>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../..">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../getting-started/">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../ARCHITECTURE/">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../deep-dive-server/">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../api-contracts-runtime/">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../WORKFLOW_AUTHORING/">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../architecture-eval/">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../tools/">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../operations/">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../configuration/">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../../project-overview/">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Agentic Runtime Platform" class="md-nav__button md-logo" data-md-component="logo" href="../../.." title="Agentic Runtime Platform">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Agentic Runtime Platform
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../getting-started/">
+<span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/installation/">
+<span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/quickstart/">
+<span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../getting-started/first-workflow/">
+<span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../development-guide/">
+<span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../NO_LLM_MODE/">
+<span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ONBOARDING/">
+<span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ARCHITECTURE/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../integration-architecture/">
+<span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../rag/">
+<span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-server/">
+<span class="md-ellipsis">
+    
+  
+    Server &amp; API
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-agents/">
+<span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deep-dive-agentic-v2-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../api-contracts-runtime/">
+<span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../data-models-runtime/">
+<span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../component-inventory-ui/">
+<span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ui/pages/">
+<span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ui/api-integration/">
+<span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_6" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../workflows/">
+<span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../WORKFLOW_AUTHORING/">
+<span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../PATTERN_CATALOG/">
+<span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-eval/">
+<span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/rubrics/">
+<span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/judge/">
+<span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/gating/">
+<span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/runners/">
+<span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../evaluation/datasets/">
+<span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_8" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_8_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_8">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../architecture-tools/">
+<span class="md-ellipsis">
+    
+  
+    Tools &amp; providers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/llm-client/">
+<span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/local-models/">
+<span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/windows-ai/">
+<span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/model-probing/">
+<span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/provider-limits/">
+<span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../tools/benchmarks/">
+<span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_9" type="checkbox"/>
+<div class="md-nav__link md-nav__container">
+<a class="md-nav__link" href="../../../operations/">
+<span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+</a>
+<label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+<span class="md-nav__icon md-icon"></span>
+</label>
+</div>
+<nav aria-expanded="false" aria-labelledby="__nav_9_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_9">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../deployment-guide/">
+<span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../operations/security-hardening/">
+<span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../operations/troubleshooting/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_10" type="checkbox"/>
+<label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_10_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_10">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../configuration/">
+<span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../GLOSSARY/">
+<span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CODING_STANDARDS/">
+<span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../KNOWN_LIMITATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../AI_RISK_MANAGEMENT/">
+<span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../MIGRATIONS/">
+<span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" id="__nav_11" type="checkbox"/>
+<label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_11_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_11">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../project-overview/">
+<span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../ROADMAP/">
+<span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CHANGELOG/">
+<span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../adr/ADR-INDEX/">
+<span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../CONTRIBUTING/">
+<span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../../DEMO/">
+<span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-objective">
+<span class="md-ellipsis">
+      
+        1. Objective
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-evidence-summary">
+<span class="md-ellipsis">
+      
+        2. Evidence Summary
+      
+    </span>
+</a>
+<nav aria-label="2. Evidence Summary" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#21-current-arp-state">
+<span class="md-ellipsis">
+      
+        2.1 Current ARP state
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#22-current-executionkit-state">
+<span class="md-ellipsis">
+      
+        2.2 Current ExecutionKit state
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#23-existing-ekarp-integration">
+<span class="md-ellipsis">
+      
+        2.3 Existing EK/ARP integration
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-source-derived-design-principles">
+<span class="md-ellipsis">
+      
+        3. Source-Derived Design Principles
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-ownership-and-dependency-rule">
+<span class="md-ellipsis">
+      
+        4. Ownership and Dependency Rule
+      
+    </span>
+</a>
+<nav aria-label="4. Ownership and Dependency Rule" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#41-package-responsibilities">
+<span class="md-ellipsis">
+      
+        4.1 Package responsibilities
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#42-standalone-packaging-decision">
+<span class="md-ellipsis">
+      
+        4.2 Standalone packaging decision
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-reference-architecture">
+<span class="md-ellipsis">
+      
+        5. Reference Architecture
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#6-core-data-contracts">
+<span class="md-ellipsis">
+      
+        6. Core Data Contracts
+      
+    </span>
+</a>
+<nav aria-label="6. Core Data Contracts" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#61-datasetref">
+<span class="md-ellipsis">
+      
+        6.1 DatasetRef
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#62-resolveddataset">
+<span class="md-ellipsis">
+      
+        6.2 ResolvedDataset
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#63-evalsample">
+<span class="md-ellipsis">
+      
+        6.3 EvalSample
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#64-normalizedworkflowresult">
+<span class="md-ellipsis">
+      
+        6.4 NormalizedWorkflowResult
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#65-graderesult">
+<span class="md-ellipsis">
+      
+        6.5 GradeResult
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#66-evalrunmanifest">
+<span class="md-ellipsis">
+      
+        6.6 EvalRunManifest
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#7-dataset-provider-design">
+<span class="md-ellipsis">
+      
+        7. Dataset Provider Design
+      
+    </span>
+</a>
+<nav aria-label="7. Dataset Provider Design" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#71-provider-protocol">
+<span class="md-ellipsis">
+      
+        7.1 Provider protocol
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#72-hugging-face-behavior">
+<span class="md-ellipsis">
+      
+        7.2 Hugging Face behavior
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#73-cache-behavior">
+<span class="md-ellipsis">
+      
+        7.3 Cache behavior
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#74-error-model">
+<span class="md-ellipsis">
+      
+        7.4 Error model
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#8-benchmark-adapter-design">
+<span class="md-ellipsis">
+      
+        8. Benchmark Adapter Design
+      
+    </span>
+</a>
+<nav aria-label="8. Benchmark Adapter Design" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#81-swe-bench-verified">
+<span class="md-ellipsis">
+      
+        8.1 SWE-bench Verified
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#9-grading-and-rubric-model">
+<span class="md-ellipsis">
+      
+        9. Grading and Rubric Model
+      
+    </span>
+</a>
+<nav aria-label="9. Grading and Rubric Model" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#91-objective-first-policy">
+<span class="md-ellipsis">
+      
+        9.1 Objective-first policy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#92-rubric-schema">
+<span class="md-ellipsis">
+      
+        9.2 Rubric schema
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#93-model-judge-calibration">
+<span class="md-ellipsis">
+      
+        9.3 Model-judge calibration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#94-multi-grader-aggregation">
+<span class="md-ellipsis">
+      
+        9.4 Multi-grader aggregation
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#10-statistics-and-benchmark-validity">
+<span class="md-ellipsis">
+      
+        10. Statistics and Benchmark Validity
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#11-developer-experience">
+<span class="md-ellipsis">
+      
+        11. Developer Experience
+      
+    </span>
+</a>
+<nav aria-label="11. Developer Experience" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#111-cli">
+<span class="md-ellipsis">
+      
+        11.1 CLI
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#112-api">
+<span class="md-ellipsis">
+      
+        11.2 API
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#113-ui">
+<span class="md-ellipsis">
+      
+        11.3 UI
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#12-security-privacy-and-governance">
+<span class="md-ellipsis">
+      
+        12. Security, Privacy, and Governance
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#13-compatibility-and-migration">
+<span class="md-ellipsis">
+      
+        13. Compatibility and Migration
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#14-implementation-slices">
+<span class="md-ellipsis">
+      
+        14. Implementation Slices
+      
+    </span>
+</a>
+<nav aria-label="14. Implementation Slices" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#slice-1-standalone-package-and-built-in-dataset-discovery">
+<span class="md-ellipsis">
+      
+        Slice 1: Standalone package and built-in dataset discovery
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#slice-2-evaluation-result-and-grader-contracts">
+<span class="md-ellipsis">
+      
+        Slice 2: Evaluation result and grader contracts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#slice-3-judge-calibration-and-statistical-reporting">
+<span class="md-ellipsis">
+      
+        Slice 3: Judge calibration and statistical reporting
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#slice-4-integrated-experiment-ux-and-documentation">
+<span class="md-ellipsis">
+      
+        Slice 4: Integrated experiment UX and documentation
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#slice-5-optional-swe-bench-authoritative-harness">
+<span class="md-ellipsis">
+      
+        Slice 5: Optional SWE-bench authoritative harness
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#15-validation-strategy">
+<span class="md-ellipsis">
+      
+        15. Validation Strategy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#16-acceptance-criteria">
+<span class="md-ellipsis">
+      
+        16. Acceptance Criteria
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#17-rejected-alternatives">
+<span class="md-ellipsis">
+      
+        17. Rejected Alternatives
+      
+    </span>
+</a>
+<nav aria-label="17. Rejected Alternatives" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#embed-inspect-ai-as-arps-evaluation-engine">
+<span class="md-ellipsis">
+      
+        Embed Inspect AI as ARP's evaluation engine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#delegate-all-agent-benchmarks-to-harbor">
+<span class="md-ellipsis">
+      
+        Delegate all agent benchmarks to Harbor
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#move-arp-evaluation-into-executionkitevals">
+<span class="md-ellipsis">
+      
+        Move ARP evaluation into executionkit.evals
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#keep-dataset-providers-in-agentic-tools">
+<span class="md-ellipsis">
+      
+        Keep dataset providers in agentic-tools
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#make-hugging-face-support-an-optional-extra">
+<span class="md-ellipsis">
+      
+        Make Hugging Face support an optional extra
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#bundle-the-swe-bench-docker-harness-in-the-baseline-install">
+<span class="md-ellipsis">
+      
+        Bundle the SWE-bench Docker harness in the baseline install
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#treat-downloaded-swe-bench-records-as-ordinary-rubric-cases">
+<span class="md-ellipsis">
+      
+        Treat downloaded SWE-bench records as ordinary rubric cases
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#preserve-silent-fallback-and-empty-list-behavior">
+<span class="md-ellipsis">
+      
+        Preserve silent fallback and empty-list behavior
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#18-explicit-non-goals">
+<span class="md-ellipsis">
+      
+        18. Explicit Non-Goals
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#19-decision">
+<span class="md-ellipsis">
+      
+        19. Decision
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/superpowers/specs/2026-07-02-evaluation-framework-design.md" rel="edit" title="Edit this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
+</a>
+<a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/superpowers/specs/2026-07-02-evaluation-framework-design.md" title="View source of this page">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
+</a>
+<h1 id="evaluation-framework-and-dynamic-benchmark-integration-design">Evaluation Framework and Dynamic Benchmark Integration Design<a class="headerlink" href="#evaluation-framework-and-dynamic-benchmark-integration-design" title="Permanent link">¶</a></h1>
+<p><strong>Status:</strong> Superseded as decision-of-record by <strong>ADR-042</strong> ("Adopt <code>agentic-evalkit</code>, sliced migration"; merged 2026-07-03). Retained as the broader design analysis — Hugging Face discovery, dynamic benchmarks, provenance, reliability — behind that decision. Where this doc assumes extracting <code>agentic-v2-eval</code> in place, ADR-042 instead adopts the independently-built <code>agentic-evalkit</code> and that package boundary governs.
+<strong>Date:</strong> 2026-07-02
+<strong>Verified as of:</strong> 2026-07-02 (predates the ADR-042 landing and the boundary guard referenced below)
+<strong>Scope:</strong> Standalone evaluation architecture, its integration into <code>agentic-runtime-platform</code> (ARP), and its boundary with <code>executionkit</code> (EK)
+<strong>Related:</strong> ADR-042 (agentic-evalkit adoption) · ADR-023 (EK as ARP's optional execution kernel) · ARP-side dependency-boundary guard <code>agentic-workflows-v2/tests/contract/test_evalkit_boundary.py</code> (landed 2026-07-05, commit 62faf67)</p>
+<h2 id="1-objective">1. Objective<a class="headerlink" href="#1-objective" title="Permanent link">¶</a></h2>
+<p>Extract ARP's evaluation capabilities into a genuinely standalone <code>agentic-v2-eval</code> package that ARP imports, so developers can discover, resolve, preview, run, and compare local and remote datasets through one coherent Python/CLI/API/UI workflow while preserving benchmark validity and reproducibility.</p>
+<p>The design must:</p>
+<ul>
+<li>provide Hugging Face discovery, inspection, preview, and immutable resolution in the baseline install so developers do not manually find, download, or import datasets;</li>
+<li>ship a versioned starter catalog, beginning with the existing benchmark presets and SWE-bench Verified;</li>
+<li>distinguish downloading benchmark records from executing the benchmark's authoritative verifier;</li>
+<li>provide typed, immutable dataset and run provenance;</li>
+<li>make objective grading the default and require calibration for model judges;</li>
+<li>report uncertainty and repeated-trial reliability, not only a point score;</li>
+<li>retain a high-quality developer workflow across Python, CLI, API, and UI;</li>
+<li>keep the standalone package independent of ARP, <code>agentic-tools</code>, and EK runtime imports;</li>
+<li>preserve ExecutionKit as the optional execution kernel used by ARP steps without making EK the owner of ARP evaluation.</li>
+</ul>
+<h2 id="2-evidence-summary">2. Evidence Summary<a class="headerlink" href="#2-evidence-summary" title="Permanent link">¶</a></h2>
+<h3 id="21-current-arp-state">2.1 Current ARP state<a class="headerlink" href="#21-current-arp-state" title="Permanent link">¶</a></h3>
+<p>ARP already contains substantial evaluation code:</p>
+<ul>
+<li><code>tools/agents/benchmarks/</code> defines nine static benchmark entries and a local/Hugging Face/GitHub loader;</li>
+<li><code>agentic-v2-eval/</code> provides rubric scoring, evaluators, runners, reporters, and a lazy dataset bridge;</li>
+<li><code>agentic-workflows-v2/agentic_v2/server/</code> exposes dataset and evaluation endpoints;</li>
+<li>the React UI provides dataset browsing, run configuration, and evaluation result views;</li>
+<li>ADRs 009-012 and 017 document scoring, methodology, API, UI, and dataset-routing decisions.</li>
+</ul>
+<p>The existing Hugging Face path is not operational for SWE-bench Verified. A live load returned zero rows because:</p>
+<ol>
+<li>Dataset Viewer requests omit the required <code>config=default</code> value and receive HTTP 422.</li>
+<li>The <code>huggingface_hub</code> fallback imports undeclared/unavailable <code>pyarrow</code> and assumes a Parquet path without resolving the Hub conversion revision.</li>
+<li>The repository's top-level <code>datasets/</code> directory shadows the optional <code>datasets</code> Python package, so the final fallback imports a namespace with no <code>load_dataset</code> function.</li>
+<li>Source failures are converted into an empty list, which makes infrastructure failure indistinguishable from an empty dataset.</li>
+<li>The cache key excludes revision, config, split, projection, offset, and limit. A paginated response can therefore be cached as though it were the complete dataset.</li>
+</ol>
+<p>The current static registry also cannot search or import arbitrary suitable Hub datasets, and it records approximate source metadata rather than resolved immutable provenance.</p>
+<h3 id="22-current-executionkit-state">2.2 Current ExecutionKit state<a class="headerlink" href="#22-current-executionkit-state" title="Permanent link">¶</a></h3>
+<p>ExecutionKit <code>main</code> and public <code>origin/main</code> both resolve to commit <code>be2bd0bec4baddd999ea1adfa99733156f43cdd4</code>.</p>
+<p>EK has a deliberately small eval harness in <code>executionkit/evals.py</code>:</p>
+<ul>
+<li><code>EvalCase</code>: a callable plus a boolean/string check;</li>
+<li><code>EvalResult</code>: pass/fail, reason, and immutable metadata;</li>
+<li><code>EvalReport</code>: counts, accuracy, a deterministic all-pass gate, and an optional live accuracy floor;</li>
+<li><code>ConversationScript</code> and <code>Turn</code>: ordered multi-turn checks through one stateful <code>Kit</code>;</li>
+<li><code>live_provider_from_env()</code>: an opt-in OpenAI-compatible live provider.</li>
+</ul>
+<p>Its committed corpora contain:</p>
+<ul>
+<li>10 deterministic pattern goldens;</li>
+<li>13 malformed-output, injection, tool-argument, and usage failure cases;</li>
+<li>4 live pattern cases;</li>
+<li>one three-case judge smoke calibration.</li>
+</ul>
+<p>The local full suite passed with <code>738 passed, 16 skipped</code> and 94.62% coverage. Current CI is green across Python 3.11-3.13 on Windows and Linux, and its dedicated deterministic eval step passes.</p>
+<p>The scheduled live eval is not healthy: the three most recent weekly runs failed. In the latest inspected run, the pinned <code>llama3.2:3b</code> judge scored a deliberately poor answer <code>0.8</code> and the good answer <code>0.7</code>. This is useful evidence that the smoke test detects judge failure, but it also proves EK's live judge is not calibrated sufficiently for platform benchmarking.</p>
+<h3 id="23-existing-ekarp-integration">2.3 Existing EK/ARP integration<a class="headerlink" href="#23-existing-ekarp-integration" title="Permanent link">¶</a></h3>
+<p>ADR-023 already establishes EK as ARP's optional execution kernel. The current bridge is real:</p>
+<ul>
+<li><code>agentic-workflows-v2</code> exposes an <code>ek</code> extra for <code>executionkit&gt;=0.1.0,&lt;0.3.0</code>;</li>
+<li>ARP wraps its routed backend as an EK provider;</li>
+<li>structured and ReAct steps can delegate to EK patterns;</li>
+<li>EK results are converted back into ARP step results;</li>
+<li>91 focused EK bridge tests passed during this review.</li>
+</ul>
+<p>There is no current evaluation dependency from <code>agentic-v2-eval</code> to <code>executionkit.evals</code>, and this design intentionally preserves that fact.</p>
+<h2 id="3-source-derived-design-principles">3. Source-Derived Design Principles<a class="headerlink" href="#3-source-derived-design-principles" title="Permanent link">¶</a></h2>
+<p>The following primary-source lessons shape the design:</p>
+<ul>
+<li><a href="https://platform.openai.com/docs/guides/evaluation-best-practices">OpenAI evaluation best practices</a>: use task-specific evals, production-representative data, continuous evaluation, automation, logs, and human calibration.</li>
+<li><a href="https://platform.openai.com/docs/guides/graders/">OpenAI graders</a>: separate data variables from sampled output and support deterministic, model, code, and composite graders.</li>
+<li><a href="https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents">Anthropic agent eval guidance</a>: combine code, model, and human graders; distinguish capability from regression suites; use repeated trials, reference solutions, <code>pass@k</code>, and <code>pass^k</code>.</li>
+<li><a href="https://inspect.aisi.org.uk/datasets.html">Inspect datasets</a>: normalize source records into typed samples, provide explicit field mapping, support immutable metadata, and keep remote-code trust disabled by default.</li>
+<li><a href="https://www.harborframework.com/docs/datasets/adapters">Harbor adapters</a>: preserve the upstream task, environment, verifier, and oracle; validate adapters with oracle and parity runs.</li>
+<li><a href="https://www.swebench.com/SWE-bench/reference/harness/">SWE-bench harness</a>: valid SWE-bench scoring requires patch application and test execution in the benchmark's Docker environment.</li>
+<li><a href="https://huggingface.co/docs/lighteval/index">Hugging Face Lighteval</a>: separate sample-level computation from corpus aggregation and retain sample-level outputs for debugging.</li>
+<li><a href="https://huggingface.co/docs/datasets/loading">Hugging Face Datasets</a>: use explicit configs/splits, streaming where appropriate, dataset cards, revisions, and integrity checks.</li>
+<li><a href="https://arxiv.org/abs/2506.11763">DeepResearch Bench</a>: report quality needs multiple dimensions, including content, citations, and presentation.</li>
+<li><a href="https://arxiv.org/abs/2601.08536">DeepResearch Bench II</a>: prefer atomic, verifiable, expert-derived binary rubrics over broad LLM-generated scoring dimensions.</li>
+<li><a href="https://arxiv.org/abs/2506.06287">Deep Research Bench / RetroSearch</a>: freeze time-varying external environments when longitudinal comparison requires a stable world state.</li>
+<li><a href="https://github.com/microsoft/m365-copilot-eval">Microsoft M365 Copilot Eval</a>: a versioned document schema, discoverable defaults, interactive scaffolding, concurrency control, and multiple report formats materially improve developer experience.</li>
+<li><a href="https://langfuse.com/docs/evaluation/experiments/experiments-via-ui">Langfuse experiments</a>: dataset experiments should make run comparison and sample inspection first-class, but ARP must pin dataset versions rather than silently using the latest version.</li>
+<li><a href="https://github.com/openai/evals">OpenAI Evals</a>: registry-driven templates lower authoring cost, but ARP should avoid coupling evaluation definitions to a monolithic local-data registry.</li>
+<li><a href="https://github.com/openai/frontier-evals">OpenAI Frontier Evals</a>: complex frontier benchmarks should remain isolated, reproducible projects with their own locked environments.</li>
+<li><a href="https://github.com/openai/simple-evals">OpenAI simple-evals</a>: benchmark prompting policy is part of the benchmark and must be versioned with results.</li>
+<li><a href="https://github.com/anthropics/evals">Anthropic model-written eval datasets</a>: model-written data can extend coverage, but human validation and dataset risk documentation remain required. This repository is a dataset collection, not a general eval framework.</li>
+<li><a href="https://github.com/hamelsmu/evals-skills/tree/main/skills">Hamelsmu eval skills</a>: start from observed failures, use objective checks when possible, calibrate judges on held-out human labels, and build review interfaces around full traces.</li>
+</ul>
+<p>The <code>ai-system-design-guide</code> is useful secondary guidance, but primary framework documentation and benchmark methodology take precedence when they disagree.</p>
+<h2 id="4-ownership-and-dependency-rule">4. Ownership and Dependency Rule<a class="headerlink" href="#4-ownership-and-dependency-rule" title="Permanent link">¶</a></h2>
+<p>The approved pipeline is retained, with the ARP evaluation contracts implemented by the standalone package that ARP imports:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>ARP dataset provider (from agentic-v2-eval)
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>  -&gt; ARP typed evaluation sample (shared contract)
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>  -&gt; ARP workflow execution
+</span><span id="__span-0-4"><a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>      -&gt; optional EK-backed step/pattern
+</span><span id="__span-0-5"><a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>  -&gt; ARP normalized workflow result
+</span><span id="__span-0-6"><a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a>  -&gt; objective graders / calibrated judges (from agentic-v2-eval)
+</span><span id="__span-0-7"><a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a>  -&gt; statistics, provenance, reports (from agentic-v2-eval)
+</span><span id="__span-0-8"><a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>  -&gt; ARP persistence, API, and UI
+</span></code></pre></div>
+<p>This is a hard architectural invariant:</p>
+<blockquote>
+<p><code>agentic-v2-eval</code> must not import ARP engine internals, <code>agentic-tools</code>, <code>executionkit</code>, or <code>executionkit.evals</code>.</p>
+</blockquote>
+<p>ExecutionKit is a component under evaluation, not ARP's evaluation engine. EK's own eval harness remains responsible for EK's package-level regression and live smoke tests. ARP evaluates platform behavior after execution has crossed the existing EK bridge and returned to an ARP-normalized result.</p>
+<h3 id="41-package-responsibilities">4.1 Package responsibilities<a class="headerlink" href="#41-package-responsibilities" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Owns</th>
+<th>Must not own</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic-v2-eval</code></td>
+<td>Dataset catalog and providers, curated presets, typed samples, benchmark and harness protocols, objective/model grader contracts, calibration artifacts, aggregation, statistics, provenance, standalone CLI, and portable reports</td>
+<td>ARP workflow implementation, ARP persistence/UI, EK execution, imports from ARP, <code>agentic-tools</code>, or EK</td>
+</tr>
+<tr>
+<td><code>agentic-tools</code> (<code>tools/agents/benchmarks</code>)</td>
+<td>Temporary compatibility wrappers during migration; unrelated tool infrastructure</td>
+<td>Canonical evaluation dataset/provider implementations after migration</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2</code></td>
+<td>Workflow execution, optional EK-backed steps, result normalization, API, persistence, run streaming, UI integration</td>
+<td>Source-specific loader implementations, benchmark-specific grading logic</td>
+</tr>
+<tr>
+<td><code>executionkit</code></td>
+<td>Minimal execution primitives and its own self-evals</td>
+<td>Hugging Face discovery, SWE-bench orchestration, ARP rubrics, ARP reports, ARP UI</td>
+</tr>
+</tbody>
+</table>
+<p>The intended dependency graph is explicit:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a>agentic-workflows-v2 -&gt; agentic-v2-eval
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a>                    \-&gt; executionkit (optional execution extra)
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>agentic-v2-eval -&gt; huggingface-hub (baseline remote provider)
+</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a>agentic-tools -&gt; agentic-v2-eval (temporary compatibility facade only)
+</span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>executionkit -X-&gt; agentic-v2-eval
+</span><span id="__span-1-8"><a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>agentic-v2-eval -X-&gt; executionkit
+</span><span id="__span-1-9"><a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a>agentic-v2-eval -X-&gt; agentic-tools
+</span><span id="__span-1-10"><a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a>agentic-v2-eval -X-&gt; agentic-workflows-v2
+</span></code></pre></div>
+<p><code>agentic-v2-eval</code> is developed in the ARP monorepo initially but must build and install as an independent wheel. Its public protocols accept an injected execution target, so ARP can adapt workflow execution without the package knowing about ARP or EK. <code>agentic-workflows-v2</code> consumes the package through that application adapter instead of retaining a second benchmark/grader implementation. EK remains an optional sibling dependency used only by ARP workflow execution.</p>
+<h3 id="42-standalone-packaging-decision">4.2 Standalone packaging decision<a class="headerlink" href="#42-standalone-packaging-decision" title="Permanent link">¶</a></h3>
+<p>Three boundaries were considered:</p>
+<ol>
+<li><strong>Built-in Hugging Face provider in the standalone eval package (selected).</strong> This gives a useful zero-import first run, keeps dataset and evaluation provenance together, and lets ARP or another host reuse the same contracts.</li>
+<li><strong>Hugging Face as an optional extra.</strong> This keeps the base wheel smaller but makes the primary dynamic-dataset experience fail until a developer discovers and installs an extra.</li>
+<li><strong>Keep providers in <code>agentic-tools</code>.</strong> This minimizes migration work but leaves <code>agentic-v2-eval</code> coupled to ARP's monorepo and prevents independent installation.</li>
+</ol>
+<p>The package remains in the monorepo until its public API is proven. Extraction to a separate repository is a later release decision, gated by clean-wheel installation, semantic versioning, API documentation, and host contract tests; no code move is required to achieve runtime independence.</p>
+<h2 id="5-reference-architecture">5. Reference Architecture<a class="headerlink" href="#5-reference-architecture" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  Developer["Developer: CLI / API / UI"] --&gt; Manifest["Versioned evaluation manifest"]
+  Manifest --&gt; Catalog["agentic-v2-eval dataset catalog"]
+  Catalog --&gt; Local["Local provider"]
+  Catalog --&gt; HF["Hugging Face provider"]
+  Catalog --&gt; GitHub["Optional repository-provider plugin"]
+  Local --&gt; Sample["Portable typed EvalSample"]
+  HF --&gt; Sample
+  GitHub --&gt; Sample
+  Sample --&gt; Prepare["Benchmark adapter: prepare task"]
+  Prepare --&gt; Target["Injected execution-target protocol"]
+  Target --&gt; Workflow["ARP workflow adapter"]
+  Workflow --&gt; Native["Native ARP step"]
+  Workflow --&gt; EK["Optional EK-backed step"]
+  Native --&gt; Normalized["NormalizedWorkflowResult"]
+  EK --&gt; Normalized
+  Normalized --&gt; Verify["Benchmark adapter: verify outcome"]
+  Verify --&gt; Objective["Objective graders"]
+  Verify --&gt; Judge["Calibrated model judges"]
+  Objective --&gt; Aggregate["Corpus aggregation and statistics"]
+  Judge --&gt; Aggregate
+  Aggregate --&gt; Evidence["Provenance, artifacts, reports"]
+  Evidence --&gt; Developer
+</code></pre>
+<h2 id="6-core-data-contracts">6. Core Data Contracts<a class="headerlink" href="#6-core-data-contracts" title="Permanent link">¶</a></h2>
+<p>All contracts are immutable Pydantic models or frozen dataclasses and serialize to versioned JSON.</p>
+<h3 id="61-datasetref">6.1 <code>DatasetRef</code><a class="headerlink" href="#61-datasetref" title="Permanent link">¶</a></h3>
+<p>Identifies what the user requested:</p>
+<ul>
+<li><code>provider</code>: <code>local</code>, <code>huggingface</code>, or <code>git</code>;</li>
+<li><code>dataset_id</code>;</li>
+<li><code>revision</code>: optional user input such as a tag, branch, or commit;</li>
+<li><code>config</code>;</li>
+<li><code>split</code>;</li>
+<li><code>data_files</code>;</li>
+<li><code>field_mapping</code>;</li>
+<li><code>filters</code>;</li>
+<li><code>trust_remote_code</code>: default <code>false</code>;</li>
+<li><code>requested_at</code>.</li>
+</ul>
+<h3 id="62-resolveddataset">6.2 <code>ResolvedDataset</code><a class="headerlink" href="#62-resolveddataset" title="Permanent link">¶</a></h3>
+<p>Records what ARP actually resolved:</p>
+<ul>
+<li>canonical provider and dataset ID;</li>
+<li>immutable source revision/commit;</li>
+<li>source URI;</li>
+<li>config and split;</li>
+<li>schema/features;</li>
+<li>row count when available;</li>
+<li>dataset-card metadata;</li>
+<li>license and citation;</li>
+<li>content or manifest digest;</li>
+<li>loader version;</li>
+<li>resolution timestamp;</li>
+<li>cache key;</li>
+<li>warnings and policy decisions.</li>
+</ul>
+<p>Floating revisions may be accepted interactively, but every run resolves and records an immutable revision before sampling.</p>
+<h3 id="63-evalsample">6.3 <code>EvalSample</code><a class="headerlink" href="#63-evalsample" title="Permanent link">¶</a></h3>
+<p>The source-independent sample passed into ARP execution:</p>
+<ul>
+<li><code>id</code>;</li>
+<li><code>input</code>: string, messages, or structured workflow input;</li>
+<li><code>target</code>: optional objective target/reference;</li>
+<li><code>choices</code>: optional multiple-choice candidates;</li>
+<li><code>metadata</code>: immutable domain and source metadata;</li>
+<li><code>files</code>: optional sandbox files;</li>
+<li><code>setup</code>: optional controlled setup descriptor;</li>
+<li><code>grader_refs</code>: grader IDs applicable to this sample;</li>
+<li><code>sandbox_ref</code>: optional benchmark environment reference;</li>
+<li><code>source_provenance</code>: dataset revision, split, row index, and record digest.</li>
+</ul>
+<p>Raw upstream records are retained as artifacts when policy permits, but graders consume the typed projection.</p>
+<h3 id="64-normalizedworkflowresult">6.4 <code>NormalizedWorkflowResult</code><a class="headerlink" href="#64-normalizedworkflowresult" title="Permanent link">¶</a></h3>
+<p>The evaluation boundary after ARP execution:</p>
+<ul>
+<li>final output and structured output;</li>
+<li>terminal status and error classification;</li>
+<li>step results;</li>
+<li>tool calls and tool results;</li>
+<li>trace/artifact references;</li>
+<li>model/provider fingerprints;</li>
+<li>token, latency, and cost measurements;</li>
+<li>workflow definition/version;</li>
+<li>optional patch or changed-files artifact;</li>
+<li>execution-environment fingerprint.</li>
+</ul>
+<p>The shape is identical whether a step executed natively or delegated to EK. EK-specific internal types do not cross into graders.</p>
+<h3 id="65-graderesult">6.5 <code>GradeResult</code><a class="headerlink" href="#65-graderesult" title="Permanent link">¶</a></h3>
+<p>Every grader returns:</p>
+<ul>
+<li><code>grader_id</code> and version;</li>
+<li><code>kind</code>: objective, model, or human;</li>
+<li><code>verdict</code>: pass, fail, abstain, or error;</li>
+<li>optional normalized score;</li>
+<li>evidence/assertions;</li>
+<li>failure reason;</li>
+<li>grader runtime and cost;</li>
+<li>grader/model/prompt fingerprints;</li>
+<li>calibration reference when applicable.</li>
+</ul>
+<p><code>error</code> is never counted as <code>fail</code>, and <code>abstain</code> is never silently converted to zero.</p>
+<h3 id="66-evalrunmanifest">6.6 <code>EvalRunManifest</code><a class="headerlink" href="#66-evalrunmanifest" title="Permanent link">¶</a></h3>
+<p>The immutable run identity includes:</p>
+<ul>
+<li>manifest schema version;</li>
+<li>resolved dataset and digest;</li>
+<li>sample selection and random seed;</li>
+<li>workflow version;</li>
+<li>model/provider parameters;</li>
+<li>benchmark adapter and harness versions;</li>
+<li>container image digests where applicable;</li>
+<li>grader/rubric versions and prompt hashes;</li>
+<li>retry and concurrency policy;</li>
+<li>code commit and dirty-state indicator;</li>
+<li>start/end timestamps;</li>
+<li>environment and dependency fingerprints.</li>
+</ul>
+<h2 id="7-dataset-provider-design">7. Dataset Provider Design<a class="headerlink" href="#7-dataset-provider-design" title="Permanent link">¶</a></h2>
+<h3 id="71-provider-protocol">7.1 Provider protocol<a class="headerlink" href="#71-provider-protocol" title="Permanent link">¶</a></h3>
+<p>Each provider implements:</p>
+<ul>
+<li><code>search(query, filters, cursor) -&gt; SearchPage</code>;</li>
+<li><code>resolve(DatasetRef) -&gt; ResolvedDataset</code>;</li>
+<li><code>preview(ResolvedDataset, offset, limit) -&gt; SamplePage</code>;</li>
+<li><code>iter_records(ResolvedDataset, selection) -&gt; AsyncIterator[SourceRecord]</code>;</li>
+<li><code>healthcheck() -&gt; ProviderHealth</code>.</li>
+</ul>
+<p>The catalog owns provider registration. The baseline <code>agentic-v2-eval</code> install includes local-file and Hugging Face providers. Additional registries and repository sources use provider plugins, not branches added to one loader function.</p>
+<p>The default catalog is usable immediately after installation. It contains versioned presets for the existing supported benchmark IDs plus SWE-bench Verified. Each preset declares its provider reference, compatible sample projection, intended metric, readiness (<code>preview</code>, <code>runnable</code>, or <code>authoritative</code>), license metadata, and required optional capabilities. A preset is metadata and an adapter binding, never a vendored copy of the dataset.</p>
+<p>Developers can search the broader Hugging Face catalog without registering a preset or editing Python. Running an arbitrary discovered dataset still requires either a compatible built-in adapter or an explicit field mapping; discovery must not imply benchmark validity.</p>
+<h3 id="72-hugging-face-behavior">7.2 Hugging Face behavior<a class="headerlink" href="#72-hugging-face-behavior" title="Permanent link">¶</a></h3>
+<ul>
+<li>Include <code>huggingface-hub</code> and the lightweight Hub/Dataset Viewer provider in the baseline package, not an optional extra.</li>
+<li>Query the Hub API for search and revision metadata.</li>
+<li>Query Dataset Viewer for configs, splits, schema, and paginated preview.</li>
+<li>Always pass the resolved config and split.</li>
+<li>Resolve tags/branches to a commit SHA before a run.</li>
+<li>Prefer safe data formats and Dataset Viewer/Hub APIs.</li>
+<li>Keep arbitrary dataset scripts and remote code disabled by default.</li>
+<li>Provide an explicit opt-in with a warning and provenance record when trusted remote code is unavoidable.</li>
+<li>Support authenticated private datasets without logging tokens.</li>
+<li>Preserve dataset card, license, citation, and gated-access metadata.</li>
+<li>Use bounded retries with classified errors and provider rate-limit information.</li>
+</ul>
+<p>The initial path must not require the heavyweight <code>datasets</code> package, <code>pyarrow</code>, a Git clone, or a manual browser download for search, inspection, preview, and supported-file retrieval. Optional format adapters may add those dependencies later without changing <code>DatasetProvider</code> or <code>DatasetRef</code>.</p>
+<p>Authentication is optional for public datasets and reads <code>HF_TOKEN</code> or the standard Hugging Face credential store for private/gated datasets. The CLI explains access and license requirements without printing credentials.</p>
+<h3 id="73-cache-behavior">7.3 Cache behavior<a class="headerlink" href="#73-cache-behavior" title="Permanent link">¶</a></h3>
+<p>The cache is content-addressed. Its key includes:</p>
+<ul>
+<li>provider;</li>
+<li>canonical dataset ID;</li>
+<li>immutable revision;</li>
+<li>config and split;</li>
+<li>data files;</li>
+<li>filter/projection;</li>
+<li>page offset and limit;</li>
+<li>loader schema version.</li>
+</ul>
+<p>Cache entries include their own manifest and checksum. Full-dataset and page entries are different types and cannot overwrite each other. Standalone use defaults to the platform user-cache directory; a host such as ARP can inject its managed cache location. Cache data never lives inside the source package.</p>
+<p>Offline mode uses only exact resolved cache entries. A stale cache hit is reported, not silently refreshed or accepted.</p>
+<h3 id="74-error-model">7.4 Error model<a class="headerlink" href="#74-error-model" title="Permanent link">¶</a></h3>
+<p>Provider failures use typed errors:</p>
+<ul>
+<li><code>DatasetNotFound</code>;</li>
+<li><code>DatasetConfigRequired</code>;</li>
+<li><code>DatasetSplitNotFound</code>;</li>
+<li><code>DatasetAccessDenied</code>;</li>
+<li><code>DatasetLicenseRejected</code>;</li>
+<li><code>DatasetIntegrityError</code>;</li>
+<li><code>DatasetSchemaMismatch</code>;</li>
+<li><code>DatasetProviderUnavailable</code>;</li>
+<li><code>DatasetUnsafeCodeRequired</code>.</li>
+</ul>
+<p>An empty result is valid only when the provider successfully returns zero matching rows. Exceptions never collapse to <code>[]</code>.</p>
+<h2 id="8-benchmark-adapter-design">8. Benchmark Adapter Design<a class="headerlink" href="#8-benchmark-adapter-design" title="Permanent link">¶</a></h2>
+<p>A dataset is not automatically a valid benchmark. A <code>BenchmarkAdapter</code> binds:</p>
+<ul>
+<li>sample projection;</li>
+<li>task/environment setup;</li>
+<li>execution artifact format;</li>
+<li>authoritative grader/verifier;</li>
+<li>oracle/reference validation;</li>
+<li>benchmark-specific aggregation.</li>
+</ul>
+<p>The adapter protocol supports <code>prepare</code>, <code>validate_oracle</code>, <code>grade</code>, and <code>aggregate</code> operations. Adapter metadata records upstream benchmark version and compatibility.</p>
+<h3 id="81-swe-bench-verified">8.1 SWE-bench Verified<a class="headerlink" href="#81-swe-bench-verified" title="Permanent link">¶</a></h3>
+<p>The baseline package ships the SWE-bench Verified dataset preset, row projection, prediction schema, and harness-neutral contracts. This makes discovery and workflow output generation available in the initial release while keeping authoritative Docker execution optional.</p>
+<p>The later <code>swebench</code> extra supplies a <code>HarnessExecutor</code> implementation through the same stable protocol. The complete high-fidelity path must:</p>
+<ol>
+<li>Resolve <code>princeton-nlp/SWE-bench_Verified</code>, config <code>default</code>, split <code>test</code>, at an immutable revision.</li>
+<li>Project each row into an <code>EvalSample</code> containing issue text, repository, base commit, test patch, fail-to-pass/pass-to-pass metadata, and the source row digest.</li>
+<li>Run the injected execution target against the specified repository state; ARP supplies its workflow/agent adapter in integrated use.</li>
+<li>Export the generated patch using the official SWE-bench prediction schema.</li>
+<li>Delegate grading to the pinned official <code>swebench</code> Docker harness.</li>
+<li>Record harness version, image digests, patch-application result, tests, logs, and resolution status.</li>
+<li>Verify at least one gold patch through the same path as an oracle smoke test.</li>
+</ol>
+<p>Generic rubric or similarity scoring must never be labeled <code>SWE-bench resolved</code>. Optional advisory graders may describe patch quality, but the authoritative metric remains the harness resolution result.</p>
+<p>If the harness extra or Docker is absent, the package reports <code>authoritative_grader_unavailable</code> with the exact capability/install guidance; it never substitutes a rubric score. The CLI and UI perform a Docker/disk/resource preflight when authoritative execution is requested and retain preview, sample preparation, ARP execution, and prediction export for developers without those prerequisites.</p>
+<p>The harness boundary accepts a versioned <code>HarnessRequest</code> and returns a versioned <code>HarnessResult</code> containing status, evidence, logs, image digests, and typed infrastructure errors. Contract tests use a deterministic fake executor in the initial release, so adding the official Docker executor later does not alter dataset, sample, workflow-result, report, or UI contracts.</p>
+<h2 id="9-grading-and-rubric-model">9. Grading and Rubric Model<a class="headerlink" href="#9-grading-and-rubric-model" title="Permanent link">¶</a></h2>
+<h3 id="91-objective-first-policy">9.1 Objective-first policy<a class="headerlink" href="#91-objective-first-policy" title="Permanent link">¶</a></h3>
+<p>The grader planner chooses the strongest valid oracle in this order:</p>
+<ol>
+<li>authoritative benchmark verifier or state transition;</li>
+<li>executable tests;</li>
+<li>schema/type/format validation;</li>
+<li>exact or normalized deterministic comparison;</li>
+<li>domain metric with a documented interpretation;</li>
+<li>calibrated model judge;</li>
+<li>human review.</li>
+</ol>
+<p>Model judges cannot replace an available authoritative verifier.</p>
+<h3 id="92-rubric-schema">9.2 Rubric schema<a class="headerlink" href="#92-rubric-schema" title="Permanent link">¶</a></h3>
+<p>Each rubric is versioned and contains atomic criteria. A criterion defines:</p>
+<ul>
+<li>stable ID and description;</li>
+<li>grader type;</li>
+<li>explicit pass and fail definitions;</li>
+<li>required evidence/context;</li>
+<li>threshold where applicable;</li>
+<li>weight for diagnostic aggregation;</li>
+<li><code>required</code>/non-compensatory hard-gate status;</li>
+<li>examples drawn only from the calibration training split;</li>
+<li>ownership and review date.</li>
+</ul>
+<p>Broad criteria such as <code>quality</code>, <code>helpfulness</code>, or <code>coherence</code> are not accepted without task-specific operational definitions. Ordinal scores may be retained for diagnostic displays only when their anchors are explicit; release gates use binary or otherwise calibrated decisions.</p>
+<p>Missing required criteria fail the evaluation configuration before execution. Optional missing criteria are reported as abstentions and excluded with an explicit denominator.</p>
+<h3 id="93-model-judge-calibration">9.3 Model-judge calibration<a class="headerlink" href="#93-model-judge-calibration" title="Permanent link">¶</a></h3>
+<p>Every production judge has a <code>JudgeCalibration</code> artifact containing:</p>
+<ul>
+<li>pinned judge model and provider;</li>
+<li>prompt/schema hash;</li>
+<li>labeled train/dev/test dataset revisions;</li>
+<li>class balance and annotator provenance;</li>
+<li>confusion matrix;</li>
+<li>true-positive and true-negative rates;</li>
+<li>confidence intervals;</li>
+<li>known failure modes;</li>
+<li>approval/expiry date.</li>
+</ul>
+<p>Few-shot examples come only from the training partition. Prompt/model changes invalidate calibration. The held-out test partition is evaluated once for release qualification.</p>
+<p>The current EK good-vs-poor smoke test remains useful inside EK, but it does not satisfy ARP calibration requirements.</p>
+<h3 id="94-multi-grader-aggregation">9.4 Multi-grader aggregation<a class="headerlink" href="#94-multi-grader-aggregation" title="Permanent link">¶</a></h3>
+<ul>
+<li>Required objective graders are non-compensatory hard gates.</li>
+<li>Diagnostic dimensions may be weighted only after hard gates pass.</li>
+<li>Objective, model, and human scores remain separately visible.</li>
+<li>The report displays denominators, errors, and abstentions.</li>
+<li>Pairwise comparison randomizes presentation order and records both orderings when position bias matters.</li>
+<li>Judge ensembles are optional and used only when calibration shows a material reliability benefit.</li>
+</ul>
+<h2 id="10-statistics-and-benchmark-validity">10. Statistics and Benchmark Validity<a class="headerlink" href="#10-statistics-and-benchmark-validity" title="Permanent link">¶</a></h2>
+<p>Each run reports sample-level results plus corpus-level statistics:</p>
+<ul>
+<li>mean/rate and exact numerator/denominator;</li>
+<li>bootstrap or binomial 95% confidence interval as appropriate;</li>
+<li>paired deltas and paired bootstrap intervals for comparable runs;</li>
+<li><code>pass@k</code> when any successful attempt is useful;</li>
+<li><code>pass^k</code> when consistent success is required;</li>
+<li>attempt counts and seed policy;</li>
+<li>error and timeout rates separately from task failures;</li>
+<li>latency/token/cost distributions with percentiles;</li>
+<li>subgroup slices when predeclared and sufficiently sampled.</li>
+</ul>
+<p>Comparisons are permitted only when dataset revision, split, adapter, harness, grader versions, and sampling policy are compatible. The UI labels incompatible runs rather than drawing a misleading delta.</p>
+<p>Capability suites and regression suites are separate:</p>
+<ul>
+<li>capability suites target difficult, discriminating tasks and may begin with low pass rates;</li>
+<li>regression suites protect known-good behavior and require near-perfect results;</li>
+<li>tasks graduate from capability to regression only through an explicit versioned change.</li>
+</ul>
+<h2 id="11-developer-experience">11. Developer Experience<a class="headerlink" href="#11-developer-experience" title="Permanent link">¶</a></h2>
+<h3 id="111-cli">11.1 CLI<a class="headerlink" href="#111-cli" title="Permanent link">¶</a></h3>
+<p>The standalone wheel exposes the same application service through <code>agentic-v2-eval</code>; ARP mounts it as <code>agentic eval</code>. Both command surfaces use the same provider, manifest, and report contracts. The ARP-integrated workflow is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>agentic eval doctor
+</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>agentic eval datasets search "swe bench" --provider huggingface
+</span><span id="__span-2-3"><a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a>agentic eval datasets inspect huggingface:princeton-nlp/SWE-bench_Verified
+</span><span id="__span-2-4"><a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a>agentic eval datasets preview ... --config default --split test --limit 3
+</span><span id="__span-2-5"><a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a>agentic eval datasets pull ... --revision &lt;sha&gt;
+</span><span id="__span-2-6"><a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a>agentic eval run evals/swebench-verified.yaml --limit 1
+</span><span id="__span-2-7"><a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>agentic eval compare &lt;run-a&gt; &lt;run-b&gt;
+</span><span id="__span-2-8"><a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a>agentic eval report &lt;run-id&gt; --format html
+</span></code></pre></div>
+<p><code>doctor</code> checks provider credentials, cache permissions, Docker, disk, optional harness dependencies, and judge calibration status. Commands print the resolved revision and estimated execution implications before expensive work.</p>
+<p>Immediately after the baseline package is installed, a developer can run <code>agentic-v2-eval datasets curated</code>, <code>agentic-v2-eval datasets search</code>, <code>inspect</code>, and <code>preview</code> against public Hugging Face datasets. No manifest authoring or manual data import is required until the developer chooses to save or run a configuration.</p>
+<h3 id="112-api">11.2 API<a class="headerlink" href="#112-api" title="Permanent link">¶</a></h3>
+<p>The API provides:</p>
+<ul>
+<li>provider health and capabilities;</li>
+<li>paginated dataset search;</li>
+<li>resolve/inspect/preview endpoints;</li>
+<li>immutable import records;</li>
+<li>eval manifest validation;</li>
+<li>run creation, progress, cancellation, and result retrieval;</li>
+<li>sample/trace/artifact detail;</li>
+<li>compatible-run comparison.</li>
+</ul>
+<p>Long-running imports and benchmark runs are jobs with streamed events. The server never blocks a request while running SWE-bench.</p>
+<h3 id="113-ui">11.3 UI<a class="headerlink" href="#113-ui" title="Permanent link">¶</a></h3>
+<p>The dataset surface has <code>Discover</code>, <code>Imported</code>, and <code>Local</code> views. It shows:</p>
+<ul>
+<li>provider, resolved revision, config/split, license, size, and cache state;</li>
+<li>schema and native sample preview;</li>
+<li>field mapping validation;</li>
+<li>benchmark-adapter compatibility;</li>
+<li>execution prerequisites and cost/resource warnings.</li>
+</ul>
+<p>The evaluation surface shows:</p>
+<ul>
+<li>manifest and provenance;</li>
+<li>progress by phase/sample;</li>
+<li>task failure versus infrastructure error;</li>
+<li>grader evidence and trace details;</li>
+<li>uncertainty intervals and repeated-trial metrics;</li>
+<li>compatible baseline comparison;</li>
+<li>downloadable JSON, JSONL, Markdown, and HTML artifacts.</li>
+</ul>
+<h2 id="12-security-privacy-and-governance">12. Security, Privacy, and Governance<a class="headerlink" href="#12-security-privacy-and-governance" title="Permanent link">¶</a></h2>
+<ul>
+<li>Remote code execution is disabled by default.</li>
+<li>Dataset IDs, revisions, URLs, configs, and file paths are validated before use.</li>
+<li>Credentials use provider-specific secret configuration and are redacted from logs/artifacts.</li>
+<li>Dataset licenses and gated/private access are surfaced before import.</li>
+<li>Imported raw data follows tenant and retention policy.</li>
+<li>Benchmark setup and grader execution occur in isolated environments when they run untrusted code.</li>
+<li>SWE-bench uses the official container boundary; host execution is not a fallback.</li>
+<li>Reports identify whether data or prompts may contain sensitive content.</li>
+<li>Dataset, rubric, judge, and adapter changes are auditable versioned events.</li>
+</ul>
+<h2 id="13-compatibility-and-migration">13. Compatibility and Migration<a class="headerlink" href="#13-compatibility-and-migration" title="Permanent link">¶</a></h2>
+<p>The migration is additive first:</p>
+<ol>
+<li>Define provider, sample, adapter, execution-target, harness, grade, and report contracts inside <code>agentic-v2-eval</code>.</li>
+<li>Move canonical dataset discovery, transport, cache, and benchmark preset code from <code>tools.agents.benchmarks</code> into <code>agentic-v2-eval</code> and remove the package's <code>agentic-tools</code> runtime dependency.</li>
+<li>Turn old <code>tools.agents.benchmarks</code> entry points into temporary wrappers that import the standalone package, never the reverse.</li>
+<li>Keep <code>agentic_v2_eval.datasets</code> as a compatibility facade while callers migrate to typed samples.</li>
+<li>Preserve existing <code>repository</code> and <code>local</code> wire values; add canonical provider metadata and deprecation guidance rather than breaking clients immediately.</li>
+<li>Migrate static <code>BENCHMARK_DEFINITIONS</code> into built-in catalog presets that resolve through the same provider path as dynamically discovered datasets.</li>
+<li>Route ARP workflow execution through the standalone execution-target protocol and normalize results without exposing EK-specific types.</li>
+<li>Retain old query-parameter dataset endpoints only for their documented deprecation window.</li>
+</ol>
+<p>A dependency test will fail if <code>agentic-v2-eval</code> imports <code>agentic-tools</code>, <code>tools.agents</code>, <code>agentic-workflows-v2</code>, ARP engine internals, <code>executionkit</code>, or <code>executionkit.evals</code>. A built wheel must install and pass its contract suite in a clean virtual environment outside the monorepo.</p>
+<h2 id="14-implementation-slices">14. Implementation Slices<a class="headerlink" href="#14-implementation-slices" title="Permanent link">¶</a></h2>
+<p>The initial release comprises Slices 1-4. Slice 5 is a compatible optional feature and is not required to install or use the initial framework.</p>
+<h3 id="slice-1-standalone-package-and-built-in-dataset-discovery">Slice 1: Standalone package and built-in dataset discovery<a class="headerlink" href="#slice-1-standalone-package-and-built-in-dataset-discovery" title="Permanent link">¶</a></h3>
+<ul>
+<li>Remove the runtime dependency on <code>agentic-tools</code> and enforce the standalone import boundary.</li>
+<li>Add typed dataset/provider contracts and a clean-wheel installation test.</li>
+<li>Replace the monolithic loader dispatch with provider registration.</li>
+<li>Ship the Hugging Face provider in the baseline install; repair config/split resolution and classified errors.</li>
+<li>Add immutable revision resolution and content-addressed cache entries.</li>
+<li>Ship the curated starter catalog, including the existing registry IDs and SWE-bench Verified.</li>
+<li>Expose curated listing, search, inspect, and preview through Python/standalone CLI/ARP API/UI.</li>
+<li>Preserve compatibility for the existing registry IDs through wrappers.</li>
+</ul>
+<h3 id="slice-2-evaluation-result-and-grader-contracts">Slice 2: Evaluation result and grader contracts<a class="headerlink" href="#slice-2-evaluation-result-and-grader-contracts" title="Permanent link">¶</a></h3>
+<ul>
+<li>Add normalized workflow, grade, manifest, and provenance types.</li>
+<li>Implement objective grader registry and hard-gate aggregation.</li>
+<li>Make missing/error/abstain semantics explicit.</li>
+<li>Add sample- and corpus-level reporter schemas.</li>
+<li>Adapt existing rubric/report paths without importing EK evals.</li>
+</ul>
+<h3 id="slice-3-judge-calibration-and-statistical-reporting">Slice 3: Judge calibration and statistical reporting<a class="headerlink" href="#slice-3-judge-calibration-and-statistical-reporting" title="Permanent link">¶</a></h3>
+<ul>
+<li>Add calibration artifact schema and validation commands.</li>
+<li>Add confusion matrices, TPR/TNR, and calibration expiry checks.</li>
+<li>Add confidence intervals, paired comparison, <code>pass@k</code>, and <code>pass^k</code>.</li>
+<li>Prevent uncalibrated judges from serving as release gates.</li>
+</ul>
+<h3 id="slice-4-integrated-experiment-ux-and-documentation">Slice 4: Integrated experiment UX and documentation<a class="headerlink" href="#slice-4-integrated-experiment-ux-and-documentation" title="Permanent link">¶</a></h3>
+<ul>
+<li>Complete comparison, trace inspection, report export, and baseline workflows.</li>
+<li>Add quickstart manifests and migration docs.</li>
+<li>Add provider/benchmark authoring documentation.</li>
+<li>Add current limitations and operational runbooks.</li>
+</ul>
+<h3 id="slice-5-optional-swe-bench-authoritative-harness">Slice 5: Optional SWE-bench authoritative harness<a class="headerlink" href="#slice-5-optional-swe-bench-authoritative-harness" title="Permanent link">¶</a></h3>
+<ul>
+<li>Preserve the initial SWE-bench dataset, sample, prediction, and <code>HarnessExecutor</code> contracts.</li>
+<li>Add the optional pinned SWE-bench harness dependency and official Docker executor.</li>
+<li>Add resource preflight, job progress, log/artifact capture, and cancellation.</li>
+<li>Validate one gold patch and one intentionally failing patch.</li>
+<li>Report resolved rate and harness provenance without changing initial report schemas.</li>
+</ul>
+<h2 id="15-validation-strategy">15. Validation Strategy<a class="headerlink" href="#15-validation-strategy" title="Permanent link">¶</a></h2>
+<p>Development follows test-first red/green/refactor cycles.</p>
+<p>Required test layers:</p>
+<ul>
+<li>provider unit tests with captured API payloads and error variants;</li>
+<li>cache-key and corruption tests;</li>
+<li>live Hugging Face integration tests behind an explicit marker;</li>
+<li>projection/property tests for typed samples;</li>
+<li>dependency-boundary tests forbidding ARP, <code>agentic-tools</code>, and EK imports in <code>agentic-v2-eval</code>;</li>
+<li>wheel build/install and standalone CLI smoke tests in a clean temporary environment;</li>
+<li>deterministic <code>HarnessExecutor</code> contract tests that run without Docker;</li>
+<li>objective-grader contract tests;</li>
+<li>judge-calibration metric tests;</li>
+<li>statistical tests against known synthetic distributions;</li>
+<li>API contract tests;</li>
+<li>UI unit and browser tests for discovery, preview, run, error, and comparison flows;</li>
+<li>existing EK bridge regression tests;</li>
+<li>SWE-bench gold/fail smoke tests only for the optional harness feature when Docker prerequisites are available;</li>
+<li>full Ruff, mypy, pytest, UI, and strict documentation gates before completion.</li>
+</ul>
+<p>No mocked row download proves live source integration, and no generic unit test proves SWE-bench benchmark validity. The initial release therefore requires live Hugging Face evidence and harness contract tests; the optional authoritative feature additionally requires Docker gold/fail end-to-end smoke evidence.</p>
+<h2 id="16-acceptance-criteria">16. Acceptance Criteria<a class="headerlink" href="#16-acceptance-criteria" title="Permanent link">¶</a></h2>
+<p>The initial release is implemented only when all of the following are demonstrated:</p>
+<ol>
+<li>A clean environment can install the built <code>agentic-v2-eval</code> wheel and run its CLI without the ARP monorepo, <code>agentic-tools</code>, EK, Docker, <code>datasets</code>, or <code>pyarrow</code>.</li>
+<li>The baseline install can list curated datasets and search public Hugging Face datasets without code changes or manual data import.</li>
+<li>A developer can inspect configs/splits, license/provenance, and sample rows through the standalone CLI and ARP surfaces.</li>
+<li>SWE-bench Verified preview returns typed samples, records an immutable source revision, and exports the official prediction schema without requiring Docker.</li>
+<li>Requesting authoritative SWE-bench grading without its optional capability returns a typed unavailable result and exact setup guidance, never a substitute score.</li>
+<li>Re-running an identical resolved request uses the exact cache entry; changing revision/config/split/page cannot collide.</li>
+<li>Provider errors are visible and typed; a failed load never appears as an empty dataset.</li>
+<li>The same dataset manifest works through Python, standalone CLI, ARP CLI, API, and UI.</li>
+<li>An ARP workflow can contain an EK-backed step and still produce the same normalized evaluation boundary as a native step.</li>
+<li><code>agentic-v2-eval</code> has no import dependency on ARP, <code>agentic-tools</code>, or EK.</li>
+<li>Results record dataset, workflow, model, adapter, harness capability, grader, environment, and code provenance.</li>
+<li>Required objective grader failures cannot be compensated by model-judge scores.</li>
+<li>Uncalibrated model judges are marked advisory and cannot gate a release.</li>
+<li>Reports separate failure, error, timeout, abstention, and unavailable capability and include uncertainty.</li>
+<li>Compatible runs can be compared with a paired delta; incompatible runs are clearly rejected or labeled.</li>
+<li>Existing local dataset and evaluation workflows remain functional through the migration window.</li>
+<li>Relevant standalone-package, backend, EK-bridge, UI, live-provider, and documentation verification gates pass.</li>
+</ol>
+<p>The optional SWE-bench harness feature is complete only when:</p>
+<ol>
+<li>One SWE-bench gold patch resolves through the official pinned Docker harness.</li>
+<li>One invalid patch fails through the same harness, proving the smoke test discriminates.</li>
+<li>The optional executor satisfies the initial <code>HarnessExecutor</code> contract without requiring changes to manifests, normalized results, reports, or ARP UI contracts.</li>
+</ol>
+<h2 id="17-rejected-alternatives">17. Rejected Alternatives<a class="headerlink" href="#17-rejected-alternatives" title="Permanent link">¶</a></h2>
+<h3 id="embed-inspect-ai-as-arps-evaluation-engine">Embed Inspect AI as ARP's evaluation engine<a class="headerlink" href="#embed-inspect-ai-as-arps-evaluation-engine" title="Permanent link">¶</a></h3>
+<p>Rejected as the primary architecture because ARP already has dataset, runner, scoring, server, and UI surfaces. Adopting Inspect wholesale would create a second runtime and force a migration before fixing current correctness gaps. Inspect remains a strong reference for typed samples and source adapters.</p>
+<h3 id="delegate-all-agent-benchmarks-to-harbor">Delegate all agent benchmarks to Harbor<a class="headerlink" href="#delegate-all-agent-benchmarks-to-harbor" title="Permanent link">¶</a></h3>
+<p>Rejected as the primary architecture because it would make ARP a wrapper around another platform and weaken integrated product control. Harbor remains a valuable optional interoperability target and a reference for adapter parity, task isolation, and oracle validation.</p>
+<h3 id="move-arp-evaluation-into-executionkitevals">Move ARP evaluation into <code>executionkit.evals</code><a class="headerlink" href="#move-arp-evaluation-into-executionkitevals" title="Permanent link">¶</a></h3>
+<p>Rejected. It would violate EK's minimal zero-runtime-dependency scope, couple it to remote datasets and heavyweight benchmark harnesses, and invert the existing ARP-to-EK execution dependency. EK self-evals and ARP platform evals serve different purposes.</p>
+<h3 id="keep-dataset-providers-in-agentic-tools">Keep dataset providers in <code>agentic-tools</code><a class="headerlink" href="#keep-dataset-providers-in-agentic-tools" title="Permanent link">¶</a></h3>
+<p>Rejected as the target architecture. It preserves the current monorepo coupling and means the eval wheel cannot discover datasets by itself. Temporary wrappers in <code>agentic-tools</code> are allowed only for migration.</p>
+<h3 id="make-hugging-face-support-an-optional-extra">Make Hugging Face support an optional extra<a class="headerlink" href="#make-hugging-face-support-an-optional-extra" title="Permanent link">¶</a></h3>
+<p>Rejected for the baseline provider. Dynamic discovery is the primary first-run experience, so public Hub search, inspection, preview, and supported-file retrieval must work after the standard install. Heavy format libraries and authoritative benchmark harnesses remain optional.</p>
+<h3 id="bundle-the-swe-bench-docker-harness-in-the-baseline-install">Bundle the SWE-bench Docker harness in the baseline install<a class="headerlink" href="#bundle-the-swe-bench-docker-harness-in-the-baseline-install" title="Permanent link">¶</a></h3>
+<p>Rejected for the initial release. It imposes substantial platform, Docker, disk, and runtime requirements on developers who only need dataset discovery or other evals. The baseline ships the adapter, prediction schema, and stable harness protocol; the authoritative executor is an optional compatible feature.</p>
+<h3 id="treat-downloaded-swe-bench-records-as-ordinary-rubric-cases">Treat downloaded SWE-bench records as ordinary rubric cases<a class="headerlink" href="#treat-downloaded-swe-bench-records-as-ordinary-rubric-cases" title="Permanent link">¶</a></h3>
+<p>Rejected as invalid. The official test harness is the authoritative grader.</p>
+<h3 id="preserve-silent-fallback-and-empty-list-behavior">Preserve silent fallback and empty-list behavior<a class="headerlink" href="#preserve-silent-fallback-and-empty-list-behavior" title="Permanent link">¶</a></h3>
+<p>Rejected because it destroys evidence integrity and makes a broken provider look like a valid empty benchmark.</p>
+<h2 id="18-explicit-non-goals">18. Explicit Non-Goals<a class="headerlink" href="#18-explicit-non-goals" title="Permanent link">¶</a></h2>
+<ul>
+<li>Replacing EK's internal <code>executionkit.evals</code> self-test harness.</li>
+<li>Adding Hugging Face or SWE-bench dependencies to EK.</li>
+<li>Moving <code>agentic-v2-eval</code> to a separate repository before its wheel and public contracts are proven.</li>
+<li>Making every Hugging Face dataset automatically runnable without a projection or benchmark adapter.</li>
+<li>Claiming benchmark parity without oracle and authoritative-harness evidence.</li>
+<li>Building a public leaderboard service in the first implementation cycle.</li>
+<li>Executing untrusted dataset scripts on the host.</li>
+<li>Treating a single aggregate score as sufficient evidence of system quality.</li>
+</ul>
+<h2 id="19-decision">19. Decision<a class="headerlink" href="#19-decision" title="Permanent link">¶</a></h2>
+<p>Proceed with an ARP-governed but standalone, provider-based <code>agentic-v2-eval</code> package. The baseline install owns local and Hugging Face dataset discovery, a curated starter catalog, typed samples, graders, statistics, provenance, a standalone CLI, and portable reports. It imports neither ARP, <code>agentic-tools</code>, nor EK. ARP imports the package, supplies workflow execution through a narrow target adapter, persists results, and presents the API/UI.</p>
+<p>Use the existing ARP-to-EK bridge only inside ARP workflow execution and normalize the result before grading. Ship SWE-bench Verified discovery, projection, and prediction export initially; add the official Docker harness later through the already-tested <code>HarnessExecutor</code> boundary.</p>
+<p>The first implementation plan must begin with Slice 1, cover the initial-release Slices 1-4, and preserve the dependency invariant from Section 4 throughout every subsequent slice. Slice 5 is planned as a compatible follow-on feature, not a prerequisite for the initial release.</p>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Last update">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 6, 2026 03:14:23 UTC">July 6, 2026</span>
+</span>
+<span class="md-source-file__fact">
+<span class="md-icon" title="Created">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 6, 2026 03:14:23 UTC">July 6, 2026</span>
+</span>
+</aside>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/tafreeman/agentic-runtime-platform" rel="noopener" target="_blank" title="GitHub">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+window.mermaidConfig = {default: {
+    startOnLoad: false
+}};</script></body>
+</html>
