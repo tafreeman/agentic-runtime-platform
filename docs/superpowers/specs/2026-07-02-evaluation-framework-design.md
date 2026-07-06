@@ -1,9 +1,10 @@
 # Evaluation Framework and Dynamic Benchmark Integration Design
 
-**Status:** Revised for standalone packaging and built-in Hugging Face discovery; awaiting review
+**Status:** Superseded as decision-of-record by **ADR-042** ("Adopt `agentic-evalkit`, sliced migration"; merged 2026-07-03). Retained as the broader design analysis — Hugging Face discovery, dynamic benchmarks, provenance, reliability — behind that decision. Where this doc assumes extracting `agentic-v2-eval` in place, ADR-042 instead adopts the independently-built `agentic-evalkit` and that package boundary governs.
 **Date:** 2026-07-02
-**Verified as of:** 2026-07-02
-**Scope:** Standalone `agentic-v2-eval` architecture, its integration into `agentic-runtime-platform` (ARP), and its boundary with `executionkit` (EK)
+**Verified as of:** 2026-07-02 (predates the ADR-042 landing and the boundary guard referenced below)
+**Scope:** Standalone evaluation architecture, its integration into `agentic-runtime-platform` (ARP), and its boundary with `executionkit` (EK)
+**Related:** ADR-042 (agentic-evalkit adoption) · ADR-023 (EK as ARP's optional execution kernel) · ARP-side dependency-boundary guard `agentic-workflows-v2/tests/contract/test_evalkit_boundary.py` (landed 2026-07-05, commit 62faf67)
 
 ## 1. Objective
 
