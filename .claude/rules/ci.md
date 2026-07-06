@@ -31,11 +31,18 @@ the whole unit suite green this way.
 ## Coverage threshold
 
 The gate is **80%** on `agentic-workflows-v2/agentic_v2` (`[tool.coverage.report]
-fail_under = 80`, `precision = 2` so 79.93% fails rather than rounding up). The
-UI package holds a separate 60% floor in `ui/vitest.config.ts`. New backend code
-targets 80% coverage on changed lines. CI collects coverage without
-`--cov-fail-under` and enforces it in a dedicated `coverage report --fail-under=80`
-step (pytest-cov 7.x does not propagate the failure exit code reliably).
+fail_under = 80`, `precision = 2` so 79.93% fails rather than rounding up). New
+backend code targets 80% coverage on changed lines. CI collects coverage
+without `--cov-fail-under` and enforces it in a dedicated
+`coverage report --fail-under=80` step (pytest-cov 7.x does not propagate the
+failure exit code reliably).
+
+UI: vitest coverage floors (branches ≥56, ratcheting toward 60; statements/
+functions/lines ≥60) defined in `ui/vitest.config.ts` and enforced by the
+`frontend-test` CI job (`npm run test:coverage`, which runs `vitest run
+--coverage`). The branches floor is a deliberate ratchet — it may only move up
+as coverage improves, never down; see the comment above the thresholds in
+`vitest.config.ts` for the full policy.
 
 Some modules are listed under `[tool.coverage.run] omit` because they require
 live providers or an optional `executionkit` install — do not add new code to an
