@@ -37,6 +37,12 @@ except ImportError as _lg_err:  # pragma: no cover
         "Install them with: pip install langchain-core langgraph"
     ) from _lg_err
 
+from ..engine.llm_output_parsing import (
+    extract_json_candidates,
+    normalize_expected_structure,
+    parse_llm_json_output,
+    parse_sentinel_output,
+)
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
 from .agents import create_agent, parse_agent_tier
@@ -310,49 +316,83 @@ def coerce_message_content_to_text(content: Any) -> str:
 
 
 def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
-    """Best-effort JSON object extraction from model text output."""
+    """Best-effort JSON object extraction from model text output.
+
+    Candidate generation is shared with the native engine
+    (:func:`agentic_v2.engine.llm_output_parsing.extract_json_candidates`),
+    plus a mid-text fence scan for payloads with prose around ```json blocks,
+    which the shared generator (outer-fence-only) does not cover.
+    """
     raw = text.strip()
     if not raw:
         return None
 
-    try:
-        parsed = json.loads(raw)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    fenced = re.findall(
-        r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE
+    candidates = list(extract_json_candidates(raw))
+    candidates.extend(
+        re.findall(
+            r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.DOTALL | re.IGNORECASE
+        )
     )
-    for candidate in fenced:
+
+    for candidate in candidates:
         try:
-            parsed = json.loads(candidate)
-            if isinstance(parsed, dict):
-                return parsed
+            # strict=False tolerates literal control characters (bare
+            # newlines/tabs) inside JSON string values — a common LLM output
+            # quirk that strict json.loads rejects wholesale.
+            parsed = json.loads(candidate, strict=False)
         except json.JSONDecodeError:
             continue
-
-    start = raw.find("{")
-    end = raw.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        try:
-            parsed = json.loads(raw[start : end + 1])
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            pass
+        if isinstance(parsed, dict):
+            return parsed
 
     return None
 
 
-def parse_step_outputs(response_text: Any) -> dict[str, Any]:
-    """Parse structured output from model response text when possible."""
+def parse_step_outputs(
+    response_text: Any,
+    expected_output_keys: list[str] | None = None,
+) -> dict[str, Any]:
+    """Parse structured output from model response text when possible.
+
+    Mirrors the native engine's parse order (sentinel artifacts first, then
+    JSON with fallbacks — see ``agent_resolver``): ``<<<ARTIFACT key>>>``
+    blocks produced by the coder/reviewer persona prompts, then JSON
+    extraction, then per-key salvage from malformed/truncated JSON via
+    :func:`parse_llm_json_output`. ``raw_response`` always carries the
+    normalized model text regardless of parse outcome.
+    """
     normalized = coerce_message_content_to_text(response_text)
     step_outputs: dict[str, Any] = {"raw_response": normalized}
-    parsed = parse_json_dict_from_text(normalized)
-    if isinstance(parsed, dict):
+
+    parsed = parse_sentinel_output(normalized, expected_output_keys)
+    if parsed is None:
+        parsed = parse_json_dict_from_text(normalized)
+        if parsed is not None and expected_output_keys:
+            parsed = normalize_expected_structure(dict(parsed), expected_output_keys)
+    if parsed is None:
+        # Full parse failed; parse_llm_json_output falls back to salvaging
+        # declared keys out of malformed/truncated JSON-ish text.
+        parsed = parse_llm_json_output(normalized, expected_output_keys)
+        parsed.pop("raw_response", None)
+
+    if parsed:
         step_outputs.update(parsed)
+
+    if expected_output_keys:
+        missing = [
+            key
+            for key in expected_output_keys
+            if key != "raw_response" and key not in step_outputs
+        ]
+        if missing:
+            logger.warning(
+                "Step output parsing found no value for declared outputs %s; "
+                "downstream ${steps.*.outputs.*} references to them will "
+                "resolve to null (raw_response length=%d)",
+                missing,
+                len(normalized),
+            )
+
     return step_outputs
 
 
@@ -419,9 +459,7 @@ def extract_agent_metadata(agent_result: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _build_tier0_node(
-    step: StepConfig, trace: TraceAdapter
-) -> Any:
+def _build_tier0_node(step: StepConfig, trace: TraceAdapter) -> Any:
     """Build the deterministic tier-0 node closure for *step*."""
     deterministic_fn = _TIER0_REGISTRY.get(step.agent)
 
@@ -440,9 +478,7 @@ def _build_tier0_node(
             result = {"context": ctx}
 
         # Move step outputs from __current__ into named step
-        step_outputs = (
-            result.get("steps", {}).get("__current__", {}).get("outputs", {})
-        )
+        step_outputs = result.get("steps", {}).get("__current__", {}).get("outputs", {})
         end_time = datetime.now(UTC)
         steps = record_step_result(
             state,
@@ -565,9 +601,7 @@ def _build_failure_update(
     err_text = "All model attempts failed"
     if attempt_errors:
         last = attempt_errors[-1]
-        err_text = (
-            f"{err_text} (last model={last.get('model')}: {last.get('error')})"
-        )
+        err_text = f"{err_text} (last model={last.get('model')}: {last.get('error')})"
     end_time = datetime.now(UTC)
     steps = record_step_result(
         state,
@@ -617,7 +651,10 @@ def _build_success_update(
         metadata["attempted_models"] = attempted_models
         metadata["attempt_errors"] = attempt_errors
 
-    step_outputs = parse_step_outputs(response_text)
+    step_outputs = parse_step_outputs(
+        response_text,
+        expected_output_keys=list(step.outputs.keys()) or None,
+    )
 
     # Map outputs to context
     ctx = map_step_outputs_to_context(step, step_outputs, ctx)
