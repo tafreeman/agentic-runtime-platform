@@ -7,6 +7,7 @@ async function renderAppAt(path: string, workflowBuilderEnabled: boolean) {
 
   vi.doMock("../config/featureFlags", () => ({
     isWorkflowBuilderEnabled: () => workflowBuilderEnabled,
+    isNoLlmModeEnabled: () => false,
   }));
 
   vi.doMock("../components/layout/Sidebar", () => ({

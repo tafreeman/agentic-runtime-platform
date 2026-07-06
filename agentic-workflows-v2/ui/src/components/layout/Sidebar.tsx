@@ -18,16 +18,18 @@ interface NavItem {
   readonly title: string;
   readonly end: boolean;
   readonly live?: boolean;
+  /** Second key of the `g`-sequence shortcut (see useGoNav's GO_TARGETS). */
+  readonly goKey: string;
 }
 
 const links: readonly NavItem[] = [
-  { to: "/", testid: "dashboard", label: "overview", num: "01", title: "overview", end: true },
-  { to: "/live/latest", testid: "live", label: "live execution", num: "02", title: "live execution", end: false, live: true },
-  { to: "/runs", testid: "runs", label: "runs", num: "03", title: "runs", end: false },
-  { to: "/models", testid: "models", label: "model router", num: "04", title: "model router", end: false },
-  { to: "/evaluations", testid: "evals", label: "evaluations", num: "05", title: "evaluations", end: false },
-  { to: "/workflows", testid: "workflows", label: "workflow builder", num: "06", title: "workflow builder", end: false },
-  { to: "/datasets", testid: "datasets", label: "datasets", num: "07", title: "datasets", end: false },
+  { to: "/", testid: "dashboard", label: "overview", num: "01", title: "overview", end: true, goKey: "d" },
+  { to: "/live/latest", testid: "live", label: "live execution", num: "02", title: "live execution", end: false, live: true, goKey: "e" },
+  { to: "/runs", testid: "runs", label: "runs", num: "03", title: "runs", end: false, goKey: "r" },
+  { to: "/models", testid: "models", label: "model router", num: "04", title: "model router", end: false, goKey: "m" },
+  { to: "/evaluations", testid: "evals", label: "evaluations", num: "05", title: "evaluations", end: false, goKey: "l" },
+  { to: "/workflows", testid: "workflows", label: "workflow builder", num: "06", title: "workflow builder", end: false, goKey: "w" },
+  { to: "/datasets", testid: "datasets", label: "datasets", num: "07", title: "datasets", end: false, goKey: "a" },
 ];
 
 // Inline values for theme-driven tokens (radius / border-width / heading font)
@@ -154,11 +156,41 @@ export default function Sidebar() {
                     className="ml-auto h-1.5 w-1.5 flex-none rounded-full bg-b-green motion-safe:animate-pulse"
                   />
                 )}
+                {!collapsed && (
+                  <span
+                    className={`${link.live ? "" : "ml-auto "}flex-none font-mono text-[9px] tracking-[1px] text-b-text-faint`}
+                    aria-hidden="true"
+                  >
+                    g {link.goKey}
+                  </span>
+                )}
               </>
             )}
           </NavLink>
         ))}
       </nav>
+
+      {/* Shortcuts legend — mirrors the design kit's sidebar footer block. */}
+      {!collapsed && (
+        <div className="mt-4 px-[18px]">
+          <div className="pb-2 text-[9px] tracking-[1.6px] text-b-text-faint">
+            SHORTCUTS
+          </div>
+          <div className="space-y-1 font-mono text-[10px] text-b-text-dim">
+            <div>
+              <span className="text-b-text-mid">j k</span> move ·{" "}
+              <span className="text-b-text-mid">↵</span> inspect
+            </div>
+            <div>
+              <span className="text-b-text-mid">esc</span> close panel
+            </div>
+            <div>
+              <span className="text-b-text-mid">⌘k</span> palette ·{" "}
+              <span className="text-b-text-mid">g</span>+key go to
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer: engine status, no-LLM mode, theme toggle, collapse */}
       <div

@@ -6,11 +6,21 @@ import {
   getRunEvaluationDetail,
 } from "../api/client";
 
-export function useRuns(workflow?: string) {
+export interface UseRunsOptions {
+  /**
+   * Auto-refresh ("live tail") — polls every 5s when true (the default,
+   * preserving historical behavior). The Runs page exposes this as the
+   * "Live tail" switch from the console design kit.
+   */
+  live?: boolean;
+}
+
+export function useRuns(workflow?: string, options?: UseRunsOptions) {
+  const live = options?.live ?? true;
   return useQuery({
     queryKey: ["runs", workflow],
     queryFn: () => listRuns(workflow),
-    refetchInterval: 5000,
+    refetchInterval: live ? 5000 : false,
     refetchIntervalInBackground: false,
   });
 }

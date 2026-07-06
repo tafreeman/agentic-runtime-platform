@@ -115,6 +115,8 @@ export interface RunDetail {
   end_time: string;
   steps: StepResult[];
   dataset?: Record<string, unknown> | null;
+  /** Raw workflow inputs captured at run time — replayable via POST /api/run. */
+  inputs?: Record<string, unknown> | null;
   extra?: {
     evaluation_requested?: boolean;
     evaluation?: EvaluationResult | null;
