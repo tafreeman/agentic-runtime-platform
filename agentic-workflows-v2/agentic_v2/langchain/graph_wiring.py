@@ -175,10 +175,23 @@ def resolve_inputs_into_context(
     """Resolve step input expressions into context and return both."""
     ctx = dict(state.get("context", {}))
     resolved_inputs: dict[str, Any] = {}
+    null_inputs: dict[str, Any] = {}
     for key, expr in step.inputs.items():
         value = resolve_expression(expr, state)
         resolved_inputs[key] = value
         ctx[key] = value
+        if value is None:
+            null_inputs[key] = expr
+
+    if null_inputs:
+        logger.warning(
+            "Step %s will run with null input(s) %s (source expressions: %s); "
+            "the agent will receive missing data for these keys",
+            step.name,
+            list(null_inputs.keys()),
+            null_inputs,
+        )
+
     return ctx, resolved_inputs
 
 
@@ -419,9 +432,7 @@ def extract_agent_metadata(agent_result: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _build_tier0_node(
-    step: StepConfig, trace: TraceAdapter
-) -> Any:
+def _build_tier0_node(step: StepConfig, trace: TraceAdapter) -> Any:
     """Build the deterministic tier-0 node closure for *step*."""
     deterministic_fn = _TIER0_REGISTRY.get(step.agent)
 
@@ -440,9 +451,7 @@ def _build_tier0_node(
             result = {"context": ctx}
 
         # Move step outputs from __current__ into named step
-        step_outputs = (
-            result.get("steps", {}).get("__current__", {}).get("outputs", {})
-        )
+        step_outputs = result.get("steps", {}).get("__current__", {}).get("outputs", {})
         end_time = datetime.now(UTC)
         steps = record_step_result(
             state,
@@ -565,9 +574,7 @@ def _build_failure_update(
     err_text = "All model attempts failed"
     if attempt_errors:
         last = attempt_errors[-1]
-        err_text = (
-            f"{err_text} (last model={last.get('model')}: {last.get('error')})"
-        )
+        err_text = f"{err_text} (last model={last.get('model')}: {last.get('error')})"
     end_time = datetime.now(UTC)
     steps = record_step_result(
         state,
