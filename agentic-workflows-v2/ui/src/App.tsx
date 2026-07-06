@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./components/layout/Sidebar";
+import ConsoleHeader from "./components/layout/ConsoleHeader";
 import DashboardPage from "./pages/DashboardPage";
 import WorkflowsPage from "./pages/WorkflowsPage";
 import WorkflowDetailPage from "./pages/WorkflowDetailPage";
@@ -16,6 +17,16 @@ import NotFoundPage from "./components/states/NotFoundPage";
 import CliStrip from "./components/layout/CliStrip";
 import CommandPalette from "./components/common/CommandPalette";
 import { CliProvider } from "./hooks/useCli";
+import { useGoNav } from "./hooks/useGoNav";
+
+/**
+ * Mounts the global `g`+key navigation sequence. Rendered as a child of
+ * {@link CliProvider} because the hook reports each jump's CLI twin.
+ */
+function GoNav() {
+  useGoNav();
+  return null;
+}
 
 export default function App() {
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
@@ -36,6 +47,7 @@ export default function App() {
 
   return (
     <CliProvider>
+    <GoNav />
     <div className="flex h-screen flex-col overflow-hidden">
       {/* Skip-to-main-content: visually hidden until focused via keyboard Tab */}
       <a
@@ -44,6 +56,7 @@ export default function App() {
       >
         skip to main content
       </a>
+      <ConsoleHeader />
       <div className="flex min-h-0 flex-1 overflow-hidden">
       <Sidebar />
       <main

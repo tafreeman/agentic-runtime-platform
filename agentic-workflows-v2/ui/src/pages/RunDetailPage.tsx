@@ -36,7 +36,7 @@ export default function RunDetailPage() {
       </BTopBar>
 
       <div className="min-h-0 flex-1">
-        <RunDetailPanel filename={filename} />
+        <RunDetailPanel filename={filename} layout="page" />
       </div>
     </div>
   );

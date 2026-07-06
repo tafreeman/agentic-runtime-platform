@@ -143,6 +143,17 @@ export default function CommandPalette() {
     return () => globalThis.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Programmatic open — the header's search affordance dispatches this event
+  // so it behaves exactly like pressing ⌘K.
+  useEffect(() => {
+    function onOpenEvent() {
+      setOpen(true);
+    }
+    globalThis.addEventListener("open-command-palette", onOpenEvent);
+    return () =>
+      globalThis.removeEventListener("open-command-palette", onOpenEvent);
+  }, []);
+
   // Autofocus the search input whenever the palette opens.
   useEffect(() => {
     if (open) {

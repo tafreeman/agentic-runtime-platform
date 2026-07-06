@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useRuns } from "../hooks/useRuns";
+import { useRuns, useRunsSummary } from "../hooks/useRuns";
 import { useHotkeys } from "../hooks/useHotkeys";
 import { useCli } from "../hooks/useCli";
 import BTopBar from "../components/layout/BTopBar";
@@ -12,6 +12,13 @@ import { gradeColorClass, gradeLetter } from "../lib/grades";
 import type { RunSummary } from "../api/types";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
+
+const STATUS_FILTERS: readonly StatusFilter[] = [
+  "all",
+  "success",
+  "failed",
+  "running",
+];
 
 /** ASCII status glyph + its CSS color variable, colored by run status. */
 function statusAscii(status: string | null | undefined): {
@@ -51,14 +58,53 @@ function shortId(run: RunSummary): string {
   return (parts.at(-1) ?? id).slice(0, 10);
 }
 
+/** One cell of the design kit's KPI strip: big mono number over a dim label. */
+function Kpi({
+  value,
+  label,
+}: Readonly<{ value: string; label: string }>) {
+  return (
+    <div className="px-4 py-3">
+      <div className="font-mono text-[26px] leading-none text-b-text tabular-nums">
+        {value}
+      </div>
+      <div className="mt-1.5 font-mono text-[10px] text-b-text-mid">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+const selectStyle = {
+  borderRadius: "var(--b-rad-sm)",
+  borderWidth: "var(--b-bw)",
+} as const;
+
+const selectClass =
+  "border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50";
+
 export default function RunsPage() {
-  const { data: runs, isLoading, isError, error, refetch } = useRuns();
+  const [liveTail, setLiveTail] = useState(true);
+  const [workflowFilter, setWorkflowFilter] = useState("all");
+  const { data: runs, isLoading, isError, error, refetch } = useRuns(
+    undefined,
+    { live: liveTail }
+  );
+  const { data: summary } = useRunsSummary();
   const { setCli } = useCli();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<RunSummary | null>(null);
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const workflowNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const r of runs ?? []) {
+      if (r.workflow_name) names.add(r.workflow_name);
+    }
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [runs]);
 
   const filtered = useMemo(() => {
     const all = runs ?? [];
@@ -69,13 +115,15 @@ export default function RunsPage() {
         (filter === "running"
           ? r.status === "running" || r.status === "in_progress"
           : r.status === filter);
+      const matchesWorkflow =
+        workflowFilter === "all" || r.workflow_name === workflowFilter;
       const matchesQuery =
         !q ||
         (r.workflow_name ?? "").toLowerCase().includes(q) ||
         (r.run_id ?? r.filename ?? "").toLowerCase().includes(q);
-      return matchesStatus && matchesQuery;
+      return matchesStatus && matchesWorkflow && matchesQuery;
     });
-  }, [runs, filter, query]);
+  }, [runs, filter, workflowFilter, query]);
 
   const counts = useMemo(() => {
     const all = runs ?? [];
@@ -106,6 +154,15 @@ export default function RunsPage() {
       next === "all"
         ? "agentic runs list --env prod --limit 50"
         : `agentic runs list --status ${next}`
+    );
+  }
+
+  function changeWorkflowFilter(next: string): void {
+    setWorkflowFilter(next);
+    setCli(
+      next === "all"
+        ? "agentic runs list --env prod --limit 50"
+        : `agentic runs list --workflow ${next}`
     );
   }
 
@@ -147,9 +204,18 @@ export default function RunsPage() {
     return () => globalThis.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Column order mirrors the design kit's runs table (RUN first, WHEN last);
+  // the grid narrows to the four identity columns while the inspector is open.
   const gridCols = selected
-    ? "grid-cols-[88px_1fr_84px_56px]"
-    : "grid-cols-[88px_1.6fr_84px_84px_56px_80px]";
+    ? "grid-cols-[minmax(120px,0.9fr)_1fr_64px_84px]"
+    : "grid-cols-[minmax(120px,0.9fr)_1.4fr_64px_84px_56px_56px_80px]";
+
+  const avgDuration =
+    summary?.avg_duration_ms == null
+      ? "—"
+      : summary.avg_duration_ms >= 1000
+        ? `${(summary.avg_duration_ms / 1000).toFixed(1)}s`
+        : `${Math.round(summary.avg_duration_ms)}ms`;
 
   return (
     <div className="flex h-full flex-col">
@@ -172,39 +238,90 @@ export default function RunsPage() {
               </div>
             </div>
 
-            {/* Filter chips */}
-            <div className="flex flex-wrap items-center gap-2">
-              {(["all", "success", "failed", "running"] as StatusFilter[]).map(
-                (f) => {
-                  const count =
-                    f === "all"
-                      ? (runs?.length ?? 0)
-                      : counts[f];
-                  const active = filter === f;
-                  return (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => changeFilter(f)}
-                      style={{
-                        borderRadius: "var(--b-rad-sm)",
-                        borderWidth: "var(--b-bw)",
-                      }}
-                      className={`border border-solid px-3 py-1 font-mono text-[11px] transition-colors ${
-                        active
-                          ? "border-b-clay bg-b-clay-soft text-b-clay"
-                          : "border-b-line text-b-text-dim hover:border-b-line hover:text-b-text"
-                      }`}
-                    >
-                      {f} <span className="text-b-text-faint">· {count}</span>
-                    </button>
-                  );
-                }
-              )}
+            {/* KPI strip — design kit's four-cell stats band */}
+            <div
+              style={{
+                borderRadius: "var(--b-rad-lg)",
+                borderWidth: "var(--b-bw)",
+              }}
+              className="grid grid-cols-2 divide-x divide-b-line border border-solid border-b-line bg-b-bg1 sm:grid-cols-4"
+              aria-label="run statistics"
+            >
+              <Kpi
+                value={String(summary?.total_runs ?? runs?.length ?? 0)}
+                label="runs total"
+              />
+              <Kpi
+                value={String(summary?.success ?? counts.success)}
+                label="passing"
+              />
+              <Kpi
+                value={String(summary?.failed ?? counts.failed)}
+                label="failed"
+              />
+              <Kpi value={avgDuration} label="avg duration" />
+            </div>
 
-              <span className="ml-auto font-mono text-[10px] text-b-text-faint">
-                native + langchain adapters
-              </span>
+            {/* Filter row — status/workflow selects, live tail, trigger run */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <label className="flex items-center font-mono text-[11px] text-b-text-dim">
+                <span className="sr-only">status filter</span>
+                <select
+                  value={filter}
+                  onChange={(e) => changeFilter(e.target.value as StatusFilter)}
+                  aria-label="Filter by status"
+                  style={selectStyle}
+                  className={selectClass}
+                >
+                  {STATUS_FILTERS.map((f) => (
+                    <option key={f} value={f}>
+                      status: {f}
+                      {f === "all"
+                        ? ` · ${runs?.length ?? 0}`
+                        : ` · ${counts[f]}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex items-center font-mono text-[11px] text-b-text-dim">
+                <span className="sr-only">workflow filter</span>
+                <select
+                  value={workflowFilter}
+                  onChange={(e) => changeWorkflowFilter(e.target.value)}
+                  aria-label="Filter by workflow"
+                  style={selectStyle}
+                  className={selectClass}
+                >
+                  <option value="all">workflow: all</option>
+                  {workflowNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex cursor-pointer items-center gap-2 font-mono text-[11px] text-b-text-dim">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={liveTail}
+                  onChange={(e) => setLiveTail(e.target.checked)}
+                  aria-label="Live tail"
+                  className="h-3 w-3 accent-[rgb(var(--b-clay))]"
+                />
+                Live tail
+              </label>
+
+              <Link
+                to="/workflows"
+                onClick={() => setCli("agentic run <workflow> --input …")}
+                style={selectStyle}
+                className="ml-auto bg-b-clay px-3 py-1.5 font-mono text-[11px] font-semibold text-b-ink transition-opacity hover:opacity-90"
+              >
+                Trigger run
+              </Link>
             </div>
 
             {/* Search */}
@@ -262,27 +379,27 @@ export default function RunsPage() {
                 }}
                 className="overflow-hidden border border-solid border-b-line bg-b-bg1"
               >
-                {/* Column headers — narrows when a run is selected, mirroring
-                    the row grid swap below. */}
+                {/* Column headers — RUN-first order per the design kit; narrows
+                    when a run is selected, mirroring the row grid swap below. */}
                 <div
                   style={{ borderBottomWidth: "var(--b-bw)" }}
                   className={`grid ${gridCols} gap-3 border-b border-solid border-b-line px-[18px] py-[11px] font-mono text-[9px] uppercase tracking-[1px] text-b-text-faint`}
                 >
-                  <span>Status</span>
+                  <span>Run</span>
                   <span>Workflow</span>
+                  <span>Status</span>
                   <span className="text-right">Duration</span>
                   {!selected && (
                     <>
-                      {/* DESIGN-GAP: design ref shows a TOKENS column here, but
-                          RunSummary exposes no token total (only step_count /
-                          failed_step_count), so we keep Steps until the backend
-                          surfaces token usage on the runs list. */}
+                      {/* DESIGN-GAP: design ref shows SPANS/ROUTE columns; the
+                          runs list exposes step counts and eval grade instead,
+                          so Steps/Score stand in until the backend surfaces
+                          span totals and route data. */}
                       <span className="text-right">Steps</span>
                       <span className="text-center">Score</span>
-                      <span className="text-right">Time</span>
+                      <span className="text-right">When</span>
                     </>
                   )}
-                  {selected && <span className="text-center">Score</span>}
                 </div>
 
                 {filtered.length === 0 ? (
@@ -328,17 +445,23 @@ export default function RunsPage() {
                                 : "bg-transparent"
                           }`}
                         />
-                        <span
-                          className="text-[9px] tracking-[0.5px]"
-                          style={{ color: ascii.color }}
-                        >
-                          {ascii.label}
-                        </span>
-                        <span className="flex min-w-0 items-baseline gap-1.5 text-b-text">
+                        {/* RUN — copyable id + deep-link to the full page */}
+                        <span className="flex min-w-0 items-center gap-1.5 text-b-text">
                           <CopyId
                             text={runId(r)}
-                            className="flex-none text-[10px]"
+                            className="min-w-0 flex-none text-[10px]"
                           />
+                          <Link
+                            to={`/runs/${encodeURIComponent(r.filename)}`}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Open run ${shortId(r)}`}
+                            title="Open full run page"
+                            className="flex-none text-[11px] text-b-text-faint hover:text-b-clay"
+                          >
+                            [↗]
+                          </Link>
+                        </span>
+                        <span className="flex min-w-0 items-baseline text-b-text">
                           {r.workflow_name ? (
                             selected ? (
                               <span className="truncate">{r.workflow_name}</span>
@@ -355,28 +478,34 @@ export default function RunsPage() {
                             "—"
                           )}
                         </span>
+                        <span
+                          className="text-[9px] tracking-[0.5px]"
+                          style={{ color: ascii.color }}
+                        >
+                          {ascii.label}
+                        </span>
                         <span className="text-right tabular-nums text-b-text-dim">
                           <DurationDisplay ms={r.total_duration_ms} />
                         </span>
                         {!selected && (
-                          <span className="text-right tabular-nums text-b-text-dim">
-                            {r.step_count ?? "—"}
-                            {r.failed_step_count ? (
-                              <span className="text-b-red">
-                                /{r.failed_step_count}
-                              </span>
-                            ) : null}
-                          </span>
-                        )}
-                        <span
-                          className={`text-center font-semibold ${scoreClass}`}
-                        >
-                          {grade ?? "—"}
-                        </span>
-                        {!selected && (
-                          <span className="text-right text-[10px] text-b-text-dim">
-                            {formatWhen(r.start_time)}
-                          </span>
+                          <>
+                            <span className="text-right tabular-nums text-b-text-dim">
+                              {r.step_count ?? "—"}
+                              {r.failed_step_count ? (
+                                <span className="text-b-red">
+                                  /{r.failed_step_count}
+                                </span>
+                              ) : null}
+                            </span>
+                            <span
+                              className={`text-center font-semibold ${scoreClass}`}
+                            >
+                              {grade ?? "—"}
+                            </span>
+                            <span className="text-right text-[10px] text-b-text-dim">
+                              {formatWhen(r.start_time)}
+                            </span>
+                          </>
                         )}
                       </div>
                     );
@@ -388,8 +517,9 @@ export default function RunsPage() {
         </div>
 
         {/* Inspector aside — mirrors the design kit's master–detail Inspector:
-            appears only once a run is selected, closes on Esc or [x]. */}
-        {selected ? (
+            appears only once a run is selected (the table keeps its full seven
+            columns until then), closes on Esc or [x]. */}
+        {selected && (
           <aside
             style={{ width: "min(520px, 46vw)", borderLeftWidth: "var(--b-bw)" }}
             className="flex-none overflow-hidden border-l border-b-line bg-b-bg0"
@@ -398,13 +528,6 @@ export default function RunsPage() {
               filename={selected.filename}
               onClose={() => setSelected(null)}
             />
-          </aside>
-        ) : (
-          <aside
-            style={{ width: "min(520px, 46vw)", borderLeftWidth: "var(--b-bw)" }}
-            className="flex flex-none items-center justify-center border-l border-b-line bg-b-bg0 font-mono text-[11px] text-b-text-dim"
-          >
-            <span>$ select a run to inspect</span>
           </aside>
         )}
       </div>

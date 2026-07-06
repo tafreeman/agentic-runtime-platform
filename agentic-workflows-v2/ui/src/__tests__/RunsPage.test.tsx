@@ -5,10 +5,12 @@ import RunsPage from "../pages/RunsPage";
 import type { RunSummary } from "../api/types";
 
 const mockUseRuns = vi.fn();
+const mockUseRunsSummary = vi.fn();
 const mockSetCli = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
-  useRuns: () => mockUseRuns(),
+  useRuns: (...args: unknown[]) => mockUseRuns(...args),
+  useRunsSummary: () => mockUseRunsSummary(),
 }));
 
 vi.mock("../hooks/useCli", () => ({
@@ -57,6 +59,7 @@ function renderPage() {
 describe("RunsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseRunsSummary.mockReturnValue({ data: undefined });
   });
 
   it("shows skeleton placeholders while loading", () => {
@@ -90,6 +93,30 @@ describe("RunsPage", () => {
     expect(screen.getByText(/no runs yet/i)).toBeInTheDocument();
   });
 
+  it("renders the KPI strip from the runs summary", () => {
+    mockUseRuns.mockReturnValue({ data: [makeRun()], isLoading: false });
+    mockUseRunsSummary.mockReturnValue({
+      data: {
+        total_runs: 312,
+        success: 300,
+        failed: 12,
+        avg_duration_ms: 340,
+        workflows: [],
+      },
+    });
+    renderPage();
+
+    const strip = screen.getByLabelText("run statistics");
+    expect(strip).toHaveTextContent("312");
+    expect(strip).toHaveTextContent("runs total");
+    expect(strip).toHaveTextContent("300");
+    expect(strip).toHaveTextContent("passing");
+    expect(strip).toHaveTextContent("12");
+    expect(strip).toHaveTextContent("failed");
+    expect(strip).toHaveTextContent("340ms");
+    expect(strip).toHaveTextContent("avg duration");
+  });
+
   it("renders run rows and filters by query", () => {
     mockUseRuns.mockReturnValue({
       data: [
@@ -100,16 +127,61 @@ describe("RunsPage", () => {
     });
     renderPage();
 
-    expect(screen.getByText("review_flow")).toBeInTheDocument();
-    expect(screen.getByText("triage_flow")).toBeInTheDocument();
+    // Row cells render workflow names as links (the select's options also
+    // carry the names, so assertions scope to link role).
+    expect(screen.getByRole("link", { name: "review_flow" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
 
     fireEvent.change(
       screen.getByLabelText("Search runs by workflow name or run ID"),
       { target: { value: "triage" } },
     );
 
-    expect(screen.queryByText("review_flow")).not.toBeInTheDocument();
-    expect(screen.getByText("triage_flow")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "review_flow" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
+  });
+
+  it("filters rows with the workflow select and sets the CLI twin", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "a.json", run_id: "a1", workflow_name: "review_flow" }),
+        makeRun({ filename: "b.json", run_id: "b2", workflow_name: "triage_flow" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    fireEvent.change(screen.getByLabelText("Filter by workflow"), {
+      target: { value: "triage_flow" },
+    });
+
+    expect(
+      screen.queryByRole("link", { name: "review_flow" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "triage_flow" })).toBeInTheDocument();
+    expect(mockSetCli).toHaveBeenCalledWith(
+      "agentic runs list --workflow triage_flow",
+    );
+  });
+
+  it("passes the Live tail switch state through to useRuns", () => {
+    mockUseRuns.mockReturnValue({ data: [makeRun()], isLoading: false });
+    renderPage();
+
+    expect(mockUseRuns).toHaveBeenLastCalledWith(undefined, { live: true });
+
+    fireEvent.click(screen.getByRole("switch", { name: "Live tail" }));
+    expect(mockUseRuns).toHaveBeenLastCalledWith(undefined, { live: false });
+  });
+
+  it("offers a Trigger run action linking to the workflows page", () => {
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    renderPage();
+
+    const trigger = screen.getByRole("link", { name: "Trigger run" });
+    expect(trigger).toHaveAttribute("href", "/workflows");
   });
 
   it("renders the SCORE column as a letter grade", () => {
@@ -146,8 +218,9 @@ describe("RunsPage", () => {
 
     expect(screen.getByText("B")).toBeInTheDocument();
     expect(screen.getByText("A")).toBeInTheDocument();
-    // The score cell falls back to an em-dash when nothing is available.
-    expect(screen.getByText("—")).toBeInTheDocument();
+    // The score cell falls back to an em-dash when nothing is available
+    // (the KPI strip may render its own dash, so assert on presence).
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
   it("normalizes a 0..100 score before grading (88 → B, not A)", () => {
@@ -182,6 +255,24 @@ describe("RunsPage", () => {
 
     const workflowLink = screen.getByRole("link", { name: "link_flow" });
     expect(workflowLink).toHaveAttribute("href", "/workflows/link_flow");
+  });
+
+  it("deep-links each run to its full page alongside the inspector", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "deep.json", run_id: "dl1", workflow_name: "deep_flow" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    // The [↗] affordance restores shareable per-run URLs without giving up
+    // the master-detail row click.
+    const openLink = screen.getByRole("link", { name: "Open run dl1" });
+    expect(openLink).toHaveAttribute("href", "/runs/deep.json");
+
+    fireEvent.click(openLink);
+    expect(screen.queryByText("Inspector for deep.json")).not.toBeInTheDocument();
   });
 
   it("exposes each run row as a copyable, keyboard-activatable button", () => {
@@ -225,11 +316,15 @@ describe("RunsPage", () => {
       expect(mockSetCli).toHaveBeenCalledWith("agentic runs inspect a1 --trace");
     });
 
-    it("shows an empty inspector state before any run is selected", () => {
+    it("keeps the full-width table (no aside) until a run is selected", () => {
       mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
       renderPage();
 
-      expect(screen.getByText(/select a run to inspect/i)).toBeInTheDocument();
+      // The design kit shows the seven-column table with no inspector chrome
+      // until a row is inspected — no permanent placeholder aside.
+      expect(screen.queryByText(/select a run to inspect/i)).not.toBeInTheDocument();
+      expect(screen.getByText("Steps")).toBeInTheDocument();
+      expect(screen.getByText("When")).toBeInTheDocument();
     });
 
     it("closes the inspector via the panel's close callback", () => {
@@ -258,23 +353,28 @@ describe("RunsPage", () => {
       mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
       renderPage();
 
-      // Steps + Time columns are visible before selection…
+      // Steps + Score + When columns are visible before selection…
       expect(screen.getByText("Steps")).toBeInTheDocument();
-      expect(screen.getByText("Time")).toBeInTheDocument();
+      expect(screen.getByText("Score")).toBeInTheDocument();
+      expect(screen.getByText("When")).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("button", { name: "Inspect run a1" }));
 
-      // …and hidden once the inspector opens, leaving Status/Workflow/Duration/Score.
+      // …and hidden once the inspector opens, leaving Run/Workflow/Status/
+      // Duration — the design kit's narrowed identity columns.
       expect(screen.queryByText("Steps")).not.toBeInTheDocument();
-      expect(screen.queryByText("Time")).not.toBeInTheDocument();
-      expect(screen.getByText("Score")).toBeInTheDocument();
+      expect(screen.queryByText("Score")).not.toBeInTheDocument();
+      expect(screen.queryByText("When")).not.toBeInTheDocument();
+      expect(screen.getByText("Duration")).toBeInTheDocument();
     });
 
-    it("sets a CLI-parity command when a status filter changes", () => {
+    it("sets a CLI-parity command when the status filter changes", () => {
       mockUseRuns.mockReturnValue({ data: twoRuns(), isLoading: false });
       renderPage();
 
-      fireEvent.click(screen.getByRole("button", { name: /^failed/i }));
+      fireEvent.change(screen.getByLabelText("Filter by status"), {
+        target: { value: "failed" },
+      });
       expect(mockSetCli).toHaveBeenCalledWith("agentic runs list --status failed");
     });
 

@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { X } from "lucide-react";
+import { Play, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRunDetail } from "../../hooks/useRuns";
 import { useWorkflowDAG } from "../../hooks/useWorkflows";
+import { useCli } from "../../hooks/useCli";
+import { getWorkflowEditor, runWorkflow } from "../../api/client";
 import type { StepStatus } from "../../api/types";
 import WorkflowDAG from "../dag/WorkflowDAG";
 import RunDetailSteps from "./RunDetail";
@@ -62,6 +66,13 @@ export interface RunDetailPanelProps {
    * standalone deep-link page, where BTopBar's back button covers "close".
    */
   onClose?: () => void;
+  /**
+   * "aside" (default) keeps the single scrollable column that fits the
+   * ~520px master–detail inspector; "page" spreads the same cards across a
+   * two-column grid (DAG left, evaluation + steps right) on the standalone
+   * `/runs/:filename` route, restoring the pre-redesign full-page layout.
+   */
+  layout?: "aside" | "page";
 }
 
 /**
@@ -74,6 +85,7 @@ export interface RunDetailPanelProps {
 export default function RunDetailPanel({
   filename,
   onClose,
+  layout = "aside",
 }: Readonly<RunDetailPanelProps>) {
   const { data: run, isLoading, isError, error } = useRunDetail(filename);
   const {
@@ -82,6 +94,27 @@ export default function RunDetailPanel({
     isError: dagError,
   } = useWorkflowDAG(run?.workflow_name);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"spans" | "yaml">("spans");
+  const navigate = useNavigate();
+  const { setCli } = useCli();
+
+  // "Replay with same inputs" — starts a NEW run of the same workflow with
+  // the inputs captured in this run's log, then jumps to the live view.
+  const replay = useMutation({
+    mutationFn: () =>
+      runWorkflow({
+        workflow: run?.workflow_name ?? "",
+        input_data: (run?.inputs ?? {}) as Record<string, unknown>,
+      }),
+    onSuccess: (resp) => navigate(`/live/${encodeURIComponent(resp.run_id)}`),
+  });
+
+  // Workflow YAML for the panel's second tab; fetched lazily on first open.
+  const yamlQuery = useQuery({
+    queryKey: ["workflow-editor", run?.workflow_name],
+    queryFn: () => getWorkflowEditor(run?.workflow_name ?? ""),
+    enabled: activeTab === "yaml" && Boolean(run?.workflow_name),
+  });
 
   const runSteps = run?.steps ?? [];
 
@@ -220,11 +253,83 @@ export default function RunDetailPanel({
         </div>
       </div>
 
-      {/* Content — single scrollable column so this fits both the full-page
-          route and the narrower master-detail aside. */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-3">
+      {/* Action bar — replay + spans/yaml tabs, per the design kit inspector */}
+      <div
+        className="flex items-center gap-2 border-b border-b-line bg-b-bg0 px-4 py-2"
+        style={{ borderBottomWidth: "var(--b-bw)" }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setCli(`agentic run ${run.workflow_name} --replay ${filename}`);
+            replay.mutate();
+          }}
+          disabled={replay.isPending || !run.workflow_name}
+          style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
+          className="flex items-center gap-1.5 border border-solid border-b-clay/60 px-2.5 py-1 font-mono text-[10.5px] text-b-clay transition-colors hover:bg-b-clay-soft disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Play size={10} aria-hidden="true" />
+          {replay.isPending ? "replaying…" : "Replay with same inputs"}
+        </button>
+        {replay.isError && (
+          <span role="alert" className="font-mono text-[10px] text-b-red">
+            replay failed
+            {replay.error instanceof Error ? `: ${replay.error.message}` : ""}
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1" role="tablist">
+          {(["spans", "yaml"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+              style={{ borderRadius: "var(--b-rad-sm)" }}
+              className={`px-2.5 py-1 font-mono text-[10.5px] transition-colors ${
+                activeTab === tab
+                  ? "bg-b-bg1 text-b-clay shadow-[inset_0_-2px_0_0_rgb(var(--b-clay))]"
+                  : "text-b-text-dim hover:text-b-text"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab === "yaml" ? (
+        <div className="flex-1 overflow-y-auto p-3">
+          <DetailCard title={`${run.workflow_name}.yaml`}>
+            {yamlQuery.isLoading ? (
+              <div className="p-4 font-mono text-[11px] text-b-text-dim">
+                $ loading workflow yaml…
+              </div>
+            ) : yamlQuery.isError || !yamlQuery.data?.source ? (
+              <div className="p-4 font-mono text-[11px] text-b-red">
+                [!] workflow yaml unavailable
+              </div>
+            ) : (
+              <pre className="overflow-x-auto whitespace-pre p-4 font-mono text-[10.5px] leading-relaxed text-b-text-mid">
+                {yamlQuery.data.source}
+              </pre>
+            )}
+          </DetailCard>
+        </div>
+      ) : (
+      /* Spans tab — DAG, evaluation, and step detail. "aside" keeps a single
+         scrollable column that fits the ~520px inspector; "page" spreads the
+         cards across two columns like the pre-redesign full-page route. */
+      <div
+        data-testid={`run-detail-${layout}-layout`}
+        className={
+          layout === "page"
+            ? "grid min-h-0 flex-1 grid-cols-1 content-start gap-3 overflow-y-auto p-3 xl:grid-cols-[1.25fr_1fr]"
+            : "flex-1 space-y-3 overflow-y-auto p-3"
+        }
+      >
         <DetailCard title="workflow dag">
-          <div className="h-[320px]">
+          <div className={layout === "page" ? "h-[520px]" : "h-[320px]"}>
             {dag ? (
               <WorkflowDAG
                 dagNodes={dag.nodes}
@@ -250,6 +355,7 @@ export default function RunDetailPanel({
           </div>
         </DetailCard>
 
+        <div className={layout === "page" ? "space-y-3" : "contents"}>
         {evalData && evalPct !== null && (
           <div
             style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}
@@ -319,7 +425,9 @@ export default function RunDetailPanel({
             />
           </div>
         </DetailCard>
+        </div>
       </div>
+      )}
     </div>
   );
 }
