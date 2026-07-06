@@ -227,7 +227,7 @@ function WorkflowDAGInner({
         className: isActiveEdge ? "dag-edge--active" : undefined,
         label: traversalCount > 0 ? String(traversalCount) : undefined,
         labelStyle: {
-          fill: isKickback ? "#e9d5ff" : "#d1d5db",
+          fill: isKickback ? "#be95ff" : "#c6c6c6",
           fontSize: 11,
           fontWeight: 600,
         },
