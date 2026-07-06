@@ -1251,3 +1251,181 @@ class TestGraphResponseParsing:
             "gh:openai/gpt-4o-mini",
         ]
         assert updated["metadata"]["attempt_errors"][0]["retryable"] is True
+
+
+class TestUnparsedOutputFailover:
+    """Failover when a model 'succeeds' but yields no declared outputs.
+
+    Regression: gemini-2.5-flash-lite answered generate_migrations with
+    "I am sorry, I cannot fulfill this request. The available tools lack
+    the functionality to generate database migrations." — a successful
+    response containing none of the step's declared output keys, so the
+    step recorded SUCCESS with raw_response only and downstream inputs
+    went null. Such responses must fail over to the next model candidate.
+    """
+
+    REFUSAL = (
+        "I am sorry, I cannot fulfill this request. The available tools "
+        "lack the functionality to generate database migrations."
+    )
+
+    def _wire(self, monkeypatch, agents_by_model, candidates):
+        from agentic_v2.langchain import graph as graph_module
+
+        created_models: list[str] = []
+
+        def _fake_get_candidates(*args, **kwargs):
+            return list(candidates)
+
+        def _fake_create_agent(
+            agent_name,
+            *,
+            tool_names=None,
+            prompt_file=None,
+            model_override=None,
+        ):
+            created_models.append(model_override or "")
+            return agents_by_model[model_override]
+
+        monkeypatch.setattr(
+            graph_module, "get_model_candidates_for_tier", _fake_get_candidates
+        )
+        monkeypatch.setattr(graph_module, "create_agent", _fake_create_agent)
+        return graph_module, created_models
+
+    @staticmethod
+    def _agent(reply: str):
+        from langchain_core.messages import AIMessage
+
+        class _Agent:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def invoke(self, payload):
+                self.calls += 1
+                return {"messages": [AIMessage(content=reply)]}
+
+        return _Agent()
+
+    async def test_refusal_fails_over_to_next_candidate(self, monkeypatch):
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        refusing = self._agent(self.REFUSAL)
+        producing = self._agent('{"migrations": "CREATE TABLE todos (id INT);"}')
+        graph_module, created = self._wire(
+            monkeypatch,
+            {"gemini:flash-lite": refusing, "gh:openai/gpt-4o-mini": producing},
+            ["gemini:flash-lite", "gh:openai/gpt-4o-mini"],
+        )
+
+        step = StepConfig(
+            name="generate_migrations",
+            agent="tier1_generator",
+            description="Generate database migrations",
+            outputs={"migrations": "db_migrations"},
+        )
+        wf = WorkflowConfig(name="wf_unparsed", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+
+        updated = await node(state)
+
+        assert created == ["gemini:flash-lite", "gh:openai/gpt-4o-mini"]
+        assert (
+            updated["steps"]["generate_migrations"]["outputs"]["migrations"]
+            == "CREATE TABLE todos (id INT);"
+        )
+        assert updated["context"]["db_migrations"] == "CREATE TABLE todos (id INT);"
+        assert updated["metadata"]["attempted_models"] == [
+            "gemini:flash-lite",
+            "gh:openai/gpt-4o-mini",
+        ]
+        assert "declared output" in updated["metadata"]["attempt_errors"][0]["error"]
+
+    async def test_all_candidates_refusing_keeps_last_response(self, monkeypatch):
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        first = self._agent(self.REFUSAL)
+        second = self._agent(self.REFUSAL)
+        graph_module, created = self._wire(
+            monkeypatch,
+            {"m1": first, "m2": second},
+            ["m1", "m2"],
+        )
+
+        step = StepConfig(
+            name="generate_migrations",
+            agent="tier1_generator",
+            description="Generate database migrations",
+            outputs={"migrations": "db_migrations"},
+        )
+        wf = WorkflowConfig(name="wf_all_refuse", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+
+        updated = await node(state)
+
+        # Historical behavior preserved: last response is kept as a success
+        # with raw_response only (parse_step_outputs logs the warning).
+        assert created == ["m1", "m2"]
+        assert updated["steps"]["generate_migrations"]["status"] == "success"
+        outputs = updated["steps"]["generate_migrations"]["outputs"]
+        assert outputs["raw_response"] == self.REFUSAL
+        assert "migrations" not in outputs
+
+    async def test_no_failover_without_declared_outputs(self, monkeypatch):
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        refusing = self._agent(self.REFUSAL)
+        graph_module, created = self._wire(
+            monkeypatch, {"m1": refusing, "m2": refusing}, ["m1", "m2"]
+        )
+
+        step = StepConfig(
+            name="free_form",
+            agent="tier1_generator",
+            description="no declared outputs",
+        )
+        wf = WorkflowConfig(name="wf_free", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+
+        await node(state)
+
+        assert created == ["m1"]
+        assert refusing.calls == 1
+
+    async def test_no_failover_in_no_llm_placeholder_mode(self, monkeypatch):
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        refusing = self._agent(self.REFUSAL)
+        graph_module, created = self._wire(
+            monkeypatch, {"m1": refusing, "m2": refusing}, ["m1", "m2"]
+        )
+
+        step = StepConfig(
+            name="generate_migrations",
+            agent="tier1_generator",
+            description="Generate database migrations",
+            outputs={"migrations": "db_migrations"},
+        )
+        wf = WorkflowConfig(name="wf_nollm", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+
+        await node(state)
+
+        # Placeholder mode: prose-only responses are expected, not a miss.
+        assert created == ["m1"]
+
+    def test_task_description_directs_direct_answers(self):
+        from agentic_v2.langchain import graph as graph_module
+
+        step = StepConfig(
+            name="generate_migrations",
+            agent="tier1_generator",
+            description="Generate database migrations",
+            outputs={"migrations": "db_migrations"},
+        )
+        text = graph_module.build_task_description(step, {"schema": {"t": 1}})
+        assert "answer without tools" in text
