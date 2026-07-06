@@ -119,10 +119,9 @@ export default function RunDetailSteps({
               key={value}
               type="button"
               onClick={() => setActiveTab(value)}
-              aria-selected={activeTab === value}
-              className={`border-r border-b-line px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.5px] transition-colors ${
+              className={`border-r border-b-line px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.5px] ${
                 activeTab === value
-                  ? "bg-b-bg1 text-b-clay shadow-[inset_0_-2px_0_0_rgb(var(--b-clay))]"
+                  ? "bg-b-bg1 text-b-clay"
                   : "text-b-text-dim hover:text-b-text"
               }`}
             >

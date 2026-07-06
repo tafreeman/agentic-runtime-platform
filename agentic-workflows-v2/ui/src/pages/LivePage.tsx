@@ -300,7 +300,7 @@ export default function LivePage() {
                   />
                 ) : dagLoading && wfName ? (
                   <div className="flex h-full items-center justify-center">
-                    <div className="h-32 w-full max-w-sm animate-pulse rounded-none bg-b-bg2" />
+                    <div className="h-32 w-full max-w-sm animate-pulse rounded-sm bg-b-bg2" />
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center font-mono text-[11px] text-b-text-dim">
