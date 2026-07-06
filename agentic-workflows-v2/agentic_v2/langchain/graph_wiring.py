@@ -26,7 +26,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 try:
     from langchain_core.messages import AIMessage, HumanMessage
@@ -45,6 +45,7 @@ from ..engine.llm_output_parsing import (
 )
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
+from ..settings import is_agentic_no_llm_enabled
 from .agents import create_agent, parse_agent_tier
 from .config import StepConfig, WorkflowConfig
 from .expressions import evaluate_condition, resolve_expression
@@ -278,7 +279,10 @@ def build_task_description(step: StepConfig, resolved_inputs: dict[str, Any]) ->
         f"Step: {step.name}\n"
         f"Description: {step.description}\n"
         f"Inputs:\n{json.dumps(resolved_inputs, indent=2, default=str)}\n\n"
-        f"Please complete this task and return your result."
+        f"Please complete this task and return your result. Produce the "
+        f"deliverable directly in this response; if none of your tools "
+        f"apply, answer without tools rather than declining for lack of a "
+        f"suitable tool."
     )
     if step.outputs:
         output_keys = list(step.outputs.keys())
@@ -364,6 +368,8 @@ def parse_json_dict_from_text(text: str) -> dict[str, Any] | None:
 def parse_step_outputs(
     response_text: Any,
     expected_output_keys: list[str] | None = None,
+    *,
+    warn_on_missing: bool = True,
 ) -> dict[str, Any]:
     """Parse structured output from model response text when possible.
 
@@ -373,6 +379,10 @@ def parse_step_outputs(
     extraction, then per-key salvage from malformed/truncated JSON via
     :func:`parse_llm_json_output`. ``raw_response`` always carries the
     normalized model text regardless of parse outcome.
+
+    ``warn_on_missing=False`` suppresses the missing-declared-outputs warning
+    for speculative parses (the failover check parses each candidate's
+    response before the step's final parse logs the real outcome).
     """
     normalized = coerce_message_content_to_text(response_text)
     step_outputs: dict[str, Any] = {"raw_response": normalized}
@@ -391,7 +401,7 @@ def parse_step_outputs(
     if parsed:
         step_outputs.update(parsed)
 
-    if expected_output_keys:
+    if expected_output_keys and warn_on_missing:
         missing = [
             key
             for key in expected_output_keys
@@ -546,17 +556,27 @@ def _invoke_with_failover(
     task_description: str,
     model_candidates: list[str],
     get_agent_for_model: Any,
+    response_ok: Callable[[str], bool] | None = None,
 ) -> dict[str, Any]:
     """Invoke the agent across candidate models, returning the attempt outcome.
 
     The returned dict always contains ``attempt_errors`` and
     ``attempted_models``; on success it also contains ``agent_result``,
     ``response_text`` and ``metadata``.
+
+    When *response_ok* is provided, a response that fails the check is
+    treated like a failed attempt and the next candidate model is tried —
+    this catches "successful" responses that are actually unusable, e.g. a
+    weak model politely refusing a generation task because none of its
+    bound tools apply. The LAST candidate's response is always returned
+    as-is, preserving the historical raw_response-plus-warning behavior
+    when every model declines.
     """
     attempt_errors: list[dict[str, Any]] = []
     attempted_models: list[str] = []
 
-    for model_id in model_candidates:
+    last_index = len(model_candidates) - 1
+    for index, model_id in enumerate(model_candidates):
         attempted_models.append(model_id)
         try:
             agent = get_agent_for_model(model_id)
@@ -564,6 +584,31 @@ def _invoke_with_failover(
                 {"messages": [HumanMessage(content=task_description)]}
             )
             response_text = extract_agent_response_text(agent_result)
+            if (
+                response_ok is not None
+                and index < last_index
+                and not response_ok(response_text)
+            ):
+                attempt_errors.append(
+                    {
+                        "model": model_id,
+                        "error": (
+                            "response contained none of the step's declared "
+                            "output keys; failing over to the next candidate"
+                        ),
+                        "retryable": True,
+                    }
+                )
+                logger.warning(
+                    "Step %s response from %s produced no declared outputs "
+                    "(likely a refusal or format miss); failing over "
+                    "(%d/%d candidates tried)",
+                    step.name,
+                    model_id,
+                    index + 1,
+                    len(model_candidates),
+                )
+                continue
             metadata = extract_agent_metadata(agent_result)
             metadata.setdefault("model", model_id)
             return {
@@ -734,8 +779,29 @@ def _build_llm_node(
 
         task_description = build_task_description(step, resolved_inputs)
 
+        # A response that yields none of the step's declared outputs (e.g. a
+        # weak model refusing because no bound tool "generates migrations")
+        # is as unusable as a provider error — let the failover loop try the
+        # next candidate. Skipped in no-LLM placeholder mode, where prose-only
+        # responses are the expected behavior, not a model miss.
+        declared_keys = [key for key in step.outputs if key != "raw_response"]
+        response_ok: Callable[[str], bool] | None = None
+        if declared_keys and not is_agentic_no_llm_enabled():
+
+            def response_ok(text: str) -> bool:
+                parsed = parse_step_outputs(
+                    text,
+                    expected_output_keys=declared_keys,
+                    warn_on_missing=False,
+                )
+                return any(key in parsed for key in declared_keys)
+
         outcome = _invoke_with_failover(
-            step, task_description, model_candidates, _get_agent_for_model
+            step,
+            task_description,
+            model_candidates,
+            _get_agent_for_model,
+            response_ok=response_ok,
         )
 
         if outcome["agent_result"] is None:
