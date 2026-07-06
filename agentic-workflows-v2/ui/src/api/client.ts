@@ -256,6 +256,17 @@ export function getRunEvaluationDetail(
   return fetchJSON(`${BASE}/runs/${encodeURIComponent(filename)}/evaluation`);
 }
 
+/** Re-score a previously-completed run by replaying its captured log. */
+export function evaluateRun(
+  filename: string
+): Promise<RunEvaluationDetailResponse> {
+  return fetchJSON(`${BASE}/runs/${encodeURIComponent(filename)}/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+}
+
 function encodeDatasetPath(datasetSource: string, datasetId: string): string {
   const encodedDatasetId = datasetId
     .split("/")

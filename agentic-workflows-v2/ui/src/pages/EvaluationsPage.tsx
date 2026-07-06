@@ -1,5 +1,7 @@
 import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { evaluateRun } from "../api/client";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
 import BPill, { type BPillTone } from "../components/common/BPill";
@@ -105,11 +107,27 @@ function relativeWhen(iso: string | null | undefined): string {
 export default function EvaluationsPage() {
   const { data: runs, isLoading, isError, error, refetch } = useRuns();
   const [expandedFilename, setExpandedFilename] = useState<string | null>(null);
+  const [selectedRunFilename, setSelectedRunFilename] = useState<string | null>(
+    null,
+  );
+  const queryClient = useQueryClient();
 
   const evaluatedRuns = useMemo(
     () => (runs ?? []).filter((r) => r.evaluation_score != null),
     [runs],
   );
+
+  // Any recent run can be (re-)scored from its captured log — not just runs
+  // that already carry a score.
+  const recentRuns = useMemo(() => (runs ?? []).slice(0, 6), [runs]);
+
+  const evalMutation = useMutation({
+    mutationFn: (filename: string) => evaluateRun(filename),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["runs"] });
+      queryClient.invalidateQueries({ queryKey: ["run-evaluation"] });
+    },
+  });
 
   // Score histogram — 20 buckets 0..100
   const histogram = useMemo(() => {
@@ -511,29 +529,42 @@ export default function EvaluationsPage() {
                   RUN
                 </span>
                 <div className="flex max-h-32 flex-col gap-1.5 overflow-y-auto">
-                  {evaluatedRuns.length === 0 ? (
+                  {recentRuns.length === 0 ? (
                     <span className="font-mono text-[10px] text-b-text-dim">
-                      no scored runs
+                      no runs yet
                     </span>
                   ) : (
-                    evaluatedRuns.slice(0, 6).map((r) => (
-                      <Link
-                        key={r.filename}
-                        to={`/runs/${r.filename}`}
-                        className="flex items-center gap-2 border border-b-line bg-b-bg2 px-2 py-1.5 font-mono text-[11px] text-b-text-mid transition-colors hover:border-b-clay/50 hover:text-b-text"
-                        style={{ borderRadius: "var(--b-rad-sm)" }}
-                      >
-                        <span className="flex-none text-[9px] text-b-text-dim">
-                          #{(r.run_id ?? r.filename).slice(0, 6)}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-left">
-                          {r.workflow_name ?? "—"}
-                        </span>
-                        <span className="flex-none text-[9px] text-b-text-dim">
-                          {relativeWhen(r.start_time)}
-                        </span>
-                      </Link>
-                    ))
+                    recentRuns.map((r) => {
+                      const isSelected = selectedRunFilename === r.filename;
+                      return (
+                        <button
+                          key={r.filename}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() =>
+                            setSelectedRunFilename(
+                              isSelected ? null : r.filename,
+                            )
+                          }
+                          className={`flex items-center gap-2 border px-2 py-1.5 font-mono text-[11px] transition-colors hover:text-b-text ${
+                            isSelected
+                              ? "border-b-clay bg-b-bg2 text-b-text"
+                              : "border-b-line bg-b-bg2 text-b-text-mid hover:border-b-clay/50"
+                          }`}
+                          style={{ borderRadius: "var(--b-rad-sm)" }}
+                        >
+                          <span className="flex-none text-[9px] text-b-text-dim">
+                            #{(r.run_id ?? r.filename).slice(0, 6)}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-left">
+                            {r.workflow_name ?? "—"}
+                          </span>
+                          <span className="flex-none text-[9px] text-b-text-dim">
+                            {relativeWhen(r.start_time)}
+                          </span>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -576,13 +607,38 @@ export default function EvaluationsPage() {
                     <SelectPill key={j} label={j} chosen={i === 0} />
                   ))}
                 </div>
-                <Link
-                  to="/workflows"
-                  className="mt-3 flex w-full items-center justify-center bg-b-clay px-2 py-2 font-mono text-[11px] font-semibold text-b-ink transition-opacity hover:opacity-90"
+                <button
+                  type="button"
+                  disabled={!selectedRunFilename || evalMutation.isPending}
+                  onClick={() =>
+                    selectedRunFilename &&
+                    evalMutation.mutate(selectedRunFilename)
+                  }
+                  className="mt-3 flex w-full items-center justify-center bg-b-clay px-2 py-2 font-mono text-[11px] font-semibold text-b-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   style={{ borderRadius: "var(--b-rad-sm)" }}
                 >
-                  ▶ evaluate a run
-                </Link>
+                  {evalMutation.isPending
+                    ? "scoring…"
+                    : "▶ evaluate a run"}
+                </button>
+                {evalMutation.isSuccess && (
+                  <div className="mt-2 font-mono text-[10px] text-b-green">
+                    {evalMutation.data?.evaluation
+                      ? `scored ${evalMutation.data.evaluation.weighted_score.toFixed(1)} · ${evalMutation.data.evaluation.grade}`
+                      : "scored — refresh to see details"}
+                  </div>
+                )}
+                {evalMutation.isError && (
+                  <div
+                    role="alert"
+                    className="mt-2 font-mono text-[10px] text-b-red"
+                  >
+                    evaluation failed
+                    {evalMutation.error instanceof Error
+                      ? `: ${evalMutation.error.message}`
+                      : ""}
+                  </div>
+                )}
               </div>
             </div>
           </section>
