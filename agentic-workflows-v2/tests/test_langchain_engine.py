@@ -339,9 +339,7 @@ class TestGraphCompilation:
             "processed_text": "Hello World",
             "step_count": 11,
         }
-        assert final_state["steps"]["step1"]["outputs"] == {
-            "result": "Hello World"
-        }
+        assert final_state["steps"]["step1"]["outputs"] == {"result": "Hello World"}
         assert final_state["steps"]["step2"]["outputs"] == {"count": 11}
 
 
@@ -441,8 +439,7 @@ class TestWorkflowRunner:
         assert result.overall_status == StepStatus.SUCCESS
         assert dummy_graph.config is not None
         assert (
-            dummy_graph.config.get("configurable", {}).get("thread_id")
-            == result.run_id
+            dummy_graph.config.get("configurable", {}).get("thread_id") == result.run_id
         )
 
     def test_invoke_fails_fast_when_graph_rejects_config(self):
@@ -1033,6 +1030,128 @@ class TestGraphResponseParsing:
         )
         assert parsed["executive_summary"] == "s"
         assert parsed["references"] == ["a"]
+
+    def test_parse_step_outputs_tolerates_control_chars_in_fenced_json(self):
+        """Fenced JSON with literal newlines inside string values must parse.
+
+        Regression: gemini-2.5-flash emitted a well-formed fenced JSON
+        architecture payload whose string values contained bare newlines.
+        Strict json.loads rejects those ("Invalid control character"), which
+        left only raw_response populated and nulled every downstream
+        ``${steps.design_architecture.outputs.*}`` reference.
+        """
+        from agentic_v2.langchain import graph as graph_module
+
+        response = (
+            '```json\n{\n  "api_design": {"style": "REST"},\n'
+            '  "database_schema": "CREATE TABLE todos (\n    id SERIAL\n  );"\n}\n```'
+        )
+        parsed = graph_module._parse_step_outputs(
+            response,
+            expected_output_keys=["api_design", "database_schema"],
+        )
+        assert parsed["api_design"] == {"style": "REST"}
+        assert "CREATE TABLE todos" in parsed["database_schema"]
+
+    def test_parse_step_outputs_extracts_sentinel_artifacts(self):
+        """<<<ARTIFACT>>> blocks (coder.md prompt format) map to declared keys.
+
+        Regression: the langchain path only attempted JSON extraction, so
+        coder-agent responses using the sentinel protocol produced
+        raw_response-only outputs and downstream steps received nulls. The
+        native engine already parsed these via parse_sentinel_output.
+        """
+        from agentic_v2.langchain import graph as graph_module
+
+        response = (
+            "<<<ARTIFACT backend_code>>>\n"
+            "FILE: src/main.py\n"
+            "print('hi')\n"
+            "ENDFILE\n"
+            "<<<ENDARTIFACT>>>"
+        )
+        parsed = graph_module._parse_step_outputs(
+            response, expected_output_keys=["backend_code"]
+        )
+        assert "FILE: src/main.py" in parsed["backend_code"]
+        assert parsed["backend_code_files"] == {"src/main.py": "print('hi')\n"}
+
+    def test_parse_step_outputs_salvages_expected_keys_from_truncated_json(self):
+        """Declared keys are salvaged individually from truncated JSON."""
+        from agentic_v2.langchain import graph as graph_module
+
+        truncated = (
+            '{"api_spec": {"endpoints": ["GET /todos"]}, "db_schema": "CREATE TAB'
+        )
+        parsed = graph_module._parse_step_outputs(
+            truncated, expected_output_keys=["api_spec", "db_schema"]
+        )
+        assert parsed["api_spec"] == {"endpoints": ["GET /todos"]}
+        assert "db_schema" not in parsed  # unparseable value stays absent
+
+    def test_parse_json_dict_from_text_midtext_fence_with_braces_in_prose(self):
+        """Prose containing braces around a fenced payload still parses."""
+        from agentic_v2.langchain import graph as graph_module
+
+        text = 'Context {unbalanced.\n```json\n{"key": "value"}\n```\nDone.'
+        assert graph_module._parse_json_dict_from_text(text) == {"key": "value"}
+
+    def test_parse_step_outputs_prose_only_warns_on_missing_declared_keys(self, caplog):
+        """Non-JSON prose keeps raw_response only and warns about missing keys."""
+        import logging
+
+        from agentic_v2.langchain import graph as graph_module
+
+        with caplog.at_level(
+            logging.WARNING, logger="agentic_v2.langchain.graph_wiring"
+        ):
+            parsed = graph_module._parse_step_outputs(
+                "I need a value for the `schema` argument.",
+                expected_output_keys=["migrations"],
+            )
+        assert set(parsed.keys()) == {"raw_response"}
+        assert any("migrations" in rec.message for rec in caplog.records)
+
+    async def test_llm_step_maps_outputs_when_model_emits_control_chars(
+        self, monkeypatch
+    ):
+        """End-to-end node: control-char fenced JSON still maps to context."""
+        from langchain_core.messages import AIMessage
+
+        from agentic_v2.langchain import graph as graph_module
+
+        class _DummyAgent:
+            def invoke(self, payload):
+                return {
+                    "messages": [
+                        AIMessage(
+                            content='```json\n{"api_design": "GET /todos\nPOST /todos"}\n```'
+                        )
+                    ]
+                }
+
+        def _fake_create_agent(*args, **kwargs):
+            return _DummyAgent()
+
+        monkeypatch.setattr(graph_module, "create_agent", _fake_create_agent)
+
+        step = StepConfig(
+            name="design_architecture",
+            agent="tier3_architect",
+            description="test",
+            outputs={"api_design": "api_design"},
+        )
+        wf = WorkflowConfig(name="wf_ctrl_chars", steps=[step])
+        node = graph_module._make_step_node(step, wf)
+        state = initial_state(workflow_inputs={})
+        state["context"]["inputs"] = {}
+
+        updated = await node(state)
+        assert (
+            updated["steps"]["design_architecture"]["outputs"]["api_design"]
+            == "GET /todos\nPOST /todos"
+        )
+        assert updated["context"]["api_design"] == "GET /todos\nPOST /todos"
 
     async def test_llm_step_maps_outputs_from_list_content(self, monkeypatch):
         from langchain_core.messages import AIMessage
