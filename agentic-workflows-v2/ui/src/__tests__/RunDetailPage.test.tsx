@@ -25,6 +25,16 @@ vi.mock("../components/runs/RunDetail", () => ({
   default: ({ steps }: { steps: Array<unknown> }) => <div>Run Detail Steps {steps.length}</div>,
 }));
 
+function renderAtRoute(filename: string) {
+  return render(
+    <MemoryRouter initialEntries={[`/runs/${filename}`]}>
+      <Routes>
+        <Route path="/runs/:filename" element={<RunDetailPage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
 describe("RunDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +44,19 @@ describe("RunDetailPage", () => {
     });
   });
 
-  it("renders loading and not-found states", () => {
+  it("renders the deep-link chrome (breadcrumb + back button) around the panel", () => {
+    mockUseRunDetail.mockReturnValue({ data: undefined, isLoading: true });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderAtRoute("run.json");
+
+    // BTopBar breadcrumb shows the route path.
+    expect(screen.getByText("runs/run.json")).toBeInTheDocument();
+    // Back button is wrapper-owned chrome, not part of the panel.
+    expect(screen.getByRole("button", { name: /go back/i })).toBeInTheDocument();
+  });
+
+  it("renders loading and not-found states via the panel", () => {
     mockUseRunDetail.mockReturnValue({ data: undefined, isLoading: true });
     mockUseWorkflowDAG.mockReturnValue({ data: undefined });
 
@@ -46,7 +68,6 @@ describe("RunDetailPage", () => {
       </MemoryRouter>
     );
 
-    // Component renders "$ loading run…" (unicode ellipsis)
     expect(screen.getByText("$ loading run…")).toBeInTheDocument();
 
     mockUseRunDetail.mockReturnValue({ data: null, isLoading: false });
@@ -58,11 +79,10 @@ describe("RunDetailPage", () => {
       </MemoryRouter>
     );
 
-    // Component renders "$ run not found"
     expect(screen.getByText("$ run not found")).toBeInTheDocument();
   });
 
-  it("renders the run summary, DAG, and evaluation summary", () => {
+  it("renders the run summary, a copyable run id, DAG, steps, and evaluation for a deep link", () => {
     mockUseRunDetail.mockReturnValue({
       data: {
         run_id: "run-123",
@@ -142,25 +162,27 @@ describe("RunDetailPage", () => {
       },
     });
 
-    render(
-      <MemoryRouter initialEntries={["/runs/run.json"]}>
-        <Routes>
-          <Route path="/runs/:filename" element={<RunDetailPage />} />
-        </Routes>
-      </MemoryRouter>
-    );
+    renderAtRoute("run.json");
 
     expect(screen.getByText("review_flow")).toBeInTheDocument();
-    expect(screen.getByText("run-123")).toBeInTheDocument();
+    // Run id is rendered via the copyable CopyId control, not plain text —
+    // CopyId's accessible name is its own text content (the id itself).
+    const copyIdButton = screen.getByRole("button", { name: "run-123" });
+    expect(copyIdButton).toHaveAttribute("title", "Copy run-123");
+
     expect(screen.getByText("Workflow DAG")).toBeInTheDocument();
     expect(screen.getByText("Run Detail Steps 1")).toBeInTheDocument();
-    // Component renders: grade <span>A</span> — so "grade" and "A" are separate nodes
     expect(screen.getAllByText(/grade/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
-    // Evaluation pill renders "passed" (lowercase)
     expect(screen.getByText("passed")).toBeInTheDocument();
     expect(screen.getByText("score detail")).toBeInTheDocument();
     expect(screen.getByText("step scores")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ingest/i })).toBeInTheDocument();
+
+    // The panel's own close [x] must NOT appear on the standalone deep-link
+    // route — BTopBar's back button covers "close" there instead.
+    expect(
+      screen.queryByRole("button", { name: /close inspector/i })
+    ).not.toBeInTheDocument();
   });
 });

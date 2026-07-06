@@ -82,7 +82,7 @@
 .react-flow__minimap {
   background-color: rgb(var(--b-bg1)) !important;
   border: 1px solid rgb(var(--b-line)) !important;
-  border-radius: 4px !important;
+  border-radius: 0 !important;
   opacity: 0.8;
   transition: opacity 0.2s;
 }
@@ -93,7 +93,7 @@
 
 .react-flow__controls {
   border: 1px solid rgb(var(--b-line)) !important;
-  border-radius: 4px !important;
+  border-radius: 0 !important;
   overflow: hidden;
   opacity: 0.6;
   transition: opacity 0.2s;
@@ -129,10 +129,10 @@
 @keyframes clay-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(var(--b-clay));
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 12px 2px rgb(var(--b-clay));
+    opacity: 0.55;
   }
 }
 
