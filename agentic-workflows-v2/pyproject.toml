@@ -136,6 +136,14 @@ exclude = [".venv*", "ui/node_modules"]
 [tool.hatch.build.targets.wheel]
 packages = ["agentic_v2"]
 
+[tool.hatch.metadata]
+# The optional `eval` extra pins agentic-evalkit via a git direct reference.
+# Hatchling validates every declared extra at build time and rejects direct
+# references unless this is enabled — so a base editable install (which does
+# not pull the extra) still fails without it. uv tolerates direct refs; pip's
+# hatchling build does not.
+allow-direct-references = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 timeout = 30
