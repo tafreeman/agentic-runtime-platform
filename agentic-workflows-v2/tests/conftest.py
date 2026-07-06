@@ -243,8 +243,8 @@ def _reset_adapter_registry():
     subsequent tests, which is critical under pytest-xdist -n auto where
     test order is non-deterministic across workers.
 
-    Built-in adapters (native) are re-registered after each reset so that
-    tests that need them can use them without explicit setup.
+    Built-in adapters (native) are re-registered after each reset so
+    that tests that need them can use them without explicit setup.
     """
     AdapterRegistry.reset_for_tests()
     _register_builtin_adapters()
@@ -283,6 +283,13 @@ def _reset_websocket_manager():
     purely an artifact of the per-test loop lifecycle. We also clear the
     in-process connection/buffer/SSE maps so leaked sockets never bleed across
     tests. Import is lazy and best-effort, mirroring ``_reset_global_routers``.
+
+    Same hazard, same fix, for ``_pending_clears``: a test that broadcasts a
+    terminal event (``workflow_end``/``error``) through the real singleton
+    schedules a retention-clear ``asyncio.Task`` bound to *that test's*
+    function-scoped loop. Cancel any still-pending ones before the loop goes
+    away so they do not linger as "Task was destroyed but it is pending"
+    warnings, then drop the dict so the next test starts clean.
     """
 
     def _reset() -> None:
@@ -308,6 +315,15 @@ def _reset_websocket_manager():
         manager.connections.clear()
         manager.event_buffers.clear()
         manager._sse_listeners.clear()
+
+        # Cancel and drop any pending delayed-clear tasks scheduled by a
+        # terminal-event broadcast during the test that just ended.
+        pending_clears = getattr(manager, "_pending_clears", None)
+        if pending_clears:
+            for task in pending_clears.values():
+                if not task.done():
+                    task.cancel()
+            pending_clears.clear()
 
     yield
     _reset()

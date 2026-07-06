@@ -117,7 +117,9 @@ class Settings(BaseSettings):
     )
 
     # --- Runtime ---
-    shell: str = Field(default="/bin/bash", description="Shell for subprocess execution")
+    shell: str = Field(
+        default="/bin/bash", description="Shell for subprocess execution"
+    )
 
     # --- LLM placeholder mode ---
     agentic_no_llm: bool = Field(
@@ -486,8 +488,31 @@ class Settings(BaseSettings):
         description="Maximum events retained per run in the replay buffer.",
     )
     replay_sqlite_path: str = Field(
-        default=".agentic_replay.db",
-        description="Filesystem path for the SQLite replay store database file.",
+        default="",
+        description=(
+            "Filesystem path for the SQLite replay store database file. "
+            "Empty string (the default) resolves to an absolute path anchored "
+            "at the repo root ('<repo>/.agentic_replay.db') via "
+            "replay_store.DEFAULT_SQLITE_PATH, matching how run_logger.py "
+            "anchors its default runs/ dir — never the process CWD, which is "
+            "unpredictable across multi-process/Windows setups. Set an "
+            "explicit absolute path to override."
+        ),
+    )
+    replay_store_retention_seconds: int = Field(
+        default=3600,
+        description=(
+            "Grace period (seconds) after a run's terminal event "
+            "(workflow_end/error) before its replay data is purged. Applies "
+            "to BOTH the in-process ConnectionManager.event_buffers cache "
+            "(cleared via a delayed asyncio task) and durable SqliteReplayStore "
+            "rows (purged lazily on append/get_events/initialize). Keeps "
+            "replay data available for late-joining clients briefly after "
+            "completion while bounding unbounded growth. Default 3600s (1h). "
+            "RedisReplayStore uses the separate replay_store_ttl setting "
+            "(default 4h) for its native key EXPIRE; the two are intentionally "
+            "independent since Redis TTL is a hard eviction, not a grace period."
+        ),
     )
 
     # --- LangGraph checkpointing ---

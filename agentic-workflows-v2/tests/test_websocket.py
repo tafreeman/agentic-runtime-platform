@@ -307,6 +307,223 @@ class TestConnectionManagerClearBuffer:
         mgr.clear_buffer("nonexistent")
 
 
+class TestConnectionManagerRetention:
+    """Tests for the grace-delayed clear scheduled by terminal-event broadcasts.
+
+    ``broadcast()`` never clears immediately at ``workflow_end``/``error`` --
+    late-joining clients legitimately replay shortly after completion. It
+    instead schedules ``clear_buffer`` after ``retention_seconds``. Tests
+    inject a tiny ``retention_seconds`` (well under the 0.5s slow-test
+    threshold) rather than sleeping for the real default (3600s).
+    """
+
+    _TINY_RETENTION = 0.05
+
+    @pytest.mark.asyncio
+    async def test_buffer_survives_within_grace_window(self) -> None:
+        """The buffer is NOT cleared immediately after a workflow_end broadcast."""
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+
+        await mgr.broadcast("run-1", _workflow_end_event())
+
+        assert "run-1" in mgr.event_buffers
+
+    @pytest.mark.asyncio
+    async def test_buffer_cleared_after_retention_expires(self) -> None:
+        """The buffer IS cleared once retention_seconds has elapsed."""
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+
+        await mgr.broadcast("run-1", _workflow_end_event())
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        assert "run-1" not in mgr.event_buffers
+
+    @pytest.mark.asyncio
+    async def test_error_event_also_schedules_clear(self) -> None:
+        """A top-level 'error' event is terminal too and schedules a clear."""
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+        error_event = {
+            "type": "error",
+            "run_id": "run-1",
+            "error": "boom",
+            "timestamp": "2026-04-21T00:00:00Z",
+        }
+
+        await mgr.broadcast("run-1", error_event)
+        assert "run-1" in mgr.event_buffers  # still within grace window
+
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        assert "run-1" not in mgr.event_buffers
+
+    @pytest.mark.asyncio
+    async def test_non_terminal_event_does_not_schedule_clear(self) -> None:
+        """A non-terminal event (e.g. step_start) never schedules a clear."""
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+        step_event = {
+            "type": "step_start",
+            "run_id": "run-1",
+            "step": "step-a",
+            "timestamp": "2026-04-21T00:00:00Z",
+        }
+
+        await mgr.broadcast("run-1", step_event)
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        # Long past what would have been the retention window — buffer
+        # must still be present because nothing scheduled a clear.
+        assert "run-1" in mgr.event_buffers
+        assert "run-1" not in mgr._pending_clears
+
+    @pytest.mark.asyncio
+    async def test_second_terminal_event_reschedules_not_stacks(self) -> None:
+        """A second terminal event for the same run replaces the pending timer."""
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+
+        await mgr.broadcast("run-1", _workflow_end_event())
+        first_task = mgr._pending_clears["run-1"]
+
+        await mgr.broadcast("run-1", _workflow_end_event())
+        second_task = mgr._pending_clears["run-1"]
+
+        assert first_task is not second_task
+        # cancel() only *requests* cancellation; yield once so the event loop
+        # can actually process it before asserting the resulting state.
+        await asyncio.sleep(0)
+        assert first_task.cancelled() or first_task.done()
+
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+        assert "run-1" not in mgr.event_buffers
+
+    @pytest.mark.asyncio
+    async def test_clears_durable_store_too(self) -> None:
+        """The delayed clear also purges the durable replay store (via clear_buffer)."""
+        from agentic_v2.server.replay_store import InMemoryReplayStore
+
+        store = InMemoryReplayStore(max_events=100)
+        mgr = ConnectionManager(
+            replay_store=store, retention_seconds=self._TINY_RETENTION
+        )
+
+        await mgr.broadcast("run-1", _workflow_end_event())
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        assert await store.get_events("run-1") == []
+
+    def test_schedule_without_running_loop_is_safe(self) -> None:
+        """_schedule_delayed_clear() is a no-op outside a running event loop.
+
+        Mirrors clear_buffer()'s own no-event-loop fallback: safe to
+        call from a sync context (e.g. a non-async unit test) without
+        raising.
+        """
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+        mgr._schedule_delayed_clear("run-1")  # must not raise
+        assert "run-1" not in mgr._pending_clears
+
+    @pytest.mark.asyncio
+    async def test_broadcast_tolerates_scheduling_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Broadcast() never fails even if _schedule_delayed_clear() itself raises.
+
+        Retention housekeeping is best-effort by contract — a bug in the
+        scheduling path must not take down the broadcast path that every
+        WebSocket/SSE client depends on.
+        """
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+
+        def _raising_schedule(run_id: str) -> None:
+            raise RuntimeError("scheduling exploded")
+
+        monkeypatch.setattr(mgr, "_schedule_delayed_clear", _raising_schedule)
+
+        # Must not raise.
+        await mgr.broadcast("run-1", _workflow_end_event())
+        # The event itself was still buffered/broadcast normally.
+        assert "run-1" in mgr.event_buffers
+
+    @pytest.mark.asyncio
+    async def test_delayed_clear_logs_and_swallows_clear_buffer_failure(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """A clear_buffer() failure inside the delayed task is logged, not raised.
+
+        The scheduled task runs detached from any caller — an unhandled
+        exception there would only surface as an "exception was never
+        retrieved" warning at GC time, silently defeating retention. It
+        must be caught and logged instead.
+        """
+        mgr = ConnectionManager(retention_seconds=self._TINY_RETENTION)
+
+        def _raising_clear_buffer(run_id: str) -> None:
+            raise RuntimeError("clear_buffer exploded")
+
+        monkeypatch.setattr(mgr, "clear_buffer", _raising_clear_buffer)
+
+        with caplog.at_level("WARNING"):
+            await mgr.broadcast("run-1", _workflow_end_event())
+            await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        warning_text = " ".join(
+            record.message for record in caplog.records if record.levelname == "WARNING"
+        )
+        assert "_delayed_clear failed" in warning_text
+        assert "clear_buffer exploded" in warning_text
+
+    @pytest.mark.asyncio
+    async def test_resolve_retention_seconds_uses_constructor_value(self) -> None:
+        """An explicit constructor value bypasses settings entirely."""
+        mgr = ConnectionManager(retention_seconds=42.0)
+        assert mgr._resolve_retention_seconds() == 42.0
+
+    @pytest.mark.asyncio
+    async def test_resolve_retention_seconds_reads_settings_when_unset(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When no constructor value is given, the setting is read lazily."""
+        from agentic_v2.settings import get_settings
+
+        monkeypatch.setenv("REPLAY_STORE_RETENTION_SECONDS", "123")
+        get_settings.cache_clear()
+        try:
+            mgr = ConnectionManager()
+            assert mgr._resolve_retention_seconds() == 123.0
+        finally:
+            get_settings.cache_clear()
+
+    @pytest.mark.asyncio
+    async def test_resolve_retention_seconds_falls_back_on_settings_error(self) -> None:
+        """A broken settings load degrades to the hardcoded fallback, not a raise.
+
+        ``get_settings`` is imported lazily inside ``_resolve_retention_seconds``
+        (``from ..settings import get_settings``), so the module attribute is
+        replaced directly rather than via ``monkeypatch.setattr`` -- the
+        ``lru_cache``-wrapped original is restored manually in ``finally`` so
+        the other autouse settings-cache-reset fixtures (which call
+        ``get_settings.cache_clear()`` in their own teardown) never see a
+        plain function without that attribute, regardless of fixture
+        teardown order.
+        """
+        import agentic_v2.server.websocket as ws_module
+        import agentic_v2.settings as settings_module
+
+        mgr = ConnectionManager()
+        original_get_settings = settings_module.get_settings
+
+        def _raising_get_settings() -> Any:
+            raise RuntimeError("settings broken")
+
+        settings_module.get_settings = _raising_get_settings  # type: ignore[assignment]
+        try:
+            assert (
+                mgr._resolve_retention_seconds()
+                == ws_module._FALLBACK_RETENTION_SECONDS
+            )
+        finally:
+            settings_module.get_settings = original_get_settings  # type: ignore[assignment]
+
+
 class TestWebSocketEndpointAuth:
     """Integration tests for WebSocket auth and origin policy."""
 

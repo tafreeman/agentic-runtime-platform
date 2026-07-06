@@ -84,7 +84,7 @@ class TestInMemoryReplayStore:
 
     @pytest.mark.asyncio
     async def test_append_and_get_events(self) -> None:
-        """append() stores events retrievable by get_events()."""
+        """Append() stores events retrievable by get_events()."""
         store = InMemoryReplayStore()
         await store.append("run-1", _event(0))
         await store.append("run-1", _event(1))
@@ -113,7 +113,7 @@ class TestInMemoryReplayStore:
 
     @pytest.mark.asyncio
     async def test_clear_removes_events(self) -> None:
-        """clear() removes all events for a run."""
+        """Clear() removes all events for a run."""
         store = InMemoryReplayStore()
         await store.append("run-1", _event(0))
         await store.clear("run-1")
@@ -121,7 +121,7 @@ class TestInMemoryReplayStore:
 
     @pytest.mark.asyncio
     async def test_clear_nonexistent_no_error(self) -> None:
-        """clear() on unknown run_id doesn't raise."""
+        """Clear() on unknown run_id doesn't raise."""
         store = InMemoryReplayStore()
         await store.clear("no-such-run")  # must not raise
 
@@ -152,7 +152,7 @@ class TestInMemoryReplayStore:
 
     @pytest.mark.asyncio
     async def test_close_is_noop(self) -> None:
-        """close() does not raise."""
+        """Close() does not raise."""
         store = InMemoryReplayStore()
         await store.close()
 
@@ -184,7 +184,9 @@ class TestRedisReplayStore:
             ttl_seconds=60,
         )
         fake_server = fakeredis.FakeServer()
-        fake_client = fakeredis.FakeAsyncRedis(server=fake_server, decode_responses=True)
+        fake_client = fakeredis.FakeAsyncRedis(
+            server=fake_server, decode_responses=True
+        )
         store._client = fake_client
         store._connected = True
         yield store
@@ -192,7 +194,7 @@ class TestRedisReplayStore:
 
     @pytest.mark.asyncio
     async def test_append_and_get_events(self, redis_store) -> None:
-        """append() stores events retrievable by get_events()."""
+        """Append() stores events retrievable by get_events()."""
         await redis_store.append("run-1", _event(0))
         await redis_store.append("run-1", _event(1))
 
@@ -218,7 +220,7 @@ class TestRedisReplayStore:
 
     @pytest.mark.asyncio
     async def test_clear(self, redis_store) -> None:
-        """clear() deletes the Redis List key."""
+        """Clear() deletes the Redis List key."""
         await redis_store.append("run-1", _event(0))
         await redis_store.clear("run-1")
         assert await redis_store.get_events("run-1") == []
@@ -285,7 +287,7 @@ class TestSqliteReplayStore:
 
     @pytest.mark.asyncio
     async def test_append_and_get_events(self, sqlite_store) -> None:
-        """append() stores events retrievable by get_events()."""
+        """Append() stores events retrievable by get_events()."""
         await sqlite_store.append("run-1", _event(0))
         await sqlite_store.append("run-1", _event(1))
 
@@ -311,14 +313,14 @@ class TestSqliteReplayStore:
 
     @pytest.mark.asyncio
     async def test_clear(self, sqlite_store) -> None:
-        """clear() deletes all rows for a run."""
+        """Clear() deletes all rows for a run."""
         await sqlite_store.append("run-1", _event(0))
         await sqlite_store.clear("run-1")
         assert await sqlite_store.get_events("run-1") == []
 
     @pytest.mark.asyncio
     async def test_clear_nonexistent_no_error(self, sqlite_store) -> None:
-        """clear() on unknown run_id doesn't raise."""
+        """Clear() on unknown run_id doesn't raise."""
         await sqlite_store.clear("ghost-run")
 
     @pytest.mark.asyncio
@@ -341,7 +343,7 @@ class TestSqliteReplayStore:
 
     @pytest.mark.asyncio
     async def test_close_is_safe(self, sqlite_store) -> None:
-        """close() releases resources without error."""
+        """Close() releases resources without error."""
         await sqlite_store.close()
         # Second close should also be safe
         await sqlite_store.close()
@@ -366,6 +368,275 @@ class TestSqliteReplayStore:
 
 
 # ---------------------------------------------------------------------------
+# SqliteReplayStore retention (lazy expiry sweep)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not _SQLITE_AVAILABLE, reason="aiosqlite not installed")
+class TestSqliteReplayStoreRetention:
+    """Tests for the lazy retention sweep on SqliteReplayStore.
+
+    Rows are purged during append()/get_events()/_initialize() rather
+    than via a background sweep thread. Tests inject a tiny
+    retention_seconds (well under the 0.5s slow-test threshold) instead
+    of sleeping for the real default (3600s).
+    """
+
+    _TINY_RETENTION = 0.05
+
+    @pytest.fixture
+    async def store(self, tmp_path):
+        """Provide a SqliteReplayStore with a tiny retention window."""
+        db_path = str(tmp_path / "retention_test.db")
+        instance = await SqliteReplayStore.connect(
+            db_path=db_path, retention_seconds=self._TINY_RETENTION
+        )
+        yield instance
+        await instance.close()
+
+    @pytest.mark.asyncio
+    async def test_events_survive_within_grace_window(self, store) -> None:
+        """A just-appended event is still present immediately after append()."""
+        await store.append("run-1", _event(0))
+
+        assert await store.get_events("run-1") == [_event(0)]
+
+    @pytest.mark.asyncio
+    async def test_events_purged_after_retention_via_append(self, store) -> None:
+        """A later append() call sweeps rows that outlived retention_seconds."""
+        await store.append("run-1", _event(0))
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        # A second run's append triggers the lazy sweep; run-1's stale row
+        # must be gone even though this append targets a different run_id.
+        await store.append("run-2", _event(1))
+
+        assert await store.get_events("run-1") == []
+        assert await store.get_events("run-2") == [_event(1)]
+
+    @pytest.mark.asyncio
+    async def test_events_purged_after_retention_via_get_events(self, store) -> None:
+        """get_events() alone (no new append) also converges on the sweep."""
+        await store.append("run-1", _event(0))
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        assert await store.get_events("run-1") == []
+
+    @pytest.mark.asyncio
+    async def test_zero_retention_disables_sweep(self, tmp_path) -> None:
+        """retention_seconds=0 (or negative) disables the sweep entirely."""
+        db_path = str(tmp_path / "no_retention.db")
+        no_retention_store = await SqliteReplayStore.connect(
+            db_path=db_path, retention_seconds=0
+        )
+        try:
+            await no_retention_store.append("run-1", _event(0))
+            await asyncio.sleep(self._TINY_RETENTION * 4)
+            assert await no_retention_store.get_events("run-1") == [_event(0)]
+        finally:
+            await no_retention_store.close()
+
+    @pytest.mark.asyncio
+    async def test_initialize_sweeps_pre_existing_expired_rows(self, tmp_path) -> None:
+        """A fresh connect() call sweeps rows already expired on disk.
+
+        Simulates a process restart: the first store instance writes an
+        event, retention elapses, then a *second* store instance opens the
+        same file — its own _initialize() sweep (not just append/get_events)
+        must purge the stale row.
+        """
+        db_path = str(tmp_path / "restart_test.db")
+        first_store = await SqliteReplayStore.connect(
+            db_path=db_path, retention_seconds=self._TINY_RETENTION
+        )
+        await first_store.append("run-1", _event(0))
+        await first_store.close()
+
+        await asyncio.sleep(self._TINY_RETENTION * 4)
+
+        second_store = await SqliteReplayStore.connect(
+            db_path=db_path, retention_seconds=self._TINY_RETENTION
+        )
+        try:
+            assert await second_store.get_events("run-1") == []
+        finally:
+            await second_store.close()
+
+
+# ---------------------------------------------------------------------------
+# SqliteReplayStore absolute path resolution
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not _SQLITE_AVAILABLE, reason="aiosqlite not installed")
+class TestSqliteAbsolutePathResolution:
+    """Tests for the absolute-path default (never the process CWD)."""
+
+    def test_default_sqlite_path_is_absolute(self) -> None:
+        """DEFAULT_SQLITE_PATH is an absolute path, not CWD-relative."""
+        from agentic_v2.server.replay_store import DEFAULT_SQLITE_PATH
+
+        assert DEFAULT_SQLITE_PATH.is_absolute()
+        assert DEFAULT_SQLITE_PATH.name == ".agentic_replay.db"
+
+    def test_bare_default_filename_resolves_to_default_path(self) -> None:
+        """The bare REPLAY_DB_FILENAME resolves to DEFAULT_SQLITE_PATH, not CWD."""
+        from agentic_v2.server.replay_store import (
+            DEFAULT_SQLITE_PATH,
+            REPLAY_DB_FILENAME,
+            _resolve_absolute_sqlite_path,
+        )
+
+        resolved = _resolve_absolute_sqlite_path(REPLAY_DB_FILENAME)
+
+        assert resolved == DEFAULT_SQLITE_PATH
+        assert resolved.is_absolute()
+
+    def test_explicit_absolute_path_is_honoured(self, tmp_path) -> None:
+        """An explicit absolute path override passes through unchanged."""
+        from agentic_v2.server.replay_store import _resolve_absolute_sqlite_path
+
+        explicit = tmp_path / "custom.db"
+
+        resolved = _resolve_absolute_sqlite_path(str(explicit))
+
+        assert resolved == explicit.resolve()
+
+    def test_relative_override_is_still_absolute(self) -> None:
+        """A custom relative path is resolved to an absolute path too.
+
+        Only the bare default filename is anchored at the repo root; any
+        other relative path a caller supplies is resolved against the
+        current directory (ordinary Path.resolve() semantics) — but the
+        result is still guaranteed absolute, never left relative.
+        """
+        from agentic_v2.server.replay_store import _resolve_absolute_sqlite_path
+
+        resolved = _resolve_absolute_sqlite_path("some/custom/relative.db")
+
+        assert resolved.is_absolute()
+
+    @pytest.mark.asyncio
+    async def test_connect_creates_missing_parent_directory(self, tmp_path) -> None:
+        """Connect() creates the parent directory for a not-yet-existing path."""
+        nested_path = tmp_path / "does" / "not" / "exist" / "replay.db"
+        assert not nested_path.parent.exists()
+
+        instance = await SqliteReplayStore.connect(db_path=str(nested_path))
+        try:
+            assert nested_path.parent.exists()
+            assert instance.db_path.is_absolute()
+        finally:
+            await instance.close()
+
+    @pytest.mark.asyncio
+    async def test_settings_override_flows_through_build_replay_store(
+        self, tmp_path
+    ) -> None:
+        """A custom replay_sqlite_path setting is honoured, not the default."""
+        custom_path = tmp_path / "settings_override" / "custom_replay.db"
+        settings = _FakeSettings(backend="sqlite", sqlite_path=str(custom_path))
+
+        instance = await build_replay_store(settings)
+        try:
+            assert isinstance(instance, SqliteReplayStore)
+            assert instance.db_path == custom_path.resolve()
+            assert custom_path.parent.exists()
+        finally:
+            await instance.close()
+
+    @pytest.mark.asyncio
+    async def test_empty_settings_path_falls_back_to_default(self) -> None:
+        """An empty replay_sqlite_path setting resolves to the absolute default.
+
+        Mirrors Settings.replay_sqlite_path's new default of "" (empty
+        string) rather than a bare relative filename.
+        """
+        from agentic_v2.server.replay_store import DEFAULT_SQLITE_PATH
+
+        settings = _FakeSettings(backend="sqlite", sqlite_path="")
+
+        instance = await build_replay_store(settings)
+        try:
+            assert isinstance(instance, SqliteReplayStore)
+            assert instance.db_path == DEFAULT_SQLITE_PATH
+        finally:
+            await instance.close()
+
+
+# ---------------------------------------------------------------------------
+# SqliteReplayStore init-failure fallback logging
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(not _SQLITE_AVAILABLE, reason="aiosqlite not installed")
+class TestSqliteInitFailureFallback:
+    """Tests that a SQLite init failure logs a loud WARNING and falls back.
+
+    ``build_replay_store`` must never propagate a SQLite init error to the
+    caller — the operational contract (documented on ReplayStore) is that a
+    misconfigured/unwritable backend degrades to InMemoryReplayStore rather
+    than crashing the WebSocket manager at startup.
+    """
+
+    @pytest.mark.asyncio
+    async def test_explicit_sqlite_backend_falls_back_on_init_failure(
+        self, monkeypatch: pytest.MonkeyPatch, caplog
+    ) -> None:
+        """Backend='sqlite' with a failing connect() logs a warning + falls back."""
+        import agentic_v2.server.replay_store as module
+
+        async def _raising_connect(*args: Any, **kwargs: Any) -> SqliteReplayStore:
+            raise OSError("disk full")
+
+        monkeypatch.setattr(module.SqliteReplayStore, "connect", _raising_connect)
+
+        settings = _FakeSettings(backend="sqlite", sqlite_path="/some/bad/path.db")
+        with caplog.at_level("WARNING"):
+            store = await build_replay_store(settings)
+
+        assert isinstance(store, InMemoryReplayStore)
+        warning_text = " ".join(
+            record.message for record in caplog.records if record.levelname == "WARNING"
+        )
+        assert "sqlite" in warning_text.lower()
+        assert "disk full" in warning_text
+        assert "/some/bad/path.db" in warning_text
+
+    @pytest.mark.asyncio
+    async def test_auto_backend_falls_back_on_sqlite_init_failure(
+        self, monkeypatch: pytest.MonkeyPatch, caplog
+    ) -> None:
+        """Auto mode logs a warning with path context when SQLite init fails."""
+        import agentic_v2.server.replay_store as module
+
+        orig_redis_available = module._REDIS_AVAILABLE
+        module._REDIS_AVAILABLE = False  # force past Redis straight to SQLite
+
+        async def _raising_connect(*args: Any, **kwargs: Any) -> SqliteReplayStore:
+            raise RuntimeError("permission denied")
+
+        monkeypatch.setattr(module.SqliteReplayStore, "connect", _raising_connect)
+        try:
+            settings = _FakeSettings(
+                backend="auto", redis_url=None, sqlite_path="/no/write/access.db"
+            )
+            with caplog.at_level("WARNING"):
+                store = await build_replay_store(settings)
+
+            assert isinstance(store, InMemoryReplayStore)
+            warning_text = " ".join(
+                record.message
+                for record in caplog.records
+                if record.levelname == "WARNING"
+            )
+            assert "permission denied" in warning_text
+            assert "/no/write/access.db" in warning_text
+        finally:
+            module._REDIS_AVAILABLE = orig_redis_available
+
+
+# ---------------------------------------------------------------------------
 # ConnectionManager integration
 # ---------------------------------------------------------------------------
 
@@ -383,7 +654,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_broadcast_persists_to_store(self) -> None:
-        """broadcast() calls _replay_store.append()."""
+        """Broadcast() calls _replay_store.append()."""
         store = InMemoryReplayStore(max_events=100)
         mgr = ConnectionManager(replay_store=store)
 
@@ -396,7 +667,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_broadcast_persistence_failure_does_not_crash(self) -> None:
-        """broadcast() continues even if the store raises."""
+        """Broadcast() continues even if the store raises."""
         bad_store = MagicMock()
         bad_store.append = AsyncMock(side_effect=RuntimeError("store down"))
         mgr = ConnectionManager(replay_store=bad_store)
@@ -408,7 +679,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_replay_reads_from_store(self) -> None:
-        """replay() sends events retrieved from the durable store."""
+        """Replay() sends events retrieved from the durable store."""
         store = InMemoryReplayStore(max_events=100)
         # Pre-populate the store but NOT the in-memory buffer
         await store.append("run-1", self._valid_event(0))
@@ -422,7 +693,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_replay_falls_back_to_memory_when_store_empty(self) -> None:
-        """replay() falls back to event_buffers when store returns nothing."""
+        """Replay() falls back to event_buffers when store returns nothing."""
         store = InMemoryReplayStore(max_events=100)
         mgr = ConnectionManager(replay_store=store)
 
@@ -437,7 +708,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_replay_store_error_falls_back_to_memory(self) -> None:
-        """replay() falls back to memory when store.get_events raises."""
+        """Replay() falls back to memory when store.get_events raises."""
         bad_store = MagicMock()
         bad_store.get_events = AsyncMock(side_effect=RuntimeError("store down"))
         mgr = ConnectionManager(replay_store=bad_store)
@@ -472,7 +743,7 @@ class TestConnectionManagerWithReplayStore:
 
     @pytest.mark.asyncio
     async def test_broadcast_still_updates_in_memory_buffer(self) -> None:
-        """broadcast() always updates the hot in-memory deque too."""
+        """Broadcast() always updates the hot in-memory deque too."""
         store = InMemoryReplayStore(max_events=100)
         mgr = ConnectionManager(replay_store=store)
 
@@ -505,7 +776,7 @@ class TestBuildReplayStoreAutoSelection:
 
     @pytest.mark.asyncio
     async def test_explicit_memory_backend(self) -> None:
-        """backend='memory' always returns InMemoryReplayStore."""
+        """Backend='memory' always returns InMemoryReplayStore."""
         settings = _FakeSettings(backend="memory")
         store = await build_replay_store(settings)
         assert isinstance(store, InMemoryReplayStore)
@@ -513,7 +784,7 @@ class TestBuildReplayStoreAutoSelection:
 
     @pytest.mark.asyncio
     async def test_explicit_redis_without_url_falls_back_to_memory(self) -> None:
-        """backend='redis' without redis_url falls back to InMemoryReplayStore."""
+        """Backend='redis' without redis_url falls back to InMemoryReplayStore."""
         settings = _FakeSettings(backend="redis", redis_url=None)
         store = await build_replay_store(settings)
         assert isinstance(store, InMemoryReplayStore)
@@ -522,7 +793,7 @@ class TestBuildReplayStoreAutoSelection:
     @pytest.mark.asyncio
     @pytest.mark.skipif(not _SQLITE_AVAILABLE, reason="aiosqlite not installed")
     async def test_explicit_sqlite_backend(self, tmp_path) -> None:
-        """backend='sqlite' returns SqliteReplayStore."""
+        """Backend='sqlite' returns SqliteReplayStore."""
         db_path = str(tmp_path / "test_auto.db")
         settings = _FakeSettings(backend="sqlite", sqlite_path=db_path)
         store = await build_replay_store(settings)
@@ -557,7 +828,9 @@ class TestBuildReplayStoreAutoSelection:
         module._REDIS_AVAILABLE = False
         try:
             db_path = str(tmp_path / "test_auto_sqlite.db")
-            settings = _FakeSettings(backend="auto", redis_url=None, sqlite_path=db_path)
+            settings = _FakeSettings(
+                backend="auto", redis_url=None, sqlite_path=db_path
+            )
             store = await build_replay_store(settings)
             assert isinstance(store, SqliteReplayStore)
             await store.close()
@@ -587,9 +860,7 @@ class TestBuildReplayStoreAutoSelection:
             module._SQLITE_AVAILABLE = orig_sqlite
 
     @pytest.mark.asyncio
-    @pytest.mark.skipif(
-        not _REDIS_AVAILABLE, reason="redis package not installed"
-    )
+    @pytest.mark.skipif(not _REDIS_AVAILABLE, reason="redis package not installed")
     async def test_auto_redis_connected_uses_redis(self) -> None:
         """auto mode: Redis url set and connection succeeds → RedisReplayStore."""
         import fakeredis
@@ -602,7 +873,9 @@ class TestBuildReplayStoreAutoSelection:
         )
 
         fake_server = fakeredis.FakeServer()
-        fake_client = fakeredis.FakeAsyncRedis(server=fake_server, decode_responses=True)
+        fake_client = fakeredis.FakeAsyncRedis(
+            server=fake_server, decode_responses=True
+        )
 
         async def fake_connect(
             redis_url: str,
