@@ -67,10 +67,11 @@ class DependencyStatus(BaseModel):
 class ReadinessResponse(BaseModel):
     """Readiness probe response (GET ``/api/health/ready``).
 
-    Unlike the cheap liveness probe (``/health``), this inspects critical
-    dependencies and routing health. Served with HTTP 503 when a configured
-    critical dependency (e.g. Redis) is unreachable, so orchestrators can stop
-    routing traffic to a process that is alive but cannot serve correctly.
+    Unlike the cheap liveness probe (``/health``), this inspects
+    critical dependencies and routing health. Served with HTTP 503 when
+    a configured critical dependency (e.g. Redis) is unreachable, so
+    orchestrators can stop routing traffic to a process that is alive
+    but cannot serve correctly.
     """
 
     status: Literal["ready", "not_ready"] = Field(
@@ -771,6 +772,27 @@ class RunEvaluationDetailResponse(BaseModel):
     evaluation_requested: bool = False
     dataset: dict[str, Any] | None = None
     evaluation: RunEvaluationDetail | None = None
+
+
+class RunReEvaluationRequest(BaseModel):
+    """Request body for ``POST /api/runs/{filename}/evaluate``.
+
+    Re-scores a previously-completed run by replaying its captured run log
+    through the evaluation judge — no workflow re-execution. All fields are
+    optional; defaults mirror the score-at-end-of-run path.
+
+    Attributes:
+        rubric_id: Rubric identifier override for scoring.
+        rubric: Rubric name override (deprecated, use ``rubric_id``).
+        enforce_hard_gates: If True, hard-gate failures force grade ``F``.
+        judge_model: Judge model identifier override (defaults to the
+            server-resolved judge model).
+    """
+
+    rubric_id: str | None = None
+    rubric: str | None = None
+    enforce_hard_gates: bool = True
+    judge_model: str | None = None
 
 
 # ---------------------------------------------------------------------------

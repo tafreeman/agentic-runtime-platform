@@ -30,11 +30,12 @@ try:
     _LANGCHAIN_AVAILABLE = True
 except ImportError:
     _LANGCHAIN_AVAILABLE = False
-from ...workflows.run_logger import RunLogger
+from ...workflows.run_logger import RunLogger, run_record_to_workflow_result
 from .. import websocket
 from ..models import (
     RunEvaluationDetail,
     RunEvaluationDetailResponse,
+    RunReEvaluationRequest,
     RunsSummaryResponse,
     RunSummaryModel,
 )
@@ -309,6 +310,124 @@ async def get_run_evaluation(
         workflow_name=run_data.get("workflow_name"),
         status=run_data.get("status"),
         evaluation_requested=evaluation_requested,
+        dataset=run_data.get("dataset"),
+        evaluation=evaluation,
+    )
+
+
+def _load_workflow_definition_optional(workflow_name: Any) -> Any:
+    """Best-effort load of the workflow definition for rubric derivation.
+
+    A rescore must still work when the workflow definition has been renamed
+    or deleted since the run was logged, so failures degrade to ``None``
+    (the scorer falls back to its default rubric resolution).
+    """
+    if not (isinstance(workflow_name, str) and workflow_name and _LANGCHAIN_AVAILABLE):
+        return None
+    try:
+        return load_workflow_config(workflow_name)
+    except Exception as exc:
+        logger.debug(
+            "Could not load workflow definition %r for rescore: %s",
+            workflow_name,
+            exc,
+        )
+        return None
+
+
+@router.post(
+    "/runs/{filename}/evaluate",
+    response_model=RunEvaluationDetailResponse,
+    responses={
+        404: {"description": "Run not found"},
+        422: {"description": "Run log cannot be replayed for evaluation"},
+    },
+)
+async def evaluate_run(
+    request: Request,
+    filename: str,
+    body: RunReEvaluationRequest | None = None,
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
+):
+    """Score a previously-completed run by replaying its captured log.
+
+    Rebuilds a :class:`WorkflowResult` from the on-disk run record and pushes
+    it through the same scoring path used when evaluation is enabled on a new
+    run (``score_workflow_result``), then persists the evaluation back onto
+    the run log so the runs list and evaluation pages pick it up.
+    """
+    from ...scoring.judge import LLMJudge
+    from ..evaluation import score_workflow_result
+    from ..execution import _resolve_judge_model
+
+    tenant_logger = _tenant_run_logger(tenant)
+    path = _resolve_run_or_404(filename, tenant)
+    run_data = tenant_logger.load_run(path)
+
+    try:
+        result = run_record_to_workflow_result(run_data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Run log cannot be replayed for evaluation: {exc}",
+        ) from exc
+
+    options = body or RunReEvaluationRequest()
+    workflow_def = _load_workflow_definition_optional(run_data.get("workflow_name"))
+    judge_model = options.judge_model or _resolve_judge_model()
+    judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
+
+    # Judge scoring is synchronous and may call an LLM — keep it off the
+    # event loop.
+    scored = await asyncio.to_thread(
+        score_workflow_result,
+        result,
+        dataset_meta=(
+            run_data.get("dataset")
+            if isinstance(run_data.get("dataset"), dict)
+            else None
+        ),
+        dataset_sample=None,
+        rubric=options.rubric_id or options.rubric,
+        workflow_definition=workflow_def,
+        enforce_hard_gates=options.enforce_hard_gates,
+        judge=judge,
+    )
+
+    tenant_logger.annotate_run(path, evaluation=scored)
+
+    from ..audit_log import audit_request_event
+
+    await audit_request_event(
+        request,
+        "evaluation.rescored",
+        outcome="success",
+        target={"type": "run.evaluation", "filename": path.name},
+        run_id=run_data.get("run_id"),
+        tenant_id=tenant.tenant_id,
+        metadata={
+            "rubric_id": scored.get("rubric_id"),
+            "weighted_score": scored.get("weighted_score"),
+            "tenant_source": tenant.source,
+        },
+    )
+
+    evaluation: RunEvaluationDetail | None = None
+    try:
+        evaluation = RunEvaluationDetail.model_validate(scored)
+    except Exception as exc:
+        logger.warning(
+            "Rescored evaluation for %s failed response validation: %s",
+            filename,
+            exc,
+        )
+
+    return RunEvaluationDetailResponse(
+        filename=path.name,
+        run_id=run_data.get("run_id"),
+        workflow_name=run_data.get("workflow_name"),
+        status=run_data.get("status"),
+        evaluation_requested=True,
         dataset=run_data.get("dataset"),
         evaluation=evaluation,
     )

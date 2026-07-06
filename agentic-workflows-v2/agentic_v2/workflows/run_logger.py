@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ..contracts import StepStatus, WorkflowResult
+from ..contracts import StepResult, StepStatus, WorkflowResult
 from ..core.tenant import DEFAULT_TENANT_ID, sanitize_tenant_id, tenant_run_dir
 
 logger = logging.getLogger(__name__)
@@ -84,9 +84,7 @@ def build_step_record(step: Any) -> dict[str, Any]:
 
     step_name = getattr(step, "step_name", "<unknown>")
     raw_status = getattr(step, "status", "error")
-    status_value = (
-        raw_status.value if hasattr(raw_status, "value") else str(raw_status)
-    )
+    status_value = raw_status.value if hasattr(raw_status, "value") else str(raw_status)
 
     record = {
         "step_name": step_name,
@@ -102,9 +100,7 @@ def build_step_record(step: Any) -> dict[str, Any]:
         "error": getattr(step, "error", None),
         "error_type": getattr(step, "error_type", None),
         "start_time": (
-            step.start_time.isoformat()
-            if getattr(step, "start_time", None)
-            else None
+            step.start_time.isoformat() if getattr(step, "start_time", None) else None
         ),
         "end_time": (
             step.end_time.isoformat() if getattr(step, "end_time", None) else None
@@ -210,9 +206,7 @@ def build_run_record(
         "run_id": result.workflow_id,
         "workflow_name": result.workflow_name,
         "status": result.overall_status.value,
-        "score": (
-            evaluation_score if evaluation_score is not None else fallback_score
-        ),
+        "score": (evaluation_score if evaluation_score is not None else fallback_score),
         "success_rate": result.success_rate,
         "total_duration_ms": result.total_duration_ms,
         "total_retries": result.total_retries,
@@ -230,6 +224,87 @@ def build_run_record(
         record["extra"] = extra
 
     return record
+
+
+def _coerce_step_status(raw: Any) -> StepStatus:
+    """Map a stored status string back onto :class:`StepStatus`.
+
+    Fallback step records may carry statuses outside the enum (e.g.
+    ``"error"``); those coerce to ``FAILED`` so a replayed result stays
+    scoreable rather than raising.
+    """
+    try:
+        return StepStatus(str(raw))
+    except ValueError:
+        return StepStatus.FAILED
+
+
+def run_record_to_workflow_result(record: dict[str, Any]) -> WorkflowResult:
+    """Rebuild a :class:`WorkflowResult` from an on-disk run record.
+
+    Inverse of :func:`build_run_record` for the fields scoring consumes
+    (steps with I/O and timing, overall status, final output). Used to
+    replay a completed run's captured log through the evaluation judge
+    without re-executing the workflow.
+
+    Raises:
+        ValueError: If the record is not a run record (no steps list or
+            missing identity fields).
+    """
+    if not isinstance(record, dict):
+        raise ValueError("run record must be a mapping")
+    raw_steps = record.get("steps")
+    if not isinstance(raw_steps, list):
+        raise ValueError("run record has no steps list")
+    run_id = record.get("run_id")
+    workflow_name = record.get("workflow_name")
+    if not (isinstance(run_id, str) and run_id):
+        raise ValueError("run record has no run_id")
+    if not (isinstance(workflow_name, str) and workflow_name):
+        raise ValueError("run record has no workflow_name")
+
+    steps = []
+    for raw in raw_steps:
+        if not isinstance(raw, dict):
+            continue
+        metadata = dict(raw.get("metadata") or {})
+        if raw.get("tokens_used") is not None:
+            metadata["tokens_used"] = raw["tokens_used"]
+        payload: dict[str, Any] = {
+            "step_name": str(raw.get("step_name") or "<unknown>"),
+            "status": _coerce_step_status(raw.get("status")),
+            "agent_role": raw.get("agent_role"),
+            "tier": raw.get("tier"),
+            "model_used": raw.get("model_used"),
+            "input_data": raw.get("input") or {},
+            "output_data": raw.get("output") or {},
+            "error": raw.get("error"),
+            "error_type": raw.get("error_type"),
+            "retry_count": int(raw.get("retry_count") or 0),
+            "metadata": metadata,
+        }
+        if raw.get("start_time"):
+            payload["start_time"] = raw["start_time"]
+        if raw.get("end_time"):
+            payload["end_time"] = raw["end_time"]
+        steps.append(StepResult.model_validate(payload))
+
+    result_payload: dict[str, Any] = {
+        "workflow_id": run_id,
+        "workflow_name": workflow_name,
+        "steps": steps,
+        "overall_status": _coerce_step_status(record.get("status")),
+        "final_output": (
+            record.get("final_output")
+            if isinstance(record.get("final_output"), dict)
+            else {}
+        ),
+    }
+    if record.get("start_time"):
+        result_payload["start_time"] = record["start_time"]
+    if record.get("end_time"):
+        result_payload["end_time"] = record["end_time"]
+    return WorkflowResult.model_validate(result_payload)
 
 
 class RunLogger:
@@ -273,7 +348,10 @@ class RunLogger:
 
     def _search_dirs(self) -> list[Path]:
         dirs = [self._runs_dir]
-        if self._tenant_id == DEFAULT_TENANT_ID and self._base_runs_dir != self._runs_dir:
+        if (
+            self._tenant_id == DEFAULT_TENANT_ID
+            and self._base_runs_dir != self._runs_dir
+        ):
             dirs.append(self._base_runs_dir)
         return dirs
 
@@ -323,6 +401,34 @@ class RunLogger:
         """Load a run record from disk."""
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def annotate_run(self, path: Path, *, evaluation: dict[str, Any]) -> dict[str, Any]:
+        """Attach (or replace) evaluation results on an existing run record.
+
+        Rewrites the record in place on disk with ``extra.evaluation`` set,
+        ``extra.evaluation_requested`` forced true, and the top-level
+        ``score`` refreshed from the evaluation — the same shape
+        ``_run_and_evaluate`` produces for runs scored at execution time, so
+        the list/detail endpoints pick the rescore up unchanged.
+
+        Returns the updated record.
+        """
+        record = self.load_run(path)
+        extra = record.get("extra") if isinstance(record.get("extra"), dict) else {}
+        record["extra"] = {
+            **extra,
+            "evaluation_requested": True,
+            "evaluation": evaluation,
+        }
+        score = _extract_evaluation_score(record["extra"])
+        if score is not None:
+            record["score"] = score
+        path.write_text(
+            json.dumps(record, indent=2, default=_safe_serialize),
+            encoding="utf-8",
+        )
+        logger.info("Run evaluation annotated: %s", path)
+        return record
+
     def resolve_run_path(self, identifier: str) -> Path | None:
         """Resolve a run by exact filename or logical run id.
 
@@ -354,9 +460,7 @@ class RunLogger:
                     return candidate_path
         return None
 
-    def _resolve_by_run_id(
-        self, requested_name: str, identifier: str
-    ) -> Path | None:
+    def _resolve_by_run_id(self, requested_name: str, identifier: str) -> Path | None:
         """Find a run file whose stored ``run_id`` matches the identifier."""
         run_id_candidates = {requested_name}
         if requested_name.endswith(_JSON_SUFFIX):
@@ -406,9 +510,7 @@ class RunLogger:
             "tokens_30d": self._sum_tokens_last_30_days(records),
         }
 
-    def _load_valid_run_records(
-        self, runs: list[Path]
-    ) -> list[dict[str, Any]]:
+    def _load_valid_run_records(self, runs: list[Path]) -> list[dict[str, Any]]:
         """Load run files, skipping unreadable files and non-run artifacts."""
         records: list[dict[str, Any]] = []
         for path in runs:

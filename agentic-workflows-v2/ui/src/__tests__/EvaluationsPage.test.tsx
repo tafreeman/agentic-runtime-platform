@@ -1,13 +1,58 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import EvaluationsPage from "../pages/EvaluationsPage";
 
 const mockUseRuns = vi.fn();
+const mockEvaluateRun = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRuns: () => mockUseRuns(),
 }));
+
+vi.mock("../api/client", () => ({
+  evaluateRun: (filename: string) => mockEvaluateRun(filename),
+}));
+
+function renderPage(): ReturnType<typeof render> {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const wrap = (ui: ReactNode) => (
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>
+  );
+  const view = render(wrap(<EvaluationsPage />));
+  return {
+    ...view,
+    rerender: (ui: ReactNode) => view.rerender(wrap(ui)),
+  };
+}
+
+const SCORED_RUN = {
+  filename: "run-1.json",
+  run_id: "run-1",
+  workflow_name: "review_flow",
+  status: "success",
+  evaluation_score: 91.4,
+  evaluation_grade: "A",
+  step_count: 7,
+  start_time: "2026-04-11T12:00:00Z",
+};
+
+const UNSCORED_RUN = {
+  filename: "run-2.json",
+  run_id: "run-2",
+  workflow_name: "draft_flow",
+  status: "success",
+  evaluation_score: null,
+  evaluation_grade: null,
+  step_count: 3,
+  start_time: null,
+};
 
 describe("EvaluationsPage", () => {
   beforeEach(() => {
@@ -16,19 +61,11 @@ describe("EvaluationsPage", () => {
 
   it("renders loading and empty evaluation states", () => {
     mockUseRuns.mockReturnValueOnce({ data: undefined, isLoading: true });
-    const { rerender } = render(
-      <MemoryRouter>
-        <EvaluationsPage />
-      </MemoryRouter>
-    );
+    const { rerender } = renderPage();
     expect(screen.getByText("Loading evaluations...")).toBeInTheDocument();
 
     mockUseRuns.mockReturnValueOnce({ data: [], isLoading: false });
-    rerender(
-      <MemoryRouter>
-        <EvaluationsPage />
-      </MemoryRouter>
-    );
+    rerender(<EvaluationsPage />);
     // Empty state now uses the shared <EmptyState> component ("$ no … yet").
     expect(screen.getByText("no evaluated runs yet")).toBeInTheDocument();
   });
@@ -43,11 +80,7 @@ describe("EvaluationsPage", () => {
       refetch,
     });
 
-    render(
-      <MemoryRouter>
-        <EvaluationsPage />
-      </MemoryRouter>
-    );
+    renderPage();
 
     const alert = screen.getByRole("alert");
     expect(alert).toHaveTextContent(/failed to load evaluations/i);
@@ -58,35 +91,10 @@ describe("EvaluationsPage", () => {
   it("renders evaluated runs in a table", () => {
     mockUseRuns.mockReturnValue({
       isLoading: false,
-      data: [
-        {
-          filename: "run-1.json",
-          run_id: "run-1",
-          workflow_name: "review_flow",
-          status: "success",
-          evaluation_score: 91.4,
-          evaluation_grade: "A",
-          step_count: 7,
-          start_time: "2026-04-11T12:00:00Z",
-        },
-        {
-          filename: "run-2.json",
-          run_id: "run-2",
-          workflow_name: "draft_flow",
-          status: "failed",
-          evaluation_score: null,
-          evaluation_grade: null,
-          step_count: 3,
-          start_time: null,
-        },
-      ],
+      data: [SCORED_RUN, { ...UNSCORED_RUN, status: "failed" }],
     });
 
-    render(
-      <MemoryRouter>
-        <EvaluationsPage />
-      </MemoryRouter>
-    );
+    renderPage();
 
     // The evaluated workflow surfaces in both the run-picker banner and the
     // eval-runs table, so assert on presence (≥1) rather than uniqueness.
@@ -97,11 +105,96 @@ describe("EvaluationsPage", () => {
     expect(screen.getAllByText("91.4").length).toBeGreaterThan(0);
     // Grade "A" renders in the table cell and also in the scorecard tier scale.
     expect(screen.getAllByText("A").length).toBeGreaterThan(0);
-    // Exact name "view" targets the table's aria-labelled detail link without
-    // colliding with the run-picker link whose name contains "review_flow".
+    // Exact name "view" targets the table's aria-labelled detail link.
     expect(screen.getByRole("link", { name: "view" })).toHaveAttribute(
       "href",
       "/runs/run-1.json"
+    );
+  });
+
+  it("evaluates a selected previous run and shows the score", async () => {
+    mockUseRuns.mockReturnValue({
+      isLoading: false,
+      data: [SCORED_RUN, UNSCORED_RUN],
+    });
+    mockEvaluateRun.mockResolvedValue({
+      filename: "run-2.json",
+      run_id: "run-2",
+      workflow_name: "draft_flow",
+      status: "success",
+      evaluation_requested: true,
+      evaluation: { weighted_score: 84.5, grade: "B" },
+    });
+
+    renderPage();
+
+    // Unscored runs are offered in the picker too — rescoring works from the
+    // captured log regardless of whether a score already exists.
+    const evaluateButton = screen.getByRole("button", {
+      name: /evaluate a run/i,
+    });
+    expect(evaluateButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
+    expect(evaluateButton).toBeEnabled();
+
+    fireEvent.click(evaluateButton);
+
+    await waitFor(() =>
+      expect(screen.getByText("scored 84.5 · B")).toBeInTheDocument()
+    );
+    expect(mockEvaluateRun).toHaveBeenCalledWith("run-2.json");
+  });
+
+  it("deselects a run on second click and handles missing detail payloads", async () => {
+    mockUseRuns.mockReturnValue({ isLoading: false, data: [UNSCORED_RUN] });
+    mockEvaluateRun.mockResolvedValue({
+      filename: "run-2.json",
+      run_id: "run-2",
+      workflow_name: "draft_flow",
+      status: "success",
+      evaluation_requested: true,
+      evaluation: null,
+    });
+
+    renderPage();
+
+    const runRow = screen.getByRole("button", { name: /draft_flow/i });
+    const evaluateButton = screen.getByRole("button", {
+      name: /evaluate a run/i,
+    });
+
+    // Toggle: select then deselect disables the evaluate action again.
+    fireEvent.click(runRow);
+    expect(runRow).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(runRow);
+    expect(runRow).toHaveAttribute("aria-pressed", "false");
+    expect(evaluateButton).toBeDisabled();
+
+    // A rescore whose detail failed server-side validation still reports
+    // success, pointing at a refresh instead of a score line.
+    fireEvent.click(runRow);
+    fireEvent.click(evaluateButton);
+    await waitFor(() =>
+      expect(
+        screen.getByText(/scored — refresh to see details/i)
+      ).toBeInTheDocument()
+    );
+  });
+
+  it("shows an error line when evaluation fails", async () => {
+    mockUseRuns.mockReturnValue({ isLoading: false, data: [UNSCORED_RUN] });
+    mockEvaluateRun.mockRejectedValue(new Error("judge unavailable"));
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /draft_flow/i }));
+    fireEvent.click(screen.getByRole("button", { name: /evaluate a run/i }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /evaluation failed: judge unavailable/i
+      )
     );
   });
 });
