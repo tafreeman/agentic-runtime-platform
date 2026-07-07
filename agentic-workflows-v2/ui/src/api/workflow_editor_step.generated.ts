@@ -26,6 +26,10 @@
  *     loop_max: Maximum loop iterations, or None.
  *     tools: Tool names allowlisted for this step.
  *     prompt_file: Path to an external prompt file, or None.
+ *     model: Per-step model id override, or None.
+ *     persona: Persona registry id for the system prompt, or None.
+ *     observers: Observer channels enabled for this step, or None for all.
+ *     model_params: Sampling parameter overrides, or None.
  *     metadata: Arbitrary step-level metadata bag, or None.
  */
 export interface WorkflowEditorStep {
@@ -37,9 +41,26 @@ export interface WorkflowEditorStep {
   metadata?: {
     [k: string]: unknown;
   } | null;
+  model?: string | null;
+  model_params?: StepModelParams | null;
   name: string;
+  observers?: string[] | null;
+  persona?: string | null;
   prompt_file?: string | null;
   tier?: string | null;
   tools?: string[];
   when?: string | null;
+}
+/**
+ * Per-step sampling parameter overrides carried in editor documents.
+ *
+ * Attributes:
+ *     temperature: Sampling temperature (0--2), or None for the default.
+ *     top_p: Nucleus sampling probability mass (0--1], or None.
+ *     max_tokens: Response token cap, or None for the provider default.
+ */
+export interface StepModelParams {
+  max_tokens?: number | null;
+  temperature?: number | null;
+  top_p?: number | null;
 }

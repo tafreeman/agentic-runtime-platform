@@ -150,6 +150,24 @@ def _step_end_event(
     }
 
 
+def _step_channel_enabled(
+    step_observers: Mapping[str, list[str] | None] | None,
+    step_name: str,
+    channel: str,
+) -> bool:
+    """Return True when *channel* is enabled for *step_name*.
+
+    A step with no observers entry (or an explicit ``None``) emits on every
+    channel; an explicit list restricts emission to the channels it names.
+    """
+    if step_observers is None:
+        return True
+    allowed = step_observers.get(step_name)
+    if allowed is None:
+        return True
+    return channel in allowed
+
+
 async def _process_streamed_step(
     step_name_raw: Any,
     step_data: Mapping[str, Any],
@@ -161,12 +179,15 @@ async def _process_streamed_step(
     step_start_times: dict[str, float],
     last_status_by_step: dict[str, str],
     scoring_listener: Any,
+    step_observers: Mapping[str, list[str] | None] | None = None,
 ) -> None:
     """Emit step_start/step_end events for a single streamed step update.
 
     Mirrors the original per-step state machine: a step transitions to
     ``running`` (emitting ``step_start`` once) and then to a terminal status
-    (emitting ``step_end`` once, plus a scoring update on success).
+    (emitting ``step_end`` once, plus a scoring update on success). The
+    status state machine always advances; per-step ``observers`` config only
+    gates whether the websocket/scoring channels actually receive events.
     """
     step_name = str(step_name_raw)
     merged_step_data = aggregated_state.get("steps", {}).get(step_name_raw)
@@ -175,22 +196,25 @@ async def _process_streamed_step(
     )
     status = str(step_data.get("status", "running")).strip().lower()
     previous_status = last_status_by_step.get(step_name)
+    websocket_enabled = _step_channel_enabled(step_observers, step_name, "websocket")
+    scoring_enabled = _step_channel_enabled(step_observers, step_name, "scoring")
 
     if status in {"running", "pending"}:
         if previous_status == "running":
             return
         last_status_by_step[step_name] = "running"
         step_start_times.setdefault(step_name, time.time())
-        await websocket.manager.broadcast(
-            run_id,
-            _step_start_event(
-                broadcast_step_data,
-                run_id=run_id,
-                step_name=step_name,
-                tenant_id=tenant_id,
-                now=now,
-            ),
-        )
+        if websocket_enabled:
+            await websocket.manager.broadcast(
+                run_id,
+                _step_start_event(
+                    broadcast_step_data,
+                    run_id=run_id,
+                    step_name=step_name,
+                    tenant_id=tenant_id,
+                    now=now,
+                ),
+            )
         return
 
     if status not in {"success", "failed", "skipped"}:
@@ -201,16 +225,17 @@ async def _process_streamed_step(
     if previous_status is None:
         last_status_by_step[step_name] = "running"
         step_start_times.setdefault(step_name, time.time())
-        await websocket.manager.broadcast(
-            run_id,
-            _step_start_event(
-                broadcast_step_data,
-                run_id=run_id,
-                step_name=step_name,
-                tenant_id=tenant_id,
-                now=now,
-            ),
-        )
+        if websocket_enabled:
+            await websocket.manager.broadcast(
+                run_id,
+                _step_start_event(
+                    broadcast_step_data,
+                    run_id=run_id,
+                    step_name=step_name,
+                    tenant_id=tenant_id,
+                    now=now,
+                ),
+            )
 
     last_status_by_step[step_name] = status
     duration_ms = _step_duration_ms(
@@ -219,20 +244,21 @@ async def _process_streamed_step(
         step_start_times=step_start_times,
     )
 
-    await websocket.manager.broadcast(
-        run_id,
-        _step_end_event(
-            broadcast_step_data,
-            run_id=run_id,
-            step_name=step_name,
-            tenant_id=tenant_id,
-            now=now,
-            status=status,
-            duration_ms=duration_ms,
-        ),
-    )
+    if websocket_enabled:
+        await websocket.manager.broadcast(
+            run_id,
+            _step_end_event(
+                broadcast_step_data,
+                run_id=run_id,
+                step_name=step_name,
+                tenant_id=tenant_id,
+                now=now,
+                status=status,
+                duration_ms=duration_ms,
+            ),
+        )
 
-    if scoring_listener is not None and status == "success":
+    if scoring_listener is not None and scoring_enabled and status == "success":
         output_text = str(
             broadcast_step_data.get("outputs")
             or broadcast_step_data.get("output")
@@ -258,6 +284,7 @@ async def _broadcast_node_steps(
     step_start_times: dict[str, float],
     last_status_by_step: dict[str, str],
     scoring_listener: Any,
+    step_observers: Mapping[str, list[str] | None] | None = None,
 ) -> None:
     """Walk a node update's step maps and emit events for each step."""
     for step_state in node_update.values():
@@ -280,4 +307,5 @@ async def _broadcast_node_steps(
                 step_start_times=step_start_times,
                 last_status_by_step=last_status_by_step,
                 scoring_listener=scoring_listener,
+                step_observers=step_observers,
             )

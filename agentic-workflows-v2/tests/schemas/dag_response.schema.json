@@ -1,8 +1,40 @@
 {
   "$defs": {
     "DAGEdgeModel": {
-      "description": "A directed dependency edge in the workflow DAG visualization.\n\nAttributes:\n    source: Name of the predecessor step.\n    target: Name of the dependent step.",
+      "description": "A directed dependency edge in the workflow DAG visualization.\n\nAttributes:\n    source: Name of the predecessor step.\n    target: Name of the dependent step.\n    id: Stable edge identifier (``\"{source}->{target}\"``), or None for\n        legacy payloads.\n    label: Short human-readable summary of what flows along the edge\n        (the target input keys fed from the source), or None.\n    mappings: Expanded ``input_key = ${...}`` expressions on the target\n        step that reference the source step.\n    when: The target step's conditional expression, or None.",
       "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "mappings": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Mappings",
+          "type": "array"
+        },
         "source": {
           "title": "Source",
           "type": "string"
@@ -10,6 +42,18 @@
         "target": {
           "title": "Target",
           "type": "string"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
         }
       },
       "required": [
@@ -49,6 +93,30 @@
         "id": {
           "title": "Id",
           "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "persona": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Persona"
         },
         "tier": {
           "anyOf": [

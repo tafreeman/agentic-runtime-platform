@@ -314,6 +314,8 @@ class DAGNodeModel(BaseModel):
     # rather than `string[] | undefined`.
     depends_on: list[str]
     tier: str | None = None
+    persona: str | None = None
+    model: str | None = None
 
 
 class DAGEdgeModel(BaseModel):
@@ -322,10 +324,21 @@ class DAGEdgeModel(BaseModel):
     Attributes:
         source: Name of the predecessor step.
         target: Name of the dependent step.
+        id: Stable edge identifier (``"{source}->{target}"``), or None for
+            legacy payloads.
+        label: Short human-readable summary of what flows along the edge
+            (the target input keys fed from the source), or None.
+        mappings: Expanded ``input_key = ${...}`` expressions on the target
+            step that reference the source step.
+        when: The target step's conditional expression, or None.
     """
 
     source: str
     target: str
+    id: str | None = None
+    label: str | None = None
+    mappings: list[str] = []
+    when: str | None = None
 
 
 class WorkflowInputSchemaItem(BaseModel):
@@ -374,6 +387,20 @@ class WorkflowInputSchemaResponse(BaseModel):
     inputs: list[WorkflowInputSchemaItem] = []
 
 
+class StepModelParams(BaseModel):
+    """Per-step sampling parameter overrides carried in editor documents.
+
+    Attributes:
+        temperature: Sampling temperature (0--2), or None for the default.
+        top_p: Nucleus sampling probability mass (0--1], or None.
+        max_tokens: Response token cap, or None for the provider default.
+    """
+
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+    top_p: float | None = Field(default=None, gt=0.0, le=1.0)
+    max_tokens: int | None = Field(default=None, ge=1)
+
+
 class WorkflowEditorStep(BaseModel):
     """HTTP wire shape for a single step inside a workflow editor document.
 
@@ -391,6 +418,10 @@ class WorkflowEditorStep(BaseModel):
         loop_max: Maximum loop iterations, or None.
         tools: Tool names allowlisted for this step.
         prompt_file: Path to an external prompt file, or None.
+        model: Per-step model id override, or None.
+        persona: Persona registry id for the system prompt, or None.
+        observers: Observer channels enabled for this step, or None for all.
+        model_params: Sampling parameter overrides, or None.
         metadata: Arbitrary step-level metadata bag, or None.
     """
 
@@ -408,6 +439,10 @@ class WorkflowEditorStep(BaseModel):
     loop_max: int | None = None
     tools: list[str] = []
     prompt_file: str | None = None
+    model: str | None = None
+    persona: str | None = None
+    observers: list[str] | None = None
+    model_params: StepModelParams | None = None
     metadata: dict[str, Any] | None = None
 
 

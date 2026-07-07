@@ -179,6 +179,32 @@ async def list_adapters():
     return {"adapters": names}
 
 
+def _dag_edge(dep: str, step: Any) -> dict[str, Any]:
+    """Build one enriched dependency edge for the DAG payload.
+
+    The edge carries what actually flows across it: every target-step input
+    expression that references the source step, plus the target's ``when``
+    condition, so the UI can label and inspect edges instead of rendering
+    anonymous arrows.
+    """
+    marker = f"steps.{dep}."
+    step_inputs = getattr(step, "inputs", {}) or {}
+    mappings = [
+        f"{key} = {value}"
+        for key, value in step_inputs.items()
+        if isinstance(value, str) and marker in value
+    ]
+    mapped_keys = [m.split(" = ", 1)[0] for m in mappings]
+    return {
+        "source": dep,
+        "target": step.name,
+        "id": f"{dep}->{step.name}",
+        "label": ", ".join(mapped_keys) if mapped_keys else None,
+        "mappings": mappings,
+        "when": getattr(step, "when", None),
+    }
+
+
 @router.get("/workflows/{name}/dag", responses={
     404: {"description": "Not Found"},
 })
@@ -199,10 +225,12 @@ async def get_workflow_dag(name: str):
                 "description": step.description,
                 "depends_on": list(step.depends_on),
                 "tier": None,  # tier is embedded in agent name (e.g. tier2_reviewer)
+                "persona": getattr(step, "persona", None),
+                "model": getattr(step, "model_override", None),
             }
         )
         for dep in step.depends_on:
-            edges.append({"source": dep, "target": step.name})
+            edges.append(_dag_edge(dep, step))
 
     # Include input schema so the UI can render a proper form
     input_schema = []

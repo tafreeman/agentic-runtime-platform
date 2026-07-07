@@ -74,7 +74,16 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
     dag = await workflows.get_workflow_dag("wf-dag")
     assert dag["name"] == "wf-dag"
     assert len(dag["nodes"]) == 2
-    assert dag["edges"] == [{"source": "step_one", "target": "step_two"}]
+    assert dag["edges"] == [
+        {
+            "source": "step_one",
+            "target": "step_two",
+            "id": "step_one->step_two",
+            "label": None,
+            "mappings": [],
+            "when": None,
+        }
+    ]
 
     capabilities = await workflows.get_workflow_capabilities("wf-dag")
     assert capabilities["workflow"] == "wf-dag"

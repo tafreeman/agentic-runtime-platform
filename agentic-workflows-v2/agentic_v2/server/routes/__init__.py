@@ -9,6 +9,10 @@ Submodules:
         listing and input preview.
     :mod:`~agentic_v2.server.routes.runs` -- Run history: list, summary, detail,
         and SSE event streaming for active runs.
+    :mod:`~agentic_v2.server.routes.catalog` -- Persona, tool, and observer
+        catalogs for the workflow editor pickers.
+    :mod:`~agentic_v2.server.routes.settings_routes` -- Provider endpoint and
+        model tier settings backed by the UI settings store.
 """
 
 from __future__ import annotations
