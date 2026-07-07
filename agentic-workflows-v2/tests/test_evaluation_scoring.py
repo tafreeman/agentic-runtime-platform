@@ -1234,7 +1234,10 @@ class TestJudgeSkipVisibility:
         )
         assert payload["judge_skipped"] is True
         assert "RuntimeError" in payload["judge_skip_reason"]
-        assert payload["judge_skip_code"] == "judge_error"
+        # The no-backend signature is the expected key-free-server shape (the
+        # server constructs a default LLMJudge even when unconfigured), so it
+        # classifies as not_configured, not as a provider failure.
+        assert payload["judge_skip_code"] == "not_configured"
         assert payload["score_layers"]["layer2_judge"] is None
         assert payload["hybrid_weights"].keys() == {"objective", "advisory"}
 

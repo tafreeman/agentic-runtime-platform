@@ -671,9 +671,24 @@ def _apply_judge_scores(
             criterion_payload.pop("judge_normalized_score", None)
             criterion_payload.pop("judge_evidence", None)
         reason, code = _handle_judge_skip(
-            f"{type(exc).__name__}: {exc}", code="judge_error"
+            f"{type(exc).__name__}: {exc}", code=_classify_judge_failure(exc)
         )
         return None, None, reason, code
+
+
+def _classify_judge_failure(exc: Exception) -> str:
+    """Map a judge failure to a machine-readable skip code.
+
+    The server constructs a default ``LLMJudge`` even when no judge model is
+    configured, so a key-free deployment surfaces as a *raised*
+    ``RuntimeError("No LLM backend configured for judge")`` (see
+    ``judge._invoke_prompt``) rather than the ``judge is None`` branch.  That
+    is an expected ``not_configured`` skip, not a provider failure — alerting
+    must be able to tell the two apart.
+    """
+    if "No LLM backend configured" in str(exc):
+        return "not_configured"
+    return "judge_error"
 
 
 def _handle_judge_skip(reason: str, *, code: str) -> tuple[str, str]:

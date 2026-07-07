@@ -928,14 +928,17 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
 @pytest.mark.asyncio
 async def test_run_log_persists_when_judge_required_unmet(monkeypatch):
     """judge_required=true fails the *evaluation*, never the run record: a
-    completed workflow must not vanish from run history (issue #172 review)."""
+    completed workflow must not vanish from run history (issue #172 review),
+    and the live stream must get a terminal event or the UI sticks in
+    "evaluating"."""
     captured: dict = {}
+    events: list[dict] = []
 
     async def _fake_run(*_args, **_kwargs):
         return _build_result(StepStatus.SUCCESS)
 
-    async def _fake_broadcast(_run_id: str, _event: dict):
-        return None
+    async def _fake_broadcast(_run_id: str, event: dict):
+        events.append(event)
 
     def _mock_load_config(name, definitions_dir=None):
         from agentic_v2.langchain.config import WorkflowConfig
@@ -990,6 +993,13 @@ async def test_run_log_persists_when_judge_required_unmet(monkeypatch):
     # The run log was still written, with the policy failure recorded.
     assert captured["extra"]["evaluation"] is None
     assert "judge_required" in captured["extra"]["evaluation_error"]
+
+    # evaluation_start went out, so a terminal event must follow — otherwise
+    # the live UI never leaves the "evaluating" state.
+    event_types = [event.get("type") for event in events]
+    assert "evaluation_start" in event_types
+    assert "error" in event_types
+    assert "evaluation_complete" not in event_types
 
 
 @pytest.mark.asyncio

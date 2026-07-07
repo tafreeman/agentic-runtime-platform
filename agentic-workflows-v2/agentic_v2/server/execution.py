@@ -575,6 +575,17 @@ async def _run_and_evaluate(
                 # history because a post-hoc scoring policy was unmet.
                 evaluation_error = str(exc)
                 logger.error("Evaluation failed for run_id=%s: %s", run_id, exc)
+                # evaluation_start already went out; without a terminal event
+                # the live UI (useWorkflowStream) stays stuck in "evaluating".
+                await websocket.manager.broadcast(
+                    run_id,
+                    {
+                        "type": "error",
+                        "run_id": run_id,
+                        "error": f"Evaluation failed: {exc}",
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                )
             if scored_evaluation is not None:
                 await websocket.manager.broadcast(
                     run_id,
