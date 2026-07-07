@@ -6,6 +6,7 @@ import {
   type Node,
   type Edge,
   type NodeTypes,
+  type Connection,
   MarkerType,
   BackgroundVariant,
   ReactFlowProvider,
@@ -99,6 +100,19 @@ interface Props {
   kickbackEdges?: Set<string>;
   /** Callback when a node is clicked. */
   onNodeClick?: (stepName: string) => void;
+  /** Callback when an edge is clicked (id is "source->target"). */
+  onEdgeClick?: (edgeId: string) => void;
+  /**
+   * Callback when the user draws a new connection between node handles.
+   * Providing this makes nodes connectable (editor mode).
+   */
+  onConnect?: (source: string, target: string) => void;
+  /** Highlight this node as the current selection (editor mode). */
+  selectedNodeId?: string | null;
+  /** Highlight this edge ("source->target") as the current selection. */
+  selectedEdgeId?: string | null;
+  /** Show declarative edge labels (what data flows along each edge). */
+  showEdgeLabels?: boolean;
   /**
    * When true, the upstream WebSocket stream is disconnected. Live
    * animations on running nodes/edges are paused to signal that on-screen
@@ -116,6 +130,11 @@ function WorkflowDAGInner({
   edgeCounts,
   kickbackEdges,
   onNodeClick,
+  onEdgeClick,
+  onConnect,
+  selectedNodeId = null,
+  selectedEdgeId = null,
+  showEdgeLabels = false,
   disconnected = false,
   className = "",
 }: Readonly<Props>) {
@@ -168,6 +187,8 @@ function WorkflowDAGInner({
         agent: dn.agent ?? null,
         description: dn.description ?? "",
         tier: dn.tier ?? null,
+        persona: dn.persona ?? null,
+        model: dn.model ?? null,
         status: live?.status ?? "pending",
         startTime: live?.startTime,
         durationMs: live?.durationMs,
@@ -176,6 +197,7 @@ function WorkflowDAGInner({
         modelInferred: live?.modelInferred,
         error: live?.error,
         disconnected,
+        selected: dn.id === selectedNodeId,
       };
 
       return {
@@ -185,15 +207,16 @@ function WorkflowDAGInner({
         data: data as unknown as Record<string, unknown>,
       };
     });
-  }, [dagNodes, positions, effectiveStepStates, disconnected]);
+  }, [dagNodes, positions, effectiveStepStates, disconnected, selectedNodeId]);
 
   const edges: Edge[] = useMemo(() => {
     return dagEdges.map((de) => {
-      const edgeId = `${de.source}->${de.target}`;
+      const edgeId = de.id ?? `${de.source}->${de.target}`;
       const sourceState = effectiveStepStates.get(de.source);
       const targetState = effectiveStepStates.get(de.target);
       const traversalCount = edgeCounts?.get(edgeId) ?? 0;
       const isKickback = kickbackEdges?.has(edgeId) ?? false;
+      const isSelected = edgeId === selectedEdgeId;
 
       // Theme-aware design-token colors (CSS vars resolve per active theme).
       const defaultColor = "rgb(var(--b-line))"; // pending/idle edge
@@ -217,6 +240,17 @@ function WorkflowDAGInner({
       } else if (sourceState?.status === "failed") {
         strokeColor = "rgb(var(--b-red) / 0.5)"; // failed source, faint
       }
+      if (isSelected) {
+        strokeColor = "rgb(var(--b-clay))";
+      }
+
+      // Traversal counts (live view) win over declarative labels (editor view).
+      let label: string | undefined;
+      if (traversalCount > 0) {
+        label = String(traversalCount);
+      } else if (showEdgeLabels) {
+        label = de.label ?? "order";
+      }
 
       return {
         id: edgeId,
@@ -225,19 +259,23 @@ function WorkflowDAGInner({
         type: "smoothstep" as const,
         animated,
         className: isActiveEdge ? "dag-edge--active" : undefined,
-        label: traversalCount > 0 ? String(traversalCount) : undefined,
+        label,
         labelStyle: {
           fill: isKickback ? "#be95ff" : "#c6c6c6",
-          fontSize: 11,
+          fontSize: traversalCount > 0 ? 11 : 9,
           fontWeight: 600,
         },
         labelBgStyle: {
           fill: isKickback ? "rgba(88, 28, 135, 0.75)" : "rgba(17, 24, 39, 0.75)",
           fillOpacity: 1,
         },
-        labelBgPadding: [6, 2],
+        labelBgPadding: [6, 2] as [number, number],
         labelBgBorderRadius: 4,
-        style: { stroke: strokeColor, strokeWidth: 1, strokeDasharray },
+        style: {
+          stroke: strokeColor,
+          strokeWidth: isSelected ? 2 : 1,
+          strokeDasharray,
+        },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
@@ -246,13 +284,37 @@ function WorkflowDAGInner({
         },
       };
     });
-  }, [dagEdges, edgeCounts, kickbackEdges, effectiveStepStates, disconnected]);
+  }, [
+    dagEdges,
+    edgeCounts,
+    kickbackEdges,
+    effectiveStepStates,
+    disconnected,
+    selectedEdgeId,
+    showEdgeLabels,
+  ]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       onNodeClick?.(node.id);
     },
     [onNodeClick]
+  );
+
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      onEdgeClick?.(edge.id);
+    },
+    [onEdgeClick]
+  );
+
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      if (connection.source && connection.target) {
+        onConnect?.(connection.source, connection.target);
+      }
+    },
+    [onConnect]
   );
 
   return (
@@ -262,6 +324,9 @@ function WorkflowDAGInner({
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
+        onEdgeClick={onEdgeClick ? handleEdgeClick : undefined}
+        onConnect={onConnect ? handleConnect : undefined}
+        nodesConnectable={Boolean(onConnect)}
         onMoveStart={onMoveStart}
         onMoveEnd={onMoveEnd}
         fitView

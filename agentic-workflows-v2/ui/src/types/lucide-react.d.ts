@@ -48,7 +48,9 @@ declare module "lucide-react" {
   export const Settings2: LucideIcon;
   export const SlidersHorizontal: LucideIcon;
   export const Timer: LucideIcon;
+  export const Trash2: LucideIcon;
   export const TriangleAlert: LucideIcon;
+  export const Unlink: LucideIcon;
   export const Trophy: LucideIcon;
   export const Workflow: LucideIcon;
   export const X: LucideIcon;

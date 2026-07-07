@@ -30,6 +30,7 @@ const links: readonly NavItem[] = [
   { to: "/evaluations", testid: "evals", label: "evaluations", num: "05", title: "evaluations", end: false, goKey: "l" },
   { to: "/workflows", testid: "workflows", label: "workflow builder", num: "06", title: "workflow builder", end: false, goKey: "w" },
   { to: "/datasets", testid: "datasets", label: "datasets", num: "07", title: "datasets", end: false, goKey: "a" },
+  { to: "/settings", testid: "settings", label: "providers & tiers", num: "08", title: "providers & tiers", end: false, goKey: "s" },
 ];
 
 // Inline values for theme-driven tokens (radius / border-width / heading font)

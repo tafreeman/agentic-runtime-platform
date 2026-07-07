@@ -13,6 +13,7 @@ import { isWorkflowBuilderEnabled } from "./config/featureFlags";
 import DatasetsPage from "./pages/DatasetsPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
 import ModelFinderPage from "./pages/ModelFinderPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./components/states/NotFoundPage";
 import CliStrip from "./components/layout/CliStrip";
 import CommandPalette from "./components/common/CommandPalette";
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/evaluations" element={<EvaluationsPage />} />
           <Route path="/models" element={<ModelFinderPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/runs" element={<RunsPage />} />
           <Route path="/runs/:filename" element={<RunDetailPage />} />
           <Route path="/live/:runId" element={<LivePage />} />

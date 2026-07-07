@@ -8,6 +8,12 @@ export interface StepNodeData {
   agent: string | null;
   description: string;
   tier: string | null;
+  /** Persona id configured on the step (editor badge), or null. */
+  persona?: string | null;
+  /** Per-step model override (editor badge), or null. */
+  model?: string | null;
+  /** True when this node is the editor's current selection. */
+  selected?: boolean;
   status: StepStatus;
   startTime?: string;
   durationMs?: number;
@@ -122,7 +128,9 @@ function StepNodeComponent({ id, data }: NodeProps) {
   // on the node; a model hint lives in the inspector panel instead.
   const tierLabel = tier ? tier.toUpperCase() : null;
   const tierColor = tierBadgeColor(tier);
-  const borderColor = statusBorderColor(status);
+  const borderColor = nodeData.selected
+    ? "rgb(var(--b-clay))"
+    : statusBorderColor(status);
 
   return (
     <>
@@ -231,6 +239,54 @@ function StepNodeComponent({ id, data }: NodeProps) {
             }}
           >
             {nodeData.agent}
+          </div>
+        )}
+
+        {/* Row 3b: per-step persona/model config badges (editor surface) */}
+        {(nodeData.persona || nodeData.model) && (
+          <div
+            data-testid="step-node-config-badges"
+            style={{
+              display: "flex",
+              gap: "4px",
+              marginTop: "4px",
+              overflow: "hidden",
+            }}
+          >
+            {nodeData.persona && (
+              <span
+                title={`persona: ${nodeData.persona}`}
+                style={{
+                  fontSize: "8px",
+                  color: "rgb(var(--b-purple))",
+                  border: "1px solid rgb(var(--b-purple) / 0.5)",
+                  borderRadius: "var(--b-rad-sm)",
+                  padding: "0 4px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {nodeData.persona}
+              </span>
+            )}
+            {nodeData.model && (
+              <span
+                title={`model: ${nodeData.model}`}
+                style={{
+                  fontSize: "8px",
+                  color: "rgb(var(--b-teal))",
+                  border: "1px solid rgb(var(--b-teal) / 0.5)",
+                  borderRadius: "var(--b-rad-sm)",
+                  padding: "0 4px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {nodeData.model}
+              </span>
+            )}
           </div>
         )}
 
