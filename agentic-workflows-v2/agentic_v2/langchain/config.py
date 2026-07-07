@@ -8,6 +8,7 @@ The graph compiler (``graph.py``) turns configs into runnable graphs.
 from __future__ import annotations
 
 import functools
+import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,6 +17,8 @@ from typing import Any
 import yaml
 
 from ..utils.path_safety import ensure_within_base
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Config dataclasses
@@ -445,19 +448,49 @@ def _parse_inputs(data: dict[str, Any]) -> dict[str, InputConfig]:
     return inputs
 
 
+def _coerce_optional_float(value: Any, *, field_name: str) -> float | None:
+    """Coerce an optional YAML scalar to float, dropping invalid values.
+
+    The editor/save path rejects invalid params up front
+    (:func:`_validate_step_model_params`); this parse path tolerates
+    hand-edited files by logging and falling back to the provider default
+    instead of failing the whole workflow load.
+    """
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        logger.warning("Ignoring invalid model_params.%s=%r", field_name, value)
+        return None
+
+
+def _coerce_optional_int(value: Any, *, field_name: str) -> int | None:
+    """Coerce an optional YAML scalar to int, dropping invalid values."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        logger.warning("Ignoring invalid model_params.%s=%r", field_name, value)
+        return None
+
+
 def _parse_model_params(raw: Any) -> ModelParamsConfig | None:
     """Parse a raw ``model_params`` mapping into a ``ModelParamsConfig``."""
     if not isinstance(raw, dict):
         return None
-    temperature = raw.get("temperature")
-    top_p = raw.get("top_p")
-    max_tokens = raw.get("max_tokens")
+    temperature = _coerce_optional_float(
+        raw.get("temperature"), field_name="temperature"
+    )
+    top_p = _coerce_optional_float(raw.get("top_p"), field_name="top_p")
+    max_tokens = _coerce_optional_int(raw.get("max_tokens"), field_name="max_tokens")
     if temperature is None and top_p is None and max_tokens is None:
         return None
     return ModelParamsConfig(
-        temperature=float(temperature) if temperature is not None else None,
-        top_p=float(top_p) if top_p is not None else None,
-        max_tokens=int(max_tokens) if max_tokens is not None else None,
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
     )
 
 

@@ -510,7 +510,7 @@ def _candidate_summary(
 async def compare_runs(
     request: Request,
     body: EvalComparisonRequest,
-    tenant: Annotated[TenantContext, Depends(get_tenant_context)] = None,
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)],
 ):
     """Score two completed runs under one rubric and return the head-to-head.
 

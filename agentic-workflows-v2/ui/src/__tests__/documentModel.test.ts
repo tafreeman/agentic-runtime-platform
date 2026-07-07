@@ -66,10 +66,19 @@ describe("documentModel", () => {
     expect(nextStepName(document)).toBe("step_4");
   });
 
-  it("removeStep scrubs the step from other depends_on lists", () => {
+  it("removeStep scrubs depends_on lists and dangling input references", () => {
     const next = removeStep(doc(), "analyze");
     expect(getStep(next, "analyze")).toBeNull();
-    expect(getStep(next, "review")?.depends_on).toEqual([]);
+    const review = getStep(next, "review");
+    expect(review?.depends_on).toEqual([]);
+    // The input mapping that read ${steps.analyze...} must not dangle.
+    expect(review?.inputs).toEqual({});
+  });
+
+  it("removeStep keeps input entries that do not reference the removed step", () => {
+    const document = patchStepInput(doc(), "review", "note", "static text");
+    const review = getStep(removeStep(document, "analyze"), "review");
+    expect(review?.inputs).toEqual({ note: "static text" });
   });
 
   it("addDependency ignores self-references and duplicates", () => {
@@ -83,9 +92,11 @@ describe("documentModel", () => {
     expect(getStep(duplicate, "review")?.depends_on).toEqual(["analyze"]);
   });
 
-  it("removeDependency severs the edge", () => {
+  it("removeDependency severs the edge and its data mappings", () => {
     const next = removeDependency(doc(), "analyze", "review");
-    expect(getStep(next, "review")?.depends_on).toEqual([]);
+    const review = getStep(next, "review");
+    expect(review?.depends_on).toEqual([]);
+    expect(review?.inputs).toEqual({});
   });
 
   it("edgeInfo reports mappings and the target condition", () => {

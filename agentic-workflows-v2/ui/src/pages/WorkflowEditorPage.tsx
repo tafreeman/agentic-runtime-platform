@@ -234,6 +234,23 @@ export default function WorkflowEditorPage() {
     return hasErrors ? `${issueCount} blocking` : "valid";
   })();
 
+  const handleModeSwitch = (nextMode: EditorMode) => {
+    if (nextMode === mode) return;
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "You have unsaved changes in this mode. Switching discards them. Continue?"
+      );
+      if (!confirmed) return;
+      // Reset the abandoned mode's draft so stale edits can't be saved later.
+      if (mode === "visual") {
+        setDraftDocument(savedDocument ? cloneDocument(savedDocument) : null);
+      } else {
+        setDraftSource(savedSource);
+      }
+    }
+    setMode(nextMode);
+  };
+
   const handleAddStep = () => {
     if (!draftDocument || isReadOnly) return;
     const after = selection?.kind === "node" ? selection.id : null;
@@ -304,12 +321,12 @@ export default function WorkflowEditorPage() {
             <ModePill
               label="visual"
               active={mode === "visual"}
-              onClick={() => setMode("visual")}
+              onClick={() => handleModeSwitch("visual")}
             />
             <ModePill
               label="yaml"
               active={mode === "yaml"}
-              onClick={() => setMode("yaml")}
+              onClick={() => handleModeSwitch("yaml")}
             />
           </div>
 

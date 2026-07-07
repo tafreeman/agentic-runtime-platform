@@ -70,7 +70,11 @@ def _load_personas(path: str) -> tuple[Persona, ...]:
         return ()
     if not isinstance(data, dict):
         return ()
-    parsed = (_parse_persona(raw) for raw in data.get("personas", []))
+    raw_personas = data.get("personas")
+    if not isinstance(raw_personas, list):
+        # A present-but-blank `personas:` key parses as None.
+        return ()
+    parsed = (_parse_persona(raw) for raw in raw_personas)
     return tuple(p for p in parsed if p is not None)
 
 

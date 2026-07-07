@@ -75,6 +75,23 @@ class TestStepConfigParsing:
         ).steps[0]
         assert step.model_params == ModelParamsConfig(temperature=1.0)
 
+    def test_parse_tolerates_invalid_values_on_load_path(self):
+        """Hand-edited YAML with junk params must not fail workflow load.
+
+        The validation path (editor save) rejects these; the parse-only path
+        (load_workflow_config) drops them with a warning instead.
+        """
+        from agentic_v2.langchain.config import _parse_model_params
+
+        assert (
+            _parse_model_params(
+                {"temperature": "hot", "top_p": None, "max_tokens": "many"}
+            )
+            is None
+        )
+        params = _parse_model_params({"temperature": "not-a-number", "top_p": 0.5})
+        assert params == ModelParamsConfig(top_p=0.5)
+
 
 class TestStepConfigValidation:
     @pytest.mark.parametrize(
@@ -132,6 +149,13 @@ class TestPersonaRegistry:
     def test_unknown_persona_returns_none(self):
         assert resolve_persona_prompt("nonexistent_persona") is None
         assert get_persona("nonexistent_persona") is None
+
+    def test_blank_personas_key_yields_empty_registry(self, tmp_path):
+        from agentic_v2.langchain.personas import _load_personas
+
+        registry_path = tmp_path / "personas.yaml"
+        registry_path.write_text("personas:\n", encoding="utf-8")
+        assert _load_personas(str(registry_path)) == ()
 
 
 class TestSystemPromptResolution:

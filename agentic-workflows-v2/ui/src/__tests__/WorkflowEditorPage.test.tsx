@@ -331,6 +331,42 @@ describe("WorkflowEditorPage", () => {
     expect(screen.getByText(/Last saved/)).toBeInTheDocument();
   });
 
+  it("confirms before discarding unsaved changes on mode switch", () => {
+    const confirmSpy = vi
+      .spyOn(window, "confirm")
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
+    renderPage();
+
+    // Dirty the visual draft.
+    fireEvent.change(screen.getByLabelText("Temperature"), {
+      target: { value: "0.9" },
+    });
+    expect(screen.getByText(/unsaved changes/i)).toBeInTheDocument();
+
+    // First attempt declined — stays in visual mode with edits intact.
+    fireEvent.click(screen.getByRole("button", { name: "yaml" }));
+    expect(screen.getByLabelText("Temperature")).toBeInTheDocument();
+
+    // Second attempt confirmed — switches and resets the visual draft.
+    fireEvent.click(screen.getByRole("button", { name: "yaml" }));
+    expect(screen.getByLabelText("Workflow source")).toBeInTheDocument();
+    expect(screen.queryByText(/unsaved changes/i)).not.toBeInTheDocument();
+
+    expect(confirmSpy).toHaveBeenCalledTimes(2);
+    confirmSpy.mockRestore();
+  });
+
+  it("switches modes without prompting when there are no unsaved changes", () => {
+    const confirmSpy = vi.spyOn(window, "confirm");
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "yaml" }));
+    expect(screen.getByLabelText("Workflow source")).toBeInTheDocument();
+    expect(confirmSpy).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+  });
+
   it("locks editing actions when the workflow is read-only", () => {
     mockUseWorkflowEditor.mockReturnValue({
       data: { ...makeEditorData(), read_only: true },

@@ -85,14 +85,34 @@ export function addStep(
   return { document: withSteps(document, [...getSteps(document), step]), name };
 }
 
-/** Remove a step and scrub it from every other step's depends_on. */
+/**
+ * Drop input entries on `step` whose expressions reference `sourceName`.
+ * Returns the original object when nothing referenced it.
+ */
+function scrubInputRefs(step: RawStep, sourceName: string): RawStep {
+  const inputs = step.inputs;
+  if (typeof inputs !== "object" || inputs === null) return step;
+  const marker = `steps.${sourceName}.`;
+  const entries = Object.entries(inputs as Record<string, unknown>);
+  const kept = entries.filter(
+    ([, value]) => !(typeof value === "string" && value.includes(marker))
+  );
+  if (kept.length === entries.length) return step;
+  return { ...step, inputs: Object.fromEntries(kept) };
+}
+
+/**
+ * Remove a step, scrub it from every other step's depends_on, and drop
+ * input mappings that referenced its outputs (they would dangle otherwise).
+ */
 export function removeStep(document: RawDocument, name: string): RawDocument {
   const steps = getSteps(document)
     .filter((step) => step.name !== name)
     .map((step) => {
-      const deps = Array.isArray(step.depends_on) ? step.depends_on : [];
-      if (!deps.includes(name)) return step;
-      return { ...step, depends_on: deps.filter((dep) => dep !== name) };
+      const scrubbed = scrubInputRefs(step, name);
+      const deps = Array.isArray(scrubbed.depends_on) ? scrubbed.depends_on : [];
+      if (!deps.includes(name)) return scrubbed;
+      return { ...scrubbed, depends_on: deps.filter((dep) => dep !== name) };
     });
   return withSteps(document, steps);
 }
@@ -115,7 +135,11 @@ export function addDependency(
   return withSteps(document, steps);
 }
 
-/** Remove `source` from `target`'s depends_on. */
+/**
+ * Remove `source` from `target`'s depends_on, and drop the target's input
+ * mappings that read from `source` — a severed edge must not leave stale
+ * data references behind.
+ */
 export function removeDependency(
   document: RawDocument,
   source: string,
@@ -123,10 +147,11 @@ export function removeDependency(
 ): RawDocument {
   const steps = getSteps(document).map((step) => {
     if (step.name !== target) return step;
-    const deps = Array.isArray(step.depends_on)
-      ? step.depends_on.map(String)
+    const scrubbed = scrubInputRefs(step, source);
+    const deps = Array.isArray(scrubbed.depends_on)
+      ? scrubbed.depends_on.map(String)
       : [];
-    return { ...step, depends_on: deps.filter((dep) => dep !== source) };
+    return { ...scrubbed, depends_on: deps.filter((dep) => dep !== source) };
   });
   return withSteps(document, steps);
 }
