@@ -209,6 +209,22 @@ def test_rehydrate_task_id_mismatch_bails_loudly():
     assert "task_id mismatch" in error
 
 
+def test_rehydrate_numeric_task_id_still_verified():
+    """Integer task ids (common in numeric benchmarks) must not silently
+    bypass the mismatch verification."""
+    from agentic_v2.server.evaluation import rehydrate_dataset_sample
+
+    meta = {
+        "source": "local",
+        "dataset_id": _GOLDEN_SMOKE_DATASET,
+        "sample_index": 0,
+        "task_id": 5,
+    }
+    sample, error = rehydrate_dataset_sample(meta)
+    assert sample is None
+    assert "task_id mismatch" in error
+
+
 def test_rehydrate_propagates_golden_error():
     from agentic_v2.server.evaluation import rehydrate_dataset_sample
 

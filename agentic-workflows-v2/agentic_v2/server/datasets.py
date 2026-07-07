@@ -644,13 +644,12 @@ def rehydrate_dataset_sample(
 
     stored_task_id = dataset_meta.get("task_id")
     reloaded_task_id = meta.get("task_id")
-    if (
-        isinstance(stored_task_id, str)
-        and stored_task_id
-        and str(reloaded_task_id) != stored_task_id
-    ):
+    # str() both sides: numeric task ids (e.g. GSM8K) are stored as ints and
+    # must not silently bypass the verification.
+    stored_task_str = "" if stored_task_id is None else str(stored_task_id).strip()
+    if stored_task_str and str(reloaded_task_id) != stored_task_str:
         error = (
-            f"task_id mismatch: run was scored against {stored_task_id!r} but "
+            f"task_id mismatch: run was scored against {stored_task_str!r} but "
             f"index {sample_index} now resolves to {reloaded_task_id!r}"
         )
         logger.warning("Rehydration of %s[%s]: %s", dataset_id, sample_index, error)

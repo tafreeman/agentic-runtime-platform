@@ -274,12 +274,14 @@ def _efficiency_slo_seconds() -> tuple[float, float]:
 
     Reads ``evaluation.scoring.efficiency_slo.{good_seconds,bad_seconds}``
     from the evaluation YAML config, falling back to the module defaults for
-    missing or invalid values (non-numeric, or a band where ``bad <= good``).
+    missing or invalid values (non-dict section, non-numeric bounds, or a
+    band where ``bad <= good``).  The whole band falls back together — a
+    half-configured band could silently invert or narrow the scale.
     """
     config = _load_eval_config()
-    slo = ((config.get("evaluation") or {}).get("scoring") or {}).get(
-        "efficiency_slo"
-    ) or {}
+    slo = ((config.get("evaluation") or {}).get("scoring") or {}).get("efficiency_slo")
+    if not isinstance(slo, dict):
+        return _EFFICIENCY_SLO_GOOD_SECONDS, _EFFICIENCY_SLO_BAD_SECONDS
     try:
         good = float(slo.get("good_seconds", _EFFICIENCY_SLO_GOOD_SECONDS))
         bad = float(slo.get("bad_seconds", _EFFICIENCY_SLO_BAD_SECONDS))

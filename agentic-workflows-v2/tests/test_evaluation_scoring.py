@@ -1372,6 +1372,16 @@ class TestEfficiencySloConfig:
             )
         assert score == pytest.approx(30.0)
 
+    def test_non_dict_section_falls_back_to_defaults(self) -> None:
+        with patch(
+            "agentic_v2.scoring.scoring_criteria._load_eval_config",
+            return_value={"evaluation": {"scoring": {"efficiency_slo": "wide"}}},
+        ):
+            score = _compute_criterion_score(
+                "efficiency", _result_with_duration(300.0), ""
+            )
+        assert score == pytest.approx(30.0)
+
     def test_inverted_band_falls_back_to_defaults(self) -> None:
         with patch(
             "agentic_v2.scoring.scoring_criteria._load_eval_config",
