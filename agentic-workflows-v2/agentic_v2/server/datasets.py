@@ -51,6 +51,7 @@ from ..scoring.dataset_matching import (
 # Re-export the eval-config loader (also relocated to ``scoring``) so existing
 # ``from .datasets import _load_eval_config`` importers keep working.
 from ..scoring.eval_config import _load_eval_config
+from ..scoring.scoring_criteria import serialize_output_text
 
 __all__ = [
     "_dataset_value_for_input",
@@ -379,9 +380,7 @@ def _extract_all_samples(data: Any) -> list[dict[str, Any]]:
         ValueError: If the data format is unsupported.
     """
     if isinstance(data, list):
-        return [
-            item if isinstance(item, dict) else {"value": item} for item in data
-        ]
+        return [item if isinstance(item, dict) else {"value": item} for item in data]
 
     if isinstance(data, dict):
         for key in ("tasks", "samples", "items"):
@@ -394,6 +393,89 @@ def _extract_all_samples(data: Any) -> list[dict[str, Any]]:
         return [data]
 
     raise ValueError("Unsupported dataset format; expected JSON object or array")
+
+
+def _resolve_golden_output_text(
+    sample: dict[str, Any],
+    dataset_path: Path,
+    tenant_id: str | None = None,
+) -> tuple[dict[str, Any], str | None]:
+    """Inline a sample's ``golden_output_path`` file as ``golden_output_text``.
+
+    Local dataset samples may reference their expected/golden output as a file
+    path relative to the dataset file (see
+    ``datasets/default/golden_cases.json``).  The scoring pipeline
+    (:func:`~agentic_v2.scoring.scoring_criteria._extract_expected_text`) only
+    reads inline text keys, so the reference must be resolved at load time or
+    correctness/similarity scoring silently runs against empty expected text.
+
+    Golden files that capture a full run envelope are reduced to their
+    ``final_output`` subtree and serialized with the same null-stripping used
+    for generated outputs, so the two sides tokenize symmetrically.
+
+    Args:
+        sample: The raw dataset sample dict (never mutated).
+        dataset_path: Absolute path of the dataset JSON file.
+        tenant_id: Optional tenant scope for allowed-root checks.
+
+    Returns:
+        ``(sample_with_golden_output_text, error)``.  On any resolution
+        failure the original sample is returned with a human-readable
+        ``error`` for the caller to log and surface in dataset metadata.
+    """
+    golden_ref = sample.get("golden_output_path")
+    if not isinstance(golden_ref, str) or not golden_ref.strip():
+        return sample, None
+    if isinstance(sample.get("golden_output_text"), str):
+        return sample, None
+
+    golden_path = (dataset_path.parent / golden_ref).resolve()
+    if not _is_under_allowed_root(golden_path, tenant_id):
+        return sample, f"golden_output_path escapes dataset roots: {golden_ref}"
+    try:
+        raw = golden_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return sample, f"golden_output_path unreadable: {golden_ref} ({exc})"
+
+    try:
+        parsed: Any = json.loads(raw)
+    except ValueError:
+        golden_text = raw
+    else:
+        if isinstance(parsed, dict) and "final_output" in parsed:
+            parsed = parsed["final_output"]
+        golden_text = serialize_output_text(parsed)
+
+    if not golden_text.strip():
+        return sample, f"golden_output_path resolved to empty text: {golden_ref}"
+    return {**sample, "golden_output_text": golden_text}, None
+
+
+def _attach_golden_output(
+    sample: dict[str, Any],
+    meta: dict[str, Any],
+    *,
+    dataset_path: Path,
+    tenant_id: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resolve a sample's golden reference and record failures in metadata.
+
+    Returns new ``(sample, meta)`` dicts; a failed resolution adds a
+    ``golden_output_error`` key to the metadata and logs a warning so the
+    degraded scoring input is visible instead of silent.
+    """
+    resolved_sample, golden_error = _resolve_golden_output_text(
+        sample, dataset_path, tenant_id
+    )
+    if golden_error is None:
+        return resolved_sample, meta
+    logger.warning(
+        "Dataset %s sample %s: %s",
+        meta.get("dataset_id"),
+        meta.get("sample_index"),
+        golden_error,
+    )
+    return resolved_sample, {**meta, "golden_output_error": golden_error}
 
 
 def load_local_dataset_sample(
@@ -423,7 +505,7 @@ def load_local_dataset_sample(
         "task_id": task_id,
         "sample_count": sample_count,
     }
-    return sample, meta
+    return _attach_golden_output(sample, meta, dataset_path=path, tenant_id=tenant_id)
 
 
 def load_local_dataset_samples(
@@ -462,9 +544,7 @@ def load_local_dataset_samples(
     relative_path = _safe_relative_id(path)
     for local_idx, sample in enumerate(page):
         absolute_index = start + local_idx
-        task_id = str(
-            sample.get("task_id") or sample.get("id") or absolute_index
-        )
+        task_id = str(sample.get("task_id") or sample.get("id") or absolute_index)
         meta = {
             "source": "local",
             "dataset_id": dataset_ref,
@@ -473,8 +553,55 @@ def load_local_dataset_samples(
             "task_id": task_id,
             "sample_count": sample_count,
         }
-        results.append((sample, meta))
+        results.append(
+            _attach_golden_output(sample, meta, dataset_path=path, tenant_id=tenant_id)
+        )
     return results
+
+
+def rehydrate_dataset_sample(
+    dataset_meta: dict[str, Any] | None,
+    tenant_id: str | None = None,
+) -> dict[str, Any] | None:
+    """Re-load the dataset sample referenced by stored run-log metadata.
+
+    Replay-style evaluation (``POST /api/runs/{filename}/evaluate`` and the
+    eval comparison endpoint) starts from a persisted run log, which stores
+    only dataset *metadata* -- not the sample itself.  Without the sample the
+    scorer has no expected/golden text, so replayed scores silently lose the
+    overlap term.  This restores the sample for local datasets (the only
+    source guaranteed to be on disk); repository-backed benchmarks are
+    skipped so a replay never triggers a network fetch.
+
+    Args:
+        dataset_meta: The ``dataset`` metadata dict persisted on the run log.
+        tenant_id: Optional tenant scope for dataset root resolution.
+
+    Returns:
+        The re-loaded sample dict (with ``golden_output_text`` inlined when
+        the sample references a golden file), or ``None`` when the metadata
+        does not reference a loadable local sample.
+    """
+    if not isinstance(dataset_meta, dict) or dataset_meta.get("source") != "local":
+        return None
+    dataset_id = dataset_meta.get("dataset_id")
+    if not isinstance(dataset_id, str) or not dataset_id:
+        return None
+    try:
+        sample_index = int(dataset_meta.get("sample_index") or 0)
+    except (TypeError, ValueError):
+        sample_index = 0
+    try:
+        sample, _meta = load_local_dataset_sample(dataset_id, sample_index, tenant_id)
+    except (OSError, ValueError) as exc:
+        logger.warning(
+            "Could not rehydrate dataset sample %s[%s] for re-evaluation: %s",
+            dataset_id,
+            sample_index,
+            exc,
+        )
+        return None
+    return sample
 
 
 def load_repository_dataset_sample(
@@ -498,9 +625,7 @@ def load_repository_dataset_sample(
     try:
         from tools.agents.benchmarks.loader import load_benchmark
 
-        tasks = load_benchmark(
-            benchmark_id=dataset_id, limit=max(sample_index + 1, 1)
-        )
+        tasks = load_benchmark(benchmark_id=dataset_id, limit=max(sample_index + 1, 1))
         if not tasks:
             raise ValueError(
                 f"No samples returned for repository dataset '{dataset_id}'"
@@ -548,9 +673,7 @@ def _repository_sample_count(dataset_id: str, fallback: int) -> int:
             if isinstance(size, int) and size > 0:
                 return size
     except (ImportError, AttributeError, TypeError) as exc:
-        logger.debug(
-            "Benchmark registry unavailable for %s: %s", dataset_id, exc
-        )
+        logger.debug("Benchmark registry unavailable for %s: %s", dataset_id, exc)
     return fallback
 
 

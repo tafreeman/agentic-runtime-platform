@@ -320,6 +320,10 @@ export interface RunEvaluationDetail {
   score_layers?: ScoreLayers | null;
   hybrid_weights: Record<string, number>;
   judge?: Record<string, unknown> | null;
+  /** True when the LLM judge layer did not contribute to the hybrid score. */
+  judge_skipped?: boolean;
+  /** Why the judge was skipped (e.g. no backend configured), when it was. */
+  judge_skip_reason?: string | null;
   generated_at: string;
   dataset?: Record<string, unknown> | null;
 }

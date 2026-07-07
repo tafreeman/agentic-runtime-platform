@@ -46,6 +46,14 @@ export default function EvaluationRubricAccordion({
   }
 
   const hardGates = detail.hard_gates;
+  // Older stored payloads predate the explicit flag; a null judge layer means
+  // the judge never contributed to those either.
+  const judgeSkipped =
+    detail.judge_skipped ??
+    (detail.score_layers ? detail.score_layers.layer2_judge == null : false);
+  const judgeSkipReason =
+    detail.judge_skip_reason ??
+    "LLM judge did not run; score is objective+advisory only";
 
   return (
     <div className="space-y-3 py-2">
@@ -67,6 +75,11 @@ export default function EvaluationRubricAccordion({
         <BPill tone={detail.passed ? "ok" : "err"}>
           {detail.passed ? "pass" : "fail"}
         </BPill>
+        {judgeSkipped && (
+          <span title={judgeSkipReason}>
+            <BPill tone="warn">judge skipped</BPill>
+          </span>
+        )}
         <span className="text-b-text-dim">
           {detail.rubric_id} v{detail.rubric_version}
         </span>
@@ -140,6 +153,12 @@ export default function EvaluationRubricAccordion({
               · advisory {detail.score_layers.layer3_advisory.toFixed(1)}
             </span>
           </div>
+          {judgeSkipped && (
+            <div className="text-b-amber">
+              [!] judge skipped
+              {detail.judge_skip_reason ? ` — ${detail.judge_skip_reason}` : ""}
+            </div>
+          )}
         </div>
       )}
 

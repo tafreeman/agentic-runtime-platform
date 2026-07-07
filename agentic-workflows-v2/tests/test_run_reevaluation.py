@@ -223,6 +223,44 @@ class TestEvaluateRunEndpoint:
         assert kwargs["rubric"] == "custom_rubric"
         assert kwargs["enforce_hard_gates"] is False
 
+    def test_dataset_sample_rehydrated_from_run_meta(self, monkeypatch, tmp_path):
+        """Re-evaluation reloads the local dataset sample (issue #172).
+
+        The persisted run log stores only dataset metadata; the scorer must
+        get the actual sample back — including the loader-inlined
+        ``golden_output_text`` — or replayed scores lose the overlap term.
+        """
+        record = _run_record(
+            dataset={
+                "source": "local",
+                "dataset_id": (
+                    "agentic-workflows-v2/tests/fixtures/datasets/"
+                    "golden_cases_smoke.json"
+                ),
+                "sample_index": 0,
+                "task_id": "golden_smoke_ok",
+            }
+        )
+        _write_run(tmp_path, record)
+        client = _client(monkeypatch, tmp_path)
+
+        response = client.post(f"/api/runs/{_RUN_FILENAME}/evaluate")
+
+        assert response.status_code == 200
+        sample = self.captured["kwargs"]["dataset_sample"]
+        assert sample is not None
+        assert sample["case_id"] == "golden_smoke_ok"
+        assert "boundary contract" in sample["golden_output_text"]
+
+    def test_dataset_sample_none_when_meta_unresolvable(self, monkeypatch, tmp_path):
+        _write_run(tmp_path, _run_record())  # meta has no dataset_id
+        client = _client(monkeypatch, tmp_path)
+
+        response = client.post(f"/api/runs/{_RUN_FILENAME}/evaluate")
+
+        assert response.status_code == 200
+        assert self.captured["kwargs"]["dataset_sample"] is None
+
     def test_unknown_run_returns_404(self, monkeypatch, tmp_path):
         client = _client(monkeypatch, tmp_path)
         response = client.post("/api/runs/nope.json/evaluate")

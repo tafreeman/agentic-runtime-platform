@@ -1,0 +1,14 @@
+{
+  "failed_steps": [],
+  "final_output": {
+    "review": "The clamp function raises TypeError when lower exceeds upper instead of honoring the boundary contract",
+    "summary": "boundary contract violation detected in clamp implementation; recommend returning clamped value"
+  },
+  "steps": {
+    "analyze": {
+      "outputs": {
+        "review": null
+      }
+    }
+  }
+}
