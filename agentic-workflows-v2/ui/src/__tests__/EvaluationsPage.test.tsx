@@ -7,6 +7,7 @@ import EvaluationsPage from "../pages/EvaluationsPage";
 
 const mockUseRuns = vi.fn();
 const mockEvaluateRun = vi.fn();
+const mockCompareRuns = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRuns: () => mockUseRuns(),
@@ -14,6 +15,7 @@ vi.mock("../hooks/useRuns", () => ({
 
 vi.mock("../api/client", () => ({
   evaluateRun: (filename: string) => mockEvaluateRun(filename),
+  compareRuns: (request: unknown) => mockCompareRuns(request),
 }));
 
 function renderPage(): ReturnType<typeof render> {
@@ -180,6 +182,65 @@ describe("EvaluationsPage", () => {
         screen.getByText(/scored — refresh to see details/i)
       ).toBeInTheDocument()
     );
+  });
+
+  it("compares two picked runs head-to-head from the compare band", async () => {
+    mockUseRuns.mockReturnValue({
+      isLoading: false,
+      data: [SCORED_RUN, UNSCORED_RUN],
+    });
+    mockCompareRuns.mockResolvedValue({
+      candidate_a: {
+        filename: "run-1.json",
+        run_id: "run-1",
+        workflow_name: "review_flow",
+        weighted_score: 91.4,
+        overall_score: 90.0,
+        grade: "A",
+        passed: true,
+        criteria: [],
+      },
+      candidate_b: {
+        filename: "run-2.json",
+        run_id: "run-2",
+        workflow_name: "draft_flow",
+        weighted_score: 62.0,
+        overall_score: 60.0,
+        grade: "D",
+        passed: false,
+        criteria: [],
+      },
+      criteria_deltas: [],
+      weighted_score_delta: 29.4,
+      winner: "a",
+      rubric_id: "default",
+    });
+
+    renderPage();
+
+    // The compare band renders alongside the evaluate band.
+    expect(
+      screen.getByRole("region", { name: "compare runs" })
+    ).toBeInTheDocument();
+
+    const compareButton = screen.getByRole("button", { name: /▶ compare/ });
+    expect(compareButton).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "pick run-1.json for candidate A" })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "pick run-2.json for candidate B" })
+    );
+    expect(compareButton).toBeEnabled();
+    fireEvent.click(compareButton);
+
+    await waitFor(() =>
+      expect(mockCompareRuns).toHaveBeenCalledWith(
+        expect.objectContaining({ run_a: "run-1.json", run_b: "run-2.json" })
+      )
+    );
+    expect(await screen.findByTestId("compare-result")).toBeInTheDocument();
   });
 
   it("shows an error line when evaluation fails", async () => {
