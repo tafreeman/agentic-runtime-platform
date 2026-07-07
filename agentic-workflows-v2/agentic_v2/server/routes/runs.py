@@ -363,6 +363,7 @@ async def evaluate_run(
     the run log so the runs list and evaluation pages pick it up.
     """
     from ...scoring.judge import LLMJudge
+    from ..datasets import rehydrate_dataset_sample
     from ..evaluation import score_workflow_result
     from ..execution import _resolve_judge_model
 
@@ -383,17 +384,16 @@ async def evaluate_run(
     judge_model = options.judge_model or _resolve_judge_model()
     judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
 
+    dataset_meta = (
+        run_data.get("dataset") if isinstance(run_data.get("dataset"), dict) else None
+    )
     # Judge scoring is synchronous and may call an LLM — keep it off the
     # event loop.
     scored = await asyncio.to_thread(
         score_workflow_result,
         result,
-        dataset_meta=(
-            run_data.get("dataset")
-            if isinstance(run_data.get("dataset"), dict)
-            else None
-        ),
-        dataset_sample=None,
+        dataset_meta=dataset_meta,
+        dataset_sample=rehydrate_dataset_sample(dataset_meta, tenant.tenant_id),
         rubric=options.rubric_id or options.rubric,
         workflow_definition=workflow_def,
         enforce_hard_gates=options.enforce_hard_gates,
@@ -451,6 +451,7 @@ def _score_run_candidate(
     Returns ``(run_data, scored_payload, filename)``. Raises HTTP 404 when the
     run is missing and HTTP 422 when its log cannot be replayed.
     """
+    from ..datasets import rehydrate_dataset_sample
     from ..evaluation import score_workflow_result
 
     tenant_logger = _tenant_run_logger(tenant)
@@ -465,14 +466,13 @@ def _score_run_candidate(
         ) from exc
 
     workflow_def = _load_workflow_definition_optional(run_data.get("workflow_name"))
+    dataset_meta = (
+        run_data.get("dataset") if isinstance(run_data.get("dataset"), dict) else None
+    )
     scored = score_workflow_result(
         result,
-        dataset_meta=(
-            run_data.get("dataset")
-            if isinstance(run_data.get("dataset"), dict)
-            else None
-        ),
-        dataset_sample=None,
+        dataset_meta=dataset_meta,
+        dataset_sample=rehydrate_dataset_sample(dataset_meta, tenant.tenant_id),
         rubric=options.rubric_id,
         workflow_definition=workflow_def,
         enforce_hard_gates=options.enforce_hard_gates,

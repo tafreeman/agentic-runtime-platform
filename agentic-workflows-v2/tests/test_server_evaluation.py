@@ -113,6 +113,81 @@ def test_load_local_dataset_sample_reads_fixture():
     assert "dataset_path" in meta
 
 
+_GOLDEN_SMOKE_DATASET = (
+    "agentic-workflows-v2/tests/fixtures/datasets/golden_cases_smoke.json"
+)
+
+
+def test_load_local_dataset_sample_resolves_golden_output_path():
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=0)
+    assert "golden_output_error" not in meta
+    golden_text = sample["golden_output_text"]
+    # Reduced to the golden's final_output subtree, not the run envelope.
+    assert "boundary contract" in golden_text
+    assert "failed_steps" not in golden_text
+
+
+def test_load_local_dataset_sample_missing_golden_records_error():
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=1)
+    assert "golden_output_text" not in sample
+    assert "unreadable" in meta["golden_output_error"]
+
+
+def test_load_local_dataset_sample_golden_escape_rejected():
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=2)
+    assert "golden_output_text" not in sample
+    assert "escapes dataset roots" in meta["golden_output_error"]
+
+
+def _build_generated_result(content: str, duration_s: float) -> WorkflowResult:
+    start = datetime(2026, 7, 7, 12, 0, 0, tzinfo=UTC)
+    result = WorkflowResult(
+        workflow_id=f"wf-diff-{duration_s}",
+        workflow_name="code_review",
+        overall_status=StepStatus.SUCCESS,
+        start_time=start,
+        end_time=start + timedelta(seconds=duration_s),
+        final_output={"review": content, "summary": content},
+    )
+    result.add_step(
+        StepResult(
+            step_name="analyze",
+            status=StepStatus.SUCCESS,
+            input_data={},
+            output_data={"review": content},
+            start_time=start,
+            end_time=start + timedelta(seconds=duration_s),
+        )
+    )
+    return result
+
+
+def test_issue_172_distinct_runs_score_distinctly_with_loaded_golden():
+    """Regression for issue #172: three synthetic runs with different content
+    and durations all scored an identical 83.97/B because the golden never
+    loaded, the judge silently skipped, and the duration penalty saturated.
+    With the golden resolved by the loader, differing runs must diverge."""
+    sample, _meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=0)
+    on_golden = _build_generated_result(
+        "The clamp function raises TypeError when lower exceeds upper instead "
+        "of honoring the boundary contract; violation detected in clamp "
+        "implementation",
+        duration_s=45.0,
+    )
+    off_golden = _build_generated_result(
+        "totally unrelated artifact text mentioning nothing relevant",
+        duration_s=300.0,
+    )
+    eval_on = score_workflow_result(on_golden, dataset_meta=None, dataset_sample=sample)
+    eval_off = score_workflow_result(
+        off_golden, dataset_meta=None, dataset_sample=sample
+    )
+    assert eval_on["weighted_score"] > eval_off["weighted_score"]
+    # Key-free run: the judge layer is absent and the skip must be loud.
+    assert eval_on["judge_skipped"] is True
+    assert eval_on["judge_skip_reason"] == "no judge configured"
+
+
 def test_adapt_sample_to_workflow_inputs_materializes_file(tmp_path: Path):
     schema = {
         "code_file": WorkflowInput(name="code_file", type="string", required=True),
@@ -653,7 +728,9 @@ async def test_sse_payload_includes_hard_gates(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
+    await workflow_routes.run_workflow(
+        request, background, _build_http_request(), FAKE_TENANT
+    )
     for task in background.tasks:
         await task()
 
@@ -699,6 +776,7 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
         execution_mod, "_get_lc_runner", lambda: type("R", (), {"run": _fake_run})()
     )
     monkeypatch.setattr(execution_mod.websocket.manager, "broadcast", _fake_broadcast)
+
     # execution.py calls run_logger.for_tenant(tenant_id).log(...) — patch
     # for_tenant to return a stub whose .log captures kwargs.
     class _FakeLogger:
@@ -706,7 +784,9 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
             captured.update(kwargs)
             return Path("dummy.json")
 
-    monkeypatch.setattr(execution_mod.run_logger, "for_tenant", lambda _tid: _FakeLogger())
+    monkeypatch.setattr(
+        execution_mod.run_logger, "for_tenant", lambda _tid: _FakeLogger()
+    )
 
     request = WorkflowRunRequest(
         workflow="dummy_workflow",
@@ -720,7 +800,9 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
+    await workflow_routes.run_workflow(
+        request, background, _build_http_request(), FAKE_TENANT
+    )
     for task in background.tasks:
         await task()
 
@@ -772,7 +854,9 @@ async def test_sse_payload_schema_validation(monkeypatch):
         ),
     )
     background = BackgroundTasks()
-    await workflow_routes.run_workflow(request, background, _build_http_request(), FAKE_TENANT)
+    await workflow_routes.run_workflow(
+        request, background, _build_http_request(), FAKE_TENANT
+    )
     for task in background.tasks:
         await task()
 

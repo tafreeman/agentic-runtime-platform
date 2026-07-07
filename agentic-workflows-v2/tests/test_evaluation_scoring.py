@@ -23,6 +23,7 @@ from agentic_v2.scoring.evaluation_scoring import (
     score_workflow_result_impl,
     validate_evaluation_payload_schema,
 )
+from agentic_v2.scoring.judge import LLMJudge
 from agentic_v2.scoring.scoring_criteria import (
     _advisory_efficiency_score,
     _advisory_similarity_score,
@@ -737,6 +738,14 @@ class TestExtractExpectedText:
         sample = {"expected_output": "first", "solution": "second"}
         assert _extract_expected_text(sample) == "first"
 
+    def test_golden_output_text_resolved_by_loader(self) -> None:
+        sample = {"golden_output_text": "from-file", "golden_patch": "patch"}
+        assert _extract_expected_text(sample) == "from-file"
+
+    def test_inline_expected_output_beats_golden_output_text(self) -> None:
+        sample = {"expected_output": "inline", "golden_output_text": "from-file"}
+        assert _extract_expected_text(sample) == "inline"
+
     def test_golden_patch_fallback(self) -> None:
         sample = {"golden_patch": "patch-text"}
         assert _extract_expected_text(sample) == "patch-text"
@@ -1120,3 +1129,138 @@ class TestScoreWorkflowResultImpl:
             compute_criterion_score_fn=lambda c, r, e: 10.0,
         )
         assert payload["passed"] is False
+
+
+# ---------------------------------------------------------------------------
+# Efficiency SLO normalization (issue #172 regression)
+# ---------------------------------------------------------------------------
+
+
+def _result_with_duration(seconds: float) -> WorkflowResult:
+    start = datetime(2026, 7, 7, 12, 0, 0, tzinfo=UTC)
+    result = WorkflowResult(
+        workflow_id="wf-duration",
+        workflow_name="test_workflow",
+        overall_status=StepStatus.SUCCESS,
+        start_time=start,
+        end_time=start + timedelta(seconds=seconds),
+        final_output={"out": "a run output with real content in it"},
+    )
+    result.add_step(
+        StepResult(
+            step_name="s1",
+            status=StepStatus.SUCCESS,
+            input_data={},
+            output_data={},
+            start_time=start,
+            end_time=start + timedelta(seconds=seconds),
+        )
+    )
+    return result
+
+
+class TestEfficiencySloNormalization:
+    def test_sub_slo_duration_scores_full(self) -> None:
+        score = _compute_criterion_score("efficiency", _result_with_duration(1.0), "")
+        assert score == pytest.approx(100.0)
+
+    def test_durations_beyond_old_cap_still_differentiate(self) -> None:
+        """Regression for issue #172: 45s and 300s runs must not tie.
+
+        The old ``min(seconds * 1.5, 55)`` penalty saturated at ~37s, so
+        every longer run scored an identical 45.0.
+        """
+        score_45s = _compute_criterion_score(
+            "efficiency", _result_with_duration(45.0), ""
+        )
+        score_300s = _compute_criterion_score(
+            "efficiency", _result_with_duration(300.0), ""
+        )
+        assert score_300s < score_45s
+
+    def test_duration_beyond_slo_bad_floors_at_retry_share(self) -> None:
+        score = _compute_criterion_score("efficiency", _result_with_duration(300.0), "")
+        # Duration term exhausted; zero retries keep the 30% retry share.
+        assert score == pytest.approx(30.0)
+
+    def test_matches_advisory_efficiency_formula(self) -> None:
+        result = _result_with_duration(45.0)
+        criterion = _compute_criterion_score("efficiency", result, "")
+        advisory = _advisory_efficiency_score(result=result, normalized_scores={})
+        assert criterion == pytest.approx(advisory * 100.0)
+
+
+# ---------------------------------------------------------------------------
+# Judge skip visibility (issue #172)
+# ---------------------------------------------------------------------------
+
+
+def _judge_response(*, prompt: str, model: str, temperature: float) -> dict:
+    return {
+        "criteria": [
+            {"name": "correctness", "score": 4, "evidence": "solid output"},
+            {"name": "code_quality", "score": 4, "evidence": "clean structure"},
+            {"name": "efficiency", "score": 3, "evidence": "acceptable latency"},
+            {"name": "documentation", "score": 4, "evidence": "documented"},
+        ]
+    }
+
+
+def _raising_judge_response(*, prompt: str, model: str, temperature: float) -> dict:
+    raise RuntimeError("No LLM backend configured for judge")
+
+
+class TestJudgeSkipVisibility:
+    def test_no_judge_marks_payload_skipped(self) -> None:
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=None
+        )
+        assert payload["judge_skipped"] is True
+        assert payload["judge_skip_reason"] == "no judge configured"
+        assert payload["score_layers"]["layer2_judge"] is None
+
+    def test_failing_judge_marks_payload_skipped_with_reason(self) -> None:
+        judge = LLMJudge(response_provider=_raising_judge_response)
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=judge
+        )
+        assert payload["judge_skipped"] is True
+        assert "RuntimeError" in payload["judge_skip_reason"]
+        assert payload["score_layers"]["layer2_judge"] is None
+        assert payload["hybrid_weights"].keys() == {"objective", "advisory"}
+
+    def test_successful_judge_is_not_skipped(self) -> None:
+        judge = LLMJudge(response_provider=_judge_response)
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=judge
+        )
+        assert payload["judge_skipped"] is False
+        assert payload["judge_skip_reason"] is None
+        assert payload["score_layers"]["layer2_judge"] is not None
+
+    def test_judge_required_config_escalates_skip_to_error(self) -> None:
+        with patch(
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
+            return_value={"evaluation": {"scoring": {"judge_required": True}}},
+        ):
+            with pytest.raises(RuntimeError, match="judge_required"):
+                score_workflow_result_impl(
+                    _make_result(),
+                    dataset_meta=None,
+                    dataset_sample=None,
+                    judge=None,
+                )
+
+    def test_judge_required_config_escalates_failing_judge(self) -> None:
+        judge = LLMJudge(response_provider=_raising_judge_response)
+        with patch(
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
+            return_value={"evaluation": {"scoring": {"judge_required": True}}},
+        ):
+            with pytest.raises(RuntimeError, match="judge_required"):
+                score_workflow_result_impl(
+                    _make_result(),
+                    dataset_meta=None,
+                    dataset_sample=None,
+                    judge=judge,
+                )

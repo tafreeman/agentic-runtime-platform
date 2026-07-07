@@ -46,15 +46,15 @@ def _tokenize(text: str) -> set[str]:
     Returns:
         Set of unique lowercase token strings.
     """
-    return {
-        token for token in re.findall(r"\w+", text.lower()) if len(token) > 2
-    }
+    return {token for token in re.findall(r"\w+", text.lower()) if len(token) > 2}
 
 
 def _extract_expected_text(sample: dict[str, Any]) -> str:
     """Extract the expected/golden output text from a dataset sample.
 
-    Searches the sample dict for keys ``expected_output``, ``golden_patch``,
+    Searches the sample dict for keys ``expected_output``,
+    ``golden_output_text`` (inlined by the dataset loader from a sample's
+    ``golden_output_path`` file reference), ``golden_patch``,
     ``answer.body``, and ``solution`` in priority order.
 
     Args:
@@ -67,6 +67,8 @@ def _extract_expected_text(sample: dict[str, Any]) -> str:
         return ""
     if isinstance(sample.get("expected_output"), str):
         return sample["expected_output"]
+    if isinstance(sample.get("golden_output_text"), str):
+        return sample["golden_output_text"]
     if isinstance(sample.get("golden_patch"), str):
         return sample["golden_patch"]
     answer = sample.get("answer")
@@ -93,11 +95,42 @@ def _has_code_content(final_output: Any) -> bool:
     return False
 
 
-def _output_text(result: WorkflowResult) -> str:
-    """Serialize the workflow's final output to a JSON string for scoring.
+def _strip_null_leaves(obj: Any) -> Any:
+    """Recursively drop null/empty leaves from dicts and lists."""
+    if isinstance(obj, dict):
+        return {
+            k: _strip_null_leaves(v)
+            for k, v in obj.items()
+            if v not in (None, "", {}, [])
+        }
+    if isinstance(obj, list):
+        return [
+            _strip_null_leaves(item) for item in obj if item not in (None, "", {}, [])
+        ]
+    return obj
+
+
+def serialize_output_text(value: Any) -> str:
+    """Serialize an output-shaped value to a JSON string for overlap scoring.
 
     Null/empty leaf values are omitted so they don't inflate richness or
-    overlap scores when the workflow produced no real output.
+    overlap scores.  Used for both generated workflow outputs and loaded
+    golden outputs so the two sides tokenize symmetrically.
+
+    Args:
+        value: Any JSON-serializable output value (dict, list, or scalar).
+
+    Returns:
+        JSON-serialized string, or ``str()`` fallback on error.
+    """
+    try:
+        return json.dumps(_strip_null_leaves(value), default=str)
+    except (TypeError, ValueError, OverflowError):
+        return str(value)
+
+
+def _output_text(result: WorkflowResult) -> str:
+    """Serialize the workflow's final output to a JSON string for scoring.
 
     Args:
         result: The completed workflow result.
@@ -106,19 +139,7 @@ def _output_text(result: WorkflowResult) -> str:
         JSON-serialized output string, or ``str()`` fallback on error.
     """
     final = getattr(result, "final_output", None) or getattr(result, "outputs", {})
-
-    def _strip_nulls(obj: Any) -> Any:
-        if isinstance(obj, dict):
-            stripped = {k: _strip_nulls(v) for k, v in obj.items() if v not in (None, "", {}, [])}
-            return stripped
-        if isinstance(obj, list):
-            return [_strip_nulls(item) for item in obj if item not in (None, "", {}, [])]
-        return obj
-
-    try:
-        return json.dumps(_strip_nulls(final), default=str)
-    except (TypeError, ValueError, OverflowError):
-        return str(final)
+    return serialize_output_text(final)
 
 
 def _text_overlap_score(expected: str, generated: str) -> float:
@@ -220,6 +241,16 @@ _QUALITY_CRITERIA = (
 _EFFICIENCY_CRITERIA = ("efficiency", "performance")
 _DOCUMENTATION_CRITERIA = ("documentation", "citation_quality", "coherence")
 
+# Execution SLO band shared by the efficiency criterion and the advisory
+# efficiency layer: durations at/below the good bound score 1.0, at/above the
+# bad bound score 0.0, linear in between (same for retries).
+_EFFICIENCY_SLO_GOOD_SECONDS = 2.0
+_EFFICIENCY_SLO_BAD_SECONDS = 60.0
+_RETRY_SLO_GOOD = 0.0
+_RETRY_SLO_BAD = 8.0
+_EFFICIENCY_DURATION_WEIGHT = 0.7
+_EFFICIENCY_RETRY_WEIGHT = 0.3
+
 
 @dataclass(frozen=True)
 class _ScoringSignals:
@@ -312,12 +343,32 @@ def _score_quality(signals: _ScoringSignals) -> float:
 
 
 def _score_efficiency(signals: _ScoringSignals) -> float:
-    """Score efficiency-family criteria: penalize execution duration and retries."""
+    """Score efficiency-family criteria via SLO-bounded normalization.
+
+    Duration is normalized against the shared execution SLO band
+    (``_EFFICIENCY_SLO_GOOD_SECONDS`` good .. ``_EFFICIENCY_SLO_BAD_SECONDS``
+    bad) and retries against the retry band, then blended 70/30 — the same
+    formula as :func:`_advisory_efficiency_score`.  The previous
+    ``min(seconds * 1.5, 55)`` penalty saturated at ~37s, making every
+    longer run score identically regardless of how much longer it ran.
+    """
     seconds = signals.duration_ms / 1000.0
-    duration_penalty = min(seconds * 1.5, 55.0)
-    retry_penalty = min(signals.retries * 5.0, 20.0)
-    score = 100.0 - duration_penalty - retry_penalty
-    return _clamp(score)
+    duration_norm = normalize_score(
+        seconds,
+        "lower_is_better",
+        slo_good=_EFFICIENCY_SLO_GOOD_SECONDS,
+        slo_bad=_EFFICIENCY_SLO_BAD_SECONDS,
+    )
+    retry_norm = normalize_score(
+        signals.retries,
+        "lower_is_better",
+        slo_good=_RETRY_SLO_GOOD,
+        slo_bad=_RETRY_SLO_BAD,
+    )
+    blended = (duration_norm * _EFFICIENCY_DURATION_WEIGHT) + (
+        retry_norm * _EFFICIENCY_RETRY_WEIGHT
+    )
+    return _clamp(blended * 100.0)
 
 
 def _score_documentation(signals: _ScoringSignals, result: WorkflowResult) -> float:
@@ -325,9 +376,7 @@ def _score_documentation(signals: _ScoringSignals, result: WorkflowResult) -> fl
     if not signals.output_text:
         return 20.0
     chars = len(signals.output_text)
-    final_out = getattr(result, "final_output", None) or getattr(
-        result, "outputs", {}
-    )
+    final_out = getattr(result, "final_output", None) or getattr(result, "outputs", {})
     key_count = len(final_out.keys()) if isinstance(final_out, dict) else 1
     # Documentation-style criteria use output richness as a heuristic proxy,
     # not as a guarantee of correctness.
@@ -502,16 +551,18 @@ def _advisory_efficiency_score(
     duration_norm = normalize_score(
         duration_seconds,
         "lower_is_better",
-        slo_good=2.0,
-        slo_bad=60.0,
+        slo_good=_EFFICIENCY_SLO_GOOD_SECONDS,
+        slo_bad=_EFFICIENCY_SLO_BAD_SECONDS,
     )
     retry_norm = normalize_score(
         result.total_retries,
         "lower_is_better",
-        slo_good=0.0,
-        slo_bad=8.0,
+        slo_good=_RETRY_SLO_GOOD,
+        slo_bad=_RETRY_SLO_BAD,
     )
-    return (duration_norm * 0.7) + (retry_norm * 0.3)
+    return (duration_norm * _EFFICIENCY_DURATION_WEIGHT) + (
+        retry_norm * _EFFICIENCY_RETRY_WEIGHT
+    )
 
 
 # =============================================================================

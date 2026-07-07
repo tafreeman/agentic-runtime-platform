@@ -183,6 +183,12 @@ evaluation:
 
     pass_threshold: 70
 
+    # When true, an unconfigured or failing LLM judge fails the evaluation
+    # instead of silently renormalizing onto objective+advisory layers.
+    # Either way the skip is recorded in the payload (judge_skipped /
+    # judge_skip_reason). Keep false for key-free runs (AGENTIC_NO_LLM=1).
+    judge_required: false
+
     aggregation:
       method: weighted_average
       handle_missing: skip # skip, zero, default
