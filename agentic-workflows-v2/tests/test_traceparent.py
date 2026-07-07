@@ -8,12 +8,22 @@ Coverage targets:
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from starlette.testclient import TestClient
+
+# Tests that ``patch("opentelemetry...")`` need the real package importable
+# (mock.patch import-resolves the target); the tracing extra is optional, so
+# skip those tests — and only those — when it is absent. The otel-absent
+# paths (e.g. ``test_returns_none_when_otel_not_installed``) still run.
+_requires_otel = pytest.mark.skipif(
+    importlib.util.find_spec("opentelemetry") is None,
+    reason="opentelemetry not installed (tracing extra)",
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -66,6 +76,7 @@ class TestBuildTraceparent:
         # ImportError path — result is None
         assert result is None
 
+    @_requires_otel
     def test_returns_none_for_invalid_span_context(self) -> None:
         """build_traceparent() returns None when the span context is invalid."""
         ctx = _make_fake_span_context(is_valid=False)
@@ -78,6 +89,7 @@ class TestBuildTraceparent:
 
         assert result is None
 
+    @_requires_otel
     def test_returns_none_for_zero_trace_id(self) -> None:
         """build_traceparent() returns None when trace_id is all-zeros."""
         ctx = _make_fake_span_context(trace_id=0, span_id=0x00F067AA0BA902B7)
@@ -90,6 +102,7 @@ class TestBuildTraceparent:
 
         assert result is None
 
+    @_requires_otel
     def test_returns_valid_traceparent(self) -> None:
         """build_traceparent() returns a correctly formatted W3C traceparent."""
         ctx = _make_fake_span_context()
@@ -109,6 +122,7 @@ class TestBuildTraceparent:
         assert len(parts[2]) == 16  # parent-id
         assert parts[3] in ("00", "01")  # trace-flags
 
+    @_requires_otel
     def test_sampled_flag_is_01(self) -> None:
         """Sampled spans produce trace flags '01'."""
         ctx = _make_fake_span_context(trace_flags=0x1)
@@ -123,6 +137,7 @@ class TestBuildTraceparent:
         traceparent, _ = result
         assert traceparent.endswith("-01")
 
+    @_requires_otel
     def test_not_sampled_flag_is_00(self) -> None:
         """Not-sampled spans produce trace flags '00'."""
         ctx = _make_fake_span_context(trace_flags=0x0)
@@ -137,6 +152,7 @@ class TestBuildTraceparent:
         traceparent, _ = result
         assert traceparent.endswith("-00")
 
+    @_requires_otel
     def test_tracestate_included_when_present(self) -> None:
         """build_traceparent() returns non-empty tracestate when the span has it."""
         ctx = _make_fake_span_context()
@@ -242,6 +258,7 @@ class TestTraceparentMiddlewareEnabled:
 
         return app, span
 
+    @_requires_otel
     def test_traceparent_header_injected(self) -> None:
         ctx = _make_fake_span_context()
         app, span = self._make_app_with_span(ctx)
@@ -261,6 +278,7 @@ class TestTraceparentMiddlewareEnabled:
         assert len(parts[1]) == 32
         assert len(parts[2]) == 16
 
+    @_requires_otel
     def test_server_timing_header_injected(self) -> None:
         ctx = _make_fake_span_context()
         app, span = self._make_app_with_span(ctx)
@@ -277,6 +295,7 @@ class TestTraceparentMiddlewareEnabled:
         # The trace ID from our fake span is present
         assert "4bf92f3577b34da6a3ce929d0e0e4736" in server_timing
 
+    @_requires_otel
     def test_no_header_when_build_traceparent_returns_none(self) -> None:
         """If no active span, headers are not injected."""
         ctx = _make_fake_span_context(is_valid=False)
@@ -334,6 +353,7 @@ class TestWebSocketTraceContext:
     """WebSocket handshake sends trace_context when tracing is enabled."""
 
     @pytest.mark.asyncio
+    @_requires_otel
     async def test_trace_context_message_sent_when_tracing_enabled(self) -> None:
         from agentic_v2.server.websocket import ConnectionManager
 
@@ -396,6 +416,7 @@ class TestWebSocketTraceContext:
 
         ws.send_json.assert_not_called()
 
+    @_requires_otel
     def test_trace_context_message_format(self) -> None:
         """trace_context message contains the expected keys."""
         ctx = _make_fake_span_context()

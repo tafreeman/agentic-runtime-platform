@@ -878,8 +878,14 @@ class TestConditionalFanOut:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.usefixtures("backendless_baseline")
 class TestModelRegistry:
-    """Tests for model provider registry."""
+    """Tests for model provider registry.
+
+    Asserts real provider construction and key-required raises, which only
+    exist outside placeholder mode — the fixture neutralises an ambient
+    ``AGENTIC_NO_LLM=1`` that would short-circuit ``get_chat_model``.
+    """
 
     def test_unsupported_provider_raises(self):
         from agentic_v2.langchain.models import get_chat_model

@@ -651,10 +651,12 @@ def test_build_prompt_fallback_anchors_when_no_scale():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.usefixtures("backendless_baseline")
 def test_invoke_prompt_raises_when_no_backend():
     """RuntimeError is raised when no LLM backend is configured."""
     judge = LLMJudge()
-    # The conftest gives us a backend-less client, so this should error
+    # The baseline fixture guarantees a backend-less client (an ambient
+    # AGENTIC_NO_LLM=1 would otherwise install a placeholder backend)
     with pytest.raises(RuntimeError, match="No LLM backend configured"):
         judge._invoke_prompt("test prompt")
 

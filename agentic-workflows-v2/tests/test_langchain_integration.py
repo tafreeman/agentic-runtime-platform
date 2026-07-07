@@ -11,15 +11,22 @@ import os
 import pytest
 from langgraph.checkpoint.memory import MemorySaver
 
+from agentic_v2.contracts import StepStatus
 from agentic_v2.langchain import WorkflowRunner, compile_workflow, load_workflow_config
 from agentic_v2.langchain.state import initial_state
 
-# Skip when neither set of API credentials is available in the environment
+# These tests drive real provider calls, so they must never run in the fast
+# unit pass — an ambient GH_TOKEN (present in many CI/sandbox containers for
+# git operations) would otherwise activate them there. The credentials skip
+# stays for anyone running the integration pass without keys.
 _HAS_CREDENTIALS = bool(os.environ.get("GH_TOKEN") or os.environ.get("GOOGLE_API_KEY"))
-pytestmark = pytest.mark.skipif(
-    not _HAS_CREDENTIALS,
-    reason="Requires external LLM API credentials (GH_TOKEN or GOOGLE_API_KEY)",
-)
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not _HAS_CREDENTIALS,
+        reason="Requires external LLM API credentials (GH_TOKEN or GOOGLE_API_KEY)",
+    ),
+]
 
 
 class TestEndToEndExecution:
@@ -34,23 +41,23 @@ class TestEndToEndExecution:
 
         assert result.run_id, "run_id should be set"
         assert result.workflow_name == "code_review"
-        assert result.elapsed_seconds >= 0
-        assert isinstance(result.outputs, dict)
-        assert isinstance(result.steps, dict)
-        assert isinstance(result.token_counts, dict)
-        assert isinstance(result.models_used, dict)
+        assert result.metadata["elapsed_seconds"] >= 0
+        assert isinstance(result.final_output, dict)
+        assert isinstance(result.steps, list)
+        assert isinstance(result.metadata.get("token_counts", {}), dict)
+        assert isinstance(result.metadata.get("models_used", {}), dict)
 
     @pytest.mark.asyncio
     async def test_async_workflow_execution(self):
         """Execute a workflow asynchronously."""
         runner = WorkflowRunner()
         result = await runner.run(
-            "code_review", code_file="def bar(): pass", review_depth="full"
+            "code_review", code_file="def bar(): pass", review_depth="deep"
         )
 
         assert result.run_id
-        assert result.status in ("success", "partial", "failed")
-        assert result.elapsed_seconds >= 0
+        assert result.overall_status in (StepStatus.SUCCESS, StepStatus.FAILED)
+        assert result.metadata["elapsed_seconds"] >= 0
 
     def test_workflow_with_errors(self):
         """Verify error handling in workflow execution."""
@@ -81,7 +88,7 @@ class TestCheckpointing:
         )
 
         assert result.run_id == thread_id
-        assert result.status in ("success", "partial")
+        assert result.overall_status is StepStatus.SUCCESS
 
     def test_checkpoint_state_inspection(self):
         """Inspect checkpoint state for a thread."""

@@ -34,7 +34,11 @@ jobs:
           print('Critical imports OK')
           "
       - name: Pytest smoke (unit only)
+        # pipefail is NOT the default for workflow `run:` steps (only an
+        # explicit `shell: bash` opts in), so without it the `| tail` pipe
+        # swallows pytest's exit code and a red suite reports green.
         run: |
+          set -euo pipefail
           cd agentic-workflows-v2
           python -m pytest tests/ -q \
             -m "not integration and not slow" \
@@ -359,7 +363,11 @@ jobs:
       - name: Run unit tests (no API keys)
         env:
           AGENTIC_NO_LLM: "1"
+        # pipefail is NOT the default for workflow `run:` steps (only an
+        # explicit `shell: bash` opts in), so without it the `| tail` pipe
+        # swallows pytest's exit code and a red suite reports green.
         run: |
+          set -euo pipefail
           cd agentic-workflows-v2
           python -m pytest tests/ -q \
             -m "not integration and not slow" \
