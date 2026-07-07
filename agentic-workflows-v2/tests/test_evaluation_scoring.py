@@ -15,6 +15,7 @@ from agentic_v2.contracts import StepResult, StepStatus, WorkflowResult
 from agentic_v2.scoring.evaluation_scoring import (
     CriterionFloorResult,
     HardGateResult,
+    JudgeRequiredError,
     _resolve_rubric,
     _step_scores,
     _validate_rubric_weights,
@@ -35,6 +36,7 @@ from agentic_v2.scoring.scoring_criteria import (
     _output_text,
     _text_overlap_score,
     _tokenize,
+    serialize_output_text,
 )
 from agentic_v2.workflows.loader import (
     WorkflowCriterion,
@@ -777,6 +779,11 @@ class TestOutputText:
         assert '"key"' in text
         assert '"value"' in text
 
+    def test_plain_string_passes_through_unescaped(self) -> None:
+        # JSON-encoding a bare string would add quotes/escapes, tokenizing
+        # asymmetrically against inline expected_output text.
+        assert serialize_output_text("naïve\nreview text") == "naïve\nreview text"
+
 
 # ---------------------------------------------------------------------------
 # _text_overlap_score
@@ -1217,6 +1224,7 @@ class TestJudgeSkipVisibility:
         )
         assert payload["judge_skipped"] is True
         assert payload["judge_skip_reason"] == "no judge configured"
+        assert payload["judge_skip_code"] == "not_configured"
         assert payload["score_layers"]["layer2_judge"] is None
 
     def test_failing_judge_marks_payload_skipped_with_reason(self) -> None:
@@ -1226,8 +1234,32 @@ class TestJudgeSkipVisibility:
         )
         assert payload["judge_skipped"] is True
         assert "RuntimeError" in payload["judge_skip_reason"]
+        assert payload["judge_skip_code"] == "judge_error"
         assert payload["score_layers"]["layer2_judge"] is None
         assert payload["hybrid_weights"].keys() == {"objective", "advisory"}
+
+    def test_arbitrary_provider_exception_still_skips(self) -> None:
+        """Provider errors are not curated exception types (executionkit
+        raises plain Exception subclasses) — they must record a skip, not
+        crash the evaluation."""
+
+        class _ProviderOutage(Exception):
+            pass
+
+        def _outage(*, prompt: str, model: str, temperature: float) -> dict:
+            raise _ProviderOutage("429 rate limited")
+
+        judge = LLMJudge(response_provider=_outage)
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=judge
+        )
+        assert payload["judge_skipped"] is True
+        assert payload["judge_skip_code"] == "judge_error"
+        assert "_ProviderOutage" in payload["judge_skip_reason"]
+        # No contradictory partial judge annotations may survive the skip.
+        for criterion in payload["criteria"]:
+            assert "judge_raw_score" not in criterion
+            assert "judge_evidence" not in criterion
 
     def test_successful_judge_is_not_skipped(self) -> None:
         judge = LLMJudge(response_provider=_judge_response)
@@ -1236,6 +1268,7 @@ class TestJudgeSkipVisibility:
         )
         assert payload["judge_skipped"] is False
         assert payload["judge_skip_reason"] is None
+        assert payload["judge_skip_code"] is None
         assert payload["score_layers"]["layer2_judge"] is not None
 
     def test_judge_required_config_escalates_skip_to_error(self) -> None:
@@ -1243,7 +1276,7 @@ class TestJudgeSkipVisibility:
             "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={"evaluation": {"scoring": {"judge_required": True}}},
         ):
-            with pytest.raises(RuntimeError, match="judge_required"):
+            with pytest.raises(JudgeRequiredError, match="judge_required"):
                 score_workflow_result_impl(
                     _make_result(),
                     dataset_meta=None,
@@ -1257,10 +1290,100 @@ class TestJudgeSkipVisibility:
             "agentic_v2.scoring.evaluation_scoring._load_eval_config",
             return_value={"evaluation": {"scoring": {"judge_required": True}}},
         ):
-            with pytest.raises(RuntimeError, match="judge_required"):
+            with pytest.raises(JudgeRequiredError, match="judge_required"):
                 score_workflow_result_impl(
                     _make_result(),
                     dataset_meta=None,
                     dataset_sample=None,
                     judge=judge,
                 )
+
+    def test_judge_required_string_false_is_not_required(self) -> None:
+        """A quoted "false" from a config overlay must not enable hard-fail."""
+        with patch(
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
+            return_value={"evaluation": {"scoring": {"judge_required": "false"}}},
+        ):
+            payload = score_workflow_result_impl(
+                _make_result(), dataset_meta=None, dataset_sample=None, judge=None
+            )
+        assert payload["judge_skipped"] is True
+
+    def test_null_scoring_section_defaults_to_not_required(self) -> None:
+        with patch(
+            "agentic_v2.scoring.evaluation_scoring._load_eval_config",
+            return_value={"evaluation": {"scoring": None}},
+        ):
+            payload = score_workflow_result_impl(
+                _make_result(), dataset_meta=None, dataset_sample=None, judge=None
+            )
+        assert payload["judge_skipped"] is True
+
+
+class TestExpectedTextPresence:
+    def test_flag_false_without_expected_text(self) -> None:
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=None
+        )
+        assert payload["expected_text_present"] is False
+
+    def test_flag_true_with_expected_text(self) -> None:
+        payload = score_workflow_result_impl(
+            _make_result(),
+            dataset_meta=None,
+            dataset_sample={"expected_output": "hello world testing"},
+            judge=None,
+        )
+        assert payload["expected_text_present"] is True
+
+
+class TestEfficiencySloConfig:
+    def test_band_override_changes_score(self) -> None:
+        with patch(
+            "agentic_v2.scoring.scoring_criteria._load_eval_config",
+            return_value={
+                "evaluation": {
+                    "scoring": {
+                        "efficiency_slo": {"good_seconds": 2.0, "bad_seconds": 300.0}
+                    }
+                }
+            },
+        ):
+            widened = _compute_criterion_score(
+                "efficiency", _result_with_duration(120.0), ""
+            )
+        # Default band floors 120s at the 30% retry share; a widened band
+        # must keep differentiating.
+        assert widened > 30.0
+
+    def test_invalid_band_falls_back_to_defaults(self) -> None:
+        with patch(
+            "agentic_v2.scoring.scoring_criteria._load_eval_config",
+            return_value={
+                "evaluation": {
+                    "scoring": {
+                        "efficiency_slo": {"good_seconds": 60.0, "bad_seconds": "wat"}
+                    }
+                }
+            },
+        ):
+            score = _compute_criterion_score(
+                "efficiency", _result_with_duration(300.0), ""
+            )
+        assert score == pytest.approx(30.0)
+
+    def test_inverted_band_falls_back_to_defaults(self) -> None:
+        with patch(
+            "agentic_v2.scoring.scoring_criteria._load_eval_config",
+            return_value={
+                "evaluation": {
+                    "scoring": {
+                        "efficiency_slo": {"good_seconds": 60.0, "bad_seconds": 2.0}
+                    }
+                }
+            },
+        ):
+            score = _compute_criterion_score(
+                "efficiency", _result_with_duration(300.0), ""
+            )
+        assert score == pytest.approx(30.0)

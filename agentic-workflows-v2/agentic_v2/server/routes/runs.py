@@ -363,8 +363,11 @@ async def evaluate_run(
     the run log so the runs list and evaluation pages pick it up.
     """
     from ...scoring.judge import LLMJudge
-    from ..datasets import rehydrate_dataset_sample
-    from ..evaluation import score_workflow_result
+    from ..evaluation import (
+        JudgeRequiredError,
+        rehydrate_dataset_sample,
+        score_workflow_result,
+    )
     from ..execution import _resolve_judge_model
 
     tenant_logger = _tenant_run_logger(tenant)
@@ -384,21 +387,37 @@ async def evaluate_run(
     judge_model = options.judge_model or _resolve_judge_model()
     judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
 
-    dataset_meta = (
+    stored_meta = (
         run_data.get("dataset") if isinstance(run_data.get("dataset"), dict) else None
     )
-    # Judge scoring is synchronous and may call an LLM — keep it off the
-    # event loop.
-    scored = await asyncio.to_thread(
-        score_workflow_result,
-        result,
-        dataset_meta=dataset_meta,
-        dataset_sample=rehydrate_dataset_sample(dataset_meta, tenant.tenant_id),
-        rubric=options.rubric_id or options.rubric,
-        workflow_definition=workflow_def,
-        enforce_hard_gates=options.enforce_hard_gates,
-        judge=judge,
-    )
+    tenant_id = tenant.tenant_id
+
+    def _rehydrate_and_score() -> dict[str, Any]:
+        # Rehydration reads dataset + golden files and judge scoring may call
+        # an LLM — both stay off the event loop inside this worker thread.
+        dataset_sample, rehydration_error = rehydrate_dataset_sample(
+            stored_meta, tenant_id
+        )
+        dataset_meta = stored_meta
+        if rehydration_error and dataset_meta is not None:
+            dataset_meta = {**dataset_meta, "rehydration_error": rehydration_error}
+        return score_workflow_result(
+            result,
+            dataset_meta=dataset_meta,
+            dataset_sample=dataset_sample,
+            rubric=options.rubric_id or options.rubric,
+            workflow_definition=workflow_def,
+            enforce_hard_gates=options.enforce_hard_gates,
+            judge=judge,
+        )
+
+    try:
+        scored = await asyncio.to_thread(_rehydrate_and_score)
+    except JudgeRequiredError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Evaluation policy unmet (judge_required_unmet): {exc}",
+        ) from exc
 
     tenant_logger.annotate_run(path, evaluation=scored)
 
@@ -449,10 +468,14 @@ def _score_run_candidate(
     """Load, replay, and score one comparison candidate.
 
     Returns ``(run_data, scored_payload, filename)``. Raises HTTP 404 when the
-    run is missing and HTTP 422 when its log cannot be replayed.
+    run is missing, HTTP 422 when its log cannot be replayed or the
+    judge-required policy is unmet.
     """
-    from ..datasets import rehydrate_dataset_sample
-    from ..evaluation import score_workflow_result
+    from ..evaluation import (
+        JudgeRequiredError,
+        rehydrate_dataset_sample,
+        score_workflow_result,
+    )
 
     tenant_logger = _tenant_run_logger(tenant)
     path = _resolve_run_or_404(identifier, tenant)
@@ -469,15 +492,26 @@ def _score_run_candidate(
     dataset_meta = (
         run_data.get("dataset") if isinstance(run_data.get("dataset"), dict) else None
     )
-    scored = score_workflow_result(
-        result,
-        dataset_meta=dataset_meta,
-        dataset_sample=rehydrate_dataset_sample(dataset_meta, tenant.tenant_id),
-        rubric=options.rubric_id,
-        workflow_definition=workflow_def,
-        enforce_hard_gates=options.enforce_hard_gates,
-        judge=judge,
+    dataset_sample, rehydration_error = rehydrate_dataset_sample(
+        dataset_meta, tenant.tenant_id
     )
+    if rehydration_error and dataset_meta is not None:
+        dataset_meta = {**dataset_meta, "rehydration_error": rehydration_error}
+    try:
+        scored = score_workflow_result(
+            result,
+            dataset_meta=dataset_meta,
+            dataset_sample=dataset_sample,
+            rubric=options.rubric_id,
+            workflow_definition=workflow_def,
+            enforce_hard_gates=options.enforce_hard_gates,
+            judge=judge,
+        )
+    except JudgeRequiredError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Evaluation policy unmet (judge_required_unmet): {exc}",
+        ) from exc
     return run_data, scored, path.name
 
 

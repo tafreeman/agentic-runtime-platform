@@ -139,6 +139,90 @@ def test_load_local_dataset_sample_golden_escape_rejected():
     assert "escapes dataset roots" in meta["golden_output_error"]
 
 
+def test_degenerate_golden_records_error():
+    """A golden captured from a failed run (final_output: null) must not
+    silently become the literal expected text "null"."""
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=3)
+    assert "golden_output_text" not in sample
+    assert "empty golden content" in meta["golden_output_error"]
+
+
+def test_blank_golden_path_records_error():
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=4)
+    assert "golden_output_text" not in sample
+    assert "not a usable path" in meta["golden_output_error"]
+
+
+def test_inline_expected_output_short_circuits_golden_read():
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=5)
+    assert "golden_output_text" not in sample
+    assert "golden_output_error" not in meta
+    assert sample["expected_output"] == "inline expected text wins precedence"
+
+
+def test_non_utf8_golden_records_error_not_crash(tmp_path, monkeypatch):
+    """Regression: UnicodeDecodeError is a ValueError, not an OSError — a
+    UTF-16 golden must degrade loudly, not crash the whole dataset load."""
+    from agentic_v2.server import datasets as datasets_mod
+
+    monkeypatch.setattr(
+        datasets_mod, "_local_dataset_roots", lambda _tid=None: [tmp_path]
+    )
+    (tmp_path / "bad_golden.json").write_bytes(
+        '{"final_output": {"review": "text"}}'.encode("utf-16")
+    )
+    sample = {"golden_output_path": "bad_golden.json"}
+    resolved, error = datasets_mod._resolve_golden_output_text(
+        sample, tmp_path / "ds.json"
+    )
+    assert resolved == sample
+    assert "UnicodeDecodeError" in error
+
+
+def test_rehydrate_unparseable_index_bails_loudly():
+    from agentic_v2.server.evaluation import rehydrate_dataset_sample
+
+    meta = {
+        "source": "local",
+        "dataset_id": _GOLDEN_SMOKE_DATASET,
+        "sample_index": "n/a",
+        "task_id": "golden_smoke_ok",
+    }
+    sample, error = rehydrate_dataset_sample(meta)
+    assert sample is None
+    assert "unusable" in error
+
+
+def test_rehydrate_task_id_mismatch_bails_loudly():
+    """A dataset that shrank/reordered since the run must not silently swap
+    in a different task's golden."""
+    from agentic_v2.server.evaluation import rehydrate_dataset_sample
+
+    meta = {
+        "source": "local",
+        "dataset_id": _GOLDEN_SMOKE_DATASET,
+        "sample_index": 0,
+        "task_id": "some_other_task",
+    }
+    sample, error = rehydrate_dataset_sample(meta)
+    assert sample is None
+    assert "task_id mismatch" in error
+
+
+def test_rehydrate_propagates_golden_error():
+    from agentic_v2.server.evaluation import rehydrate_dataset_sample
+
+    meta = {
+        "source": "local",
+        "dataset_id": _GOLDEN_SMOKE_DATASET,
+        "sample_index": 1,
+        "task_id": "golden_smoke_missing",
+    }
+    sample, error = rehydrate_dataset_sample(meta)
+    assert sample is not None
+    assert "unreadable" in error
+
+
 def _build_generated_result(content: str, duration_s: float) -> WorkflowResult:
     start = datetime(2026, 7, 7, 12, 0, 0, tzinfo=UTC)
     result = WorkflowResult(
@@ -186,6 +270,19 @@ def test_issue_172_distinct_runs_score_distinctly_with_loaded_golden():
     # Key-free run: the judge layer is absent and the skip must be loud.
     assert eval_on["judge_skipped"] is True
     assert eval_on["judge_skip_reason"] == "no judge configured"
+    assert eval_on["expected_text_present"] is True
+
+    # Content-only divergence: same duration, different content must still
+    # separate by a real margin (not just a float-noise inequality) — the
+    # duration term cannot mask a dead overlap term.
+    same_duration_off = _build_generated_result(
+        "totally unrelated artifact text mentioning nothing relevant",
+        duration_s=45.0,
+    )
+    eval_same_duration = score_workflow_result(
+        same_duration_off, dataset_meta=None, dataset_sample=sample
+    )
+    assert eval_on["weighted_score"] - eval_same_duration["weighted_score"] >= 1.0
 
 
 def test_adapt_sample_to_workflow_inputs_materializes_file(tmp_path: Path):
@@ -810,6 +907,73 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
     assert "hard_gates" in evaluation_payload
     assert "hard_gate_failures" in evaluation_payload
     assert "step_scores" in evaluation_payload
+
+
+@pytest.mark.asyncio
+async def test_run_log_persists_when_judge_required_unmet(monkeypatch):
+    """judge_required=true fails the *evaluation*, never the run record: a
+    completed workflow must not vanish from run history (issue #172 review)."""
+    captured: dict = {}
+
+    async def _fake_run(*_args, **_kwargs):
+        return _build_result(StepStatus.SUCCESS)
+
+    async def _fake_broadcast(_run_id: str, _event: dict):
+        return None
+
+    def _mock_load_config(name, definitions_dir=None):
+        from agentic_v2.langchain.config import WorkflowConfig
+
+        return WorkflowConfig(name=name, inputs={}, outputs={}, steps=[])
+
+    monkeypatch.setattr(workflow_routes, "load_workflow_config", _mock_load_config)
+    monkeypatch.setattr(execution_mod, "load_workflow_config", _mock_load_config)
+    monkeypatch.setattr(
+        result_normalization,
+        "load_local_dataset_sample",
+        lambda *_a, **_k: ({}, {"source": "local"}),
+    )
+    monkeypatch.setattr(
+        result_normalization, "adapt_sample_to_workflow_inputs", lambda *_a, **_k: {}
+    )
+    monkeypatch.setattr(
+        execution_mod, "_get_lc_runner", lambda: type("R", (), {"run": _fake_run})()
+    )
+    monkeypatch.setattr(execution_mod.websocket.manager, "broadcast", _fake_broadcast)
+    # Force the judge-required policy on; the key-free judge then escalates.
+    monkeypatch.setattr(
+        "agentic_v2.scoring.evaluation_scoring._load_eval_config",
+        lambda: {"evaluation": {"scoring": {"judge_required": True}}},
+    )
+
+    class _FakeLogger:
+        def log(self, *_args, **kwargs):
+            captured.update(kwargs)
+            return Path("dummy.json")
+
+    monkeypatch.setattr(
+        execution_mod.run_logger, "for_tenant", lambda _tid: _FakeLogger()
+    )
+
+    request = WorkflowRunRequest(
+        workflow="dummy_workflow",
+        run_id="judge-required-run",
+        evaluation=WorkflowEvaluationRequest(
+            enabled=True,
+            dataset_source="local",
+            dataset_id="dummy.json",
+        ),
+    )
+    background = BackgroundTasks()
+    await workflow_routes.run_workflow(
+        request, background, _build_http_request(), FAKE_TENANT
+    )
+    for task in background.tasks:
+        await task()
+
+    # The run log was still written, with the policy failure recorded.
+    assert captured["extra"]["evaluation"] is None
+    assert "judge_required" in captured["extra"]["evaluation_error"]
 
 
 @pytest.mark.asyncio

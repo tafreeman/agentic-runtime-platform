@@ -186,8 +186,18 @@ evaluation:
     # When true, an unconfigured or failing LLM judge fails the evaluation
     # instead of silently renormalizing onto objective+advisory layers.
     # Either way the skip is recorded in the payload (judge_skipped /
-    # judge_skip_reason). Keep false for key-free runs (AGENTIC_NO_LLM=1).
+    # judge_skip_reason / judge_skip_code). Keep false for key-free runs
+    # (AGENTIC_NO_LLM=1). The failure is scoped to the evaluation: the run
+    # log still persists (with evaluation_error) and the API maps it to 422.
     judge_required: false
+
+    # Efficiency criterion duration SLO band (seconds): at/below good scores
+    # 1.0, at/above bad scores 0.0, linear in between. CAUTION: changing the
+    # band re-baselines efficiency scores — runs scored under different bands
+    # are not comparable. Invalid values fall back to these defaults.
+    efficiency_slo:
+      good_seconds: 2.0
+      bad_seconds: 60.0
 
     aggregation:
       method: weighted_average

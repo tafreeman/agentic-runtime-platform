@@ -140,5 +140,32 @@ describe("EvaluationRubricAccordion", () => {
     render(<EvaluationRubricAccordion filename="run.json" />);
 
     expect(screen.getAllByText(/judge skipped/i).length).toBeGreaterThan(0);
+    // No stored reason — the fallback explanation must still render.
+    expect(
+      screen.getByText(/objective\+advisory only/),
+    ).toBeInTheDocument();
+  });
+
+  it("treats payloads with no score layers at all as judge-skipped", () => {
+    // Pre-hybrid payloads have score_layers: null — the judge definitively
+    // never contributed to those either.
+    mockDetail({});
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    expect(screen.getAllByText(/judge skipped/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows a notice when the overlap term never engaged", () => {
+    mockDetail({
+      judge_skipped: false,
+      expected_text_present: false,
+      score_layers: { ...scoreLayers, layer2_judge: 78.5 },
+    });
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    expect(screen.queryByText(/judge skipped/i)).toBeNull();
+    expect(screen.getByText(/overlap term inactive/)).toBeInTheDocument();
   });
 });

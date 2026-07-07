@@ -51,7 +51,11 @@ from ..scoring.dataset_matching import (
 # Re-export the eval-config loader (also relocated to ``scoring``) so existing
 # ``from .datasets import _load_eval_config`` importers keep working.
 from ..scoring.eval_config import _load_eval_config
-from ..scoring.scoring_criteria import serialize_output_text
+from ..scoring.scoring_criteria import GOLDEN_OUTPUT_TEXT_KEY, serialize_output_text
+
+# Refuse to inline goldens beyond this size: the text is copied into every
+# loaded sample and persisted into run logs.
+_GOLDEN_MAX_BYTES = 5 * 1024 * 1024
 
 __all__ = [
     "_dataset_value_for_input",
@@ -424,18 +428,34 @@ def _resolve_golden_output_text(
         ``error`` for the caller to log and surface in dataset metadata.
     """
     golden_ref = sample.get("golden_output_path")
-    if not isinstance(golden_ref, str) or not golden_ref.strip():
+    if golden_ref is None:
         return sample, None
-    if isinstance(sample.get("golden_output_text"), str):
+    if not isinstance(golden_ref, str) or not golden_ref.strip():
+        return sample, f"golden_output_path is not a usable path: {golden_ref!r}"
+    if isinstance(sample.get(GOLDEN_OUTPUT_TEXT_KEY), str):
+        return sample, None
+    if isinstance(sample.get("expected_output"), str):
+        # Inline expected_output wins precedence in _extract_expected_text;
+        # skip the file read so nobody mistakes the golden for the scored text.
         return sample, None
 
-    golden_path = (dataset_path.parent / golden_ref).resolve()
-    if not _is_under_allowed_root(golden_path, tenant_id):
-        return sample, f"golden_output_path escapes dataset roots: {golden_ref}"
     try:
+        golden_path = (dataset_path.parent / golden_ref).resolve()
+        if not _is_under_allowed_root(golden_path, tenant_id):
+            return sample, f"golden_output_path escapes dataset roots: {golden_ref}"
+        if golden_path.stat().st_size > _GOLDEN_MAX_BYTES:
+            return sample, (
+                f"golden_output_path exceeds {_GOLDEN_MAX_BYTES} bytes: {golden_ref}"
+            )
         raw = golden_path.read_text(encoding="utf-8")
-    except OSError as exc:
-        return sample, f"golden_output_path unreadable: {golden_ref} ({exc})"
+    except (OSError, ValueError) as exc:
+        # ValueError covers NUL-byte paths (Path.resolve) and UnicodeDecodeError
+        # (a subclass) from non-UTF-8 goldens. Only the exception class is
+        # recorded — the full message can leak absolute server paths into
+        # metadata that is persisted and served to clients.
+        return sample, (
+            f"golden_output_path unreadable: {golden_ref} " f"({type(exc).__name__})"
+        )
 
     try:
         parsed: Any = json.loads(raw)
@@ -444,11 +464,18 @@ def _resolve_golden_output_text(
     else:
         if isinstance(parsed, dict) and "final_output" in parsed:
             parsed = parsed["final_output"]
+        if parsed is None or parsed == {} or parsed == []:
+            # A golden captured from a failed run serializes to "null"/"{}",
+            # which would pass a bare emptiness check and silently score
+            # against garbage expected text.
+            return sample, (
+                f"golden_output_path resolved to empty golden content: {golden_ref}"
+            )
         golden_text = serialize_output_text(parsed)
 
     if not golden_text.strip():
         return sample, f"golden_output_path resolved to empty text: {golden_ref}"
-    return {**sample, "golden_output_text": golden_text}, None
+    return {**sample, GOLDEN_OUTPUT_TEXT_KEY: golden_text}, None
 
 
 def _attach_golden_output(
@@ -562,7 +589,7 @@ def load_local_dataset_samples(
 def rehydrate_dataset_sample(
     dataset_meta: dict[str, Any] | None,
     tenant_id: str | None = None,
-) -> dict[str, Any] | None:
+) -> tuple[dict[str, Any] | None, str | None]:
     """Re-load the dataset sample referenced by stored run-log metadata.
 
     Replay-style evaluation (``POST /api/runs/{filename}/evaluate`` and the
@@ -573,35 +600,63 @@ def rehydrate_dataset_sample(
     source guaranteed to be on disk); repository-backed benchmarks are
     skipped so a replay never triggers a network fetch.
 
+    Wrong-sample protection: a ``sample_index`` that is present but
+    unparseable is an error (never a silent index-0 guess), and when the
+    stored metadata carries a ``task_id`` it must match the reloaded
+    sample's -- a dataset file that shrank or was reordered since the run
+    must not silently swap in a different task's golden.
+
     Args:
         dataset_meta: The ``dataset`` metadata dict persisted on the run log.
         tenant_id: Optional tenant scope for dataset root resolution.
 
     Returns:
-        The re-loaded sample dict (with ``golden_output_text`` inlined when
-        the sample references a golden file), or ``None`` when the metadata
-        does not reference a loadable local sample.
+        ``(sample, error)``.  ``sample`` is the re-loaded dict (with
+        ``golden_output_text`` inlined when it references a golden file), or
+        ``None`` when the metadata does not reference a local dataset or the
+        reload failed.  ``error`` is a human-readable reason for callers to
+        surface in the evaluation payload whenever rehydration degraded:
+        reload failure, index/task mismatch, or a golden that no longer
+        resolves.
     """
     if not isinstance(dataset_meta, dict) or dataset_meta.get("source") != "local":
-        return None
+        return None, None
     dataset_id = dataset_meta.get("dataset_id")
     if not isinstance(dataset_id, str) or not dataset_id:
-        return None
+        return None, None
+
+    raw_index = dataset_meta.get("sample_index", 0)
     try:
-        sample_index = int(dataset_meta.get("sample_index") or 0)
+        sample_index = int(raw_index if raw_index is not None else 0)
     except (TypeError, ValueError):
-        sample_index = 0
+        error = f"stored sample_index is unusable: {raw_index!r}"
+        logger.warning("Rehydration of %s failed: %s", dataset_id, error)
+        return None, error
+
     try:
-        sample, _meta = load_local_dataset_sample(dataset_id, sample_index, tenant_id)
+        sample, meta = load_local_dataset_sample(dataset_id, sample_index, tenant_id)
     except (OSError, ValueError) as exc:
+        error = f"dataset could not be reloaded ({type(exc).__name__})"
         logger.warning(
-            "Could not rehydrate dataset sample %s[%s] for re-evaluation: %s",
-            dataset_id,
-            sample_index,
-            exc,
+            "Rehydration of %s[%s] failed: %s", dataset_id, sample_index, exc
         )
-        return None
-    return sample
+        return None, error
+
+    stored_task_id = dataset_meta.get("task_id")
+    reloaded_task_id = meta.get("task_id")
+    if (
+        isinstance(stored_task_id, str)
+        and stored_task_id
+        and str(reloaded_task_id) != stored_task_id
+    ):
+        error = (
+            f"task_id mismatch: run was scored against {stored_task_id!r} but "
+            f"index {sample_index} now resolves to {reloaded_task_id!r}"
+        )
+        logger.warning("Rehydration of %s[%s]: %s", dataset_id, sample_index, error)
+        return None, error
+
+    return sample, meta.get("golden_output_error")
 
 
 def load_repository_dataset_sample(

@@ -104,6 +104,8 @@ _SCORED = {
     "pass_threshold": 70.0,
     "hard_gate_failures": [],
     "step_scores": [],
+    "judge_skipped": True,
+    "judge_skip_reason": "no judge configured",
     "generated_at": "2026-07-06T13:00:00+00:00",
 }
 
@@ -193,6 +195,10 @@ class TestEvaluateRunEndpoint:
         assert payload["evaluation_requested"] is True
         assert payload["evaluation"]["weighted_score"] == 84.5
         assert payload["evaluation"]["grade"] == "B"
+        # Judge-skip visibility survives the response model round-trip
+        # (RunEvaluationDetail must not drop the fields).
+        assert payload["evaluation"]["judge_skipped"] is True
+        assert payload["evaluation"]["judge_skip_reason"] == "no judge configured"
 
         # The replayed result fed to the scorer came from the log.
         scored_result = self.captured["result"]
@@ -251,6 +257,7 @@ class TestEvaluateRunEndpoint:
         assert sample is not None
         assert sample["case_id"] == "golden_smoke_ok"
         assert "boundary contract" in sample["golden_output_text"]
+        assert "rehydration_error" not in self.captured["kwargs"]["dataset_meta"]
 
     def test_dataset_sample_none_when_meta_unresolvable(self, monkeypatch, tmp_path):
         _write_run(tmp_path, _run_record())  # meta has no dataset_id
@@ -260,6 +267,50 @@ class TestEvaluateRunEndpoint:
 
         assert response.status_code == 200
         assert self.captured["kwargs"]["dataset_sample"] is None
+
+    def test_rehydration_failure_recorded_in_dataset_meta(self, monkeypatch, tmp_path):
+        """A rehydration that degrades must be visible in the scored payload's
+        dataset block, not just a server log line."""
+        record = _run_record(
+            dataset={
+                "source": "local",
+                "dataset_id": (
+                    "agentic-workflows-v2/tests/fixtures/datasets/"
+                    "golden_cases_smoke.json"
+                ),
+                "sample_index": 0,
+                "task_id": "some_other_task",
+            }
+        )
+        _write_run(tmp_path, record)
+        client = _client(monkeypatch, tmp_path)
+
+        response = client.post(f"/api/runs/{_RUN_FILENAME}/evaluate")
+
+        assert response.status_code == 200
+        kwargs = self.captured["kwargs"]
+        assert kwargs["dataset_sample"] is None
+        assert "task_id mismatch" in kwargs["dataset_meta"]["rehydration_error"]
+
+    def test_judge_required_policy_maps_to_422(self, monkeypatch, tmp_path):
+        from agentic_v2.scoring.evaluation_scoring import JudgeRequiredError
+
+        def _raise_policy(result, **kwargs):
+            raise JudgeRequiredError(
+                "LLM judge is required (evaluation.scoring.judge_required=true) "
+                "but unavailable: no judge configured"
+            )
+
+        monkeypatch.setattr(
+            "agentic_v2.server.evaluation.score_workflow_result", _raise_policy
+        )
+        _write_run(tmp_path, _run_record())
+        client = _client(monkeypatch, tmp_path)
+
+        response = client.post(f"/api/runs/{_RUN_FILENAME}/evaluate")
+
+        assert response.status_code == 422
+        assert "judge_required_unmet" in response.json()["detail"]
 
     def test_unknown_run_returns_404(self, monkeypatch, tmp_path):
         client = _client(monkeypatch, tmp_path)

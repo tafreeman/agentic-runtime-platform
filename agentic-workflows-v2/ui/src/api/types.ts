@@ -324,6 +324,10 @@ export interface RunEvaluationDetail {
   judge_skipped?: boolean;
   /** Why the judge was skipped (e.g. no backend configured), when it was. */
   judge_skip_reason?: string | null;
+  /** Machine-readable skip cause: "not_configured" | "judge_error". */
+  judge_skip_code?: string | null;
+  /** False when no expected/golden text existed — overlap term was inactive. */
+  expected_text_present?: boolean | null;
   generated_at: string;
   dataset?: Record<string, unknown> | null;
 }

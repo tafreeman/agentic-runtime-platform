@@ -25,6 +25,7 @@ from ..contracts import WorkflowResult
 from ..scoring.evaluation_scoring import (
     CriterionFloorResult,
     HardGateResult,
+    JudgeRequiredError,
     _build_judge_criteria,
     _clamp,
     _compose_hybrid_score,
@@ -65,6 +66,7 @@ from .datasets import (
     load_repository_dataset_sample,
     load_repository_dataset_samples,
     match_workflow_dataset,
+    rehydrate_dataset_sample,
     validate_required_inputs_present,
 )
 
@@ -107,6 +109,8 @@ def score_workflow_result(
 __all__ = [
     "CriterionFloorResult",
     "HardGateResult",
+    "JudgeRequiredError",
+    "rehydrate_dataset_sample",
     "Path",
     "WorkflowDefinition",
     "WorkflowInput",
