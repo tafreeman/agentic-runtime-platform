@@ -224,8 +224,16 @@ def backendless_baseline(monkeypatch: pytest.MonkeyPatch):
     regardless of the ambient flag. Mirrors ``_reset_llm_client``: rebuild
     the client after clearing the flag, then leave the live settings cache
     empty for the test body.
+
+    The baseline also means the LEGACY completion path: with the optional
+    ``ek`` extra installed, ``agentic_ek_provider`` is default-on (ADR-023
+    B-2) and no-backend steps surface EK's ``react_loop()`` refusal note
+    instead of the legacy "No LLM backend configured" the golden output
+    pins. ``AGENTIC_EK_PROVIDER=0`` is the documented rollback flag that
+    forces the legacy branch in every install.
     """
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+    monkeypatch.setenv("AGENTIC_EK_PROVIDER", "0")
     reset_client()
     get_client(auto_configure=False)
     _settings_module.get_settings.cache_clear()
