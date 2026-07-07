@@ -28,9 +28,7 @@ router = APIRouter(tags=["catalog"])
 _PROMPT_PREVIEW_CHARS = 240
 
 _OBSERVER_DESCRIPTIONS: dict[str, str] = {
-    "trace": (
-        "Engine trace adapter (OpenTelemetry spans and canonical step events)."
-    ),
+    "trace": ("Engine trace adapter (OpenTelemetry spans and canonical step events)."),
     "websocket": (
         "Live execution streaming to the web UI (step_start/step_end events "
         "over WebSocket and SSE)."

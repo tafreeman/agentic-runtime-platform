@@ -99,7 +99,9 @@ class ProviderConfig(BaseModel):
     @classmethod
     def _reject_secret_options(cls, value: dict[str, Any]) -> dict[str, Any]:
         forbidden = sorted(
-            key for key in value if key.lower().replace("-", "_") in _FORBIDDEN_OPTION_KEYS
+            key
+            for key in value
+            if key.lower().replace("-", "_") in _FORBIDDEN_OPTION_KEYS
         )
         if forbidden:
             raise ValueError(

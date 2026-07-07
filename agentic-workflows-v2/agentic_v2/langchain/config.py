@@ -200,9 +200,7 @@ def render_workflow_document(document: dict[str, Any]) -> str:
     return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
 
 
-def _validate_document_name(
-    document: dict[str, Any], expected_name: str | None
-) -> str:
+def _validate_document_name(document: dict[str, Any], expected_name: str | None) -> str:
     """Validate the document's name against the expected name and return it."""
     default_name = _validate_workflow_name(expected_name or document.get("name", ""))
     doc_name = document.get("name")
@@ -301,9 +299,7 @@ def _validate_step_observers(step_name: str, raw_step: dict[str, Any]) -> None:
         )
 
 
-def _validate_step(
-    index: int, raw_step: Any, seen_step_names: set[str]
-) -> None:
+def _validate_step(index: int, raw_step: Any, seen_step_names: set[str]) -> None:
     """Validate a single raw step mapping, tracking seen names for dup detection."""
     if not isinstance(raw_step, dict):
         raise ValueError(f"Workflow step #{index} must be a mapping.")
@@ -412,9 +408,7 @@ def _parse_loop_max(
     """Parse a step loop bound and preserve runtime input expressions."""
     if isinstance(raw_value, str):
         stripped = raw_value.strip()
-        input_ref = re.fullmatch(
-            r"\$\{\s*inputs\.([A-Za-z_][\w]*)\s*\}", stripped
-        )
+        input_ref = re.fullmatch(r"\$\{\s*inputs\.([A-Za-z_][\w]*)\s*\}", stripped)
         if input_ref:
             input_name = input_ref.group(1)
             input_cfg = inputs.get(input_name)
@@ -488,9 +482,7 @@ def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConf
             if isinstance(raw.get("model_override"), str)
             else raw.get("model")
         ),
-        persona=(
-            raw.get("persona") if isinstance(raw.get("persona"), str) else None
-        ),
+        persona=(raw.get("persona") if isinstance(raw.get("persona"), str) else None),
         observers=(
             [str(o) for o in raw.get("observers")]
             if isinstance(raw.get("observers"), list)
@@ -534,9 +526,7 @@ def _parse_criterion(c: dict[str, Any]) -> CriterionConfig:
         definition=c.get("definition", ""),
         weight=float(c["weight"]) if c.get("weight") else None,
         critical_floor=(
-            float(c["critical_floor"])
-            if c.get("critical_floor") is not None
-            else None
+            float(c["critical_floor"]) if c.get("critical_floor") is not None else None
         ),
         scale={str(sk): str(sv) for sk, sv in (c.get("scale") or {}).items()},
         evidence_required=c.get("evidence_required", []),

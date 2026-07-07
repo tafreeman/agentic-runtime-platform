@@ -51,9 +51,7 @@ def _parse_persona(raw: object) -> Persona | None:
         tags=tuple(str(t) for t in tags) if isinstance(tags, list) else (),
         prompt=raw.get("prompt") if isinstance(raw.get("prompt"), str) else None,
         prompt_file=(
-            raw.get("prompt_file")
-            if isinstance(raw.get("prompt_file"), str)
-            else None
+            raw.get("prompt_file") if isinstance(raw.get("prompt_file"), str) else None
         ),
     )
 

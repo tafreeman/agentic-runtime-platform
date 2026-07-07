@@ -212,9 +212,7 @@ class TestCreateAgentThreading:
 
         agent = agents_module.create_agent(
             "tier2_reviewer",
-            model_params=ModelParamsConfig(
-                temperature=0.8, top_p=0.95, max_tokens=512
-            ),
+            model_params=ModelParamsConfig(temperature=0.8, top_p=0.95, max_tokens=512),
             persona="winston_architect",
         )
 

@@ -503,3 +503,6 @@ AGENTS.md
 # Generated model-probe discovery output (machine-specific paths; regenerated
 # by tools/llm/model_probe.py --discover and scripts/start-dev.ps1).
 tools/llm/filename.json
+
+# UI-managed settings store (runtime artifact; see ADR-043)
+.agentic_ui_settings.json

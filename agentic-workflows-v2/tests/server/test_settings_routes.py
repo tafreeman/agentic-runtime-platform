@@ -8,9 +8,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _isolated_settings(tmp_path, monkeypatch):
     """Point the UI settings store at a per-test temp file."""
-    monkeypatch.setenv(
-        "AGENTIC_UI_SETTINGS_PATH", str(tmp_path / "ui_settings.json")
-    )
+    monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(tmp_path / "ui_settings.json"))
 
 
 class TestProviderSettings:
@@ -104,9 +102,7 @@ class TestTierSettings:
             "/api/settings/tiers",
             json={"tier_overrides": {"2": ["gh:openai/gpt-4o-mini"]}},
         )
-        response = client.put(
-            "/api/settings/tiers", json={"tier_overrides": {"2": []}}
-        )
+        response = client.put("/api/settings/tiers", json={"tier_overrides": {"2": []}})
         assert response.status_code == 200
         assert response.json()["tiers"][2]["override"] == []
 

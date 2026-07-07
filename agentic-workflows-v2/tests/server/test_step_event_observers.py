@@ -74,24 +74,18 @@ class TestStepEventObserverFiltering:
 
     async def test_omitting_websocket_suppresses_broadcasts_only(self, broadcasts):
         scoring = _RecordingScoringListener()
-        await _drive_step(
-            broadcasts, scoring, step_observers={"review": ["scoring"]}
-        )
+        await _drive_step(broadcasts, scoring, step_observers={"review": ["scoring"]})
         assert broadcasts == []
         assert len(scoring.updates) == 1
 
     async def test_omitting_scoring_suppresses_score_updates_only(self, broadcasts):
         scoring = _RecordingScoringListener()
-        await _drive_step(
-            broadcasts, scoring, step_observers={"review": ["websocket"]}
-        )
+        await _drive_step(broadcasts, scoring, step_observers={"review": ["websocket"]})
         assert [e["type"] for e in broadcasts] == ["step_start", "step_end"]
         assert scoring.updates == []
 
     async def test_step_without_entry_defaults_to_all_channels(self, broadcasts):
         scoring = _RecordingScoringListener()
-        await _drive_step(
-            broadcasts, scoring, step_observers={"other_step": []}
-        )
+        await _drive_step(broadcasts, scoring, step_observers={"other_step": []})
         assert [e["type"] for e in broadcasts] == ["step_start", "step_end"]
         assert len(scoring.updates) == 1
