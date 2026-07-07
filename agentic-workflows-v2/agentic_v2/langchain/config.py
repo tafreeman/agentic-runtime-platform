@@ -23,6 +23,24 @@ from ..utils.path_safety import ensure_within_base
 
 
 @dataclass
+class ModelParamsConfig:
+    """Per-step sampling parameter overrides.
+
+    ``None`` fields fall back to provider/builder defaults, so a step only
+    pins the parameters it explicitly declares in YAML.
+    """
+
+    temperature: float | None = None
+    top_p: float | None = None
+    max_tokens: int | None = None
+
+
+# Observer channels a step may enable.  ``observers: null`` (the default)
+# means "all channels"; an explicit list restricts emission to those named.
+KNOWN_OBSERVERS: tuple[str, ...] = ("trace", "websocket", "scoring")
+
+
+@dataclass
 class StepConfig:
     """A single step parsed from YAML."""
 
@@ -39,6 +57,9 @@ class StepConfig:
     tools: list[str] | None = None
     prompt_file: str | None = None
     model_override: str | None = None
+    persona: str | None = None
+    observers: list[str] | None = None
+    model_params: ModelParamsConfig | None = None
 
 
 @dataclass
@@ -215,6 +236,71 @@ def _validate_step_mappings(step_name: str, raw_step: dict[str, Any]) -> None:
             )
 
 
+def _validate_step_model_params(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``model_params`` mapping when present."""
+    raw_params = raw_step.get("model_params")
+    if raw_params is None:
+        return
+    if not isinstance(raw_params, dict):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'model_params' "
+            "(must be a mapping)."
+        )
+
+    temperature = raw_params.get("temperature")
+    if temperature is not None and not (
+        isinstance(temperature, (int, float))
+        and not isinstance(temperature, bool)
+        and 0.0 <= float(temperature) <= 2.0
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'temperature' "
+            "(must be a number between 0 and 2)."
+        )
+
+    top_p = raw_params.get("top_p")
+    if top_p is not None and not (
+        isinstance(top_p, (int, float))
+        and not isinstance(top_p, bool)
+        and 0.0 < float(top_p) <= 1.0
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'top_p' "
+            "(must be a number greater than 0 and at most 1)."
+        )
+
+    max_tokens = raw_params.get("max_tokens")
+    if max_tokens is not None and not (
+        isinstance(max_tokens, int)
+        and not isinstance(max_tokens, bool)
+        and max_tokens >= 1
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'max_tokens' "
+            "(must be a positive integer)."
+        )
+
+
+def _validate_step_observers(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``observers`` list references known channels."""
+    raw_observers = raw_step.get("observers")
+    if raw_observers is None:
+        return
+    if not isinstance(raw_observers, list) or any(
+        not isinstance(item, str) or not item for item in raw_observers
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'observers' "
+            "(must be a list of channel names)."
+        )
+    unknown = sorted(set(raw_observers) - set(KNOWN_OBSERVERS))
+    if unknown:
+        raise ValueError(
+            f"Workflow step {step_name!r} references unknown observers "
+            f"{unknown}. Known observers: {list(KNOWN_OBSERVERS)}."
+        )
+
+
 def _validate_step(
     index: int, raw_step: Any, seen_step_names: set[str]
 ) -> None:
@@ -230,6 +316,8 @@ def _validate_step(
 
     _validate_step_depends_on(step_name, raw_step)
     _validate_step_mappings(step_name, raw_step)
+    _validate_step_model_params(step_name, raw_step)
+    _validate_step_observers(step_name, raw_step)
 
 
 def _validate_steps(document: dict[str, Any]) -> None:
@@ -363,6 +451,22 @@ def _parse_inputs(data: dict[str, Any]) -> dict[str, InputConfig]:
     return inputs
 
 
+def _parse_model_params(raw: Any) -> ModelParamsConfig | None:
+    """Parse a raw ``model_params`` mapping into a ``ModelParamsConfig``."""
+    if not isinstance(raw, dict):
+        return None
+    temperature = raw.get("temperature")
+    top_p = raw.get("top_p")
+    max_tokens = raw.get("max_tokens")
+    if temperature is None and top_p is None and max_tokens is None:
+        return None
+    return ModelParamsConfig(
+        temperature=float(temperature) if temperature is not None else None,
+        top_p=float(top_p) if top_p is not None else None,
+        max_tokens=int(max_tokens) if max_tokens is not None else None,
+    )
+
+
 def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConfig:
     """Parse a single raw step mapping into a ``StepConfig``."""
     loop_max, loop_max_expr = _parse_loop_max(raw.get("loop_max", 3), inputs)
@@ -384,6 +488,15 @@ def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConf
             if isinstance(raw.get("model_override"), str)
             else raw.get("model")
         ),
+        persona=(
+            raw.get("persona") if isinstance(raw.get("persona"), str) else None
+        ),
+        observers=(
+            [str(o) for o in raw.get("observers")]
+            if isinstance(raw.get("observers"), list)
+            else None
+        ),
+        model_params=_parse_model_params(raw.get("model_params")),
     )
 
 

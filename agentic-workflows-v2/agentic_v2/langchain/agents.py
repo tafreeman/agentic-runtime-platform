@@ -17,7 +17,9 @@ from typing import Any
 
 from langgraph.prebuilt import create_react_agent
 
-from .models import get_model_for_tier
+from .config import ModelParamsConfig
+from .models import apply_model_params, get_model_for_tier
+from .personas import resolve_persona_prompt
 from .tools import get_tools_by_name, get_tools_for_tier
 
 logger = logging.getLogger(__name__)
@@ -37,15 +39,23 @@ _AGENT_PATTERN = re.compile(r"tier(\d+)_(.+)")
 def _load_system_prompt(
     agent_name: str,
     prompt_file_override: str | None = None,
+    persona: str | None = None,
 ) -> str:
     """Load a Markdown persona prompt for an agent.
 
     Resolution order:
-    1. Explicit ``prompt_file_override`` from YAML step.
-    2. ``prompts/{role}.md`` where role is extracted from agent name.
-    3. A sensible default prompt.
+    1. Explicit ``persona`` id from the YAML step (persona registry).
+    2. Explicit ``prompt_file_override`` from YAML step.
+    3. ``prompts/{role}.md`` where role is extracted from agent name.
+    4. A sensible default prompt.
     """
-    # Try override first
+    # Persona registry wins when the step names one
+    if persona:
+        persona_prompt = resolve_persona_prompt(persona)
+        if persona_prompt:
+            return persona_prompt
+
+    # Try override next
     if prompt_file_override:
         p = _PROMPTS_DIR / prompt_file_override
         if p.exists():
@@ -83,6 +93,8 @@ def create_agent(
     tool_names: list[str] | None = None,
     prompt_file: str | None = None,
     model_override: str | None = None,
+    persona: str | None = None,
+    model_params: ModelParamsConfig | None = None,
 ) -> Any:
     """Create a LangGraph ReAct agent for the given agent name.
 
@@ -97,6 +109,10 @@ def create_agent(
         Override the system prompt file.
     model_override:
         Override the model name for this agent.
+    persona:
+        Persona id from the persona registry; wins over ``prompt_file``.
+    model_params:
+        Per-step sampling overrides (temperature, top_p, max_tokens).
 
     Returns
     -------
@@ -115,10 +131,18 @@ def create_agent(
         tools = get_tools_for_tier(tier)
 
     # Resolve model
-    model = get_model_for_tier(tier, model_override)
+    temperature = 0.0
+    if model_params is not None and model_params.temperature is not None:
+        temperature = model_params.temperature
+    model = get_model_for_tier(tier, model_override, temperature=temperature)
+    if model_params is not None:
+        model = apply_model_params(
+            model,
+            {"top_p": model_params.top_p, "max_tokens": model_params.max_tokens},
+        )
 
     # Resolve system prompt
-    system_prompt = _load_system_prompt(agent_name, prompt_file)
+    system_prompt = _load_system_prompt(agent_name, prompt_file, persona)
 
     # Build the ReAct agent
     agent = create_react_agent(
