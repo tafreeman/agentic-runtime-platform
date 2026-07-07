@@ -8,6 +8,7 @@ The graph compiler (``graph.py``) turns configs into runnable graphs.
 from __future__ import annotations
 
 import functools
+import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -17,9 +18,29 @@ import yaml
 
 from ..utils.path_safety import ensure_within_base
 
+logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
 # Config dataclasses
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class ModelParamsConfig:
+    """Per-step sampling parameter overrides.
+
+    ``None`` fields fall back to provider/builder defaults, so a step only
+    pins the parameters it explicitly declares in YAML.
+    """
+
+    temperature: float | None = None
+    top_p: float | None = None
+    max_tokens: int | None = None
+
+
+# Observer channels a step may enable.  ``observers: null`` (the default)
+# means "all channels"; an explicit list restricts emission to those named.
+KNOWN_OBSERVERS: tuple[str, ...] = ("trace", "websocket", "scoring")
 
 
 @dataclass
@@ -39,6 +60,9 @@ class StepConfig:
     tools: list[str] | None = None
     prompt_file: str | None = None
     model_override: str | None = None
+    persona: str | None = None
+    observers: list[str] | None = None
+    model_params: ModelParamsConfig | None = None
 
 
 @dataclass
@@ -179,9 +203,7 @@ def render_workflow_document(document: dict[str, Any]) -> str:
     return yaml.safe_dump(document, sort_keys=False, allow_unicode=True)
 
 
-def _validate_document_name(
-    document: dict[str, Any], expected_name: str | None
-) -> str:
+def _validate_document_name(document: dict[str, Any], expected_name: str | None) -> str:
     """Validate the document's name against the expected name and return it."""
     default_name = _validate_workflow_name(expected_name or document.get("name", ""))
     doc_name = document.get("name")
@@ -215,9 +237,72 @@ def _validate_step_mappings(step_name: str, raw_step: dict[str, Any]) -> None:
             )
 
 
-def _validate_step(
-    index: int, raw_step: Any, seen_step_names: set[str]
-) -> None:
+def _validate_step_model_params(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``model_params`` mapping when present."""
+    raw_params = raw_step.get("model_params")
+    if raw_params is None:
+        return
+    if not isinstance(raw_params, dict):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'model_params' "
+            "(must be a mapping)."
+        )
+
+    temperature = raw_params.get("temperature")
+    if temperature is not None and not (
+        isinstance(temperature, (int, float))
+        and not isinstance(temperature, bool)
+        and 0.0 <= float(temperature) <= 2.0
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'temperature' "
+            "(must be a number between 0 and 2)."
+        )
+
+    top_p = raw_params.get("top_p")
+    if top_p is not None and not (
+        isinstance(top_p, (int, float))
+        and not isinstance(top_p, bool)
+        and 0.0 < float(top_p) <= 1.0
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'top_p' "
+            "(must be a number greater than 0 and at most 1)."
+        )
+
+    max_tokens = raw_params.get("max_tokens")
+    if max_tokens is not None and not (
+        isinstance(max_tokens, int)
+        and not isinstance(max_tokens, bool)
+        and max_tokens >= 1
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'max_tokens' "
+            "(must be a positive integer)."
+        )
+
+
+def _validate_step_observers(step_name: str, raw_step: dict[str, Any]) -> None:
+    """Validate a step's ``observers`` list references known channels."""
+    raw_observers = raw_step.get("observers")
+    if raw_observers is None:
+        return
+    if not isinstance(raw_observers, list) or any(
+        not isinstance(item, str) or not item for item in raw_observers
+    ):
+        raise ValueError(
+            f"Workflow step {step_name!r} has invalid 'observers' "
+            "(must be a list of channel names)."
+        )
+    unknown = sorted(set(raw_observers) - set(KNOWN_OBSERVERS))
+    if unknown:
+        raise ValueError(
+            f"Workflow step {step_name!r} references unknown observers "
+            f"{unknown}. Known observers: {list(KNOWN_OBSERVERS)}."
+        )
+
+
+def _validate_step(index: int, raw_step: Any, seen_step_names: set[str]) -> None:
     """Validate a single raw step mapping, tracking seen names for dup detection."""
     if not isinstance(raw_step, dict):
         raise ValueError(f"Workflow step #{index} must be a mapping.")
@@ -230,6 +315,8 @@ def _validate_step(
 
     _validate_step_depends_on(step_name, raw_step)
     _validate_step_mappings(step_name, raw_step)
+    _validate_step_model_params(step_name, raw_step)
+    _validate_step_observers(step_name, raw_step)
 
 
 def _validate_steps(document: dict[str, Any]) -> None:
@@ -324,9 +411,7 @@ def _parse_loop_max(
     """Parse a step loop bound and preserve runtime input expressions."""
     if isinstance(raw_value, str):
         stripped = raw_value.strip()
-        input_ref = re.fullmatch(
-            r"\$\{\s*inputs\.([A-Za-z_][\w]*)\s*\}", stripped
-        )
+        input_ref = re.fullmatch(r"\$\{\s*inputs\.([A-Za-z_][\w]*)\s*\}", stripped)
         if input_ref:
             input_name = input_ref.group(1)
             input_cfg = inputs.get(input_name)
@@ -363,6 +448,52 @@ def _parse_inputs(data: dict[str, Any]) -> dict[str, InputConfig]:
     return inputs
 
 
+def _coerce_optional_float(value: Any, *, field_name: str) -> float | None:
+    """Coerce an optional YAML scalar to float, dropping invalid values.
+
+    The editor/save path rejects invalid params up front
+    (:func:`_validate_step_model_params`); this parse path tolerates
+    hand-edited files by logging and falling back to the provider default
+    instead of failing the whole workflow load.
+    """
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        logger.warning("Ignoring invalid model_params.%s=%r", field_name, value)
+        return None
+
+
+def _coerce_optional_int(value: Any, *, field_name: str) -> int | None:
+    """Coerce an optional YAML scalar to int, dropping invalid values."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        logger.warning("Ignoring invalid model_params.%s=%r", field_name, value)
+        return None
+
+
+def _parse_model_params(raw: Any) -> ModelParamsConfig | None:
+    """Parse a raw ``model_params`` mapping into a ``ModelParamsConfig``."""
+    if not isinstance(raw, dict):
+        return None
+    temperature = _coerce_optional_float(
+        raw.get("temperature"), field_name="temperature"
+    )
+    top_p = _coerce_optional_float(raw.get("top_p"), field_name="top_p")
+    max_tokens = _coerce_optional_int(raw.get("max_tokens"), field_name="max_tokens")
+    if temperature is None and top_p is None and max_tokens is None:
+        return None
+    return ModelParamsConfig(
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
+    )
+
+
 def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConfig:
     """Parse a single raw step mapping into a ``StepConfig``."""
     loop_max, loop_max_expr = _parse_loop_max(raw.get("loop_max", 3), inputs)
@@ -384,6 +515,13 @@ def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConf
             if isinstance(raw.get("model_override"), str)
             else raw.get("model")
         ),
+        persona=(raw.get("persona") if isinstance(raw.get("persona"), str) else None),
+        observers=(
+            [str(o) for o in raw.get("observers")]
+            if isinstance(raw.get("observers"), list)
+            else None
+        ),
+        model_params=_parse_model_params(raw.get("model_params")),
     )
 
 
@@ -421,9 +559,7 @@ def _parse_criterion(c: dict[str, Any]) -> CriterionConfig:
         definition=c.get("definition", ""),
         weight=float(c["weight"]) if c.get("weight") else None,
         critical_floor=(
-            float(c["critical_floor"])
-            if c.get("critical_floor") is not None
-            else None
+            float(c["critical_floor"]) if c.get("critical_floor") is not None else None
         ),
         scale={str(sk): str(sv) for sk, sv in (c.get("scale") or {}).items()},
         evidence_required=c.get("evidence_required", []),

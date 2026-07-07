@@ -26,9 +26,12 @@ export type { DAGResponse, DAGNodeModel, DAGEdgeModel, WorkflowInputSchemaItem }
 // WorkflowInputSchemaResponse (full DAG + inputs)
 export type { WorkflowInputSchemaResponse } from "./workflow_input_schema.generated";
 
-// WorkflowEditorStep
-import type { WorkflowEditorStep } from "./workflow_editor_step.generated";
-export type { WorkflowEditorStep };
+// WorkflowEditorStep + StepModelParams
+import type {
+  StepModelParams,
+  WorkflowEditorStep,
+} from "./workflow_editor_step.generated";
+export type { StepModelParams, WorkflowEditorStep };
 
 // RunsSummaryResponse (aggregate run statistics)
 export type { RunsSummaryResponse } from "./runs_summary.generated";
@@ -63,6 +66,8 @@ export interface WorkflowEditorDocument extends DAGResponse {
   metadata?: Record<string, unknown> | null;
   read_only?: boolean;
   updated_at?: string | null;
+  /** Raw YAML document as JSON — the source of truth for structured edits. */
+  document?: Record<string, unknown> | null;
 }
 
 export interface WorkflowEditorMutationRequest {
@@ -467,4 +472,138 @@ export interface ModelProbeResponse {
   tier_defaults: Record<string, string>;
   models: ProbedModel[];
   no_llm_mode: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Catalog types (personas / tools / observers) — GET /api/personas|tools|observers
+// ---------------------------------------------------------------------------
+
+export interface PersonaInfo {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  tags: string[];
+  prompt_preview: string;
+}
+
+export interface ListPersonasResponse {
+  personas: PersonaInfo[];
+}
+
+export interface ToolInfo {
+  name: string;
+  description: string;
+  tiers: number[];
+}
+
+export interface ListToolsResponse {
+  tools: ToolInfo[];
+}
+
+export interface ObserverInfo {
+  id: string;
+  description: string;
+}
+
+export interface ListObserversResponse {
+  observers: ObserverInfo[];
+}
+
+// ---------------------------------------------------------------------------
+// Provider settings — GET/PUT /api/settings/providers
+// ---------------------------------------------------------------------------
+
+export type ProviderType =
+  | "openai"
+  | "anthropic"
+  | "gh"
+  | "ollama"
+  | "foundry_local"
+  | "custom";
+
+export interface ProviderEndpointConfig {
+  id: string;
+  type: ProviderType;
+  label: string;
+  base_url?: string | null;
+  /** Name of the env var holding the credential — never the secret itself. */
+  api_key_env?: string | null;
+  default_model?: string | null;
+  enabled: boolean;
+  options: Record<string, unknown>;
+}
+
+export interface ProviderSettingsResponse {
+  providers: ProviderEndpointConfig[];
+  provider_types: ProviderType[];
+  env_configured_providers: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Tier settings — GET/PUT /api/settings/tiers
+// ---------------------------------------------------------------------------
+
+export interface TierChain {
+  tier: number;
+  default_chain: string[];
+  override: string[];
+  effective: string[];
+}
+
+export interface TierModelInfo {
+  id: string;
+  provider: string;
+  capabilities: string[];
+  capability_overridden: boolean;
+}
+
+export interface TierSettingsResponse {
+  tiers: TierChain[];
+  models: TierModelInfo[];
+  known_capabilities: string[];
+}
+
+export interface TierSettingsUpdateRequest {
+  tier_overrides?: Record<string, string[]>;
+  model_capabilities?: Record<string, string[]>;
+}
+
+// ---------------------------------------------------------------------------
+// Eval comparison — POST /api/eval/compare
+// ---------------------------------------------------------------------------
+
+export interface EvalComparisonRequest {
+  run_a: string;
+  run_b: string;
+  rubric_id?: string | null;
+  enforce_hard_gates?: boolean;
+  judge_model?: string | null;
+}
+
+export interface EvalCandidateSummary {
+  filename: string;
+  run_id: string | null;
+  workflow_name: string | null;
+  weighted_score: number;
+  overall_score: number;
+  grade: string;
+  passed: boolean;
+  criteria: EvaluationCriterionDetail[];
+}
+
+export interface CriterionDelta {
+  criterion: string;
+  score_a: number | null;
+  score_b: number | null;
+  delta: number | null;
+}
+
+export interface EvalComparisonResponse {
+  candidate_a: EvalCandidateSummary;
+  candidate_b: EvalCandidateSummary;
+  criteria_deltas: CriterionDelta[];
+  weighted_score_delta: number;
+  winner: "a" | "b" | "tie";
+  rubric_id: string;
 }

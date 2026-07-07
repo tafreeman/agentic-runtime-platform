@@ -9,6 +9,7 @@ import BAsciiBar from "../components/common/BAsciiBar";
 import EmptyState from "../components/states/EmptyState";
 import InlineError from "../components/states/InlineError";
 import EvaluationRubricAccordion from "../components/evaluations/EvaluationRubricAccordion";
+import RunComparePanel from "../components/evaluations/RunComparePanel";
 import {
   gradeColorClass,
   gradeLetter,
@@ -642,6 +643,9 @@ export default function EvaluationsPage() {
               </div>
             </div>
           </section>
+
+          {/* Compare runs — head-to-head scoring under one rubric */}
+          <RunComparePanel runs={runs ?? []} />
 
           {mainContent}
         </div>

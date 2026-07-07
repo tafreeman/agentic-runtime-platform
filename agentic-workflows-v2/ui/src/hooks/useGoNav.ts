@@ -22,6 +22,7 @@ export const GO_TARGETS: Readonly<Record<string, GoTarget>> = {
   l: { path: "/evaluations", cli: "agentic evals list" },
   w: { path: "/workflows", cli: "agentic workflows list" },
   a: { path: "/datasets", cli: "agentic datasets list" },
+  s: { path: "/settings", cli: "agentic settings show" },
 };
 
 /** Returns true if a text-entry element currently has focus. */

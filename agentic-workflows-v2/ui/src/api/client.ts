@@ -5,11 +5,21 @@ import type {
   DAGNode,
   DatasetSampleDetailResponse,
   DatasetSampleListResponse,
+  EvalComparisonRequest,
+  EvalComparisonResponse,
   EvaluationDatasetsResponse,
+  ListObserversResponse,
+  ListPersonasResponse,
+  ListToolsResponse,
+  ProviderEndpointConfig,
+  ProviderSettingsResponse,
   RunDetail,
   RunEvaluationDetailResponse,
   RunSummary,
   RunsSummary,
+  StepModelParams,
+  TierSettingsResponse,
+  TierSettingsUpdateRequest,
   WorkflowEditorDocument,
   WorkflowEditorMutationRequest,
   WorkflowEditorSaveResponse,
@@ -103,6 +113,19 @@ function toWorkflowEditorDocument(
       ? step.tools.filter((value): value is string => typeof value === "string")
       : [],
     prompt_file: typeof step.prompt_file === "string" ? step.prompt_file : null,
+    model:
+      typeof step.model === "string"
+        ? step.model
+        : typeof step.model_override === "string"
+          ? step.model_override
+          : null,
+    persona: typeof step.persona === "string" ? step.persona : null,
+    observers: Array.isArray(step.observers)
+      ? step.observers.filter(
+          (value): value is string => typeof value === "string"
+        )
+      : null,
+    model_params: toStepModelParams(step.model_params),
     metadata:
       typeof step.metadata === "object" && step.metadata !== null
         ? (step.metadata as Record<string, unknown>)
@@ -117,6 +140,7 @@ function toWorkflowEditorDocument(
     nodes,
     edges,
     steps,
+    document,
     metadata:
       typeof document.metadata === "object" && document.metadata !== null
         ? (document.metadata as Record<string, unknown>)
@@ -124,6 +148,16 @@ function toWorkflowEditorDocument(
     read_only: false,
     updated_at: null,
   };
+}
+
+function toStepModelParams(value: unknown): StepModelParams | null {
+  if (typeof value !== "object" || value === null) return null;
+  const raw = value as Record<string, unknown>;
+  const params: StepModelParams = {};
+  if (typeof raw.temperature === "number") params.temperature = raw.temperature;
+  if (typeof raw.top_p === "number") params.top_p = raw.top_p;
+  if (typeof raw.max_tokens === "number") params.max_tokens = raw.max_tokens;
+  return Object.keys(params).length > 0 ? params : null;
 }
 
 /** List available workflow names. */
@@ -161,6 +195,27 @@ export function saveWorkflowEditor(
   }));
 }
 
+/** Save a structured workflow document (JSON form of the YAML). */
+export function saveWorkflowEditorDocument(
+  name: string,
+  document: Record<string, unknown>
+): Promise<WorkflowEditorSaveResponse> {
+  return fetchJSON<WorkflowEditorApiResponse>(
+    `${BASE}/workflows/${encodeURIComponent(name)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ document }),
+    }
+  ).then((workflow) => ({
+    saved: true,
+    workflow: {
+      ...toWorkflowEditorDocument(workflow),
+      updated_at: new Date().toISOString(),
+    },
+  }));
+}
+
 /** Validate edited workflow source without saving. */
 export function validateWorkflowEditor(
   name: string,
@@ -170,6 +225,32 @@ export function validateWorkflowEditor(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ source: request.source, name }),
+  }).then((response) => ({
+    valid: response.valid,
+    issues: [],
+    workflow: {
+      name: response.name,
+      description: "",
+      source: response.yaml_text,
+      nodes: [],
+      edges: [],
+      steps: [],
+      metadata: null,
+      read_only: false,
+      updated_at: null,
+    },
+  }));
+}
+
+/** Validate a structured workflow document without saving. */
+export function validateWorkflowEditorDocument(
+  name: string,
+  document: Record<string, unknown>
+): Promise<WorkflowEditorValidateResponse> {
+  return fetchJSON<WorkflowValidationApiResponse>(`${BASE}/workflows/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document, name }),
   }).then((response) => ({
     valid: response.valid,
     issues: [],
@@ -325,6 +406,64 @@ export function getModelRecommendations(
  */
 export function probeModels(): Promise<ModelProbeResponse> {
   return fetchJSON(`${BASE}/models/probe`);
+}
+
+/** List pre-canned personas for the node persona picker. */
+export function listPersonas(): Promise<ListPersonasResponse> {
+  return fetchJSON(`${BASE}/personas`);
+}
+
+/** List tools available for per-step allowlisting. */
+export function listTools(): Promise<ListToolsResponse> {
+  return fetchJSON(`${BASE}/tools`);
+}
+
+/** List observer channels a step can enable. */
+export function listObservers(): Promise<ListObserversResponse> {
+  return fetchJSON(`${BASE}/observers`);
+}
+
+/** Get user-configured provider endpoints. */
+export function getProviderSettings(): Promise<ProviderSettingsResponse> {
+  return fetchJSON(`${BASE}/settings/providers`);
+}
+
+/** Replace the provider endpoint list. */
+export function putProviderSettings(
+  providers: ProviderEndpointConfig[]
+): Promise<ProviderSettingsResponse> {
+  return fetchJSON(`${BASE}/settings/providers`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ providers }),
+  });
+}
+
+/** Get tier rankings and model capability tags. */
+export function getTierSettings(): Promise<TierSettingsResponse> {
+  return fetchJSON(`${BASE}/settings/tiers`);
+}
+
+/** Update tier rerank overrides and/or capability tags (merge-per-key). */
+export function putTierSettings(
+  update: TierSettingsUpdateRequest
+): Promise<TierSettingsResponse> {
+  return fetchJSON(`${BASE}/settings/tiers`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+}
+
+/** Score two completed runs under one rubric, head-to-head. */
+export function compareRuns(
+  request: EvalComparisonRequest
+): Promise<EvalComparisonResponse> {
+  return fetchJSON(`${BASE}/eval/compare`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
 }
 
 /** Health check. */

@@ -179,9 +179,39 @@ async def list_adapters():
     return {"adapters": names}
 
 
-@router.get("/workflows/{name}/dag", responses={
-    404: {"description": "Not Found"},
-})
+def _dag_edge(dep: str, step: Any) -> dict[str, Any]:
+    """Build one enriched dependency edge for the DAG payload.
+
+    The edge carries what actually flows across it: every target-step input
+    expression that references the source step, plus the target's ``when``
+    condition, so the UI can label and inspect edges instead of rendering
+    anonymous arrows.
+    """
+    marker = f"steps.{dep}."
+    step_inputs = getattr(step, "inputs", {}) or {}
+    mapped = [
+        (key, value)
+        for key, value in step_inputs.items()
+        if isinstance(value, str) and marker in value
+    ]
+    mappings = [f"{key} = {value}" for key, value in mapped]
+    mapped_keys = [key for key, _ in mapped]
+    return {
+        "source": dep,
+        "target": step.name,
+        "id": f"{dep}->{step.name}",
+        "label": ", ".join(mapped_keys) if mapped_keys else None,
+        "mappings": mappings,
+        "when": getattr(step, "when", None),
+    }
+
+
+@router.get(
+    "/workflows/{name}/dag",
+    responses={
+        404: {"description": "Not Found"},
+    },
+)
 async def get_workflow_dag(name: str):
     """Return the DAG structure for visualization."""
     try:
@@ -199,10 +229,12 @@ async def get_workflow_dag(name: str):
                 "description": step.description,
                 "depends_on": list(step.depends_on),
                 "tier": None,  # tier is embedded in agent name (e.g. tier2_reviewer)
+                "persona": getattr(step, "persona", None),
+                "model": getattr(step, "model_override", None),
             }
         )
         for dep in step.depends_on:
-            edges.append({"source": dep, "target": step.name})
+            edges.append(_dag_edge(dep, step))
 
     # Include input schema so the UI can render a proper form
     input_schema = []
@@ -227,9 +259,12 @@ async def get_workflow_dag(name: str):
     }
 
 
-@router.get("/workflows/{name}/capabilities", responses={
-    404: {"description": "Not Found"},
-})
+@router.get(
+    "/workflows/{name}/capabilities",
+    responses={
+        404: {"description": "Not Found"},
+    },
+)
 async def get_workflow_capabilities(name: str):
     """Return workflow capability declarations (inputs/outputs)."""
     try:
@@ -243,10 +278,14 @@ async def get_workflow_capabilities(name: str):
     }
 
 
-@router.get("/workflows/{name}/editor", response_model=WorkflowEditorResponse, responses={
-    404: {"description": "Not Found"},
-    422: {"description": "Unprocessable Entity"},
-})
+@router.get(
+    "/workflows/{name}/editor",
+    response_model=WorkflowEditorResponse,
+    responses={
+        404: {"description": "Not Found"},
+        422: {"description": "Unprocessable Entity"},
+    },
+)
 async def get_workflow_editor(name: str):
     """Return the raw YAML workflow document for editor clients."""
     try:
@@ -258,10 +297,14 @@ async def get_workflow_editor(name: str):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.put("/workflows/{name}", response_model=WorkflowEditorResponse, responses={
-    422: {"description": "Unprocessable Entity"},
-    503: {"description": "Service Unavailable"},
-})
+@router.put(
+    "/workflows/{name}",
+    response_model=WorkflowEditorResponse,
+    responses={
+        422: {"description": "Unprocessable Entity"},
+        503: {"description": "Service Unavailable"},
+    },
+)
 async def save_workflow_editor(name: str, request: WorkflowEditorRequest):
     """Validate and persist a workflow document."""
     try:
@@ -315,13 +358,17 @@ async def validate_workflow_editor(request: WorkflowEditorRequest):
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
-@router.post("/run", response_model=WorkflowRunResponse, responses={
-    400: {"description": "Bad Request"},
-    422: {"description": "Unprocessable Entity"},
-    500: {"description": "Internal Server Error"},
-    501: {"description": "Not Implemented"},
-    503: {"description": "Service Unavailable"},
-})
+@router.post(
+    "/run",
+    response_model=WorkflowRunResponse,
+    responses={
+        400: {"description": "Bad Request"},
+        422: {"description": "Unprocessable Entity"},
+        500: {"description": "Internal Server Error"},
+        501: {"description": "Not Implemented"},
+        503: {"description": "Service Unavailable"},
+    },
+)
 async def run_workflow(
     request: WorkflowRunRequest,
     background_tasks: BackgroundTasks,

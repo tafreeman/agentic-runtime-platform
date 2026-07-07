@@ -31,11 +31,13 @@ from .middleware.rate_limit import configure_rate_limiting
 from .middleware.tracing import TraceparentMiddleware
 from .routes import (
     agents,
+    catalog,
     evaluation_routes,
     health,
     model_finder,
     models,
     runs,
+    settings_routes,
     workflows,
 )
 from .spa import UI_DIST_DIR, _mount_spa
@@ -154,6 +156,8 @@ def create_app() -> FastAPI:
     # Include routes
     app.include_router(health.router, prefix="/api")
     app.include_router(agents.router, prefix="/api")
+    app.include_router(catalog.router, prefix="/api")
+    app.include_router(settings_routes.router, prefix="/api")
     app.include_router(models.router, prefix="/api")
     app.include_router(workflows.router, prefix="/api")
     app.include_router(evaluation_routes.router, prefix="/api")

@@ -1,5 +1,55 @@
 {
-  "description": "HTTP wire shape for a single step inside a workflow editor document.\n\nMirrors the step-level fields that the workflow YAML parser produces and\nthat the React editor surfaces for visualisation and editing.\n\nAttributes:\n    name: Step identifier (unique within the workflow).\n    agent: Agent persona/tier string (e.g. ``\"tier2_coder\"``), or None.\n    description: Human-readable step description.\n    tier: Explicit model tier override, or None.\n    depends_on: Names of steps this step depends on.\n    when: Optional conditional expression string.\n    loop_until: Loop termination expression, or None.\n    loop_max: Maximum loop iterations, or None.\n    tools: Tool names allowlisted for this step.\n    prompt_file: Path to an external prompt file, or None.\n    metadata: Arbitrary step-level metadata bag, or None.",
+  "$defs": {
+    "StepModelParams": {
+      "description": "Per-step sampling parameter overrides carried in editor documents.\n\nAttributes:\n    temperature: Sampling temperature (0--2), or None for the default.\n    top_p: Nucleus sampling probability mass (0--1], or None.\n    max_tokens: Response token cap, or None for the provider default.",
+      "properties": {
+        "max_tokens": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Tokens"
+        },
+        "temperature": {
+          "anyOf": [
+            {
+              "maximum": 2.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature"
+        },
+        "top_p": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top P"
+        }
+      },
+      "title": "StepModelParams",
+      "type": "object"
+    }
+  },
+  "description": "HTTP wire shape for a single step inside a workflow editor document.\n\nMirrors the step-level fields that the workflow YAML parser produces and\nthat the React editor surfaces for visualisation and editing.\n\nAttributes:\n    name: Step identifier (unique within the workflow).\n    agent: Agent persona/tier string (e.g. ``\"tier2_coder\"``), or None.\n    description: Human-readable step description.\n    tier: Explicit model tier override, or None.\n    depends_on: Names of steps this step depends on.\n    when: Optional conditional expression string.\n    loop_until: Loop termination expression, or None.\n    loop_max: Maximum loop iterations, or None.\n    tools: Tool names allowlisted for this step.\n    prompt_file: Path to an external prompt file, or None.\n    model: Per-step model id override, or None.\n    persona: Persona registry id for the system prompt, or None.\n    observers: Observer channels enabled for this step, or None for all.\n    model_params: Sampling parameter overrides, or None.\n    metadata: Arbitrary step-level metadata bag, or None.",
   "properties": {
     "agent": {
       "anyOf": [
@@ -69,9 +119,59 @@
       "default": null,
       "title": "Metadata"
     },
+    "model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Model"
+    },
+    "model_params": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StepModelParams"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "name": {
       "title": "Name",
       "type": "string"
+    },
+    "observers": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Observers"
+    },
+    "persona": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Persona"
     },
     "prompt_file": {
       "anyOf": [

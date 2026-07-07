@@ -39,6 +39,12 @@ from ..models import (
     RunsSummaryResponse,
     RunSummaryModel,
 )
+from ..models_settings import (
+    EvalCandidateSummary,
+    EvalComparisonRequest,
+    EvalComparisonResponse,
+    build_criteria_deltas,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["workflows"])
@@ -430,6 +436,132 @@ async def evaluate_run(
         evaluation_requested=True,
         dataset=run_data.get("dataset"),
         evaluation=evaluation,
+    )
+
+
+def _score_run_candidate(
+    label: str,
+    identifier: str,
+    tenant: TenantContext,
+    options: EvalComparisonRequest,
+    judge: Any,
+) -> tuple[dict[str, Any], dict[str, Any], str]:
+    """Load, replay, and score one comparison candidate.
+
+    Returns ``(run_data, scored_payload, filename)``. Raises HTTP 404 when the
+    run is missing and HTTP 422 when its log cannot be replayed.
+    """
+    from ..evaluation import score_workflow_result
+
+    tenant_logger = _tenant_run_logger(tenant)
+    path = _resolve_run_or_404(identifier, tenant)
+    run_data = tenant_logger.load_run(path)
+    try:
+        result = run_record_to_workflow_result(run_data)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Candidate {label} ({identifier}) cannot be replayed: {exc}",
+        ) from exc
+
+    workflow_def = _load_workflow_definition_optional(run_data.get("workflow_name"))
+    scored = score_workflow_result(
+        result,
+        dataset_meta=(
+            run_data.get("dataset")
+            if isinstance(run_data.get("dataset"), dict)
+            else None
+        ),
+        dataset_sample=None,
+        rubric=options.rubric_id,
+        workflow_definition=workflow_def,
+        enforce_hard_gates=options.enforce_hard_gates,
+        judge=judge,
+    )
+    return run_data, scored, path.name
+
+
+def _candidate_summary(
+    run_data: dict[str, Any],
+    scored: dict[str, Any],
+    filename: str,
+) -> EvalCandidateSummary:
+    """Build the wire summary for one scored comparison candidate."""
+    return EvalCandidateSummary(
+        filename=filename,
+        run_id=run_data.get("run_id"),
+        workflow_name=run_data.get("workflow_name"),
+        weighted_score=float(scored.get("weighted_score") or 0.0),
+        overall_score=float(scored.get("overall_score") or 0.0),
+        grade=str(scored.get("grade") or "F"),
+        passed=bool(scored.get("passed")),
+        criteria=scored.get("criteria") or [],
+    )
+
+
+@router.post(
+    "/eval/compare",
+    response_model=EvalComparisonResponse,
+    responses={
+        404: {"description": "Run not found"},
+        422: {"description": "A run log cannot be replayed for evaluation"},
+    },
+)
+async def compare_runs(
+    request: Request,
+    body: EvalComparisonRequest,
+    tenant: Annotated[TenantContext, Depends(get_tenant_context)],
+):
+    """Score two completed runs under one rubric and return the head-to-head.
+
+    Both candidates are re-scored by replaying their captured run logs — no
+    workflow re-execution, and nothing is persisted. Use this to compare
+    prompt or workflow variants that ran against the same task.
+    """
+    from ...scoring.judge import LLMJudge
+    from ..execution import _resolve_judge_model
+
+    judge_model = body.judge_model or _resolve_judge_model()
+    judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
+
+    # Judge scoring is synchronous and may call an LLM — keep it off the
+    # event loop.
+    run_data_a, scored_a, filename_a = await asyncio.to_thread(
+        _score_run_candidate, "A", body.run_a, tenant, body, judge
+    )
+    run_data_b, scored_b, filename_b = await asyncio.to_thread(
+        _score_run_candidate, "B", body.run_b, tenant, body, judge
+    )
+
+    candidate_a = _candidate_summary(run_data_a, scored_a, filename_a)
+    candidate_b = _candidate_summary(run_data_b, scored_b, filename_b)
+    delta = candidate_a.weighted_score - candidate_b.weighted_score
+    winner = "tie" if abs(delta) < 1e-9 else ("a" if delta > 0 else "b")
+
+    from ..audit_log import audit_request_event
+
+    await audit_request_event(
+        request,
+        "evaluation.compared",
+        outcome="success",
+        target={"type": "run.evaluation.compare", "a": filename_a, "b": filename_b},
+        tenant_id=tenant.tenant_id,
+        metadata={
+            "winner": winner,
+            "weighted_score_delta": delta,
+            "tenant_source": tenant.source,
+        },
+    )
+
+    return EvalComparisonResponse(
+        candidate_a=candidate_a,
+        candidate_b=candidate_b,
+        criteria_deltas=build_criteria_deltas(
+            scored_a.get("criteria") or [], scored_b.get("criteria") or []
+        ),
+        weighted_score_delta=delta,
+        winner=winner,
+        rubric_id=str(scored_a.get("rubric_id") or ""),
     )
 
 

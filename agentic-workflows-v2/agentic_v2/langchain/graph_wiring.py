@@ -273,12 +273,38 @@ def map_step_outputs_to_context(
     return final_ctx
 
 
+_DATA_URL_PATTERN = re.compile(r"^data:(?P<mime>[\w.+-]+/[\w.+-]+)?(;base64)?,")
+
+
+def summarize_media_value(value: Any) -> Any:
+    """Replace data-URL media payloads with a compact textual placeholder.
+
+    Image/audio inputs arrive from the UI as ``data:`` URLs; embedding the
+    raw base64 in a text prompt wastes the context window without conveying
+    the content, so it is summarized to ``<media ...>`` instead. Applied
+    recursively to mapping/list inputs.
+    """
+    if isinstance(value, str):
+        match = _DATA_URL_PATTERN.match(value)
+        if match and len(value) > 256:
+            mime = match.group("mime") or "application/octet-stream"
+            approx_kb = max(1, len(value) * 3 // 4 // 1024)
+            return f"<media {mime} ~{approx_kb} KB attached>"
+        return value
+    if isinstance(value, dict):
+        return {key: summarize_media_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [summarize_media_value(item) for item in value]
+    return value
+
+
 def build_task_description(step: StepConfig, resolved_inputs: dict[str, Any]) -> str:
     """Create an LLM task prompt payload for a workflow step."""
+    prompt_inputs = summarize_media_value(resolved_inputs)
     task_description = (
         f"Step: {step.name}\n"
         f"Description: {step.description}\n"
-        f"Inputs:\n{json.dumps(resolved_inputs, indent=2, default=str)}\n\n"
+        f"Inputs:\n{json.dumps(prompt_inputs, indent=2, default=str)}\n\n"
         f"Please complete this task and return your result. Produce the "
         f"deliverable directly in this response; if none of your tools "
         f"apply, answer without tools rather than declining for lack of a "
@@ -758,6 +784,15 @@ def _build_llm_node(
     )
     agent_cache: dict[str, Any] = {}
 
+    # New optional per-step config is passed only when set so that existing
+    # create_agent stand-ins (tests monkeypatch keyword-only fakes) keep
+    # working unchanged for steps that don't use it.
+    extra_agent_kwargs: dict[str, Any] = {}
+    if step.persona:
+        extra_agent_kwargs["persona"] = step.persona
+    if step.model_params is not None:
+        extra_agent_kwargs["model_params"] = step.model_params
+
     def _get_agent_for_model(model_id: str) -> Any:
         cached = agent_cache.get(model_id)
         if cached is not None:
@@ -767,6 +802,7 @@ def _build_llm_node(
             tool_names=step.tools,
             prompt_file=step.prompt_file,
             model_override=model_id,
+            **extra_agent_kwargs,
         )
         agent_cache[model_id] = agent
         return agent
@@ -866,6 +902,11 @@ def make_step_node(
 
     tier = parse_agent_tier(step.agent)
     _trace = trace_adapter or NullTraceAdapter()
+
+    # Per-step observer gating: an explicit observers list that omits "trace"
+    # silences engine trace emission for this step (None means all channels).
+    if step.observers is not None and "trace" not in step.observers:
+        _trace = NullTraceAdapter()
 
     # Tier 0: deterministic
     if tier == 0:

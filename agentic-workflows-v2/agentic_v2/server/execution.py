@@ -37,6 +37,7 @@ _run_and_evaluate
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -367,6 +368,15 @@ async def _stream_and_run(
         "errors": [],
     }
 
+    # Per-step observer channel config (None = every channel enabled).
+    step_observers: dict[str, list[str] | None] | None = None
+    try:
+        # File I/O + YAML parse (on cache miss) stays off the event loop.
+        workflow_cfg = await asyncio.to_thread(load_workflow_config, workflow_name)
+        step_observers = {s.name: s.observers for s in workflow_cfg.steps}
+    except Exception as exc:
+        logger.debug("Observer config unavailable for %s: %s", workflow_name, exc)
+
     try:
         async for node_update in _get_lc_runner().astream(
             workflow_name,
@@ -387,6 +397,7 @@ async def _stream_and_run(
                 step_start_times=step_start_times,
                 last_status_by_step=last_status_by_step,
                 scoring_listener=scoring_listener,
+                step_observers=step_observers,
             )
 
         result = _build_stream_result(

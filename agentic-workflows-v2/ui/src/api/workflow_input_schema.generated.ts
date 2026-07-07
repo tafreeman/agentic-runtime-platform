@@ -35,10 +35,21 @@ export interface WorkflowInputSchemaResponse {
  * Attributes:
  *     source: Name of the predecessor step.
  *     target: Name of the dependent step.
+ *     id: Stable edge identifier (``"{source}->{target}"``), or None for
+ *         legacy payloads.
+ *     label: Short human-readable summary of what flows along the edge
+ *         (the target input keys fed from the source), or None.
+ *     mappings: Expanded ``input_key = ${...}`` expressions on the target
+ *         step that reference the source step.
+ *     when: The target step's conditional expression, or None.
  */
 export interface DAGEdgeModel {
+  id?: string | null;
+  label?: string | null;
+  mappings?: string[];
   source: string;
   target: string;
+  when?: string | null;
 }
 /**
  * HTTP wire shape for a single workflow input parameter descriptor.
@@ -79,5 +90,7 @@ export interface DAGNodeModel {
   depends_on: string[];
   description?: string;
   id: string;
+  model?: string | null;
+  persona?: string | null;
   tier?: string | null;
 }

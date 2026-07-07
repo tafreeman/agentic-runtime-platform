@@ -54,6 +54,108 @@ const CONTROL_TOKENS = {
   borderWidth: "var(--b-bw)",
 } as const;
 
+/** Input schema types that render a file picker instead of a text field. */
+const FILE_INPUT_TYPES = new Set(["image", "audio", "file"]);
+
+/** Per-field bookkeeping for media inputs (the value itself lives in
+ * `inputValues` as a data: URL so it submits through the existing record). */
+interface FileFieldState {
+  meta: { name: string; size: number } | null;
+  error: string | null;
+  /** Bumped on clear so the native file input remounts (and resets). */
+  resets: number;
+}
+
+const EMPTY_FILE_FIELD: FileFieldState = { meta: null, error: null, resets: 0 };
+
+/** Native accept filter for a media-typed input ("file" accepts anything). */
+function fileAccept(type: string | undefined): string | undefined {
+  if (type === "image") return "image/*";
+  if (type === "audio") return "audio/*";
+  return undefined;
+}
+
+/** Human-readable file size (B / KB / MB). */
+function humanFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+interface FileInputFieldProps {
+  id: string;
+  input: WorkflowInputSchema;
+  value: string;
+  state: FileFieldState;
+  fieldClass: string;
+  onFile: (file: File | null) => void;
+  onClear: () => void;
+}
+
+/** File picker + preview chip for image/audio/file-typed workflow inputs. */
+function FileInputField({
+  id,
+  input,
+  value,
+  state,
+  fieldClass,
+  onFile,
+  onClear,
+}: Readonly<FileInputFieldProps>) {
+  const showChip = state.meta != null && value !== "";
+  return (
+    <div className="space-y-1.5">
+      <input
+        key={`${input.name}-${state.resets}`}
+        id={id}
+        data-testid={`input-${input.name}`}
+        type="file"
+        accept={fileAccept(input.type)}
+        required={input.required && !value}
+        onChange={(event) => onFile(event.target.files?.[0] ?? null)}
+        style={CONTROL_TOKENS}
+        className={fieldClass}
+      />
+      {showChip && state.meta ? (
+        <div
+          data-testid={`file-chip-${input.name}`}
+          style={CONTROL_TOKENS}
+          className="flex items-center gap-2 border border-solid border-b-line bg-b-bg1 px-2 py-1.5"
+        >
+          {value.startsWith("data:image") ? (
+            <img
+              src={value}
+              alt={`${state.meta.name} preview`}
+              className="max-h-12 border border-solid border-b-line"
+              style={{ borderRadius: "var(--b-rad-sm)" }}
+            />
+          ) : null}
+          <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-b-text">
+            {state.meta.name}
+          </span>
+          <span className="flex-none font-mono text-[10px] text-b-text-dim">
+            {humanFileSize(state.meta.size)}
+          </span>
+          <button
+            type="button"
+            aria-label={`remove ${input.name}`}
+            onClick={onClear}
+            className="flex-none font-mono text-[10px] text-b-text-dim hover:text-b-red"
+          >
+            [x]
+          </button>
+        </div>
+      ) : null}
+      {state.error ? (
+        <div role="alert" className="font-mono text-[10px] text-b-red">
+          [!] {state.error}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function RunConfigForm({
   inputs,
   workflowName,
@@ -61,6 +163,9 @@ export default function RunConfigForm({
 }: RunConfigFormProps) {
   const [inputValues, setInputValues] = useState<Record<string, string>>(() =>
     buildInitialValues(inputs)
+  );
+  const [fileFields, setFileFields] = useState<Record<string, FileFieldState>>(
+    {}
   );
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [runtime, setRuntime] =
@@ -87,6 +192,7 @@ export default function RunConfigForm({
 
   useEffect(() => {
     setInputValues(buildInitialValues(inputs));
+    setFileFields({});
   }, [inputs]);
 
   const datasetOptions = useMemo(() => {
@@ -139,6 +245,48 @@ export default function RunConfigForm({
 
   const updateInputValue = (name: string, value: string) => {
     setInputValues((current) => ({ ...current, [name]: value }));
+  };
+
+  const updateFileField = (
+    name: string,
+    update: (current: FileFieldState) => FileFieldState
+  ) => {
+    setFileFields((current) => ({
+      ...current,
+      [name]: update(current[name] ?? EMPTY_FILE_FIELD),
+    }));
+  };
+
+  const handleFileSelect = (name: string, file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      // readAsDataURL always yields a string; guard for the typed union.
+      if (typeof reader.result === "string") {
+        updateInputValue(name, reader.result);
+        updateFileField(name, (current) => ({
+          ...current,
+          meta: { name: file.name, size: file.size },
+          error: null,
+        }));
+      }
+    };
+    reader.onerror = () => {
+      updateFileField(name, (current) => ({
+        ...current,
+        error: `failed to read ${file.name}`,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearFile = (name: string) => {
+    updateInputValue(name, "");
+    updateFileField(name, (current) => ({
+      meta: null,
+      error: null,
+      resets: current.resets + 1,
+    }));
   };
 
   const updateDatasetSource = (source: DatasetSource) => {
@@ -210,7 +358,17 @@ export default function RunConfigForm({
                     <span className="text-b-red"> *</span>
                   ) : null}
                 </span>
-                {input.enum ? (
+                {FILE_INPUT_TYPES.has(input.type ?? "") ? (
+                  <FileInputField
+                    id={id}
+                    input={input}
+                    value={inputValues[input.name] ?? ""}
+                    state={fileFields[input.name] ?? EMPTY_FILE_FIELD}
+                    fieldClass={fieldClass}
+                    onFile={(file) => handleFileSelect(input.name, file)}
+                    onClear={() => clearFile(input.name)}
+                  />
+                ) : input.enum ? (
                   <select
                     id={id}
                     data-testid={`input-${input.name}`}

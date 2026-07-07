@@ -630,14 +630,20 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     )
 
 
-def get_model_for_tier(tier: int, model_override: str | None = None) -> Any:
+def get_model_for_tier(
+    tier: int,
+    model_override: str | None = None,
+    *,
+    temperature: float = 0.0,
+) -> Any:
     """Return a chat model for the given agent tier.
 
     Resolution order:
     1. ``model_override`` argument
     2. Env var ``AGENTIC_MODEL_TIER_{tier}``
-    3. Tier default from ``_TIER_DEFAULTS`` (set by probe)
-    4. Walk the fallback chain trying each available provider
+    3. UI settings tier override (``agentic_v2.ui_settings``)
+    4. Tier default from ``_TIER_DEFAULTS`` (set by probe)
+    5. Walk the fallback chain trying each available provider
     """
     chain = get_model_candidates_for_tier(
         tier,
@@ -648,7 +654,7 @@ def get_model_for_tier(tier: int, model_override: str | None = None) -> Any:
     last_err: Exception | None = None
     for model_id in chain:
         try:
-            return get_chat_model(model_id)
+            return get_chat_model(model_id, temperature)
         except (ValueError, ImportError) as exc:
             last_err = exc
             logger.debug("Fallback %s failed: %s", model_id, exc)
@@ -657,6 +663,40 @@ def get_model_for_tier(tier: int, model_override: str | None = None) -> Any:
     raise ValueError(
         f"No available model for tier {tier}. Checked: {chain}. Last error: {last_err}"
     )
+
+
+# Sampling params that can be applied post-construction. Field names differ by
+# provider integration, so each logical param maps to candidate field names in
+# priority order (e.g. ChatOllama exposes ``num_predict``, not ``max_tokens``).
+_PARAM_FIELD_CANDIDATES: dict[str, tuple[str, ...]] = {
+    "top_p": ("top_p",),
+    "max_tokens": ("max_tokens", "max_completion_tokens", "num_predict"),
+}
+
+
+def apply_model_params(model: Any, params: dict[str, Any] | None) -> Any:
+    """Return a copy of *model* with supported sampling params applied.
+
+    Works generically across LangChain chat-model integrations: a param is
+    applied only when the model class declares a matching Pydantic field, so
+    unsupported params are skipped silently (e.g. the no-LLM placeholder).
+    """
+    if not params:
+        return model
+    fields = getattr(type(model), "model_fields", None)
+    if not fields:
+        return model
+    updates: dict[str, Any] = {}
+    for param, value in params.items():
+        if value is None:
+            continue
+        for candidate in _PARAM_FIELD_CANDIDATES.get(param, (param,)):
+            if candidate in fields:
+                updates[candidate] = value
+                break
+    if not updates:
+        return model
+    return model.model_copy(update=updates)
 
 
 def get_model_candidates_for_tier(
@@ -671,9 +711,11 @@ def get_model_candidates_for_tier(
     Resolution order:
     1. Per-step ``model_override`` (resolved, supports ``env:VAR|fallback``)
     2. Env var ``AGENTIC_MODEL_TIER_{tier}``
-    3. Probed tier default from ``_TIER_DEFAULTS``
-    4. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``
-    5. GitHub backup models (when ``GITHUB_TOKEN`` is configured)
+    3. UI settings tier override (``agentic_v2.ui_settings``, set via the
+       settings API / web UI)
+    4. Probed tier default from ``_TIER_DEFAULTS``
+    5. Tier fallback chain from ``_TIER_FALLBACK_CHAINS``
+    6. GitHub backup models (when ``GITHUB_TOKEN`` is configured)
     """
     pinned: list[str] = []
 
@@ -684,6 +726,13 @@ def get_model_candidates_for_tier(
     env_val = (os.environ.get(env_key) or "").strip()
     if env_val:
         pinned.append(env_val)
+
+    try:
+        from ..ui_settings import tier_override_models
+
+        pinned.extend(tier_override_models(tier))
+    except Exception as exc:  # settings store must never break routing
+        logger.debug("UI settings tier override unavailable: %s", exc)
 
     default_id = _TIER_DEFAULTS.get(tier, _TIER_DEFAULTS.get(2, _ultimate_fallback()))
     if default_id:

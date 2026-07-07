@@ -1,0 +1,122 @@
+"""Tests for the runtime-mutable UI settings store (agentic_v2.ui_settings)."""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+from pydantic import ValidationError
+
+from agentic_v2.ui_settings import (
+    ProviderConfig,
+    UiSettings,
+    load_ui_settings,
+    save_ui_settings,
+    tier_override_models,
+)
+
+
+def _settings_path(tmp_path):
+    return tmp_path / "ui_settings.json"
+
+
+class TestProviderConfig:
+    def test_accepts_a_full_provider_entry(self):
+        provider = ProviderConfig(
+            id="my-ollama",
+            type="ollama",
+            label="Local Ollama",
+            base_url="http://localhost:11434",
+            default_model="ollama:qwen3:8b",
+            options={"num_ctx": 8192},
+        )
+        assert provider.enabled is True
+        assert provider.base_url == "http://localhost:11434"
+
+    def test_rejects_invalid_slug_id(self):
+        with pytest.raises(ValidationError, match="slug"):
+            ProviderConfig(id="Bad Id!", type="openai")
+
+    def test_rejects_unknown_provider_type(self):
+        with pytest.raises(ValidationError):
+            ProviderConfig(id="x", type="definitely-not-a-provider")
+
+    def test_rejects_credential_smuggling_in_options(self):
+        with pytest.raises(ValidationError, match="credentials"):
+            ProviderConfig(id="x", type="custom", options={"api_key": "sk-123"})
+
+    def test_api_key_env_holds_a_name_not_a_secret(self):
+        provider = ProviderConfig(id="x", type="anthropic", api_key_env="MY_KEY_VAR")
+        assert provider.api_key_env == "MY_KEY_VAR"
+
+
+class TestUiSettingsValidation:
+    def test_rejects_duplicate_provider_ids(self):
+        with pytest.raises(ValidationError, match="Duplicate provider id"):
+            UiSettings(
+                providers=[
+                    ProviderConfig(id="dup", type="openai"),
+                    ProviderConfig(id="dup", type="ollama"),
+                ]
+            )
+
+    def test_rejects_out_of_range_tier(self):
+        with pytest.raises(ValidationError, match="between 0 and 5"):
+            UiSettings(tier_overrides={9: ["gh:openai/gpt-4o"]})
+
+    def test_rejects_empty_model_id_in_override(self):
+        with pytest.raises(ValidationError, match="empty model id"):
+            UiSettings(tier_overrides={2: [""]})
+
+
+class TestStoreRoundtrip:
+    def test_load_returns_defaults_when_file_missing(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        settings = load_ui_settings()
+        assert settings.providers == []
+        assert settings.tier_overrides == {}
+
+    def test_save_then_load_roundtrips(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        original = UiSettings(
+            providers=[ProviderConfig(id="lab", type="custom", base_url="http://x")],
+            tier_overrides={2: ["ollama:qwen3:8b", "gh:openai/gpt-4o"]},
+            model_capabilities={"ollama:qwen3:8b": ["fast", "local"]},
+        )
+        path = save_ui_settings(original)
+        assert path == _settings_path(tmp_path)
+
+        loaded = load_ui_settings()
+        assert loaded == original
+
+    def test_corrupt_file_degrades_to_defaults(self, tmp_path, monkeypatch):
+        path = _settings_path(tmp_path)
+        path.write_text("{not json", encoding="utf-8")
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
+        assert load_ui_settings() == UiSettings()
+
+    def test_saved_file_is_valid_json_without_secrets_fields(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        save_ui_settings(
+            UiSettings(
+                providers=[
+                    ProviderConfig(id="a", type="openai", api_key_env="OPENAI_API_KEY")
+                ]
+            )
+        )
+        on_disk = json.loads(_settings_path(tmp_path).read_text(encoding="utf-8"))
+        assert on_disk["providers"][0]["api_key_env"] == "OPENAI_API_KEY"
+        assert "api_key" not in on_disk["providers"][0]
+
+
+class TestTierOverrideAccessor:
+    def test_returns_override_for_tier(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        save_ui_settings(UiSettings(tier_overrides={3: ["anthropic:claude-x"]}))
+        assert tier_override_models(3) == ["anthropic:claude-x"]
+
+    def test_returns_empty_for_unset_tier(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        assert tier_override_models(4) == []

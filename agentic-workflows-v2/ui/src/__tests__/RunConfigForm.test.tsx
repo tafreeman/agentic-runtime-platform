@@ -205,6 +205,92 @@ describe("RunConfigForm", () => {
     expect(screen.getByTestId("run-config-form")).toBeInTheDocument();
   });
 
+  it("renders a file picker for image inputs and stores a data URL", async () => {
+    const inputs: WorkflowInputSchema[] = [
+      makeInput({ name: "photo", type: "image", required: false }),
+    ];
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />
+    );
+
+    const fileInput = screen.getByTestId("input-photo") as HTMLInputElement;
+    expect(fileInput.type).toBe("file");
+    expect(fileInput.accept).toBe("image/*");
+
+    // jsdom implements FileReader.readAsDataURL, so the real reader runs.
+    const file = new File(["fake-image-bytes"], "photo.png", {
+      type: "image/png",
+    });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      const lastCall = onChange.mock.calls.at(-1)?.[0];
+      expect(lastCall.inputValues.photo).toMatch(/^data:image\/png;base64,/);
+    });
+
+    // Preview chip: file name, human size, and an image thumbnail.
+    expect(screen.getByTestId("file-chip-photo")).toBeInTheDocument();
+    expect(screen.getByText("photo.png")).toBeInTheDocument();
+    expect(screen.getByText("16 B")).toBeInTheDocument();
+    const thumb = screen.getByAltText("photo.png preview") as HTMLImageElement;
+    expect(thumb.src).toMatch(/^data:image\/png/);
+
+    // Removing the file clears the submitted value and the chip.
+    fireEvent.click(screen.getByRole("button", { name: "remove photo" }));
+    await waitFor(() => {
+      const lastCall = onChange.mock.calls.at(-1)?.[0];
+      expect(lastCall.inputValues.photo).toBe("");
+    });
+    expect(screen.queryByTestId("file-chip-photo")).not.toBeInTheDocument();
+  });
+
+  it("renders an audio-accepting file picker for audio inputs", () => {
+    const inputs: WorkflowInputSchema[] = [
+      makeInput({ name: "clip", type: "audio", required: false }),
+    ];
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />
+    );
+
+    const fileInput = screen.getByTestId("input-clip") as HTMLInputElement;
+    expect(fileInput.type).toBe("file");
+    expect(fileInput.accept).toBe("audio/*");
+  });
+
+  it("surfaces a FileReader failure inline", async () => {
+    const inputs: WorkflowInputSchema[] = [
+      makeInput({ name: "photo", type: "image", required: false }),
+    ];
+    const onChange = vi.fn();
+
+    // Force the reader down its error path.
+    const readSpy = vi
+      .spyOn(FileReader.prototype, "readAsDataURL")
+      .mockImplementation(function (this: FileReader) {
+        this.onerror?.(new ProgressEvent("error") as ProgressEvent<FileReader>);
+      });
+
+    renderForm(
+      <RunConfigForm inputs={inputs} workflowName="test" onChange={onChange} />
+    );
+
+    const file = new File(["broken"], "broken.png", { type: "image/png" });
+    fireEvent.change(screen.getByTestId("input-photo"), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        /failed to read broken.png/i
+      )
+    );
+    readSpy.mockRestore();
+  });
+
   it("loads selectable local datasets and emits the selected dataset config", async () => {
     const onChange = vi.fn();
 
