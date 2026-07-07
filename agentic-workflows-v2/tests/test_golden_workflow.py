@@ -22,6 +22,10 @@ import pytest
 GOLDEN_DIR = Path(__file__).parent / "golden"
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
+# The committed golden output was produced in the backend-less baseline; an
+# ambient AGENTIC_NO_LLM=1 swaps in the placeholder backend and drifts it.
+pytestmark = pytest.mark.usefixtures("backendless_baseline")
+
 # Fields that vary between runs and must not be compared
 _VOLATILE_KEYS = {
     "end_time",

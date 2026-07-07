@@ -26,6 +26,10 @@ from agentic_v2.contracts import (
 )
 from agentic_v2.models import ModelTier
 
+# The agent tests exercise the ``backend is None`` mock branches; an ambient
+# AGENTIC_NO_LLM=1 would install a placeholder backend and defeat them.
+pytestmark = pytest.mark.usefixtures("backendless_baseline")
+
 # ============================================================================
 # ConversationMemory Tests
 # ============================================================================

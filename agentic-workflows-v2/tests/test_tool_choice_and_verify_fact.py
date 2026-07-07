@@ -21,6 +21,7 @@ from typing import Any
 import httpx
 import pytest
 
+from agentic_v2.core.errors import NoProviderConfiguredError
 from agentic_v2.engine import agent_resolver
 from agentic_v2.engine.tool_execution import (
     build_tool_contracts,
@@ -420,12 +421,26 @@ async def test_native_loop_forces_first_turn_then_auto(
 # ---------------------------------------------------------------------------
 
 
+class _NoModelsRouter:
+    """Router stub for the EK delegation path: no providers configured.
+
+    When executionkit IS installed, ``complete_turn_via_ek`` builds a real
+    ``SmartRouterProvider`` around this router; raising the runtime's
+    ``NoProviderConfiguredError`` (what a zero-provider router does) is
+    non-retryable for EK, so the tests surface it immediately instead of
+    sleeping through EK's ``ProviderError`` retry backoff.
+    """
+
+    def get_model_for_tier(self, tier: Any) -> str:
+        raise NoProviderConfiguredError("test stub: no providers configured")
+
+
 class _FakeClient:
     """Client whose complete_chat records the forwarded tool_choice."""
 
     def __init__(self) -> None:
         self.backend = object()
-        self.router = object()
+        self.router = _NoModelsRouter()
         self.budget = None
         self.seen: list[Any] = []
 
@@ -480,9 +495,11 @@ class TestEKProviderForcedToolChoice:
     async def test_auto_passes_through_under_ek_provider(
         self, relaxed: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        # An unforced choice must NOT raise the forced-choice error. With
-        # executionkit absent the EK delegation import fails instead — which
-        # proves 'auto'/'none'/None got PAST the forced-choice guard.
+        # An unforced choice must NOT raise the forced-choice error. Either
+        # terminal error below proves 'auto'/'none'/None got PAST the guard:
+        # with executionkit absent the EK delegation import fails; with it
+        # installed the delegation runs and the stub router (no providers
+        # configured) raises inside the real provider stack.
         _enable_ek_provider(monkeypatch)
         client = _FakeClient()
         try:
@@ -496,9 +513,8 @@ class TestEKProviderForcedToolChoice:
             )
         except NotImplementedError as exc:  # pragma: no cover - defensive
             pytest.fail(f"unforced choice {relaxed!r} must not raise: {exc}")
-        except ImportError:
-            # executionkit not installed: the guard was passed (expected) and the
-            # EK delegation import is what failed — that is the pass-through path.
+        except (ImportError, NoProviderConfiguredError):
+            # Both are the pass-through path (see comment above).
             pass
 
     async def test_forced_choice_without_tools_does_not_raise(
@@ -506,7 +522,9 @@ class TestEKProviderForcedToolChoice:
     ) -> None:
         # No tools → tool_choice is irrelevant; the forced-choice guard is scoped
         # to ``tools`` being present, so a forced choice without tools must not
-        # raise the NotImplementedError.
+        # raise the NotImplementedError. ImportError (executionkit absent) and
+        # NoProviderConfiguredError (executionkit present, stub router has no
+        # providers) both prove the guard was passed.
         _enable_ek_provider(monkeypatch)
         client = _FakeClient()
         try:
@@ -520,7 +538,7 @@ class TestEKProviderForcedToolChoice:
             )
         except NotImplementedError as exc:  # pragma: no cover - defensive
             pytest.fail(f"forced choice without tools must not raise: {exc}")
-        except ImportError:
+        except (ImportError, NoProviderConfiguredError):
             pass
 
 

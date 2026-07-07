@@ -210,6 +210,28 @@ def _reset_llm_client():
     _settings_module.get_settings.cache_clear()
 
 
+@pytest.fixture
+def backendless_baseline(monkeypatch: pytest.MonkeyPatch):
+    """Pin the backend-less keyless baseline for tests that assert it.
+
+    An ambient ``AGENTIC_NO_LLM=1`` (the ``no-llm-smoke`` CI job, or a
+    contributor's shell) makes ``get_client()`` install a placeholder
+    ``MockBackend``, which defeats tests written against the backend-less
+    baseline: agents' ``backend is None`` mock branches, "no backend
+    configured" error contracts, key-required raises in the model registry,
+    and the committed golden output. Such tests opt in via
+    ``@pytest.mark.usefixtures("backendless_baseline")`` so they stay green
+    regardless of the ambient flag. Mirrors ``_reset_llm_client``: rebuild
+    the client after clearing the flag, then leave the live settings cache
+    empty for the test body.
+    """
+    monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+    reset_client()
+    get_client(auto_configure=False)
+    _settings_module.get_settings.cache_clear()
+    yield
+
+
 @pytest.fixture(autouse=True)
 def _default_shell_allowlist(monkeypatch: pytest.MonkeyPatch):
     """Keep legacy shell tests runnable while production remains fail-closed."""
