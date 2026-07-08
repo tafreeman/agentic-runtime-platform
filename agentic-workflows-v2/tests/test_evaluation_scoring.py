@@ -1241,10 +1241,15 @@ class TestJudgeSkipVisibility:
         assert payload["score_layers"]["layer2_judge"] is None
         assert payload["hybrid_weights"].keys() == {"objective", "advisory"}
 
-    def test_arbitrary_provider_exception_still_skips(self) -> None:
+    def test_arbitrary_provider_exception_still_skips(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Provider errors are not curated exception types (executionkit
         raises plain Exception subclasses) — they must record a skip, not
         crash the evaluation."""
+        # Pin declared-no-LLM mode OFF: with it on, every failure classifies
+        # as not_configured by design.
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
         class _ProviderOutage(Exception):
             pass
@@ -1263,6 +1268,26 @@ class TestJudgeSkipVisibility:
         for criterion in payload["criteria"]:
             assert "judge_raw_score" not in criterion
             assert "judge_evidence" not in criterion
+
+    def test_no_llm_mode_classifies_as_not_configured(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Under AGENTIC_NO_LLM the placeholder MockBackend responds with
+        canned text and the judge fails JSON parsing — that is the declared
+        no-LLM mode, not a provider failure (alerting must not page)."""
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+
+        def _placeholder_garbage(
+            *, prompt: str, model: str, temperature: float
+        ) -> dict:
+            raise ValueError("Judge output did not contain a JSON object")
+
+        judge = LLMJudge(response_provider=_placeholder_garbage)
+        payload = score_workflow_result_impl(
+            _make_result(), dataset_meta=None, dataset_sample=None, judge=judge
+        )
+        assert payload["judge_skipped"] is True
+        assert payload["judge_skip_code"] == "not_configured"
 
     def test_successful_judge_is_not_skipped(self) -> None:
         judge = LLMJudge(response_provider=_judge_response)

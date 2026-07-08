@@ -688,6 +688,14 @@ def _classify_judge_failure(exc: Exception) -> str:
     """
     if "No LLM backend configured" in str(exc):
         return "not_configured"
+
+    from ..settings import is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        # AGENTIC_NO_LLM installs a placeholder MockBackend whose canned
+        # text fails the judge's JSON parsing — an expected consequence of
+        # the operator-declared no-LLM mode, not a provider failure.
+        return "not_configured"
     return "judge_error"
 
 
