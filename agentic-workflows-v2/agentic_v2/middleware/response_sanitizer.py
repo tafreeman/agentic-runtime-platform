@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from ..contracts.sanitization import (
     Classification,
     Finding,
+    FindingCategory,
     SanitizationResult,
 )
 from .detectors.secrets import SecretDetector
@@ -80,21 +81,29 @@ class ResponseSanitizer:
                 self._secret_detector.version
             )
 
-        # Responses are never BLOCKED — classify as CLEAN or REDACTED only
+        # Responses are never BLOCKED — classify as CLEAN or REDACTED only.
+        # A "secret" is any SecretDetector finding, which INCLUDES a
+        # high-entropy-only match: at the 4.5-bits / >=20-char threshold that
+        # heuristic fires on uniformly-random opaque tokens (the shape of a real
+        # secret with no recognizable prefix), while structured hex — git SHAs,
+        # UUIDs, MD5/SHA-256 — and typical base64 blobs stay below it and are
+        # left untouched (see ADR-046 for the measured false-positive analysis).
+        # Masking the span is the safer default on this disclosure-sensitive
+        # path. Unicode findings are normalization noise, not secrets, so a
+        # response whose only findings are Unicode stays CLEAN.
         classification = Classification.CLEAN
         if all_findings:
             has_secrets = any(
-                f.matched_pattern != "dangerous_unicode_removed"
-                and f.matched_pattern != "high_entropy"
-                for f in all_findings
+                f.category != FindingCategory.UNICODE_INJECTION for f in all_findings
             )
             classification = (
                 Classification.REDACTED if has_secrets else Classification.CLEAN
             )
 
-        # Adopt the masked text only when real secrets were found. A CLEAN
-        # response (no secrets — only unicode/entropy noise, or nothing) returns
-        # the unicode-normalized text, so clean input round-trips byte-identically.
+        # Adopt the masked text whenever a secret was found (named pattern or
+        # high-entropy). A response with only Unicode findings — or none —
+        # returns the unicode-normalized text, so clean input round-trips
+        # byte-identically.
         sanitized_text = (
             secret_masked_text
             if classification == Classification.REDACTED

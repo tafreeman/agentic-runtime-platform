@@ -105,7 +105,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 
 `PIIDetector` (`middleware/detectors/pii.py`) — email, US phone, SSN patterns (MEDIUM → REDACTED).
 
-*Outbound:* `ResponseSanitizer` (`agentic-workflows-v2/agentic_v2/middleware/response_sanitizer.py`) runs `SecretDetector` + `UnicodeSanitizer` on every LLM response. Responses are never blocked (already generated), but secret spans matching a named pattern are masked with `[REDACTED:<category>]` in the returned text and a warning is logged. High-entropy-only detections (a random-looking token matching no named pattern) are logged but not auto-masked outbound — consistent with the best-effort, known-patterns-only scope noted under LLM02.
+*Outbound:* `ResponseSanitizer` (`agentic-workflows-v2/agentic_v2/middleware/response_sanitizer.py`) runs `SecretDetector` + `UnicodeSanitizer` on every LLM response. Responses are never blocked (already generated), but detected secret spans — both named-pattern matches and high-entropy-only tokens — are masked with `[REDACTED:<category>]` in the returned text, the response is classified `REDACTED`, and a warning is logged (ADR-046). The high-entropy heuristic (≥ 20 chars, entropy ≥ 4.5 bits) fires on uniformly-random opaque tokens; structured hex identifiers — git SHAs, UUIDs, hashes — cap near 4.0 bits/char and stay below the threshold, so they are not masked (measured FP analysis in ADR-046).
 
 *Audit trail:* `SanitizationResult` stores `original_hash` as SHA-256 of the raw input. Pattern names are logged; matched text is never stored or logged (`contracts/sanitization.py`, `Finding.matched_pattern` field documentation: "Pattern name/ID, NEVER the matched text itself").
 
@@ -114,7 +114,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 *Supply-side:* `detect-secrets` pre-commit hook with `.secrets.baseline` prevents secrets from being committed to the repository.
 
 **Residual risk and gaps.**
-- Output redaction applies to known patterns only. An LLM could synthesize a credential from partial information without matching any pattern.
+- Output redaction covers named patterns plus high-entropy opaque tokens (ADR-046), but not secrets that fall below the entropy threshold or that an LLM synthesizes from partial information spread across multiple spans.
 - PII detection covers email, phone, and SSN. Other PII categories (passport numbers, biometrics, clearance information) are not covered.
 - No structured-output enforcement (Instructor, Outlines) constrains what general agent steps can emit.
 - The `system_prompt_extract` injection pattern detects the request to leak the prompt but relies on the LLM complying with its persona instructions — not a hard enforcement.
@@ -194,7 +194,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 
 **Controls implemented.**
 
-*Response-path sanitization:* `ResponseSanitizer` (`middleware/response_sanitizer.py`) applies `SecretDetector` and `UnicodeSanitizer` to every LLM response before it is returned, masking detected secret spans as `[REDACTED:<category>]` (best-effort, known patterns only).
+*Response-path sanitization:* `ResponseSanitizer` (`middleware/response_sanitizer.py`) applies `SecretDetector` and `UnicodeSanitizer` to every LLM response before it is returned, masking detected secret spans as `[REDACTED:<category>]` — named patterns plus high-entropy opaque tokens, best-effort (ADR-046).
 
 *Structured output for key agents:* `json_extraction.py` implements two-stage JSON extraction + Pydantic validation for `OrchestratorAgent`, `ReviewerAgent`, and `ArchitectAgent`. The `judge.py` module has a dedicated `validate_judge_structured_output()` function with strict schema enforcement.
 
