@@ -151,9 +151,57 @@
           "title": "Criteria",
           "type": "array"
         },
+        "expected_text_present": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Text Present"
+        },
         "grade": {
           "title": "Grade",
           "type": "string"
+        },
+        "judge_skip_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judge Skip Code"
+        },
+        "judge_skip_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judge Skip Reason"
+        },
+        "judge_skipped": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judge Skipped"
         },
         "overall_score": {
           "title": "Overall Score",

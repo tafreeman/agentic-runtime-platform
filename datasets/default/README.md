@@ -96,6 +96,30 @@ other three cap at **0.80** for the Code Quality reason above. 0.80 is above the
 heavy-criterion regression to zero (e.g. Correctness → 0 on `code_review` yields
 0.70 < 0.80).
 
+## Server-side golden resolution (second consumer)
+
+Since ADR-044, the FastAPI server's dataset loader
+(`agentic_v2/server/datasets.py`) ALSO consumes `golden_output_path` when a
+sample from this (or any local) dataset is selected for a scored run or a
+replay re-evaluation. Its rules deliberately differ from `eval_gate.py`'s:
+
+- The path resolves **relative to the dataset JSON file** and must stay under
+  an allowed dataset root (tenant dir or the fixture/evaluation roots) —
+  absolute paths and `..` escapes are rejected. `eval_gate.py` has no such
+  confinement.
+- The golden is reduced to its `final_output` subtree, null-stripped, and
+  inlined into the sample as `golden_output_text` for token-overlap scoring —
+  `eval_gate.py` instead consumes the full envelope structurally.
+- Failures (missing/unreadable/oversized/non-UTF-8 file, empty golden
+  content) never fail the load: the sample loads without the golden and the
+  reason is recorded as `golden_output_error` in the dataset metadata (and
+  `rehydration_error` on replay).
+
+A case that passes the CI gate can therefore still degrade server-side (or
+vice versa). Converging the two resolvers is planned with the ADR-042
+evalkit migration; until then this section is the contract for the server
+half.
+
 ## Regenerating a golden (deliberate only)
 
 Never hand-edit the golden JSON. To update `<workflow>_output.json`:

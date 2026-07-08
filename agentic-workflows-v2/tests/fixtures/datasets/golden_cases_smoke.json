@@ -1,20 +1,59 @@
 [
   {
     "case_id": "golden_smoke_ok",
+    "task_id": "golden_smoke_ok",
     "workflow_name": "code_review",
     "golden_output_path": "golden_smoke_output.json",
     "code_file": "def clamp(value, lower, upper):\n    return max(lower, min(upper, value))\n"
   },
   {
     "case_id": "golden_smoke_missing",
+    "task_id": "golden_smoke_missing",
     "workflow_name": "code_review",
     "golden_output_path": "does_not_exist_golden.json",
     "code_file": "print('x')"
   },
   {
     "case_id": "golden_smoke_escape",
+    "task_id": "golden_smoke_escape",
     "workflow_name": "code_review",
     "golden_output_path": "../../../pyproject.toml",
+    "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_null",
+    "task_id": "golden_smoke_null",
+    "workflow_name": "code_review",
+    "golden_output_path": "golden_null_smoke.json",
+    "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_blank",
+    "task_id": "golden_smoke_blank",
+    "workflow_name": "code_review",
+    "golden_output_path": "   ",
+    "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_inline",
+    "task_id": "golden_smoke_inline",
+    "workflow_name": "code_review",
+    "expected_output": "inline expected text wins precedence",
+    "golden_output_path": "golden_smoke_output.json",
+    "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_hollow",
+    "task_id": "golden_smoke_hollow",
+    "workflow_name": "code_review",
+    "golden_output_path": "golden_hollow_smoke.json",
+    "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_nested_hollow",
+    "task_id": "golden_smoke_nested_hollow",
+    "workflow_name": "code_review",
+    "golden_output_path": "golden_nested_hollow_smoke.json",
     "code_file": "print('x')"
   }
 ]

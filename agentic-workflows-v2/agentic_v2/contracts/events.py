@@ -125,6 +125,12 @@ class EvaluationCompleteEvent(BaseModel):
     passed: bool = False
     pass_threshold: float = 70.0
     criteria: list[dict[str, Any]] = []
+    # Scoring-visibility flags (ADR-044): without them the live evaluation
+    # card cannot tell a judged score from a shape-only fallback.
+    judge_skipped: bool | None = None
+    judge_skip_reason: str | None = None
+    judge_skip_code: str | None = None
+    expected_text_present: bool | None = None
     timestamp: str
 
 

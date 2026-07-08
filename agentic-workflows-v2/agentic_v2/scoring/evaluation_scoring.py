@@ -66,6 +66,16 @@ from .scoring_profiles import get_profile
 
 logger = logging.getLogger(__name__)
 
+
+class JudgeRequiredError(RuntimeError):
+    """The judge is mandatory (``evaluation.scoring.judge_required``) but unavailable.
+
+    A distinct type so callers can map the *policy* failure (persist the run
+    with an evaluation error, return a structured HTTP 422) without also
+    catching the ordinary judge failures it escalates.
+    """
+
+
 _DEFAULT_WEIGHTS: dict[str, float] = {
     "correctness": 0.50,
     "code_quality": 0.25,
@@ -145,7 +155,7 @@ def _scoring_weights() -> dict[str, float]:
         Mapping of criterion name to weight (should sum to ~1.0).
     """
     config = _load_eval_config()
-    raw = config.get("evaluation", {}).get("scoring", {}).get("weights", {})
+    raw = ((config.get("evaluation") or {}).get("scoring") or {}).get("weights", {})
     if not isinstance(raw, dict):
         return dict(_DEFAULT_WEIGHTS)
 
@@ -170,10 +180,8 @@ def pass_threshold() -> float:
         Pass threshold as a float in the 0--100 scale.
     """
     config = _load_eval_config()
-    raw = (
-        config.get("evaluation", {})
-        .get("scoring", {})
-        .get("pass_threshold", _DEFAULT_PASS_THRESHOLD)
+    raw = ((config.get("evaluation") or {}).get("scoring") or {}).get(
+        "pass_threshold", _DEFAULT_PASS_THRESHOLD
     )
     try:
         return float(raw)
@@ -194,13 +202,11 @@ def judge_required() -> bool:
     Returns:
         True if the judge is required, False otherwise.
     """
-    raw = (
-        _load_eval_config()
-        .get("evaluation", {})
-        .get("scoring", {})
-        .get("judge_required", False)
-    )
-    return bool(raw)
+    config = _load_eval_config()
+    scoring = (config.get("evaluation") or {}).get("scoring") or {}
+    # _is_true_like, not bool(): a quoted "false"/"no"/"0" from a config
+    # overlay must not silently enable hard-fail mode.
+    return _is_true_like(scoring.get("judge_required", False))
 
 
 def _resolve_rubric(
@@ -610,22 +616,24 @@ def _apply_judge_scores(
     criteria_by_name: dict[str, WorkflowCriterion],
     generated_text: str,
     expected_text: str,
-) -> tuple[JudgeEvaluationResult | None, float | None, str | None]:
+) -> tuple[JudgeEvaluationResult | None, float | None, str | None, str | None]:
     """Run the LLM judge (if provided) and annotate criterion payloads in place.
 
-    Returns ``(judge_result, judge_score_0_1, skip_reason)``.  The first two
-    are ``None`` -- and ``skip_reason`` says why -- when no judge is
-    configured or the judge invocation failed.  A skipped judge is never
-    silent: the reason is logged, propagated into the evaluation payload
-    (``judge_skipped`` / ``judge_skip_reason``), and, when
-    :func:`judge_required` is enabled, escalated to a hard failure.
+    Returns ``(judge_result, judge_score_0_1, skip_reason, skip_code)``.  The
+    first two are ``None`` -- and ``skip_reason``/``skip_code`` say why --
+    when no judge is configured or the judge invocation failed.  A skipped
+    judge is never silent: the reason is logged, propagated into the
+    evaluation payload (``judge_skipped`` / ``judge_skip_reason`` /
+    ``judge_skip_code``), and, when :func:`judge_required` is enabled,
+    escalated to a hard failure.
 
     Raises:
-        RuntimeError: The judge is unavailable and
+        JudgeRequiredError: The judge is unavailable and
             ``evaluation.scoring.judge_required`` is ``True``.
     """
     if judge is None:
-        return None, None, _handle_judge_skip("no judge configured")
+        reason, code = _handle_judge_skip("no judge configured", code="not_configured")
+        return None, None, reason, code
 
     try:
         judge_criteria = _build_judge_criteria(
@@ -648,30 +656,67 @@ def _apply_judge_scores(
                 judge_item.normalized_score, 4
             )
             criterion_payload["judge_evidence"] = judge_item.evidence
-        return judge_result, judge_result.normalized_score, None
-    except (ValueError, RuntimeError, OSError, TypeError, KeyError) as exc:
-        # Judge failures should not discard an otherwise valid objective
-        # evaluation (unless the judge is configured as required), but they
-        # must stay visible: the reason lands in the payload for the UI.
-        reason = f"{type(exc).__name__}: {exc}"
-        return None, None, _handle_judge_skip(reason)
+        return judge_result, judge_result.normalized_score, None, None
+    except Exception as exc:
+        # Broad by design: the skip machinery IS the safety net. Provider
+        # errors arrive as arbitrary Exception subclasses (executionkit
+        # RateLimitError/PermanentError are plain Exceptions), and any escape
+        # here destroys the whole evaluation instead of recording a loud
+        # skip. JudgeRequiredError is raised by _handle_judge_skip below,
+        # outside this try, so the policy escalation is never swallowed.
+        for criterion_payload in criteria:
+            # A mid-loop failure must not leave contradictory partial judge
+            # annotations next to judge_skipped=true.
+            criterion_payload.pop("judge_raw_score", None)
+            criterion_payload.pop("judge_normalized_score", None)
+            criterion_payload.pop("judge_evidence", None)
+        reason, code = _handle_judge_skip(
+            f"{type(exc).__name__}: {exc}", code=_classify_judge_failure(exc)
+        )
+        return None, None, reason, code
 
 
-def _handle_judge_skip(reason: str) -> str:
+def _classify_judge_failure(exc: Exception) -> str:
+    """Map a judge failure to a machine-readable skip code.
+
+    The server constructs a default ``LLMJudge`` even when no judge model is
+    configured, so a key-free deployment surfaces as a *raised*
+    ``RuntimeError("No LLM backend configured for judge")`` (see
+    ``judge._invoke_prompt``) rather than the ``judge is None`` branch.  That
+    is an expected ``not_configured`` skip, not a provider failure — alerting
+    must be able to tell the two apart.
+    """
+    if "No LLM backend configured" in str(exc):
+        return "not_configured"
+
+    from ..settings import is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        # AGENTIC_NO_LLM installs a placeholder MockBackend whose canned
+        # text fails the judge's JSON parsing — an expected consequence of
+        # the operator-declared no-LLM mode, not a provider failure.
+        return "not_configured"
+    return "judge_error"
+
+
+def _handle_judge_skip(reason: str, *, code: str) -> tuple[str, str]:
     """Log a judge skip and enforce the ``judge_required`` policy.
 
-    Returns the reason so callers can thread it into the payload.
+    Returns ``(reason, code)`` so callers can thread both into the payload.
+    ``code`` is machine-readable: ``"not_configured"`` (expected in key-free
+    environments) or ``"judge_error"`` (a configured judge failed — worth
+    paging on).
 
     Raises:
-        RuntimeError: ``evaluation.scoring.judge_required`` is ``True``.
+        JudgeRequiredError: ``evaluation.scoring.judge_required`` is ``True``.
     """
     if judge_required():
-        raise RuntimeError(
+        raise JudgeRequiredError(
             "LLM judge is required (evaluation.scoring.judge_required=true) "
             f"but unavailable: {reason}"
         )
-    logger.warning("Judge evaluation skipped: %s", reason)
-    return reason
+    logger.warning("Judge evaluation skipped [%s]: %s", code, reason)
+    return reason, code
 
 
 def _collect_floor_violations(
@@ -799,6 +844,7 @@ class _ScoreLayers:
     judge_result: JudgeEvaluationResult | None
     judge_score_0_1: float | None
     judge_skip_reason: str | None
+    judge_skip_code: str | None
     weighted_score: float
     overall_score: float
     active_hybrid_weights: dict[str, float]
@@ -844,13 +890,15 @@ def _compute_score_layers(
         advisory_efficiency_0_1 * 0.33
     )
 
-    judge_result, judge_score_0_1, judge_skip_reason = _apply_judge_scores(
-        judge,
-        criteria=criteria,
-        weights=weights,
-        criteria_by_name=criteria_by_name,
-        generated_text=generated_text,
-        expected_text=expected_text,
+    judge_result, judge_score_0_1, judge_skip_reason, judge_skip_code = (
+        _apply_judge_scores(
+            judge,
+            criteria=criteria,
+            weights=weights,
+            criteria_by_name=criteria_by_name,
+            generated_text=generated_text,
+            expected_text=expected_text,
+        )
     )
 
     hybrid_score_0_1, active_hybrid_weights = _compose_hybrid_score(
@@ -871,6 +919,7 @@ def _compute_score_layers(
         judge_result=judge_result,
         judge_score_0_1=judge_score_0_1,
         judge_skip_reason=judge_skip_reason,
+        judge_skip_code=judge_skip_code,
         weighted_score=hybrid_score_0_1 * 100.0,
         overall_score=raw_sum / len(criteria) if criteria else 0.0,
         active_hybrid_weights=active_hybrid_weights,
@@ -886,6 +935,7 @@ def _build_base_payload(
     grade: str,
     threshold: float,
     dataset_meta: dict[str, Any] | None,
+    expected_text_present: bool,
 ) -> dict[str, Any]:
     """Assemble the pre-gate evaluation payload from the computed score layers.
 
@@ -924,6 +974,10 @@ def _build_base_payload(
         ),
         "judge_skipped": judge_score_0_1 is None,
         "judge_skip_reason": layers.judge_skip_reason,
+        "judge_skip_code": layers.judge_skip_code,
+        # False means the overlap/similarity term never engaged (no inline
+        # expected text and no resolvable golden) — the score is shape-only.
+        "expected_text_present": expected_text_present,
         "generated_at": datetime.now(UTC).isoformat(),
     }
 
@@ -1096,6 +1150,7 @@ def score_workflow_result_impl(
         grade=grade,
         threshold=threshold,
         dataset_meta=dataset_meta,
+        expected_text_present=bool(expected_text),
     )
 
     return _apply_gates_and_finalize(
@@ -1116,6 +1171,7 @@ def score_workflow_result_impl(
 __all__ = [
     "CriterionFloorResult",
     "HardGateResult",
+    "JudgeRequiredError",
     "_build_judge_criteria",
     "_clamp",
     "_compose_hybrid_score",

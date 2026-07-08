@@ -16,7 +16,14 @@ from typing import Any
 from ..contracts import StepStatus, WorkflowResult
 from ..evaluation.normalization import normalize_score
 from ..workflows.loader import WorkflowCriterion
+from .eval_config import _load_eval_config
 from .judge import JudgeCriterionDefinition
+
+# Dataset-loader/scorer contract: the loader inlines a sample's resolved
+# golden file under this key; _extract_expected_text reads it back. Shared as
+# a constant so a rename on either side of the server->scoring boundary
+# cannot silently degrade expected text to "".
+GOLDEN_OUTPUT_TEXT_KEY = "golden_output_text"
 
 # =============================================================================
 # TEXT ANALYSIS UTILITIES
@@ -49,6 +56,33 @@ def _tokenize(text: str) -> set[str]:
     return {token for token in re.findall(r"\w+", text.lower()) if len(token) > 2}
 
 
+def has_content_leaves(value: Any) -> bool:
+    """Return True if any leaf of *value* carries real content.
+
+    Structural keys do not count: a nested-hollow golden like
+    ``{"review": {"body": null}}`` null-strips to ``{"review": {}}`` whose
+    serialized form still tokenizes on the key — this walks leaf VALUES
+    instead, so such goldens are rejected as empty.
+    """
+    if isinstance(value, dict):
+        return any(has_content_leaves(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_content_leaves(item) for item in value)
+    if isinstance(value, str):
+        return bool(value.strip())
+    return value is not None
+
+
+def has_scoring_tokens(text: str) -> bool:
+    """Return True if *text* yields at least one overlap-scoring token.
+
+    The dataset loader uses this to reject goldens that cannot participate
+    in overlap scoring (e.g. a hollow envelope that null-strips to ``{}``) --
+    the check is deliberately the same tokenizer the scorer uses.
+    """
+    return bool(_tokenize(text))
+
+
 def _extract_expected_text(sample: dict[str, Any]) -> str:
     """Extract the expected/golden output text from a dataset sample.
 
@@ -67,8 +101,8 @@ def _extract_expected_text(sample: dict[str, Any]) -> str:
         return ""
     if isinstance(sample.get("expected_output"), str):
         return sample["expected_output"]
-    if isinstance(sample.get("golden_output_text"), str):
-        return sample["golden_output_text"]
+    if isinstance(sample.get(GOLDEN_OUTPUT_TEXT_KEY), str):
+        return sample[GOLDEN_OUTPUT_TEXT_KEY]
     if isinstance(sample.get("golden_patch"), str):
         return sample["golden_patch"]
     answer = sample.get("answer")
@@ -117,12 +151,18 @@ def serialize_output_text(value: Any) -> str:
     overlap scores.  Used for both generated workflow outputs and loaded
     golden outputs so the two sides tokenize symmetrically.
 
+    Plain strings pass through unserialized: JSON-encoding them would add
+    literal quotes and escape sequences, tokenizing asymmetrically against
+    inline ``expected_output`` text.
+
     Args:
         value: Any JSON-serializable output value (dict, list, or scalar).
 
     Returns:
         JSON-serialized string, or ``str()`` fallback on error.
     """
+    if isinstance(value, str):
+        return value
     try:
         return json.dumps(_strip_null_leaves(value), default=str)
     except (TypeError, ValueError, OverflowError):
@@ -243,13 +283,40 @@ _DOCUMENTATION_CRITERIA = ("documentation", "citation_quality", "coherence")
 
 # Execution SLO band shared by the efficiency criterion and the advisory
 # efficiency layer: durations at/below the good bound score 1.0, at/above the
-# bad bound score 0.0, linear in between (same for retries).
+# bad bound score 0.0, linear in between (same for retries). The duration
+# band is configurable via ``evaluation.scoring.efficiency_slo`` (see
+# :func:`_efficiency_slo_seconds`); these are the code-versioned defaults.
+# NOTE: changing the band re-baselines efficiency scores — historic runs are
+# only comparable to new ones under the same band.
 _EFFICIENCY_SLO_GOOD_SECONDS = 2.0
 _EFFICIENCY_SLO_BAD_SECONDS = 60.0
 _RETRY_SLO_GOOD = 0.0
 _RETRY_SLO_BAD = 8.0
 _EFFICIENCY_DURATION_WEIGHT = 0.7
 _EFFICIENCY_RETRY_WEIGHT = 0.3
+
+
+def _efficiency_slo_seconds() -> tuple[float, float]:
+    """Resolve the efficiency duration SLO band ``(good, bad)`` in seconds.
+
+    Reads ``evaluation.scoring.efficiency_slo.{good_seconds,bad_seconds}``
+    from the evaluation YAML config, falling back to the module defaults for
+    missing or invalid values (non-dict section, non-numeric bounds, or a
+    band where ``bad <= good``).  The whole band falls back together — a
+    half-configured band could silently invert or narrow the scale.
+    """
+    config = _load_eval_config()
+    slo = ((config.get("evaluation") or {}).get("scoring") or {}).get("efficiency_slo")
+    if not isinstance(slo, dict):
+        return _EFFICIENCY_SLO_GOOD_SECONDS, _EFFICIENCY_SLO_BAD_SECONDS
+    try:
+        good = float(slo.get("good_seconds", _EFFICIENCY_SLO_GOOD_SECONDS))
+        bad = float(slo.get("bad_seconds", _EFFICIENCY_SLO_BAD_SECONDS))
+    except (TypeError, ValueError):
+        return _EFFICIENCY_SLO_GOOD_SECONDS, _EFFICIENCY_SLO_BAD_SECONDS
+    if bad <= good:
+        return _EFFICIENCY_SLO_GOOD_SECONDS, _EFFICIENCY_SLO_BAD_SECONDS
+    return good, bad
 
 
 @dataclass(frozen=True)
@@ -353,11 +420,12 @@ def _score_efficiency(signals: _ScoringSignals) -> float:
     longer run score identically regardless of how much longer it ran.
     """
     seconds = signals.duration_ms / 1000.0
+    slo_good, slo_bad = _efficiency_slo_seconds()
     duration_norm = normalize_score(
         seconds,
         "lower_is_better",
-        slo_good=_EFFICIENCY_SLO_GOOD_SECONDS,
-        slo_bad=_EFFICIENCY_SLO_BAD_SECONDS,
+        slo_good=slo_good,
+        slo_bad=slo_bad,
     )
     retry_norm = normalize_score(
         signals.retries,
@@ -548,11 +616,12 @@ def _advisory_efficiency_score(
         return normalize_score(normalized_scores["efficiency"], "zero_one")
 
     duration_seconds = (result.total_duration_ms or 0.0) / 1000.0
+    slo_good, slo_bad = _efficiency_slo_seconds()
     duration_norm = normalize_score(
         duration_seconds,
         "lower_is_better",
-        slo_good=_EFFICIENCY_SLO_GOOD_SECONDS,
-        slo_bad=_EFFICIENCY_SLO_BAD_SECONDS,
+        slo_good=slo_good,
+        slo_bad=slo_bad,
     )
     retry_norm = normalize_score(
         result.total_retries,

@@ -552,10 +552,28 @@ function EvaluationCard({
         >
           evaluation · {passed ? "passed" : "needs work"}
         </span>
-        <span className="font-mono text-[9.5px] text-b-text-faint">
-          llm-as-judge
+        <span
+          className={`font-mono text-[9.5px] ${
+            evaluation.judge_skipped ? "text-b-amber" : "text-b-text-faint"
+          }`}
+          title={
+            evaluation.judge_skipped
+              ? (evaluation.judge_skip_reason ??
+                "LLM judge did not run; score is objective+advisory only")
+              : undefined
+          }
+        >
+          {evaluation.judge_skipped
+            ? "objective+advisory · judge skipped"
+            : "llm-as-judge"}
         </span>
       </div>
+
+      {evaluation.expected_text_present === false && (
+        <div className="mt-[6px] font-mono text-[9.5px] text-b-amber">
+          [!] no expected/golden text — score is shape-only
+        </div>
+      )}
 
       <div className="mt-[10px] flex items-end gap-[14px]">
         <div

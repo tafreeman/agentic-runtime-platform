@@ -137,6 +137,31 @@ describe("LivePage", () => {
     expect(screen.getByText("Selected review")).toBeInTheDocument();
   });
 
+  it("labels a judge-skipped evaluation honestly on the live card", () => {
+    mockUseWorkflowStream.mockReturnValue({
+      workflowStatus: "completed",
+      error: null,
+      stepStates: new Map(),
+      events: [],
+      evaluation: {
+        weighted_score: 56.4,
+        grade: "F",
+        passed: false,
+        criteria: [],
+        judge_skipped: true,
+        judge_skip_reason: "no judge configured",
+        expected_text_present: false,
+      },
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+    renderPage();
+
+    expect(screen.getByText(/judge skipped/)).toBeInTheDocument();
+    expect(screen.queryByText("llm-as-judge")).toBeNull();
+    expect(screen.getByText(/score is shape-only/)).toBeInTheDocument();
+  });
+
   it("renders failed workflow status directly", () => {
     mockUseWorkflowStream.mockReturnValue({
       workflowStatus: "failed",

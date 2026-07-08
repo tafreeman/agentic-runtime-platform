@@ -138,7 +138,11 @@ export interface EvaluationCompleteEvent {
   criteria?: {
     [k: string]: unknown;
   }[];
+  expected_text_present?: boolean | null;
   grade: string;
+  judge_skip_code?: string | null;
+  judge_skip_reason?: string | null;
+  judge_skipped?: boolean | null;
   overall_score: number;
   pass_threshold?: number;
   passed?: boolean;

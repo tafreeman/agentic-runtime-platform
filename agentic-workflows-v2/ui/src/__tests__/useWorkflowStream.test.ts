@@ -119,11 +119,16 @@ describe("useWorkflowStream", () => {
         passed: true,
         pass_threshold: 70,
         criteria: [],
+        judge_skipped: true,
+        judge_skip_reason: "no judge configured",
+        expected_text_present: false,
         timestamp: "2025-01-01T00:00:03Z",
       });
     });
 
     expect(result.current.evaluation?.weighted_score).toBe(82.5);
+    expect(result.current.evaluation?.judge_skipped).toBe(true);
+    expect(result.current.evaluation?.expected_text_present).toBe(false);
     expect(result.current.workflowStatus).toBe("completed");
   });
 

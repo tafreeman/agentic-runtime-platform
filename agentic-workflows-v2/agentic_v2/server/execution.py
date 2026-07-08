@@ -66,6 +66,7 @@ except ImportError as exc:
     _LANGCHAIN_IMPORT_ERROR = to_missing_langchain_dependency_error(exc)
 
 from ..integrations.otel import create_trace_adapter
+from ..scoring.evaluation_scoring import JudgeRequiredError
 from ..scoring.judge import LLMJudge
 from ..scoring.step_scoring import build_step_scoring_listener
 from ..workflows.run_logger import RunLogger
@@ -545,6 +546,7 @@ async def _run_and_evaluate(
         )
 
         scored_evaluation: dict[str, Any] | None = None
+        evaluation_error: str | None = None
         if evaluation and evaluation.enabled:
             await websocket.manager.broadcast(
                 run_id,
@@ -557,49 +559,75 @@ async def _run_and_evaluate(
             judge_model = _resolve_judge_model()
             judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
 
-            scored_evaluation = score_workflow_result(
-                result,
-                dataset_meta=dataset_meta,
-                dataset_sample=dataset_sample,
-                rubric=(evaluation.rubric_id or evaluation.rubric),
-                workflow_definition=workflow_def,
-                enforce_hard_gates=evaluation.enforce_hard_gates,
-                judge=judge,
-            )
-            await websocket.manager.broadcast(
-                run_id,
-                {
-                    "type": "evaluation_complete",
-                    "run_id": run_id,
-                    **{
-                        k: scored_evaluation[k]
-                        for k in (
-                            "rubric",
-                            "rubric_id",
-                            "rubric_version",
-                            "weighted_score",
-                            "overall_score",
-                            "grade",
-                            "passed",
-                            "pass_threshold",
-                            "criteria",
-                            "hard_gates",
-                            "hard_gate_failures",
-                            "step_scores",
-                        )
+            try:
+                scored_evaluation = score_workflow_result(
+                    result,
+                    dataset_meta=dataset_meta,
+                    dataset_sample=dataset_sample,
+                    rubric=(evaluation.rubric_id or evaluation.rubric),
+                    workflow_definition=workflow_def,
+                    enforce_hard_gates=evaluation.enforce_hard_gates,
+                    judge=judge,
+                )
+            except JudgeRequiredError as exc:
+                # The judge-required policy fails the *evaluation*, never the
+                # run record: a completed workflow must not vanish from run
+                # history because a post-hoc scoring policy was unmet.
+                evaluation_error = str(exc)
+                logger.error("Evaluation failed for run_id=%s: %s", run_id, exc)
+                # evaluation_start already went out; without a terminal event
+                # the live UI (useWorkflowStream) stays stuck in "evaluating".
+                await websocket.manager.broadcast(
+                    run_id,
+                    {
+                        "type": "error",
+                        "run_id": run_id,
+                        "error": f"Evaluation failed: {exc}",
+                        "timestamp": datetime.now(UTC).isoformat(),
                     },
-                    "timestamp": datetime.now(UTC).isoformat(),
-                },
-            )
+                )
+            if scored_evaluation is not None:
+                await websocket.manager.broadcast(
+                    run_id,
+                    {
+                        "type": "evaluation_complete",
+                        "run_id": run_id,
+                        **{
+                            k: scored_evaluation[k]
+                            for k in (
+                                "rubric",
+                                "rubric_id",
+                                "rubric_version",
+                                "weighted_score",
+                                "overall_score",
+                                "grade",
+                                "passed",
+                                "pass_threshold",
+                                "criteria",
+                                "hard_gates",
+                                "hard_gate_failures",
+                                "step_scores",
+                                "judge_skipped",
+                                "judge_skip_reason",
+                                "judge_skip_code",
+                                "expected_text_present",
+                            )
+                        },
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                )
 
+        log_extra: dict[str, Any] = {
+            "evaluation_requested": bool(evaluation and evaluation.enabled),
+            "evaluation": scored_evaluation,
+        }
+        if evaluation_error is not None:
+            log_extra["evaluation_error"] = evaluation_error
         run_logger.for_tenant(tenant_id).log(
             result,
             dataset_meta=dataset_meta,
             workflow_inputs=workflow_inputs,
-            extra={
-                "evaluation_requested": bool(evaluation and evaluation.enabled),
-                "evaluation": scored_evaluation,
-            },
+            extra=log_extra,
         )
         logger.info("Completed background execution for run_id=%s", run_id)
     except Exception as e:

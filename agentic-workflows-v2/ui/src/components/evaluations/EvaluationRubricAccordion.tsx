@@ -38,19 +38,26 @@ export default function EvaluationRubricAccordion({
   const detail = data?.evaluation;
 
   if (!detail) {
+    const evaluationError = data?.evaluation_error;
     return (
-      <div className="p-2 font-mono text-[11px] text-b-text-dim">
-        no evaluation data
+      <div className="p-2 font-mono text-[11px]">
+        {evaluationError ? (
+          <span className="text-b-amber">
+            [!] evaluation failed — {evaluationError}
+          </span>
+        ) : (
+          <span className="text-b-text-dim">no evaluation data</span>
+        )}
       </div>
     );
   }
 
   const hardGates = detail.hard_gates;
-  // Older stored payloads predate the explicit flag; a null judge layer means
-  // the judge never contributed to those either.
+  // Older stored payloads predate the explicit flag; a null (or entirely
+  // absent) judge layer means the judge never contributed to those either.
   const judgeSkipped =
     detail.judge_skipped ??
-    (detail.score_layers ? detail.score_layers.layer2_judge == null : false);
+    (detail.score_layers ? detail.score_layers.layer2_judge == null : true);
   const judgeSkipReason =
     detail.judge_skip_reason ??
     "LLM judge did not run; score is objective+advisory only";
@@ -155,10 +162,16 @@ export default function EvaluationRubricAccordion({
           </div>
           {judgeSkipped && (
             <div className="text-b-amber">
-              [!] judge skipped
-              {detail.judge_skip_reason ? ` — ${detail.judge_skip_reason}` : ""}
+              [!] judge skipped — {judgeSkipReason}
             </div>
           )}
+        </div>
+      )}
+
+      {detail.expected_text_present === false && (
+        <div className="font-mono text-[11px] text-b-amber">
+          [!] no expected/golden text — overlap term inactive, score is
+          shape-only
         </div>
       )}
 

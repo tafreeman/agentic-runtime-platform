@@ -760,6 +760,16 @@ class RunEvaluationDetail(BaseModel):
         score_layers: Decomposed hybrid score layers.
         hybrid_weights: Weight coefficients used for hybrid composition.
         judge: LLM-as-judge evaluation payload, or None.
+        judge_skipped: True when the judge layer was unavailable (unconfigured
+            or failed) and its score is absent. None on legacy payloads that
+            predate the flag.
+        judge_skip_reason: Human-readable reason the judge was skipped.
+        judge_skip_code: Machine-readable skip cause: ``not_configured``
+            (expected in key-free environments) or ``judge_error`` (a
+            configured judge failed).
+        expected_text_present: False when the overlap/similarity term never
+            engaged (no inline expected text and no resolvable golden) — the
+            objective score is shape-only. None on legacy payloads.
         generated_at: ISO-8601 timestamp of when scoring ran.
         dataset: Dataset metadata attached to the run, or None.
     """
@@ -783,6 +793,10 @@ class RunEvaluationDetail(BaseModel):
     score_layers: ScoreLayersModel | None = None
     hybrid_weights: dict[str, float] = {}
     judge: dict[str, Any] | None = None
+    judge_skipped: bool | None = None
+    judge_skip_reason: str | None = None
+    judge_skip_code: str | None = None
+    expected_text_present: bool | None = None
     generated_at: str = ""
     dataset: dict[str, Any] | None = None
 
@@ -807,6 +821,11 @@ class RunEvaluationDetailResponse(BaseModel):
     evaluation_requested: bool = False
     dataset: dict[str, Any] | None = None
     evaluation: RunEvaluationDetail | None = None
+    # Why evaluation is None although it was requested (e.g. the
+    # judge-required policy failed on the fresh run) — without this the
+    # persisted extra.evaluation_error is invisible once the live stream
+    # is gone.
+    evaluation_error: str | None = None
 
 
 class RunReEvaluationRequest(BaseModel):
