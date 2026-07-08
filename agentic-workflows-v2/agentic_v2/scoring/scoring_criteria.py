@@ -56,6 +56,23 @@ def _tokenize(text: str) -> set[str]:
     return {token for token in re.findall(r"\w+", text.lower()) if len(token) > 2}
 
 
+def has_content_leaves(value: Any) -> bool:
+    """Return True if any leaf of *value* carries real content.
+
+    Structural keys do not count: a nested-hollow golden like
+    ``{"review": {"body": null}}`` null-strips to ``{"review": {}}`` whose
+    serialized form still tokenizes on the key — this walks leaf VALUES
+    instead, so such goldens are rejected as empty.
+    """
+    if isinstance(value, dict):
+        return any(has_content_leaves(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_content_leaves(item) for item in value)
+    if isinstance(value, str):
+        return bool(value.strip())
+    return value is not None
+
+
 def has_scoring_tokens(text: str) -> bool:
     """Return True if *text* yields at least one overlap-scoring token.
 

@@ -53,6 +53,7 @@ from ..scoring.dataset_matching import (
 from ..scoring.eval_config import _load_eval_config
 from ..scoring.scoring_criteria import (
     GOLDEN_OUTPUT_TEXT_KEY,
+    has_content_leaves,
     has_scoring_tokens,
     serialize_output_text,
 )
@@ -468,10 +469,11 @@ def _resolve_golden_output_text(
     else:
         if isinstance(parsed, dict) and "final_output" in parsed:
             parsed = parsed["final_output"]
-        if parsed is None or parsed == {} or parsed == []:
-            # A golden captured from a failed run serializes to "null"/"{}",
-            # which would pass a bare emptiness check and silently score
-            # against garbage expected text.
+        if not has_content_leaves(parsed):
+            # A golden captured from a failed run (final_output null/{}, or
+            # nested-hollow like {"review": {"body": null}}) must record an
+            # error — serialized structural keys would otherwise tokenize and
+            # silently score against garbage expected text.
             return sample, (
                 f"golden_output_path resolved to empty golden content: {golden_ref}"
             )

@@ -156,6 +156,33 @@ def test_hollow_golden_records_error():
     assert "empty golden content" in meta["golden_output_error"]
 
 
+def test_nested_hollow_golden_records_error():
+    """Structural keys must not count as golden content: {"review": {"body":
+    null}} null-strips to {"review": {}} whose serialized keys tokenize."""
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=7)
+    assert "golden_output_text" not in sample
+    assert "empty golden content" in meta["golden_output_error"]
+
+
+def test_tokenless_golden_records_error(tmp_path, monkeypatch):
+    """A golden with content leaves but zero scoring tokens (e.g. all short
+    numerics) cannot participate in overlap scoring — reject it loudly."""
+    from agentic_v2.server import datasets as datasets_mod
+
+    monkeypatch.setattr(
+        datasets_mod, "_local_dataset_roots", lambda _tid=None: [tmp_path]
+    )
+    (tmp_path / "numeric_golden.json").write_text(
+        '{"final_output": {"n": 42}}', encoding="utf-8"
+    )
+    sample = {"golden_output_path": "numeric_golden.json"}
+    resolved, error = datasets_mod._resolve_golden_output_text(
+        sample, tmp_path / "ds.json"
+    )
+    assert resolved == sample
+    assert "empty golden content" in error
+
+
 def test_blank_golden_path_records_error():
     sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=4)
     assert "golden_output_text" not in sample
