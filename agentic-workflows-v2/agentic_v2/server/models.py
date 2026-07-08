@@ -821,6 +821,11 @@ class RunEvaluationDetailResponse(BaseModel):
     evaluation_requested: bool = False
     dataset: dict[str, Any] | None = None
     evaluation: RunEvaluationDetail | None = None
+    # Why evaluation is None although it was requested (e.g. the
+    # judge-required policy failed on the fresh run) — without this the
+    # persisted extra.evaluation_error is invisible once the live stream
+    # is gone.
+    evaluation_error: str | None = None
 
 
 class RunReEvaluationRequest(BaseModel):

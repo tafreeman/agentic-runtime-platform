@@ -341,6 +341,8 @@ export interface RunEvaluationDetailResponse {
   evaluation_requested: boolean;
   dataset?: Record<string, unknown> | null;
   evaluation?: RunEvaluationDetail | null;
+  /** Why evaluation is null although requested (e.g. judge_required unmet). */
+  evaluation_error?: string | null;
 }
 
 // ---------------------------------------------------------------------------

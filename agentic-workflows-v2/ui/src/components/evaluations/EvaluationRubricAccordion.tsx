@@ -38,9 +38,16 @@ export default function EvaluationRubricAccordion({
   const detail = data?.evaluation;
 
   if (!detail) {
+    const evaluationError = data?.evaluation_error;
     return (
-      <div className="p-2 font-mono text-[11px] text-b-text-dim">
-        no evaluation data
+      <div className="p-2 font-mono text-[11px]">
+        {evaluationError ? (
+          <span className="text-b-amber">
+            [!] evaluation failed — {evaluationError}
+          </span>
+        ) : (
+          <span className="text-b-text-dim">no evaluation data</span>
+        )}
       </div>
     );
   }

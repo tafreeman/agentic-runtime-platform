@@ -156,6 +156,23 @@ describe("EvaluationRubricAccordion", () => {
     expect(screen.getAllByText(/judge skipped/i).length).toBeGreaterThan(0);
   });
 
+  it("surfaces a persisted evaluation failure when no payload exists", () => {
+    mockUseRunEvaluationDetail.mockReturnValue({
+      isLoading: false,
+      data: {
+        evaluation: null,
+        evaluation_error:
+          "LLM judge is required (evaluation.scoring.judge_required=true) but unavailable: no judge configured",
+      },
+    });
+
+    render(<EvaluationRubricAccordion filename="run.json" />);
+
+    expect(screen.getByText(/evaluation failed/)).toBeInTheDocument();
+    expect(screen.getByText(/judge_required/)).toBeInTheDocument();
+    expect(screen.queryByText(/no evaluation data/)).toBeNull();
+  });
+
   it("shows a notice when the overlap term never engaged", () => {
     mockDetail({
       judge_skipped: false,

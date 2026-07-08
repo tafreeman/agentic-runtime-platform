@@ -310,6 +310,11 @@ async def get_run_evaluation(
         except Exception as exc:
             logger.warning("Failed to parse evaluation for %s: %s", filename, exc)
 
+    evaluation_error = (
+        extra.get("evaluation_error")
+        if isinstance(extra.get("evaluation_error"), str)
+        else None
+    )
     return RunEvaluationDetailResponse(
         filename=filename,
         run_id=run_data.get("run_id"),
@@ -318,6 +323,7 @@ async def get_run_evaluation(
         evaluation_requested=evaluation_requested,
         dataset=run_data.get("dataset"),
         evaluation=evaluation,
+        evaluation_error=evaluation_error,
     )
 
 

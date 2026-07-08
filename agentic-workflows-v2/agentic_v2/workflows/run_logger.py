@@ -414,11 +414,14 @@ class RunLogger:
         """
         record = self.load_run(path)
         extra = record.get("extra") if isinstance(record.get("extra"), dict) else {}
-        record["extra"] = {
+        merged = {
             **extra,
             "evaluation_requested": True,
             "evaluation": evaluation,
         }
+        # A successful (re)score supersedes any persisted policy failure.
+        merged.pop("evaluation_error", None)
+        record["extra"] = merged
         score = _extract_evaluation_score(record["extra"])
         if score is not None:
             record["score"] = score

@@ -292,6 +292,48 @@ class TestEvaluateRunEndpoint:
         assert kwargs["dataset_sample"] is None
         assert "task_id mismatch" in kwargs["dataset_meta"]["rehydration_error"]
 
+    def test_persisted_evaluation_error_served_by_detail_endpoint(
+        self, monkeypatch, tmp_path
+    ):
+        """A judge_required failure recorded at run time must stay visible
+        after the live stream is gone (issue #172 review, round 7)."""
+        record = _run_record(
+            extra={
+                "evaluation_requested": True,
+                "evaluation": None,
+                "evaluation_error": "judge_required unmet: no judge configured",
+            }
+        )
+        _write_run(tmp_path, record)
+        client = _client(monkeypatch, tmp_path)
+
+        detail = client.get(f"/api/runs/{_RUN_FILENAME}/evaluation")
+
+        assert detail.status_code == 200
+        payload = detail.json()
+        assert payload["evaluation"] is None
+        assert "judge_required" in payload["evaluation_error"]
+
+    def test_successful_rescore_clears_persisted_evaluation_error(
+        self, monkeypatch, tmp_path
+    ):
+        record = _run_record(
+            extra={
+                "evaluation_requested": True,
+                "evaluation": None,
+                "evaluation_error": "judge_required unmet: no judge configured",
+            }
+        )
+        _write_run(tmp_path, record)
+        client = _client(monkeypatch, tmp_path)
+
+        response = client.post(f"/api/runs/{_RUN_FILENAME}/evaluate")
+        assert response.status_code == 200
+
+        detail = client.get(f"/api/runs/{_RUN_FILENAME}/evaluation").json()
+        assert detail["evaluation_error"] is None
+        assert detail["evaluation"]["weighted_score"] == 84.5
+
     def test_judge_required_policy_maps_to_422(self, monkeypatch, tmp_path):
         from agentic_v2.scoring.evaluation_scoring import JudgeRequiredError
 
