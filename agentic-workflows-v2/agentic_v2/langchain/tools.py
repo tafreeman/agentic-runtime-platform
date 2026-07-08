@@ -35,6 +35,15 @@ class _ApprovalGated:
     whose ``requires_approval`` flag forces the per-tool trigger. ``shell_run``
     and ``file_write`` are shell-exec / filesystem-write tools and are always
     treated as high-impact regardless of settings.
+
+    Note: this is a *separate* tool system from ``agentic_v2.tools.BaseTool``.
+    The ADR-047 structural gate (``BaseTool.__init_subclass__``) covers BaseTool
+    tools; it cannot reach these decorated functions, so this manual gate stays.
+    ``_check_tool_approval`` is the first statement in each sensitive function's
+    body, so it also covers a direct ``shell_run.func(...)`` call — that is NOT
+    a bypass. The residual risk is convention: a *future* sensitive ``@tool``
+    that forgets to call ``_check_tool_approval`` would be ungated (see ADR-047
+    future-work note).
     """
 
     requires_approval = True
@@ -80,6 +89,7 @@ def _check_tool_approval(tool_name: str, tool_args: dict[str, Any]) -> str | Non
     if not outcome.allowed:
         return f"ERROR: {outcome.error_message}"
     return None
+
 
 # ---------------------------------------------------------------------------
 # Security helpers
@@ -398,7 +408,8 @@ def _scan_file_for_query(
 ) -> bool:
     """Append matching lines from *filepath* to *results*.
 
-    Returns True if *results* reached *max_results* (caller should stop).
+    Returns True if *results* reached *max_results* (caller should
+    stop).
     """
     try:
         text = filepath.read_text(encoding="utf-8", errors="replace")

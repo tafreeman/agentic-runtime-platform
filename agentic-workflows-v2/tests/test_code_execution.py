@@ -8,6 +8,10 @@ import pytest
 
 from agentic_v2.tools.builtin.code_execution import CodeExecutionTool
 
+# CodeExecutionTool self-gates on execute (ADR-047); approve-all so these tests
+# exercise the sandbox/safety logic, not the approval gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 
 class TestCodeSafetyChecker:
     """Tests for _check_code_safety blocklist."""

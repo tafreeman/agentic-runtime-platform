@@ -46,6 +46,7 @@ def _executionkit_available() -> bool:
     """
     return importlib.util.find_spec("executionkit") is not None
 
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -158,9 +159,7 @@ def normalize_tool_choice(
     raise ValueError(f"Unsupported tool_choice: {tool_choice!r}")
 
 
-def _validate_forced_tool(
-    name: str, available_tool_names: set[str] | None
-) -> None:
+def _validate_forced_tool(name: str, available_tool_names: set[str] | None) -> None:
     """Raise ``ValueError`` if *name* is forced but not in the available set."""
     if available_tool_names is not None and name not in available_tool_names:
         raise ValueError(
@@ -582,9 +581,7 @@ async def run_tool_calls(
             continue
 
         tool = bound_tools.get(tool_name)
-        tool_result_text = await _dispatch_single_tool_call(
-            tool, tool_name, tool_args
-        )
+        tool_result_text = await _dispatch_single_tool_call(tool, tool_name, tool_args)
 
         messages.append(
             {
@@ -610,49 +607,21 @@ async def _dispatch_single_tool_call(
     serialized ``{"success": False, "error": ...}`` payload rather than raised,
     so the LLM receives feedback in the next turn.
 
-    Before validation/execution the human-approval gate
-    (:func:`agentic_v2.governance.approval.evaluate_tool_approval`) is consulted.
-    A gated tool that is denied (including the fail-closed no-provider case)
-    returns a serialized error and is never executed. This engine path has no
-    clean event channel here, so approval request/decision are surfaced via the
-    module logger (WARNING/INFO) and recorded in the serialized result metadata
-    rather than threading an event emitter through the tool loop.
+    The human-approval gate is enforced structurally inside
+    ``BaseTool.execute`` (ADR-047): a denied or fail-closed call returns an
+    error ``ToolResult`` carrying the decision in ``metadata`` and the tool body
+    never runs. This path therefore no longer pre-gates — it validates and
+    executes, and ``serialize_tool_result`` surfaces any denial payload.
     """
     if tool is None:
-        return json.dumps(
-            {"success": False, "error": f"Unknown tool: {tool_name}"}
-        )
-
-    from ..governance.approval import evaluate_tool_approval
-
-    approval = await evaluate_tool_approval(
-        tool=tool,
-        tool_name=tool_name,
-        tool_args=tool_args,
-        call_id=call_id_for(tool_name, tool_args),
-        agent_or_step=None,
-    )
-    if not approval.allowed:
-        return json.dumps(
-            {
-                "success": False,
-                "error": approval.error_message,
-                "metadata": {
-                    "approval_required": True,
-                    "approval_decision": approval.decision.value,
-                    "approval_provider": approval.provider_label,
-                },
-            }
-        )
+        return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
 
     is_valid, validation_error = tool.validate_parameters(**tool_args)
     if not is_valid:
         return json.dumps(
             {
                 "success": False,
-                "error": (
-                    f"Invalid parameters for {tool_name}: {validation_error}"
-                ),
+                "error": (f"Invalid parameters for {tool_name}: {validation_error}"),
             }
         )
 

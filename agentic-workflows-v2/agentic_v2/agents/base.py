@@ -405,7 +405,7 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
             )
 
             tool = self._bound_tools.get(tool_name)
-            result_str = await self._dispatch_tool(tool, tool_name, tool_args, call_id)
+            result_str = await self._dispatch_tool(tool, tool_name, tool_args)
 
             self._emit(
                 AgentEvent.TOOL_RESULT,
@@ -420,18 +420,15 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         tool: BaseTool | None,
         tool_name: str,
         tool_args: dict[str, Any],
-        call_id: str,
     ) -> str:
         """Validate and execute one tool call, returning its serialized result.
 
         Mirrors :func:`agentic_v2.engine.tool_execution._dispatch_single_tool_call`:
         unknown tools, invalid parameters, and execution errors are returned as
         a serialized ``{"success": False, "error": ...}`` payload rather than
-        raised, so the model receives feedback on the next turn.
-
-        ``call_id`` is the normalized id produced by ``normalize_tool_call`` in
-        the caller; it is threaded through so the approval request, the returned
-        payload, and the caller's ``TOOL_RESULT`` event all agree on one id.
+        raised, so the model receives feedback on the next turn. The
+        human-approval gate is enforced structurally inside ``BaseTool.execute``
+        (ADR-047), so this path no longer pre-gates.
         """
         # Imported here for the same circular-import constraint as the caller.
         from ..engine.tool_execution import (
@@ -441,33 +438,6 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
 
         if tool is None:
             return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
-
-        # Human-approval gate (P1 #12): consult before validation/execution.
-        # Denied (incl. fail-closed no-provider) returns a serialized error and
-        # the tool never runs. The denial detail (decision/provider) rides in the
-        # returned payload's metadata; ``_handle_tool_calls`` emits the single
-        # canonical TOOL_RESULT event from that payload, so we do NOT emit here.
-        from ..governance.approval import evaluate_tool_approval
-
-        approval = await evaluate_tool_approval(
-            tool=tool,
-            tool_name=tool_name,
-            tool_args=tool_args,
-            call_id=call_id,
-            agent_or_step=self.config.name,
-        )
-        if not approval.allowed:
-            return json.dumps(
-                {
-                    "success": False,
-                    "error": approval.error_message,
-                    "metadata": {
-                        "approval_required": True,
-                        "approval_decision": approval.decision.value,
-                        "approval_provider": approval.provider_label,
-                    },
-                }
-            )
 
         validate = getattr(tool, "validate_parameters", None)
         if callable(validate):

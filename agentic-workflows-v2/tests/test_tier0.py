@@ -23,6 +23,11 @@ from agentic_v2.tools.builtin.transform import (
     YamlLoadTool,
 )
 
+# The file_ops builtins (write/copy/delete/move, dir-create) self-gate on
+# execute (ADR-047); approve-all so these tests reach the tool bodies. Ungated
+# transform/json/yaml tools are unaffected.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 
 @pytest.fixture(autouse=True)
 def _scoped_file_base_dir(request, tmp_path, monkeypatch):

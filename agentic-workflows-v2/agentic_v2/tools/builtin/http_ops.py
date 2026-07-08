@@ -142,6 +142,100 @@ async def _guarded_request(
     raise ValueError("Unexpected exit from redirect loop.")  # pragma: no cover
 
 
+async def _perform_http_request(
+    *,
+    url: str,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+    body: dict | list | None = None,
+    params: dict[str, str] | None = None,
+    timeout: float = 30.0,
+) -> ToolResult:
+    """Execute one SSRF-guarded HTTP request and return a ``ToolResult``.
+
+    Shared by ``HttpTool`` / ``HttpGetTool`` / ``HttpPostTool`` so the
+    convenience wrappers reuse this logic WITHOUT calling another
+    ``BaseTool``'s ``execute`` — composing a gated tool's ``execute`` would
+    re-enter the ADR-047 approval gate, double-consulting ``http`` and
+    fail-closing the intentionally-ungated ``http_get``.
+    """
+    try:
+        allowed_methods = {
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "HEAD",
+            "OPTIONS",
+        }
+        method = method.upper()
+        if method not in allowed_methods:
+            return ToolResult(
+                success=False,
+                error=f"Method '{method}' not allowed. Allowed: {', '.join(sorted(allowed_methods))}",
+            )
+
+        headers = headers or {}
+        params_map: dict[str, str] = params or {}
+
+        if body is not None and "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
+        block_private = get_settings().agentic_block_private_ips
+
+        # GuardedResolver re-validates every DNS answer at connect time so
+        # a rebinding domain cannot serve a public address to the pre-check
+        # and a private/metadata one to the actual connection.
+        connector = aiohttp.TCPConnector(resolver=GuardedResolver(block_private))
+        async with aiohttp.ClientSession(connector=connector) as session:
+            timeout_obj = aiohttp.ClientTimeout(total=timeout)
+            try:
+                response, final_url = await _guarded_request(
+                    session,
+                    method,
+                    url,
+                    headers=headers,
+                    json_body=body,
+                    params=params_map,
+                    timeout_obj=timeout_obj,
+                    block_private=block_private,
+                )
+            except ValueError as guard_err:
+                return ToolResult(success=False, error=str(guard_err))
+
+            async with response:
+                content_type = response.headers.get("Content-Type", "")
+                if "application/json" in content_type:
+                    response_data = await response.json()
+                else:
+                    response_data = await response.text()
+
+                return ToolResult(
+                    success=response.status < 400,
+                    data={
+                        "status": response.status,
+                        "headers": dict(response.headers),
+                        "body": response_data,
+                        "url": final_url,
+                    },
+                    metadata={
+                        "method": method,
+                        "content_type": content_type,
+                        "status_code": response.status,
+                    },
+                )
+
+    except aiohttp.ClientError as e:
+        return ToolResult(
+            success=False,
+            error=f"HTTP request failed: {e!s}",
+            metadata={"url": url, "method": method},
+        )
+    except Exception as e:
+        return ToolResult(success=False, error=f"Failed to execute HTTP request: {e!s}")
+
+
 class HttpTool(BaseTool):
     """Execute HTTP requests (GET, POST, PUT, DELETE, etc.)."""
 
@@ -227,83 +321,14 @@ class HttpTool(BaseTool):
         timeout: float = 30.0,
     ) -> ToolResult:
         """Execute HTTP request."""
-        try:
-            allowed_methods = {
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "PATCH",
-                "HEAD",
-                "OPTIONS",
-            }
-            method = method.upper()
-            if method not in allowed_methods:
-                return ToolResult(
-                    success=False,
-                    error=f"Method '{method}' not allowed. Allowed: {', '.join(sorted(allowed_methods))}",
-                )
-
-            headers = headers or {}
-            params_map: dict[str, str] = params or {}
-
-            if body is not None and "Content-Type" not in headers:
-                headers["Content-Type"] = "application/json"
-
-            block_private = get_settings().agentic_block_private_ips
-
-            # GuardedResolver re-validates every DNS answer at connect time so
-            # a rebinding domain cannot serve a public address to the pre-check
-            # and a private/metadata one to the actual connection.
-            connector = aiohttp.TCPConnector(resolver=GuardedResolver(block_private))
-            async with aiohttp.ClientSession(connector=connector) as session:
-                timeout_obj = aiohttp.ClientTimeout(total=timeout)
-                try:
-                    response, final_url = await _guarded_request(
-                        session,
-                        method,
-                        url,
-                        headers=headers,
-                        json_body=body,
-                        params=params_map,
-                        timeout_obj=timeout_obj,
-                        block_private=block_private,
-                    )
-                except ValueError as guard_err:
-                    return ToolResult(success=False, error=str(guard_err))
-
-                async with response:
-                    content_type = response.headers.get("Content-Type", "")
-                    if "application/json" in content_type:
-                        response_data = await response.json()
-                    else:
-                        response_data = await response.text()
-
-                    return ToolResult(
-                        success=response.status < 400,
-                        data={
-                            "status": response.status,
-                            "headers": dict(response.headers),
-                            "body": response_data,
-                            "url": final_url,
-                        },
-                        metadata={
-                            "method": method,
-                            "content_type": content_type,
-                            "status_code": response.status,
-                        },
-                    )
-
-        except aiohttp.ClientError as e:
-            return ToolResult(
-                success=False,
-                error=f"HTTP request failed: {e!s}",
-                metadata={"url": url, "method": method},
-            )
-        except Exception as e:
-            return ToolResult(
-                success=False, error=f"Failed to execute HTTP request: {e!s}"
-            )
+        return await _perform_http_request(
+            url=url,
+            method=method,
+            headers=headers,
+            body=body,
+            params=params,
+            timeout=timeout,
+        )
 
 
 class HttpGetTool(BaseTool):
@@ -355,8 +380,7 @@ class HttpGetTool(BaseTool):
         headers: dict[str, str] | None = None,
     ) -> ToolResult:
         """Execute HTTP GET."""
-        http_tool = HttpTool()
-        return await http_tool.execute(
+        return await _perform_http_request(
             url=url, method="GET", params=params, headers=headers
         )
 
@@ -414,7 +438,6 @@ class HttpPostTool(BaseTool):
         headers: dict[str, str] | None = None,
     ) -> ToolResult:
         """Execute HTTP POST."""
-        http_tool = HttpTool()
-        return await http_tool.execute(
+        return await _perform_http_request(
             url=url, method="POST", body=body, headers=headers
         )

@@ -155,7 +155,7 @@ async def _agent_dispatch(tool: BaseTool, args: dict[str, Any]) -> dict[str, Any
     agent = _ScriptedAgent([_final("done")])
     await agent.initialize()
     agent.bind_tool(tool)
-    result_str = await agent._dispatch_tool(tool, tool.name, args, "call-test")
+    result_str = await agent._dispatch_tool(tool, tool.name, args)
     return json.loads(result_str)
 
 
@@ -427,6 +427,171 @@ async def test_build_app_no_provider_fails_closed() -> None:
     assert payload["success"] is False
     assert "no provider" in payload["error"].lower()
     assert payload["metadata"]["approval_decision"] == "denied"
+
+
+# ---------------------------------------------------------------------------
+# Structural gate (ADR-047): a direct execute()/__call__ cannot bypass approval
+# ---------------------------------------------------------------------------
+
+
+async def test_direct_execute_on_gated_tool_is_blocked() -> None:
+    """A direct ``tool.execute()`` — bypassing every dispatcher — is still gated.
+
+    This is the exact bypass class the structural gate closes: prior to ADR-047
+    the gate lived only in the 4 dispatch sites, so ``tool.execute(...)`` ran
+    ungated.
+    """
+    set_approval_provider(AutoDenyProvider())
+    tool = _SpyTool(requires_approval=True)
+
+    result = await tool.execute(text="hi")
+
+    assert isinstance(result, ToolResult)
+    assert result.success is False
+    assert tool.calls == []  # the tool body never ran
+    assert result.metadata["approval_decision"] == "denied"
+
+
+async def test_direct_execute_no_provider_fails_closed() -> None:
+    """A direct ``tool.execute()`` with no provider fails closed (never runs)."""
+    set_approval_provider(None)
+    tool = _SpyTool(requires_approval=True)
+
+    result = await tool.execute(text="hi")
+
+    assert result.success is False
+    assert tool.calls == []
+    assert "no provider" in (result.error or "").lower()
+
+
+async def test_direct_call_dunder_on_gated_tool_is_blocked() -> None:
+    """``tool(**kwargs)`` (``__call__`` delegates to ``execute``) is gated too."""
+    set_approval_provider(AutoDenyProvider())
+    tool = _SpyTool(requires_approval=True)
+
+    result = await tool(text="hi")
+
+    assert result.success is False
+    assert tool.calls == []
+
+
+async def test_direct_execute_ungated_tool_runs() -> None:
+    """The structural gate does not over-block: an ungated tool runs directly."""
+    set_approval_provider(None)
+    tool = _SpyTool(requires_approval=False)
+
+    result = await tool.execute(text="hi")
+
+    assert result.success is True
+    assert tool.calls == [{"text": "hi"}]
+
+
+async def test_direct_execute_build_app_bypass_is_closed() -> None:
+    """The flagged vector — a direct ``BuildAppTool.execute()`` — is now gated.
+
+    ``registry.get("build_app").execute(...)`` returns a ``BuildAppTool``
+    instance; the structural gate blocks it before any install/build/test shell
+    runs even though no dispatcher was involved.
+    """
+    from agentic_v2.tools.builtin.build_ops import BuildAppTool
+
+    set_approval_provider(AutoDenyProvider())
+    tool = BuildAppTool()
+
+    result = await tool.execute(project_root=".", dry_run=True)
+
+    assert result.success is False
+    assert result.metadata["approval_decision"] == "denied"
+
+
+class _CountingProvider:
+    """Approves everything, counting how many times it is consulted."""
+
+    def __init__(self) -> None:
+        self.count = 0
+
+    async def request_approval(self, request: ApprovalRequest) -> ApprovalDecision:
+        self.count += 1
+        return ApprovalDecision.APPROVED
+
+
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_gate_consulted_exactly_once_per_dispatch(dispatch) -> None:
+    """No double-consult: removing the pre-gates leaves exactly one gate.
+
+    If a dispatcher still pre-gated while ``execute`` also self-gated, the
+    provider would be consulted twice (and an interactive provider would
+    double-prompt).
+    """
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+    tool = _SpyTool(requires_approval=True)
+
+    payload = await dispatch(tool, {"text": "hi"})
+
+    assert payload["success"] is True
+    assert provider.count == 1
+
+
+def test_init_subclass_skips_abstract_intermediate() -> None:
+    """The gate wrapper skips a subclass that defines no ``execute``.
+
+    An abstract intermediate must stay abstract — the wrapper must not
+    accidentally bind a concrete ``execute`` and make it instantiable.
+    """
+
+    class _NoExecuteIntermediate(BaseTool):
+        pass
+
+    with pytest.raises(TypeError):
+        _NoExecuteIntermediate()  # type: ignore[abstract]
+
+
+async def test_http_get_stays_ungated_after_structural_gate(monkeypatch) -> None:
+    """http_get must NOT fail closed with no provider.
+
+    Regression: HttpGetTool.execute used to call the gated HttpTool().execute()
+    internally, so once execute self-gated, the ungated http_get re-entered the
+    gate and fail-closed. The fix routes both through a shared helper; this test
+    proves the helper is reached (no gate denial) even with no provider.
+    """
+    from agentic_v2.tools.builtin import http_ops
+    from agentic_v2.tools.builtin.http_ops import HttpGetTool
+
+    set_approval_provider(None)
+    reached = {"called": False}
+
+    async def _fake_request(**kwargs: Any) -> ToolResult:
+        reached["called"] = True
+        return ToolResult(success=True, data={"status": 200}, tool_name="http_get")
+
+    monkeypatch.setattr(http_ops, "_perform_http_request", _fake_request)
+
+    result = await HttpGetTool().execute(url="http://example.test/")
+
+    assert reached["called"] is True  # the gate did not block an ungated tool
+    assert result.success is True
+    assert "approval_decision" not in result.metadata
+
+
+async def test_http_post_gate_consulted_exactly_once(monkeypatch) -> None:
+    """http_post (gated) is consulted exactly once — no re-entry via a nested
+    HttpTool().execute() (which the pre-fix composition caused)."""
+    from agentic_v2.tools.builtin import http_ops
+    from agentic_v2.tools.builtin.http_ops import HttpPostTool
+
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    async def _fake_request(**kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, data={"status": 200}, tool_name="http_post")
+
+    monkeypatch.setattr(http_ops, "_perform_http_request", _fake_request)
+
+    result = await HttpPostTool().execute(url="http://example.test/", body={"a": 1})
+
+    assert result.success is True
+    assert provider.count == 1
 
 
 def test_tool_requires_approval_helper() -> None:

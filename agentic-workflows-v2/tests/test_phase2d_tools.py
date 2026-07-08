@@ -17,6 +17,10 @@ from agentic_v2.tools.builtin.http_ops import HttpGetTool, HttpPostTool, HttpToo
 from agentic_v2.tools.builtin.search_ops import GrepTool, SearchTool
 from agentic_v2.tools.builtin.shell_ops import ShellExecTool, ShellTool
 
+# Gated builtins (shell/http-post/build_app) self-gate on execute (ADR-047);
+# approve-all so these tests exercise the tool bodies, not the approval gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 # ============================================================================
 # Build Tool Tests
 # ============================================================================
@@ -134,8 +138,8 @@ async def test_git_diff_tool():
 def _disable_ssrf_guard_for_localhost(monkeypatch: pytest.MonkeyPatch):
     """Disable the SSRF private-IP guard so tests can reach a local test server.
 
-    These tests intentionally use a 127.0.0.1 server; real SSRF protection is
-    exercised by tests/test_ssrf_guard.py.
+    These tests intentionally use a 127.0.0.1 server; real SSRF
+    protection is exercised by tests/test_ssrf_guard.py.
     """
     import agentic_v2.settings as settings_mod
 
