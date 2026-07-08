@@ -198,7 +198,8 @@ jobs:
     if: >
       (github.event_name == 'pull_request' &&
       contains(github.event.pull_request.labels.*.name, 'run-live-eval')) ||
-      github.event_name == 'schedule'
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch'
     defaults:
       run:
         working-directory: .
@@ -215,7 +216,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e "." -c ci-constraints.txt
           pip install -e "agentic-v2-eval/[dev]" -c ci-constraints.txt
-          pip install -e "agentic-workflows-v2" -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2[server]" -c ci-constraints.txt
 
       - name: Run live eval gate (real model, median of 3 runs per case)
         env:
