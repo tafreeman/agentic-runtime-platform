@@ -607,6 +607,10 @@ async def _run_and_evaluate(
                                 "hard_gates",
                                 "hard_gate_failures",
                                 "step_scores",
+                                "judge_skipped",
+                                "judge_skip_reason",
+                                "judge_skip_code",
+                                "expected_text_present",
                             )
                         },
                         "timestamp": datetime.now(UTC).isoformat(),

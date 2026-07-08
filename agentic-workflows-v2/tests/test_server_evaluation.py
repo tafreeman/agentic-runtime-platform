@@ -890,6 +890,11 @@ async def test_sse_payload_includes_hard_gates(monkeypatch):
     event = evaluation_events[-1]
     assert "hard_gates" in event
     assert "hard_gate_failures" in event
+    # Visibility flags must ride the live frame — the live evaluation card is
+    # populated only from this event (issue #172 review, round 8).
+    assert event["judge_skipped"] is True
+    assert "judge_skip_code" in event
+    assert event["expected_text_present"] is False
 
 
 @pytest.mark.asyncio

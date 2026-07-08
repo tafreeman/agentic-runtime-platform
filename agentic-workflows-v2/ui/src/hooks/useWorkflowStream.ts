@@ -144,6 +144,9 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
           grade: event.grade,
           passed: event.passed ?? false,
           pass_threshold: event.pass_threshold ?? 70,
+          judge_skipped: event.judge_skipped,
+          judge_skip_reason: event.judge_skip_reason,
+          expected_text_present: event.expected_text_present,
           generated_at: event.timestamp,
         });
         setWorkflowStatus((prev) => (prev === "failed" ? prev : "completed"));

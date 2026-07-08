@@ -200,6 +200,12 @@ export interface EvaluationResult {
   grade: string;
   passed: boolean;
   pass_threshold: number;
+  /** True when the LLM judge layer did not contribute to the hybrid score. */
+  judge_skipped?: boolean | null;
+  /** Why the judge was skipped, when it was. */
+  judge_skip_reason?: string | null;
+  /** False when no expected/golden text existed — overlap term was inactive. */
+  expected_text_present?: boolean | null;
   generated_at: string;
   dataset?: Record<string, unknown> | null;
 }
