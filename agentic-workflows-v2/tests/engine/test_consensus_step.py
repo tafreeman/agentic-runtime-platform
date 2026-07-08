@@ -11,8 +11,13 @@ from pathlib import Path
 
 import pytest
 
-from agentic_v2.engine import StepDefinition, StepExecutor
-from agentic_v2.engine.agent_resolver import TIER0_REGISTRY, resolve_agent
+from agentic_v2.core.errors import ConfigurationError
+from agentic_v2.engine import RetryConfig, StepDefinition, StepExecutor
+from agentic_v2.engine.agent_resolver import (
+    TIER0_REGISTRY,
+    _consensus_step,
+    resolve_agent,
+)
 from agentic_v2.engine.context import ExecutionContext
 from agentic_v2.models import ModelTier
 
@@ -26,9 +31,7 @@ class TestConsensusStepResolution:
 
     def test_resolves_to_tier0(self):
         """resolve_agent binds a tier-0 func for tier0_consensus."""
-        step = StepDefinition(
-            name="vote", metadata={"agent": "tier0_consensus"}
-        )
+        step = StepDefinition(name="vote", metadata={"agent": "tier0_consensus"})
         resolve_agent(step)
 
         assert step.func is not None
@@ -75,7 +78,7 @@ class TestConsensusMiniDag:
 
     @pytest.mark.asyncio
     async def test_three_stub_steps_into_vote(self):
-        """approve/approve/reject reviewers -> winner 'approve', agreement 2/3."""
+        """Approve/approve/reject reviewers -> winner 'approve', agreement 2/3."""
         ctx = ExecutionContext()
         executor = StepExecutor()
 
@@ -85,9 +88,9 @@ class TestConsensusMiniDag:
             "reviewer_c": "reject",
         }
         for name, verdict in verdicts.items():
-            stub = StepDefinition(
-                name=name, func=_make_stub(verdict)
-            ).with_output(verdict="_ignored")
+            stub = StepDefinition(name=name, func=_make_stub(verdict)).with_output(
+                verdict="_ignored"
+            )
             stub_result = await executor.execute(stub, ctx)
             assert stub_result.is_success
 
@@ -139,6 +142,72 @@ class TestConsensusYamlLoads:
         # The summarize step is gated on the vote's threshold result.
         summarize_step = workflow.dag.steps["summarize"]
         assert summarize_step.when is not None
+
+
+class TestConsensusMinAgreementFailClosed:
+    """min_agreement resolution fails closed on bad config (A4).
+
+    The documented ``0.0`` default only applies when the threshold is genuinely
+    absent; a present-but-malformed value must not be silently coerced to 0.0
+    (which would make ``meets_threshold`` always true — fail-open).
+    """
+
+    @pytest.mark.asyncio
+    async def test_absent_min_agreement_uses_documented_default(self):
+        """Absent threshold → documented 0.0 default (no gate), no raise."""
+        ctx = ExecutionContext()
+        await ctx.set("samples", ["approve", "approve", "reject"])
+
+        result = await _consensus_step(ctx)
+
+        # 0.0 default means the threshold is met (no gate was requested).
+        assert result["meets_threshold"] is True
+        assert result["winner"] == "approve"
+
+    @pytest.mark.asyncio
+    async def test_unparseable_min_agreement_raises(self):
+        """A present-but-unparseable threshold is a config error (fail-closed)."""
+        ctx = ExecutionContext()
+        await ctx.set("samples", ["approve", "reject"])
+        await ctx.set("min_agreement", "high")
+
+        with pytest.raises(ConfigurationError):
+            await _consensus_step(ctx)
+
+    @pytest.mark.asyncio
+    async def test_out_of_range_min_agreement_raises(self):
+        """A negative threshold would be fail-open (agreement >= -x); reject it."""
+        ctx = ExecutionContext()
+        await ctx.set("samples", ["approve", "reject"])
+        await ctx.set("min_agreement", -0.5)
+
+        with pytest.raises(ConfigurationError):
+            await _consensus_step(ctx)
+
+    @pytest.mark.asyncio
+    async def test_malformed_config_fails_the_step_closed(self):
+        """Through StepExecutor a malformed threshold yields a failed step.
+
+        A failed vote step means the downstream ``when: meets_threshold`` gate
+        never fires — fail-closed end to end, not a silent pass.
+        """
+        # max_retries=0: a ConfigurationError is deterministic, so retrying it
+        # only adds ~7s of exponential backoff before the same failure — the
+        # step must fail immediately (matches sibling failure-path tests).
+        step = StepDefinition(
+            name="vote",
+            metadata={"agent": "tier0_consensus"},
+            retry=RetryConfig(max_retries=0),
+        ).with_input(samples="raw_samples", min_agreement="threshold")
+        resolve_agent(step)
+
+        ctx = ExecutionContext()
+        await ctx.set("raw_samples", ["a", "b"])
+        await ctx.set("threshold", "not-a-number")
+
+        result = await StepExecutor().execute(step, ctx)
+
+        assert not result.is_success
 
 
 def _make_stub(verdict: str):

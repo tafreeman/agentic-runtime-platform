@@ -46,7 +46,10 @@ from agentic_v2.tools.base import BaseTool, ToolResult
 
 
 class _SpyTool(BaseTool):
-    """Tier-0 tool that records every execution. ``requires_approval`` settable."""
+    """Tier-0 tool that records every execution.
+
+    ``requires_approval`` settable.
+    """
 
     def __init__(self, *, name: str = "spy", requires_approval: bool = False) -> None:
         super().__init__()
@@ -78,8 +81,9 @@ class _SpyTool(BaseTool):
 
     async def execute(self, **kwargs: Any) -> ToolResult:
         self.calls.append(dict(kwargs))
-        return ToolResult(success=True, data={"echoed": kwargs.get("text")},
-                          tool_name=self._name)
+        return ToolResult(
+            success=True, data={"echoed": kwargs.get("text")}, tool_name=self._name
+        )
 
 
 class _ScriptedAgent(BaseAgent[SimpleTask, SimpleOutput]):
@@ -348,6 +352,7 @@ async def test_policy_provider_allowlist() -> None:
 
 
 def test_destructive_builtins_require_approval() -> None:
+    from agentic_v2.tools.builtin.build_ops import BuildAppTool
     from agentic_v2.tools.builtin.code_execution import CodeExecutionTool
     from agentic_v2.tools.builtin.file_ops import (
         DirectoryCreateTool,
@@ -365,6 +370,7 @@ def test_destructive_builtins_require_approval() -> None:
     from agentic_v2.tools.builtin.shell_ops import ShellExecTool, ShellTool
 
     for cls in (
+        BuildAppTool,
         ShellTool,
         ShellExecTool,
         CodeExecutionTool,
@@ -381,6 +387,46 @@ def test_destructive_builtins_require_approval() -> None:
     # Read-only tools stay un-gated.
     assert FileReadTool().requires_approval is False
     assert HttpGetTool().requires_approval is False
+
+
+async def test_build_app_gate_fires_before_execute() -> None:
+    """build_app is denied (fail-closed) before its shell phases ever run.
+
+    Regression for the A2 gap: BuildAppTool ran install/build/test shell
+    commands with no approval gate. The gate must be consulted *before* execute.
+    """
+    from agentic_v2.tools.builtin.build_ops import BuildAppTool
+
+    executed = {"ran": False}
+
+    class _SpyBuildApp(BuildAppTool):
+        async def execute(self, **kwargs: Any) -> ToolResult:
+            executed["ran"] = True
+            return await super().execute(**kwargs)
+
+    set_approval_provider(AutoDenyProvider())
+    tool = _SpyBuildApp()
+
+    payload = await _engine_dispatch(tool, {"project_root": ".", "dry_run": True})
+
+    assert executed["ran"] is False  # gate fired before execute ran
+    assert payload["success"] is False
+    assert "approval" in payload["error"].lower()
+    assert payload["metadata"]["approval_decision"] == "denied"
+
+
+async def test_build_app_no_provider_fails_closed() -> None:
+    """No provider registered → build_app fails closed, never executes."""
+    from agentic_v2.tools.builtin.build_ops import BuildAppTool
+
+    set_approval_provider(None)
+    tool = BuildAppTool()
+
+    payload = await _engine_dispatch(tool, {"project_root": ".", "dry_run": True})
+
+    assert payload["success"] is False
+    assert "no provider" in payload["error"].lower()
+    assert payload["metadata"]["approval_decision"] == "denied"
 
 
 def test_tool_requires_approval_helper() -> None:
@@ -535,9 +581,7 @@ async def test_approval_times_out_and_denies_fail_closed(
     settings_mod.get_settings.cache_clear()
 
     class _HangingProvider:
-        async def request_approval(
-            self, request: ApprovalRequest
-        ) -> ApprovalDecision:
+        async def request_approval(self, request: ApprovalRequest) -> ApprovalDecision:
             await asyncio.sleep(60)  # never resolves within the test's timeout
             return ApprovalDecision.APPROVED
 
@@ -558,35 +602,29 @@ async def test_approval_times_out_and_denies_fail_closed(
 async def test_approval_timeout_nonfinite_coerced_to_default(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A non-finite AGENTIC_APPROVAL_TIMEOUT_SECONDS (nan/inf) must not silently
-    disable the gate (``nan > 0`` is False → unbounded wait); it is coerced back
-    to the protective default instead.
-    """
+    """A non-finite AGENTIC_APPROVAL_TIMEOUT_SECONDS (nan/inf) must not silently disable
+    the gate (``nan > 0`` is False → unbounded wait); it is coerced back to the
+    protective default instead."""
     import agentic_v2.settings as settings_mod
 
     for raw in ("nan", "inf"):
         monkeypatch.setenv("AGENTIC_APPROVAL_TIMEOUT_SECONDS", raw)
         settings_mod.get_settings.cache_clear()
-        assert (
-            settings_mod.get_settings().agentic_approval_timeout_seconds == 1800.0
-        )
+        assert settings_mod.get_settings().agentic_approval_timeout_seconds == 1800.0
 
 
 async def test_approval_disabled_timeout_allows_slow_provider(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """timeout <= 0 disables the bound: a provider that takes a moment still
-    resolves (APPROVED), it is not denied by a timeout.
-    """
+    """Timeout <= 0 disables the bound: a provider that takes a moment still resolves
+    (APPROVED), it is not denied by a timeout."""
     import agentic_v2.settings as settings_mod
 
     monkeypatch.setenv("AGENTIC_APPROVAL_TIMEOUT_SECONDS", "0")
     settings_mod.get_settings.cache_clear()
 
     class _SlowApprover:
-        async def request_approval(
-            self, request: ApprovalRequest
-        ) -> ApprovalDecision:
+        async def request_approval(self, request: ApprovalRequest) -> ApprovalDecision:
             await asyncio.sleep(0.05)  # finite, but slower than any tiny bound
             return ApprovalDecision.APPROVED
 

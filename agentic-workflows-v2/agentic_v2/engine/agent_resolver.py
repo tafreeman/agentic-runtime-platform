@@ -35,6 +35,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ..core.errors import ConfigurationError
 from ..integrations.otel import get_tracer as _get_tracer
 from ..models.router import ModelTier
 from .context import ExecutionContext
@@ -205,6 +206,33 @@ async def _gather_consensus_samples(ctx: ExecutionContext) -> list[Any]:
     return [_resolve_sample_item(ctx, item) for item in raw_samples]
 
 
+def _coerce_min_agreement(raw: Any) -> float:
+    """Resolve the consensus ``min_agreement`` threshold, failing closed.
+
+    A missing/``None`` value is the documented optional default (``0.0`` — no
+    gate, matching :func:`majority_vote`'s own signature default). A value that
+    is *present but unparseable*, or outside ``[0.0, 1.0]``, is a configuration
+    error: silently coercing it to ``0.0`` would disable a threshold the caller
+    intended to set, making ``meets_threshold`` fail-open (always true). Raise a
+    :class:`ConfigurationError` instead so the step fails closed.
+    """
+    if raw is None:
+        return 0.0
+    try:
+        value = float(raw)
+    except (TypeError, ValueError) as exc:
+        raise ConfigurationError(
+            f"consensus 'min_agreement' must be a number in [0.0, 1.0]; got "
+            f"{raw!r} (unparseable). Refusing to fail open."
+        ) from exc
+    if not 0.0 <= value <= 1.0:
+        raise ConfigurationError(
+            f"consensus 'min_agreement' must be in [0.0, 1.0]; got {value}. "
+            "Refusing to fail open."
+        )
+    return value
+
+
 async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
     """Tier-0: majority-vote over ``samples`` and expose the winner for gating.
 
@@ -212,7 +240,9 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
     - ``samples`` (required): a list of candidate values to vote on.  Entries
       that are ``${...}`` expressions are resolved against the live context.
     - ``min_agreement`` (optional, default ``0.0``): threshold for
-      ``meets_threshold``.
+      ``meets_threshold``.  A present-but-unparseable or out-of-range value is a
+      configuration error and fails the step closed (see
+      :func:`_coerce_min_agreement`).
     - ``mode`` (optional, default ``"majority"``): voting strategy.
 
     Returns the consensus fields downstream steps and ``when:`` conditions can
@@ -222,11 +252,7 @@ async def _consensus_step(ctx: ExecutionContext) -> dict[str, Any]:
 
     samples = await _gather_consensus_samples(ctx)
 
-    min_agreement_raw = await ctx.get("min_agreement")
-    try:
-        min_agreement = float(min_agreement_raw) if min_agreement_raw is not None else 0.0
-    except (TypeError, ValueError):
-        min_agreement = 0.0
+    min_agreement = _coerce_min_agreement(await ctx.get("min_agreement"))
 
     mode = await ctx.get("mode") or "majority"
     if mode != "majority":
@@ -258,8 +284,9 @@ def _build_placeholder_output(
 ) -> dict[str, Any]:
     """Build deterministic placeholder output when the LLM call fails.
 
-    Preserves workflow handoff contracts by emitting all declared output keys
-    with placeholder payloads so downstream gating conditions still resolve.
+    Preserves workflow handoff contracts by emitting all declared output
+    keys with placeholder payloads so downstream gating conditions still
+    resolve.
     """
     placeholder_output: dict[str, Any] = {
         "agent": agent_name,
@@ -408,7 +435,9 @@ async def _run_native_tool_loop(
     return response, model_used, tokens_used, tool_call_count
 
 
-def _should_use_ek_tool_loop(bound_tools: dict[str, Any], tool_path: str | None) -> bool:
+def _should_use_ek_tool_loop(
+    bound_tools: dict[str, Any], tool_path: str | None
+) -> bool:
     """ADR-023 Phase 6b gate: is the EK react_loop the owner of this step?
 
     DEFAULT OFF — only ``True`` when ``AGENTIC_EK_PROVIDER`` is set AND the step

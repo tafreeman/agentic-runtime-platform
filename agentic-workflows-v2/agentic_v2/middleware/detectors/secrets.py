@@ -79,7 +79,36 @@ class SecretDetector:
     )
 
     async def scan(self, text: str) -> Sequence[Finding]:
-        findings: list[Finding] = []
+        """Detect secrets / high-entropy tokens.
+
+        Returns findings (no mutation).
+        """
+        return tuple(finding for _start, _end, finding in self._detect(text))
+
+    async def scan_and_mask(self, text: str) -> tuple[str, Sequence[Finding]]:
+        """Detect *and* redact secrets in a single pass.
+
+        Returns ``(masked_text, findings)`` where every matched span in
+        ``masked_text`` has been replaced by a ``[REDACTED:<category>]``
+        placeholder. ``findings`` are identical to :meth:`scan`. Text with no
+        findings is returned byte-for-byte unchanged.
+        """
+        detections = self._detect(text)
+        findings = tuple(finding for _start, _end, finding in detections)
+        spans = [
+            (start, end, finding.category.value) for start, end, finding in detections
+        ]
+        return self._apply_masks(text, spans), findings
+
+    def _detect(self, text: str) -> list[tuple[int, int, Finding]]:
+        """Locate secret and high-entropy spans in detection order.
+
+        Returns ``(start, end, Finding)`` tuples so both :meth:`scan` (findings
+        only) and :meth:`scan_and_mask` (span-accurate redaction) share one
+        detection pass. Pattern matches come first, then non-overlapping
+        high-entropy tokens — the same order findings were emitted before.
+        """
+        detections: list[tuple[int, int, Finding]] = []
         matched_ranges: list[tuple[int, int]] = []
 
         # Phase 1: Pattern matching
@@ -87,13 +116,17 @@ class SecretDetector:
             for match in secret_pattern.pattern.finditer(text):
                 start, end = match.start(), match.end()
                 matched_ranges.append((start, end))
-                findings.append(
-                    Finding(
-                        category=secret_pattern.category,
-                        severity=secret_pattern.severity,
-                        location=f"text[{start}:{end}]",
-                        matched_pattern=secret_pattern.name,
-                        redacted_preview=self._build_preview(text, start, end),
+                detections.append(
+                    (
+                        start,
+                        end,
+                        Finding(
+                            category=secret_pattern.category,
+                            severity=secret_pattern.severity,
+                            location=f"text[{start}:{end}]",
+                            matched_pattern=secret_pattern.name,
+                            redacted_preview=self._build_preview(text, start, end),
+                        ),
                     )
                 )
 
@@ -106,17 +139,50 @@ class SecretDetector:
             if len(token) >= self.MIN_ENTROPY_LENGTH:
                 entropy = self._shannon_entropy(token)
                 if entropy >= self.ENTROPY_THRESHOLD:
-                    findings.append(
-                        Finding(
-                            category=FindingCategory.HIGH_ENTROPY_STRING,
-                            severity=Severity.LOW,
-                            location=f"text[{start}:{end}]",
-                            matched_pattern="high_entropy",
-                            redacted_preview=self._build_preview(text, start, end),
+                    detections.append(
+                        (
+                            start,
+                            end,
+                            Finding(
+                                category=FindingCategory.HIGH_ENTROPY_STRING,
+                                severity=Severity.LOW,
+                                location=f"text[{start}:{end}]",
+                                matched_pattern="high_entropy",
+                                redacted_preview=self._build_preview(text, start, end),
+                            ),
                         )
                     )
 
-        return tuple(findings)
+        return detections
+
+    @staticmethod
+    def _apply_masks(text: str, spans: list[tuple[int, int, str]]) -> str:
+        """Replace each span with ``[REDACTED:<category>]``; returns new text.
+
+        Overlapping or adjacent spans are merged (first-seen category wins) so a
+        region covered by several patterns yields a single placeholder and byte
+        offsets never shift mid-rebuild. Immutable: a new string is returned and
+        empty ``spans`` returns ``text`` unchanged.
+        """
+        if not spans:
+            return text
+        ordered = sorted(spans, key=lambda span: (span[0], -span[1]))
+        merged: list[tuple[int, int, str]] = []
+        for start, end, category in ordered:
+            if merged and start <= merged[-1][1]:
+                prev_start, prev_end, prev_category = merged[-1]
+                merged[-1] = (prev_start, max(prev_end, end), prev_category)
+            else:
+                merged.append((start, end, category))
+
+        parts: list[str] = []
+        cursor = 0
+        for start, end, category in merged:
+            parts.append(text[cursor:start])
+            parts.append(f"[REDACTED:{category}]")
+            cursor = end
+        parts.append(text[cursor:])
+        return "".join(parts)
 
     def _build_preview(self, text: str, start: int, end: int) -> str:
         ctx_start = max(0, start - self.PREVIEW_CONTEXT)

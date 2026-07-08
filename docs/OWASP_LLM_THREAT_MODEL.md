@@ -105,7 +105,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 
 `PIIDetector` (`middleware/detectors/pii.py`) — email, US phone, SSN patterns (MEDIUM → REDACTED).
 
-*Outbound:* `ResponseSanitizer` (`agentic-workflows-v2/agentic_v2/middleware/response_sanitizer.py`) runs `SecretDetector` + `UnicodeSanitizer` on every LLM response. Responses are never blocked (already generated), but secrets are redacted with `[REDACTED]` and a warning is logged.
+*Outbound:* `ResponseSanitizer` (`agentic-workflows-v2/agentic_v2/middleware/response_sanitizer.py`) runs `SecretDetector` + `UnicodeSanitizer` on every LLM response. Responses are never blocked (already generated), but secret spans matching a named pattern are masked with `[REDACTED:<category>]` in the returned text and a warning is logged. High-entropy-only detections (a random-looking token matching no named pattern) are logged but not auto-masked outbound — consistent with the best-effort, known-patterns-only scope noted under LLM02.
 
 *Audit trail:* `SanitizationResult` stores `original_hash` as SHA-256 of the raw input. Pattern names are logged; matched text is never stored or logged (`contracts/sanitization.py`, `Finding.matched_pattern` field documentation: "Pattern name/ID, NEVER the matched text itself").
 
@@ -194,7 +194,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 
 **Controls implemented.**
 
-*Response-path sanitization:* `ResponseSanitizer` (`middleware/response_sanitizer.py`) applies `SecretDetector` and `UnicodeSanitizer` to every LLM response before it is returned, preventing secret leakage via output.
+*Response-path sanitization:* `ResponseSanitizer` (`middleware/response_sanitizer.py`) applies `SecretDetector` and `UnicodeSanitizer` to every LLM response before it is returned, masking detected secret spans as `[REDACTED:<category>]` (best-effort, known patterns only).
 
 *Structured output for key agents:* `json_extraction.py` implements two-stage JSON extraction + Pydantic validation for `OrchestratorAgent`, `ReviewerAgent`, and `ArchitectAgent`. The `judge.py` module has a dedicated `validate_judge_structured_output()` function with strict schema enforcement.
 

@@ -1,12 +1,10 @@
 # ADR index — Agentic Runtime Platform
 
-> **Last updated:** 2026-07-05
-> **Total ADRs:** 38 decisions across 36 files (30 Accepted, 6 Proposed, 2 Superseded)
-
 Architecture Decision Records capture the load-bearing choices behind the
 Agentic Runtime Platform — what was decided, what alternatives were rejected,
-and what it costs. The corpus currently holds **38 decisions** (numbers
-001–042; 004–006 and 013 are intentionally unused gaps). If you read only five:
+and what it costs. Every decision is enumerated in the deck below, each with its
+own status (004–006 and 013 are intentionally unused number gaps). If you read
+only five:
 
 - **[ADR-001](ADR-001-002-003-architecture-decisions.md)** — the dual execution engine (LangGraph adapter alongside the native Kahn's-DAG executor).
 - **[ADR-002](ADR-001-002-003-architecture-decisions.md)** — SmartModelRouter circuit-breaker hardening (three-state breaker, adaptive cooldowns, bulkheads).
@@ -60,6 +58,7 @@ and what it costs. The corpus currently holds **38 decisions** (numbers
 | **042** | Adopt `agentic-evalkit` as ARP's evaluation framework, superseding in-tree `agentic-v2-eval`, via a sliced migration (A: dependency, B: bridge module, C: cut over step_scoring, D: deprecate+delete agentic-v2-eval, E: CI cutover); evalkit stays optional until it has a public remote | Proposed | [ADR-042](ADR-042-agentic-evalkit-adoption.md) |
 | **043** | Configurable workflow UI: per-step node config (model params / persona / observers) in the YAML schema, a JSON UI-settings store for provider endpoints + tier reranks (below env-var pins in routing precedence), self-describing DAG edges, and replay-based run comparison (`POST /api/eval/compare`) | Accepted | [ADR-043](ADR-043-configurable-workflow-ui.md) |
 | **044** | Evaluation scoring visibility (issue #172): loader-side `golden_output_path` resolution inlined as `golden_output_text`, loud+typed judge skips (`judge_skipped`/`judge_skip_reason`/`judge_skip_code`, `expected_text_present`, opt-in `judge_required` → `JudgeRequiredError` scoped to the evaluation), replay sample rehydration with task_id verification, and a config-backed efficiency SLO band | Accepted | [ADR-044](ADR-044-evaluation-scoring-visibility.md) |
+| **045** | `BuildAppTool` requires human approval — the `build_app` install/build/test shell tool joins the fail-closed HITL gate (it was ungated, contradicting the shell-approval claim) | Accepted | [ADR-045](ADR-045-build-app-approval-gate.md) |
 
 **Note:** ADRs 004-006 and 013 were never created or were withdrawn; those numbering gaps are intentional and should not be reclaimed. (The decision once numbered ADR-013 in the `agentic-systems-lab` fork was salvaged into this repo as **ADR-031**, not as 013.) ADR-023 working notes (migration plan, phase tracker, finish plan, divergence audit, preservation matrix) were moved to [`drafts/`](drafts/README.md) on 2026-06-17 to resolve a naming collision; the canonical decision record remains at ADR-023.
 
