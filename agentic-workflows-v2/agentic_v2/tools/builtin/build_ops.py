@@ -36,6 +36,12 @@ class BuildAppTool(BaseTool):
         return "build_app"
 
     @property
+    def requires_approval(self) -> bool:
+        # High-impact: runs install/build/test/smoke shell commands (including a
+        # create_subprocess_shell path). Gated by default — fail-closed HITL.
+        return True
+
+    @property
     def description(self) -> str:
         return (
             "Detect project stack and execute install/build/test/smoke phases "

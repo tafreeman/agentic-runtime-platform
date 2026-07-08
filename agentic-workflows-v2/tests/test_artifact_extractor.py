@@ -19,6 +19,7 @@ from agentic_v2.workflows.artifact_extractor import (
     _collect_strings,
     _safe_rel_path,
     _scan_output_for_files,
+    _write_files,
     extract_artifacts,
     extract_from_record,
 )
@@ -62,15 +63,14 @@ class TestSafeRelPath:
         [
             ("src/main.py", ("src", "main.py")),
             ("src\\main.py", ("src", "main.py")),
-            ("/absolute/file.txt", ("absolute", "file.txt")),
             ("a/../b/c.py", ("a", "b", "c.py")),
         ],
-        ids=["posix", "backslash", "leading-slash-stripped", "dotdot-stripped"],
+        ids=["posix", "backslash", "dotdot-stripped"],
     )
     def test_safe_path_normalizes(
         self, raw: str, expected_parts: tuple[str, ...]
     ) -> None:
-        """Tier 1: paths are normalized, traversals stripped."""
+        """Tier 1: relative paths are normalized, traversals stripped."""
         result = _safe_rel_path(raw)
         assert result is not None
         assert result.parts == expected_parts
@@ -82,12 +82,167 @@ class TestSafeRelPath:
             "../../..",
             "",
             "   ",
+            "/etc/passwd",
+            "C:/Windows/System32/evil.dll",
+            "C:\\evil",
+            "//server/share/x",
         ],
-        ids=["single-dotdot", "multi-dotdot", "empty", "whitespace"],
+        ids=[
+            "single-dotdot",
+            "multi-dotdot",
+            "empty",
+            "whitespace",
+            "posix-absolute",
+            "windows-drive",
+            "windows-drive-backslash",
+            "unc-path",
+        ],
     )
     def test_unsafe_paths_return_none(self, raw: str) -> None:
-        """Tier 1: purely traversal or empty paths return None."""
+        """Tier 1: traversal-only, empty, or absolute paths return None.
+
+        Absolute paths under either convention (POSIX root, Windows drive, UNC
+        anchor) must be rejected — joining them onto ``run_dir`` would discard it
+        and escape the artifact sandbox.
+        """
         assert _safe_rel_path(raw) is None
+
+
+# ===================================================================
+# _safe_rel_path — drive/anchor escape containment (A1)
+# ===================================================================
+
+
+class TestDriveAnchorEscape:
+    """Tier 1: drive-letter / anchor payloads never escape run_dir on write."""
+
+    _ABSOLUTE_ESCAPES = [
+        "C:/Windows/System32/evil.dll",
+        "C:\\evil",
+        "//server/share/x",
+        "/etc/passwd",
+    ]
+
+    @pytest.mark.parametrize("raw", _ABSOLUTE_ESCAPES)
+    def test_absolute_escape_rejected(self, raw: str) -> None:
+        """Tier 1: every absolute (drive/UNC/root) payload is rejected."""
+        assert _safe_rel_path(raw) is None
+
+    # A drive/UNC anchor or NTFS stream can hide in a NON-leading segment; on
+    # Windows ``Path("foo", "D:", "x")`` re-derives ``D:`` as the drive and drops
+    # ``foo``. Dot-only names are OS-invalid. None of these are "absolute" by
+    # POSIX/Windows rules, so they slip every whole-string anchor check.
+    _EMBEDDED_ANCHOR_ESCAPES = [
+        "foo/D:/evil.dll",
+        "notes/E:/temp/pwned",
+        "a/b/C:relative",
+        "evil.txt:ads",
+        "..:ads",
+        "...",
+    ]
+
+    @pytest.mark.parametrize("raw", _EMBEDDED_ANCHOR_ESCAPES)
+    def test_embedded_anchor_or_stream_rejected(self, raw: str) -> None:
+        """Tier 1: a drive/stream anchor in a non-leading segment (or a dot-only
+        name) is rejected, not silently rebuilt into an escaping path."""
+        assert _safe_rel_path(raw) is None
+
+    def test_relative_traversal_stays_contained(self) -> None:
+        """Tier 1: ``..`` segments are dropped, not escaped."""
+        result = _safe_rel_path("..\\..\\x")
+        assert result is not None
+        assert ".." not in result.parts
+        assert not result.is_absolute()
+
+    def test_nothing_written_outside_run_dir(self, tmp_path: Path) -> None:
+        """Tier 1: malicious FILE blocks write nothing outside run_dir.
+
+        The happy-path file lands inside run_dir, the relative-traversal block
+        is contained, and no absolute-escape payload is written anywhere.
+        """
+        blocks = [
+            f"FILE: {path}\nESCAPE_PAYLOAD\nENDFILE\n"
+            for path in self._ABSOLUTE_ESCAPES
+        ]
+        blocks.append("FILE: ..\\..\\x\nTRAVERSAL_PAYLOAD\nENDFILE\n")
+        blocks.append("FILE: src/app.py\nSAFE_PAYLOAD\nENDFILE\n")
+        record = {
+            "run_id": "run-escape",
+            "steps": [{"status": "success", "output": "".join(blocks)}],
+        }
+
+        run_dir = extract_from_record(record, artifacts_dir=tmp_path)
+
+        assert run_dir is not None
+        written = [p for p in tmp_path.rglob("*") if p.is_file()]
+        # Every file that was written lives under run_dir — nothing escaped.
+        run_dir_resolved = run_dir.resolve()
+        for path in written:
+            assert run_dir_resolved in path.resolve().parents
+        # The absolute-escape payload was never written anywhere under tmp_path.
+        contents = [p.read_text(encoding="utf-8") for p in written]
+        assert all("ESCAPE_PAYLOAD" not in text for text in contents)
+        # The happy-path file is present inside run_dir with its content.
+        assert (run_dir / "src" / "app.py").read_text(
+            encoding="utf-8"
+        ) == "SAFE_PAYLOAD\n"
+        # The relative-traversal block is contained as run_dir/x.
+        assert (run_dir / "x").read_text(encoding="utf-8") == "TRAVERSAL_PAYLOAD\n"
+
+    def test_malicious_run_id_writes_nothing_outside_root(self, tmp_path: Path) -> None:
+        """A ``..``-bearing run_id must not relocate output outside the root.
+
+        The per-file path here (``pwned.txt``) is perfectly safe — the escape is
+        entirely via ``run_id``, the vector _safe_rel_path does not cover.
+        """
+        record = {
+            "run_id": "../escaped",
+            "steps": [
+                {
+                    "status": "success",
+                    "output": "FILE: pwned.txt\nRUN_ID_ESCAPE\nENDFILE\n",
+                }
+            ],
+        }
+        artifacts_root = tmp_path / "artifacts"
+
+        result = extract_from_record(record, artifacts_dir=artifacts_root)
+
+        assert result is None
+        # Nothing landed anywhere under tmp_path — not in artifacts, not a sibling.
+        assert not any(p.is_file() for p in tmp_path.rglob("*"))
+
+    def test_one_bad_block_does_not_abort_the_batch(self, tmp_path: Path) -> None:
+        """A rejected FILE block must not suppress its sibling artifacts."""
+        blocks = [
+            "FILE: evil.txt:ads\nADS_PAYLOAD\nENDFILE\n",
+            "FILE: good/keep.py\nKEEP\nENDFILE\n",
+        ]
+        record = {
+            "run_id": "batch",
+            "steps": [{"status": "success", "output": "".join(blocks)}],
+        }
+
+        run_dir = extract_from_record(record, artifacts_dir=tmp_path)
+
+        assert run_dir is not None
+        assert (run_dir / "good" / "keep.py").read_text(encoding="utf-8") == "KEEP\n"
+
+    def test_write_files_containment_is_independently_load_bearing(
+        self, tmp_path: Path
+    ) -> None:
+        """_write_files blocks an escaping path even if handed one directly.
+
+        Proves the second containment layer stands on its own, so a
+        future refactor that weakens _safe_rel_path cannot silently
+        reopen the escape.
+        """
+        run_dir = tmp_path / "run"
+
+        _write_files(run_dir, {Path("..") / ".." / "escape.txt": "ESCAPE"})
+
+        assert not (tmp_path / "escape.txt").exists()
+        assert not (tmp_path.parent / "escape.txt").exists()
 
 
 # ===================================================================

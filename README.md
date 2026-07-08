@@ -25,7 +25,7 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 |-----------|-------------|
 | **DAG Executor** | Kahn's algorithm scheduling with `asyncio` parallel dispatch — diamond dependencies, conditional execution, iterative refinement |
 | **Circuit-Breaker Model Router** | Bulkhead-isolated, health-weighted selection across 8+ providers with adaptive exponential cooldowns and HALF_OPEN single-probe circuit breakers — no single-provider lock-in |
-| **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed |
+| **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, `build_app` build/test runners, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed |
 | **Bias-Aware LLM-as-Judge** | Seeded criterion-shuffle positional-bias mitigation, swapped-order consistency checks, and MAE calibration against human-labeled fixtures |
 | **Non-Compensatory Gated Evaluation** | YAML-defined rubrics, DORA-inspired Elite/High/Medium/Low tiers, gated on a non-compensatory floor across all scoring dimensions |
 | **SSRF Guard (DNS-rebinding pinning)** | Default-on egress guard — resolves DNS, validates every returned address, and pins the connection to defeat rebinding, incl. cloud-metadata blocklisting |

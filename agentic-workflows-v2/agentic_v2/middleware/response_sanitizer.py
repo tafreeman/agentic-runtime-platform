@@ -68,9 +68,13 @@ class ResponseSanitizer:
                 self._unicode_sanitizer.version
             )
 
-        # Secret leakage check
+        # Secret leakage check — mask matched spans so a REDACTED classification
+        # actually scrubs the secret from the returned text (not just labels it).
+        secret_masked_text = current_text
         if self._secret_detector is not None:
-            secret_findings = await self._secret_detector.scan(current_text)
+            secret_masked_text, secret_findings = (
+                await self._secret_detector.scan_and_mask(current_text)
+            )
             all_findings.extend(secret_findings)
             detector_versions[self._secret_detector.name] = (
                 self._secret_detector.version
@@ -88,16 +92,25 @@ class ResponseSanitizer:
                 Classification.REDACTED if has_secrets else Classification.CLEAN
             )
 
+        # Adopt the masked text only when real secrets were found. A CLEAN
+        # response (no secrets — only unicode/entropy noise, or nothing) returns
+        # the unicode-normalized text, so clean input round-trips byte-identically.
+        sanitized_text = (
+            secret_masked_text
+            if classification == Classification.REDACTED
+            else current_text
+        )
+
         if classification == Classification.REDACTED:
             logger.warning(
-                "LLM response contained %d secret findings — marked as redacted",
+                "LLM response contained %d secret findings — redacted from output",
                 len(all_findings),
             )
 
         return SanitizationResult(
             classification=classification,
             findings=tuple(all_findings),
-            sanitized_text=current_text,
+            sanitized_text=sanitized_text,
             original_hash=SanitizationResult.compute_hash(response_text),
             detector_versions=detector_versions,
         )
