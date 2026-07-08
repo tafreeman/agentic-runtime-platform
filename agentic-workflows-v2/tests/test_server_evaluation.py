@@ -147,6 +147,15 @@ def test_degenerate_golden_records_error():
     assert "empty golden content" in meta["golden_output_error"]
 
 
+def test_hollow_golden_records_error():
+    """A golden whose final_output null-strips to {} (e.g. {"review": null})
+    must not be inlined as tokenless expected text with
+    expected_text_present=true."""
+    sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=6)
+    assert "golden_output_text" not in sample
+    assert "empty golden content" in meta["golden_output_error"]
+
+
 def test_blank_golden_path_records_error():
     sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=4)
     assert "golden_output_text" not in sample

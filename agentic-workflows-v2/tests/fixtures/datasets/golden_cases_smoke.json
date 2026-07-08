@@ -41,5 +41,12 @@
     "expected_output": "inline expected text wins precedence",
     "golden_output_path": "golden_smoke_output.json",
     "code_file": "print('x')"
+  },
+  {
+    "case_id": "golden_smoke_hollow",
+    "task_id": "golden_smoke_hollow",
+    "workflow_name": "code_review",
+    "golden_output_path": "golden_hollow_smoke.json",
+    "code_file": "print('x')"
   }
 ]

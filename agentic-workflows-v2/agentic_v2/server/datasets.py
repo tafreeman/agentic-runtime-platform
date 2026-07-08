@@ -51,7 +51,11 @@ from ..scoring.dataset_matching import (
 # Re-export the eval-config loader (also relocated to ``scoring``) so existing
 # ``from .datasets import _load_eval_config`` importers keep working.
 from ..scoring.eval_config import _load_eval_config
-from ..scoring.scoring_criteria import GOLDEN_OUTPUT_TEXT_KEY, serialize_output_text
+from ..scoring.scoring_criteria import (
+    GOLDEN_OUTPUT_TEXT_KEY,
+    has_scoring_tokens,
+    serialize_output_text,
+)
 
 # Refuse to inline goldens beyond this size: the text is copied into every
 # loaded sample and persisted into run logs.
@@ -473,8 +477,14 @@ def _resolve_golden_output_text(
             )
         golden_text = serialize_output_text(parsed)
 
-    if not golden_text.strip():
-        return sample, f"golden_output_path resolved to empty text: {golden_ref}"
+    if not has_scoring_tokens(golden_text):
+        # Catches hollow envelopes that null-strip to "{}"/"[]" as well as
+        # whitespace-only text: a golden with zero scoring tokens would let
+        # correctness/similarity silently run against garbage while
+        # expected_text_present claims otherwise.
+        return sample, (
+            f"golden_output_path resolved to empty golden content: {golden_ref}"
+        )
     return {**sample, GOLDEN_OUTPUT_TEXT_KEY: golden_text}, None
 
 

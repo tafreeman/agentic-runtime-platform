@@ -56,6 +56,16 @@ def _tokenize(text: str) -> set[str]:
     return {token for token in re.findall(r"\w+", text.lower()) if len(token) > 2}
 
 
+def has_scoring_tokens(text: str) -> bool:
+    """Return True if *text* yields at least one overlap-scoring token.
+
+    The dataset loader uses this to reject goldens that cannot participate
+    in overlap scoring (e.g. a hollow envelope that null-strips to ``{}``) --
+    the check is deliberately the same tokenizer the scorer uses.
+    """
+    return bool(_tokenize(text))
+
+
 def _extract_expected_text(sample: dict[str, Any]) -> str:
     """Extract the expected/golden output text from a dataset sample.
 
