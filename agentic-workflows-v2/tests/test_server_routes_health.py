@@ -80,10 +80,14 @@ class TestLivenessProbe:
         assert resp.status_code == 200
         assert resp.json()["no_llm_mode"] is True
 
+    @pytest.mark.usefixtures("backendless_baseline")
     def test_health_reports_no_llm_mode_disabled(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """With AGENTIC_NO_LLM unset, the liveness payload reports False."""
+        """With no backed client and AGENTIC_NO_LLM unset, the payload reports
+        False. ``backendless_baseline`` pins the backend-less client so this
+        holds under the no-llm-smoke job too (where the ambient flag would
+        otherwise install a MockBackend and make the effective mode True)."""
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
         resp = client.get("/api/health")
@@ -91,10 +95,12 @@ class TestLivenessProbe:
         assert resp.status_code == 200
         assert resp.json()["no_llm_mode"] is False
 
+    @pytest.mark.usefixtures("backendless_baseline")
     def test_health_no_llm_mode_falls_back_to_env_without_a_backed_client(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """With no concrete backend installed (the keyless test baseline),
+        """With no concrete backend installed (``backendless_baseline`` pins the
+        backend-less client, so this holds under the no-llm-smoke job too),
         ``no_llm_mode`` falls back to the live ``AGENTIC_NO_LLM`` env, so
         flipping the flag between two requests changes the payload.
         """
@@ -123,16 +129,19 @@ class TestLivenessProbe:
         )
 
         reset_client()
-        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
-        armed = get_client(auto_configure=False)  # installs MockBackend
-        assert armed.backend is not None
+        try:
+            monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+            armed = get_client(auto_configure=False)  # installs MockBackend
+            assert armed.backend is not None
 
-        # Flip the flag OFF at runtime without resetting the client.
-        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+            # Flip the flag OFF at runtime without resetting the client.
+            monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
-        assert effective_no_llm_mode() is True, (
-            "must reflect the effective MockBackend, not the flipped env"
-        )
+            assert effective_no_llm_mode() is True, (
+                "must reflect the effective MockBackend, not the flipped env"
+            )
+        finally:
+            reset_client()  # don't leak the MockBackend client to later tests
 
 
 class TestReadinessProbe:

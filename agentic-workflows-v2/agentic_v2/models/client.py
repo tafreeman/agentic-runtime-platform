@@ -963,8 +963,11 @@ def effective_no_llm_mode() -> bool:
     from ..settings import is_agentic_no_llm_enabled
     from .backends import MockBackend
 
-    if _client is not None and _client.backend is not None:
-        return isinstance(_client.backend, MockBackend)
+    # Snapshot the singleton once: a concurrent reset_client() could otherwise
+    # rebind _client to None between the guard and the attribute access.
+    client = _client
+    if client is not None and client.backend is not None:
+        return isinstance(client.backend, MockBackend)
     return is_agentic_no_llm_enabled()
 
 
