@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/useTheme";
-import { healthCheck } from "../../api/client";
+import { useBackendHealth } from "../../hooks/useBackendHealth";
 
 /**
  * Navigation entries, mapped onto the seven existing routes. The visible label
@@ -42,15 +41,10 @@ export default function Sidebar() {
   const [theme, setTheme] = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
-  // Footer engine-status dot wired to the real backend health probe (the same
-  // /health endpoint ConsoleStatus polls). The dot colour + label reflect the
-  // live connection state; the dot keeps the motion-safe pulse treatment.
-  const health = useQuery({
-    queryKey: ["backend-health"],
-    queryFn: healthCheck,
-    retry: false,
-    refetchInterval: 15_000,
-  });
+  // Footer engine-status dot wired to the shared backend health probe (see
+  // useBackendHealth). The dot colour + label reflect the live connection
+  // state; the dot keeps the motion-safe pulse treatment.
+  const health = useBackendHealth();
   const engineConnected = health.isSuccess;
   const engineChecking = health.isLoading || health.isFetching;
   // No-LLM indicator reflects the server's own reported mode (health.data.no_llm_mode),

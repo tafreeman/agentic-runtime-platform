@@ -949,6 +949,28 @@ def get_client(auto_configure: bool = False) -> LLMClientWrapper:
     return _client
 
 
+def effective_no_llm_mode() -> bool:
+    """Whether the shared client effectively serves placeholder (no-LLM) responses.
+
+    Reports the created client's *actual* backend: :func:`get_client` fixes the
+    backend from ``AGENTIC_NO_LLM`` once, at creation, and never reconfigures it
+    on a later env flip. Reading the live env alone could therefore claim
+    "no-LLM" while a real backend is still installed (or the reverse) in a
+    long-lived process whose flag was flipped without a client reset. Falls back
+    to the ``AGENTIC_NO_LLM`` env only before any backed client exists (startup
+    intent, and the backend-less keyless test baseline).
+    """
+    from ..settings import is_agentic_no_llm_enabled
+    from .backends import MockBackend
+
+    # Snapshot the singleton once: a concurrent reset_client() could otherwise
+    # rebind _client to None between the guard and the attribute access.
+    client = _client
+    if client is not None and client.backend is not None:
+        return isinstance(client.backend, MockBackend)
+    return is_agentic_no_llm_enabled()
+
+
 def _maybe_set_token_budget(client: LLMClientWrapper) -> None:
     """Install the configured process-wide token budget, if any.
 

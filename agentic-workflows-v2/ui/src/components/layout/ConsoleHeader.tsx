@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { healthCheck } from "../../api/client";
+import { useBackendHealth } from "../../hooks/useBackendHealth";
 
 /** Small bordered keycap, matching the design kit's kbd treatment. */
 function Kbd({ children }: Readonly<{ children: string }>) {
@@ -22,15 +21,11 @@ function Kbd({ children }: Readonly<{ children: string }>) {
  * mounted at the root and listens for the `open-command-palette` event.
  */
 export default function ConsoleHeader() {
-  // Shares the ["backend-health"] query cache with Sidebar/ConsoleStatus
-  // (same queryKey => React Query dedupes the underlying fetch). The badge
+  // Shared ["backend-health"] query (see useBackendHealth). ConsoleHeader is
+  // the single polling owner (always mounted in the shell); Sidebar and
+  // ConsoleStatus read the same cache without their own interval. The badge
   // reflects the server's own reported mode, not a client build-time flag.
-  const health = useQuery({
-    queryKey: ["backend-health"],
-    queryFn: healthCheck,
-    retry: false,
-    refetchInterval: 15_000,
-  });
+  const health = useBackendHealth({ poll: true });
   const noLlmMode = health.data?.no_llm_mode ?? false;
 
   const openPalette = () => {

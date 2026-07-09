@@ -1,14 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { healthCheck } from "../../api/client";
+import { useBackendHealth } from "../../hooks/useBackendHealth";
 import BPill from "./BPill";
 
 export default function ConsoleStatus() {
-  const health = useQuery({
-    queryKey: ["backend-health"],
-    queryFn: healthCheck,
-    retry: false,
-    refetchInterval: 15_000,
-  });
+  const health = useBackendHealth();
 
   const connected = health.isSuccess;
   const loading = health.isLoading || health.isFetching;
