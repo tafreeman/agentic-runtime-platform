@@ -9,7 +9,3 @@ export function parseBooleanFlag(value: unknown): boolean {
 export function isWorkflowBuilderEnabled(): boolean {
   return parseBooleanFlag(__AGENTIC_ENABLE_WORKFLOW_BUILDER__);
 }
-
-export function isNoLlmModeEnabled(): boolean {
-  return parseBooleanFlag(__AGENTIC_NO_LLM_MODE__);
-}

@@ -10,11 +10,6 @@ export default defineConfig({
         process.env.AGENTIC_ENABLE_WORKFLOW_BUILDER ??
         ""
     ),
-    __AGENTIC_NO_LLM_MODE__: JSON.stringify(
-      process.env.VITE_AGENTIC_NO_LLM ??
-        process.env.AGENTIC_NO_LLM ??
-        ""
-    ),
   },
   resolve: {
     alias: {

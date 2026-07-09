@@ -11,7 +11,6 @@ import ConsoleStatus from "../components/common/ConsoleStatus";
 import GettingStartedCard from "../components/dashboard/GettingStartedCard";
 import BTopBar from "../components/layout/BTopBar";
 import type { AgentInfo, RunSummary } from "../api/types";
-import { isNoLlmModeEnabled } from "../config/featureFlags";
 import { gradeColorClass, gradeLetter } from "../lib/grades";
 
 const HEADING_FONT = { fontFamily: "var(--b-font-heading)" } as const;
@@ -175,7 +174,6 @@ export default function DashboardPage() {
   const runs = runsQuery.data;
   const workflows = workflowsQuery.data;
   const agents = agentsQuery.data?.agents;
-  const noLlmMode = isNoLlmModeEnabled();
 
   // Cold-start loading (no cached data yet) — render skeletons instead of
   // zero-filled cards so the page doesn't look like an empty workspace.
@@ -272,7 +270,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               {hasNoRuns ? <GettingStartedCard showQuickStartWhenDismissed /> : null}
-              <ConsoleStatus noLlmMode={noLlmMode} />
+              <ConsoleStatus />
             </div>
           </div>
 

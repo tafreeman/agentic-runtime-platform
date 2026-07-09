@@ -22,14 +22,31 @@ function renderWithClient(ui: React.ReactElement) {
 }
 
 describe("ConsoleStatus", () => {
-  it("renders connected backend version and no-LLM mode", async () => {
-    mockHealthCheck.mockResolvedValue({ status: "ok", version: "0.1.0" });
+  it("renders connected backend version and the server-reported no-LLM mode", async () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: true,
+    });
 
-    renderWithClient(<ConsoleStatus noLlmMode />);
+    renderWithClient(<ConsoleStatus />);
 
     expect(await screen.findByText(/api connected/i)).toBeInTheDocument();
     expect(screen.getByText(/v0\.1\.0/i)).toBeInTheDocument();
     expect(screen.getByText(/no-llm/i)).toBeInTheDocument();
+  });
+
+  it("hides the no-LLM pill when the server reports it disabled", async () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: false,
+    });
+
+    renderWithClient(<ConsoleStatus />);
+
+    expect(await screen.findByText(/api connected/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no-llm/i)).not.toBeInTheDocument();
   });
 
   it("renders disconnected backend state when health check fails", async () => {

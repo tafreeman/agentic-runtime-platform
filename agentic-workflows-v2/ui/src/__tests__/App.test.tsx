@@ -7,11 +7,17 @@ async function renderAppAt(path: string, workflowBuilderEnabled: boolean) {
 
   vi.doMock("../config/featureFlags", () => ({
     isWorkflowBuilderEnabled: () => workflowBuilderEnabled,
-    isNoLlmModeEnabled: () => false,
   }));
 
   vi.doMock("../components/layout/Sidebar", () => ({
     default: () => <div>Sidebar</div>,
+  }));
+  // ConsoleHeader now fetches GET /api/health via react-query for the
+  // server-reported no-LLM badge; stub it out like Sidebar so this route
+  // test doesn't need a QueryClientProvider (App routing, not header
+  // rendering, is what's under test here).
+  vi.doMock("../components/layout/ConsoleHeader", () => ({
+    default: () => <div>Console Header</div>,
   }));
   vi.doMock("../pages/DashboardPage", () => ({
     default: () => <div>Dashboard Page</div>,

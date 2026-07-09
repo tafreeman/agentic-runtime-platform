@@ -8,6 +8,7 @@ import type {
   EvalComparisonRequest,
   EvalComparisonResponse,
   EvaluationDatasetsResponse,
+  HealthCheckResponse,
   ListObserversResponse,
   ListPersonasResponse,
   ListToolsResponse,
@@ -467,6 +468,6 @@ export function compareRuns(
 }
 
 /** Health check. */
-export function healthCheck(): Promise<{ status: string; version: string }> {
+export function healthCheck(): Promise<HealthCheckResponse> {
   return fetchJSON(`${BASE}/health`);
 }

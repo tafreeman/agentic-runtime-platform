@@ -47,6 +47,15 @@ class HealthResponse(BaseModel):
 
     status: str = "ok"
     version: str = "0.1.0"
+    no_llm_mode: bool = Field(
+        default=False,
+        description=(
+            "True when the server is running under AGENTIC_NO_LLM=1 (the "
+            "deterministic placeholder backend; no live provider calls). "
+            "Read live from the environment on every request -- reflects the "
+            "server's actual current mode, not a client build-time flag."
+        ),
+    )
 
 
 class DependencyStatus(BaseModel):
