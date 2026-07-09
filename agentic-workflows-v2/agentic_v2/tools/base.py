@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -51,6 +52,59 @@ class BaseTool(ABC):
     def __init__(self):
         """Initialize the tool."""
         self._schema: ToolSchema | None = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Wrap each subclass's ``execute`` with the human-approval gate.
+
+        The gate is enforced *inside* ``execute`` so it cannot be bypassed by a
+        direct ``tool.execute(...)`` / ``registry.get(name).execute(...)`` call
+        or by ``tool(**kwargs)`` (``__call__`` delegates to ``execute``). This
+        replaces the per-dispatch-site pre-gates the engine/agent/EK/LangChain
+        paths used to each re-implement; ``requires_approval`` is now a
+        structural boundary, not a convention. See ADR-047.
+
+        Only a subclass's *own* concrete ``execute`` is wrapped: abstract
+        intermediates (no ``execute`` in ``__dict__``, or an abstract one) are
+        skipped, and an already-wrapped callable is never double-wrapped.
+        """
+        super().__init_subclass__(**kwargs)
+        raw = cls.__dict__.get("execute")
+        if raw is None or getattr(raw, "__isabstractmethod__", False):
+            return
+        if getattr(raw, "__approval_gated__", False):
+            return
+
+        @functools.wraps(raw)
+        async def _gated_execute(
+            self: BaseTool, *args: Any, **kwargs: Any
+        ) -> ToolResult:
+            # Lazy imports: avoid an import-time tools -> engine/governance cycle
+            # (both import back into tools). By call time all modules are loaded.
+            from ..engine.tool_execution import call_id_for
+            from ..governance.approval import evaluate_tool_approval
+
+            outcome = await evaluate_tool_approval(
+                tool=self,
+                tool_name=self.name,
+                tool_args=kwargs,
+                call_id=call_id_for(self.name, kwargs),
+                agent_or_step=None,
+            )
+            if not outcome.allowed:
+                return ToolResult(
+                    success=False,
+                    error=outcome.error_message,
+                    tool_name=self.name,
+                    metadata={
+                        "approval_required": True,
+                        "approval_decision": outcome.decision.value,
+                        "approval_provider": outcome.provider_label,
+                    },
+                )
+            return await raw(self, *args, **kwargs)
+
+        _gated_execute.__approval_gated__ = True  # type: ignore[attr-defined]
+        cls.execute = _gated_execute  # type: ignore[method-assign]
 
     @property
     @abstractmethod

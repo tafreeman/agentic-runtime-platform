@@ -316,31 +316,36 @@ def wrap_runtime_tool(
     from .tool_execution import call_id_for, serialize_tool_result
 
     async def _execute(**kwargs: Any) -> str:
-        # Human-approval gate (P1 #12): consult before execution, mirroring the
-        # native engine tool loop (``_dispatch_single_tool_call``). A denied call
-        # (including the fail-closed no-provider case) returns the same serialized
-        # error payload and the wrapped tool is never executed.
-        from ..governance.approval import evaluate_tool_approval
+        # A genuine BaseTool self-gates inside execute (ADR-047), so it must NOT
+        # be pre-gated here (that would consult the provider twice). But this
+        # path is duck-typed — ``tool`` need only expose name/description/
+        # execute/requires_approval — and BaseTool.__init_subclass__ can only
+        # wrap actual BaseTool subclasses. A non-BaseTool runtime tool would
+        # therefore run UNGATED, so it must be gated explicitly here.
+        from ..tools.base import BaseTool
 
-        approval = await evaluate_tool_approval(
-            tool=tool,
-            tool_name=tool.name,
-            tool_args=kwargs,
-            call_id=call_id_for(tool.name, kwargs),
-            agent_or_step=None,
-        )
-        if not approval.allowed:
-            return json.dumps(
-                {
-                    "success": False,
-                    "error": approval.error_message,
-                    "metadata": {
-                        "approval_required": True,
-                        "approval_decision": approval.decision.value,
-                        "approval_provider": approval.provider_label,
-                    },
-                }
+        if not isinstance(tool, BaseTool):
+            from ..governance.approval import evaluate_tool_approval
+
+            outcome = await evaluate_tool_approval(
+                tool=tool,
+                tool_name=tool.name,
+                tool_args=kwargs,
+                call_id=call_id_for(tool.name, kwargs),
+                agent_or_step=None,
             )
+            if not outcome.allowed:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": outcome.error_message,
+                        "metadata": {
+                            "approval_required": True,
+                            "approval_decision": outcome.decision.value,
+                            "approval_provider": outcome.provider_label,
+                        },
+                    }
+                )
 
         tool_result = await tool.execute(**kwargs)
         return serialize_tool_result(tool_result)

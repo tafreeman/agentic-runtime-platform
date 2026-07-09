@@ -11,6 +11,10 @@ import pytest
 
 from agentic_v2.tools.builtin.shell_ops import ShellExecTool, ShellTool
 
+# ShellTool/ShellExecTool self-gate on execute (ADR-047); approve-all so these
+# tests exercise the allowlist/security logic, not the approval gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 # ---------------------------------------------------------------------------
 # Fail-closed: no env var
 # ---------------------------------------------------------------------------

@@ -25,6 +25,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# The gated http builtins (HttpPostTool/HttpTool) self-gate on execute
+# (ADR-047); approve-all so these tests exercise the SSRF guard, not the gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

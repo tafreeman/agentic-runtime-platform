@@ -178,6 +178,28 @@ def _reset_approval_provider():
             pass
 
 
+@pytest.fixture
+def auto_approve_tools(_reset_approval_provider):
+    """Approve-all so a test can exercise a gated tool's own logic directly.
+
+    The ADR-047 structural gate in ``BaseTool.execute`` fail-closes when no
+    ``ApprovalProvider`` is registered, so a unit test that calls a gated tool's
+    ``execute()`` / ``__call__`` to test the *tool body* (not the approval gate
+    itself) must register a provider first. Opt in per-module with
+    ``pytestmark = pytest.mark.usefixtures("auto_approve_tools")``. Depends on
+    ``_reset_approval_provider`` so the process-global is snapshotted before this
+    override and restored after the test — the default fail-closed posture is
+    preserved everywhere this fixture is not requested.
+    """
+    from agentic_v2.governance.approval import (
+        AutoApproveProvider,
+        set_approval_provider,
+    )
+
+    set_approval_provider(AutoApproveProvider())
+    yield
+
+
 @pytest.fixture(autouse=True)
 def _reset_llm_client():
     """Pre-create a backend-less global client for each test.

@@ -7,6 +7,10 @@ import pytest
 from agentic_v2.tools.builtin.code_execution import CodeExecutionTool
 from agentic_v2.tools.builtin.shell_ops import ShellTool
 
+# ShellTool/CodeExecutionTool self-gate on execute (ADR-047); approve-all so
+# these hardening tests exercise the subprocess logic, not the approval gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 
 @pytest.mark.asyncio
 async def test_shell_tool_rejects_shell_metacharacters() -> None:
@@ -16,7 +20,9 @@ async def test_shell_tool_rejects_shell_metacharacters() -> None:
     assert "metacharacters" in (result.error or "")
 
 
-def test_code_execution_env_excludes_ambient_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_code_execution_env_excludes_ambient_secrets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "should-not-leak")
     monkeypatch.setenv("AGENTIC_API_KEY", "should-not-leak")
 

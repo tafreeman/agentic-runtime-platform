@@ -14,6 +14,10 @@ from unittest.mock import patch
 
 import pytest
 
+# The file_ops builtins self-gate on execute (ADR-047); approve-all so these
+# containment tests exercise the sandbox logic, not the approval gate.
+pytestmark = pytest.mark.usefixtures("auto_approve_tools")
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
