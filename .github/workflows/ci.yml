@@ -443,6 +443,24 @@ jobs:
       - name: Check protocol names appear in ARCHITECTURE.md
         run: python scripts/check-doc-drift.py
 
+  doc-stats-drift:
+    # Fail the build if docs/index.md's derived "by the numbers" stats (backend
+    # test count, ADR count, production workflow count) no longer match what
+    # scripts/generate_doc_stats.py recomputes from source. Keeps the homepage
+    # figures from silently drifting — regenerate with
+    # `python scripts/generate_doc_stats.py` and commit. Stdlib-only, so no
+    # dependency install step is needed (mirrors check-doc-drift above).
+    name: docs/index.md derived stats in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Check homepage stats match source
+        run: python scripts/generate_doc_stats.py --check
+
   pydocstyle:
     name: pydocstyle (core + contracts)
     runs-on: ubuntu-latest
