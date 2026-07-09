@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from ..middleware.sanitization import SanitizationMiddleware
 
 from .backends_base import LLMBackend
-from .cache_budget import CachedResponse, TokenBudget
+from .cache_budget import CachedResponse, ProcessWideTokenBudget, TokenBudget
 from .fallback_selector import run_with_fallback
 from .retry_utils import retry_with_jitter
 from .router import ModelTier
@@ -945,7 +945,44 @@ def get_client(auto_configure: bool = False) -> LLMClientWrapper:
                 pass  # No backends available — will fail at call time
 
         _maybe_attach_agent_loop_sanitization(_client)
+        _maybe_set_token_budget(_client)
     return _client
+
+
+def _maybe_set_token_budget(client: LLMClientWrapper) -> None:
+    """Install the configured process-wide token budget, if any.
+
+    Reads ``Settings.agentic_token_budget`` (``AGENTIC_TOKEN_BUDGET``). Before
+    this wiring, ``LLMClientWrapper.set_budget()`` had no production caller —
+    the enforcement machinery (``_check_prompt_budget`` / ``consume()``) was
+    fully implemented but never armed on the client the engine actually uses.
+
+    Installs a :class:`ProcessWideTokenBudget` (not ``set_budget``'s per-run
+    reservation ``TokenBudget``): the shared client's post-dispatch accounting
+    paths call ``consume`` with tokens that are *already spent*, so the budget
+    must always accumulate — otherwise an overrun is unrecorded and the next
+    pre-flight ``can_afford`` check under-counts, making the cap bypassable.
+
+    Skipped under ``AGENTIC_NO_LLM`` (placeholder/demo mode) — mirrors
+    ``_maybe_attach_agent_loop_sanitization`` — so a budget configured for
+    production never trips on cost-free placeholder calls in CI/demos.
+    Idempotent: does nothing if a budget is already installed.
+    """
+    from ..settings import get_settings, is_agentic_no_llm_enabled
+
+    if is_agentic_no_llm_enabled():
+        return
+    if client.budget is not None:
+        return
+    max_tokens = get_settings().agentic_token_budget
+    if max_tokens is None:
+        return
+    client.budget = ProcessWideTokenBudget(max_tokens=max_tokens)
+    logger.info(
+        "Process-wide token budget of %d installed on the shared LLM client "
+        "(AGENTIC_TOKEN_BUDGET set).",
+        max_tokens,
+    )
 
 
 def _maybe_attach_agent_loop_sanitization(client: LLMClientWrapper) -> None:

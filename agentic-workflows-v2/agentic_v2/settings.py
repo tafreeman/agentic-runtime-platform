@@ -138,6 +138,73 @@ class Settings(BaseSettings):
         ),
     )
 
+    # --- LLM cost control ---
+    agentic_token_budget: int | None = Field(
+        default=None,
+        description=(
+            "Optional cumulative token cap installed on the shared "
+            "native-engine LLM client singleton (models.client.get_client()) "
+            "via LLMClientWrapper.set_budget(). The client is a process-wide "
+            "singleton, so this budget is NOT scoped per workflow run — "
+            "every call routed through get_client() counts against the same "
+            "cap for the life of the process. A call whose estimated cost "
+            "would exceed the remaining budget raises ValueError before (or "
+            "immediately after, on the EK provider path) dispatch. Unset "
+            "(default, None) installs no budget: unlimited, matching prior "
+            "behaviour. Skipped entirely under AGENTIC_NO_LLM (mirrors "
+            "agentic_sanitize_agent_loop) so demos/CI never hit a spurious "
+            "'budget exceeded' on cost-free placeholder calls. Set via "
+            "AGENTIC_TOKEN_BUDGET to a positive integer; zero, negative, or "
+            "unparseable values are coerced to None (disabled) with a "
+            "logged warning rather than silently blocking every LLM call."
+        ),
+    )
+
+    @field_validator("agentic_token_budget", mode="before")
+    @classmethod
+    def _coerce_token_budget(cls, v: Any) -> int | None:
+        """Normalise ``AGENTIC_TOKEN_BUDGET``, failing safe to disabled (None).
+
+        A cap of zero or below would silently block every subsequent LLM
+        call in production; an unparseable value would otherwise surface as
+        an opaque ``ValidationError`` at startup. Both fail safe to "no
+        budget" (unlimited — the historical default) with a logged warning,
+        so a typo'd env var shows up in the log rather than as a mysterious
+        outage or a crash-at-boot.
+        """
+        if v is None:
+            return None
+        if isinstance(v, str) and not v.strip():
+            # A blank env var (AGENTIC_TOKEN_BUDGET=) means "unset", not a typo —
+            # return None silently rather than warning on an empty string.
+            return None
+        if isinstance(v, bool):
+            # bool is an int subclass — reject rather than silently
+            # accepting True/False as a 1/0 token cap.
+            logger.warning(
+                "AGENTIC_TOKEN_BUDGET=%r is a boolean, not a token count; "
+                "treating as unset (no budget).",
+                v,
+            )
+            return None
+        try:
+            budget = int(str(v).strip())
+        except (TypeError, ValueError):
+            logger.warning(
+                "AGENTIC_TOKEN_BUDGET=%r is not a valid integer; treating as "
+                "unset (no budget).",
+                v,
+            )
+            return None
+        if budget <= 0:
+            logger.warning(
+                "AGENTIC_TOKEN_BUDGET=%s must be a positive integer; "
+                "treating as unset (no budget).",
+                budget,
+            )
+            return None
+        return budget
+
     # --- ADR-023 Phase 5b: EK provider hot-path switch ---
     agentic_ek_provider: bool = Field(
         default=True,
