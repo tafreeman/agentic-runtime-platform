@@ -41,6 +41,7 @@ test: _require-venv
 
 docs: _require-venv
     & "{{venv_python}}" agentic-workflows-v2/scripts/check_docs_refs.py
+    & "{{venv_python}}" scripts/generate_doc_stats.py --check
 
 dev:
     & "./agentic-workflows-v2/scripts/start-dev.ps1" -BackendPort {{backend_port}} -FrontendPort {{frontend_port}} -ApiProxyTarget "http://127.0.0.1:{{backend_port}}"

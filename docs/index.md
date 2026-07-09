@@ -168,15 +168,15 @@ flowchart LR
   <div class="stat-label">Lines of Python</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">2,595</div>
-  <div class="stat-label">Tests passing</div>
+  <div class="stat-value">3,643</div>
+  <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
   <div class="stat-value">80%</div>
   <div class="stat-label">Coverage gate, CI-enforced</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">38</div>
+  <div class="stat-value">44</div>
   <div class="stat-label">ADRs</div>
 </div>
 <div class="stat-item">
@@ -201,7 +201,7 @@ The platform is the demonstration; the practices are the argument. Everything be
 
 <div class="feature-card" markdown>
 <h3 class="fc-title">A written decision record</h3>
-<p class="fc-body">38 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
+<p class="fc-body">44 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
 [ADR index](adr/ADR-INDEX.md){ .fc-link }
 </div>
 

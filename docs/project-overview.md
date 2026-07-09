@@ -190,6 +190,6 @@ agentic-runtime-platform/
 | [Development Guide](development-guide.md) | Local development setup, dev servers, testing, linting, CLI usage |
 | [Deployment Guide](deployment-guide.md) | CI/CD pipeline, environment variable reference, Docker, production configuration |
 | [Onboarding](ONBOARDING.md) | New contributor onboarding path (5 minutes to 1 hour) |
-| [ADR Index](adr/ADR-INDEX.md) | All 38 architecture decision records (the index is the authoritative count) |
+| [ADR Index](adr/ADR-INDEX.md) | All architecture decision records (the index is the authoritative count) |
 | [Roadmap](ROADMAP.md) | Shipped epics and sprints, in-flight work, and proposals |
 | [Known Limitations](KNOWN_LIMITATIONS.md) | Honest accounting of current caveats and open debt |

@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Docs homepage stats derived from source (2026-07-09)
+
+- **Docs homepage stats now derived, not hand-typed.** `docs/index.md`'s "By the numbers" strip (backend test count, ADR count, production workflow count) carried hand-maintained literals that had drifted (ADR count hard-typed 38 vs an actual 44). New `scripts/generate_doc_stats.py` recomputes each from source (AST-counted test functions, `docs/adr/ADR-*.md` filename parsing, non-`test_*` workflow YAML defs); `just docs` runs it in `--check` mode and a new `doc-stats-drift` CI job enforces it on push and PR. `docs/project-overview.md`'s ADR cell now defers to the ADR index without a numeral.
+
 ### Model registry drift detection (2026-06-25)
 
 - Added probe-time drift detection (`detect_registry_drift`, ADR-040). On every provider probe (server startup and `/api/models/probe`) the curated registry is diffed against the live `discover_cloud_models()` listings; any pinned id a keyed provider no longer lists is **quarantined** (dropped from routing by both engines) and logged at WARNING — automatically catching the next retired model instead of discovering it as a runtime 404. A provider that returns no listing is treated as unknown (no false-positive mass-quarantine); newly discovered ids are never auto-promoted into a chain. No-op under `AGENTIC_NO_LLM`; `AGENTIC_REGISTRY_STRICT=1` raises instead of warning so a CI/probe job fails loudly. The `DriftReport` is surfaced as an additive `drift` key in the probe response.
