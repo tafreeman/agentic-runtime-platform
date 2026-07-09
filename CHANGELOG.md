@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Process-wide token budget wired up — ADR-048 (2026-07-09)
+
+- **Process-wide token budget wired up (ADR-048).** `LLMClientWrapper.set_budget()` and the `TokenBudget` enforcement it arms had zero production callers — `models.get_client()` never armed a budget, so the cap was dead code. New `AGENTIC_TOKEN_BUDGET` (env var, default unlimited) arms a cumulative `ProcessWideTokenBudget` on the shared client singleton via `_maybe_set_token_budget()`. It always accumulates spend (the post-dispatch accounting paths charge tokens already spent and ignore `consume()`'s return, so a plain reservation `TokenBudget` would drop an overrun unrecorded and let the cap be bypassed) — making it a real circuit breaker. Cumulative across the process (singleton, not per-run — see ADR-048), fails safe to disabled on a bad value (a blank env var is silently unset), skipped under `AGENTIC_NO_LLM`. Enforcement + accumulation tests included.
+
 ### Docs homepage stats derived from source (2026-07-09)
 
 - **Docs homepage stats now derived, not hand-typed.** `docs/index.md`'s "By the numbers" strip (backend test count, ADR count, production workflow count) carried hand-maintained literals that had drifted (ADR count hard-typed 38 vs an actual 44). New `scripts/generate_doc_stats.py` recomputes each from source (AST-counted test functions, `docs/adr/ADR-*.md` filename parsing, non-`test_*` workflow YAML defs); `just docs` runs it in `--check` mode and a new `doc-stats-drift` CI job enforces it on push and PR. `docs/project-overview.md`'s ADR cell now defers to the ADR index without a numeral.

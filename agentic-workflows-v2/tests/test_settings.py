@@ -127,3 +127,70 @@ def test_replay_sqlite_path_defaults_to_empty_string(monkeypatch):
 
     s = Settings()
     assert s.replay_sqlite_path == ""
+
+
+def test_token_budget_defaults_to_disabled(monkeypatch):
+    """agentic_token_budget is None (unlimited) when AGENTIC_TOKEN_BUDGET is unset."""
+    monkeypatch.delenv("AGENTIC_TOKEN_BUDGET", raising=False)
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_token_budget is None
+
+
+def test_token_budget_reads_from_env(monkeypatch):
+    """A positive AGENTIC_TOKEN_BUDGET is parsed as-is."""
+    monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "50000")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_token_budget == 50000
+
+
+def test_token_budget_rejects_zero(monkeypatch):
+    """A zero cap would block every call; coerced to disabled (None), not 0."""
+    monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "0")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_token_budget is None
+
+
+def test_token_budget_rejects_negative(monkeypatch):
+    """A negative cap is nonsensical; coerced to disabled (None)."""
+    monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "-5")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_token_budget is None
+
+
+def test_token_budget_rejects_unparseable_value(monkeypatch):
+    """A non-numeric value fails safe to disabled (None), not a startup crash."""
+    monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "not-a-number")
+
+    from agentic_v2.settings import Settings
+
+    s = Settings()
+    assert s.agentic_token_budget is None
+
+
+def test_token_budget_blank_string_is_silently_unset(monkeypatch, caplog):
+    """A blank/whitespace AGENTIC_TOKEN_BUDGET= means 'unset', not a typo: it
+    coerces to None WITHOUT the noisy 'not a valid integer' warning that a
+    genuine typo triggers."""
+    monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "   ")
+
+    from agentic_v2.settings import Settings
+
+    with caplog.at_level("WARNING"):
+        s = Settings()
+
+    assert s.agentic_token_budget is None
+    assert "AGENTIC_TOKEN_BUDGET" not in caplog.text, (
+        "a blank env var must not warn — only a genuine typo should"
+    )
