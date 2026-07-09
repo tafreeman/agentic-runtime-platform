@@ -10,6 +10,85 @@ from ..base import BaseTool, ToolResult
 from ..subprocess_utils import minimal_subprocess_env
 
 
+async def _run_git_command(
+    command: str, args: list[str] | None = None, cwd: str = "."
+) -> ToolResult:
+    """Run one allowlisted git subcommand and return a ``ToolResult``.
+
+    Shared by ``GitTool`` / ``GitStatusTool`` / ``GitDiffTool`` so the
+    convenience wrappers reuse this logic WITHOUT calling another
+    ``BaseTool``'s ``execute`` — post-ADR-047 that would re-enter the
+    structural approval gate (a latent double-consult if ``GitTool`` is ever
+    gated).
+    """
+    try:
+        # Validate command
+        allowed_commands = {
+            "status",
+            "diff",
+            "log",
+            "add",
+            "commit",
+            "branch",
+            "show",
+            "rev-parse",
+        }
+        if command not in allowed_commands:
+            return ToolResult(
+                success=False,
+                error=f"Command '{command}' not allowed. Allowed: {', '.join(sorted(allowed_commands))}",
+            )
+
+        # Build command
+        cmd_list = ["git", command]
+        if args:
+            cmd_list.extend(args)
+
+        # Verify working directory exists
+        cwd_path = Path(cwd)
+        if not cwd_path.exists():
+            return ToolResult(
+                success=False, error=f"Working directory does not exist: {cwd}"
+            )
+
+        # Execute git command
+        process = await asyncio.create_subprocess_exec(
+            *cmd_list,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(cwd_path),
+            env=minimal_subprocess_env(),
+        )
+
+        stdout, stderr = await process.communicate()
+
+        if process.returncode != 0:
+            return ToolResult(
+                success=False,
+                error=f"Git command failed (exit {process.returncode}): {stderr.decode('utf-8', errors='replace')}",
+                metadata={
+                    "command": command,
+                    "args": args or [],
+                    "exit_code": process.returncode,
+                },
+            )
+
+        return ToolResult(
+            success=True,
+            data={
+                "output": stdout.decode("utf-8", errors="replace"),
+                "command": command,
+                "args": args or [],
+            },
+            metadata={
+                "exit_code": process.returncode,
+                "cwd": cwd,
+            },
+        )
+    except Exception as e:
+        return ToolResult(success=False, error=f"Failed to execute git command: {e!s}")
+
+
 class GitTool(BaseTool):
     """Execute git operations (status, diff, commit, log)."""
 
@@ -69,74 +148,7 @@ class GitTool(BaseTool):
         self, command: str, args: list[str] | None = None, cwd: str = "."
     ) -> ToolResult:
         """Execute git command."""
-        try:
-            # Validate command
-            allowed_commands = {
-                "status",
-                "diff",
-                "log",
-                "add",
-                "commit",
-                "branch",
-                "show",
-                "rev-parse",
-            }
-            if command not in allowed_commands:
-                return ToolResult(
-                    success=False,
-                    error=f"Command '{command}' not allowed. Allowed: {', '.join(sorted(allowed_commands))}",
-                )
-
-            # Build command
-            cmd_list = ["git", command]
-            if args:
-                cmd_list.extend(args)
-
-            # Verify working directory exists
-            cwd_path = Path(cwd)
-            if not cwd_path.exists():
-                return ToolResult(
-                    success=False, error=f"Working directory does not exist: {cwd}"
-                )
-
-            # Execute git command
-            process = await asyncio.create_subprocess_exec(
-                *cmd_list,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(cwd_path),
-                env=minimal_subprocess_env(),
-            )
-
-            stdout, stderr = await process.communicate()
-
-            if process.returncode != 0:
-                return ToolResult(
-                    success=False,
-                    error=f"Git command failed (exit {process.returncode}): {stderr.decode('utf-8', errors='replace')}",
-                    metadata={
-                        "command": command,
-                        "args": args or [],
-                        "exit_code": process.returncode,
-                    },
-                )
-
-            return ToolResult(
-                success=True,
-                data={
-                    "output": stdout.decode("utf-8", errors="replace"),
-                    "command": command,
-                    "args": args or [],
-                },
-                metadata={
-                    "exit_code": process.returncode,
-                    "cwd": cwd,
-                },
-            )
-        except Exception as e:
-            return ToolResult(
-                success=False, error=f"Failed to execute git command: {e!s}"
-            )
+        return await _run_git_command(command, args, cwd)
 
 
 class GitStatusTool(BaseTool):
@@ -178,9 +190,8 @@ class GitStatusTool(BaseTool):
 
     async def execute(self, cwd: str = ".", short: bool = False) -> ToolResult:
         """Execute git status."""
-        git_tool = GitTool()
         args = ["--short"] if short else []
-        return await git_tool.execute(command="status", args=args, cwd=cwd)
+        return await _run_git_command("status", args, cwd)
 
 
 class GitDiffTool(BaseTool):
@@ -230,10 +241,9 @@ class GitDiffTool(BaseTool):
         self, ref: str | None = None, cached: bool = False, cwd: str = "."
     ) -> ToolResult:
         """Execute git diff."""
-        git_tool = GitTool()
         args = []
         if cached:
             args.append("--cached")
         if ref:
             args.append(ref)
-        return await git_tool.execute(command="diff", args=args, cwd=cwd)
+        return await _run_git_command("diff", args, cwd)

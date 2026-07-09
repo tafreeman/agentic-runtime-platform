@@ -12,6 +12,181 @@ from ..base import BaseTool, ToolResult
 logger = logging.getLogger(__name__)
 
 
+def _regex_search(pattern: str, content: str, file_path: Path) -> list[dict]:
+    """Perform regex search."""
+    # Guard against ReDoS — reject overly complex patterns
+    if len(pattern) > 500:
+        return [
+            {
+                "file": str(file_path),
+                "line": 0,
+                "column": 0,
+                "text": "",
+                "match": "",
+                "error": "Pattern too long (>500 chars); rejected for safety.",
+            }
+        ]
+    try:
+        regex = re.compile(pattern, re.MULTILINE | re.IGNORECASE)
+        matches = []
+
+        for i, line in enumerate(content.splitlines(), 1):
+            for match in regex.finditer(line):
+                matches.append(
+                    {
+                        "file": str(file_path),
+                        "line": i,
+                        "column": match.start(),
+                        "text": line.strip(),
+                        "match": match.group(),
+                    }
+                )
+
+        return matches
+    except re.error:
+        return []
+
+
+def _fuzzy_search(pattern: str, content: str, file_path: Path) -> list[dict]:
+    """Perform fuzzy search (case-insensitive substring)."""
+    pattern_lower = pattern.lower()
+    matches = []
+
+    for i, line in enumerate(content.splitlines(), 1):
+        line_lower = line.lower()
+        if pattern_lower in line_lower:
+            start = line_lower.index(pattern_lower)
+            matches.append(
+                {
+                    "file": str(file_path),
+                    "line": i,
+                    "column": start,
+                    "text": line.strip(),
+                    "match": line[start : start + len(pattern)],
+                }
+            )
+
+    return matches
+
+
+def _semantic_search(pattern: str, content: str, file_path: Path) -> list[dict]:
+    """Perform simple semantic search (word-based matching)."""
+    # Extract key words from pattern
+    pattern_words = set(re.findall(r"\w+", pattern.lower()))
+    matches = []
+
+    for i, line in enumerate(content.splitlines(), 1):
+        line_lower = line.lower()
+        line_words = set(re.findall(r"\w+", line_lower))
+
+        # Calculate word overlap
+        overlap = pattern_words & line_words
+        if overlap:
+            score = len(overlap) / len(pattern_words)
+            if score > 0.3:  # At least 30% word match
+                matches.append(
+                    {
+                        "file": str(file_path),
+                        "line": i,
+                        "column": 0,
+                        "text": line.strip(),
+                        "score": score,
+                        "matched_words": list(overlap),
+                    }
+                )
+
+    # Sort by score
+    matches.sort(key=lambda x: x.get("score", 0), reverse=True)
+    return matches
+
+
+async def _run_search(
+    pattern: str,
+    path: str,
+    mode: str = "regex",
+    recursive: bool = False,
+    file_pattern: str = "*",
+    max_results: int = 100,
+) -> ToolResult:
+    """Search files under *path* and return a ``ToolResult``.
+
+    Shared by ``SearchTool`` / ``GrepTool`` so the grep wrapper reuses this
+    logic WITHOUT calling ``SearchTool().execute`` — post-ADR-047 that would
+    re-enter the structural approval gate (a latent double-consult if
+    ``SearchTool`` is ever gated).
+    """
+    try:
+        search_path = Path(path)
+        if not search_path.exists():
+            return ToolResult(success=False, error=f"Path does not exist: {path}")
+
+        results = []
+        files_searched = 0
+
+        # Get files to search
+        if search_path.is_file():
+            files = [search_path]
+        elif recursive:
+            files = list(search_path.rglob(file_pattern))
+        else:
+            files = list(search_path.glob(file_pattern))
+
+        # Filter to actual files
+        files = [f for f in files if f.is_file()]
+
+        # Search each file
+        for file_path in files:
+            if len(results) >= max_results:
+                break
+
+            try:
+                content = file_path.read_text(encoding="utf-8", errors="ignore")
+                files_searched += 1
+
+                if mode == "regex":
+                    matches = _regex_search(pattern, content, file_path)
+                    results.extend(matches)
+
+                elif mode == "fuzzy":
+                    matches = _fuzzy_search(pattern, content, file_path)
+                    results.extend(matches)
+
+                elif mode == "semantic":
+                    # Simple semantic search using word matching
+                    matches = _semantic_search(pattern, content, file_path)
+                    results.extend(matches)
+
+                else:
+                    return ToolResult(
+                        success=False,
+                        error=f"Invalid mode: {mode}. Use 'regex', 'fuzzy', or 'semantic'",
+                    )
+
+            except Exception as exc:
+                logger.debug("Skipping unreadable file: %s", exc)
+                continue
+
+        # Limit results
+        results = results[:max_results]
+
+        return ToolResult(
+            success=True,
+            data={
+                "matches": results,
+                "total_matches": len(results),
+                "files_searched": files_searched,
+            },
+            metadata={
+                "pattern": pattern,
+                "mode": mode,
+                "path": path,
+            },
+        )
+
+    except Exception as e:
+        return ToolResult(success=False, error=f"Search failed: {e!s}")
+
+
 class SearchTool(BaseTool):
     """Semantic search in files with regex and fuzzy matching."""
 
@@ -132,163 +307,9 @@ class SearchTool(BaseTool):
         max_results: int = 100,
     ) -> ToolResult:
         """Execute search."""
-        try:
-            search_path = Path(path)
-            if not search_path.exists():
-                return ToolResult(success=False, error=f"Path does not exist: {path}")
-
-            results = []
-            files_searched = 0
-
-            # Get files to search
-            if search_path.is_file():
-                files = [search_path]
-            elif recursive:
-                files = list(search_path.rglob(file_pattern))
-            else:
-                files = list(search_path.glob(file_pattern))
-
-            # Filter to actual files
-            files = [f for f in files if f.is_file()]
-
-            # Search each file
-            for file_path in files:
-                if len(results) >= max_results:
-                    break
-
-                try:
-                    content = file_path.read_text(encoding="utf-8", errors="ignore")
-                    files_searched += 1
-
-                    if mode == "regex":
-                        matches = self._regex_search(pattern, content, file_path)
-                        results.extend(matches)
-
-                    elif mode == "fuzzy":
-                        matches = self._fuzzy_search(pattern, content, file_path)
-                        results.extend(matches)
-
-                    elif mode == "semantic":
-                        # Simple semantic search using word matching
-                        matches = self._semantic_search(pattern, content, file_path)
-                        results.extend(matches)
-
-                    else:
-                        return ToolResult(
-                            success=False,
-                            error=f"Invalid mode: {mode}. Use 'regex', 'fuzzy', or 'semantic'",
-                        )
-
-                except Exception as exc:
-                    logger.debug("Skipping unreadable file: %s", exc)
-                    continue
-
-            # Limit results
-            results = results[:max_results]
-
-            return ToolResult(
-                success=True,
-                data={
-                    "matches": results,
-                    "total_matches": len(results),
-                    "files_searched": files_searched,
-                },
-                metadata={
-                    "pattern": pattern,
-                    "mode": mode,
-                    "path": path,
-                },
-            )
-
-        except Exception as e:
-            return ToolResult(success=False, error=f"Search failed: {e!s}")
-
-    def _regex_search(self, pattern: str, content: str, file_path: Path) -> list[dict]:
-        """Perform regex search."""
-        # Guard against ReDoS — reject overly complex patterns
-        if len(pattern) > 500:
-            return [
-                {
-                    "file": str(file_path),
-                    "line": 0,
-                    "column": 0,
-                    "text": "",
-                    "match": "",
-                    "error": "Pattern too long (>500 chars); rejected for safety.",
-                }
-            ]
-        try:
-            regex = re.compile(pattern, re.MULTILINE | re.IGNORECASE)
-            matches = []
-
-            for i, line in enumerate(content.splitlines(), 1):
-                for match in regex.finditer(line):
-                    matches.append(
-                        {
-                            "file": str(file_path),
-                            "line": i,
-                            "column": match.start(),
-                            "text": line.strip(),
-                            "match": match.group(),
-                        }
-                    )
-
-            return matches
-        except re.error:
-            return []
-
-    def _fuzzy_search(self, pattern: str, content: str, file_path: Path) -> list[dict]:
-        """Perform fuzzy search (case-insensitive substring)."""
-        pattern_lower = pattern.lower()
-        matches = []
-
-        for i, line in enumerate(content.splitlines(), 1):
-            line_lower = line.lower()
-            if pattern_lower in line_lower:
-                start = line_lower.index(pattern_lower)
-                matches.append(
-                    {
-                        "file": str(file_path),
-                        "line": i,
-                        "column": start,
-                        "text": line.strip(),
-                        "match": line[start : start + len(pattern)],
-                    }
-                )
-
-        return matches
-
-    def _semantic_search(
-        self, pattern: str, content: str, file_path: Path
-    ) -> list[dict]:
-        """Perform simple semantic search (word-based matching)."""
-        # Extract key words from pattern
-        pattern_words = set(re.findall(r"\w+", pattern.lower()))
-        matches = []
-
-        for i, line in enumerate(content.splitlines(), 1):
-            line_lower = line.lower()
-            line_words = set(re.findall(r"\w+", line_lower))
-
-            # Calculate word overlap
-            overlap = pattern_words & line_words
-            if overlap:
-                score = len(overlap) / len(pattern_words)
-                if score > 0.3:  # At least 30% word match
-                    matches.append(
-                        {
-                            "file": str(file_path),
-                            "line": i,
-                            "column": 0,
-                            "text": line.strip(),
-                            "score": score,
-                            "matched_words": list(overlap),
-                        }
-                    )
-
-        # Sort by score
-        matches.sort(key=lambda x: x.get("score", 0), reverse=True)
-        return matches
+        return await _run_search(
+            pattern, path, mode, recursive, file_pattern, max_results
+        )
 
 
 class GrepTool(BaseTool):
@@ -371,14 +392,12 @@ class GrepTool(BaseTool):
         case_sensitive: bool = False,
     ) -> ToolResult:
         """Execute grep search."""
-        search_tool = SearchTool()
-
         # Escape regex special chars for literal search
         escaped_pattern = re.escape(pattern)
         if not case_sensitive:
             escaped_pattern = f"(?i){escaped_pattern}"
 
-        return await search_tool.execute(
+        return await _run_search(
             pattern=escaped_pattern,
             path=path,
             mode="regex",

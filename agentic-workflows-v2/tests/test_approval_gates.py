@@ -675,6 +675,54 @@ async def test_native_dispatch_non_basetool_ungated_runs() -> None:
     assert tool.calls == [{"text": "hi"}]
 
 
+async def test_git_status_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """git_status must not re-enter the gate via a nested GitTool().execute().
+
+    Under a global approval requirement, the wrapper is consulted
+    exactly once (its own gate) — not twice — proving it calls the
+    shared _run_git_command helper rather than another BaseTool's
+    execute (ADR-047 composition fix).
+    """
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import git_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="git")
+
+    monkeypatch.setattr(git_ops, "_run_git_command", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await git_ops.GitStatusTool().execute(cwd=".")
+
+    assert result.success is True
+    assert provider.count == 1
+
+
+async def test_grep_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """Grep must not re-enter the gate via a nested SearchTool().execute()."""
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import search_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="search")
+
+    monkeypatch.setattr(search_ops, "_run_search", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await search_ops.GrepTool().execute(pattern="x", path=".")
+
+    assert result.success is True
+    assert provider.count == 1
+
+
 def test_tool_requires_approval_helper() -> None:
     """The shared helper OR's the per-tool flag with settings triggers."""
     gated = _SpyTool(requires_approval=True)
