@@ -216,6 +216,45 @@ jobs:
           files: coverage-whole-repo.xml
           fail_ci_if_error: false
 
+  ek-delegation-tests:
+    # The EK bridge suite (tests/engine/test_step_ek_*, tests/models/test_ek_*)
+    # module-skips itself when `executionkit` is not importable, and no other
+    # CI job installs the optional `ek` extra — so those tests, including the
+    # ADR-047 approval-gate regressions (a non-BaseTool runtime tool must be
+    # denied / fail-closed), SKIP in every other job. That blind spot let an
+    # ADR-047 regression pass CI (caught only by manual review). This job
+    # installs the `ek` extra so the suite actually runs.
+    name: EK step-delegation (approval-gate) tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install packages (with the ek extra)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "." -c ci-constraints.txt
+          pip install -e "agentic-workflows-v2/[dev,server,mcp,langchain,tracing,ek]" -c ci-constraints.txt
+      - name: Verify executionkit is importable
+        # Guard against the silent-skip failure mode this job exists to close:
+        # if the ek extra ever fails to resolve/install, fail loudly here rather
+        # than let the tests below quietly module-skip and report green.
+        run: |
+          python -c "import executionkit; print('executionkit', getattr(executionkit, '__version__', '?'))"
+      - name: Run the EK-gated suite
+        run: |
+          set -euo pipefail
+          cd agentic-workflows-v2
+          python -m pytest \
+            tests/engine/test_step_ek_delegation.py \
+            tests/engine/test_step_tool_path.py \
+            tests/models/test_ek_adapters.py \
+            tests/models/test_ek_provider.py \
+            tests/models/test_ek_provider_wrapper.py \
+            -q --timeout=120
+
   wire-format-drift:
     # Sprint B #3 / S1-1 — prevent silent Python <-> TypeScript wire-format drift.
     # Sources of truth:
