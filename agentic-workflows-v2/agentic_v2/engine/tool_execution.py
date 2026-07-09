@@ -610,11 +610,44 @@ async def _dispatch_single_tool_call(
     The human-approval gate is enforced structurally inside
     ``BaseTool.execute`` (ADR-047): a denied or fail-closed call returns an
     error ``ToolResult`` carrying the decision in ``metadata`` and the tool body
-    never runs. This path therefore no longer pre-gates — it validates and
-    executes, and ``serialize_tool_result`` surfaces any denial payload.
+    never runs. This path therefore no longer pre-gates a genuine ``BaseTool``
+    — it validates and executes, and ``serialize_tool_result`` surfaces any
+    denial payload. As defense-in-depth, a *non-*``BaseTool`` tool (which the
+    structural gate cannot reach) is gated explicitly below.
     """
     if tool is None:
         return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
+
+    # Defense-in-depth (ADR-047): the structural approval gate lives inside
+    # BaseTool.execute, so a non-BaseTool duck-typed tool dispatched here would
+    # run UNGATED. No such caller exists today (bound_tools is registry-sourced,
+    # always BaseTool), but gate it explicitly rather than trust that — mirrors
+    # the guard wrap_runtime_tool uses on the EK path. A genuine BaseTool
+    # self-gates in execute() and is not double-consulted here.
+    from ..tools.base import BaseTool
+
+    if not isinstance(tool, BaseTool):
+        from ..governance.approval import evaluate_tool_approval
+
+        outcome = await evaluate_tool_approval(
+            tool=tool,
+            tool_name=tool_name,
+            tool_args=tool_args,
+            call_id=call_id_for(tool_name, tool_args),
+            agent_or_step=None,
+        )
+        if not outcome.allowed:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": outcome.error_message,
+                    "metadata": {
+                        "approval_required": True,
+                        "approval_decision": outcome.decision.value,
+                        "approval_provider": outcome.provider_label,
+                    },
+                }
+            )
 
     is_valid, validation_error = tool.validate_parameters(**tool_args)
     if not is_valid:

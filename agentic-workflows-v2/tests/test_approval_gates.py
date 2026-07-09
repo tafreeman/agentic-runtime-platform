@@ -86,6 +86,38 @@ class _SpyTool(BaseTool):
         )
 
 
+class _DuckTool:
+    """A duck-typed runtime tool that is NOT a ``BaseTool`` subclass.
+
+    Mirrors the shape of a non-``BaseTool`` runtime tool (e.g. an MCP adapter):
+    it exposes ``name``/``description``/``requires_approval``/``execute``/
+    ``validate_parameters`` but does not inherit ``BaseTool`` — so the ADR-047
+    ``__init_subclass__`` gate never wraps its ``execute``.
+    """
+
+    def __init__(self, *, name: str = "duck", requires_approval: bool = True) -> None:
+        self.name = name
+        self.requires_approval = requires_approval
+        self.calls: list[dict[str, Any]] = []
+
+    @property
+    def description(self) -> str:
+        return "Duck-typed (non-BaseTool) runtime tool."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {"text": {"type": "string", "description": "Text", "required": False}}
+
+    def validate_parameters(self, **kwargs: Any) -> tuple[bool, str | None]:
+        return True, None
+
+    async def execute(self, **kwargs: Any) -> ToolResult:
+        self.calls.append(dict(kwargs))
+        return ToolResult(
+            success=True, data={"echoed": kwargs.get("text")}, tool_name=self.name
+        )
+
+
 class _ScriptedAgent(BaseAgent[SimpleTask, SimpleOutput]):
     """BaseAgent whose ``_call_model`` returns scripted responses in order."""
 
@@ -589,6 +621,140 @@ async def test_http_post_gate_consulted_exactly_once(monkeypatch) -> None:
     monkeypatch.setattr(http_ops, "_perform_http_request", _fake_request)
 
     result = await HttpPostTool().execute(url="http://example.test/", body={"a": 1})
+
+    assert result.success is True
+    assert provider.count == 1
+
+
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_tool_is_gated(dispatch) -> None:
+    """A non-BaseTool duck-typed tool is gated on BOTH dispatch paths (denied).
+
+    Defense-in-depth (ADR-047): the structural gate lives in
+    BaseTool.execute, which cannot reach a non-BaseTool tool — so the
+    engine and agent dispatchers gate it explicitly rather than running
+    it ungated.
+    """
+    set_approval_provider(AutoDenyProvider())
+    tool = _DuckTool(requires_approval=True)
+
+    payload = await dispatch(tool, {"text": "hi"})
+
+    assert tool.calls == []  # the tool body never ran
+    assert payload["success"] is False
+    assert payload["metadata"]["approval_decision"] == "denied"
+
+
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_no_provider_fails_closed(dispatch) -> None:
+    """A non-BaseTool tool with no provider fails closed on both paths."""
+    set_approval_provider(None)
+    tool = _DuckTool(requires_approval=True)
+
+    payload = await dispatch(tool, {"text": "hi"})
+
+    assert tool.calls == []
+    assert payload["success"] is False
+    assert "no provider" in payload["error"].lower()
+
+
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_ungated_runs(dispatch) -> None:
+    """The defensive gate does not over-block an ungated duck tool."""
+    set_approval_provider(None)
+    tool = _DuckTool(name="duck_ok", requires_approval=False)
+
+    payload = await dispatch(tool, {"text": "hi"})
+
+    assert payload["success"] is True
+    assert tool.calls == [{"text": "hi"}]
+
+
+async def test_langchain_adapter_gates_non_basetool_tool() -> None:
+    """The LangChain adapter's _arun gates a non-BaseTool V2 tool (string denial)."""
+    from agentic_v2.integrations.langchain import (
+        LANGCHAIN_AVAILABLE,
+        AgenticLangChainTool,
+    )
+
+    if not LANGCHAIN_AVAILABLE:  # pragma: no cover — langchain-core is a dep
+        pytest.skip("langchain-core not installed")
+
+    set_approval_provider(AutoDenyProvider())
+    tool = _DuckTool(name="duck_lc", requires_approval=True)
+    lc_tool = AgenticLangChainTool.from_v2_tool(tool)
+
+    result = await lc_tool._arun(text="hi")
+
+    assert tool.calls == []  # the tool body never ran
+    assert result.startswith("Error:")
+    assert "approval" in result.lower()
+
+
+async def test_git_status_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """git_status must not re-enter the gate via a nested GitTool().execute().
+
+    Under a global approval requirement, the wrapper is consulted
+    exactly once (its own gate) — not twice — proving it calls the
+    shared _run_git_command helper rather than another BaseTool's
+    execute (ADR-047 composition fix).
+    """
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import git_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="git")
+
+    monkeypatch.setattr(git_ops, "_run_git_command", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await git_ops.GitStatusTool().execute(cwd=".")
+
+    assert result.success is True
+    assert provider.count == 1
+
+
+async def test_git_diff_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """git_diff has the same fix as git_status — consulted exactly once."""
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import git_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="git")
+
+    monkeypatch.setattr(git_ops, "_run_git_command", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await git_ops.GitDiffTool().execute(cwd=".")
+
+    assert result.success is True
+    assert provider.count == 1
+
+
+async def test_grep_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """Grep must not re-enter the gate via a nested SearchTool().execute()."""
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import search_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="search")
+
+    monkeypatch.setattr(search_ops, "_run_search", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await search_ops.GrepTool().execute(pattern="x", path=".")
 
     assert result.success is True
     assert provider.count == 1

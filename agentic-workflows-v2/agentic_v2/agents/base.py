@@ -439,6 +439,37 @@ class BaseAgent(ABC, Generic[TInput, TOutput]):
         if tool is None:
             return json.dumps({"success": False, "error": f"Unknown tool: {tool_name}"})
 
+        # Defense-in-depth (ADR-047): the structural gate lives inside
+        # BaseTool.execute, so a non-BaseTool tool bound via bind_tool would run
+        # UNGATED. No such caller exists today, but gate it explicitly — mirrors
+        # _dispatch_single_tool_call. A genuine BaseTool self-gates once in
+        # execute() and is not double-consulted.
+        from ..tools.base import BaseTool
+
+        if not isinstance(tool, BaseTool):
+            from ..engine.tool_execution import call_id_for
+            from ..governance.approval import evaluate_tool_approval
+
+            outcome = await evaluate_tool_approval(
+                tool=tool,
+                tool_name=tool_name,
+                tool_args=tool_args,
+                call_id=call_id_for(tool_name, tool_args),
+                agent_or_step=self.config.name,
+            )
+            if not outcome.allowed:
+                return json.dumps(
+                    {
+                        "success": False,
+                        "error": outcome.error_message,
+                        "metadata": {
+                            "approval_required": True,
+                            "approval_decision": outcome.decision.value,
+                            "approval_provider": outcome.provider_label,
+                        },
+                    }
+                )
+
         validate = getattr(tool, "validate_parameters", None)
         if callable(validate):
             is_valid, validation_error = validate(**tool_args)

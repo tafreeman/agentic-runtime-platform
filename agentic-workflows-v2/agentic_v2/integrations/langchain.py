@@ -191,9 +191,26 @@ if LANGCHAIN_AVAILABLE:
                 return "Error: No V2 tool bound"
 
             # Approval is enforced structurally inside BaseTool.execute
-            # (ADR-047): a denied call returns an error ToolResult, surfaced
-            # below as this adapter's ``Error: <msg>`` string contract. This
-            # adapter no longer pre-gates.
+            # (ADR-047): a genuine BaseTool's denied call returns an error
+            # ToolResult, surfaced below as this adapter's ``Error: <msg>``
+            # string contract. Defense-in-depth: a *non-*BaseTool V2 tool bound
+            # via from_v2_tool would run UNGATED (the structural gate cannot
+            # reach it), so gate it explicitly here.
+            from ..engine.tool_execution import call_id_for
+            from ..governance.approval import evaluate_tool_approval
+            from ..tools.base import BaseTool
+
+            if not isinstance(self._v2_tool, BaseTool):
+                outcome = await evaluate_tool_approval(
+                    tool=self._v2_tool,
+                    tool_name=self._v2_tool.name,
+                    tool_args=kwargs,
+                    call_id=call_id_for(self._v2_tool.name, kwargs),
+                    agent_or_step=None,
+                )
+                if not outcome.allowed:
+                    return f"Error: {outcome.error_message}"
+
             result: ToolResult = await self._v2_tool.execute(**kwargs)
             if result.success:
                 return json.dumps(result.data, default=str) if result.data else "OK"
