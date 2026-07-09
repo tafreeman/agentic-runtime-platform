@@ -20,15 +20,12 @@ on:
     # this workflow -- without it, a label added after the PR was opened would
     # never fire the eval-live-gate job below until the next push.
     types: [opened, synchronize, reopened, labeled]
-    paths:
-      - 'agentic-v2-eval/**'
-      - 'tools/**'
-      - 'datasets/**'
-      - 'scripts/eval_gate.py'
-      - '.github/workflows/eval-package-ci.yml'
-      - 'pyproject.toml'
-      - 'ci-constraints.txt'
-      - 'uv.lock'
+    # No `paths:` filter on pull_request: `eval-golden-gate` below is a REQUIRED
+    # status check on main, so it must report on every PR. A path-filtered
+    # required check that never runs would leave unrelated PRs stuck "Expected"
+    # (unmergeable). The golden gate is deterministic, key-free, and fast; the
+    # test/lint/type-check jobs it `needs` run cheaply here, and eval-live-gate
+    # stays label-gated. The push trigger above keeps its paths filter.
   schedule:
     # Nightly real-model eval-live-gate run on main, independent of the label
     # gate below. 06:00 UTC -- outside the 07:00 UTC nightly.yml E2E window
