@@ -91,13 +91,12 @@ class TestLivenessProbe:
         assert resp.status_code == 200
         assert resp.json()["no_llm_mode"] is False
 
-    def test_health_no_llm_mode_reflects_env_change_without_restart(
+    def test_health_no_llm_mode_falls_back_to_env_without_a_backed_client(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Flipping the env var between two requests changes the payload.
-
-        Proves the field is read live (via ``is_agentic_no_llm_enabled``)
-        rather than captured once at process/settings-cache start.
+        """With no concrete backend installed (the keyless test baseline),
+        ``no_llm_mode`` falls back to the live ``AGENTIC_NO_LLM`` env, so
+        flipping the flag between two requests changes the payload.
         """
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
         first = client.get("/api/health").json()
@@ -107,6 +106,33 @@ class TestLivenessProbe:
 
         assert first["no_llm_mode"] is False
         assert second["no_llm_mode"] is True
+
+    def test_no_llm_mode_reflects_effective_backend_over_a_late_env_flip(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Once a client is built with a MockBackend (an ``AGENTIC_NO_LLM=1``
+        startup), a later env flip must NOT flip the reported mode: it reflects
+        the effective backend — what the server actually serves — not the
+        mutated env. Guards the health badge from falsely claiming LLM is active
+        while the process still serves placeholders (and the reverse).
+        """
+        from agentic_v2.models.client import (
+            effective_no_llm_mode,
+            get_client,
+            reset_client,
+        )
+
+        reset_client()
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        armed = get_client(auto_configure=False)  # installs MockBackend
+        assert armed.backend is not None
+
+        # Flip the flag OFF at runtime without resetting the client.
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+
+        assert effective_no_llm_mode() is True, (
+            "must reflect the effective MockBackend, not the flipped env"
+        )
 
 
 class TestReadinessProbe:
