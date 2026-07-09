@@ -19,10 +19,12 @@ LLM-backed step (``engine.agent_resolver._make_llm_step`` ->
 
 Hard constraints (ADR-023 functionality-preservation + accepted decisions):
 
-* **Flag-gated, default OFF.** Nothing here runs unless
-  ``settings.agentic_ek_provider`` is true. The caller
-  (``complete_chat_with_fallback``) keeps its legacy branch byte-for-byte for
-  the OFF case; this module adds a new code path only.
+* **Flag-gated (default ON) and package-gated.** Nothing here runs unless
+  ``settings.agentic_ek_provider`` is true (default ON per ADR-023) AND the
+  optional ``executionkit`` package is installed (the ``[ek]`` extra). The
+  caller (``complete_chat_with_fallback``) keeps its native branch byte-for-byte
+  for the OFF case (``AGENTIC_EK_PROVIDER=0``) or when the package is absent;
+  this module adds a new code path only.
 * **Budget precedence (ACCEPTED): layer, do not merge.** On each
   ``LLMResponse`` the runtime :class:`~agentic_v2.models.client.TokenBudget`
   owns the token-sum ceiling — ``TokenBudget.consume(total_tokens)`` runs FIRST

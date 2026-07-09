@@ -18,8 +18,8 @@ members = [
 
 [[package]]
 name = "agentic-evalkit"
-version = "0.1.0"
-source = { git = "https://github.com/tafreeman/agentic-evalkit?rev=v0.1.0#3a8fef32e9197ab82050b8ddbfa0cdc410fc432e" }
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "huggingface-hub" },
@@ -28,6 +28,10 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
     { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/af/e6b5ed9e00c9359b181166f27015e35d835f5570b7a3323740bef0daa5c2/agentic_evalkit-0.1.1.tar.gz", hash = "sha256:536d8d253a9d88f901fdfd9a9074ee4fcf00c9073c3509f82cd70a2215cec1e9", size = 521768, upload-time = "2026-07-08T08:33:13.76Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/f6/e36d2416e312ec31bf36bf83be64ee74b57002130f997623eab109957054/agentic_evalkit-0.1.1-py3-none-any.whl", hash = "sha256:0bedcb89f16d8e1354508a3c65f0dbc45bb381b5225efb5608c8a66350e1b0b5", size = 134128, upload-time = "2026-07-08T08:33:11.942Z" },
 ]
 
 [[package]]
@@ -215,7 +219,7 @@ tracing = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentic-evalkit", marker = "extra == 'eval'", git = "https://github.com/tafreeman/agentic-evalkit?rev=v0.1.0" },
+    { name = "agentic-evalkit", marker = "extra == 'eval'", specifier = ">=0.1.1,<0.2.0" },
     { name = "agentic-tools", editable = "." },
     { name = "aiofiles", specifier = ">=23.0,<26" },
     { name = "aiohttp", specifier = ">=3.9,<4" },
@@ -224,7 +228,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0" },
     { name = "cachetools", specifier = ">=5.0,<8" },
     { name = "claude-agent-sdk", marker = "extra == 'claude'", specifier = ">=0.1,<1" },
-    { name = "executionkit", marker = "extra == 'ek'", specifier = ">=0.1.0,<0.3.0" },
+    { name = "executionkit", marker = "extra == 'ek'", specifier = ">=0.3.0,<0.4.0" },
     { name = "fakeredis", extras = ["lua"], marker = "extra == 'dev'", specifier = ">=2.21,<3" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.100,<1" },
     { name = "filelock", specifier = ">=3.0,<4" },
@@ -1018,11 +1022,11 @@ wheels = [
 
 [[package]]
 name = "executionkit"
-version = "0.1.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/13/a2c55fbf45586e9b65f5ac1c703629555baa3fde2de177bcc4311187b433/executionkit-0.1.0.tar.gz", hash = "sha256:222417fbb4612ff8a5a7d8d4ea9abb559b8625afb5f951f208d68e8386af51ce", size = 105663, upload-time = "2026-05-29T10:14:40.587Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/7a/a0406817623b9f012a10d7eacaa708db49a797ae4bd1f07188183c5599ff/executionkit-0.3.0.tar.gz", hash = "sha256:328b83231dba8ce8eec4f8aba5d017a57e2361ff778cc19f7a74a81f78ab6818", size = 630415, upload-time = "2026-07-09T07:25:59.881Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/6a/7783e997bd526386b9873b03eb8a124c6c83106356dcbb8bed885880b486/executionkit-0.1.0-py3-none-any.whl", hash = "sha256:0c891c1d2a25643ec152831115861d80ff00aa70497ae27d883748c4b5e64125", size = 41071, upload-time = "2026-05-29T10:14:39.429Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/0d/3e26a60e0b80331291c03546a532612f7fda61906b2205aa7b1b9cc2af7a/executionkit-0.3.0-py3-none-any.whl", hash = "sha256:b54775c2031444fe8c4964a40ca01944271ef96b398ca980045c12ca17162ff5", size = 109196, upload-time = "2026-07-09T07:25:58.253Z" },
 ]
 
 [[package]]

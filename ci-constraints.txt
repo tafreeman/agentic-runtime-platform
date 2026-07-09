@@ -96,7 +96,7 @@ distro==1.9.0
     #   openai
 docstring-parser==0.18.0
     # via anthropic
-executionkit==0.1.0
+executionkit==0.3.0
     # via agentic-workflows-v2
 fakeredis==2.35.1
     # via agentic-workflows-v2

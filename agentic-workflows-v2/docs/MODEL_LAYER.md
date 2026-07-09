@@ -55,7 +55,7 @@ flowchart TD
   TIERS --> LC
   NR -.->|AGENTIC_NO_LLM| PH
   LC -.->|AGENTIC_NO_LLM| PH
-  subgraph EK["ExecutionKit bridge - OPT-IN: AGENTIC_EK_PROVIDER, pip extra ek"]
+  subgraph EK["ExecutionKit bridge - DEFAULT-ON, package-gated: AGENTIC_EK_PROVIDER + pip extra ek"]
     EKP["models/ek_provider.py<br/>models/ek_adapters.py<br/>engine/ek_step_delegation.py"]
     PKG["executionkit PyPI package"]
   end
