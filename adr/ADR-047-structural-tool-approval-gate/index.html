@@ -2833,25 +2833,27 @@ no-provider) outcome returns an error <code>ToolResult</code> carrying the decis
 <code>metadata</code> and the original body never runs. <code>__call__</code>, direct <code>.execute()</code>,
 and <code>registry.get(name).execute()</code> all funnel through the wrapped <code>execute</code>, so
 all are gated by construction.</p>
-<p><strong>Three</strong> of the four dispatch pre-gates are <strong>removed</strong> — engine
-(<code>_dispatch_single_tool_call</code>), agent (<code>_dispatch_tool</code>), and the LangChain
-adapter (<code>AgenticLangChainTool._arun</code>) all handle genuine <code>BaseTool</code> instances,
-so the wrapper is now their single gate. The <strong>EK step-delegation</strong> path
-(<code>wrap_runtime_tool</code>) is the exception: it is duck-typed (<code>dict[str, Any]</code>) and
-may wrap a <em>non-<code>BaseTool</code></em> runtime object, which <code>__init_subclass__</code> cannot
-reach. It therefore keeps an explicit gate <strong>guarded by <code>isinstance(tool,
-BaseTool)</code></strong> — a <code>BaseTool</code> self-gates via the wrapper (no pre-gate, no
-double-consult); a non-<code>BaseTool</code> runtime tool is gated explicitly there or it
-would run ungated. This is a deliberate security-boundary move, recorded here.</p>
+<p>For a genuine <code>BaseTool</code>, the wrapper is the single gate — the four dispatch
+sites (engine <code>_dispatch_single_tool_call</code>, agent <code>_dispatch_tool</code>, LangChain
+adapter <code>AgenticLangChainTool._arun</code>, and EK <code>wrap_runtime_tool</code>) <strong>drop their
+pre-gate</strong> and rely on it (no double-consult). But all four are duck-typed and
+can, in principle, be handed a <em>non-<code>BaseTool</code></em> object that <code>__init_subclass__</code>
+cannot reach and that would then run <strong>ungated</strong>. So each keeps an explicit gate
+<strong>guarded by <code>isinstance(tool, BaseTool)</code></strong>: a <code>BaseTool</code> self-gates via the
+wrapper; a non-<code>BaseTool</code> tool is gated explicitly there or it would run
+ungated. On EK this closed a live gap (that path genuinely wraps non-<code>BaseTool</code>
+runtime tools); on the engine/agent/LangChain paths it is defense-in-depth (no
+non-<code>BaseTool</code> caller exists today). This is a deliberate security-boundary
+move, recorded here.</p>
 <p>Implementation notes:
 - The wrapper skips abstract intermediates (no own <code>execute</code>, or an abstract
   one) and never double-wraps (an <code>__approval_gated__</code> marker on the wrapped
   callable), so <code>abc</code> integrity is preserved and re-runs are idempotent.
 - Convenience tools must not reach real work by calling another <code>BaseTool</code>'s
-  <code>execute</code> (that re-enters the gate). <code>HttpGetTool</code>/<code>HttpPostTool</code> were fixed
-  to call a shared module helper (<code>_perform_http_request</code>) rather than
-  <code>HttpTool().execute(...)</code>; the same latent composition exists, harmlessly, in
-  <code>git_ops</code>/<code>search_ops</code> (neither layer is gated) and is tracked for cleanup.
+  <code>execute</code> (that re-enters the gate). <code>HttpGetTool</code>/<code>HttpPostTool</code>,
+  <code>GitStatusTool</code>/<code>GitDiffTool</code>, and <code>GrepTool</code> were fixed to call shared module
+  helpers (<code>_perform_http_request</code>, <code>_run_git_command</code>, <code>_run_search</code>) rather
+  than instantiating and calling another gated tool's <code>execute</code>.
 - <code>evaluate_tool_approval</code> resolves its provider from the module-level
   <code>get_approval_provider()</code>, so the wrapper needs no provider threading; the
   fail-closed no-provider and bounded-timeout behavior of
@@ -2928,7 +2930,7 @@ would run ungated. This is a deliberate security-boundary move, recorded here.</
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 9, 2026 00:02:35 UTC">July 9, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 9, 2026 03:52:43 UTC">July 9, 2026</span>
   </span>
 
     
