@@ -2,19 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { healthCheck } from "../api/client";
 
 /**
- * Shared backend-health query used by ConsoleHeader, Sidebar, and
- * ConsoleStatus. One `["backend-health"]` cache entry backs all three
- * observers; the `staleTime` keeps them on the cached response instead of each
- * independently firing its own `refetchInterval` request (React Query only
- * shares a fetch across observers while the data is fresh). Centralising the
- * key + options here also removes the previously triplicated config.
+ * Shared backend-health query. All consumers read one `["backend-health"]`
+ * cache entry, but only the designated poller (ConsoleHeader, always mounted in
+ * the app shell) passes `poll: true` to own the single 15s refetch interval;
+ * secondary consumers (Sidebar, ConsoleStatus) omit it and just subscribe to
+ * the cache. The whole UI therefore issues one `/api/health` request per
+ * interval instead of one per mounted observer.
+ *
+ * Note: `refetchInterval` is per-observer and is NOT suppressed by `staleTime`
+ * (that only gates stale-triggered refetches like mount/focus/reconnect), so a
+ * single polling owner — not `staleTime` alone — is what actually dedupes the
+ * interval traffic.
  */
-export function useBackendHealth() {
+export function useBackendHealth({ poll = false }: { poll?: boolean } = {}) {
   return useQuery({
     queryKey: ["backend-health"],
     queryFn: healthCheck,
     retry: false,
     staleTime: 10_000,
-    refetchInterval: 15_000,
+    refetchInterval: poll ? 15_000 : false,
   });
 }
