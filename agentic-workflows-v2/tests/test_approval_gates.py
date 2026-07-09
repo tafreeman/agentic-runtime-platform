@@ -86,6 +86,34 @@ class _SpyTool(BaseTool):
         )
 
 
+class _DuckTool:
+    """A duck-typed runtime tool that is NOT a ``BaseTool`` subclass.
+
+    Mirrors the shape of a non-``BaseTool`` runtime tool (e.g. an MCP adapter):
+    it exposes ``name``/``description``/``requires_approval``/``execute``/
+    ``validate_parameters`` but does not inherit ``BaseTool`` — so the ADR-047
+    ``__init_subclass__`` gate never wraps its ``execute``.
+    """
+
+    def __init__(self, *, name: str = "duck", requires_approval: bool = True) -> None:
+        self.name = name
+        self.requires_approval = requires_approval
+        self.calls: list[dict[str, Any]] = []
+
+    @property
+    def description(self) -> str:
+        return "Duck-typed (non-BaseTool) runtime tool."
+
+    def validate_parameters(self, **kwargs: Any) -> tuple[bool, str | None]:
+        return True, None
+
+    async def execute(self, **kwargs: Any) -> ToolResult:
+        self.calls.append(dict(kwargs))
+        return ToolResult(
+            success=True, data={"echoed": kwargs.get("text")}, tool_name=self.name
+        )
+
+
 class _ScriptedAgent(BaseAgent[SimpleTask, SimpleOutput]):
     """BaseAgent whose ``_call_model`` returns scripted responses in order."""
 
@@ -592,6 +620,59 @@ async def test_http_post_gate_consulted_exactly_once(monkeypatch) -> None:
 
     assert result.success is True
     assert provider.count == 1
+
+
+async def test_native_dispatch_gates_non_basetool_tool() -> None:
+    """A non-BaseTool duck-typed tool dispatched natively is gated (denied).
+
+    Defense-in-depth (ADR-047): the structural gate lives in
+    BaseTool.execute, which cannot reach a non-BaseTool tool — so
+    _dispatch_single_tool_call gates it explicitly rather than running
+    it ungated.
+    """
+    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
+
+    set_approval_provider(AutoDenyProvider())
+    tool = _DuckTool(requires_approval=True)
+
+    payload = json.loads(
+        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
+    )
+
+    assert tool.calls == []  # the tool body never ran
+    assert payload["success"] is False
+    assert payload["metadata"]["approval_decision"] == "denied"
+
+
+async def test_native_dispatch_non_basetool_no_provider_fails_closed() -> None:
+    """A non-BaseTool tool with no provider fails closed on the native path."""
+    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
+
+    set_approval_provider(None)
+    tool = _DuckTool(requires_approval=True)
+
+    payload = json.loads(
+        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
+    )
+
+    assert tool.calls == []
+    assert payload["success"] is False
+    assert "no provider" in payload["error"].lower()
+
+
+async def test_native_dispatch_non_basetool_ungated_runs() -> None:
+    """The native-path defensive gate does not over-block an ungated duck tool."""
+    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
+
+    set_approval_provider(None)
+    tool = _DuckTool(name="duck_ok", requires_approval=False)
+
+    payload = json.loads(
+        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
+    )
+
+    assert payload["success"] is True
+    assert tool.calls == [{"text": "hi"}]
 
 
 def test_tool_requires_approval_helper() -> None:
