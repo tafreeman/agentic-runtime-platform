@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNoLlmModeEnabled, parseBooleanFlag } from "../config/featureFlags";
+import { parseBooleanFlag } from "../config/featureFlags";
 
 describe("parseBooleanFlag", () => {
   it.each(["1", "true", "TRUE", " yes ", "on"])("treats %s as enabled", (value) => {
@@ -12,10 +12,4 @@ describe("parseBooleanFlag", () => {
       expect(parseBooleanFlag(value)).toBe(false);
     }
   );
-});
-
-describe("isNoLlmModeEnabled", () => {
-  it("reads the compile-time no-LLM flag", () => {
-    expect(isNoLlmModeEnabled()).toBe(false);
-  });
 });

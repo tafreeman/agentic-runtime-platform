@@ -2,11 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { healthCheck } from "../../api/client";
 import BPill from "./BPill";
 
-interface ConsoleStatusProps {
-  noLlmMode?: boolean;
-}
-
-export default function ConsoleStatus({ noLlmMode = false }: Readonly<ConsoleStatusProps>) {
+export default function ConsoleStatus() {
   const health = useQuery({
     queryKey: ["backend-health"],
     queryFn: healthCheck,
@@ -16,6 +12,9 @@ export default function ConsoleStatus({ noLlmMode = false }: Readonly<ConsoleSta
 
   const connected = health.isSuccess;
   const loading = health.isLoading || health.isFetching;
+  // Server-reported mode (not a client build-time flag) so the badge can
+  // never drift from how the server process was actually started.
+  const noLlmMode = health.data?.no_llm_mode ?? false;
 
   let pillTone: "ok" | "dim" | "err";
   if (connected) {

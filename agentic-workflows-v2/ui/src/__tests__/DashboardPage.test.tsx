@@ -9,7 +9,6 @@ const mockUseRuns = vi.fn();
 const mockUseWorkflows = vi.fn();
 const mockHealthCheck = vi.fn();
 const mockListAgents = vi.fn();
-const mockIsNoLlmModeEnabled = vi.fn();
 
 vi.mock("../hooks/useRuns", () => ({
   useRunsSummary: () => mockUseRunsSummary(),
@@ -27,10 +26,6 @@ vi.mock("../hooks/useHotkeys", () => ({
 vi.mock("../api/client", () => ({
   healthCheck: () => mockHealthCheck(),
   listAgents: () => mockListAgents(),
-}));
-
-vi.mock("../config/featureFlags", () => ({
-  isNoLlmModeEnabled: () => mockIsNoLlmModeEnabled(),
 }));
 
 function renderDashboard() {
@@ -53,9 +48,12 @@ describe("DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    mockHealthCheck.mockResolvedValue({ status: "ok", version: "0.1.0" });
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: false,
+    });
     mockListAgents.mockResolvedValue({ agents: [] });
-    mockIsNoLlmModeEnabled.mockReturnValue(false);
   });
 
   it("renders available workflows and recent runs", () => {
@@ -265,8 +263,12 @@ describe("DashboardPage", () => {
     });
   });
 
-  it("shows a no-LLM demo mode signal when enabled", async () => {
-    mockIsNoLlmModeEnabled.mockReturnValue(true);
+  it("shows a no-LLM demo mode signal when the server reports it enabled", async () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: true,
+    });
     mockUseRunsSummary.mockReturnValue({
       data: { total_runs: 0, success: 0, failed: 0 },
       isLoading: false,

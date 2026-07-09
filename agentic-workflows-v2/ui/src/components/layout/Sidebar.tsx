@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "../../hooks/useTheme";
-import { isNoLlmModeEnabled } from "../../config/featureFlags";
 import { healthCheck } from "../../api/client";
 
 /**
@@ -42,7 +41,6 @@ const hardBorder = { borderWidth: "var(--b-bw)" } as const;
 export default function Sidebar() {
   const [theme, setTheme] = useTheme();
   const [collapsed, setCollapsed] = useState(false);
-  const noLlmMode = isNoLlmModeEnabled();
 
   // Footer engine-status dot wired to the real backend health probe (the same
   // /health endpoint ConsoleStatus polls). The dot colour + label reflect the
@@ -55,6 +53,10 @@ export default function Sidebar() {
   });
   const engineConnected = health.isSuccess;
   const engineChecking = health.isLoading || health.isFetching;
+  // No-LLM indicator reflects the server's own reported mode (health.data.no_llm_mode),
+  // not a client build-time flag, so it can never drift from how the server was
+  // actually started.
+  const noLlmMode = health.data?.no_llm_mode ?? false;
 
   let engineDotClass = "bg-b-red";
   let engineTextClass = "text-b-red";

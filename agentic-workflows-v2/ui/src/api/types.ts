@@ -152,6 +152,17 @@ export interface WorkflowRunResponse {
   status: StepStatus;
 }
 
+/**
+ * GET /api/health response. `no_llm_mode` is read live by the server from
+ * `AGENTIC_NO_LLM` on every request -- prefer it over any client build-time
+ * flag when displaying the server's actual current mode.
+ */
+export interface HealthCheckResponse {
+  status: string;
+  version: string;
+  no_llm_mode: boolean;
+}
+
 export interface WorkflowEvaluationRequest {
   enabled: boolean;
   enforce_hard_gates?: boolean;

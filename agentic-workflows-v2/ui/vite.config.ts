@@ -14,19 +14,12 @@ export default defineConfig(({ mode }) => {
     process.env.VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     process.env.AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     "";
-  const noLlmModeFlag =
-    env.VITE_AGENTIC_NO_LLM ??
-    env.AGENTIC_NO_LLM ??
-    process.env.VITE_AGENTIC_NO_LLM ??
-    process.env.AGENTIC_NO_LLM ??
-    "";
 
   // In dev, always inject the backend URL so websocket.ts can connect directly
   // (Vite's proxy silently drops WebSocket upgrades). In production, omit it
   // so the client defaults to same-origin WebSocket (backend serves the UI).
   const clientDefines: Record<string, string> = {
     __AGENTIC_ENABLE_WORKFLOW_BUILDER__: JSON.stringify(workflowBuilderFlag),
-    __AGENTIC_NO_LLM_MODE__: JSON.stringify(noLlmModeFlag),
   };
   if (mode === "development") {
     clientDefines["import.meta.env.VITE_API_PROXY_TARGET"] = JSON.stringify(apiProxyTarget);

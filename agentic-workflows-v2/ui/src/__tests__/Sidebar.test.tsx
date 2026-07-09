@@ -93,4 +93,30 @@ describe("Sidebar", () => {
       expect(screen.getByText("engine: ready")).toBeInTheDocument();
     });
   });
+
+  it("reflects the server-reported no-LLM mode, not a build-time flag", async () => {
+    mockHealthCheck.mockResolvedValueOnce({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: true,
+    });
+    renderSidebar("/");
+
+    await waitFor(() => {
+      expect(screen.getByTitle("No-LLM mode active")).toBeInTheDocument();
+    });
+  });
+
+  it("shows no-LLM mode off when the server reports it disabled", async () => {
+    mockHealthCheck.mockResolvedValueOnce({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: false,
+    });
+    renderSidebar("/");
+
+    await waitFor(() => {
+      expect(screen.getByTitle("No-LLM mode off")).toBeInTheDocument();
+    });
+  });
 });

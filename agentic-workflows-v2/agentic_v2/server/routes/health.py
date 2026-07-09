@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Response, status
 
 from ...models.model_stats import CircuitState
-from ...settings import get_settings
+from ...settings import get_settings, is_agentic_no_llm_enabled
 from ..models import DependencyStatus, HealthResponse, ReadinessResponse
 
 if TYPE_CHECKING:
@@ -45,8 +45,15 @@ _redis_probe_lock = asyncio.Lock()
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    """Liveness probe: confirm the process is alive (no dependency checks)."""
-    return HealthResponse()
+    """Liveness probe: confirm the process is alive (no dependency checks).
+
+    Also reports ``no_llm_mode``, read live from the environment via
+    :func:`is_agentic_no_llm_enabled` (not the cached ``get_settings()``
+    singleton) so a flag flipped after process start is reflected
+    immediately -- callers such as the dashboard should trust this field
+    over any client-side build-time flag.
+    """
+    return HealthResponse(no_llm_mode=is_agentic_no_llm_enabled())
 
 
 async def _check_redis(redis_url: str | None) -> DependencyStatus:

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -5,17 +6,34 @@ import ConsoleHeader from "../components/layout/ConsoleHeader";
 import { CliProvider } from "../hooks/useCli";
 import { GO_TARGETS, useGoNav } from "../hooks/useGoNav";
 
-vi.mock("../config/featureFlags", () => ({
-  isNoLlmModeEnabled: () => true,
+const mockHealthCheck = vi.fn();
+
+vi.mock("../api/client", () => ({
+  healthCheck: () => mockHealthCheck(),
 }));
+
+function renderWithClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 describe("ConsoleHeader", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders the brand, search affordance, and environment badge", () => {
-    render(
+  it("renders the brand, search affordance, and the server-reported no-LLM badge", async () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: true,
+    });
+
+    renderWithClient(
       <MemoryRouter>
         <ConsoleHeader />
       </MemoryRouter>
@@ -29,13 +47,37 @@ describe("ConsoleHeader", () => {
     expect(
       screen.getByRole("button", { name: /search runs, workflows, actions/i })
     ).toBeInTheDocument();
-    // no-LLM builds surface the deterministic badge instead of prod · live.
-    expect(screen.getByText("no-llm · deterministic")).toBeInTheDocument();
+    // no-LLM mode is server-reported (GET /api/health), fetched async — the
+    // badge starts as "prod · live" and flips once the query resolves.
+    expect(
+      await screen.findByText("no-llm · deterministic")
+    ).toBeInTheDocument();
+  });
+
+  it("shows the live-providers badge when the server reports no-LLM mode disabled", async () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: false,
+    });
+
+    renderWithClient(
+      <MemoryRouter>
+        <ConsoleHeader />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("prod · live")).toBeInTheDocument();
   });
 
   it("dispatches the open-command-palette event from the search affordance", () => {
+    mockHealthCheck.mockResolvedValue({
+      status: "ok",
+      version: "0.1.0",
+      no_llm_mode: false,
+    });
     const dispatched = vi.spyOn(globalThis, "dispatchEvent");
-    render(
+    renderWithClient(
       <MemoryRouter>
         <ConsoleHeader />
       </MemoryRouter>

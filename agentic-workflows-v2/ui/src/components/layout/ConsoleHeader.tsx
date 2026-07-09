@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import { isNoLlmModeEnabled } from "../../config/featureFlags";
+import { useQuery } from "@tanstack/react-query";
+import { healthCheck } from "../../api/client";
 
 /** Small bordered keycap, matching the design kit's kbd treatment. */
 function Kbd({ children }: Readonly<{ children: string }>) {
@@ -21,7 +22,16 @@ function Kbd({ children }: Readonly<{ children: string }>) {
  * mounted at the root and listens for the `open-command-palette` event.
  */
 export default function ConsoleHeader() {
-  const noLlmMode = isNoLlmModeEnabled();
+  // Shares the ["backend-health"] query cache with Sidebar/ConsoleStatus
+  // (same queryKey => React Query dedupes the underlying fetch). The badge
+  // reflects the server's own reported mode, not a client build-time flag.
+  const health = useQuery({
+    queryKey: ["backend-health"],
+    queryFn: healthCheck,
+    retry: false,
+    refetchInterval: 15_000,
+  });
+  const noLlmMode = health.data?.no_llm_mode ?? false;
 
   const openPalette = () => {
     globalThis.dispatchEvent(new CustomEvent("open-command-palette"));

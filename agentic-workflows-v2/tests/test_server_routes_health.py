@@ -44,6 +44,11 @@ class TestHealthResponse:
         assert isinstance(resp.version, str)
         assert len(resp.version) > 0
 
+    def test_health_response_no_llm_mode_defaults_false(self) -> None:
+        """``no_llm_mode`` defaults to False when not explicitly set."""
+        resp = HealthResponse()
+        assert resp.no_llm_mode is False
+
 
 @pytest.fixture()
 def client() -> TestClient:
@@ -58,6 +63,50 @@ class TestLivenessProbe:
         resp = client.get("/api/health")
         assert resp.status_code == 200
         assert resp.json()["status"] == "ok"
+
+    def test_health_reports_no_llm_mode_enabled(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """AGENTIC_NO_LLM=1 is reflected live in the liveness payload.
+
+        Regression guard for the dashboard no-LLM badge: it must trust this
+        server-reported field, not a client build-time flag that can go
+        stale relative to how the server process was actually started.
+        """
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+
+        resp = client.get("/api/health")
+
+        assert resp.status_code == 200
+        assert resp.json()["no_llm_mode"] is True
+
+    def test_health_reports_no_llm_mode_disabled(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """With AGENTIC_NO_LLM unset, the liveness payload reports False."""
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+
+        resp = client.get("/api/health")
+
+        assert resp.status_code == 200
+        assert resp.json()["no_llm_mode"] is False
+
+    def test_health_no_llm_mode_reflects_env_change_without_restart(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Flipping the env var between two requests changes the payload.
+
+        Proves the field is read live (via ``is_agentic_no_llm_enabled``)
+        rather than captured once at process/settings-cache start.
+        """
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        first = client.get("/api/health").json()
+
+        monkeypatch.setenv("AGENTIC_NO_LLM", "true")
+        second = client.get("/api/health").json()
+
+        assert first["no_llm_mode"] is False
+        assert second["no_llm_mode"] is True
 
 
 class TestReadinessProbe:

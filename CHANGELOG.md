@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### No-LLM badge now server-reported (2026-07-09)
+
+- **No-LLM badge now server-reported.** The dashboard's no-LLM indicator (`Sidebar`, `ConsoleHeader`, `ConsoleStatus`) read `isNoLlmModeEnabled()`, a client build-time flag baked in at `vite build` — it could silently disagree with how the server was started. `GET /api/health` now returns an additive `no_llm_mode` field read live from `AGENTIC_NO_LLM` each request (not the cached `Settings` singleton); all three surfaces derive the badge from it via the shared `["backend-health"]` query. The orphaned build-time flag (`isNoLlmModeEnabled()`, the `__AGENTIC_NO_LLM_MODE__` Vite/Vitest define, `VITE_AGENTIC_NO_LLM` plumbing) was removed as dead code.
+
 ### Process-wide token budget wired up — ADR-048 (2026-07-09)
 
 - **Process-wide token budget wired up (ADR-048).** `LLMClientWrapper.set_budget()` and the `TokenBudget` enforcement it arms had zero production callers — `models.get_client()` never armed a budget, so the cap was dead code. New `AGENTIC_TOKEN_BUDGET` (env var, default unlimited) arms a cumulative `ProcessWideTokenBudget` on the shared client singleton via `_maybe_set_token_budget()`. It always accumulates spend (the post-dispatch accounting paths charge tokens already spent and ignore `consume()`'s return, so a plain reservation `TokenBudget` would drop an overrun unrecorded and let the cap be bypassed) — making it a real circuit breaker. Cumulative across the process (singleton, not per-run — see ADR-048), fails safe to disabled on a bad value (a blank env var is silently unset), skipped under `AGENTIC_NO_LLM`. Enforcement + accumulation tests included.
