@@ -104,6 +104,10 @@ class _DuckTool:
     def description(self) -> str:
         return "Duck-typed (non-BaseTool) runtime tool."
 
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {"text": {"type": "string", "description": "Text", "required": False}}
+
     def validate_parameters(self, **kwargs: Any) -> tuple[bool, str | None]:
         return True, None
 
@@ -622,57 +626,69 @@ async def test_http_post_gate_consulted_exactly_once(monkeypatch) -> None:
     assert provider.count == 1
 
 
-async def test_native_dispatch_gates_non_basetool_tool() -> None:
-    """A non-BaseTool duck-typed tool dispatched natively is gated (denied).
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_tool_is_gated(dispatch) -> None:
+    """A non-BaseTool duck-typed tool is gated on BOTH dispatch paths (denied).
 
     Defense-in-depth (ADR-047): the structural gate lives in
-    BaseTool.execute, which cannot reach a non-BaseTool tool — so
-    _dispatch_single_tool_call gates it explicitly rather than running
+    BaseTool.execute, which cannot reach a non-BaseTool tool — so the
+    engine and agent dispatchers gate it explicitly rather than running
     it ungated.
     """
-    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
-
     set_approval_provider(AutoDenyProvider())
     tool = _DuckTool(requires_approval=True)
 
-    payload = json.loads(
-        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
-    )
+    payload = await dispatch(tool, {"text": "hi"})
 
     assert tool.calls == []  # the tool body never ran
     assert payload["success"] is False
     assert payload["metadata"]["approval_decision"] == "denied"
 
 
-async def test_native_dispatch_non_basetool_no_provider_fails_closed() -> None:
-    """A non-BaseTool tool with no provider fails closed on the native path."""
-    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
-
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_no_provider_fails_closed(dispatch) -> None:
+    """A non-BaseTool tool with no provider fails closed on both paths."""
     set_approval_provider(None)
     tool = _DuckTool(requires_approval=True)
 
-    payload = json.loads(
-        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
-    )
+    payload = await dispatch(tool, {"text": "hi"})
 
     assert tool.calls == []
     assert payload["success"] is False
     assert "no provider" in payload["error"].lower()
 
 
-async def test_native_dispatch_non_basetool_ungated_runs() -> None:
-    """The native-path defensive gate does not over-block an ungated duck tool."""
-    from agentic_v2.engine.tool_execution import _dispatch_single_tool_call
-
+@pytest.mark.parametrize("dispatch", _DISPATCHERS)
+async def test_non_basetool_ungated_runs(dispatch) -> None:
+    """The defensive gate does not over-block an ungated duck tool."""
     set_approval_provider(None)
     tool = _DuckTool(name="duck_ok", requires_approval=False)
 
-    payload = json.loads(
-        await _dispatch_single_tool_call(tool, tool.name, {"text": "hi"})
-    )
+    payload = await dispatch(tool, {"text": "hi"})
 
     assert payload["success"] is True
     assert tool.calls == [{"text": "hi"}]
+
+
+async def test_langchain_adapter_gates_non_basetool_tool() -> None:
+    """The LangChain adapter's _arun gates a non-BaseTool V2 tool (string denial)."""
+    from agentic_v2.integrations.langchain import (
+        LANGCHAIN_AVAILABLE,
+        AgenticLangChainTool,
+    )
+
+    if not LANGCHAIN_AVAILABLE:  # pragma: no cover — langchain-core is a dep
+        pytest.skip("langchain-core not installed")
+
+    set_approval_provider(AutoDenyProvider())
+    tool = _DuckTool(name="duck_lc", requires_approval=True)
+    lc_tool = AgenticLangChainTool.from_v2_tool(tool)
+
+    result = await lc_tool._arun(text="hi")
+
+    assert tool.calls == []  # the tool body never ran
+    assert result.startswith("Error:")
+    assert "approval" in result.lower()
 
 
 async def test_git_status_wrapper_does_not_reenter_gate(monkeypatch) -> None:
@@ -697,6 +713,27 @@ async def test_git_status_wrapper_does_not_reenter_gate(monkeypatch) -> None:
     set_approval_provider(provider)
 
     result = await git_ops.GitStatusTool().execute(cwd=".")
+
+    assert result.success is True
+    assert provider.count == 1
+
+
+async def test_git_diff_wrapper_does_not_reenter_gate(monkeypatch) -> None:
+    """git_diff has the same fix as git_status — consulted exactly once."""
+    monkeypatch.setenv("AGENTIC_REQUIRE_TOOL_APPROVAL", "1")
+    import agentic_v2.settings as settings_mod
+
+    settings_mod.get_settings.cache_clear()
+    from agentic_v2.tools.builtin import git_ops
+
+    async def _fake(*args: Any, **kwargs: Any) -> ToolResult:
+        return ToolResult(success=True, tool_name="git")
+
+    monkeypatch.setattr(git_ops, "_run_git_command", _fake)
+    provider = _CountingProvider()
+    set_approval_provider(provider)
+
+    result = await git_ops.GitDiffTool().execute(cwd=".")
 
     assert result.success is True
     assert provider.count == 1

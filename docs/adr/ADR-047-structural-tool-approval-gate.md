@@ -37,26 +37,28 @@ no-provider) outcome returns an error `ToolResult` carrying the decision in
 and `registry.get(name).execute()` all funnel through the wrapped `execute`, so
 all are gated by construction.
 
-**Three** of the four dispatch pre-gates are **removed** — engine
-(`_dispatch_single_tool_call`), agent (`_dispatch_tool`), and the LangChain
-adapter (`AgenticLangChainTool._arun`) all handle genuine `BaseTool` instances,
-so the wrapper is now their single gate. The **EK step-delegation** path
-(`wrap_runtime_tool`) is the exception: it is duck-typed (`dict[str, Any]`) and
-may wrap a *non-`BaseTool`* runtime object, which `__init_subclass__` cannot
-reach. It therefore keeps an explicit gate **guarded by `isinstance(tool,
-BaseTool)`** — a `BaseTool` self-gates via the wrapper (no pre-gate, no
-double-consult); a non-`BaseTool` runtime tool is gated explicitly there or it
-would run ungated. This is a deliberate security-boundary move, recorded here.
+For a genuine `BaseTool`, the wrapper is the single gate — the four dispatch
+sites (engine `_dispatch_single_tool_call`, agent `_dispatch_tool`, LangChain
+adapter `AgenticLangChainTool._arun`, and EK `wrap_runtime_tool`) **drop their
+pre-gate** and rely on it (no double-consult). But all four are duck-typed and
+can, in principle, be handed a *non-`BaseTool`* object that `__init_subclass__`
+cannot reach and that would then run **ungated**. So each keeps an explicit gate
+**guarded by `isinstance(tool, BaseTool)`**: a `BaseTool` self-gates via the
+wrapper; a non-`BaseTool` tool is gated explicitly there or it would run
+ungated. On EK this closed a live gap (that path genuinely wraps non-`BaseTool`
+runtime tools); on the engine/agent/LangChain paths it is defense-in-depth (no
+non-`BaseTool` caller exists today). This is a deliberate security-boundary
+move, recorded here.
 
 Implementation notes:
 - The wrapper skips abstract intermediates (no own `execute`, or an abstract
   one) and never double-wraps (an `__approval_gated__` marker on the wrapped
   callable), so `abc` integrity is preserved and re-runs are idempotent.
 - Convenience tools must not reach real work by calling another `BaseTool`'s
-  `execute` (that re-enters the gate). `HttpGetTool`/`HttpPostTool` were fixed
-  to call a shared module helper (`_perform_http_request`) rather than
-  `HttpTool().execute(...)`; the same latent composition exists, harmlessly, in
-  `git_ops`/`search_ops` (neither layer is gated) and is tracked for cleanup.
+  `execute` (that re-enters the gate). `HttpGetTool`/`HttpPostTool`,
+  `GitStatusTool`/`GitDiffTool`, and `GrepTool` were fixed to call shared module
+  helpers (`_perform_http_request`, `_run_git_command`, `_run_search`) rather
+  than instantiating and calling another gated tool's `execute`.
 - `evaluate_tool_approval` resolves its provider from the module-level
   `get_approval_provider()`, so the wrapper needs no provider threading; the
   fail-closed no-provider and bounded-timeout behavior of
