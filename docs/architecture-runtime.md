@@ -342,7 +342,7 @@ The runtime and ExecutionKit (EK) LLM contracts are unified onto a single seam u
 - **One runtime backend interface** — the `LLMBackend` ABC in `models/backends_base.py` (re-exported from `models/client.py`); all concrete backends implement it.
 - **One EK provider protocol** — the runtime bridges to EK's `LLMProvider` via `SmartRouterProvider` (`models/ek_provider.py`).
 - **`models/ek_adapters.py` is the sole translation layer** between OpenAI-shaped backend dicts and the frozen EK value types (`LLMResponse`, `ToolCall`, `TokenUsage`, `LLMError` hierarchy).
-- **Opt-in EK path** — `AGENTIC_EK_PROVIDER=1` routes `LLMClientWrapper.complete()` through EK; the legacy text-only branch is retained as the rollback path.
+- **Default-on, package-gated EK path** — `AGENTIC_EK_PROVIDER` (default-on) routes `LLMClientWrapper.complete()` through EK when the optional `executionkit` package is installed (the `[ek]` extra); when the package is absent the runtime falls back to the native dispatch path, and `AGENTIC_EK_PROVIDER=0` forces that legacy text-only branch as the rollback path.
 - Budget, retry, and tool-path ownership rules (token ceiling vs. call counting, exactly-once error recording, `react_loop` default with `tool_path: native` opt-out) are specified in [ADR-023](adr/ADR-023-executionkit-runtime-contract-relationship.md).
 
 ---

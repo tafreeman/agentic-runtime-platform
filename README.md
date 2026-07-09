@@ -327,7 +327,7 @@ ExecutionKit and Agentic Runtime Platform occupy different layers of the same st
 | **Dependencies** | Zero (stdlib only) | FastAPI, LangGraph, Pydantic |
 | **Use when** | You need reasoning primitives | You need to orchestrate many agents |
 
-**Agentic Runtime Platform uses ExecutionKit patterns internally** as execution primitives for agent steps.
+**Agentic Runtime Platform uses ExecutionKit for step delegation when it is installed** — the optional `[ek]` extra (`pip install -e "agentic-workflows-v2[ek]"`); without it, the platform falls back to its native runtime.
 
 ## Standards & Governance
 

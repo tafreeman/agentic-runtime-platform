@@ -440,7 +440,7 @@ def _should_use_ek_tool_loop(
 ) -> bool:
     """ADR-023 Phase 6b gate: is the EK react_loop the owner of this step?
 
-    DEFAULT OFF — only ``True`` when ``AGENTIC_EK_PROVIDER`` is set AND the step
+    DEFAULT ON, package-gated — ``True`` when ``AGENTIC_EK_PROVIDER`` is on (default) AND the step
     did not opt out with ``tool_path: native`` AND the step has tools AND the
     optional ``executionkit`` package is installed. When this is ``False`` the
     legacy ``run_tool_calls`` loop runs byte-for-byte (so an EK-on deployment

@@ -479,7 +479,8 @@ async def complete_chat_with_fallback(
         raise RuntimeError("No LLM backend configured")
 
     # ADR-023 Phase 6a: flag-gated EK delegation of the inner completion turn.
-    # DEFAULT OFF — when AGENTIC_EK_PROVIDER is unset/false the call delegates to
+    # DEFAULT ON, package-gated — when AGENTIC_EK_PROVIDER=0, or the optional
+    # ``executionkit`` package is absent, the call delegates to
     # ``client.complete_chat`` (router-based fallback + budget tracking) exactly
     # as before. When on, the plain-completion turn is routed through EK
     # ``_TrackedProvider`` / ``checked_complete`` over a ``SmartRouterProvider``
