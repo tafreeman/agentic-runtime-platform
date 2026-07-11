@@ -9,12 +9,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "eval:code": "promptfoo eval -c evals/code-gen.yaml",
-    "eval:agents": "promptfoo eval -c evals/agents.yaml",
-    "eval:research": "promptfoo eval -c evals/research.yaml",
-    "eval:all": "promptfoo eval -c evals/code-gen.yaml && promptfoo eval -c evals/agents.yaml && promptfoo eval -c evals/research.yaml",
-    "eval:view": "promptfoo view"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -30,8 +25,5 @@
   "homepage": "https://github.com/tafreeman/agentic-runtime-platform#readme",
   "dependencies": {
     "@playwright/test": "^1.59.1"
-  },
-  "devDependencies": {
-    "promptfoo": "latest"
   }
 }
