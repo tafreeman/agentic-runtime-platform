@@ -463,13 +463,26 @@ def get_system_profile() -> SystemProfile:
     npu_tops = sum(a.tops or 0 for a in accelerators if a.kind == "npu")
     all_tops = sum(a.tops or 0 for a in accelerators)
     # system_tops override lets the YAML express the true total (incl. CPU VNNI/TOPS
-    # that aren't modelled as an Accelerator entry).
+    # that aren't modelled as an Accelerator entry). A malformed value must
+    # degrade to the computed accelerator total, not 500 the route.
     system_tops_raw = override.get("system_tops")
-    system_tops: float | None = (
-        float(system_tops_raw)
-        if system_tops_raw is not None
-        else (round(all_tops, 1) if all_tops > 0 else None)
-    )
+    system_tops: float | None = None
+    if system_tops_raw is not None:
+        try:
+            # bool is an int subclass — float(True) == 1.0 — so a YAML
+            # `system_tops: true` would silently claim 1 TOPS; reject it
+            # into the same fallback path as any other non-numeric value.
+            if isinstance(system_tops_raw, bool):
+                raise TypeError("booleans are not numeric system_tops values")
+            system_tops = float(system_tops_raw)
+        except (ValueError, TypeError):
+            logger.warning(
+                "Ignoring non-numeric system_tops hardware override %r; "
+                "falling back to the computed accelerator total.",
+                system_tops_raw,
+            )
+    if system_tops is None:
+        system_tops = round(all_tops, 1) if all_tops > 0 else None
     cinebench = int(logical * ((max_mhz or 2500) / 1000) * 620)
     # NPU TOPS contribute ~0.15 t/s per TOPS for INT4/INT8 quantized 7B models.
     tps = round(
