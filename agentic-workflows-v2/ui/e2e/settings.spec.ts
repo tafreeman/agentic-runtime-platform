@@ -21,8 +21,12 @@ import { expect, test } from '@playwright/test';
  *
  * Robust to an empty OR populated surface: the DOM assertions are grounded in
  * the live API payload and branch on it — the no-LLM baseline ships zero user
- * providers (so the empty-state strip renders) but a full config-driven tier
- * table, and this spec stays green either way.
+ * providers (so the empty-state strip renders) yet a non-empty env-configured
+ * set and a full config-driven tier table, so this spec stays green either way.
+ * Where the surface is populated it reconciles the rendered DOM against the
+ * payload (the env-provider strip echoes the id list; one routing row renders
+ * per model in each tier's effective chain) so a dropped or duplicated entry
+ * fails rather than passing on mere presence.
  */
 test.describe('settings', () => {
   test('renders the provider-endpoint and tier controls', async ({ page }) => {
@@ -105,6 +109,23 @@ test.describe('settings', () => {
       ).toBeVisible({ timeout: 15_000 });
     }
 
+    // ── Env-configured strip ── distinct from user providers: the panel echoes
+    // the provider ids discovered from environment credentials. The no-LLM
+    // baseline reports a non-empty, sorted set, so the strip renders and must
+    // list exactly what the API returns (reconciled against the payload); an
+    // empty set hides the strip entirely.
+    if (providers.env_configured_providers.length > 0) {
+      const envStrip = providerRegion.getByText(/configured via environment/i);
+      await expect(envStrip).toBeVisible({ timeout: 15_000 });
+      await expect(envStrip).toContainText(
+        providers.env_configured_providers.join(', '),
+      );
+    } else {
+      await expect(
+        providerRegion.getByText(/configured via environment/i),
+      ).toHaveCount(0);
+    }
+
     // ── Tiers ── the routing table the board renders, the model capability
     // catalog, and the known capability tags.
     const tiersRes = await request.get('/api/settings/tiers');
@@ -114,12 +135,15 @@ test.describe('settings', () => {
     expect(Array.isArray(tiers.models)).toBe(true);
     expect(Array.isArray(tiers.known_capabilities)).toBe(true);
     // Every tier chain carries a numeric tier and the three routing arrays the
-    // board reads (default / override / effective). Loop is empty-safe.
+    // board reads (default / override / effective). Loop is empty-safe; sum the
+    // effective-chain lengths so the rendered routing rows can be reconciled.
+    let effectiveRows = 0;
     for (const tier of tiers.tiers) {
       expect(typeof tier.tier).toBe('number');
       expect(Array.isArray(tier.default_chain)).toBe(true);
       expect(Array.isArray(tier.override)).toBe(true);
       expect(Array.isArray(tier.effective)).toBe(true);
+      effectiveRows += tier.effective.length;
     }
 
     const tierRegion = page.getByRole('region', { name: 'tier routing' });
@@ -129,6 +153,16 @@ test.describe('settings', () => {
       await expect(tierRegion.getByText(/^T\d+$/)).toHaveCount(tiers.tiers.length, {
         timeout: 15_000,
       });
+      // Each model in a tier's effective chain renders exactly one capability-
+      // editor row (aria-label "Edit capabilities for <model> in tier <n>").
+      // Reconcile the rendered row count against the summed effective chains so
+      // the board can't silently drop or duplicate a routed model. Empty-safe:
+      // resolves to 0 rows when every chain is empty (e.g. a bare tier 0).
+      await expect(
+        tierRegion.getByRole('button', {
+          name: /Edit capabilities for .+ in tier \d+/,
+        }),
+      ).toHaveCount(effectiveRows, { timeout: 15_000 });
     } else {
       // No tiers configured — only the panel header renders.
       await expect(tierRegion.getByText(/MODEL TIERS/i)).toBeVisible();

@@ -15,9 +15,14 @@ import { expect, test } from '@playwright/test';
  * Which state shows is volatile — evaluated runs are only visible while they
  * sit in the top-50 recency window, and parallel specs mint fresh runs — so the
  * assertions anchor on the always-present heading + action bands and on a
- * scorecard-OR-empty-state locator, never on scored-run values (generated ids,
- * timestamps, grades). A `<section aria-label>` is exposed as an ARIA "region",
- * so the bands and scorecard are matched by role/name.
+ * scorecard-OR-empty-state locator, and branch on whichever actually settled
+ * (never on the probe's snapshot, which can disagree once runs are minted). No
+ * single scored run's volatile values (generated ids, timestamps, letter
+ * grades) are pinned: the populated branch checks only derived, non-volatile
+ * facts — that the scorecard reports a positive count of scored runs and that
+ * the table surfaces a valid pass/warn/fail disposition. A `<section
+ * aria-label>` is exposed as an ARIA "region", so the bands and scorecard are
+ * matched by role/name.
  */
 test.describe('evaluations', () => {
   test('loads the surface and renders its primary structure (populated or empty)', async ({
@@ -74,10 +79,24 @@ test.describe('evaluations', () => {
       await expect(
         page.getByRole('link', { name: /run a workflow with evaluation/i }),
       ).toBeVisible();
+      // Mutual exclusivity: the scored-surface scorecard shares the page's one
+      // empty/populated gate, so it must be absent in the empty world. This
+      // stays green once empty — no spec deletes runs, so scored runs never
+      // re-enter the recency window mid-suite to flip it back.
+      await expect(scorecard).toHaveCount(0);
     } else {
-      await expect(scorecard).toBeVisible();
+      // Populated: prove the scored surface reflects real data, not just a
+      // mounted shell. The scorecard headline carries a positive count of
+      // scored runs — scoped to the region so it can't match the identical
+      // phrase in the page subtitle — and the "recent evaluations" table
+      // surfaces at least one row with a real pass/warn/fail disposition. The
+      // pill text is lowercase in the DOM, so the anchored regex can't collide
+      // with the uppercase "PASS" column header.
+      await expect(scorecard.getByText(/[1-9]\d* runs scored/)).toBeVisible();
+      const recent = page.getByRole('region', { name: 'recent evaluations' });
+      await expect(recent).toBeVisible();
       await expect(
-        page.getByRole('region', { name: 'recent evaluations' }),
+        recent.getByText(/^(pass|warn|fail)$/).first(),
       ).toBeVisible();
     }
   });

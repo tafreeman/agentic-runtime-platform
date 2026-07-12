@@ -117,9 +117,13 @@ test.describe('run detail', () => {
       await expect(page.getByText(/no steps recorded/i)).toBeVisible();
       return;
     }
-    // The step-list card title carries the count ("steps · N"); match the shape
-    // (bullet glyph agnostic) so it never collides with the "steps N" metric.
-    await expect(page.getByText(/^steps\s+\S\s+\d+$/)).toBeVisible();
+    // The step-list card title carries the count ("steps · N"); assert the
+    // exact count from the record (bullet-glyph agnostic) so it reconciles with
+    // the persisted step list and never collides with the header's "steps N"
+    // metric (no bullet glyph → no match).
+    await expect(
+      page.getByText(new RegExp(`^steps\\s+\\S\\s+${steps.length}$`)),
+    ).toBeVisible();
 
     // Drill into a concrete step from the record (step names are workflow-defined
     // and stable, not generated ids). Its Output/Input/Metadata inspector renders

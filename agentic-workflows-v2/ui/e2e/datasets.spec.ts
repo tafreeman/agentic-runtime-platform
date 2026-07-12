@@ -80,11 +80,17 @@ test.describe('datasets', () => {
 
     if (listedNames.length > 0) {
       // Populated: the browser lists at least the first catalog entry and does
-      // NOT surface its internal empty strip. The repository group header is a
-      // stable structural anchor unique to the section (the count strip abbreviates
-      // it to "repo").
+      // NOT surface its internal empty strip. The repository group header
+      // reconciles *exactly* with the API's repository count — the catalog is a
+      // static server-side list that no spec mutates, so an exact match is safe
+      // and stronger than mere presence, and `exact` keeps it off the page's
+      // abbreviated "N repo" count strip.
       if (payload.repository.length > 0) {
-        await expect(page.getByText(/repository ·/)).toBeVisible();
+        await expect(
+          page.getByText(`repository · ${payload.repository.length}`, {
+            exact: true,
+          }),
+        ).toBeVisible();
       }
       await expect(page.getByText(listedNames[0]).first()).toBeVisible({
         timeout: 15_000,

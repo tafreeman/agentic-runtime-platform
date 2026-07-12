@@ -33,9 +33,26 @@ test.describe('app shell', () => {
     // Navigation routes: "workflow builder" lands on the workflows list.
     await nav.getByRole('link', { name: /workflow builder/ }).click();
     await expect(page).toHaveURL(/\/workflows$/);
-    // The list renders at least the code_review workflow entry.
-    await expect(
-      page.getByRole('link', { name: /code_review/ }).first(),
-    ).toBeVisible({ timeout: 15_000 });
+
+    // The list renders one row per workflow the backend reports — each row
+    // carries a stable `workflow-link-<name>` testid. Reconcile the rendered
+    // row count against the /api/workflows record (through the same proxy)
+    // rather than trusting a single substring match, and anchor on the seeded
+    // code_review definition by its exact testid so a `code_review_*` sibling
+    // could never satisfy it by accident.
+    const workflowsRes = await request.get('/api/workflows');
+    expect(
+      workflowsRes.ok(),
+      `GET /api/workflows -> ${workflowsRes.status()}`,
+    ).toBe(true);
+    const { workflows } = (await workflowsRes.json()) as {
+      workflows: string[];
+    };
+    expect(workflows).toContain('code_review');
+    await expect(page.locator('[data-testid^="workflow-link-"]')).toHaveCount(
+      workflows.length,
+      { timeout: 15_000 },
+    );
+    await expect(page.getByTestId('workflow-link-code_review')).toBeVisible();
   });
 });

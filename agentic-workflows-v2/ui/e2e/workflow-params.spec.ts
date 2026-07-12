@@ -1,7 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-/** Terminal workflow states surfaced by the live stream. */
-const TERMINAL = /completed|success|failed|error/i;
+/** Terminal workflow-status words the live pill (`workflow-status`) can show.
+ *  `success` is normalised to `completed` upstream so it never appears
+ *  verbatim; anchoring keeps the non-terminal states (connecting/running/
+ *  evaluating) from matching on a substring. */
+const TERMINAL = /^(completed|failed|error)$/i;
+
+/** Canonicalise UI text vs. the API enum into terminal buckets so `error`
+ *  cannot silently agree with `completed` via a loose substring match. */
+function bucket(raw: string): 'success' | 'failed' | 'other' {
+  const s = raw.trim().toLowerCase();
+  if (/^(success|completed|ok)$/.test(s)) return 'success';
+  if (/^(failed|error)$/.test(s)) return 'failed';
+  return 'other';
+}
 
 /**
  * Changing run parameters and launching — "changing the parameters and
@@ -40,18 +52,29 @@ test.describe('run parameters', () => {
     expect(runId, 'run-id must expose a data-run-id after kickoff').toBeTruthy();
 
     // Let the run reach a terminal state so the record is fully written.
-    await expect(page.getByTestId('workflow-status')).toHaveText(TERMINAL, {
-      timeout: 60_000,
-    });
+    const status = page.getByTestId('workflow-status');
+    await expect(status).toHaveText(TERMINAL, { timeout: 60_000 });
+    const uiStatus = (await status.textContent())?.trim() ?? '';
 
-    // The edited, non-default parameters must be exactly what ran.
+    // Reconcile the record's identity first, so the inputs assertion below
+    // cannot pass against some other run's log.
     const rec = await request.get(`/api/runs/${runId}.json`);
     expect(rec.ok(), `GET /api/runs/${runId}.json -> ${rec.status()}`).toBe(true);
     const run = await rec.json();
+    expect(run.run_id, 'record identity must match the launched run').toBe(runId);
+    expect(run.workflow_name).toBe('code_review');
+
+    // The edited, non-default parameters must be exactly what ran.
     expect(run.inputs).toMatchObject({
       code_file: codeFile,
       review_depth: 'deep',
     });
-    expect(String(run.status).toLowerCase()).toMatch(/success|completed/);
+
+    // UI terminal state and the persisted status must agree on one canonical
+    // bucket, and a no_llm code_review run resolves deterministically to
+    // success — a stronger check than matching a status substring.
+    const serverBucket = bucket(String(run.status));
+    expect(bucket(uiStatus)).toBe(serverBucket);
+    expect(serverBucket).toBe('success');
   });
 });
