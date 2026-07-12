@@ -40,6 +40,7 @@ TARGET_FILES = (
     "docs/REPO_MAP.md",
     "docs/DOCS_BEST_PRACTICES.md",
     "docs/API_REFERENCE.md",
+    "docs/MODEL_LAYER.md",
     "docs/reports/ACTIVE_VS_LEGACY_TOOLING_MAP.md",
 )
 
