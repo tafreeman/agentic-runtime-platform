@@ -13,7 +13,7 @@
 - The probe is **credential‑presence + a curated static catalog + live
   discovery**. `is_provider_available()` still only checks env keys, but every
   rescan *also* calls the list‑models APIs of whatever it can reach: Ollama
-  `/api/tags` (ADR‑037), LM Studio `/v1/models` + an ONNX folder walk
+  `/api/tags` (ADR‑037), LM Studio `/api/v0/models` + an ONNX folder walk
   (ADR‑038), and the keyed cloud providers — OpenAI, Anthropic, Gemini, GitHub
   Models, NVIDIA NIM (ADR‑039) and OpenRouter (curated + TTL‑cached, ADR‑050).
   Discovered ids absent from the static tier chains merge into the catalog at
@@ -68,7 +68,7 @@ flowchart TD
   PROBE -->|update defaults| TIERS
   subgraph DISC["Live discovery - IMPLEMENTED (ADR-037/038/039/050)"]
     OD["models/ollama_discovery.py<br/>local /api/tags + /api/ps<br/>cloud: Bearer OLLAMA_API_KEY"]
-    LD["models/local_discovery.py<br/>LM Studio /v1/models + ONNX folder walk"]
+    LD["models/local_discovery.py<br/>LM Studio /api/v0/models + ONNX folder walk"]
     CD["models/cloud_discovery.py<br/>OpenAI / Anthropic / Gemini / GitHub / NVIDIA / OpenRouter<br/>keyed-only, 8s bound, OpenRouter curated + TTL cache"]
   end
   OD -.->|merge tier-0 entries| PROBE
@@ -122,19 +122,21 @@ sequenceDiagram
     M->>G: is_provider_available(provider)
     G-->>M: True / False (env-key presence only)
   end
-  M->>M: resolve tier defaults from fallback chains
   M->>M: _configure_native_router(availability)
+  M->>D: detect_registry_drift() - quarantine retired ids (ADR-040), no-op when AGENTIC_NO_LLM=1
+  D->>P: 1st cloud list-models sweep (keyed providers, concurrent)
+  M->>M: resolve tier defaults from chains, skipping quarantined ids
   R->>M: enumerate_known_models()
   M->>D: _merge_ollama_models() + _merge_local_models()
-  D->>P: Ollama /api/tags + /api/ps, LM Studio /v1/models, ONNX dir walk
+  D->>P: Ollama /api/tags + /api/ps, LM Studio /api/v0/models, ONNX dir walk
   M->>D: _merge_cloud_models() - skipped when AGENTIC_NO_LLM=1
-  D->>P: list-models per KEYED cloud provider (concurrent, 8s bound each)
+  D->>P: 2nd cloud list-models sweep (keyed providers, concurrent, 8s bound each)
   P-->>D: model ids (best-effort - a failure contributes nothing)
   D-->>M: tier-0 entries merged into catalog
   M-->>R: models[] = static chains + live-discovered (tier 0)
   R->>R: add no_llm_mode = is_agentic_no_llm_enabled()
-  R-->>U: available_providers, tier_defaults, models, no_llm_mode
-  Note over M,P: Live list-models APIs ARE contacted on every rescan.<br/>Availability flags alone still come from env-key presence.
+  R-->>U: available_providers, tier_defaults, drift, models, no_llm_mode
+  Note over M,P: Live list-models APIs ARE contacted on every rescan - the cloud sweep<br/>runs TWICE per probe (drift check + catalog merge; only OpenRouter's<br/>slice is TTL-cached). Availability flags alone are env-key presence.
 ```
 
 ## Provider gate — `PROVIDER_ENV_KEYS` (`langchain/model_utils.py`)
@@ -177,7 +179,9 @@ set, or when the provider needs **no** key (local providers always pass).
   `openai:gpt-4o-mini` → `anthropic:claude-haiku-4-5-20251001` →
   `ollama:gemma3:4b`).
 - `detect_registry_drift()` warns and **quarantines** registry ids a provider
-  has retired; discovery never auto‑promotes a discovered id into a chain.
+  has retired; discovery never auto‑promotes a discovered id into a chain. It
+  runs inside every probe *before* tier defaults resolve, with its **own**
+  live cloud sweep (see the rescan diagram's note).
 - `enumerate_known_models()` returns the static chain **union** as
   `{ id, provider, tier (lowest tier it appears in), available }`, **merged
   with every live‑discovered model**: Ollama (ADR‑037), LM Studio + ONNX
@@ -201,6 +205,9 @@ set, or when the provider needs **no** key (local providers always pass).
   "available_providers":   ["anthropic", "gh", "ollama", ...],
   "unavailable_providers": ["gemini", "openai"],
   "tier_defaults":         { "1": "gh:openai/gpt-4o-mini", "2": "...", ... },
+  // probe-time registry reconciliation (ADR-040) — see detect_registry_drift()
+  "drift":                 { "quarantined": [], "missing_pricing": ["..."],
+                             "checked_providers": ["openai", "anthropic"] },
   "models": [ { "id": "anthropic:claude-...", "provider": "anthropic",
                 "tier": 2, "available": true },
               // live-discovered Ollama models also carry cloud/capabilities/running
@@ -295,10 +302,13 @@ rate limits but does **not** expose the catalog without one of these.
 `agentic_v2/models/local_discovery.py` extends the same merge to the other two
 local providers; both are best‑effort and surface as `tier 0` router entries:
 
-- **LM Studio (`lmstudio:`):** `GET {host}/v1/models` (OpenAI‑compatible). Host
-  from `LMSTUDIO_HOST` / `LM_STUDIO_HOST`; with none set, ports `1234` then
-  `12340` are tried and the first reachable wins. Lights up once LM Studio's
-  server is running.
+- **LM Studio (`lmstudio:`):** `GET {host}/api/v0/models` — LM Studio's
+  *native* REST API, preferred because it lists the **whole downloaded
+  library** with a `type` (`llm`/`vlm`/`embeddings`) and a `state`
+  (`loaded`/`not-loaded`); the OpenAI‑compatible `GET {host}/v1/models` shim
+  (currently *loaded* models only) is the fallback for older servers. Host
+  from `LMSTUDIO_HOST`; with it unset, ports `1234` then `12340` are tried and
+  the first reachable wins. Lights up once LM Studio's server is running.
 - **ONNX (`onnx:`):** bounded‑depth walk for `genai_config.json` under the ONNX
   root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default `~/.cache/aigallery`).
   Returns `onnx:<relpath>` relative to that root — the *same* root `OnnxBackend`
@@ -344,6 +354,11 @@ placeholder, so a live listing would mislead, and the gate keeps the unit suite
 (which runs with `AGENTIC_NO_LLM=1`) hermetic with no per‑test patching. Local
 discovery (localhost, free) stays ungated; cloud discovery (internet, metered)
 does not. Covered by mocked‑HTTP tests in `tests/models/test_cloud_discovery.py`.
+
+**Known inefficiency:** a full probe currently runs this cloud sweep **twice** —
+once inside `detect_registry_drift()` (the ADR‑040 quarantine pass) and once in
+`_merge_cloud_models()` — and only OpenRouter's slice is TTL‑cached. Flagged
+for a follow‑up optimization (share one listing per probe request).
 
 ### OpenRouter — curated + TTL‑cached (ADR‑050, PR #188)
 
