@@ -76,9 +76,10 @@ def has_content_leaves(value: Any) -> bool:
 def has_scoring_tokens(text: str) -> bool:
     """Return True if *text* yields at least one overlap-scoring token.
 
-    The dataset loader uses this to reject goldens that cannot participate
-    in overlap scoring (e.g. a hollow envelope that null-strips to ``{}``) --
-    the check is deliberately the same tokenizer the scorer uses.
+    The dataset loader uses this to reject goldens that cannot
+    participate in overlap scoring (e.g. a hollow envelope that null-
+    strips to ``{}``) -- the check is deliberately the same tokenizer
+    the scorer uses.
     """
     return bool(_tokenize(text))
 
@@ -116,9 +117,10 @@ def _extract_expected_text(sample: dict[str, Any]) -> str:
 def _has_code_content(final_output: Any) -> bool:
     """Return True if final_output contains at least one non-trivial string leaf.
 
-    Recursively walks dicts/lists looking for a string value with meaningful
-    length (>= 20 chars).  Used to distinguish real code output from placeholder
-    "I cannot fulfill this" responses where all leaves are null.
+    Recursively walks dicts/lists looking for a string value with
+    meaningful length (>= 20 chars).  Used to distinguish real code
+    output from placeholder "I cannot fulfill this" responses where all
+    leaves are null.
     """
     if isinstance(final_output, str):
         return len(final_output.strip()) >= 20

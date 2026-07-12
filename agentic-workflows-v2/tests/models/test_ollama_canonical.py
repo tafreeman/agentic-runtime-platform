@@ -101,15 +101,15 @@ async def test_complete_chat_separates_thinking_from_content() -> None:
     )
 
     # Separation guarantee (the open-decision resolution).
-    assert "thinking" in result, (
-        "canonical shape must expose a top-level 'thinking' key"
-    )
-    assert result["thinking"] == canonical["thinking"], (
-        "thinking text must round-trip verbatim from message.thinking"
-    )
-    assert result["thinking"] != "", (
-        "fixture is a thinking-only response; thinking must be non-empty"
-    )
+    assert (
+        "thinking" in result
+    ), "canonical shape must expose a top-level 'thinking' key"
+    assert (
+        result["thinking"] == canonical["thinking"]
+    ), "thinking text must round-trip verbatim from message.thinking"
+    assert (
+        result["thinking"] != ""
+    ), "fixture is a thinking-only response; thinking must be non-empty"
 
     # Content stays empty — no silent fold-in of thinking into content.
     assert result["content"] == "", (
@@ -151,9 +151,9 @@ async def test_complete_chat_normal_response_thinking_is_empty_string() -> None:
     )
 
     assert result["content"] == "Hello! How can I help you today?"
-    assert result["thinking"] == "", (
-        "thinking key must always be present; absent upstream field => empty string"
-    )
+    assert (
+        result["thinking"] == ""
+    ), "thinking key must always be present; absent upstream field => empty string"
     assert result["tool_calls"] is None
     assert result["finish_reason"] == "stop"
     assert result["model"] == "llama3.2"
@@ -162,8 +162,7 @@ async def test_complete_chat_normal_response_thinking_is_empty_string() -> None:
 @pytest.mark.unit
 async def test_complete_chat_normalises_tool_calls_to_dicts() -> None:
     """SDK ``ToolCall`` objects must surface as JSON-able ``list[dict]`` with the
-    historical ``{"function": {"name", "arguments"}}`` shape.
-    """
+    historical ``{"function": {"name", "arguments"}}`` shape."""
     response = ollama.ChatResponse(
         model="qwen3:8b",
         done=True,
@@ -198,8 +197,7 @@ async def test_complete_chat_normalises_tool_calls_to_dicts() -> None:
 @pytest.mark.unit
 async def test_complete_chat_forwards_think_opt_in() -> None:
     """When the backend is configured with ``think=True`` the parameter must be
-    forwarded to the SDK ``chat`` call; the default leaves it ``None``.
-    """
+    forwarded to the SDK ``chat`` call; the default leaves it ``None``."""
     response = ollama.ChatResponse(
         model="qwen3:8b",
         done=True,
@@ -220,9 +218,8 @@ async def test_complete_chat_forwards_think_opt_in() -> None:
 
 @pytest.mark.unit
 async def test_complete_prompt_path_falls_back_to_thinking() -> None:
-    """The raw-prompt ``complete()`` path returns ``response`` text, falling back
-    to ``thinking`` when the answer text is blank (reasoning-only turn).
-    """
+    """The raw-prompt ``complete()`` path returns ``response`` text, falling back to
+    ``thinking`` when the answer text is blank (reasoning-only turn)."""
     response = ollama.GenerateResponse(
         model="qwen3:8b",
         done=True,

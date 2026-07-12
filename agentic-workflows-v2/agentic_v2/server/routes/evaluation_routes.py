@@ -89,13 +89,15 @@ def _encode_dataset_path(dataset_source: str, dataset_id: str) -> str:
     return f"/api/eval/datasets/{encoded_source}/{encoded_dataset_id}/samples"
 
 
-def _extract_sample_summary_text(
-    sample: dict[str, Any], field_names: list[str]
-) -> str:
+def _extract_sample_summary_text(sample: dict[str, Any], field_names: list[str]) -> str:
     """Return the first non-identifier string field, truncated to 200 chars."""
     for key in field_names:
         val = sample.get(key)
-        if isinstance(val, str) and val.strip() and key not in ("id", "task_id", "sample_id"):
+        if (
+            isinstance(val, str)
+            and val.strip()
+            and key not in ("id", "task_id", "sample_id")
+        ):
             return val[:200]
     return ""
 
@@ -155,7 +157,9 @@ def _filter_datasets_for_workflow(
         try:
             sample, _ = load_first_sample(dataset["id"])
         except Exception as exc:
-            logger.debug("Skipping dataset %r (load failed): %s", dataset.get("id"), exc)
+            logger.debug(
+                "Skipping dataset %r (load failed): %s", dataset.get("id"), exc
+            )
             continue
         compatible, _ = match_workflow_dataset(workflow_def, sample)
         if compatible:
@@ -220,7 +224,9 @@ async def list_evaluation_datasets(
     "/workflows/{workflow_name}/preview-dataset-inputs",
     responses={
         404: {"description": "Workflow not found"},
-        422: {"description": "Unprocessable Entity — invalid dataset_source or sample value"},
+        422: {
+            "description": "Unprocessable Entity — invalid dataset_source or sample value"
+        },
         501: {"description": "Not Implemented — LangChain extras not installed"},
     },
 )
@@ -363,9 +369,7 @@ async def get_dataset_sample_detail(
 def _validate_sample_list_params(source: str, offset: int, limit: int) -> None:
     """Validate pagination/source params for the sample-list endpoint."""
     if source not in ("repository", "local"):
-        raise HTTPException(
-            status_code=422, detail=f"Invalid source: {source!r}"
-        )
+        raise HTTPException(status_code=422, detail=f"Invalid source: {source!r}")
     if limit < 1 or limit > 100:
         raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
     if offset < 0:
@@ -413,9 +417,7 @@ def _resolve_sample_count(batch: list[Any]) -> int:
 def _validate_sample_detail_source(source: str) -> None:
     """Validate the dataset source for the sample-detail endpoint."""
     if source not in ("repository", "local"):
-        raise HTTPException(
-            status_code=422, detail=f"Invalid source: {source!r}"
-        )
+        raise HTTPException(status_code=422, detail=f"Invalid source: {source!r}")
 
 
 def _load_single_sample(
@@ -427,9 +429,7 @@ def _load_single_sample(
     """Load one dataset sample, mapping load errors to HTTP codes."""
     try:
         if source == "repository":
-            return load_repository_dataset_sample(
-                dataset_id, sample_index=sample_index
-            )
+            return load_repository_dataset_sample(dataset_id, sample_index=sample_index)
         return _call_with_supported_kwargs(
             load_local_dataset_sample,
             dataset_id,

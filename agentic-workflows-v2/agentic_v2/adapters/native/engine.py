@@ -218,13 +218,12 @@ class NativeEngine:
         )
 
     @staticmethod
-    def _restore_checkpoint_state(
-        ctx: ExecutionContext, saved: dict[str, Any]
-    ) -> None:
+    def _restore_checkpoint_state(ctx: ExecutionContext, saved: dict[str, Any]) -> None:
         """Replay successful checkpointed steps into *ctx*.
 
-        Marks each successful step as completed (so the DAG executor skips it)
-        and restores its output data into the context variables.
+        Marks each successful step as completed (so the DAG executor
+        skips it) and restores its output data into the context
+        variables.
         """
         for step_name, step_data in saved.items():
             if step_data["status"] != StepStatus.SUCCESS.value:
@@ -292,8 +291,8 @@ class NativeEngine:
         """Create a wrapper around *original_callback* that also writes checkpoints on
         ``step_end`` events.
 
-        The checkpoint write is launched as a tracked background task so it
-        does not block DAG scheduling.
+        The checkpoint write is launched as a tracked background task so
+        it does not block DAG scheduling.
         """
         store = self._checkpoint_store
         workflow_name = getattr(workflow, "name", "unknown")

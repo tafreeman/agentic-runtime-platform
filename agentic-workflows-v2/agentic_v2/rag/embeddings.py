@@ -127,7 +127,9 @@ def _fallback_identity(
     if first is not None and all(identity == first for identity in identities):
         return first
 
-    model_name = "explicitly-compatible" if allow_mixed_provider_identities else "unknown"
+    model_name = (
+        "explicitly-compatible" if allow_mixed_provider_identities else "unknown"
+    )
     return EmbeddingProviderIdentity(provider="fallback", model_name=model_name)
 
 

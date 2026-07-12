@@ -221,9 +221,7 @@ def build_step_results(
     return results
 
 
-def _step_metadata(
-    step_data: Mapping[str, Any], token_meta: Any
-) -> dict[str, Any]:
+def _step_metadata(step_data: Mapping[str, Any], token_meta: Any) -> dict[str, Any]:
     """Build a step's metadata dict, folding in token counts when available."""
     metadata_raw = step_data.get("metadata")
     metadata: dict[str, Any] = (
@@ -276,9 +274,7 @@ def _build_single_step_result(
             else None
         ),
         tier=(
-            int(step_data["tier"])
-            if isinstance(step_data.get("tier"), int)
-            else None
+            int(step_data["tier"]) if isinstance(step_data.get("tier"), int) else None
         ),
         model_used=model_used,
         input_data=as_dict(step_data.get("inputs")),

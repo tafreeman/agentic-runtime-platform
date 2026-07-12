@@ -56,11 +56,14 @@ def test_installed_evalkit_does_not_import_arp_tools_or_ek() -> None:
 
 
 def test_evalkit_is_installed_not_vendored() -> None:
-    """evalkit must be an external dependency, never vendored *inside* the ARP
-    repo tree. A normal install (site-packages, including the project ``.venv``)
+    """Evalkit must be an external dependency, never vendored *inside* the ARP repo
+    tree.
+
+    A normal install (site-packages, including the project ``.venv``)
     and an editable install pointing at a separate sibling checkout are both
     legitimate; a copy physically under the ARP source tree is not — that would
-    defeat the version pin and the one-way boundary."""
+    defeat the version pin and the one-way boundary.
+    """
     installed = _installed_package_dir().resolve()
     arp_root = Path(__file__).resolve().parents[3]
     in_site_packages = "site-packages" in installed.parts

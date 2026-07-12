@@ -259,9 +259,7 @@ class LLMClient:
                 model_name, prompt, system_instruction, temperature, max_tokens
             )
         if lower.startswith("gh:"):
-            return LLMClient._call_github_models(
-                model_name, prompt, system_instruction
-            )
+            return LLMClient._call_github_models(model_name, prompt, system_instruction)
         if lower.startswith("openai:"):
             # Explicit prefix for OpenAI hosted models
             model_id = model_name.split(":", 1)[1]

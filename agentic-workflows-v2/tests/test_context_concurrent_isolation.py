@@ -120,8 +120,7 @@ class TestConcurrentContextIsolation:
         # the inherited step's output on the child, plus the fork's own step.
         evaluator = ExpressionEvaluator(child)
         assert (
-            evaluator.resolve_variable("steps.design.outputs.architecture")
-            == "ARCH-V1"
+            evaluator.resolve_variable("steps.design.outputs.architecture") == "ARCH-V1"
         )
         assert evaluator.resolve_variable("steps.code.outputs.impl") == "done"
 

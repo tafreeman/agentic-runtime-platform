@@ -259,7 +259,9 @@ def _load_from_huggingface_datasets_lib(
             ds = ds.select(range(min(limit, len(ds))))
         return list(ds)
     except Exception as exc:
-        logger.error("datasets library also failed for %s: %s", benchmark.source_url, exc)
+        logger.error(
+            "datasets library also failed for %s: %s", benchmark.source_url, exc
+        )
         return []
 
 
@@ -291,7 +293,9 @@ def _load_from_huggingface(
         )
         logger.debug("Dataset Viewer returned %d rows", len(rows))
     except Exception as exc_viewer:
-        logger.debug("Dataset Viewer unavailable (%s), trying huggingface_hub", exc_viewer)
+        logger.debug(
+            "Dataset Viewer unavailable (%s), trying huggingface_hub", exc_viewer
+        )
 
         # --- tier 2: huggingface_hub (already in project deps) ---
         try:
@@ -300,7 +304,9 @@ def _load_from_huggingface(
             )
             logger.debug("huggingface_hub returned %d rows", len(rows))
         except Exception as exc_hub:
-            logger.debug("huggingface_hub failed (%s), falling back to datasets", exc_hub)
+            logger.debug(
+                "huggingface_hub failed (%s), falling back to datasets", exc_hub
+            )
             rows = _load_from_huggingface_datasets_lib(benchmark, limit, offset)
             if not rows:
                 return []
@@ -594,9 +600,7 @@ def load_benchmark(
 
     # Check cache
     if use_cache:
-        cached_tasks = _load_cached_tasks(
-            benchmark_id, limit, offset, cache_ttl_hours
-        )
+        cached_tasks = _load_cached_tasks(benchmark_id, limit, offset, cache_ttl_hours)
         if cached_tasks is not None:
             return cached_tasks
 

@@ -116,7 +116,8 @@ class TestLifespanLangChainValidation:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """When AGENTIC_DEFAULT_ADAPTER=langchain and extras are missing, startup fails."""
+        """When AGENTIC_DEFAULT_ADAPTER=langchain and extras are missing, startup
+        fails."""
         monkeypatch.setenv("AGENTIC_DEFAULT_ADAPTER", "langchain")
 
         with _block_modules("langchain", "langgraph"):
@@ -127,17 +128,21 @@ class TestLifespanLangChainValidation:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """When AGENTIC_DEFAULT_ADAPTER=native, startup succeeds even without LangChain."""
+        """When AGENTIC_DEFAULT_ADAPTER=native, startup succeeds even without
+        LangChain."""
         monkeypatch.setenv("AGENTIC_DEFAULT_ADAPTER", "native")
 
         with _block_modules("langchain", "langgraph"):
             # Must NOT raise
             get_registry().validate_selected("native")
 
-    def test_create_app_smoke_with_default_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_create_app_smoke_with_default_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """create_app() succeeds when the real LangChain extras are installed.
 
-        Skipped if langchain/langgraph are not available in the test environment.
+        Skipped if langchain/langgraph are not available in the test
+        environment.
         """
         pytest.importorskip("langchain")
         pytest.importorskip("langgraph")

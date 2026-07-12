@@ -131,9 +131,12 @@ def _base_case(**overrides: Any) -> dict[str, Any]:
 
 
 def _write_minimal_mocked_dataset(tmp_path: Path) -> Path:
-    """Write a minimal, valid golden_cases.json + golden file pair to
-    ``tmp_path`` and return the cases.json path. Used by tests that only need
-    to exercise the mocked path's CLI plumbing, not its scoring semantics."""
+    """Write a minimal, valid golden_cases.json + golden file pair to ``tmp_path`` and
+    return the cases.json path.
+
+    Used by tests that only need to exercise the mocked path's CLI
+    plumbing, not its scoring semantics.
+    """
     golden_path = tmp_path / "golden.json"
     golden_path.write_text(
         json.dumps(
@@ -171,10 +174,10 @@ class TestLiveArgPlumbing:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Without --live, main() must default args.live to False, take the
-        mocked golden-file path (score_case_live never called), and never
-        import agentic_v2/the workflow engine at all -- the mocked gate's
-        whole point is not needing the runtime package installed."""
+        """Without --live, main() must default args.live to False, take the mocked
+        golden-file path (score_case_live never called), and never import agentic_v2/the
+        workflow engine at all -- the mocked gate's whole point is not needing the
+        runtime package installed."""
         cases_path = _write_minimal_mocked_dataset(tmp_path)
         # Poison the import: if the mocked path ever starts importing
         # agentic_v2.workflows, resolving this sys.modules entry raises
@@ -319,10 +322,10 @@ class TestLiveCredentialGate:
 def _expected_weighted_score(
     eval_gate: ModuleType, workflow_result: WorkflowResult, case: dict[str, Any]
 ) -> float:
-    """Compute the ground-truth weighted_score for one mocked run the same
-    way score_case_live does internally (derive_criteria + Scorer), so tests
-    assert against the module's own real scoring logic rather than a
-    hand-computed constant that could silently drift from the rubric."""
+    """Compute the ground-truth weighted_score for one mocked run the same way
+    score_case_live does internally (derive_criteria + Scorer), so tests assert against
+    the module's own real scoring logic rather than a hand-computed constant that could
+    silently drift from the rubric."""
     golden = workflow_result.model_dump(mode="json")
     criteria = eval_gate.derive_criteria(golden, case)
     scorer = eval_gate.Scorer(eval_gate.load_rubric(str(case.get("rubric", "code"))))
@@ -334,9 +337,9 @@ class TestScoreCaseLiveMedian:
     async def test_takes_median_of_three_varying_runs(
         self, eval_gate: ModuleType
     ) -> None:
-        """3 runs with distinct, strictly-increasing success rates (0%, 50%,
-        100%) -> the run with the MIDDLE weighted_score is reported, not the
-        mean and not a value absent from the 3 observed runs."""
+        """3 runs with distinct, strictly-increasing success rates (0%, 50%, 100%) ->
+        the run with the MIDDLE weighted_score is reported, not the mean and not a value
+        absent from the 3 observed runs."""
         case = _base_case()
         results = [
             _make_workflow_result(
@@ -373,9 +376,9 @@ class TestScoreCaseLiveMedian:
     async def test_median_is_middle_of_three_not_average(
         self, eval_gate: ModuleType
     ) -> None:
-        """Two low runs + one high run: mean would sit above the low pair,
-        but the gate must report the median (equal to the repeated low
-        score), proving it isn't silently averaging."""
+        """Two low runs + one high run: mean would sit above the low pair, but the gate
+        must report the median (equal to the repeated low score), proving it isn't
+        silently averaging."""
         case = _base_case(threshold=0.0)
         results = [
             _make_workflow_result(
@@ -409,8 +412,8 @@ class TestScoreCaseLiveMedian:
     async def test_calls_run_workflow_with_case_live_inputs(
         self, eval_gate: ModuleType
     ) -> None:
-        """run_workflow must be invoked with the workflow_name and live_inputs
-        from the case, not the golden dataset's mocked input_data."""
+        """run_workflow must be invoked with the workflow_name and live_inputs from the
+        case, not the golden dataset's mocked input_data."""
         result = _make_workflow_result(
             "consensus_review",
             step_statuses=[StepStatus.SUCCESS],
@@ -460,9 +463,9 @@ class TestScoreCaseLiveMedian:
     async def test_run_workflow_exception_reported_not_raised(
         self, eval_gate: ModuleType
     ) -> None:
-        """A live model call can fail in provider-specific ways (timeout, rate
-        limit, malformed response); score_case_live must catch and report,
-        never propagate, so one bad case doesn't crash the whole dataset."""
+        """A live model call can fail in provider-specific ways (timeout, rate limit,
+        malformed response); score_case_live must catch and report, never propagate, so
+        one bad case doesn't crash the whole dataset."""
         mock_run = AsyncMock(side_effect=RuntimeError("provider unavailable"))
         with patch("agentic_v2.workflows.run_workflow", mock_run):
             result = await eval_gate.score_case_live(_base_case(), 0.80)

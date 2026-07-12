@@ -381,9 +381,10 @@ def test_cli_evaluate_defaults_to_packaged_rubric(
 def _write_default_results(path: Path) -> None:
     """Write a results file scoring against the packaged 'default' rubric.
 
-    The weighted average lands well inside (0.0, 1.0), so a 0.99 threshold is
-    always above it and a 0.10 threshold is always below it — letting the gate
-    tests stay deterministic without pinning the exact computed score.
+    The weighted average lands well inside (0.0, 1.0), so a 0.99
+    threshold is always above it and a 0.10 threshold is always below it
+    — letting the gate tests stay deterministic without pinning the
+    exact computed score.
     """
     path.write_text(
         json.dumps(

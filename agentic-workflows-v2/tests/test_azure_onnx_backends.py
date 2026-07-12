@@ -71,9 +71,7 @@ class TestAzureOpenAIBackend:
             endpoint="https://r.openai.azure.com",
             api_version="2024-10-21",
         )
-        backend._client = _mock_client(
-            handler, base_url="https://r.openai.azure.com"
-        )
+        backend._client = _mock_client(handler, base_url="https://r.openai.azure.com")
 
         result = await backend.complete_chat(
             "azure:gpt-4o-prod", [{"role": "user", "content": "hi"}]

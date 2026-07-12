@@ -57,9 +57,9 @@ def _normalize_number(token: str) -> float | None:
 class VerifyFactTool(BaseTool):
     """Deterministically check whether a claim is grounded in evidence.
 
-    Shared across roles/tiers: registered at tier 0 so it is selectable by any
-    step regardless of its model tier. See the module docstring for why tier 0
-    is the mechanism that makes the tool cross-role.
+    Shared across roles/tiers: registered at tier 0 so it is selectable
+    by any step regardless of its model tier. See the module docstring
+    for why tier 0 is the mechanism that makes the tool cross-role.
     """
 
     @property
@@ -192,9 +192,9 @@ def _verify_numeric(claim: str, evidence: str) -> tuple[bool, str | None, list[s
     """Every number mentioned in the claim must appear in the evidence.
 
     Compares numeric *values*, not raw strings, so equal numbers written
-    differently are treated as matching ("100" == "100.0", "1,000" == "1000",
-    ".5" == "0.5"). The original claim token is preserved for the matched-span
-    and missing-number reporting.
+    differently are treated as matching ("100" == "100.0", "1,000" ==
+    "1000", ".5" == "0.5"). The original claim token is preserved for
+    the matched-span and missing-number reporting.
     """
     claim_numbers = _NUMBER_RE.findall(claim)
     if not claim_numbers:

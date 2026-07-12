@@ -54,7 +54,9 @@ def tmp_repo(tmp_path: Path) -> Path:
     (pkg_b / "pyproject.toml").write_text(
         '[project]\nname = "pkg-b"\ndescription = "Package B"\n'
     )
-    (pkg_b / "index.ts").write_text("export const greet = (name: string) => `Hello ${name}`;\n")
+    (pkg_b / "index.ts").write_text(
+        "export const greet = (name: string) => `Hello ${name}`;\n"
+    )
 
     # Git marker (fake)
     (tmp_path / ".git").mkdir()
@@ -80,7 +82,9 @@ class TestDiscoverPackages:
         assert all(not Path(path).is_absolute() for path in paths)
 
     def test_missing_root_returns_error(self, tmp_path: Path) -> None:
-        result = json.loads(discover_packages.invoke({"root": str(tmp_path / "nonexistent")}))
+        result = json.loads(
+            discover_packages.invoke({"root": str(tmp_path / "nonexistent")})
+        )
         assert "error" in result
 
     def test_skips_venv_dirs(self, tmp_repo: Path) -> None:
@@ -105,7 +109,9 @@ class TestCountLinesOfCode:
                 {"package_dir": str(tmp_repo / "pkg_a"), "extensions": "py"}
             )
         )
-        assert result["by_extension"]["py"]["files"] >= 2  # main.py + test_main.py + conftest.py
+        assert (
+            result["by_extension"]["py"]["files"] >= 2
+        )  # main.py + test_main.py + conftest.py
         assert result["total"]["code"] > 0
 
     def test_counts_typescript_files(self, tmp_repo: Path) -> None:
@@ -178,21 +184,29 @@ class TestGetGitStats:
 
 class TestListTestFiles:
     def test_finds_test_files(self, tmp_repo: Path) -> None:
-        result = json.loads(list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_a")}))
+        result = json.loads(
+            list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_a")})
+        )
         assert result["test_count"] >= 1
         assert any("test_main.py" in f for f in result["test_files"])
 
     def test_detects_conftest(self, tmp_repo: Path) -> None:
-        result = json.loads(list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_a")}))
+        result = json.loads(
+            list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_a")})
+        )
         assert result["has_conftest"] is True
 
     def test_no_tests_returns_zero(self, tmp_repo: Path) -> None:
-        result = json.loads(list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_b")}))
+        result = json.loads(
+            list_test_files.invoke({"package_dir": str(tmp_repo / "pkg_b")})
+        )
         assert result["test_count"] == 0
         assert result["has_conftest"] is False
 
     def test_missing_dir_returns_error(self, tmp_path: Path) -> None:
-        result = json.loads(list_test_files.invoke({"package_dir": str(tmp_path / "missing")}))
+        result = json.loads(
+            list_test_files.invoke({"package_dir": str(tmp_path / "missing")})
+        )
         assert "error" in result
 
 
@@ -214,16 +228,22 @@ class TestFindKeyPatterns:
             find_key_patterns.invoke({"package_dir": str(tmp_repo / "pkg_a")})
         )
         expected_keys = {
-            "async_def", "protocol", "dataclass", "pydantic_model",
-            "langgraph", "langchain", "fastapi_route", "typed_dict",
-            "yaml_config", "structlog", "abc_abstract",
+            "async_def",
+            "protocol",
+            "dataclass",
+            "pydantic_model",
+            "langgraph",
+            "langchain",
+            "fastapi_route",
+            "typed_dict",
+            "yaml_config",
+            "structlog",
+            "abc_abstract",
         }
         assert expected_keys.issubset(set(result.keys()))
 
     def test_counts_are_non_negative(self, tmp_repo: Path) -> None:
-        result = json.loads(
-            find_key_patterns.invoke({"package_dir": str(tmp_repo)})
-        )
+        result = json.loads(find_key_patterns.invoke({"package_dir": str(tmp_repo)}))
         assert all(isinstance(v, int) and v >= 0 for v in result.values())
 
     def test_missing_dir_returns_error(self, tmp_path: Path) -> None:
@@ -265,14 +285,18 @@ class TestBuildAgent:
 
         monkeypatch.setitem(sys.modules, "agentic_v2", types.ModuleType("agentic_v2"))
         monkeypatch.setitem(
-            sys.modules, "agentic_v2.langchain", types.ModuleType("agentic_v2.langchain")
+            sys.modules,
+            "agentic_v2.langchain",
+            types.ModuleType("agentic_v2.langchain"),
         )
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.tools", tools_mod)
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", models_mod)
 
         captured: dict[str, object] = {}
 
-        def fake_create_react_agent(llm: object, tools: list[object], **kwargs: object) -> str:
+        def fake_create_react_agent(
+            llm: object, tools: list[object], **kwargs: object
+        ) -> str:
             captured["llm"] = llm
             captured["tools"] = tools
             captured["kwargs"] = kwargs
@@ -284,7 +308,9 @@ class TestBuildAgent:
         )
 
         assert agent_mod.build_agent("openai:gpt-4o") == "compiled-agent"
-        models_mod.get_chat_model.assert_called_once_with("openai:gpt-4o", temperature=0.0)
+        models_mod.get_chat_model.assert_called_once_with(
+            "openai:gpt-4o", temperature=0.0
+        )
         models_mod.get_model_for_tier.assert_not_called()
         assert captured["llm"] == "openai-llm"
 
@@ -305,7 +331,9 @@ class TestBuildAgent:
 
         monkeypatch.setitem(sys.modules, "agentic_v2", types.ModuleType("agentic_v2"))
         monkeypatch.setitem(
-            sys.modules, "agentic_v2.langchain", types.ModuleType("agentic_v2.langchain")
+            sys.modules,
+            "agentic_v2.langchain",
+            types.ModuleType("agentic_v2.langchain"),
         )
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.tools", tools_mod)
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", models_mod)
@@ -342,7 +370,9 @@ class TestBuildAgent:
 
         monkeypatch.setitem(sys.modules, "agentic_v2", types.ModuleType("agentic_v2"))
         monkeypatch.setitem(
-            sys.modules, "agentic_v2.langchain", types.ModuleType("agentic_v2.langchain")
+            sys.modules,
+            "agentic_v2.langchain",
+            types.ModuleType("agentic_v2.langchain"),
         )
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.tools", tools_mod)
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", models_mod)
@@ -377,14 +407,18 @@ class TestBuildAgent:
         models_mod.get_model_for_tier = MagicMock(return_value="tier-llm")
         monkeypatch.setitem(sys.modules, "agentic_v2", types.ModuleType("agentic_v2"))
         monkeypatch.setitem(
-            sys.modules, "agentic_v2.langchain", types.ModuleType("agentic_v2.langchain")
+            sys.modules,
+            "agentic_v2.langchain",
+            types.ModuleType("agentic_v2.langchain"),
         )
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.tools", tools_mod)
         monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", models_mod)
 
         captured: dict[str, object] = {}
 
-        def fake_create_react_agent(llm: object, tools: list[object], **kwargs: object) -> str:
+        def fake_create_react_agent(
+            llm: object, tools: list[object], **kwargs: object
+        ) -> str:
             captured["llm"] = llm
             captured["tools"] = tools
             captured["kwargs"] = kwargs
@@ -420,7 +454,14 @@ class TestRunAnalysis:
             "messages": [
                 ToolMessage(
                     content=json.dumps(
-                        [{"name": "pkg-a", "path": "pkg_a", "description": "A", "build_backend": "hatchling"}]
+                        [
+                            {
+                                "name": "pkg-a",
+                                "path": "pkg_a",
+                                "description": "A",
+                                "build_backend": "hatchling",
+                            }
+                        ]
                     ),
                     tool_call_id="tc1",
                     name="discover_packages",
@@ -432,14 +473,21 @@ class TestRunAnalysis:
                             "last_tag": "v1.0",
                             "contributors": [{"name": "Alice", "commits": 10}],
                             "recent_commits": [
-                                {"hash": "abc", "author": "Alice", "date": "2025-01-01", "subject": "init"}
+                                {
+                                    "hash": "abc",
+                                    "author": "Alice",
+                                    "date": "2025-01-01",
+                                    "subject": "init",
+                                }
                             ],
                         }
                     ),
                     tool_call_id="tc2",
                     name="get_git_stats",
                 ),
-                AIMessage(content="## Repo Analysis\n\nThis is a well-structured monorepo."),
+                AIMessage(
+                    content="## Repo Analysis\n\nThis is a well-structured monorepo."
+                ),
             ]
         }
         monkeypatch.setattr(agent_mod, "build_agent", lambda **_: fake_agent)

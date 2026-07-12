@@ -72,9 +72,7 @@ class McpResourceAdapter:
             return f"Error: {error_msg}"
 
     @staticmethod
-    def _is_connection_listable(
-        name: str, state: Any, server_name: str | None
-    ) -> bool:
+    def _is_connection_listable(name: str, state: Any, server_name: str | None) -> bool:
         """Return True if a connection should be included in resource listing."""
         # Filter by server if specified
         if server_name and name != server_name:

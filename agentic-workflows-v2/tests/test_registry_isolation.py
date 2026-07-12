@@ -1,4 +1,5 @@
 """Verify AdapterRegistry state does not leak between tests."""
+
 from __future__ import annotations
 
 from agentic_v2.adapters.registry import get_registry
@@ -19,6 +20,6 @@ def test_registry_isolation_first():
 def test_registry_isolation_second():
     """Previous test's adapter must not be present."""
     reg = get_registry()
-    assert "_test_leak" not in reg.list_adapters(), (
-        "Registry leaked state from a previous test — isolation fixture is missing"
-    )
+    assert (
+        "_test_leak" not in reg.list_adapters()
+    ), "Registry leaked state from a previous test — isolation fixture is missing"

@@ -13,7 +13,9 @@ import warnings
 import pytest
 
 
-@pytest.mark.skip(reason="agentic_v2.adapters.langchain does not emit DeprecationWarning on reload; warning is only raised from agentic_v2.langchain top-level module")
+@pytest.mark.skip(
+    reason="agentic_v2.adapters.langchain does not emit DeprecationWarning on reload; warning is only raised from agentic_v2.langchain top-level module"
+)
 def test_langchain_adapter_emits_deprecation_warning() -> None:
     """Adapter package triggers deprecation warning via transitive import."""
     pytest.importorskip("langgraph")

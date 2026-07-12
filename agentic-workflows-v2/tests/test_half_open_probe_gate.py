@@ -1,7 +1,7 @@
 """Concurrency tests for the HALF_OPEN single-probe invariant.
 
-Block #10 — verifies that exactly ONE probe call reaches the provider when
-N callers race against a model whose recovery timeout just elapsed.
+Block #10 — verifies that exactly ONE probe call reaches the provider
+when N callers race against a model whose recovery timeout just elapsed.
 """
 
 from __future__ import annotations
@@ -21,11 +21,10 @@ from agentic_v2.models.smart_router import CircuitResolvedError, SmartModelRoute
 
 
 def _make_open_router(model: str = "test:model") -> SmartModelRouter:
-    """Return a SmartModelRouter with `model` in OPEN state ready to tip to HALF_OPEN."""
+    """Return a SmartModelRouter with `model` in OPEN state ready to tip to
+    HALF_OPEN."""
     router = SmartModelRouter()
-    router.register_chain(
-        ModelTier.TIER_1, FallbackChain((model,), "test-chain")
-    )
+    router.register_chain(ModelTier.TIER_1, FallbackChain((model,), "test-chain"))
     # Make the model available to routing
     router._available_models.add(model)
 
@@ -69,7 +68,9 @@ class TestCheckCircuitHalfOpen:
             stats.record_failure("error")
         assert stats.circuit_state == CircuitState.OPEN
 
-        stats._last_failure_mono = time.monotonic() - (stats._recovery_timeout_seconds + 1)
+        stats._last_failure_mono = time.monotonic() - (
+            stats._recovery_timeout_seconds + 1
+        )
         result = stats.check_circuit()
 
         assert result is True
@@ -121,9 +122,9 @@ async def test_exactly_one_probe_reaches_provider() -> None:
     tasks = [asyncio.create_task(caller()) for _ in range(8)]
     await asyncio.gather(*tasks)
 
-    assert probe_count == 1, (
-        f"Expected exactly 1 probe call to reach the provider, got {probe_count}"
-    )
+    assert (
+        probe_count == 1
+    ), f"Expected exactly 1 probe call to reach the provider, got {probe_count}"
 
 
 @pytest.mark.asyncio
@@ -186,8 +187,8 @@ async def test_circuit_resolved_error_not_raised_for_closed_circuit() -> None:
 async def test_call_with_fallback_does_not_record_failure_on_circuit_resolved() -> None:
     """call_with_fallback skips CircuitResolvedError without recording a failure.
 
-    When a probe slot is already taken, the call is not a failure — it's a
-    routing signal. The failure_count should not increase.
+    When a probe slot is already taken, the call is not a failure — it's
+    a routing signal. The failure_count should not increase.
     """
     model = "test:model"
     router = _make_open_router(model)

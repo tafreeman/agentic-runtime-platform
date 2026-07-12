@@ -164,7 +164,9 @@ def test_tenant_helpers_cover_claims_and_dry_run(tmp_path: Path) -> None:
     assert dry_file.exists()
     assert not (runs_root / "tenant-b").exists()
 
-    target = tenant_mod.tenant_run_dir("tenant-b", base_dir=tmp_path / "other-runs", create=False)
+    target = tenant_mod.tenant_run_dir(
+        "tenant-b", base_dir=tmp_path / "other-runs", create=False
+    )
     assert target.name == "tenant-b"
     assert not target.exists()
 
@@ -173,7 +175,9 @@ def test_tenant_helpers_cover_claims_and_dry_run(tmp_path: Path) -> None:
 async def test_sanitization_dispatch_covers_non_json_and_body_error_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    middleware = server_middleware.SanitizationASGIMiddleware(lambda scope, receive, send: None)
+    middleware = server_middleware.SanitizationASGIMiddleware(
+        lambda scope, receive, send: None
+    )
     app = SimpleNamespace(state=SimpleNamespace(sanitization=object()))
     called = {"count": 0}
 
@@ -194,7 +198,9 @@ async def test_sanitization_dispatch_covers_non_json_and_body_error_paths(
                 raise self._body_error
             return self._body_result
 
-    response = await middleware.dispatch(_FakeRequest({"content-type": "text/plain"}), _call_next)
+    response = await middleware.dispatch(
+        _FakeRequest({"content-type": "text/plain"}), _call_next
+    )
     assert response.status_code == 200
     assert called["count"] == 1
 

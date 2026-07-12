@@ -19,8 +19,7 @@ DEFAULT_OUTPUT_DIR = ".temp/mcp-outputs"
 
 
 class McpOutputStorage:
-    """
-    Manages disk-backed storage for oversized MCP outputs.
+    """Manages disk-backed storage for oversized MCP outputs.
 
     Features:
     - Safe path handling (no traversal attacks)
@@ -35,8 +34,7 @@ class McpOutputStorage:
         output_dir: str | None = None,
         workspace_root: str | None = None,
     ) -> None:
-        """
-        Initialize output storage.
+        """Initialize output storage.
 
         Args:
             output_dir: Directory for output files (default: .temp/mcp-outputs)
@@ -57,8 +55,7 @@ class McpOutputStorage:
         tool_name: str,
         extension: str = "txt",
     ) -> tuple[str, str]:
-        """
-        Save text output to disk.
+        """Save text output to disk.
 
         Args:
             content: Text content to save
@@ -71,7 +68,9 @@ class McpOutputStorage:
         """
         # Generate safe filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        content_hash = hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[:8]
+        content_hash = hashlib.md5(content.encode(), usedforsecurity=False).hexdigest()[
+            :8
+        ]
         filename = f"{server_name}_{tool_name}_{timestamp}_{content_hash}.{extension}"
 
         # Sanitize filename (remove path separators)
@@ -91,7 +90,9 @@ class McpOutputStorage:
             raise
 
         # Get workspace-relative path (always starts with "./" for portability)
-        relative_path = os.path.join(".", os.path.relpath(file_path, self.workspace_root))
+        relative_path = os.path.join(
+            ".", os.path.relpath(file_path, self.workspace_root)
+        )
 
         return file_path, relative_path
 
@@ -102,8 +103,7 @@ class McpOutputStorage:
         tool_name: str,
         mime_type: str | None = None,
     ) -> tuple[str, str]:
-        """
-        Save binary output to disk.
+        """Save binary output to disk.
 
         Args:
             data: Binary data
@@ -139,7 +139,9 @@ class McpOutputStorage:
             raise
 
         # Get workspace-relative path (always starts with "./" for portability)
-        relative_path = os.path.join(".", os.path.relpath(file_path, self.workspace_root))
+        relative_path = os.path.join(
+            ".", os.path.relpath(file_path, self.workspace_root)
+        )
 
         return file_path, relative_path
 
@@ -150,8 +152,7 @@ class McpOutputStorage:
         tool_name: str,
         mime_type: str | None = None,
     ) -> tuple[str, str]:
-        """
-        Save base64-encoded output to disk.
+        """Save base64-encoded output to disk.
 
         Args:
             base64_data: Base64-encoded string
@@ -179,8 +180,7 @@ class McpOutputStorage:
         content_type: str = "output",
         format_description: str | None = None,
     ) -> str:
-        """
-        Generate a friendly message with file pointer for the LLM.
+        """Generate a friendly message with file pointer for the LLM.
 
         Args:
             file_path: Workspace-relative file path
@@ -204,8 +204,7 @@ class McpOutputStorage:
         return message
 
     def _mime_to_extension(self, mime_type: str) -> str:
-        """
-        Map MIME type to file extension.
+        """Map MIME type to file extension.
 
         Args:
             mime_type: MIME type string
@@ -235,8 +234,7 @@ class McpOutputStorage:
         return mime_map.get(mime_base, "bin")
 
     def _format_size(self, size: int) -> str:
-        """
-        Format byte/char count into human-readable string.
+        """Format byte/char count into human-readable string.
 
         Args:
             size: Size in bytes/chars
@@ -254,8 +252,7 @@ class McpOutputStorage:
             return f"{size / (1024 * 1024 * 1024):.1f} GB"
 
     def cleanup_old_files(self, max_age_hours: int = 24) -> int:
-        """
-        Clean up old output files.
+        """Clean up old output files.
 
         Args:
             max_age_hours: Delete files older than this many hours
@@ -279,7 +276,7 @@ class McpOutputStorage:
 
                 # Check file age
                 file_mtime = os.path.getmtime(file_path)
-                age_seconds = (now.timestamp() - file_mtime)
+                age_seconds = now.timestamp() - file_mtime
 
                 if age_seconds > max_age_seconds:
                     try:

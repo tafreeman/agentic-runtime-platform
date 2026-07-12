@@ -72,9 +72,10 @@ _MAX_ERROR_MESSAGE_LEN = 300
 def _safe_error_message(exc: Exception) -> str:
     """Return a scrubbed, truncated error description safe for the wire.
 
-    Redacts bearer tokens and every reachable provider's API-key shape, then
-    truncates so a verbose provider error can never leak environment values to
-    the browser (or, via the caller's log line, to the server log).
+    Redacts bearer tokens and every reachable provider's API-key shape,
+    then truncates so a verbose provider error can never leak
+    environment values to the browser (or, via the caller's log line, to
+    the server log).
     """
     message = f"{type(exc).__name__}: {exc}"
     for pattern in _SECRET_RES:

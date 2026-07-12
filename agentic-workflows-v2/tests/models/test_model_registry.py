@@ -147,8 +147,8 @@ def test_validate_rejects_unknown_provider():
 
 
 def test_validate_rejects_missing_tier():
-    """A registry missing a tier chain fails loudly at load, not as a later
-    KeyError in ModelRouter.get_chain's DEFAULT_CHAINS[TIER_2] fallback."""
+    """A registry missing a tier chain fails loudly at load, not as a later KeyError in
+    ModelRouter.get_chain's DEFAULT_CHAINS[TIER_2] fallback."""
     payload = _base_registry_dict()
     del payload["tiers"][2]
     registry = mr.Registry.model_validate(payload)

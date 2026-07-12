@@ -417,7 +417,9 @@ def _attempt_gh_run(
         )
 
     except FileNotFoundError:
-        return "gh models error: gh CLI not found. Install with: winget install GitHub.cli"
+        return (
+            "gh models error: gh CLI not found. Install with: winget install GitHub.cli"
+        )
     except subprocess.TimeoutExpired:
         if attempt < max_retries - 1:
             logger.info(

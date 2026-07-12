@@ -562,7 +562,9 @@ def validate(
     if lint_violations:
         for v in lint_violations:
             console.print(f"  [red]!![/red]  {v}")
-        console.print(f"\n[red]{len(lint_violations)} lint violation(s) -- fix before validating.[/red]")
+        console.print(
+            f"\n[red]{len(lint_violations)} lint violation(s) -- fix before validating.[/red]"
+        )
         raise typer.Exit(1)
 
     # Tier 2: deep LangGraph compilation check (requires langchain extra)

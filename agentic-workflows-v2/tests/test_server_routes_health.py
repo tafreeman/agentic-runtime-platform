@@ -84,10 +84,12 @@ class TestLivenessProbe:
     def test_health_reports_no_llm_mode_disabled(
         self, client: TestClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """With no backed client and AGENTIC_NO_LLM unset, the payload reports
-        False. ``backendless_baseline`` pins the backend-less client so this
+        """With no backed client and AGENTIC_NO_LLM unset, the payload reports False.
+
+        ``backendless_baseline`` pins the backend-less client so this
         holds under the no-llm-smoke job too (where the ambient flag would
-        otherwise install a MockBackend and make the effective mode True)."""
+        otherwise install a MockBackend and make the effective mode True).
+        """
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
         resp = client.get("/api/health")
@@ -101,9 +103,8 @@ class TestLivenessProbe:
     ) -> None:
         """With no concrete backend installed (``backendless_baseline`` pins the
         backend-less client, so this holds under the no-llm-smoke job too),
-        ``no_llm_mode`` falls back to the live ``AGENTIC_NO_LLM`` env, so
-        flipping the flag between two requests changes the payload.
-        """
+        ``no_llm_mode`` falls back to the live ``AGENTIC_NO_LLM`` env, so flipping the
+        flag between two requests changes the payload."""
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
         first = client.get("/api/health").json()
 
@@ -116,10 +117,11 @@ class TestLivenessProbe:
     def test_no_llm_mode_reflects_effective_backend_over_a_late_env_flip(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Once a client is built with a MockBackend (an ``AGENTIC_NO_LLM=1``
-        startup), a later env flip must NOT flip the reported mode: it reflects
-        the effective backend — what the server actually serves — not the
-        mutated env. Guards the health badge from falsely claiming LLM is active
+        """Once a client is built with a MockBackend (an ``AGENTIC_NO_LLM=1`` startup),
+        a later env flip must NOT flip the reported mode: it reflects the effective
+        backend — what the server actually serves — not the mutated env.
+
+        Guards the health badge from falsely claiming LLM is active
         while the process still serves placeholders (and the reverse).
         """
         from agentic_v2.models.client import (
@@ -137,9 +139,9 @@ class TestLivenessProbe:
             # Flip the flag OFF at runtime without resetting the client.
             monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
-            assert effective_no_llm_mode() is True, (
-                "must reflect the effective MockBackend, not the flipped env"
-            )
+            assert (
+                effective_no_llm_mode() is True
+            ), "must reflect the effective MockBackend, not the flipped env"
         finally:
             reset_client()  # don't leak the MockBackend client to later tests
 
@@ -203,8 +205,8 @@ class TestReadinessProbe:
         """Repeated probes reuse one Redis store instead of reconnecting.
 
         PR #73 review (Gemini): a fresh connection pool per probe churns
-        sockets under frequent orchestrator health checks; the probe must
-        connect once and reuse the store while it stays healthy.
+        sockets under frequent orchestrator health checks; the probe
+        must connect once and reuse the store while it stays healthy.
         """
         url = "redis://127.0.0.1:6399/0"
         monkeypatch.setenv("REDIS_URL", url)

@@ -136,7 +136,9 @@ def test_lint_workflow_file_malformed_yaml(tmp_path: pathlib.Path) -> None:
 
 
 def test_lint_violation_str_with_step() -> None:
-    v = LintViolation(field="agent", step="step_one", message="required step field missing")
+    v = LintViolation(
+        field="agent", step="step_one", message="required step field missing"
+    )
     assert str(v) == "ERROR [step_one] field 'agent': required step field missing"
 
 

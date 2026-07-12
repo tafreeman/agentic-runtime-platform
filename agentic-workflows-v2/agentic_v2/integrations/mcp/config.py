@@ -25,9 +25,7 @@ from agentic_v2.integrations.mcp.types import (
 logger = logging.getLogger(__name__)
 
 # Pattern for variable expansion: ${input:var_name} or ${env:var_name} or ${VAR_NAME}
-VAR_EXPANSION_PATTERN = re.compile(
-    r"\$\{(?:input:)?(?:env:)?([A-Za-z_]\w*)\}"
-)
+VAR_EXPANSION_PATTERN = re.compile(r"\$\{(?:input:)?(?:env:)?([A-Za-z_]\w*)\}")
 
 
 def expand_variables(

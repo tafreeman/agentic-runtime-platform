@@ -68,8 +68,8 @@ def _router() -> SmartModelRouter:
 async def test_complete_chat_threads_usage_into_record_success(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A mocked complete_chat call with real usage reaches record_success
-    with non-zero token counts (AGENTIC_NO_LLM=1, no network)."""
+    """A mocked complete_chat call with real usage reaches record_success with non-zero
+    token counts (AGENTIC_NO_LLM=1, no network)."""
     monkeypatch.setenv("AGENTIC_NO_LLM", "1")
     from agentic_v2.settings import get_settings
 
@@ -85,9 +85,7 @@ async def test_complete_chat_threads_usage_into_record_success(
     captured: list[dict[str, Any]] = []
     original_record_success = router.record_success
 
-    def spy_record_success(
-        model: str, latency_ms: float, usage: Any = None
-    ) -> None:
+    def spy_record_success(model: str, latency_ms: float, usage: Any = None) -> None:
         captured.append({"model": model, "usage": usage})
         original_record_success(model, latency_ms, usage=usage)
 

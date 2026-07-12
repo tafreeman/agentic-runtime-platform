@@ -52,7 +52,9 @@ async def sanitize_prompt(
     """
     if sanitization is None:
         return prompt
-    san_result = await sanitization.process(prompt, {"source": source, "tier": tier.name})
+    san_result = await sanitization.process(
+        prompt, {"source": source, "tier": tier.name}
+    )
     if not san_result.is_safe:
         raise ValueError(
             f"Prompt blocked by sanitization: {san_result.classification.value}"

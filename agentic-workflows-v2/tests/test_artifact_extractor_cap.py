@@ -1,4 +1,5 @@
-"""Tests for the 256 KB cap guard in agentic_v2.workflows.artifact_extractor._scan_output_for_files.
+"""Tests for the 256 KB cap guard in
+agentic_v2.workflows.artifact_extractor._scan_output_for_files.
 
 The cap guard at ~line 75-76 of artifact_extractor.py executes on every call
 that passes a string blob.  These tests call _scan_output_for_files with
@@ -20,7 +21,8 @@ class TestScanOutputForFilesCapGuard:
     def test_extracts_single_file_block_from_string(self):
         """A single FILE/ENDFILE block in a string blob is extracted.
 
-        The cap guard is evaluated for every blob string before the regex runs.
+        The cap guard is evaluated for every blob string before the
+        regex runs.
         """
         blob = "FILE: src/app.py\nprint('hello')\nENDFILE\n"
         result = _scan_output_for_files(blob)
@@ -32,10 +34,7 @@ class TestScanOutputForFilesCapGuard:
 
     def test_extracts_multiple_file_blocks(self):
         """Multiple FILE/ENDFILE blocks in one string blob are all extracted."""
-        blob = (
-            "FILE: a.txt\nContent A\nENDFILE\n"
-            "FILE: b.txt\nContent B\nENDFILE\n"
-        )
+        blob = "FILE: a.txt\nContent A\nENDFILE\n" "FILE: b.txt\nContent B\nENDFILE\n"
         result = _scan_output_for_files(blob)
         assert len(result) == 2
 

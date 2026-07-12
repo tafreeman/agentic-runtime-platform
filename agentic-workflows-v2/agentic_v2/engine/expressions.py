@@ -400,9 +400,7 @@ class ExpressionEvaluator:
 
         if isinstance(node, ast.Name):
             if node.id.startswith("__"):
-                raise ValueError(
-                    f"Dunder name reference is not allowed: {node.id!r}"
-                )
+                raise ValueError(f"Dunder name reference is not allowed: {node.id!r}")
             if node.id not in env:
                 raise NameError(f"name {node.id!r} is not defined")
             return env[node.id]
@@ -486,9 +484,7 @@ class ExpressionEvaluator:
                     if result:
                         return result
                 return result
-            raise ValueError(
-                f"Unsupported boolean operator: {type(node.op).__name__}"
-            )
+            raise ValueError(f"Unsupported boolean operator: {type(node.op).__name__}")
 
         if isinstance(node, ast.Compare):
             left = self._eval_node(node.left, env)
@@ -515,8 +511,7 @@ class ExpressionEvaluator:
             func = self._eval_node(node.func, env)
             if func is not _coalesce:
                 raise ValueError(
-                    "Only coalesce() may be called in expressions; "
-                    f"got {func!r}"
+                    "Only coalesce() may be called in expressions; " f"got {func!r}"
                 )
             args = [self._eval_node(arg, env) for arg in node.args]
             return func(*args)

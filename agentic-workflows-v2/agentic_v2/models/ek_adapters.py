@@ -140,7 +140,8 @@ def _freeze_usage(usage: Any) -> MappingProxyType[str, Any]:
 
 
 def dict_to_llm_response(payload: dict[str, Any]) -> LLMResponse:
-    """Map a runtime ``complete_chat`` dict (canonicalized per Phase 3) to ``LLMResponse``.
+    """Map a runtime ``complete_chat`` dict (canonicalized per Phase 3) to
+    ``LLMResponse``.
 
     Loss-less when ``payload`` was produced by a Phase-3 backend. The original
     dict is preserved verbatim under ``LLMResponse.raw`` so any
@@ -192,9 +193,7 @@ def llm_response_to_dict(resp: LLMResponse) -> dict[str, Any]:
     }
 
 
-def map_http_error(
-    status: int, retry_after: float | None = None
-) -> type[LLMError]:
+def map_http_error(status: int, retry_after: float | None = None) -> type[LLMError]:
     """Classify an upstream HTTP status code to an EK error class.
 
     Mapping (per ADR-023 and the EK ``provider.py`` contract):

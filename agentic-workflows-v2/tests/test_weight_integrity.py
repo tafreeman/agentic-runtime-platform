@@ -142,7 +142,7 @@ models:
 
 @pytest.mark.skip(
     reason="Fails when global sys.path resolves tools.llm to a sibling clone. "
-           "Requires isolated venv for correct execution."
+    "Requires isolated venv for correct execution."
 )
 def test_local_provider_verifies_weights_before_loading(
     tmp_path: Path,
@@ -188,7 +188,9 @@ models:
         try:
             wi_module.verify_model_weights(path)
         except wi_module.ModelWeightVerificationError as exc:
-            raise RuntimeError(f"Local model weight verification failed: {exc}") from exc
+            raise RuntimeError(
+                f"Local model weight verification failed: {exc}"
+            ) from exc
         return path
 
     with pytest.raises(RuntimeError, match="Local model weight verification failed"):

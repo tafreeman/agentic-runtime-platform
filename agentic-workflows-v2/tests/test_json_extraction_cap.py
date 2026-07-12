@@ -1,4 +1,5 @@
-"""Tests for the 256 KB cap guard in agentic_v2.agents.json_extraction._find_json_string.
+"""Tests for the 256 KB cap guard in
+agentic_v2.agents.json_extraction._find_json_string.
 
 The cap line at ~line 60 in json_extraction.py executes on every call to
 _find_json_string.  These tests call the function with small valid inputs
@@ -33,7 +34,7 @@ class TestFindJsonStringCapGuard:
 
     def test_extracts_from_generic_fenced_block(self):
         """Strategy 2: generic ``` ... ``` fence containing a JSON object."""
-        text = "Here you go:\n```\n{\"x\": 1, \"y\": 2}\n```\n"
+        text = 'Here you go:\n```\n{"x": 1, "y": 2}\n```\n'
         result = _find_json_string(text)
         assert result == '{"x": 1, "y": 2}'
 

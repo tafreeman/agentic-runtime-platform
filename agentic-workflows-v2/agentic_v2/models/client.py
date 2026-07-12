@@ -137,7 +137,8 @@ class LLMClientWrapper:
         self.budget = TokenBudget(max_tokens=max_tokens)
 
     def _cache_key(self, prompt: str, tier: ModelTier, **kwargs: Any) -> str:
-        """SHA-256 cache key from prompt, tier, and sorted kwargs (first 16 hex chars)."""
+        """SHA-256 cache key from prompt, tier, and sorted kwargs (first 16 hex
+        chars)."""
         key_data = f"{prompt}:{tier.value}:{sorted(kwargs.items())}"
         return hashlib.sha256(key_data.encode()).hexdigest()[:16]
 
@@ -207,7 +208,9 @@ class LLMClientWrapper:
 
     async def _sanitize_response_text(self, response: str) -> str:
         """Outbound response sanitizer — no-op when no response sanitizer attached."""
-        return await _sd_response_text(response, response_sanitizer=self.response_sanitizer)
+        return await _sd_response_text(
+            response, response_sanitizer=self.response_sanitizer
+        )
 
     async def _sanitize_response_content_blocks(self, blocks: list[Any]) -> list[Any]:
         """Outbound list-of-blocks response sanitizer."""
@@ -375,8 +378,9 @@ class LLMClientWrapper:
     ) -> tuple[str, str, int]:
         """Execute one legacy ``complete`` attempt and record its success.
 
-        Runs the routed call, counts tokens, records router success, applies
-        response sanitization, updates the budget, and caches the result.
+        Runs the routed call, counts tokens, records router success,
+        applies response sanitization, updates the budget, and caches
+        the result.
         """
         assert self.backend is not None  # guarded by complete() before invocation
         response = await self.router._execute_call(
@@ -595,9 +599,7 @@ class LLMClientWrapper:
                 # Explicit fallback (mirrors _complete_via_ek): stream the legacy
                 # path and return, so a future edit cannot silently break the
                 # fall-through by reordering the branches below.
-                async for chunk in self._complete_stream_legacy(
-                    prompt, tier, **kwargs
-                ):
+                async for chunk in self._complete_stream_legacy(prompt, tier, **kwargs):
                     yield chunk
                 return
             else:
@@ -724,7 +726,9 @@ class LLMClientWrapper:
         # Check cache
         cache_key: str | None = None
         if use_cache and self.enable_cache:
-            cache_key = self._cache_key(str(messages), tier, tools=tools, model=model, **kwargs)
+            cache_key = self._cache_key(
+                str(messages), tier, tools=tools, model=model, **kwargs
+            )
             cached_chat = self._get_cached_chat(cache_key)
             if cached_chat is not None:
                 return cached_chat
@@ -775,6 +779,7 @@ class LLMClientWrapper:
         if cached is None:
             return None
         import json
+
         try:
             response_dict = json.loads(cached.response)
         except json.JSONDecodeError:
@@ -794,8 +799,9 @@ class LLMClientWrapper:
     ) -> tuple[dict[str, Any], str, int]:
         """Execute one ``complete_chat`` attempt and record its success.
 
-        Runs the routed call, counts request+response tokens, records router
-        success, updates the budget, and caches the serialized response.
+        Runs the routed call, counts request+response tokens, records
+        router success, updates the budget, and caches the serialized
+        response.
         """
         assert self.backend is not None  # guarded by complete_chat() before invocation
         # _execute_call expects a prompt string, so we pass prompt_str
@@ -814,21 +820,23 @@ class LLMClientWrapper:
                     "content": await self._sanitize_response_text(content),
                 }
             elif isinstance(content, list):
-                cleaned_blocks = await self._sanitize_response_content_blocks(
-                    content
-                )
+                cleaned_blocks = await self._sanitize_response_content_blocks(content)
                 response_dict = {**response_dict, "content": cleaned_blocks}
 
         # Prefer real usage from the provider; fall back to char estimate.
         usage = response_dict.get("usage") or {}
-        reported = (usage.get("prompt_tokens") or 0) + (usage.get("completion_tokens") or 0)
+        reported = (usage.get("prompt_tokens") or 0) + (
+            usage.get("completion_tokens") or 0
+        )
         if reported > 0:
             tokens = reported
         else:
             response_text = response_dict.get("content", "") or ""
             if response_dict.get("tool_calls"):
                 response_text += str(response_dict.get("tool_calls"))
-            tokens = self.backend.count_tokens(prompt_str + response_text, selected_model)
+            tokens = self.backend.count_tokens(
+                prompt_str + response_text, selected_model
+            )
         latency = (time.monotonic() - start) * 1000
 
         # Record success (threads real provider token usage onto the
@@ -842,7 +850,10 @@ class LLMClientWrapper:
         # Cache response
         if use_cache and self.enable_cache and cache_key is not None:
             import json
-            self._set_cached(cache_key, json.dumps(response_dict), selected_model, tokens)
+
+            self._set_cached(
+                cache_key, json.dumps(response_dict), selected_model, tokens
+            )
 
         return response_dict, selected_model, tokens
 
@@ -929,9 +940,7 @@ def get_client(auto_configure: bool = False) -> LLMClientWrapper:
         if is_agentic_no_llm_enabled():
             from .backends import PLACEHOLDER_RESPONSE_TEXT, MockBackend
 
-            _client.set_backend(
-                MockBackend(default_response=PLACEHOLDER_RESPONSE_TEXT)
-            )
+            _client.set_backend(MockBackend(default_response=PLACEHOLDER_RESPONSE_TEXT))
             logger.warning(
                 "AGENTIC_NO_LLM=1: all LLM calls return a placeholder. "
                 "Disable for production workloads."

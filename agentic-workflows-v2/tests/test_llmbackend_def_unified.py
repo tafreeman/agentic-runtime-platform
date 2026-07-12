@@ -42,8 +42,8 @@ def test_llmbackend_definitions_are_the_same_class() -> None:
 
 
 def test_unified_llmbackend_exposes_complete_chat() -> None:
-    """The unified ABC must declare complete_chat (the abstract method
-    that was previously missing from the client.py Protocol)."""
+    """The unified ABC must declare complete_chat (the abstract method that was
+    previously missing from the client.py Protocol)."""
     assert hasattr(ClientLLMBackend, "complete_chat"), (
         "Unified LLMBackend must expose complete_chat for the wrapper "
         "and step executor to see it."
@@ -54,9 +54,10 @@ def test_unified_llmbackend_exposes_complete_chat() -> None:
 
 
 def test_all_concrete_backends_inherit_unified_llmbackend() -> None:
-    """Every concrete backend shipped in the runtime must inherit the
-    unified ABC. This catches drift if a new backend is added that
-    bypasses the ABC."""
+    """Every concrete backend shipped in the runtime must inherit the unified ABC.
+
+    This catches drift if a new backend is added that bypasses the ABC.
+    """
     concrete_backends = [
         OpenAIBackend,
         AnthropicBackend,

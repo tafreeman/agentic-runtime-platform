@@ -61,9 +61,7 @@ def _lint_depends_on(
 def _lint_step(step: Any, step_names: set[str]) -> list[LintViolation]:
     """Validate a single step mapping and return its violations."""
     if not isinstance(step, dict):
-        return [
-            LintViolation(field="steps[]", message="each step must be a mapping")
-        ]
+        return [LintViolation(field="steps[]", message="each step must be a mapping")]
 
     step_name: str = step.get("name", "<unnamed>")
     violations: list[LintViolation] = [
@@ -97,9 +95,7 @@ def lint_workflow_dict(doc: dict[str, Any]) -> list[LintViolation]:
         return violations
 
     step_names: set[str] = {
-        s.get("name")
-        for s in steps
-        if isinstance(s, dict) and "name" in s
+        s.get("name") for s in steps if isinstance(s, dict) and "name" in s
     }
 
     for step in steps:
@@ -121,7 +117,9 @@ def lint_workflow_file(path: pathlib.Path) -> list[LintViolation]:
         return [LintViolation(field="yaml", message=f"YAML parse error: {exc}")]
 
     if not isinstance(doc, dict):
-        return [LintViolation(field="document", message="workflow YAML must be a mapping")]
+        return [
+            LintViolation(field="document", message="workflow YAML must be a mapping")
+        ]
 
     return lint_workflow_dict(doc)
 
