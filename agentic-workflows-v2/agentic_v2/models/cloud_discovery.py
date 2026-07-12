@@ -457,9 +457,7 @@ def _curate_openrouter_ids(payload: Any) -> list[str] | None:
             free.append(model_id)
         elif model_id.startswith(_OPENROUTER_FLAGSHIP_PREFIXES):
             flagship.append(model_id)
-    return sorted(free)[:_OPENROUTER_FREE_CAP] + _interleave_flagship_families(
-        flagship
-    )
+    return sorted(free)[:_OPENROUTER_FREE_CAP] + _interleave_flagship_families(flagship)
 
 
 def discover_openrouter_models() -> list[CloudModelInfo]:
