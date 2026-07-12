@@ -281,9 +281,7 @@ def detect_registry_drift(
     # Snapshot quarantine before the network call; re-read after and union both
     # so quarantines added by a concurrent probe during discovery are not lost.
     prior_snapshot = registry.quarantined_ids()
-    live_source = (
-        discover_cloud_models() if cloud_listing is None else cloud_listing
-    )
+    live_source = discover_cloud_models() if cloud_listing is None else cloud_listing
     live_ids = {info.id for info in live_source}
     checked_providers = {registry.provider_for(mid) for mid in live_ids}
     # Union: any id quarantined by a concurrent probe during the network window.
