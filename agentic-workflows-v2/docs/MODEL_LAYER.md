@@ -32,10 +32,12 @@
   (`langchain/models.py` + `langchain/model_utils.py` + the
   `agentic_v2/models/*_discovery.py` modules). It is **not** an ExecutionKit
   feature — ExecutionKit is a separate, opt‑in *execution* bridge.
-- "Ollama" is modeled as a **local, unauthenticated** provider
-  (`OLLAMA_BASE_URL`, default `http://localhost:11434`); setting
-  `OLLAMA_API_KEY` additionally lists **ollama.com cloud** models via the
-  Bearer‑key method (ADR‑037).
+- "Ollama" is **local‑first**: models present in the local daemon's
+  `/api/tags` are served from `OLLAMA_BASE_URL` (default
+  `http://localhost:11434`, no auth). Setting `OLLAMA_API_KEY` lists
+  **ollama.com cloud** models via the Bearer‑key method (ADR‑037) **and**
+  routes execution of models absent locally to `ollama.com` with the same
+  key (ADR‑051); without the key, Ollama stays local‑only.
 
 ## System diagram
 
@@ -94,7 +96,7 @@ flowchart TD
   subgraph BUILD["Model builders - langchain/model_builders.py"]
     B1["github to Azure inference<br/>GITHUB_TOKEN"]
     B2["openai / anthropic / gemini / nvidia / openrouter<br/>provider APIs + API keys"]
-    B3["ollama to OLLAMA_BASE_URL<br/>localhost:11434, no auth"]
+    B3["ollama local-first: OLLAMA_BASE_URL, no auth<br/>absent locally + OLLAMA_API_KEY: ollama.com Bearer (ADR-051)"]
     B4["lmstudio / local / onnx<br/>localhost servers + local runtimes"]
   end
   LC --> BUILD
@@ -151,7 +153,7 @@ set, or when the provider needs **no** key (local providers always pass).
 | `gh` | `GITHUB_TOKEN` | `models.inference.ai.azure.com` | Bearer token |
 | `nvidia` | `NVIDIA_API_KEY` (+ optional `NVIDIA_BASE_URL` for on‑prem NIM) | `integrate.api.nvidia.com/v1` | Bearer token |
 | `openrouter` | `OPENROUTER_API_KEY` (+ optional `OPENROUTER_BASE_URL`) — ADR‑050, PR #188 | `openrouter.ai/api/v1` | Bearer token |
-| `ollama` | _(none; optional `OLLAMA_API_KEY` for ollama.com cloud listing)_ | `OLLAMA_BASE_URL` → `localhost:11434` | **none (local)** |
+| `ollama` | _(none; optional `OLLAMA_API_KEY` for ollama.com cloud listing **and** execution of models absent locally — ADR‑051)_ | `OLLAMA_BASE_URL` → `localhost:11434`, local‑first; `ollama.com` for cloud‑routed calls | none (local) / Bearer token (cloud‑routed) |
 | `lmstudio` | _(none)_ | `LMSTUDIO_HOST`, else first reachable of `:1234` / `:12340` | none (local) |
 | `onnx` | _(none)_ | local onnxruntime‑genai (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`) | none (local) |
 | `local` / `local_api` | _(none)_ | local ONNX / local server | none (local) |

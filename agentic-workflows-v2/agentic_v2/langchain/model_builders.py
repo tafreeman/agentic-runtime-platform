@@ -430,8 +430,27 @@ def build_notebooklm_model(model_name: str, temperature: float) -> Any:
     return build_gemini_model(resolved, temperature)
 
 
+def _ollama_served_locally(model_name: str) -> bool:
+    """True when the local daemon's ``/api/tags`` can serve ``model_name``.
+
+    Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
+    also matches its ``:latest`` alias, mirroring the daemon's own resolution.
+    """
+    from ..models.ollama_discovery import local_model_names
+
+    names = local_model_names()
+    return model_name in names or f"{model_name}:latest" in names
+
+
 def build_ollama_model(model_name: str, temperature: float) -> Any:
-    """Build a ChatOllama instance for local Ollama server.
+    """Build a ChatOllama instance for a local or ollama.com-hosted model.
+
+    Local-first (ADR-051): a model present in the local daemon's ``/api/tags``
+    is served from ``OLLAMA_BASE_URL`` exactly as before. When the model is
+    absent locally and ``OLLAMA_API_KEY`` is set, the call is routed to the
+    hosted ``https://ollama.com`` API with bearer auth instead — otherwise
+    cloud-catalog models are listed by discovery but 404 at execution time.
+    Without an API key, behavior is unchanged.
 
     Parameters
     ----------
@@ -457,12 +476,28 @@ def build_ollama_model(model_name: str, temperature: float) -> Any:
             "Install with: pip install langchain-ollama"
         ) from exc
 
-    base_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-    logger.debug("Using Ollama: %s at %s", model_name, base_url)
+    from ..models.ollama_discovery import (
+        CLOUD_HOST,
+        DEFAULT_LOCAL_HOST,
+        ENV_API_KEY,
+        ENV_BASE_URL,
+    )
+
+    base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST)
+    client_kwargs: dict[str, Any] = {}
+    api_key = os.environ.get(ENV_API_KEY)
+    if api_key and not _ollama_served_locally(model_name):
+        base_url = CLOUD_HOST
+        client_kwargs = {"headers": {"Authorization": f"Bearer {api_key}"}}
+        logger.debug("Using Ollama cloud: %s at %s", model_name, base_url)
+    else:
+        logger.debug("Using Ollama: %s at %s", model_name, base_url)
     return ChatOllama(
         model=model_name,
         base_url=base_url,
         temperature=temperature,
+        client_kwargs=client_kwargs,
+        async_client_kwargs=client_kwargs,
     )
 
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -149,6 +150,40 @@ def _parse_tags(
     return models
 
 
+# Cached ``/api/tags`` name set for the routing decision in
+# ``build_ollama_model``: probing the daemon on every model build would add a
+# network round-trip per step, so hits are memoised for a short window. The
+# cache stores (expires_at, names); a failed probe caches an empty set so a
+# down daemon costs one timeout per window, not one per build.
+_LOCAL_TAGS_TTL_SECONDS = 60.0
+_local_tags_cache: tuple[float, frozenset[str]] | None = None
+
+
+def local_model_names() -> frozenset[str]:
+    """Return model names the local daemon can serve right now (cached).
+
+    Reads ``GET {OLLAMA_BASE_URL}/api/tags`` and caches the resulting name set
+    for ``_LOCAL_TAGS_TTL_SECONDS``. Best-effort like the rest of this module:
+    any probe failure yields (and caches) an empty set. Never raises.
+    """
+    global _local_tags_cache
+    now = time.monotonic()
+    if _local_tags_cache is not None and now < _local_tags_cache[0]:
+        return _local_tags_cache[1]
+
+    base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST).rstrip("/")
+    data = _get_json(f"{base_url}{_TAGS_PATH}")
+    names: set[str] = set()
+    for entry in (data or {}).get("models", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get("name") or entry.get("model")
+        if isinstance(name, str) and name:
+            names.add(name)
+    _local_tags_cache = (now + _LOCAL_TAGS_TTL_SECONDS, frozenset(names))
+    return _local_tags_cache[1]
+
+
 def discover_ollama_models() -> list[OllamaModelInfo]:
     """Discover Ollama models actually available right now (best-effort).
 
@@ -188,4 +223,4 @@ def discover_ollama_models() -> list[OllamaModelInfo]:
     return discovered
 
 
-__all__ = ["OllamaModelInfo", "discover_ollama_models"]
+__all__ = ["OllamaModelInfo", "discover_ollama_models", "local_model_names"]
