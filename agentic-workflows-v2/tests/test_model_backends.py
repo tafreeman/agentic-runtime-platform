@@ -142,6 +142,7 @@ class TestPrefixMap:
             "ollama:",
             "local:",
             "onnx:",
+            "openrouter:",
         }
         assert set(PREFIX_MAP.keys()) == expected
 

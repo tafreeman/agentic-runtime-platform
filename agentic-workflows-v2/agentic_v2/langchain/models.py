@@ -69,6 +69,7 @@ from .model_builders import (
     build_nvidia_model,
     build_ollama_model,
     build_openai_model,
+    build_openrouter_model,
     build_placeholder_model,
 )
 from .model_utils import (
@@ -394,13 +395,12 @@ def _merge_local_models(models: list[dict[str, Any]]) -> None:
 
 
 def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
-    """Append live cloud-provider listings (OpenAI/Anthropic/Gemini/GitHub).
+    """Append live cloud-provider listings as tier-0 catalog entries.
 
-    Skipped entirely in no-LLM mode: that mode routes every tier to the
-    deterministic placeholder, so a live cloud listing would be both misleading
-    and a needless network/cost liability (it also keeps the unit suite — which
-    runs with ``AGENTIC_NO_LLM=1`` — hermetic). Discovered ids absent from the
-    static chains are appended at tier 0; only keyed providers make a call.
+    Skipped entirely in no-LLM mode: every tier routes to the placeholder
+    there, so a live listing would mislead and cost network (it also keeps the
+    ``AGENTIC_NO_LLM=1`` unit suite hermetic). Availability reflects the key
+    env — OpenRouter's keyless static-fallback entries honestly show False.
     """
     from ..settings import is_agentic_no_llm_enabled
 
@@ -416,7 +416,7 @@ def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
                 "id": info.id,
                 "provider": provider_prefix(info.id),
                 "tier": 0,
-                "available": True,
+                "available": is_provider_available(provider_prefix(info.id)),
             }
         )
 
@@ -546,6 +546,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("ollama:", build_ollama_model),
     ("openai:", build_openai_model),
     ("nvidia:", build_nvidia_model),
+    ("openrouter:", build_openrouter_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -562,6 +563,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
 _KNOWN_PREFIXES: tuple[str, ...] = (
     "openai:",
     "nvidia:",
+    "openrouter:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -625,10 +627,10 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     if model is not None:
         return model
 
+    supported = ", ".join(prefix for prefix, _ in _PREFIX_BUILDERS)
     raise ValueError(
         f"Unsupported model provider in '{model_id}'. "
-        "Supported prefixes: gh:, ollama:, openai:, anthropic:/claude:, "
-        "gemini:, notebooklm:, local:, lmstudio:, local-api:."
+        f"Supported prefixes: {supported}."
     )
 
 
@@ -780,6 +782,7 @@ __all__ = [
     "build_github_model",
     "build_openai_model",
     "build_nvidia_model",
+    "build_openrouter_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",

@@ -389,10 +389,16 @@ class TestEnumerateKnownModelsMerge:
     def test_cloud_models_merged_in_llm_mode(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Keyed cloud listings append as tier-0 entries when LLM mode is on."""
+        """Keyed cloud listings append as tier-0 entries when LLM mode is on.
+
+        ``available`` is derived from the provider's key env (no longer
+        hardcoded ``True``), so the key is pinned explicitly — the assertion
+        must not depend on whatever keys the host machine happens to carry.
+        """
         from agentic_v2.models.cloud_discovery import CloudModelInfo
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)  # LLM mode
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_ollama_models", lambda: []
         )
@@ -407,6 +413,27 @@ class TestEnumerateKnownModelsMerge:
         assert entry["provider"] == "openai"
         assert entry["tier"] == 0
         assert entry["available"] is True
+
+    def test_cloud_merge_availability_tracks_key_env(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A merged cloud entry without its key env advertises available=False."""
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models",
+            lambda: [CloudModelInfo(id="openai:gpt-4o-2099-mega")],
+        )
+        by_id = {m["id"]: m for m in enumerate_known_models()}
+
+        entry = by_id.get("openai:gpt-4o-2099-mega")
+        assert entry is not None
+        assert entry["available"] is False
 
     def test_cloud_discovery_skipped_in_no_llm_mode(
         self, monkeypatch: pytest.MonkeyPatch

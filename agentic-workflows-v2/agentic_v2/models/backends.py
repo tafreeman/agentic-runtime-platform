@@ -46,6 +46,7 @@ from .backends_cloud import (
     GitHubModelsBackend,
     NvidiaBackend,
     OpenAIBackend,
+    OpenRouterBackend,
 )
 from .backends_local import OllamaBackend, OnnxBackend
 from .secrets import SecretProvider, get_first_secret, get_secret
@@ -62,6 +63,7 @@ PREFIX_MAP: dict[str, str] = {
     "gh:": "github",
     "openai:": "openai",
     "nvidia:": "nvidia",
+    "openrouter:": "openrouter",
     "anthropic:": "anthropic",
     "gemini:": "gemini",
     "azure:": "azure",
@@ -257,6 +259,12 @@ def _build_cloud_backend(
         return OpenAIBackend(
             api_key=_required_secret("OPENAI_API_KEY", secret_provider=secret_provider)
         )
+    if provider == "openrouter":
+        return OpenRouterBackend(
+            api_key=_required_secret(
+                "OPENROUTER_API_KEY", secret_provider=secret_provider
+            )
+        )
     if provider == "anthropic":
         return AnthropicBackend(
             api_key=_required_secret(
@@ -359,6 +367,17 @@ def _register_cloud_backends(
             "nvidia",
             lambda: NvidiaBackend(api_key=nvidia_api_key or ""),
             "Registered NVIDIA NIM backend",
+        )
+
+    # OpenRouter — aggregator over an OpenAI-compatible surface; always
+    # authenticated (no keyless self-hosted mode, unlike NIM).
+    openrouter_api_key = get_secret("OPENROUTER_API_KEY", provider=active_provider)
+    if openrouter_api_key:
+        _try_register_backend(
+            backends,
+            "openrouter",
+            lambda: OpenRouterBackend(api_key=openrouter_api_key),
+            "Registered OpenRouter backend",
         )
 
     # Anthropic
@@ -469,6 +488,7 @@ __all__ = [
     "GitHubModelsBackend",
     "OpenAIBackend",
     "NvidiaBackend",
+    "OpenRouterBackend",
     "AnthropicBackend",
     "GeminiBackend",
     "AzureOpenAIBackend",

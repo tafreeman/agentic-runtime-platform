@@ -42,6 +42,8 @@ _ALL_KEYS = (
     "GITHUB_TOKEN",
     "NVIDIA_API_KEY",
     "NVIDIA_BASE_URL",
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_BASE_URL",
 )
 
 
@@ -330,14 +332,25 @@ class TestAggregate:
             },
         )
         result = sorted(m.id for m in discover_cloud_models())
-        assert result == ["gh:openai/gpt-4.1", "openai:gpt-4o"]
-        # Anthropic + Gemini have no key → never called.
+        keyed = [m for m in result if not m.startswith("openrouter:")]
+        assert keyed == ["gh:openai/gpt-4.1", "openai:gpt-4o"]
+        # OpenRouter is keyless here: its curated static fallback appears
+        # without any fetch (exact contents covered in
+        # test_openrouter_discovery.py).
+        assert any(m.startswith("openrouter:") for m in result)
+        # Anthropic + Gemini have no key → never called; OpenRouter keyless
+        # → never called either.
         probed = {url for url, _ in calls}
         assert probed == {_OPENAI, _GITHUB}
 
-    def test_no_keys_returns_empty_without_network(
+    def test_no_keys_yields_only_openrouter_fallback_without_network(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         calls = _route(monkeypatch, {})
-        assert discover_cloud_models() == []
+        result = discover_cloud_models()
+        # Keyless discovery makes zero network calls; only OpenRouter's
+        # curated static fallback is returned (surfaced downstream with
+        # available=False until a key is configured).
         assert calls == []
+        assert result != []
+        assert all(m.id.startswith("openrouter:") for m in result)
