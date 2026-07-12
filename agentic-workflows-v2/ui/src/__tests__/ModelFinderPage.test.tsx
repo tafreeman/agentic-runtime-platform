@@ -329,4 +329,26 @@ describe("ModelFinderPage", () => {
       expect(rescanButton).toHaveAttribute("aria-busy", "false");
     });
   });
+
+  it("switches to the chat playground tab and back to the finder", async () => {
+    renderPage();
+
+    // Finder is the default view.
+    expect(await screen.findByTestId("probe-mode")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("chat-playground-tab"));
+
+    // The playground swaps in (its picker is fed by the same probe query)
+    // and the finder sections unmount.
+    expect(screen.getByTestId("chat-model-picker")).toBeInTheDocument();
+    expect(screen.queryByTestId("probe-mode")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "finder" }));
+    expect(await screen.findByTestId("probe-mode")).toBeInTheDocument();
+
+    // The rescan control stays present regardless of the active tab.
+    expect(
+      screen.getByRole("button", { name: "Rescan providers" }),
+    ).toBeInTheDocument();
+  });
 });

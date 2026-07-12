@@ -69,6 +69,7 @@ from .model_builders import (
     build_nvidia_model,
     build_ollama_model,
     build_openai_model,
+    build_openrouter_model,
     build_placeholder_model,
 )
 from .model_utils import (
@@ -320,10 +321,11 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
 def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
     """Enrich/append live Ollama discovery into ``models`` in place.
 
-    Models already in the catalog get marked available and enriched with cloud /
-    capability / running metadata from the raw ``/api/tags`` + ``/api/ps``
-    payloads; models absent from every tier chain are appended at tier 0 so the
-    console reflects everything currently runnable.
+    Models already in the catalog get marked available and enriched with
+    cloud / capability / running metadata from the raw ``/api/tags`` +
+    ``/api/ps`` payloads; models absent from every tier chain are
+    appended at tier 0 so the console reflects everything currently
+    runnable.
     """
     discovered = discover_ollama_models()
     by_id = {info.id: info for info in discovered}
@@ -363,9 +365,10 @@ def _enrich_local_model(model: dict[str, Any], info: LocalModelInfo) -> None:
 def _merge_local_models(models: list[dict[str, Any]]) -> None:
     """Enrich/append LM Studio + ONNX discovery into ``models`` in place.
 
-    LM Studio's native API supplies the full downloaded library plus running /
-    vision metadata; ONNX supplies filesystem-scanned folders. Catalog entries
-    that are discovered get enriched; the rest are appended at tier 0 (ADR-038).
+    LM Studio's native API supplies the full downloaded library plus
+    running / vision metadata; ONNX supplies filesystem-scanned folders.
+    Catalog entries that are discovered get enriched; the rest are
+    appended at tier 0 (ADR-038).
     """
     local_infos = [*discover_lmstudio_models(), *discover_onnx_models()]
     local_by_id = {info.id: info for info in local_infos}
@@ -392,13 +395,12 @@ def _merge_local_models(models: list[dict[str, Any]]) -> None:
 
 
 def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
-    """Append live cloud-provider listings (OpenAI/Anthropic/Gemini/GitHub).
+    """Append live cloud-provider listings as tier-0 catalog entries.
 
-    Skipped entirely in no-LLM mode: that mode routes every tier to the
-    deterministic placeholder, so a live cloud listing would be both misleading
-    and a needless network/cost liability (it also keeps the unit suite — which
-    runs with ``AGENTIC_NO_LLM=1`` — hermetic). Discovered ids absent from the
-    static chains are appended at tier 0; only keyed providers make a call.
+    Skipped entirely in no-LLM mode: every tier routes to the placeholder
+    there, so a live listing would mislead and cost network (it also keeps the
+    ``AGENTIC_NO_LLM=1`` unit suite hermetic). Availability reflects the key
+    env — OpenRouter's keyless static-fallback entries honestly show False.
     """
     from ..settings import is_agentic_no_llm_enabled
 
@@ -414,7 +416,7 @@ def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
                 "id": info.id,
                 "provider": provider_prefix(info.id),
                 "tier": 0,
-                "available": True,
+                "available": is_provider_available(provider_prefix(info.id)),
             }
         )
 
@@ -479,8 +481,8 @@ def _iter_default_chain_models(
 ) -> Iterator[str]:
     """Yield every model ID in the default chains, skipping the no-LLM tier.
 
-    Iterates tiers in enum order and each chain in priority order so the yield
-    sequence matches the original nested-loop traversal.
+    Iterates tiers in enum order and each chain in priority order so the
+    yield sequence matches the original nested-loop traversal.
     """
     for tier_enum in model_tier_enum:
         if tier_enum == model_tier_enum.TIER_0:
@@ -498,8 +500,8 @@ def _premark_unavailable_models(
 ) -> None:
     """Mark every default-chain model from an unavailable provider as unavailable.
 
-    Lets the native router skip providers with no configured credentials instead
-    of probing them at request time.
+    Lets the native router skip providers with no configured credentials
+    instead of probing them at request time.
     """
     for provider, available in availability.items():
         if available:
@@ -544,6 +546,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
     ("ollama:", build_ollama_model),
     ("openai:", build_openai_model),
     ("nvidia:", build_nvidia_model),
+    ("openrouter:", build_openrouter_model),
     ("anthropic:", build_anthropic_model),
     ("claude:", build_anthropic_model),
     ("gemini:", build_gemini_model),
@@ -560,6 +563,7 @@ _PREFIX_BUILDERS: tuple[tuple[str, Any], ...] = (
 _KNOWN_PREFIXES: tuple[str, ...] = (
     "openai:",
     "nvidia:",
+    "openrouter:",
     "azure:",
     "local:",
     "windows-ai:",
@@ -623,10 +627,10 @@ def get_chat_model(model_id: str, temperature: float = 0.0) -> Any:
     if model is not None:
         return model
 
+    supported = ", ".join(prefix for prefix, _ in _PREFIX_BUILDERS)
     raise ValueError(
         f"Unsupported model provider in '{model_id}'. "
-        "Supported prefixes: gh:, ollama:, openai:, anthropic:/claude:, "
-        "gemini:, notebooklm:, local:, lmstudio:, local-api:."
+        f"Supported prefixes: {supported}."
     )
 
 
@@ -778,6 +782,7 @@ __all__ = [
     "build_github_model",
     "build_openai_model",
     "build_nvidia_model",
+    "build_openrouter_model",
     "build_anthropic_model",
     "build_gemini_model",
     "build_notebooklm_model",

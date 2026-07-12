@@ -11,6 +11,8 @@
 //   tests/schemas/workflow_input_schema.schema.json → src/api/workflow_input_schema.generated.ts
 //   tests/schemas/workflow_editor_step.schema.json → src/api/workflow_editor_step.generated.ts
 //   tests/schemas/runs_summary.schema.json       → src/api/runs_summary.generated.ts
+//   tests/schemas/chat_request.schema.json       → src/api/chat_request.generated.ts
+//   tests/schemas/chat_stream_event.schema.json  → src/api/chat_stream_event.generated.ts
 //
 // Run it manually after editing either Python contract:
 //     cd agentic-workflows-v2/ui
@@ -320,3 +322,65 @@ const runsSummaryTs = await compile(runsSummarySchema, 'RunsSummaryResponse', {
 const runsSummaryOutPath = outPath('runs_summary.generated.ts');
 writeFileSync(runsSummaryOutPath, RUNS_SUMMARY_HEADER + runsSummaryTs, 'utf8');
 console.log(`Wrote ${runsSummaryOutPath}`);
+
+// ---------------------------------------------------------------------------
+// chat_request.generated.ts
+// ---------------------------------------------------------------------------
+
+const chatRequestSchema = JSON.parse(readFileSync(schemaPath('chat_request.schema.json'), 'utf8'));
+stripPropertyTitles(chatRequestSchema);
+
+const CHAT_REQUEST_HEADER = `/**
+ * AUTO-GENERATED — DO NOT EDIT BY HAND
+ *
+ * Regenerate with: npm run generate:types (from agentic-workflows-v2/ui/)
+ *
+ * Source JSON Schema: agentic-workflows-v2/tests/schemas/chat_request.schema.json
+ * Origin Pydantic model: agentic_v2.contracts.chat.ChatRequest
+ *
+ * CI fails the 'wire-format-drift' job if this file does not match a fresh
+ * regeneration from the committed schema.
+ */
+`;
+
+const chatRequestTs = await compile(chatRequestSchema, 'ChatRequest', {
+  bannerComment: '',
+  additionalProperties: false,
+  style: { singleQuote: true, semi: true },
+});
+
+const chatRequestOutPath = outPath('chat_request.generated.ts');
+writeFileSync(chatRequestOutPath, CHAT_REQUEST_HEADER + chatRequestTs, 'utf8');
+console.log(`Wrote ${chatRequestOutPath}`);
+
+// ---------------------------------------------------------------------------
+// chat_stream_event.generated.ts
+// ---------------------------------------------------------------------------
+
+const chatStreamEventSchema = JSON.parse(
+  readFileSync(schemaPath('chat_stream_event.schema.json'), 'utf8'),
+);
+stripPropertyTitles(chatStreamEventSchema);
+
+const CHAT_STREAM_EVENT_HEADER = `/**
+ * AUTO-GENERATED — DO NOT EDIT BY HAND
+ *
+ * Regenerate with: npm run generate:types (from agentic-workflows-v2/ui/)
+ *
+ * Source JSON Schema: agentic-workflows-v2/tests/schemas/chat_stream_event.schema.json
+ * Origin Pydantic model: agentic_v2.contracts.chat.ChatStreamEvent
+ *
+ * CI fails the 'wire-format-drift' job if this file does not match a fresh
+ * regeneration from the committed schema.
+ */
+`;
+
+const chatStreamEventTs = await compile(chatStreamEventSchema, 'ChatStreamEvent', {
+  bannerComment: '',
+  additionalProperties: false,
+  style: { singleQuote: true, semi: true },
+});
+
+const chatStreamEventOutPath = outPath('chat_stream_event.generated.ts');
+writeFileSync(chatStreamEventOutPath, CHAT_STREAM_EVENT_HEADER + chatStreamEventTs, 'utf8');
+console.log(`Wrote ${chatStreamEventOutPath}`);

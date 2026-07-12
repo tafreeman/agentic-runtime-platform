@@ -49,6 +49,7 @@ PROVIDER_ENV_KEYS: dict[str, list[str]] = {
     "openai": ["OPENAI_API_KEY"],
     "gh": ["GITHUB_TOKEN"],
     "nvidia": ["NVIDIA_API_KEY"],
+    "openrouter": ["OPENROUTER_API_KEY"],
     "ollama": [],  # always available (local)
     "local": [],  # always available (ONNX)
     "onnx": [],  # always available (local onnxruntime-genai)

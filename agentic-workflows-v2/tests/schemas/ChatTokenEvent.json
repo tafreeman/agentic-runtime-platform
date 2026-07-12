@@ -1,0 +1,20 @@
+{
+  "description": "Incremental text delta streamed from the model reply.",
+  "properties": {
+    "delta": {
+      "title": "Delta",
+      "type": "string"
+    },
+    "type": {
+      "const": "token",
+      "default": "token",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "delta"
+  ],
+  "title": "ChatTokenEvent",
+  "type": "object"
+}

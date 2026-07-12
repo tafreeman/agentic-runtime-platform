@@ -1,5 +1,7 @@
 import type {
   AgentInfo,
+  ChatRequest,
+  ChatStreamEvent,
   DAGResponse,
   DAGEdge,
   DAGNode,
@@ -45,16 +47,23 @@ function toDisplayString(value: unknown): string {
   return "";
 }
 
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const requestUrl =
-    globalThis.window !== undefined && url.startsWith("/")
-      ? new URL(url, globalThis.window.location.origin).toString()
-      : url;
+/** Resolve a relative API path against the page origin (browser + jsdom). */
+function resolveRequestUrl(url: string): string {
+  return globalThis.window !== undefined && url.startsWith("/")
+    ? new URL(url, globalThis.window.location.origin).toString()
+    : url;
+}
 
-  const res = await fetch(requestUrl, init);
+/** Canonical `API {status}: {text}` error for a failed HTTP response. */
+async function toApiError(res: Response): Promise<Error> {
+  const text = await res.text().catch(() => res.statusText);
+  return new Error(`API ${res.status}: ${text}`);
+}
+
+async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(resolveRequestUrl(url), init);
   if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`API ${res.status}: ${text}`);
+    throw await toApiError(res);
   }
   return res.json() as Promise<T>;
 }
@@ -407,6 +416,106 @@ export function getModelRecommendations(
  */
 export function probeModels(): Promise<ModelProbeResponse> {
   return fetchJSON(`${BASE}/models/probe`);
+}
+
+// ---------------------------------------------------------------------------
+// Chat playground streaming — POST /api/chat (SSE over fetch)
+// ---------------------------------------------------------------------------
+
+/** SSE frame delimiter used by the chat stream ("data: <json>\n\n"). */
+const SSE_FRAME_SEPARATOR = "\n\n";
+
+/** Line prefix carrying the JSON payload inside one SSE frame ("data:"). */
+const SSE_DATA_PREFIX = "data:";
+
+/**
+ * Parse one SSE frame and forward its JSON payload to the handler.
+ * Malformed frames are logged and dropped rather than crashing the stream
+ * (mirrors the WebSocket channel's malformed-frame convention).
+ */
+function emitChatFrame(
+  frame: string,
+  onEvent: (event: ChatStreamEvent) => void
+): void {
+  const payload = frame
+    .split("\n")
+    .filter((line) => line.startsWith(SSE_DATA_PREFIX))
+    // Per the SSE spec a single space after "data:" is optional — strip it.
+    .map((line) => {
+      const value = line.slice(SSE_DATA_PREFIX.length);
+      return value.startsWith(" ") ? value.slice(1) : value;
+    })
+    .join("\n");
+  if (payload.trim() === "") return;
+  try {
+    onEvent(JSON.parse(payload) as ChatStreamEvent);
+  } catch (error) {
+    // Malformed stream frame — log & drop rather than crash the stream.
+    console.warn(
+      "[chat] parse error:",
+      error,
+      "payload preview:",
+      payload.slice(0, 200)
+    );
+  }
+}
+
+/**
+ * Stream a direct chat completion from POST /api/chat.
+ *
+ * The endpoint routes straight to the requested model (no tier selection)
+ * and always answers HTTP 200 with `text/event-stream` frames; each parsed
+ * `ChatStreamEvent` is forwarded to `onEvent`. Provider failures (missing
+ * key, 401, 429, connection refused) arrive as in-stream `error` events —
+ * the returned promise only rejects on transport-level failures (non-2xx
+ * status, missing body, aborted signal).
+ */
+export async function sendChat(
+  request: ChatRequest,
+  onEvent: (event: ChatStreamEvent) => void,
+  options: { signal?: AbortSignal } = {}
+): Promise<void> {
+  const res = await fetch(resolveRequestUrl(`${BASE}/chat`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+    signal: options.signal,
+  });
+  if (!res.ok) {
+    throw await toApiError(res);
+  }
+  if (!res.body) {
+    throw new Error("API chat stream: response has no readable body");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    // Normalize CRLF/CR to LF (the SSE spec allows all three line endings,
+    // and a rewriting proxy may re-terminate lines) before frame splitting.
+    // A CRLF pair split across chunks still converges: the trailing "\r"
+    // becomes "\n" now and the next chunk's leading "\n" completes the
+    // separator, leaving only an ignorable blank line.
+    buffer += decoder.decode(value, { stream: true });
+    buffer = buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    let boundary = buffer.indexOf(SSE_FRAME_SEPARATOR);
+    while (boundary !== -1) {
+      emitChatFrame(buffer.slice(0, boundary), onEvent);
+      buffer = buffer.slice(boundary + SSE_FRAME_SEPARATOR.length);
+      boundary = buffer.indexOf(SSE_FRAME_SEPARATOR);
+    }
+  }
+
+  // Flush the decoder remainder plus any final unterminated frame.
+  buffer += decoder.decode();
+  buffer = buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  if (buffer.trim() !== "") {
+    emitChatFrame(buffer, onEvent);
+  }
 }
 
 /** List pre-canned personas for the node persona picker. */

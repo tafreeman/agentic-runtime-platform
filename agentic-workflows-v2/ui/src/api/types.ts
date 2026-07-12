@@ -634,3 +634,58 @@ export interface EvalComparisonResponse {
   winner: "a" | "b" | "tie";
   rubric_id: string;
 }
+
+// ---------------------------------------------------------------------------
+// Chat playground — POST /api/chat (SSE stream)
+// ---------------------------------------------------------------------------
+// Hand-maintained mirror of the Pydantic contract in
+// `agentic_v2/contracts/chat.py`. The endpoint answers HTTP 200 with
+// `text/event-stream` frames (`data: <json>\n\n`); every stream terminates
+// with exactly one `done` OR one `error` event. Provider failures (unknown
+// prefix, missing key, 401, 429, connection refused) arrive as in-stream
+// `error` events — never as HTTP 4xx/5xx (only FastAPI request validation
+// stays a native 422).
+
+/** Author role for one chat playground message. */
+export type ChatRole = "system" | "user" | "assistant";
+
+/** One turn of the playground transcript. */
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+/** POST /api/chat request body. */
+export interface ChatRequest {
+  /** FULL prefixed id, e.g. "openrouter:meta-llama/llama-3.1-8b-instruct:free". */
+  model: string;
+  /** Running transcript; the server requires at least one message. */
+  messages: ChatMessage[];
+  /** Sampling temperature (0.0–2.0); the server defaults it to 0.2. */
+  temperature?: number;
+}
+
+/** Incremental completion text. */
+export interface ChatTokenEvent {
+  type: "token";
+  delta: string;
+}
+
+/** Terminal success frame — echoes the model that produced the reply. */
+export interface ChatDoneEvent {
+  type: "done";
+  model: string;
+}
+
+/** Terminal failure frame; `category` is an ErrorCode value (e.g. "auth_error"). */
+export interface ChatErrorEvent {
+  type: "error";
+  message: string;
+  category: string;
+}
+
+/** Discriminated union ("type") of every frame on the chat stream. */
+export type ChatStreamEvent = ChatTokenEvent | ChatDoneEvent | ChatErrorEvent;
+
+/** The discriminator values carried by `ChatStreamEvent`. */
+export type ChatStreamEventType = ChatStreamEvent["type"];

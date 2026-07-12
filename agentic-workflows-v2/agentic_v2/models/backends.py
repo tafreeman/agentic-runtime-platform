@@ -46,6 +46,7 @@ from .backends_cloud import (
     GitHubModelsBackend,
     NvidiaBackend,
     OpenAIBackend,
+    OpenRouterBackend,
 )
 from .backends_local import OllamaBackend, OnnxBackend
 from .secrets import SecretProvider, get_first_secret, get_secret
@@ -62,6 +63,7 @@ PREFIX_MAP: dict[str, str] = {
     "gh:": "github",
     "openai:": "openai",
     "nvidia:": "nvidia",
+    "openrouter:": "openrouter",
     "anthropic:": "anthropic",
     "gemini:": "gemini",
     "azure:": "azure",
@@ -228,9 +230,7 @@ def _onnx_runtime_available() -> bool:
     return importlib.util.find_spec("onnxruntime_genai") is not None
 
 
-def _required_secret(
-    name: str, *, secret_provider: SecretProvider | None
-) -> str:
+def _required_secret(name: str, *, secret_provider: SecretProvider | None) -> str:
     """Resolve a single named secret, coalescing absence to an empty string."""
     return get_secret(name, default="", provider=secret_provider) or ""
 
@@ -240,9 +240,9 @@ def _build_cloud_backend(
 ) -> LLMBackend | None:
     """Construct a cloud backend for ``provider``, or None if not cloud.
 
-    Handles the credentialed providers (GitHub, OpenAI, Anthropic, Gemini,
-    Azure OpenAI, Azure AI Foundry). Returns None for non-cloud providers so
-    the caller can handle local/mock backends.
+    Handles the credentialed providers (GitHub, OpenAI, Anthropic,
+    Gemini, Azure OpenAI, Azure AI Foundry). Returns None for non-cloud
+    providers so the caller can handle local/mock backends.
     """
     if provider == "github":
         token = (
@@ -258,6 +258,12 @@ def _build_cloud_backend(
     if provider == "openai":
         return OpenAIBackend(
             api_key=_required_secret("OPENAI_API_KEY", secret_provider=secret_provider)
+        )
+    if provider == "openrouter":
+        return OpenRouterBackend(
+            api_key=_required_secret(
+                "OPENROUTER_API_KEY", secret_provider=secret_provider
+            )
         )
     if provider == "anthropic":
         return AnthropicBackend(
@@ -363,6 +369,17 @@ def _register_cloud_backends(
             "Registered NVIDIA NIM backend",
         )
 
+    # OpenRouter — aggregator over an OpenAI-compatible surface; always
+    # authenticated (no keyless self-hosted mode, unlike NIM).
+    openrouter_api_key = get_secret("OPENROUTER_API_KEY", provider=active_provider)
+    if openrouter_api_key:
+        _try_register_backend(
+            backends,
+            "openrouter",
+            lambda: OpenRouterBackend(api_key=openrouter_api_key),
+            "Registered OpenRouter backend",
+        )
+
     # Anthropic
     anthropic_api_key = get_secret("ANTHROPIC_API_KEY", provider=active_provider)
     if anthropic_api_key:
@@ -415,9 +432,7 @@ def _register_cloud_backends(
         _try_register_backend(
             backends,
             "azure_foundry",
-            lambda: AzureFoundryBackend(
-                api_key=foundry_key, endpoint=foundry_endpoint
-            ),
+            lambda: AzureFoundryBackend(api_key=foundry_key, endpoint=foundry_endpoint),
             "Registered Azure AI Foundry backend",
         )
 
@@ -473,6 +488,7 @@ __all__ = [
     "GitHubModelsBackend",
     "OpenAIBackend",
     "NvidiaBackend",
+    "OpenRouterBackend",
     "AnthropicBackend",
     "GeminiBackend",
     "AzureOpenAIBackend",

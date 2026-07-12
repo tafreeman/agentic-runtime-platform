@@ -5,6 +5,7 @@ Concrete backends for cloud-hosted model APIs:
 - ``GitHubModelsBackend`` — GitHub Models (Azure AI Inference endpoint)
 - ``OpenAIBackend``        — OpenAI API
 - ``NvidiaBackend``        — NVIDIA NIM (OpenAI-compatible cloud + on-prem)
+- ``OpenRouterBackend``    — OpenRouter aggregator (OpenAI-compatible)
 - ``AnthropicBackend``     — Anthropic Claude API
 - ``GeminiBackend``        — Google Gemini API
 
@@ -68,6 +69,7 @@ def _to_anthropic_tool_choice(
     if tool_choice.get("type") == "tool" and name:
         return {"type": "tool", "name": str(name)}
     return None
+
 
 # ---------------------------------------------------------------------------
 # GitHub Models
@@ -320,6 +322,49 @@ class NvidiaBackend(OpenAIBackend):
 
 
 # ---------------------------------------------------------------------------
+# OpenRouter
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class OpenRouterBackend(OpenAIBackend):
+    """Backend for the OpenRouter aggregator (OpenAI-compatible ``/v1`` surface).
+
+    OpenRouter speaks the OpenAI wire protocol for every model it fronts, so
+    this is just :class:`OpenAIBackend` with OpenRouter credentials and
+    base-URL resolution (shared with discovery via
+    :func:`agentic_v2.models.cloud_discovery.resolve_openrouter_base_url`).
+
+    Model ids keep their ``publisher/model`` form and free-tier ids append
+    ``:free`` (e.g. ``meta-llama/llama-3.1-8b-instruct:free``); only the
+    ``openrouter:`` prefix is stripped — never the publisher segment or the
+    ``:free`` suffix — so a discovered id round-trips unchanged. Unlike NIM
+    there is no keyless self-hosted mode: ``OPENROUTER_API_KEY`` is always
+    required.
+    """
+
+    _provider_prefix: ClassVar[str] = "openrouter:"
+
+    api_key: str = field(
+        default_factory=lambda: get_secret("OPENROUTER_API_KEY", default="") or "",
+        repr=False,
+    )
+    # Resolved in __post_init__ via the shared discovery helper so backend and
+    # probe always target the same host.
+    base_url: str = ""
+
+    def __post_init__(self) -> None:
+        from .cloud_discovery import resolve_openrouter_base_url
+
+        if not self.base_url:
+            self.base_url = resolve_openrouter_base_url()
+        if not self.api_key:
+            raise ValueError(
+                "OPENROUTER_API_KEY environment variable required for OpenRouter"
+            )
+
+
+# ---------------------------------------------------------------------------
 # Anthropic
 # ---------------------------------------------------------------------------
 
@@ -448,9 +493,7 @@ class AnthropicBackend(LLMBackend):
             "tool_use": "tool_calls",
             "stop_sequence": "stop",
         }
-        canonical_finish_reason = _stop_reason_map.get(
-            raw_stop_reason, raw_stop_reason
-        )
+        canonical_finish_reason = _stop_reason_map.get(raw_stop_reason, raw_stop_reason)
 
         return {
             "content": "\n".join(text_parts),
@@ -636,8 +679,7 @@ class AzureOpenAIBackend(LLMBackend):
     )
     api_version: str = field(
         default_factory=lambda: (
-            get_secret("AZURE_OPENAI_API_VERSION", default="2024-10-21")
-            or "2024-10-21"
+            get_secret("AZURE_OPENAI_API_VERSION", default="2024-10-21") or "2024-10-21"
         ),
     )
     timeout: float = 120.0
@@ -819,4 +861,5 @@ __all__ = [
     "GeminiBackend",
     "GitHubModelsBackend",
     "OpenAIBackend",
+    "OpenRouterBackend",
 ]

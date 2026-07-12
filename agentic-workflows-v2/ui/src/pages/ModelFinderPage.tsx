@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Cpu, Gauge, HardDrive, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import BTopBar from "../components/layout/BTopBar";
+import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import { getModelRecommendations, probeModels } from "../api/client";
 import type {
   ModelCandidate,
@@ -179,7 +180,40 @@ function ProfileStat({
   );
 }
 
+/** Sub-views of the model router page. */
+type ModelRouterTab = "finder" | "playground";
+
+function TabButton({
+  label,
+  active,
+  onClick,
+  testId,
+}: Readonly<{
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  testId?: string;
+}>) {
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      aria-pressed={active}
+      onClick={onClick}
+      className={`-mb-px border-b-2 px-1 pb-2.5 pt-3 font-mono text-[10px] uppercase tracking-[1.6px] transition-colors ${
+        active ? "text-b-text" : "text-b-text-dim hover:text-b-text"
+      }`}
+      style={{
+        borderBottomColor: active ? "rgb(var(--b-clay))" : "transparent",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function ModelFinderPage() {
+  const [tab, setTab] = useState<ModelRouterTab>("finder");
   const [category, setCategory] = useState<ModelTaskCategory | "all">("all");
   const [sortBy, setSortBy] = useState<ModelSortField>("downloads");
   const [openProvider, setOpenProvider] = useState<string | null>(null);
@@ -246,7 +280,26 @@ export default function ModelFinderPage() {
         </button>
       </BTopBar>
 
+      {/* Sub-view tabs: catalog/fit finder vs direct chat playground. */}
+      <div className="flex items-center gap-4 border-b border-b-line px-6">
+        <TabButton
+          label="finder"
+          active={tab === "finder"}
+          onClick={() => setTab("finder")}
+        />
+        <TabButton
+          label="playground"
+          active={tab === "playground"}
+          onClick={() => setTab("playground")}
+          testId="chat-playground-tab"
+        />
+      </div>
+
       <div className="h-full overflow-y-auto p-6">
+        {tab === "playground" && (
+          <ChatPlaygroundPanel probe={probe} probeLoading={probing} />
+        )}
+        {tab === "finder" && (
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -622,6 +675,7 @@ export default function ModelFinderPage() {
             </p>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

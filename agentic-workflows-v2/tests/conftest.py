@@ -121,6 +121,31 @@ def _reset_model_registry_cache():
 
 
 @pytest.fixture(autouse=True)
+def _reset_openrouter_discovery_cache():
+    """Clear the OpenRouter discovery TTL cache around every test (ADR-050).
+
+    ``discover_openrouter_models`` memoizes its live catalog fetch in a
+    module-level TTL cache (a deliberate deviation from ADR-039's cache-free
+    probes, justified by the 300-400 model catalog). A listing cached by one
+    test must never satisfy a later test's probe. Lazy + best-effort import,
+    mirroring the other reset fixtures.
+    """
+
+    def _reset() -> None:
+        try:
+            from agentic_v2.models.cloud_discovery import (
+                _reset_openrouter_discovery_cache as _clear_openrouter_cache,
+            )
+        except ImportError:
+            return
+        _clear_openrouter_cache()
+
+    _reset()
+    yield
+    _reset()
+
+
+@pytest.fixture(autouse=True)
 def _reset_global_routers():
     """Reset the module-global router singletons around every test.
 
