@@ -6,6 +6,7 @@ Run this script when making intentional schema changes:
 
 Then commit the updated snapshots alongside the model change.
 """
+
 from __future__ import annotations
 
 import json
@@ -13,6 +14,11 @@ from pathlib import Path
 
 from agentic_v2.contracts import (
     AgentMessage,
+    ChatDoneEvent,
+    ChatErrorEvent,
+    ChatMessage,
+    ChatRequest,
+    ChatTokenEvent,
     CodeGenerationOutput,
     CodeReviewInput,
     CodeReviewOutput,
@@ -49,6 +55,11 @@ COVERED_MODELS = [
     WorkflowEndEvent,
     EvaluationStartEvent,
     EvaluationCompleteEvent,
+    ChatMessage,
+    ChatRequest,
+    ChatTokenEvent,
+    ChatDoneEvent,
+    ChatErrorEvent,
 ]
 
 SCHEMA_DIR = Path(__file__).parent.parent / "tests" / "schemas"

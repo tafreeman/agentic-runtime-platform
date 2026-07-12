@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "ChatMessage": {
+      "description": "One conversation turn submitted to the chat playground.\n\n``content`` is capped well above any real chat turn so a single request\ncannot buffer unbounded memory through the sanitization middleware.",
+      "properties": {
+        "content": {
+          "maxLength": 100000,
+          "title": "Content",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "system",
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "content"
+      ],
+      "title": "ChatMessage",
+      "type": "object"
+    }
+  },
+  "description": "Request body for ``POST /api/chat``.\n\n``model`` is a FULL prefixed model id (e.g.\n``openrouter:meta-llama/llama-3.1-8b-instruct:free``). The endpoint\nbuilds exactly that model via ``langchain.models.get_chat_model``,\nbypassing ``SmartModelRouter`` tier selection.",
+  "properties": {
+    "messages": {
+      "description": "Conversation history, oldest first",
+      "items": {
+        "$ref": "#/$defs/ChatMessage"
+      },
+      "maxItems": 100,
+      "minItems": 1,
+      "title": "Messages",
+      "type": "array"
+    },
+    "model": {
+      "description": "Full prefixed model id to chat with",
+      "maxLength": 200,
+      "title": "Model",
+      "type": "string"
+    },
+    "temperature": {
+      "default": 0.2,
+      "description": "Sampling temperature",
+      "maximum": 2.0,
+      "minimum": 0.0,
+      "title": "Temperature",
+      "type": "number"
+    }
+  },
+  "required": [
+    "model",
+    "messages"
+  ],
+  "title": "ChatRequest",
+  "type": "object"
+}

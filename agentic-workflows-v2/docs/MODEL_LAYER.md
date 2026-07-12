@@ -2,22 +2,40 @@
 
 > Scope: how the runtime decides **which provider/model** to use, how the
 > `/api/models/probe` "rescan" works today, and where it sits relative to the
-> execution engines (native / LangChain / ExecutionKit). Written as the baseline
-> before adding **live per‑provider model discovery** (see
-> [Proposed: live discovery](#proposed-live-discovery)).
+> execution engines (native / LangChain / ExecutionKit). Originally written as
+> the baseline before live discovery existed; discovery has since shipped in
+> four stages — Ollama (ADR‑037), LM Studio + ONNX (ADR‑038), the keyed cloud
+> providers (ADR‑039), and OpenRouter + the chat playground (ADR‑050,
+> [PR #188](https://github.com/tafreeman/agentic-runtime-platform/pull/188)).
 
 ## TL;DR
 
-- The **probe is credential‑presence + a static catalog**, *not* live discovery.
-  It checks which providers have env keys and echoes the hard‑coded tier‑fallback
-  chains. It never calls a provider's list‑models API (no Ollama `/api/tags`, no
-  remote catalog).
+- The probe is **credential‑presence + a curated static catalog + live
+  discovery**. `is_provider_available()` still only checks env keys, but every
+  rescan *also* calls the list‑models APIs of whatever it can reach: Ollama
+  `/api/tags` (ADR‑037), LM Studio `/api/v0/models` + an ONNX folder walk
+  (ADR‑038), and the keyed cloud providers — OpenAI, Anthropic, Gemini, GitHub
+  Models, NVIDIA NIM (ADR‑039) and OpenRouter (curated + TTL‑cached, ADR‑050).
+  Discovered ids absent from the static tier chains merge into the catalog at
+  **tier 0** (`_merge_ollama_models` / `_merge_local_models` /
+  `_merge_cloud_models`).
+- A green **"ready"** still means *"a key is present (or none is required)"* —
+  the availability flag itself makes no network call. The **real liveness
+  check** is the chat playground: `POST /api/chat` streams a message straight
+  to one exact model id and surfaces genuine auth/quota/connection failures
+  (ADR‑050, PR #188).
+- Cloud discovery is **best‑effort and bounded**: probes run concurrently, 8 s
+  per request, any failure degrades to the static catalog, keys are never
+  logged, and the whole cloud merge is **skipped under `AGENTIC_NO_LLM=1`**
+  (which keeps the unit suite hermetic).
 - It is **engine‑agnostic** and lives in the native/LangChain **model layer**
-  (`langchain/models.py` + `langchain/model_utils.py`). It is **not** an
-  ExecutionKit feature — ExecutionKit is a separate, opt‑in *execution* bridge.
+  (`langchain/models.py` + `langchain/model_utils.py` + the
+  `agentic_v2/models/*_discovery.py` modules). It is **not** an ExecutionKit
+  feature — ExecutionKit is a separate, opt‑in *execution* bridge.
 - "Ollama" is modeled as a **local, unauthenticated** provider
-  (`OLLAMA_BASE_URL`, default `http://localhost:11434`). It does **not** use the
-  Ollama Cloud Bearer‑key method.
+  (`OLLAMA_BASE_URL`, default `http://localhost:11434`); setting
+  `OLLAMA_API_KEY` additionally lists **ollama.com cloud** models via the
+  Bearer‑key method (ADR‑037).
 
 ## System diagram
 
@@ -27,24 +45,35 @@ flowchart TD
     RESCAN["rescan button"]
     PM["probeModels()<br/>GET /api/models/probe"]
     GR["getModelRecommendations()<br/>GET /api/model-finder/recommendations"]
+    PLAY["chat playground tab<br/>POST /api/chat (SSE)"]
   end
   RESCAN --> PM
   RESCAN --> GR
   subgraph ROUTES["Server routes - FastAPI /api"]
     RP["routes/models.py"]
     RF["routes/model_finder.py<br/>local hardware fit + static HF catalog"]
+    RC["routes/chat.py<br/>direct model chat, ADR-050"]
   end
   PM --> RP
   GR --> RF
+  PLAY --> RC
   subgraph MODEL["Model layer (engine-agnostic) - langchain/model_utils.py + langchain/models.py"]
     GATE["Provider gate<br/>PROVIDER_ENV_KEYS<br/>is_provider_available()"]
-    TIERS["Tier catalog<br/>_TIER_DEFAULTS<br/>_TIER_FALLBACK_CHAINS T1-T5"]
+    TIERS["Tier catalog<br/>model_registry.yaml, ADR-040<br/>_TIER_DEFAULTS + _TIER_FALLBACK_CHAINS T1-T5"]
     PROBE["probe_and_update_tier_defaults()<br/>probe_available_providers()<br/>enumerate_known_models()"]
   end
   RP --> PROBE
   GATE --> PROBE
   TIERS --> PROBE
   PROBE -->|update defaults| TIERS
+  subgraph DISC["Live discovery - IMPLEMENTED (ADR-037/038/039/050)"]
+    OD["models/ollama_discovery.py<br/>local /api/tags + /api/ps<br/>cloud: Bearer OLLAMA_API_KEY"]
+    LD["models/local_discovery.py<br/>LM Studio /api/v0/models + ONNX folder walk"]
+    CD["models/cloud_discovery.py<br/>OpenAI / Anthropic / Gemini / GitHub / NVIDIA / OpenRouter<br/>keyed-only, 8s bound, OpenRouter curated + TTL cache"]
+  end
+  OD -.->|merge tier-0 entries| PROBE
+  LD -.->|merge tier-0 entries| PROBE
+  CD -.->|merge tier-0 entries| PROBE
   subgraph EXEC["Execution paths - per step / tier"]
     NR["Native ModelRouter<br/>models/client.py get_client()"]
     LC["LangChain adapter<br/>langchain/models.py get_chat_model()"]
@@ -53,6 +82,7 @@ flowchart TD
   PROBE -->|configure router| NR
   TIERS --> NR
   TIERS --> LC
+  RC -->|"get_chat_model(exact id)"| LC
   NR -.->|AGENTIC_NO_LLM| PH
   LC -.->|AGENTIC_NO_LLM| PH
   subgraph EK["ExecutionKit bridge - DEFAULT-ON, package-gated: AGENTIC_EK_PROVIDER + pip extra ek"]
@@ -63,20 +93,16 @@ flowchart TD
   EKP --> PKG
   subgraph BUILD["Model builders - langchain/model_builders.py"]
     B1["github to Azure inference<br/>GITHUB_TOKEN"]
-    B2["openai / anthropic / gemini<br/>provider APIs + API keys"]
+    B2["openai / anthropic / gemini / nvidia / openrouter<br/>provider APIs + API keys"]
     B3["ollama to OLLAMA_BASE_URL<br/>localhost:11434, no auth"]
-    B4["lmstudio / local<br/>localhost servers"]
+    B4["lmstudio / local / onnx<br/>localhost servers + local runtimes"]
   end
   LC --> BUILD
   NR --> BUILD
-  subgraph FUTURE["Proposed - NOT implemented"]
-    DISC["discover_provider_models()<br/>ollama /api/tags<br/>local: no auth · cloud: Bearer OLLAMA_API_KEY"]
-  end
-  DISC -.->|merge into catalog| PROBE
   classDef ek fill:#fbe7d5,stroke:#cc9a55;
-  classDef future fill:#e8ecff,stroke:#7c8cc4;
+  classDef disc fill:#ddf4e4,stroke:#4f9d69;
   class EKP,PKG ek;
-  class DISC future;
+  class OD,LD,CD disc;
 ```
 
 ## Probe request flow (`rescan`)
@@ -88,19 +114,29 @@ sequenceDiagram
   participant R as route /api/models/probe
   participant M as langchain/models.py
   participant G as Provider gate (env keys)
+  participant D as discovery modules
+  participant P as Provider APIs
   U->>R: GET /api/models/probe
   R->>M: probe_and_update_tier_defaults()
   loop each provider in PROVIDER_ENV_KEYS
     M->>G: is_provider_available(provider)
     G-->>M: True / False (env-key presence only)
   end
-  M->>M: resolve tier defaults from fallback chains
   M->>M: _configure_native_router(availability)
+  M->>D: detect_registry_drift() - quarantine retired ids (ADR-040), no-op when AGENTIC_NO_LLM=1
+  D->>P: 1st cloud list-models sweep (keyed providers, concurrent)
+  M->>M: resolve tier defaults from chains, skipping quarantined ids
   R->>M: enumerate_known_models()
-  M-->>R: models[] = static tier-chain + availability flag
+  M->>D: _merge_ollama_models() + _merge_local_models()
+  D->>P: Ollama /api/tags + /api/ps, LM Studio /api/v0/models, ONNX dir walk
+  M->>D: _merge_cloud_models() - skipped when AGENTIC_NO_LLM=1
+  D->>P: 2nd cloud list-models sweep (keyed providers, concurrent, 8s bound each)
+  P-->>D: model ids (best-effort - a failure contributes nothing)
+  D-->>M: tier-0 entries merged into catalog
+  M-->>R: models[] = static chains + live-discovered (tier 0)
   R->>R: add no_llm_mode = is_agentic_no_llm_enabled()
-  R-->>U: available_providers, tier_defaults, models, no_llm_mode
-  Note over M,G: No provider API is contacted - no /api/tags, no live model listing
+  R-->>U: available_providers, tier_defaults, drift, models, no_llm_mode
+  Note over M,P: Live list-models APIs ARE contacted on every rescan - the cloud sweep<br/>runs TWICE per probe (drift check + catalog merge; only OpenRouter's<br/>slice is TTL-cached). Availability flags alone are env-key presence.
 ```
 
 ## Provider gate — `PROVIDER_ENV_KEYS` (`langchain/model_utils.py`)
@@ -112,30 +148,48 @@ set, or when the provider needs **no** key (local providers always pass).
 |----------|---------------------|--------------------|------|
 | `gemini` | `GOOGLE_API_KEY` / `GEMINI_API_KEY` | Google Generative AI | API key |
 | `anthropic` | `ANTHROPIC_API_KEY` | api.anthropic.com | API key |
-| `openai` | `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL`) | api.openai.com | API key |
+| `openai` | `OPENAI_API_KEY` (+ optional `OPENAI_BASE_URL` / `OPENAI_API_BASE`) | api.openai.com | API key |
 | `gh` | `GITHUB_TOKEN` | `models.inference.ai.azure.com` | Bearer token |
-| `ollama` | _(none)_ | `OLLAMA_BASE_URL` → `localhost:11434` | **none (local)** |
-| `lmstudio` | _(none)_ | `LMSTUDIO_HOST` → `127.0.0.1:12340/v1` | none (local) |
+| `nvidia` | `NVIDIA_API_KEY` (+ optional `NVIDIA_BASE_URL` for on‑prem NIM) | `integrate.api.nvidia.com/v1` | Bearer token |
+| `openrouter` | `OPENROUTER_API_KEY` (+ optional `OPENROUTER_BASE_URL`) — ADR‑050, PR #188 | `openrouter.ai/api/v1` | Bearer token |
+| `ollama` | _(none; optional `OLLAMA_API_KEY` for ollama.com cloud listing)_ | `OLLAMA_BASE_URL` → `localhost:11434` | **none (local)** |
+| `lmstudio` | _(none)_ | `LMSTUDIO_HOST`, else first reachable of `:1234` / `:12340` | none (local) |
+| `onnx` | _(none)_ | local onnxruntime‑genai (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`) | none (local) |
 | `local` / `local_api` | _(none)_ | local ONNX / local server | none (local) |
 
 > **Misconception guard:** a green **"ready"** in the UI means *"a key is present
-> (or none is required)"* — **not**, in general, that a model‑list/health call
-> succeeded. The credential probe makes no network call. The **exception is
-> Ollama**: `enumerate_known_models()` performs a live `/api/tags` (+`/api/ps`)
-> read to surface real local/cloud models (ADR‑037).
+> (or none is required)"* — the availability **flag** makes no network call. The
+> model **list**, by contrast, is live: every rescan merges real listings from
+> Ollama (ADR‑037), LM Studio/ONNX (ADR‑038), and each keyed cloud provider
+> (ADR‑039/050). To prove a key/model actually **works**, use the chat
+> playground (`POST /api/chat`) — see
+> [Chat playground](#chat-playground--the-real-liveness-check-adr050-pr-188).
 
 ## Tier catalog (`langchain/models.py`)
 
-- `_TIER_DEFAULTS` — one resolved default model per tier **1–5**.
-- `_TIER_FALLBACK_CHAINS` — an ordered list per tier; the **first available**
-  provider in the chain wins during a probe (e.g. T1 →
-  `gemini-2.0-flash-lite` → `gh:gpt-4o-mini` → `openai:gpt-4o-mini` →
-  `anthropic:claude-haiku` → `ollama:gemma3:4b`).
+- Model ids, tier membership, and per‑tier fallback chains are declared once in
+  the **curated registry** `agentic_v2/config/defaults/model_registry.yaml`
+  (ADR‑040) and materialized at import as `_TIER_FALLBACK_CHAINS` (tiers
+  **1–5**) and `_TIER_DEFAULTS` (seeded from each chain's first id, refined at
+  server startup by the probe). Design principle: *dynamic for facts the
+  runtime verifies (availability, health); curated for judgments a human owns
+  (tier membership, capability, price).*
+- During a probe the **first available** provider in a chain wins (e.g. T1 →
+  `gemini:gemini-2.5-flash-lite` → `gh:openai/gpt-4o-mini` →
+  `openai:gpt-4o-mini` → `anthropic:claude-haiku-4-5-20251001` →
+  `ollama:gemma3:4b`).
+- `detect_registry_drift()` warns and **quarantines** registry ids a provider
+  has retired; discovery never auto‑promotes a discovered id into a chain. It
+  runs inside every probe *before* tier defaults resolve, with its **own**
+  live cloud sweep (see the rescan diagram's note).
 - `enumerate_known_models()` returns the static chain **union** as
-  `{ id, provider, tier (lowest tier it appears in), available }`, **merged with
-  live‑discovered Ollama models** (ADR‑037). Discovered models carry
-  `cloud` / `capabilities` / `running`; those absent from every chain appear at
-  `tier 0`. This is the full "catalog" the `/models` page shows.
+  `{ id, provider, tier (lowest tier it appears in), available }`, **merged
+  with every live‑discovered model**: Ollama (ADR‑037), LM Studio + ONNX
+  (ADR‑038), and the keyed cloud providers (ADR‑039/050). Discovered models
+  absent from every chain appear at `tier 0`; local entries can carry
+  `cloud` / `capabilities` / `running`, cloud entries are plain ids whose
+  `available` flag reflects the provider's key env. This is the full "catalog"
+  the `/models` page shows.
 
 ### `get_chat_model()` resolution order (LangChain path)
 
@@ -144,29 +198,39 @@ set, or when the provider needs **no** key (local providers always pass).
 3. Probed tier default (`_TIER_DEFAULTS`, set by the probe).
 4. Tier fallback chain (`_TIER_FALLBACK_CHAINS`).
 
-## `/api/models/probe` response shape (`routes/models.py`)
+## `/api/models/probe` response shape (`server/routes/models.py`)
 
 ```jsonc
 {
   "available_providers":   ["anthropic", "gh", "ollama", ...],
   "unavailable_providers": ["gemini", "openai"],
   "tier_defaults":         { "1": "gh:openai/gpt-4o-mini", "2": "...", ... },
+  // probe-time registry reconciliation (ADR-040) — see detect_registry_drift()
+  "drift":                 { "quarantined": [], "missing_pricing": ["..."],
+                             "checked_providers": ["openai", "anthropic"] },
   "models": [ { "id": "anthropic:claude-...", "provider": "anthropic",
                 "tier": 2, "available": true },
               // live-discovered Ollama models also carry cloud/capabilities/running
               { "id": "ollama:gpt-oss:120b-cloud", "provider": "ollama",
                 "tier": 0, "available": true, "cloud": true,
-                "capabilities": ["tools"], "running": false }, ... ],
+                "capabilities": ["tools"], "running": false },
+              // live-discovered cloud models are plain tier-0 ids (ADR-039)
+              { "id": "openai:gpt-4.1", "provider": "openai",
+                "tier": 0, "available": true },
+              // keyless OpenRouter static-fallback entries stay honest (ADR-050)
+              { "id": "openrouter:openai/gpt-4o-mini", "provider": "openrouter",
+                "tier": 0, "available": false }, ... ],
   "no_llm_mode": false
 }
 ```
 
 - `ImportError` (LangChain extra not installed) → **503**; any other error → **500**.
 - `no_llm_mode` = `is_agentic_no_llm_enabled()` (`AGENTIC_NO_LLM`). When true,
-  **every** tier is routed to `PlaceholderChatModel` regardless of keys.
-- A **separate** system, `/api/model-finder/*` (`routes/model_finder.py`), powers
-  the same page's hardware‑fit section: it profiles the local machine and ranks a
-  hard‑coded HuggingFace catalog. It is unrelated to the provider probe.
+  **every** tier is routed to `PlaceholderChatModel` regardless of keys, and the
+  cloud‑discovery merge is skipped entirely.
+- A **separate** system, `/api/model-finder/*` (`server/routes/model_finder.py`),
+  powers the same page's hardware‑fit section: it profiles the local machine and
+  ranks a hard‑coded HuggingFace catalog. It is unrelated to the provider probe.
 
 ## ExecutionKit boundary (it is *not* the probe)
 
@@ -182,19 +246,24 @@ resolution. Its entire footprint:
 | `engine/ek_step_delegation.py` | Delegates a workflow step to the EK kernel |
 | touch‑points: `models/client.py`, `engine/tool_execution.py`, `engine/agent_resolver.py`, `settings.py` | Wiring + the `AGENTIC_EK_PROVIDER` flag |
 
-The probe (`probe_*`, `enumerate_known_models`, `routes/models.py`) contains **no
-EK imports** and is shared by the native router, the LangChain adapter, and the
-EK bridge alike. These EK modules are in the coverage `omit` list (CI does not
-install the optional dependency).
+The probe (`probe_*`, `enumerate_known_models`, `server/routes/models.py`)
+contains **no EK imports** and is shared by the native router, the LangChain
+adapter, and the EK bridge alike. These EK modules are in the coverage `omit`
+list (CI does not install the optional dependency).
 
 ## File map
 
 | Concern | File |
 |---------|------|
 | Provider gate / env keys | `agentic_v2/langchain/model_utils.py` |
-| Tier catalog + probe + `enumerate_known_models` | `agentic_v2/langchain/models.py` |
+| Tier chains + probe + `enumerate_known_models` | `agentic_v2/langchain/models.py` |
+| Curated model registry (ids, tiers, prices) | `agentic_v2/config/defaults/model_registry.yaml` + `agentic_v2/models/model_registry.py` |
 | Per‑provider client builders | `agentic_v2/langchain/model_builders.py` |
+| Live discovery — Ollama (ADR‑037) | `agentic_v2/models/ollama_discovery.py` |
+| Live discovery — LM Studio + ONNX (ADR‑038) | `agentic_v2/models/local_discovery.py` |
+| Live discovery — cloud providers incl. OpenRouter (ADR‑039/050) | `agentic_v2/models/cloud_discovery.py` |
 | Probe route (`/api/models/probe`) | `agentic_v2/server/routes/models.py` |
+| Chat playground route (`POST /api/chat`; ADR‑050, PR #188) | `agentic_v2/server/routes/chat.py` + `agentic_v2/contracts/chat.py` |
 | Hardware‑fit finder (`/api/model-finder/*`) | `agentic_v2/server/routes/model_finder.py` |
 | Native model client | `agentic_v2/models/client.py` |
 | ExecutionKit bridge (opt‑in) | `agentic_v2/models/ek_*.py`, `agentic_v2/engine/ek_step_delegation.py` |
@@ -233,10 +302,13 @@ rate limits but does **not** expose the catalog without one of these.
 `agentic_v2/models/local_discovery.py` extends the same merge to the other two
 local providers; both are best‑effort and surface as `tier 0` router entries:
 
-- **LM Studio (`lmstudio:`):** `GET {host}/v1/models` (OpenAI‑compatible). Host
-  from `LMSTUDIO_HOST` / `LM_STUDIO_HOST`; with none set, ports `1234` then
-  `12340` are tried and the first reachable wins. Lights up once LM Studio's
-  server is running.
+- **LM Studio (`lmstudio:`):** `GET {host}/api/v0/models` — LM Studio's
+  *native* REST API, preferred because it lists the **whole downloaded
+  library** with a `type` (`llm`/`vlm`/`embeddings`) and a `state`
+  (`loaded`/`not-loaded`); the OpenAI‑compatible `GET {host}/v1/models` shim
+  (currently *loaded* models only) is the fallback for older servers. Host
+  from `LMSTUDIO_HOST`; with it unset, ports `1234` then `12340` are tried and
+  the first reachable wins. Lights up once LM Studio's server is running.
 - **ONNX (`onnx:`):** bounded‑depth walk for `genai_config.json` under the ONNX
   root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default `~/.cache/aigallery`).
   Returns `onnx:<relpath>` relative to that root — the *same* root `OnnxBackend`
@@ -247,5 +319,102 @@ local providers; both are best‑effort and surface as `tier 0` router entries:
 `onnx` is registered in `PROVIDER_ENV_KEYS` (no key) so the router marks it
 available. Covered by `tests/models/test_local_discovery.py`.
 
-**Still future work:** the same live‑listing pattern for the *cloud* providers'
-list‑models endpoints (OpenAI `/v1/models`, Gemini, etc.).
+## Live discovery (cloud providers) — implemented (ADR‑039)
+
+`agentic_v2/models/cloud_discovery.py` (live since 2026‑06‑23) extends the same
+merge to the hosted providers, so the probe lists what each configured **key**
+can actually reach — not just the handful of ids pinned in the tier chains.
+Each provider is probed **only when its key env var is set** (no key → no
+network call); the probes run **concurrently** (worst case ≈ one 8 s timeout,
+not the sum); any failure (network, auth, schema drift) contributes nothing
+instead of failing the probe; keys travel only as auth headers/params and are
+never logged. A conservative name heuristic drops obvious non‑chat ids
+(embeddings, speech, image, rerank, …) — over‑listing beats silent dropping.
+Results are appended by `_merge_cloud_models()` at **tier 0**:
+
+- **OpenAI** (`openai:`) — `GET {base}/models`, Bearer `OPENAI_API_KEY`;
+  `OPENAI_BASE_URL` / `OPENAI_API_BASE` honored for proxies/Azure,
+  `OPENAI_ORG_ID` forwarded.
+- **Anthropic** (`anthropic:`) — `GET https://api.anthropic.com/v1/models` with
+  `x-api-key` + `anthropic-version` headers.
+- **Google Gemini** (`gemini:`) — `GET …/v1beta/models?key=…`, filtered to
+  models advertising `generateContent`; the `models/` name prefix is stripped.
+- **GitHub Models** (`gh:`) — `GET https://models.github.ai/catalog/models`,
+  Bearer `GITHUB_TOKEN`; ids keep their `publisher/model` form (e.g.
+  `gh:openai/gpt-4.1`) to match the `gh:` backend's resolution (the *builder*
+  still targets `models.inference.ai.azure.com`).
+- **NVIDIA NIM** (`nvidia:`) — `GET {base}/models` where the base comes from
+  `resolve_nvidia_base_url()` (`NVIDIA_BASE_URL` for on‑prem NIM, else
+  `https://integrate.api.nvidia.com/v1`), Bearer `NVIDIA_API_KEY`;
+  `publisher/model` ids round‑trip to the OpenAI‑compatible backend unchanged.
+
+**No‑LLM gating:** `_merge_cloud_models()` is skipped entirely under
+`AGENTIC_NO_LLM=1` — that mode routes every tier to the deterministic
+placeholder, so a live listing would mislead, and the gate keeps the unit suite
+(which runs with `AGENTIC_NO_LLM=1`) hermetic with no per‑test patching. Local
+discovery (localhost, free) stays ungated; cloud discovery (internet, metered)
+does not. Covered by mocked‑HTTP tests in `tests/models/test_cloud_discovery.py`.
+
+**Known inefficiency:** a full probe currently runs this cloud sweep **twice** —
+once inside `detect_registry_drift()` (the ADR‑040 quarantine pass) and once in
+`_merge_cloud_models()` — and only OpenRouter's slice is TTL‑cached. Flagged
+for a follow‑up optimization (share one listing per probe request).
+
+### OpenRouter — curated + TTL‑cached (ADR‑050, PR #188)
+
+OpenRouter is a single‑key aggregator fronting 300–400 models, so its discovery
+deliberately deviates from ADR‑039's list‑everything/no‑cache baseline:
+
+- **Endpoint:** `GET {base}/models` via `resolve_openrouter_base_url()`
+  (`OPENROUTER_BASE_URL` for gateways, else `https://openrouter.ai/api/v1`),
+  Bearer `OPENROUTER_API_KEY`.
+- **Curation:** the raw catalog is filtered to text‑output chat models, then
+  capped at ≤ 25 `:free` ids (alphabetical) plus ≤ 15 flagship‑family ids
+  filled **round‑robin across families** (`openai/gpt-5`, `anthropic/claude`,
+  `google/gemini-2`, `meta-llama/llama-4`, …) so one prolific publisher cannot
+  starve the rest. Deterministic for a given catalog.
+- **TTL cache:** the curated **live** result is cached for 300 s (lock‑guarded;
+  the static fallback is never cached). A failed re‑fetch serves the last live
+  result before degrading to the static list.
+- **Keyless fallback:** with no `OPENROUTER_API_KEY`, a small static list of
+  free‑tier + flagship ids is returned — still with no network call — so the
+  console can advertise the aggregator; the merge layer marks those entries
+  `available: false` (availability always derives from the key env).
+- **Ids:** `publisher/model[:free]`, so a full id has **two** colons
+  (`openrouter:meta-llama/llama-3.1-8b-instruct:free`) — safe under
+  `provider_prefix()`'s first‑colon split. The LangChain builder is a
+  `ChatOpenAI` base‑URL swap; the native engine gets parity via
+  `OpenRouterBackend`. Like NVIDIA, OpenRouter joins **no** tier chain — it is
+  reachable via explicit id or override only.
+
+## Chat playground — the real liveness check (ADR‑050, PR #188)
+
+Everything above answers *"what exists and which providers look configured"*;
+none of it proves a call **works** — `is_provider_available()` remains
+env‑detection only, and local providers are hard‑coded available whether or not
+their server is up. The chat playground closes that gap:
+
+- `POST /api/chat` (`agentic_v2/server/routes/chat.py`) is a request‑scoped
+  **SSE** stream that sends the supplied conversation **straight to the
+  requested model id** via `get_chat_model(full_id)` — deliberately bypassing
+  `SmartModelRouter` tier selection. It answers "does this one id work," not
+  "what would the router pick."
+- Wire contract (`agentic_v2/contracts/chat.py`, part of the ADR‑014
+  wire‑format drift pipeline): `ChatRequest { model, messages[{role, content}],
+  temperature }`; the response is a discriminated‑union event stream —
+  `token {delta}` frames terminated by exactly one `done {model}` **or** one
+  `error {message, category}`.
+- The endpoint always answers **HTTP 200**: real provider failures (401, 429,
+  connection refused, unknown prefix, missing key) surface as in‑stream
+  `error` frames categorized by `classify_error()`, with the message
+  **secret‑scrubbed** (bearer headers and every reachable provider's key shape
+  redacted, length‑capped) so a verbose provider error can never echo a
+  credential to the browser. Only FastAPI request validation stays a native
+  422; a missing LangChain install returns the same 503 convention as the
+  probe route.
+- The playground tab on the `/models` page (ModelFinderPage) drives it, so
+  "provider looks ready" (env key) and "provider actually answered" (live SSE
+  reply) are adjacent, clearly distinct signals.
+
+With ADR‑039/050 the discovery story covers every registered provider — the
+former "cloud list‑models is still future work" note in this doc is done.

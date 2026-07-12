@@ -264,6 +264,8 @@ jobs:
     #   agentic_v2/server/models.WorkflowInputSchemaResponse → workflow_input_schema.schema.json + workflow_input_schema.generated.ts
     #   agentic_v2/server/models.WorkflowEditorStep → workflow_editor_step.schema.json + workflow_editor_step.generated.ts
     #   agentic_v2/server/models.RunsSummaryResponse → runs_summary.schema.json + runs_summary.generated.ts
+    #   agentic_v2/contracts/chat.py (ChatRequest)  → chat_request.schema.json + chat_request.generated.ts
+    #   agentic_v2/contracts/chat.py (ChatStreamEvent) → chat_stream_event.schema.json + chat_stream_event.generated.ts
     # This job regenerates all committed artifacts and fails the PR if the
     # working tree no longer matches what's checked in.
     runs-on: ubuntu-latest
@@ -304,12 +306,16 @@ jobs:
               agentic-workflows-v2/tests/schemas/workflow_input_schema.schema.json \
               agentic-workflows-v2/tests/schemas/workflow_editor_step.schema.json \
               agentic-workflows-v2/tests/schemas/runs_summary.schema.json \
+              agentic-workflows-v2/tests/schemas/chat_request.schema.json \
+              agentic-workflows-v2/tests/schemas/chat_stream_event.schema.json \
               agentic-workflows-v2/ui/src/api/events.generated.ts \
               agentic-workflows-v2/ui/src/api/step_result.generated.ts \
               agentic-workflows-v2/ui/src/api/dag_response.generated.ts \
               agentic-workflows-v2/ui/src/api/workflow_input_schema.generated.ts \
               agentic-workflows-v2/ui/src/api/workflow_editor_step.generated.ts \
-              agentic-workflows-v2/ui/src/api/runs_summary.generated.ts; then
+              agentic-workflows-v2/ui/src/api/runs_summary.generated.ts \
+              agentic-workflows-v2/ui/src/api/chat_request.generated.ts \
+              agentic-workflows-v2/ui/src/api/chat_stream_event.generated.ts; then
             echo "::error::Wire-format drift detected. Run 'python -m scripts.generate_ts_types' and 'npm run generate:types' (from agentic-workflows-v2/ui/) and commit the result."
             exit 1
           fi
