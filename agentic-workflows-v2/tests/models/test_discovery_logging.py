@@ -25,12 +25,6 @@ from agentic_v2.models.discovery_logging import (
 _FAKE_KEY = "fake-discovery-key-not-real"
 
 
-def _drop_redaction_filters(target: logging.Logger) -> None:
-    for existing in list(target.filters):
-        if isinstance(existing, SecretQueryParamFilter):
-            target.removeFilter(existing)
-
-
 # Loggers a test in this module may install the filter on: the test-local
 # names, plus the two process-global loggers cloud_discovery guards at import.
 _GUARDED_LOGGER_NAMES = (
@@ -43,14 +37,26 @@ _GUARDED_LOGGER_NAMES = (
 
 @pytest.fixture(autouse=True)
 def _reset_redaction_filters() -> Iterator[None]:
-    """Strip installed redaction filters after each test.
+    """Remove only the redaction filters a test itself installed.
 
-    Loggers are process-global singletons, so a filter added by a test here
-    would otherwise leak into every later test in the run.
+    Loggers are process-global singletons, but stripping every
+    SecretQueryParamFilter would also remove the import-time install
+    cloud_discovery puts on ``httpx`` — and the cached module never re-runs
+    it, leaving the REST of the pytest run unprotected. Snapshot what each
+    guarded logger carried before the test and drop only the additions.
     """
+    before = {
+        name: set(logging.getLogger(name).filters) for name in _GUARDED_LOGGER_NAMES
+    }
     yield
     for name in _GUARDED_LOGGER_NAMES:
-        _drop_redaction_filters(logging.getLogger(name))
+        target = logging.getLogger(name)
+        for existing in list(target.filters):
+            if (
+                isinstance(existing, SecretQueryParamFilter)
+                and existing not in before[name]
+            ):
+                target.removeFilter(existing)
 
 
 class TestRedactUrlSecrets:
