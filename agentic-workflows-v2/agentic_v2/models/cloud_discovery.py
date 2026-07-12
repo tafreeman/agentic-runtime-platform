@@ -24,8 +24,10 @@ Providers probed (best-effort, only when their key env var is set):
 Best-effort by design: a missing key contributes nothing (no network call), and
 any probe failure (network, auth, schema drift) degrades to "no models for this
 provider" rather than raising — callers keep the static catalog. The probe is
-bounded by an 8 s per-request timeout. API keys are sent as auth headers/params
-and are never logged.
+bounded by an 8 s per-request timeout. API keys are sent as request **headers**
+(never as URL query parameters, so they cannot leak into httpx's request-line
+logs); :mod:`.discovery_logging` scrubs credential-like query params from any
+logged URL as a second layer of defense.
 """
 
 from __future__ import annotations
@@ -38,7 +40,14 @@ from typing import Any
 
 import httpx
 
+from .discovery_logging import install_redaction_filter
+
 logger = logging.getLogger(__name__)
+
+# Defense in depth: every probe below sends its key as a header (never a URL
+# query param), but also scrub credential-like query params from anything httpx
+# or this module logs, so a regression cannot write a live key to the logs.
+install_redaction_filter(logger, logging.getLogger("httpx"))
 
 _TIMEOUT_SECONDS = 8.0
 
@@ -80,17 +89,16 @@ def _get_json(
     url: str,
     *,
     headers: dict[str, str] | None = None,
-    params: dict[str, str] | None = None,
 ) -> Any | None:
     """GET ``url`` and return parsed JSON (list or dict), or ``None`` on failure.
 
     Never raises: any transport/HTTP/parse error logs at debug and yields
     ``None`` so a provider that is down or rejects the key contributes nothing.
+    Credentials travel via ``headers`` only — never as URL query parameters —
+    so a secret cannot appear in httpx's request-line logs.
     """
     try:
-        response = httpx.get(
-            url, headers=headers, params=params, timeout=_TIMEOUT_SECONDS
-        )
+        response = httpx.get(url, headers=headers, timeout=_TIMEOUT_SECONDS)
         response.raise_for_status()
         return response.json()
     except Exception as exc:
@@ -186,7 +194,11 @@ def discover_gemini_models() -> list[CloudModelInfo]:
     api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return []
-    payload = _get_json(_GEMINI_MODELS_URL, params={"key": api_key})
+    # Send the key as a header, never as a ``?key=`` query param: httpx
+    # INFO-logs the full request URL, so a query-string secret would be written
+    # to the backend logs in plaintext. Google's Generative Language API accepts
+    # either form, and the runtime's Gemini *backend* already uses this header.
+    payload = _get_json(_GEMINI_MODELS_URL, headers={"x-goog-api-key": api_key})
     if not isinstance(payload, dict):
         return []
     names: list[str] = []
@@ -273,10 +285,10 @@ def discover_nvidia_models() -> list[CloudModelInfo]:
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live listings from every keyed cloud provider (best-effort).
 
-    Providers without a configured key contribute nothing and make no network
-    call. The four probes run concurrently so worst-case latency is a single
-    timeout (~8s) rather than the sum of all four; provider order is preserved.
-    Never raises.
+    Providers without a configured key contribute nothing and make no
+    network call. The four probes run concurrently so worst-case latency
+    is a single timeout (~8s) rather than the sum of all four; provider
+    order is preserved. Never raises.
     """
     probes = (
         discover_openai_models,
