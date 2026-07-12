@@ -90,6 +90,30 @@ system_tops: not-a-number
         # computed accelerator total wins.
         assert profile.system_tops == 40.0
 
+    def test_boolean_system_tops_falls_back_to_accelerator_total(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # bool is an int subclass (float(True) == 1.0), so without an explicit
+        # guard a YAML `system_tops: true` would silently mean 1.0 TOPS.
+        self._install_override(
+            tmp_path,
+            monkeypatch,
+            """
+cpu_cores_logical: 8
+ram_gb: 32
+accelerators:
+  - kind: gpu
+    name: Test GPU
+    tops: 40
+    memory_gb: 16
+system_tops: true
+""",
+        )
+
+        profile = get_system_profile()
+
+        assert profile.system_tops == 40.0
+
     def test_mapping_system_tops_without_accelerators_yields_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
