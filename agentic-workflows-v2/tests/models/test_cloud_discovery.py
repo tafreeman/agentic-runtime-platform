@@ -207,6 +207,44 @@ class TestGemini:
         )
         assert [m.id for m in discover_gemini_models()] == ["gemini:gemini-2.5-flash"]
 
+    def test_key_sent_as_header_never_in_url_or_query(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The Gemini key rides in x-goog-api-key, never a ``?key=`` query param.
+
+        httpx INFO-logs the full request URL, so a query-string secret
+        would be written to the backend logs in plaintext — the leak
+        this guards against.
+        """
+        fake_key = "fake-gemini-key-not-real"
+        monkeypatch.setenv("GEMINI_API_KEY", fake_key)
+        seen: dict[str, Any] = {}
+
+        def _capture(
+            url: str, headers: Any = None, params: Any = None, timeout: Any = None
+        ) -> _Resp:
+            seen.update(url=url, headers=headers or {}, params=params)
+            return _Resp(
+                {
+                    "models": [
+                        {
+                            "name": "models/gemini-2.5-flash",
+                            "supportedGenerationMethods": ["generateContent"],
+                        }
+                    ]
+                }
+            )
+
+        monkeypatch.setattr(cloud_discovery.httpx, "get", _capture)
+
+        assert [m.id for m in discover_gemini_models()] == ["gemini:gemini-2.5-flash"]
+        # Credential rides in the header...
+        assert seen["headers"].get("x-goog-api-key") == fake_key
+        # ...and appears in neither the request URL nor any query params.
+        assert seen["params"] is None
+        assert "key=" not in seen["url"]
+        assert fake_key not in seen["url"]
+
 
 class TestGitHub:
     def test_lists_catalog_array_keeping_publisher_prefix(
