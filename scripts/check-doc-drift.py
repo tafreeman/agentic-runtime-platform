@@ -20,11 +20,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PROTOCOLS_PATH = (
-    REPO_ROOT
-    / "agentic-workflows-v2"
-    / "agentic_v2"
-    / "core"
-    / "protocols.py"
+    REPO_ROOT / "agentic-workflows-v2" / "agentic_v2" / "core" / "protocols.py"
 )
 DEFAULT_DOCS_PATH = REPO_ROOT / "docs" / "ARCHITECTURE.md"
 

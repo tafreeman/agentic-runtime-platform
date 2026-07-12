@@ -437,8 +437,9 @@ _ProviderCacheKey = tuple[int, int, ModelTier]
 class _ProviderCacheEntry:
     """A cached provider plus weak refs to the router/backend it was built for.
 
-    Holds the provider strongly (the cache is the owner) and the router/backend
-    weakly so we can re-validate identity on hit without keeping them alive.
+    Holds the provider strongly (the cache is the owner) and the
+    router/backend weakly so we can re-validate identity on hit without
+    keeping them alive.
     """
 
     __slots__ = ("backend_ref", "provider", "router_ref")
@@ -479,14 +480,16 @@ def get_provider(
 ) -> SmartRouterProvider:
     """Return a cached :class:`SmartRouterProvider` for this router/backend/tier.
 
-    Builds and caches a fresh provider on first use for a given identity triple;
-    subsequent calls with the same *live* triple return the same instance. The
-    provider is immutable after construction (it stores only references to the
-    router and backend, which own all mutable state), so caching is safe.
+    Builds and caches a fresh provider on first use for a given identity
+    triple; subsequent calls with the same *live* triple return the same
+    instance. The provider is immutable after construction (it stores
+    only references to the router and backend, which own all mutable
+    state), so caching is safe.
 
-    A cache hit is validated against the live router/backend identity (see the
-    module-level lifecycle note): a dead weak ref or an identity mismatch (the
-    id() was recycled by a different object) evicts the stale entry and rebuilds.
+    A cache hit is validated against the live router/backend identity
+    (see the module-level lifecycle note): a dead weak ref or an
+    identity mismatch (the id() was recycled by a different object)
+    evicts the stale entry and rebuilds.
     """
     global _provider_cache
     if _provider_cache is None:

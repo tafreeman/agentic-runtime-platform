@@ -84,8 +84,7 @@ class ApprovalRequest:
 
     def _redacted_args(self) -> str:
         items = ", ".join(
-            f"{key}={_redact_arg_value(value)}"
-            for key, value in self.tool_args.items()
+            f"{key}={_redact_arg_value(value)}" for key, value in self.tool_args.items()
         )
         return "{" + items + "}"
 
@@ -111,14 +110,20 @@ class ApprovalProvider(Protocol):
 
 
 class AutoApproveProvider:
-    """Approves every request. For trusted/non-interactive environments only."""
+    """Approves every request.
+
+    For trusted/non-interactive environments only.
+    """
 
     async def request_approval(self, request: ApprovalRequest) -> ApprovalDecision:
         return ApprovalDecision.APPROVED
 
 
 class AutoDenyProvider:
-    """Denies every request. Useful as a hard kill-switch."""
+    """Denies every request.
+
+    Useful as a hard kill-switch.
+    """
 
     async def request_approval(self, request: ApprovalRequest) -> ApprovalDecision:
         return ApprovalDecision.DENIED
@@ -330,8 +335,6 @@ async def evaluate_tool_approval(
     return ApprovalOutcome(
         allowed=False,
         decision=decision,
-        error_message=(
-            f"Tool '{tool_name}' requires approval: denied by {label}."
-        ),
+        error_message=(f"Tool '{tool_name}' requires approval: denied by {label}."),
         provider_label=label,
     )

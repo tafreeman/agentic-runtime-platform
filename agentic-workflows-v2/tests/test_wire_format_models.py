@@ -91,7 +91,10 @@ class TestWorkflowInputSchemaResponse:
     """Tests for the WorkflowInputSchemaResponse model."""
 
     def _nodes(self) -> list[dict[str, Any]]:
-        return [{"id": "step-a", "depends_on": []}, {"id": "step-b", "depends_on": ["step-a"]}]
+        return [
+            {"id": "step-a", "depends_on": []},
+            {"id": "step-b", "depends_on": ["step-a"]},
+        ]
 
     def _edges(self) -> list[dict[str, Any]]:
         return [{"source": "step-a", "target": "step-b"}]
@@ -144,7 +147,8 @@ class TestWorkflowInputSchemaResponse:
             )
 
     def test_model_validate_from_dag_endpoint_shape(self) -> None:
-        """Accepts the raw dict produced by the GET /api/workflows/{name}/dag endpoint."""
+        """Accepts the raw dict produced by the GET /api/workflows/{name}/dag
+        endpoint."""
         raw: dict[str, Any] = {
             "name": "research-pipeline",
             "description": "Research DAG",

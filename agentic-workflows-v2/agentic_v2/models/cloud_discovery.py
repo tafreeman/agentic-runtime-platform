@@ -273,10 +273,10 @@ def discover_nvidia_models() -> list[CloudModelInfo]:
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live listings from every keyed cloud provider (best-effort).
 
-    Providers without a configured key contribute nothing and make no network
-    call. The four probes run concurrently so worst-case latency is a single
-    timeout (~8s) rather than the sum of all four; provider order is preserved.
-    Never raises.
+    Providers without a configured key contribute nothing and make no
+    network call. The four probes run concurrently so worst-case latency
+    is a single timeout (~8s) rather than the sum of all four; provider
+    order is preserved. Never raises.
     """
     probes = (
         discover_openai_models,

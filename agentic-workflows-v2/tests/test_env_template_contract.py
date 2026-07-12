@@ -1,4 +1,5 @@
 """Contract tests for the root environment template."""
+
 from __future__ import annotations
 
 from pathlib import Path

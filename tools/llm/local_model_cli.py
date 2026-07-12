@@ -115,7 +115,9 @@ def _run_batch_evaluate_mode(args: argparse.Namespace) -> int:
         return 1
 
 
-def _run_interactive_mode(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+def _run_interactive_mode(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> int:
     """Generate a response for a single prompt; return process exit code."""
     from tools.llm.local_model import LocalModel
 

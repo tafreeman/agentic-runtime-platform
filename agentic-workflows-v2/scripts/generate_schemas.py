@@ -6,6 +6,7 @@ Run this script when making intentional schema changes:
 
 Then commit the updated snapshots alongside the model change.
 """
+
 from __future__ import annotations
 
 import json

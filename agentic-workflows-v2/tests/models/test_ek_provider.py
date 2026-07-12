@@ -118,14 +118,14 @@ class _FakeBackend(LLMBackend):
         return step
 
 
-def _http_status_error(status: int, retry_after: str | None = None) -> httpx.HTTPStatusError:
+def _http_status_error(
+    status: int, retry_after: str | None = None
+) -> httpx.HTTPStatusError:
     """Build a real ``httpx.HTTPStatusError`` with the given status."""
     headers = {"retry-after": retry_after} if retry_after is not None else {}
     request = httpx.Request("POST", "https://example.test/chat/completions")
     response = httpx.Response(status, request=request, headers=headers)
-    return httpx.HTTPStatusError(
-        f"HTTP {status}", request=request, response=response
-    )
+    return httpx.HTTPStatusError(f"HTTP {status}", request=request, response=response)
 
 
 def _router_with(chain: tuple[str, ...], tier: ModelTier) -> SmartModelRouter:

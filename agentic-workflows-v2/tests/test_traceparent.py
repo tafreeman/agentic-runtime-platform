@@ -71,7 +71,9 @@ class TestBuildTraceparent:
         """build_traceparent() returns None when OTEL SDK is missing."""
         from agentic_v2.server.middleware.tracing import build_traceparent
 
-        with patch.dict(sys.modules, {"opentelemetry": None, "opentelemetry.trace": None}):
+        with patch.dict(
+            sys.modules, {"opentelemetry": None, "opentelemetry.trace": None}
+        ):
             result = build_traceparent()
         # ImportError path — result is None
         assert result is None
@@ -212,7 +214,10 @@ class TestTraceparentMiddlewareDisabled:
         async def ping() -> PlainTextResponse:
             return PlainTextResponse("pong")
 
-        with patch("agentic_v2.server.middleware.tracing.is_tracing_enabled", return_value=False):
+        with patch(
+            "agentic_v2.server.middleware.tracing.is_tracing_enabled",
+            return_value=False,
+        ):
             with TestClient(app) as client:
                 resp = client.get("/ping")
 
@@ -232,7 +237,10 @@ class TestTraceparentMiddlewareDisabled:
         async def ping() -> PlainTextResponse:
             return PlainTextResponse("pong")
 
-        with patch("agentic_v2.server.middleware.tracing.is_tracing_enabled", return_value=False):
+        with patch(
+            "agentic_v2.server.middleware.tracing.is_tracing_enabled",
+            return_value=False,
+        ):
             with TestClient(app) as client:
                 resp = client.get("/ping")
 
@@ -264,7 +272,10 @@ class TestTraceparentMiddlewareEnabled:
         app, span = self._make_app_with_span(ctx)
 
         with (
-            patch("agentic_v2.server.middleware.tracing.is_tracing_enabled", return_value=True),
+            patch(
+                "agentic_v2.server.middleware.tracing.is_tracing_enabled",
+                return_value=True,
+            ),
             patch("opentelemetry.trace.get_current_span", return_value=span),
         ):
             with TestClient(app) as client:
@@ -284,7 +295,10 @@ class TestTraceparentMiddlewareEnabled:
         app, span = self._make_app_with_span(ctx)
 
         with (
-            patch("agentic_v2.server.middleware.tracing.is_tracing_enabled", return_value=True),
+            patch(
+                "agentic_v2.server.middleware.tracing.is_tracing_enabled",
+                return_value=True,
+            ),
             patch("opentelemetry.trace.get_current_span", return_value=span),
         ):
             with TestClient(app) as client:
@@ -302,7 +316,10 @@ class TestTraceparentMiddlewareEnabled:
         app, span = self._make_app_with_span(ctx)
 
         with (
-            patch("agentic_v2.server.middleware.tracing.is_tracing_enabled", return_value=True),
+            patch(
+                "agentic_v2.server.middleware.tracing.is_tracing_enabled",
+                return_value=True,
+            ),
             patch("opentelemetry.trace.get_current_span", return_value=span),
         ):
             with TestClient(app) as client:
@@ -404,7 +421,9 @@ class TestWebSocketTraceContext:
         ws.send_json = AsyncMock()
         mgr = ConnectionManager()
 
-        with patch("agentic_v2.server.websocket.is_tracing_enabled", return_value=False):
+        with patch(
+            "agentic_v2.server.websocket.is_tracing_enabled", return_value=False
+        ):
             await mgr.connect(ws, "run-no-trace")
             # Simulate the endpoint logic: only send trace_context when enabled
             from agentic_v2.server.websocket import (

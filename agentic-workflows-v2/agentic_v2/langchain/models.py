@@ -320,10 +320,11 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
 def _merge_ollama_models(models: list[dict[str, Any]]) -> None:
     """Enrich/append live Ollama discovery into ``models`` in place.
 
-    Models already in the catalog get marked available and enriched with cloud /
-    capability / running metadata from the raw ``/api/tags`` + ``/api/ps``
-    payloads; models absent from every tier chain are appended at tier 0 so the
-    console reflects everything currently runnable.
+    Models already in the catalog get marked available and enriched with
+    cloud / capability / running metadata from the raw ``/api/tags`` +
+    ``/api/ps`` payloads; models absent from every tier chain are
+    appended at tier 0 so the console reflects everything currently
+    runnable.
     """
     discovered = discover_ollama_models()
     by_id = {info.id: info for info in discovered}
@@ -363,9 +364,10 @@ def _enrich_local_model(model: dict[str, Any], info: LocalModelInfo) -> None:
 def _merge_local_models(models: list[dict[str, Any]]) -> None:
     """Enrich/append LM Studio + ONNX discovery into ``models`` in place.
 
-    LM Studio's native API supplies the full downloaded library plus running /
-    vision metadata; ONNX supplies filesystem-scanned folders. Catalog entries
-    that are discovered get enriched; the rest are appended at tier 0 (ADR-038).
+    LM Studio's native API supplies the full downloaded library plus
+    running / vision metadata; ONNX supplies filesystem-scanned folders.
+    Catalog entries that are discovered get enriched; the rest are
+    appended at tier 0 (ADR-038).
     """
     local_infos = [*discover_lmstudio_models(), *discover_onnx_models()]
     local_by_id = {info.id: info for info in local_infos}
@@ -479,8 +481,8 @@ def _iter_default_chain_models(
 ) -> Iterator[str]:
     """Yield every model ID in the default chains, skipping the no-LLM tier.
 
-    Iterates tiers in enum order and each chain in priority order so the yield
-    sequence matches the original nested-loop traversal.
+    Iterates tiers in enum order and each chain in priority order so the
+    yield sequence matches the original nested-loop traversal.
     """
     for tier_enum in model_tier_enum:
         if tier_enum == model_tier_enum.TIER_0:
@@ -498,8 +500,8 @@ def _premark_unavailable_models(
 ) -> None:
     """Mark every default-chain model from an unavailable provider as unavailable.
 
-    Lets the native router skip providers with no configured credentials instead
-    of probing them at request time.
+    Lets the native router skip providers with no configured credentials
+    instead of probing them at request time.
     """
     for provider, available in availability.items():
         if available:

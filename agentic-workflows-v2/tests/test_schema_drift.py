@@ -8,6 +8,7 @@ To update snapshots after an intentional schema change:
     git add tests/schemas/
     git commit -m "chore(schemas): update schema snapshots for <ModelName>"
 """
+
 from __future__ import annotations
 
 import json

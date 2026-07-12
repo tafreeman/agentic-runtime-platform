@@ -302,9 +302,7 @@ class ModelStats:
                     return True
             elif self._last_failure_time is not None:
                 # Fallback for stats loaded from persistence (no mono reference)
-                elapsed = (
-                    datetime.now(UTC) - self._last_failure_time
-                ).total_seconds()
+                elapsed = (datetime.now(UTC) - self._last_failure_time).total_seconds()
                 if elapsed >= self._recovery_timeout_seconds:
                     self.circuit_state = CircuitState.HALF_OPEN
                     return True
@@ -368,9 +366,7 @@ class ModelStats:
         if data.get("cooldown_until"):
             stats.cooldown_until = datetime.fromisoformat(data["cooldown_until"])
             # Recompute monotonic deadline from remaining wall-clock seconds
-            remaining = (
-                stats.cooldown_until - datetime.now(UTC)
-            ).total_seconds()
+            remaining = (stats.cooldown_until - datetime.now(UTC)).total_seconds()
             if remaining > 0:
                 stats._cooldown_until_mono = time.monotonic() + remaining
             # else: cooldown already expired, leave mono as None

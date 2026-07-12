@@ -21,6 +21,7 @@ Run it manually when editing either contract:
 CI regenerates these files and fails the ``wire-format-drift`` job if the
 output does not match what's committed.
 """
+
 from __future__ import annotations
 
 import json

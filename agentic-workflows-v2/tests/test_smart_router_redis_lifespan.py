@@ -138,9 +138,9 @@ async def test_installed_redis_router_persists_via_cas(
 ) -> None:
     """The installed Redis router actually persists circuit-breaker state via CAS.
 
-    Proves the redis_state.py CAS path is no longer dead code: recording a
-    success on the installed router queues a background save that writes the
-    model's stats into the (fake) Redis store.
+    Proves the redis_state.py CAS path is no longer dead code: recording
+    a success on the installed router queues a background save that
+    writes the model's stats into the (fake) Redis store.
     """
     from agentic_v2.server import lifespan as lifespan_mod
 
@@ -207,14 +207,14 @@ async def test_lifespan_shutdown_drains_router(
     monkeypatch.setattr(lifespan_mod, "_install_smart_router", fake_install)
     monkeypatch.setattr(lifespan_mod, "_validate_selected_adapter", lambda: None)
     monkeypatch.setattr(lifespan_mod, "_probe_llm_providers", lambda: None)
-    monkeypatch.setattr(lifespan_mod, "_initialize_sanitization_state", lambda app: None)
+    monkeypatch.setattr(
+        lifespan_mod, "_initialize_sanitization_state", lambda app: None
+    )
 
     async def _noop_init_store() -> None:
         return None
 
-    monkeypatch.setattr(
-        app_mod.websocket.manager, "initialize_store", _noop_init_store
-    )
+    monkeypatch.setattr(app_mod.websocket.manager, "initialize_store", _noop_init_store)
 
     # build_audit_logger is awaited in the lifespan; make it cheap/safe.
     async def _fake_build_audit_logger(_settings: object):
@@ -240,7 +240,7 @@ async def test_lifespan_shutdown_drains_router(
 async def test_aclose_drains_pending_redis_save_tasks(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """aclose() on the installed Redis router empties _background_tasks.
+    """Aclose() on the installed Redis router empties _background_tasks.
 
     Mirrors the shutdown drain contract: an in-flight CAS save task is queued,
     then aclose() (called by the lifespan) awaits it to completion.
@@ -312,7 +312,9 @@ async def test_redis_connect_failure_falls_back_without_raising(
     """create_with_redis raising must not crash startup — fall back in-process."""
     from agentic_v2.server import lifespan as lifespan_mod
 
-    async def boom_create_with_redis(*args: object, **kwargs: object) -> SmartModelRouter:
+    async def boom_create_with_redis(
+        *args: object, **kwargs: object
+    ) -> SmartModelRouter:
         raise ConnectionError("redis unreachable")
 
     monkeypatch.setattr(
@@ -371,8 +373,9 @@ async def test_settings_redis_url_from_env_drives_wiring(
 ) -> None:
     """REDIS_URL read from the environment via get_settings() drives the wiring.
 
-    Confirms the optional REDIS_URL setting (pydantic-settings, default None)
-    is the real switch — setting the env var routes through the Redis path.
+    Confirms the optional REDIS_URL setting (pydantic-settings, default
+    None) is the real switch — setting the env var routes through the
+    Redis path.
     """
     from agentic_v2.server import lifespan as lifespan_mod
     from agentic_v2.settings import get_settings

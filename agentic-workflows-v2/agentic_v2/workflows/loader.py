@@ -314,9 +314,7 @@ class WorkflowLoader:
             criteria=criteria,
         )
 
-    def _parse_criteria(
-        self, criteria_raw: Any, name: str
-    ) -> list[WorkflowCriterion]:
+    def _parse_criteria(self, criteria_raw: Any, name: str) -> list[WorkflowCriterion]:
         """Parse the ``evaluation.criteria`` list into WorkflowCriterion objects."""
         criteria: list[WorkflowCriterion] = []
         if criteria_raw is None:
@@ -554,7 +552,9 @@ class WorkflowLoader:
                 resolve_agent(step)
                 dag.add(step)
             except Exception as exc:
-                logger.debug("Skipping invalid DAG step %r: %s", step_data.get("name"), exc)
+                logger.debug(
+                    "Skipping invalid DAG step %r: %s", step_data.get("name"), exc
+                )
                 continue
 
     @staticmethod

@@ -70,9 +70,7 @@ def print_evaluation_report(result: EvaluationResult, verbose: bool = True) -> N
     _print_bulleted_section("[-] WEAKNESSES:", result.weaknesses, 5)
 
     if verbose:
-        _print_bulleted_section(
-            "[>] SUGGESTIONS:", result.improvement_suggestions, 3
-        )
+        _print_bulleted_section("[>] SUGGESTIONS:", result.improvement_suggestions, 3)
         _print_bulleted_section("[!] KEY FINDINGS:", result.key_findings, 3)
 
 

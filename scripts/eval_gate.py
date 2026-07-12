@@ -111,7 +111,8 @@ def _load_json(path: Path) -> Any:
 
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
-    """Coerce a possibly-null / non-numeric JSON value to float; ``default`` on failure."""
+    """Coerce a possibly-null / non-numeric JSON value to float; ``default`` on
+    failure."""
     if value is None:
         return default
     try:
@@ -427,8 +428,8 @@ async def _score_all_live(
 
 
 def _report_and_exit(scored: list[dict[str, Any]], global_threshold: float) -> int:
-    """Print the per-case + aggregate report shared by the mocked and --live
-    paths, and return the process exit code (0 pass, 1 fail)."""
+    """Print the per-case + aggregate report shared by the mocked and --live paths, and
+    return the process exit code (0 pass, 1 fail)."""
     any_failed = False
     for result in scored:
         status = "PASS" if result["passed"] else "FAIL"
@@ -471,8 +472,11 @@ def _report_and_exit(scored: list[dict[str, Any]], global_threshold: float) -> i
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Entry point. Returns 0 (all cases pass, or --live was skipped for lack
-    of provider credentials) or 1 (any fail / load error)."""
+    """Entry point.
+
+    Returns 0 (all cases pass, or --live was skipped for lack of
+    provider credentials) or 1 (any fail / load error).
+    """
     parser = argparse.ArgumentParser(
         prog="eval_gate",
         description=(

@@ -114,8 +114,8 @@ class TestGetClientBudgetWiring:
     def test_configured_budget_is_installed_on_the_shared_client(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """AGENTIC_TOKEN_BUDGET=N arms TokenBudget(max_tokens=N) on the
-        singleton get_client() returns."""
+        """AGENTIC_TOKEN_BUDGET=N arms TokenBudget(max_tokens=N) on the singleton
+        get_client() returns."""
         monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "12345")
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
         get_settings.cache_clear()
@@ -201,9 +201,9 @@ class TestBudgetEnforcement:
             "ever dispatched"
         )
         assert client.budget is not None
-        assert client.budget.used_tokens == 0, (
-            "a rejected call must not consume any of the budget"
-        )
+        assert (
+            client.budget.used_tokens == 0
+        ), "a rejected call must not consume any of the budget"
 
 
 class TestProcessWideTokenBudgetAccumulates:
@@ -226,9 +226,9 @@ class TestProcessWideTokenBudgetAccumulates:
         # A charge that overshoots the remaining 40 is already spent upstream:
         # it must be recorded (not dropped) and report the cap as breached.
         assert budget.consume(90) is False
-        assert budget.used_tokens == 150, (
-            "the overrun must be accumulated, not silently dropped"
-        )
+        assert (
+            budget.used_tokens == 150
+        ), "the overrun must be accumulated, not silently dropped"
         # The pre-flight gate now blocks the next call outright — no bypass.
         assert budget.can_afford(1) is False
         assert budget.remaining == 0

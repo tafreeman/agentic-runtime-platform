@@ -11,6 +11,7 @@ To update the golden file after an intentional workflow change:
 Note: When deep_research.yaml is created, add a parametrize entry here
 and add tests/golden/deep_research_output.json.
 """
+
 from __future__ import annotations
 
 import json
@@ -46,10 +47,9 @@ def _strip_volatile(obj: object) -> object:
         return [_strip_volatile(item) for item in obj]
     return obj
 
+
 MOCK_AGENT_RESPONSE = {
-    "findings": [
-        {"severity": "low", "message": "No issues found", "line": 1}
-    ],
+    "findings": [{"severity": "low", "message": "No issues found", "line": 1}],
     "summary": "Code looks correct.",
     "status": "approved",
 }

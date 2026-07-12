@@ -58,6 +58,7 @@ except ImportError:  # pragma: no cover — guarded for isolated environments
         allow_module_level=True,
     )
 
+
 @pytest.fixture(autouse=True, scope="module")
 def _force_no_llm_env() -> Any:
     """Set ``AGENTIC_NO_LLM=1`` for THIS module only.
@@ -455,7 +456,7 @@ async def test_lifecycle_retry_backoff_with_flag_on(
 async def test_lifecycle_error_hooks_fire_on_failure_with_flag_on(
     ek_flag_on: None,
 ) -> None:
-    """error hooks fire and the error maps onto StepResult on terminal failure."""
+    """Error hooks fire and the error maps onto StepResult on terminal failure."""
     fired: list[str] = []
 
     async def _err_hook(ctx: ExecutionContext, sd: Any) -> None:
@@ -505,7 +506,7 @@ async def test_lifecycle_loop_until_with_flag_on(ek_flag_on: None) -> None:
 async def test_lifecycle_verification_block_fails_step_with_flag_on(
     ek_flag_on: None,
 ) -> None:
-    """verification escalation='block' marks the step FAILED (unchanged)."""
+    """Verification escalation='block' marks the step FAILED (unchanged)."""
     from agentic_v2.contracts.verification import VerificationPolicy
 
     async def _ok(ctx: ExecutionContext) -> dict[str, Any]:
@@ -514,7 +515,7 @@ async def test_lifecycle_verification_block_fails_step_with_flag_on(
     # A command that exits non-zero so the gate FAILS; 'block' must fail the step.
     policy = VerificationPolicy(
         enabled=True,
-        verification_commands=("python -c \"import sys; sys.exit(1)\"",),
+        verification_commands=('python -c "import sys; sys.exit(1)"',),
         escalation_strategy="block",
     )
     step_def = StepDefinition(
@@ -529,7 +530,7 @@ async def test_lifecycle_verification_block_fails_step_with_flag_on(
 async def test_lifecycle_verification_report_continues_with_flag_on(
     ek_flag_on: None,
 ) -> None:
-    """verification escalation='report' logs but does NOT fail the step."""
+    """Verification escalation='report' logs but does NOT fail the step."""
     from agentic_v2.contracts.verification import VerificationPolicy
 
     async def _ok(ctx: ExecutionContext) -> dict[str, Any]:
@@ -537,7 +538,7 @@ async def test_lifecycle_verification_report_continues_with_flag_on(
 
     policy = VerificationPolicy(
         enabled=True,
-        verification_commands=("python -c \"import sys; sys.exit(1)\"",),
+        verification_commands=('python -c "import sys; sys.exit(1)"',),
         escalation_strategy="report",
     )
     step_def = StepDefinition(

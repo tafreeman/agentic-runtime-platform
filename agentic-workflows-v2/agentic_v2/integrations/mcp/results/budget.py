@@ -14,8 +14,7 @@ DEFAULT_MAX_MCP_OUTPUT_TOKENS = 25000
 
 
 def get_max_mcp_output_tokens() -> int:
-    """
-    Get the maximum allowed tokens for MCP output.
+    """Get the maximum allowed tokens for MCP output.
 
     Checks environment variable MAX_MCP_OUTPUT_TOKENS first,
     falls back to default.
@@ -24,6 +23,7 @@ def get_max_mcp_output_tokens() -> int:
         Maximum tokens allowed
     """
     from ....settings import get_settings
+
     _max = get_settings().max_mcp_output_tokens
     env_value = str(_max) if _max is not None else None
     if env_value:
@@ -40,8 +40,7 @@ def get_max_mcp_output_tokens() -> int:
 
 
 def estimate_token_count(text: str) -> int:
-    """
-    Estimate token count for text.
+    """Estimate token count for text.
 
     Uses rough 4-char-per-token heuristic. For more accurate counting,
     integrate with tiktoken or your framework's token counter.
@@ -57,8 +56,7 @@ def estimate_token_count(text: str) -> int:
 
 
 def estimate_content_blocks_tokens(content_blocks: list[dict[str, Any]]) -> int:
-    """
-    Estimate total tokens across multiple content blocks.
+    """Estimate total tokens across multiple content blocks.
 
     Args:
         content_blocks: List of MCP content blocks
@@ -91,8 +89,7 @@ def estimate_content_blocks_tokens(content_blocks: list[dict[str, Any]]) -> int:
 
 
 class ContextBudgetGuard:
-    """
-    Guards LLM context window from oversized MCP outputs.
+    """Guards LLM context window from oversized MCP outputs.
 
     Features:
     - Token counting for text content
@@ -106,8 +103,7 @@ class ContextBudgetGuard:
         max_tokens: int | None = None,
         truncation_message_template: str | None = None,
     ) -> None:
-        """
-        Initialize context budget guard.
+        """Initialize context budget guard.
 
         Args:
             max_tokens: Maximum tokens allowed (default: from env or 25000)
@@ -127,8 +123,7 @@ class ContextBudgetGuard:
         server_name: str,
         tool_name: str,
     ) -> tuple[str, bool]:
-        """
-        Check text content and truncate if needed.
+        """Check text content and truncate if needed.
 
         Args:
             text: Text to check
@@ -218,8 +213,7 @@ class ContextBudgetGuard:
         server_name: str,
         tool_name: str,
     ) -> tuple[list[dict[str, Any]], bool]:
-        """
-        Check content blocks and truncate if needed.
+        """Check content blocks and truncate if needed.
 
         Args:
             content_blocks: List of content blocks
@@ -265,8 +259,7 @@ class ContextBudgetGuard:
         return result_blocks, was_truncated
 
     def is_oversized(self, text: str) -> bool:
-        """
-        Check if text exceeds token budget.
+        """Check if text exceeds token budget.
 
         Args:
             text: Text to check
@@ -277,8 +270,7 @@ class ContextBudgetGuard:
         return estimate_token_count(text) > self.max_tokens
 
     def get_budget_summary(self, text: str) -> dict[str, Any]:
-        """
-        Get budget usage summary for text.
+        """Get budget usage summary for text.
 
         Args:
             text: Text to analyze

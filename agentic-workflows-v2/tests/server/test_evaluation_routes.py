@@ -262,9 +262,7 @@ def test_local_dataset_batch_loader_slices_in_memory(
     monkeypatch.setattr(datasets_module, "_WORKSPACE_ROOT", tmp_path)
 
     dataset_ref = "tests/fixtures/datasets/synthetic.json"
-    batch = datasets_module.load_local_dataset_samples(
-        dataset_ref, offset=10, limit=5
-    )
+    batch = datasets_module.load_local_dataset_samples(dataset_ref, offset=10, limit=5)
 
     assert len(batch) == 5
     assert [meta["sample_index"] for _, meta in batch] == [10, 11, 12, 13, 14]
@@ -368,7 +366,8 @@ def test_dataset_id_with_slashes_in_path_based_endpoint(
     fake_humaneval_env: list[dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Path-based endpoint preserves slashes in dataset_id (e.g., 'openai/humaneval')."""
+    """Path-based endpoint preserves slashes in dataset_id (e.g.,
+    'openai/humaneval')."""
     app = create_app()
     client = TestClient(app)
 

@@ -93,7 +93,10 @@ class TestDAGExecutorTimeout:
         assert failed, "Expected at least one FAILED step after timeout"
         # Error message must mention timeout
         assert failed[0].error is not None
-        assert "timeout" in failed[0].error.lower() or "exceeded" in failed[0].error.lower()
+        assert (
+            "timeout" in failed[0].error.lower()
+            or "exceeded" in failed[0].error.lower()
+        )
 
     async def test_timeout_result_metadata(self) -> None:
         """WorkflowResult.metadata contains timeout bookkeeping fields."""
@@ -125,9 +128,9 @@ class TestDAGExecutorTimeout:
             if issubclass(w.category, (ResourceWarning, RuntimeWarning))
             and "pending" in str(w.message).lower()
         ]
-        assert task_warnings == [], (
-            f"Leaked asyncio tasks detected: {[str(w.message) for w in task_warnings]}"
-        )
+        assert (
+            task_warnings == []
+        ), f"Leaked asyncio tasks detected: {[str(w.message) for w in task_warnings]}"
         # Also verify all current tasks (excluding our own) are not pending
         current_tasks = asyncio.all_tasks()
         # The only task should be the test itself (or none if we're in sync ctx)
@@ -155,7 +158,7 @@ class TestDAGExecutorTimeout:
         assert step_map["downstream"].status == StepStatus.SKIPPED
 
     async def test_timeout_kwargs_dispatch(self) -> None:
-        """timeout accepted via **kwargs so server-layer dispatch works unchanged."""
+        """Timeout accepted via **kwargs so server-layer dispatch works unchanged."""
         dag = _make_dag("kwargs-timeout")
         dag.add(StepDefinition(name="hung", func=hung_step))
 
@@ -233,7 +236,7 @@ class TestDAGExecutorTimeoutNone:
         assert result.overall_status == StepStatus.SUCCESS
 
     async def test_no_timeout_kwargs_none(self) -> None:
-        """timeout=None via kwargs path also preserves happy-path behaviour."""
+        """Timeout=None via kwargs path also preserves happy-path behaviour."""
         dag = _make_dag("kwargs-none")
         dag.add(StepDefinition(name="compute", func=fast_step))
 
@@ -338,9 +341,7 @@ class TestEngineExecuteSpanErrorStatus:
         assert span.status.status_code is StatusCode.ERROR
         assert "exception" in [e.name for e in span.events]
 
-    async def test_timeout_marks_engine_span_error(
-        self, engine_span_exporter
-    ) -> None:
+    async def test_timeout_marks_engine_span_error(self, engine_span_exporter) -> None:
         """A timed-out workflow yields an ERROR engine.execute span."""
         from opentelemetry.trace import StatusCode
 

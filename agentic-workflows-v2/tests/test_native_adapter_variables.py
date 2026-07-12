@@ -24,7 +24,8 @@ from agentic_v2.engine.step import StepDefinition
 
 
 def test_execution_context_accepts_variables_kwarg() -> None:
-    """``ExecutionContext(variables=...)`` seeds the variable store (root-cause guard)."""
+    """``ExecutionContext(variables=...)`` seeds the variable store (root-cause
+    guard)."""
     ctx = ExecutionContext(variables={"alpha": 1, "nested": {"k": "v"}})
 
     assert ctx.get_sync("alpha") == 1

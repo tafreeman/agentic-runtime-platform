@@ -181,9 +181,7 @@ def _build_agent_data(task: Any, agent_type: str, agent_output: str) -> dict[str
         "error": task.error,
         "duration_seconds": task.duration_seconds,
         "started_at": task.started_at.isoformat() if task.started_at else None,
-        "completed_at": (
-            task.completed_at.isoformat() if task.completed_at else None
-        ),
+        "completed_at": (task.completed_at.isoformat() if task.completed_at else None),
     }
 
 
@@ -274,8 +272,7 @@ def _compute_phase_summary(workflow_data: dict[str, Any]) -> None:
         "min_score": min(scores) if scores else 0,
         "max_score": max(scores) if scores else 0,
         "scores_by_agent": {
-            k: v.get("score", 0)
-            for k, v in workflow_data["phase_evaluations"].items()
+            k: v.get("score", 0) for k, v in workflow_data["phase_evaluations"].items()
         },
     }
 

@@ -150,7 +150,8 @@ class TestDAGModels:
         assert node.depends_on == []
 
     def test_dag_node_defaults(self) -> None:
-        """DAGNodeModel has correct defaults (depends_on is required, must be passed explicitly)."""
+        """DAGNodeModel has correct defaults (depends_on is required, must be passed
+        explicitly)."""
         node = DAGNodeModel(id="step-1", depends_on=[])
         assert node.agent is None
         assert node.description == ""
@@ -159,7 +160,10 @@ class TestDAGModels:
 
     def test_dag_response(self) -> None:
         """DAGResponse contains nodes and edges."""
-        nodes = [DAGNodeModel(id="a", depends_on=[]), DAGNodeModel(id="b", depends_on=["a"])]
+        nodes = [
+            DAGNodeModel(id="a", depends_on=[]),
+            DAGNodeModel(id="b", depends_on=["a"]),
+        ]
         edges = [DAGEdgeModel(source="a", target="b")]
         dag = DAGResponse(name="test-wf", nodes=nodes, edges=edges)
         assert dag.name == "test-wf"

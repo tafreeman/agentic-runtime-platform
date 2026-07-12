@@ -51,6 +51,7 @@ except ImportError:  # pragma: no cover — guarded for isolated environments
         allow_module_level=True,
     )
 
+
 @pytest.fixture(autouse=True, scope="module")
 def _force_no_llm_env() -> Any:
     """Set ``AGENTIC_NO_LLM=1`` for THIS module only.

@@ -32,11 +32,13 @@ FAKE_TENANT = TenantContext(tenant_id="default", source="default")
 class _PassThroughSanitizer:
     """Minimal sanitizer that always returns CLEAN — no detection, no blocking.
 
-    Used in route-shape tests where we need requests to reach route handlers
-    without running the real sanitization pipeline.
+    Used in route-shape tests where we need requests to reach route
+    handlers without running the real sanitization pipeline.
     """
 
-    async def process(self, text: str, metadata: dict[str, Any] | None = None) -> SanitizationResult:
+    async def process(
+        self, text: str, metadata: dict[str, Any] | None = None
+    ) -> SanitizationResult:
         return SanitizationResult(
             classification=Classification.CLEAN,
             findings=(),

@@ -35,7 +35,6 @@ TARGET_FILES = (
     "docs/README.md",
     "docs/ARCHITECTURE.md",
     "docs/WORKFLOWS.md",
-
     "docs/DEVELOPMENT.md",
     "docs/REPO_MAP.md",
     "docs/DOCS_BEST_PRACTICES.md",

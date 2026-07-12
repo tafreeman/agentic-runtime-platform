@@ -80,9 +80,9 @@ def count_suppressions(config: dict[str, Any]) -> dict[str, int]:
     per_file_ignores: dict[str, list[str]] = ruff_lint.get("per-file-ignores", {})
     per_file_rule_total = sum(len(rules) for rules in per_file_ignores.values())
 
-    mypy_overrides: list[dict[str, Any]] = config.get("tool", {}).get(
-        "mypy", {}
-    ).get("overrides", [])
+    mypy_overrides: list[dict[str, Any]] = (
+        config.get("tool", {}).get("mypy", {}).get("overrides", [])
+    )
     ignore_errors_modules = 0
     for override in mypy_overrides:
         if override.get("ignore_errors") is not True:

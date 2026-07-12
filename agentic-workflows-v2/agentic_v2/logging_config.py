@@ -33,7 +33,9 @@ _TEXT_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 
 # Fields included in JSON output when python-json-logger is available.
 # Use standard LogRecord attribute names here; rename_fields handles the final key names.
-_JSON_FORMAT_FIELDS = "%(asctime)s %(levelname)s %(name)s %(message)s %(module)s %(funcName)s %(lineno)s"
+_JSON_FORMAT_FIELDS = (
+    "%(asctime)s %(levelname)s %(name)s %(message)s %(module)s %(funcName)s %(lineno)s"
+)
 
 
 def configure_logging(log_format: str = "text", level: int = logging.INFO) -> None:

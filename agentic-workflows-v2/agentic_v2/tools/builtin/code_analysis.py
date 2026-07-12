@@ -118,9 +118,7 @@ class CodeAnalysisTool(BaseTool):
         return result_data
 
     @staticmethod
-    def _load_source(
-        source: str, from_file: bool
-    ) -> tuple[str, ToolResult | None]:
+    def _load_source(source: str, from_file: bool) -> tuple[str, ToolResult | None]:
         """Resolve source code from a string or a (sandbox-checked) file path.
 
         Returns:
@@ -140,9 +138,7 @@ class CodeAnalysisTool(BaseTool):
             except ValueError as e:
                 return "", ToolResult(success=False, error=str(e))
         if not file_path.exists():
-            return "", ToolResult(
-                success=False, error=f"File does not exist: {source}"
-            )
+            return "", ToolResult(success=False, error=f"File does not exist: {source}")
         return file_path.read_text(encoding="utf-8"), None
 
     @staticmethod
@@ -153,9 +149,7 @@ class CodeAnalysisTool(BaseTool):
             "total": len(lines),
             "blank": sum(1 for line in lines if not line.strip()),
             "code": sum(
-                1
-                for line in lines
-                if line.strip() and not line.strip().startswith("#")
+                1 for line in lines if line.strip() and not line.strip().startswith("#")
             ),
             "comments": sum(1 for line in lines if line.strip().startswith("#")),
         }

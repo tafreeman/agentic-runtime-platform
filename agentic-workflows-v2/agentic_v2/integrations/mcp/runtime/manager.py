@@ -259,9 +259,7 @@ class McpConnectionManager:
         """
         if "401" in str(error) or "Unauthorized" in str(error):
             metadata.record_auth_failure()
-            raise RuntimeError(
-                f"Auth failure for {metadata.name}: {error}"
-            ) from error
+            raise RuntimeError(f"Auth failure for {metadata.name}: {error}") from error
 
     @staticmethod
     async def _schedule_retry(
@@ -317,7 +315,8 @@ class McpConnectionManager:
     ) -> McpProtocolClient:
         """Connect and perform the initialize handshake for a single attempt.
 
-        On success, updates metadata state and returns the connected client.
+        On success, updates metadata state and returns the connected
+        client.
         """
         # Start transport
         await client.connect()
@@ -326,9 +325,7 @@ class McpConnectionManager:
         init_response = await client.initialize()
         if isinstance(init_response, dict):
             raw_info = init_response.get("serverInfo", {})
-            server_info = (
-                McpServerInfo.model_validate(raw_info) if raw_info else None
-            )
+            server_info = McpServerInfo.model_validate(raw_info) if raw_info else None
         else:
             server_info = init_response
         metadata.server_info = server_info
@@ -337,9 +334,7 @@ class McpConnectionManager:
         metadata.backoff.reset()
 
         info_str = (
-            f"{server_info.name} v{server_info.version}"
-            if server_info
-            else "unknown"
+            f"{server_info.name} v{server_info.version}" if server_info else "unknown"
         )
         logger.info(f"Successfully connected to {metadata.name}: {info_str}")
         return client

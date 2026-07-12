@@ -156,7 +156,10 @@ def test_run_rejects_incompatible_dataset_422(monkeypatch):
     monkeypatch.setattr(
         result_normalization,
         "load_local_dataset_sample",
-        lambda _dataset_ref, sample_index=0, **_kw: ({"prompt": ""}, {"source": "local"}),
+        lambda _dataset_ref, sample_index=0, **_kw: (
+            {"prompt": ""},
+            {"source": "local"},
+        ),
     )
 
     response = client.post(

@@ -493,11 +493,12 @@ class OrchestratorAgent(
     ) -> AdaptiveDecomposition:
         """Generate subtasks *from* investigation findings (not a fixed plan).
 
-        One local-analysis pass is emitted per discovered file, then a single
-        cross-file integration pass is emitted that depends on every per-file
-        pass. When the investigation found no files, there is nothing to analyze
-        locally and the per-file tier is empty; the cross-file pass is only
-        emitted when at least one per-file pass exists for it to integrate.
+        One local-analysis pass is emitted per discovered file, then a
+        single cross-file integration pass is emitted that depends on
+        every per-file pass. When the investigation found no files,
+        there is nothing to analyze locally and the per-file tier is
+        empty; the cross-file pass is only emitted when at least one
+        per-file pass exists for it to integrate.
         """
         per_file: list[dict[str, Any]] = []
         for index, file_path in enumerate(findings.files):

@@ -89,7 +89,9 @@ def count_lines_of_code(package_dir: str, extensions: str = "py,ts,tsx") -> str:
             if parts & {VENV_DIR, "venv", "dist", "__pycache__", "node_modules"}:
                 continue
             try:
-                lines = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
+                lines = filepath.read_text(
+                    encoding="utf-8", errors="replace"
+                ).splitlines()
             except OSError:
                 continue
             file_count += 1
@@ -151,7 +153,12 @@ def get_git_stats(root: str, max_commits: int = 20) -> str:
         parts = line.split("|", 3)
         if len(parts) == 4:
             commits.append(
-                {"hash": parts[0], "author": parts[1], "date": parts[2], "subject": parts[3]}
+                {
+                    "hash": parts[0],
+                    "author": parts[1],
+                    "date": parts[2],
+                    "subject": parts[3],
+                }
             )
 
     raw_contrib = _git("shortlog", "-sn", "--no-merges", "HEAD")

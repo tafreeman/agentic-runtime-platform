@@ -83,9 +83,10 @@ def _bracket_span(raw: str, open_ch: str, close_ch: str) -> str | None:
 def extract_json_candidates(text: str) -> list[str]:
     """Return increasingly permissive JSON candidates from model output.
 
-    Tries, in order: raw text, markdown-fence-stripped text (outer fence only),
-    bracket-span extraction for objects (``{…}``), and bracket-span for arrays
-    (``[…]``). Duplicates are removed while preserving priority order.
+    Tries, in order: raw text, markdown-fence-stripped text (outer fence
+    only), bracket-span extraction for objects (``{…}``), and bracket-
+    span for arrays (``[…]``). Duplicates are removed while preserving
+    priority order.
     """
     candidates: list[str] = []
     raw = text.strip()
@@ -170,9 +171,7 @@ def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:
         raw_status = status_match.group(1).strip()
     elif approved_match:
         raw_status = (
-            "APPROVED"
-            if approved_match.group(1).lower() == "true"
-            else "NEEDS_FIXES"
+            "APPROVED" if approved_match.group(1).lower() == "true" else "NEEDS_FIXES"
         )
     else:
         raw_status = None  # normalize() defaults to NEEDS_FIXES
@@ -180,9 +179,7 @@ def _review_report_from_raw_text(raw_text: str) -> dict[str, Any]:
     return {"overall_status": ReviewStatus.normalize(raw_status).value}
 
 
-def _finalize_review_report_status(
-    parsed: dict[str, Any], rr: dict[str, Any]
-) -> None:
+def _finalize_review_report_status(parsed: dict[str, Any], rr: dict[str, Any]) -> None:
     """Ensure rr has a normalized overall_status, promoting top-level if needed."""
     from ..contracts import ReviewStatus
 
@@ -227,13 +224,10 @@ def _compute_missing_keys(
 ) -> list[str]:
     """Return expected keys absent from *parsed* (ignoring ``raw_response``).
 
-    Preserves the order of *expected_output_keys* so promotion is deterministic.
+    Preserves the order of *expected_output_keys* so promotion is
+    deterministic.
     """
-    return [
-        k
-        for k in expected_output_keys
-        if k not in parsed and k != "raw_response"
-    ]
+    return [k for k in expected_output_keys if k not in parsed and k != "raw_response"]
 
 
 def _promote_keys_from_candidate(

@@ -135,7 +135,7 @@ class TestQualityEvaluator:
         evaluator = QualityEvaluator(llm_client=mock_client)
 
         response = """The response is well-written and coherent.
-        
+
         Based on my analysis, I give it a score of 5."""
 
         score = evaluator._extract_score(response, STANDARD_CHOICES)

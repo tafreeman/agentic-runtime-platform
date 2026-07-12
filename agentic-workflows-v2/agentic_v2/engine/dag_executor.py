@@ -46,8 +46,8 @@ except ImportError:  # pragma: no cover — exercised only without the extra
 def _mark_span_error(span: Any, message: str) -> None:
     """Mark an OTEL span as ERROR and record an exception event.
 
-    No-op when OTel is unavailable or no span is active, so failure paths
-    stay safe in local/no-tracing runs.
+    No-op when OTel is unavailable or no span is active, so failure
+    paths stay safe in local/no-tracing runs.
     """
     if span is None or not _OTEL_STATUS_AVAILABLE:
         return
@@ -291,9 +291,7 @@ async def _scheduling_loop(state: _RunState) -> None:
         # If no tasks are running but we aren't done, some steps are
         # unreachable.
         if not state.tasks:
-            remaining = (
-                set(state.dag.steps.keys()) - state.completed - state.skipped
-            )
+            remaining = set(state.dag.steps.keys()) - state.completed - state.skipped
             for step_name in remaining:
                 _mark_skipped(state, step_name, "unmet dependencies")
             break
@@ -344,9 +342,7 @@ async def _handle_timeout(state: _RunState) -> None:
     now = datetime.now(UTC)
     for step_name in state.running:
         if step_name not in state.completed:
-            step_result = StepResult(
-                step_name=step_name, status=StepStatus.FAILED
-            )
+            step_result = StepResult(step_name=step_name, status=StepStatus.FAILED)
             step_result.error = timeout_msg
             step_result.error_type = "TimeoutError"
             step_result.end_time = now
@@ -443,7 +439,9 @@ class DAGExecutor:
         dag: DAG = workflow
         max_concurrency: int = kwargs.get("max_concurrency", 10)
         # Accept timeout via **kwargs as documented — explicit param wins.
-        effective_timeout: float | None = timeout if timeout is not None else kwargs.get("timeout")
+        effective_timeout: float | None = (
+            timeout if timeout is not None else kwargs.get("timeout")
+        )
         if ctx is None:
             ctx = get_context()
 
@@ -510,9 +508,7 @@ class DAGExecutor:
             result=result,
             adjacency=adjacency,
             in_degree=in_degree,
-            ready=deque(
-                [name for name, deg in in_degree.items() if deg == 0]
-            ),
+            ready=deque([name for name, deg in in_degree.items() if deg == 0]),
         )
 
         try:
@@ -531,9 +527,8 @@ class DAGExecutor:
         # path already marked the span ERROR with a timeout-specific message
         # (metadata flag set in _handle_timeout); only mark here for the
         # non-timeout failure paths (a step failed and cascaded).
-        if (
-            result.overall_status == StepStatus.FAILED
-            and not result.metadata.get("timeout_exceeded")
+        if result.overall_status == StepStatus.FAILED and not result.metadata.get(
+            "timeout_exceeded"
         ):
             _mark_span_error(
                 span, f"Workflow '{dag.name}' failed: one or more steps errored."

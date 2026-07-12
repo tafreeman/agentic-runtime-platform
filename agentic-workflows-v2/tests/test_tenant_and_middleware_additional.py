@@ -43,7 +43,9 @@ def _app_with_route() -> FastAPI:
     return app
 
 
-def test_tenant_helpers_cover_user_header_default_and_migration(monkeypatch, tmp_path: Path):
+def test_tenant_helpers_cover_user_header_default_and_migration(
+    monkeypatch, tmp_path: Path
+):
     request = Request(
         {
             "type": "http",
@@ -97,11 +99,15 @@ def test_tenant_helpers_cover_user_header_default_and_migration(monkeypatch, tmp
     assert (runs_root / "tenant-a" / "run.json").exists()
     assert (datasets_root / "tenant-a" / "sample.json").exists()
 
-    monkeypatch.setattr(tenant_mod, "get_settings", lambda: SimpleNamespace(agentic_oidc_enabled=True))
+    monkeypatch.setattr(
+        tenant_mod, "get_settings", lambda: SimpleNamespace(agentic_oidc_enabled=True)
+    )
     assert tenant_mod._oidc_enabled(request_no_header) is True
 
 
-def test_sanitization_middleware_covers_fail_closed_fail_open_and_redaction(monkeypatch):
+def test_sanitization_middleware_covers_fail_closed_fail_open_and_redaction(
+    monkeypatch,
+):
     app = _app_with_route()
     client = TestClient(app)
 

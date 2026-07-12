@@ -43,7 +43,10 @@ _OPENAI = "/v1/models"
 
 
 class _Resp:
-    """Minimal httpx-response double. ``status >= 400`` raises on check."""
+    """Minimal httpx-response double.
+
+    ``status >= 400`` raises on check.
+    """
 
     def __init__(self, payload: Any, status: int = 200) -> None:
         self._payload = payload
@@ -257,7 +260,8 @@ class TestResolveLmStudioHost:
     def test_failed_resolution_not_cached(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A fallback result is not cached, so a server that starts later is still discovered."""
+        """A fallback result is not cached, so a server that starts later is still
+        discovered."""
         calls = _route(monkeypatch, {})
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
         # Each of the 2 candidate hosts is probed on both native and OpenAI-shim paths.
@@ -275,9 +279,9 @@ class TestResolveLmStudioHost:
     ) -> None:
         """A rescan must drop the cached host so inference re-targets the new port.
 
-        Without eviction, a process that first resolved :12340 keeps sending
-        inference there even after LM Studio restarts on :1234 and a rescan
-        surfaces the :1234 models (Codex review #132).
+        Without eviction, a process that first resolved :12340 keeps
+        sending inference there even after LM Studio restarts on :1234
+        and a rescan surfaces the :1234 models (Codex review #132).
         """
         # First inference resolves to :12340 (only it is up) and caches it.
         _route(

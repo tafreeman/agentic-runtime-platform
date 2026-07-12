@@ -223,34 +223,30 @@ class TestProtocolSignatures:
     """Verify no Any in core protocol method signatures."""
 
     def test_agent_protocol_run_no_any_in_signature(self):
-        """run() must not use Any for input_data or return type."""
+        """Run() must not use Any for input_data or return type."""
         annotations = AgentProtocol.run.__annotations__
 
         input_data_ann = annotations.get("input_data", "")
-        assert input_data_ann != "Any", (
-            "AgentProtocol.run parameter 'input_data' must not be typed as Any"
-        )
+        assert (
+            input_data_ann != "Any"
+        ), "AgentProtocol.run parameter 'input_data' must not be typed as Any"
 
         return_ann = annotations.get("return", "")
-        assert return_ann != "Any", (
-            "AgentProtocol.run return type must not be Any"
-        )
+        assert return_ann != "Any", "AgentProtocol.run return type must not be Any"
 
     def test_tool_protocol_execute_no_any_in_signature(self):
-        """execute() **kwargs and return type must not be typed as Any."""
+        """Execute() **kwargs and return type must not be typed as Any."""
         from agentic_v2.core.protocols import ToolProtocol
 
         annotations = ToolProtocol.execute.__annotations__
 
         return_ann = annotations.get("return", "")
-        assert return_ann != "Any", (
-            "ToolProtocol.execute return type must not be Any"
-        )
+        assert return_ann != "Any", "ToolProtocol.execute return type must not be Any"
 
         kwargs_ann = annotations.get("kwargs", "")
-        assert kwargs_ann != "Any", (
-            "ToolProtocol.execute **kwargs must not be typed as Any"
-        )
+        assert (
+            kwargs_ann != "Any"
+        ), "ToolProtocol.execute **kwargs must not be typed as Any"
 
     def test_protocol_type_hints_resolve_without_import_cycles(self):
         """Protocol annotations must be introspectable at runtime."""

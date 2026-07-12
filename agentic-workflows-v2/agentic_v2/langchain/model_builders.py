@@ -660,9 +660,7 @@ def _get_placeholder_chat_model_cls() -> Any:
         ) -> Any:
             return ChatResult(
                 generations=[
-                    ChatGeneration(
-                        message=AIMessage(content=PLACEHOLDER_RESPONSE_TEXT)
-                    )
+                    ChatGeneration(message=AIMessage(content=PLACEHOLDER_RESPONSE_TEXT))
                 ]
             )
 
@@ -714,8 +712,8 @@ def _reset_placeholder_state_for_tests() -> None:
     """Reset module-level placeholder caches.  For test fixtures only.
 
     Clears both the warning flag (so caplog assertions work across
-    tests) and the cached class (so test runs that toggle the flag
-    mid-session don't see a stale class object).
+    tests) and the cached class (so test runs that toggle the flag mid-
+    session don't see a stale class object).
     """
     global _PLACEHOLDER_WARNED, _PLACEHOLDER_CHAT_MODEL_CLS
     _PLACEHOLDER_WARNED = False

@@ -57,8 +57,8 @@ def _load_json(path: Path, label: str) -> Any:
 def _extract_p99(summary: Any) -> float:
     """Pull p99 latency (ms) from a k6 --summary-export JSON.
 
-    k6 stores the value at metrics.http_req_duration["p(99)"].
-    Returns the float value or exits with code 2 if the key is absent.
+    k6 stores the value at metrics.http_req_duration["p(99)"]. Returns
+    the float value or exits with code 2 if the key is absent.
     """
     try:
         p99: float = float(summary["metrics"]["http_req_duration"]["p(99)"])
@@ -74,8 +74,8 @@ def _extract_p99(summary: Any) -> float:
 def _extract_throughput(summary: Any) -> float:
     """Pull throughput (iterations/sec) from a k6 --summary-export JSON.
 
-    k6 stores the iteration rate at metrics.iterations.rate.
-    Returns the float value or exits with code 2 if the key is absent.
+    k6 stores the iteration rate at metrics.iterations.rate. Returns the
+    float value or exits with code 2 if the key is absent.
     """
     try:
         rate: float = float(summary["metrics"]["iterations"]["rate"])
@@ -93,14 +93,17 @@ def _extract_baseline_value(baseline: Any, key: str) -> float:
     try:
         return float(baseline[key])
     except (KeyError, TypeError, ValueError) as exc:
-        print(f"ERROR: baseline.{key} is missing or not numeric: {exc}", file=sys.stderr)
+        print(
+            f"ERROR: baseline.{key} is missing or not numeric: {exc}", file=sys.stderr
+        )
         sys.exit(2)
 
 
 def compare(summary_path: Path, baseline_path: Path) -> int:
     """Compare summary metrics to baseline.
 
-    Returns 0 if all metrics are within acceptable range, 1 if any breach.
+    Returns 0 if all metrics are within acceptable range, 1 if any
+    breach.
     """
     summary = _load_json(summary_path, "k6 summary")
     baseline = _load_json(baseline_path, "baseline")

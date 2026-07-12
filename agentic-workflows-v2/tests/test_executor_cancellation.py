@@ -65,12 +65,12 @@ class TestWorkflowExecutorCancellation:
         reset_executor()
 
     async def test_cancellation_emits_cancelled_and_workflow_end_events(self):
-        """A CancelledError in executor orchestration emits both
-        ExecutorEvent.CANCELLED and ExecutorEvent.WORKFLOW_END before the
-        error propagates.
+        """A CancelledError in executor orchestration emits both ExecutorEvent.CANCELLED
+        and ExecutorEvent.WORKFLOW_END before the error propagates.
 
-        This ensures WebSocket / stream subscribers receive a terminal event
-        instead of hanging when the run task is cancelled externally.
+        This ensures WebSocket / stream subscribers receive a terminal
+        event instead of hanging when the run task is cancelled
+        externally.
         """
         # Arrange
         executor, emitted_events = _make_executor_with_listener()
@@ -86,12 +86,12 @@ class TestWorkflowExecutorCancellation:
             await executor.execute(step_def)
 
         # Assert: both terminal events were emitted before the error propagated
-        assert ExecutorEvent.CANCELLED in emitted_events, (
-            f"ExecutorEvent.CANCELLED was not emitted; got: {emitted_events}"
-        )
-        assert ExecutorEvent.WORKFLOW_END in emitted_events, (
-            f"ExecutorEvent.WORKFLOW_END was not emitted; got: {emitted_events}"
-        )
+        assert (
+            ExecutorEvent.CANCELLED in emitted_events
+        ), f"ExecutorEvent.CANCELLED was not emitted; got: {emitted_events}"
+        assert (
+            ExecutorEvent.WORKFLOW_END in emitted_events
+        ), f"ExecutorEvent.WORKFLOW_END was not emitted; got: {emitted_events}"
 
     async def test_cancelled_event_precedes_workflow_end_event(self):
         """ExecutorEvent.CANCELLED must be emitted before ExecutorEvent.WORKFLOW_END."""
@@ -114,15 +114,19 @@ class TestWorkflowExecutorCancellation:
             None,
         )
         end_idx = next(
-            (i for i, e in enumerate(emitted_events) if e == ExecutorEvent.WORKFLOW_END),
+            (
+                i
+                for i, e in enumerate(emitted_events)
+                if e == ExecutorEvent.WORKFLOW_END
+            ),
             None,
         )
 
         assert cancelled_idx is not None, "CANCELLED event never emitted"
         assert end_idx is not None, "WORKFLOW_END event never emitted"
-        assert cancelled_idx < end_idx, (
-            f"CANCELLED (idx={cancelled_idx}) must precede WORKFLOW_END (idx={end_idx})"
-        )
+        assert (
+            cancelled_idx < end_idx
+        ), f"CANCELLED (idx={cancelled_idx}) must precede WORKFLOW_END (idx={end_idx})"
 
     async def test_full_event_sequence_on_cancellation(self):
         """WORKFLOW_START is emitted before cancellation; verify the full sequence

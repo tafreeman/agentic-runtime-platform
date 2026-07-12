@@ -117,8 +117,9 @@ def migrate_legacy_tenant_storage(
 ) -> dict[str, list[str]]:
     """Move legacy root files into ``runs/{tenant}`` and ``datasets/{tenant}``.
 
-    The helper is intentionally opt-in. It only moves files, not existing tenant
-    subdirectories, so already-scoped data is left untouched.
+    The helper is intentionally opt-in. It only moves files, not
+    existing tenant subdirectories, so already-scoped data is left
+    untouched.
     """
     tenant_id = sanitize_tenant_id(tenant_id)
     runs_root = Path(runs_dir) if runs_dir is not None else _DEFAULT_RUNS_DIR
@@ -132,9 +133,7 @@ def migrate_legacy_tenant_storage(
     return moved
 
 
-def _migrate_legacy_runs(
-    runs_root: Path, tenant_id: str, dry_run: bool
-) -> list[str]:
+def _migrate_legacy_runs(runs_root: Path, tenant_id: str, dry_run: bool) -> list[str]:
     """Move legacy root run files into ``runs/{tenant}``."""
     moved: list[str] = []
     if not runs_root.exists():
@@ -155,9 +154,7 @@ def _migrate_legacy_datasets(
     moved: list[str] = []
     if not datasets_root.exists():
         return moved
-    target = tenant_dataset_dir(
-        tenant_id, base_dir=datasets_root, create=not dry_run
-    )
+    target = tenant_dataset_dir(tenant_id, base_dir=datasets_root, create=not dry_run)
     tenant_target = target.resolve()
     for path in sorted(p for p in datasets_root.rglob("*") if p.is_file()):
         if path.resolve().is_relative_to(tenant_target):

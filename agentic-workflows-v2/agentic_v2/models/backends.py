@@ -228,9 +228,7 @@ def _onnx_runtime_available() -> bool:
     return importlib.util.find_spec("onnxruntime_genai") is not None
 
 
-def _required_secret(
-    name: str, *, secret_provider: SecretProvider | None
-) -> str:
+def _required_secret(name: str, *, secret_provider: SecretProvider | None) -> str:
     """Resolve a single named secret, coalescing absence to an empty string."""
     return get_secret(name, default="", provider=secret_provider) or ""
 
@@ -240,9 +238,9 @@ def _build_cloud_backend(
 ) -> LLMBackend | None:
     """Construct a cloud backend for ``provider``, or None if not cloud.
 
-    Handles the credentialed providers (GitHub, OpenAI, Anthropic, Gemini,
-    Azure OpenAI, Azure AI Foundry). Returns None for non-cloud providers so
-    the caller can handle local/mock backends.
+    Handles the credentialed providers (GitHub, OpenAI, Anthropic,
+    Gemini, Azure OpenAI, Azure AI Foundry). Returns None for non-cloud
+    providers so the caller can handle local/mock backends.
     """
     if provider == "github":
         token = (
@@ -415,9 +413,7 @@ def _register_cloud_backends(
         _try_register_backend(
             backends,
             "azure_foundry",
-            lambda: AzureFoundryBackend(
-                api_key=foundry_key, endpoint=foundry_endpoint
-            ),
+            lambda: AzureFoundryBackend(api_key=foundry_key, endpoint=foundry_endpoint),
             "Registered Azure AI Foundry backend",
         )
 

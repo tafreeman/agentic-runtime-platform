@@ -69,7 +69,7 @@ async def main():
     all_tools = []
     all_resources = []
 
-    for client, config in zip(clients, configs):
+    for client, config in zip(clients, configs, strict=False):
         try:
             # Discover tools
             tools = await tool_discovery.discover_tools(config.name, client)

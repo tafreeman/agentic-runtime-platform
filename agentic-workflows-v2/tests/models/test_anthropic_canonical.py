@@ -75,7 +75,9 @@ def _build_raw_anthropic_response(
     }
 
 
-def _patch_anthropic_client(monkeypatch: pytest.MonkeyPatch, raw_response: dict[str, Any]):
+def _patch_anthropic_client(
+    monkeypatch: pytest.MonkeyPatch, raw_response: dict[str, Any]
+):
     """Patch AnthropicBackend._get_client to return a mock that yields raw_response."""
     from agentic_v2.models import backends_cloud
 
@@ -127,7 +129,9 @@ async def test_finish_reason_tool_calls_when_tools_present(
 
 
 @pytest.mark.unit
-async def test_finish_reason_stop_when_end_turn(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_finish_reason_stop_when_end_turn(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """end_turn stop_reason maps to OpenAI 'stop'."""
     from agentic_v2.models.backends_cloud import AnthropicBackend
 

@@ -38,10 +38,7 @@ class TestExtractFilesFromArtifactCapGuard:
 
     def test_extracts_multiple_file_blocks(self):
         """Multiple FILE/ENDFILE blocks are all extracted."""
-        content = (
-            "FILE: a.py\ncontent_a\nENDFILE\n"
-            "FILE: b.py\ncontent_b\nENDFILE\n"
-        )
+        content = "FILE: a.py\ncontent_a\nENDFILE\n" "FILE: b.py\ncontent_b\nENDFILE\n"
         result = extract_files_from_artifact(content)
         assert len(result) == 2
         assert "a.py" in result
@@ -58,7 +55,8 @@ class TestParseSentinelOutputCapGuard:
     def test_returns_none_when_no_sentinel_blocks_present(self):
         """Text without <<<ARTIFACT>>> blocks returns None.
 
-        The cap guard line executes before the regex findall on any call.
+        The cap guard line executes before the regex findall on any
+        call.
         """
         result = parse_sentinel_output("Just plain text.", expected_output_keys=None)
         assert result is None
@@ -77,9 +75,9 @@ class TestParseSentinelOutputCapGuard:
     def test_parses_json_artifact_correctly(self):
         """A JSON-shaped artifact content is parsed as a dict."""
         text = (
-            '<<<ARTIFACT data>>>\n'
+            "<<<ARTIFACT data>>>\n"
             '{"status": "ok", "value": 42}\n'
-            '<<<ENDARTIFACT>>>'
+            "<<<ENDARTIFACT>>>"
         )
         result = parse_sentinel_output(text, expected_output_keys=None)
         assert result is not None

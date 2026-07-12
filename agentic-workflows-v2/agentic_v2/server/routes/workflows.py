@@ -78,8 +78,8 @@ async def _sanitize_inputs(
 ) -> None:
     """Sanitize workflow inputs if middleware is available.
 
-    Raises HTTPException 400 if inputs are blocked.
-    Raises HTTPException 503 if sanitization failed to initialize (fail-closed).
+    Raises HTTPException 400 if inputs are blocked. Raises HTTPException
+    503 if sanitization failed to initialize (fail-closed).
     """
     from ..middleware import _fail_open_enabled
 

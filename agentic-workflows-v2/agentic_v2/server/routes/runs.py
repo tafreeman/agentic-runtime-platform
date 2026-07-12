@@ -554,9 +554,9 @@ async def compare_runs(
 ):
     """Score two completed runs under one rubric and return the head-to-head.
 
-    Both candidates are re-scored by replaying their captured run logs — no
-    workflow re-execution, and nothing is persisted. Use this to compare
-    prompt or workflow variants that ran against the same task.
+    Both candidates are re-scored by replaying their captured run logs —
+    no workflow re-execution, and nothing is persisted. Use this to
+    compare prompt or workflow variants that ran against the same task.
     """
     from ...scoring.judge import LLMJudge
     from ..execution import _resolve_judge_model

@@ -1,8 +1,8 @@
 """Workspace-wide test runner for all monorepo packages.
 
-Runs pytest sequentially across all three packages and reports per-package
-pass/fail with a final summary.  Sequential execution keeps output readable
-and avoids resource contention on low-RAM dev machines.
+Runs pytest sequentially across all three packages and reports per-
+package pass/fail with a final summary.  Sequential execution keeps
+output readable and avoids resource contention on low-RAM dev machines.
 """
 
 from __future__ import annotations
@@ -109,7 +109,5 @@ def run_all(
             console.print(f"  [red]!![/red]  {name}")
         return False
 
-    console.print(
-        f"[green]SUMMARY:[/green] all {len(packages)} package(s) passed"
-    )
+    console.print(f"[green]SUMMARY:[/green] all {len(packages)} package(s) passed")
     return True

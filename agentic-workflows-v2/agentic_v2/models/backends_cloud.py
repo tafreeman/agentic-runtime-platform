@@ -69,6 +69,7 @@ def _to_anthropic_tool_choice(
         return {"type": "tool", "name": str(name)}
     return None
 
+
 # ---------------------------------------------------------------------------
 # GitHub Models
 # ---------------------------------------------------------------------------
@@ -448,9 +449,7 @@ class AnthropicBackend(LLMBackend):
             "tool_use": "tool_calls",
             "stop_sequence": "stop",
         }
-        canonical_finish_reason = _stop_reason_map.get(
-            raw_stop_reason, raw_stop_reason
-        )
+        canonical_finish_reason = _stop_reason_map.get(raw_stop_reason, raw_stop_reason)
 
         return {
             "content": "\n".join(text_parts),
@@ -636,8 +635,7 @@ class AzureOpenAIBackend(LLMBackend):
     )
     api_version: str = field(
         default_factory=lambda: (
-            get_secret("AZURE_OPENAI_API_VERSION", default="2024-10-21")
-            or "2024-10-21"
+            get_secret("AZURE_OPENAI_API_VERSION", default="2024-10-21") or "2024-10-21"
         ),
     )
     timeout: float = 120.0

@@ -1,7 +1,8 @@
 """Integration tests for APIKeyMiddleware per-IP 401 brute-force throttle.
 
 Exercises the full Starlette/FastAPI middleware stack with a TestClient.
-The throttle threshold and window are set to small values so tests run fast.
+The throttle threshold and window are set to small values so tests run
+fast.
 """
 
 from __future__ import annotations
@@ -27,9 +28,12 @@ def _make_throttle_app(
     threshold: int = _THRESHOLD,
     lockout: float = float(_LOCKOUT),
 ) -> FastAPI:
-    """Create a minimal FastAPI app wired with APIKeyMiddleware + a fresh AuthThrottle."""
+    """Create a minimal FastAPI app wired with APIKeyMiddleware + a fresh
+    AuthThrottle."""
     app = FastAPI()
-    app.state.auth_throttle = AuthThrottle(window=60.0, threshold=threshold, lockout=lockout)
+    app.state.auth_throttle = AuthThrottle(
+        window=60.0, threshold=threshold, lockout=lockout
+    )
     app.add_middleware(APIKeyMiddleware)
 
     @app.get("/api/data")
@@ -58,13 +62,17 @@ class TestAuthBasic:
     def test_valid_key_returns_200(self) -> None:
         app = _make_throttle_app()
         client = TestClient(app)
-        response = client.get("/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"})
+        response = client.get(
+            "/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"}
+        )
         assert response.status_code == 200
 
     def test_bad_key_first_failure_returns_401(self) -> None:
         app = _make_throttle_app()
         client = TestClient(app)
-        response = client.get("/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"})
+        response = client.get(
+            "/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"}
+        )
         assert response.status_code == 401
 
     def test_health_always_returns_200(self) -> None:
@@ -107,8 +115,9 @@ class TestThrottleEngagement:
     def test_threshold_failure_returns_429(self) -> None:
         """The THRESHOLD-th failure itself triggers the lockout and returns 429.
 
-        When the failure count reaches the threshold, the lockout is activated
-        immediately; the triggering request also returns 429 (not 401).
+        When the failure count reaches the threshold, the lockout is
+        activated immediately; the triggering request also returns 429
+        (not 401).
         """
         app = _make_throttle_app(threshold=5)
         client = TestClient(app)
@@ -144,7 +153,9 @@ class TestThrottleEngagement:
         self._exhaust_failures(client, 5)
         resp = client.get("/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"})
         assert resp.status_code == 429
-        retry_after_raw = resp.headers.get("retry-after") or resp.headers.get("Retry-After")
+        retry_after_raw = resp.headers.get("retry-after") or resp.headers.get(
+            "Retry-After"
+        )
         assert retry_after_raw is not None
         retry_after = int(retry_after_raw)
         assert retry_after > 0
@@ -155,7 +166,9 @@ class TestThrottleEngagement:
         client = TestClient(app)
         self._exhaust_failures(client, 5)
         # Even with the correct key, the locked IP gets 429
-        resp = client.get("/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"})
+        resp = client.get(
+            "/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"}
+        )
         assert resp.status_code == 429
 
     def test_health_endpoint_never_throttled(self) -> None:
@@ -184,7 +197,8 @@ class TestSuccessClearsCounter:
         monkeypatch.setenv("AGENTIC_API_KEY", _VALID_KEY)
 
     def test_success_after_failures_clears_counter(self) -> None:
-        """Successful auth after failures resets the counter so further failures start fresh."""
+        """Successful auth after failures resets the counter so further failures start
+        fresh."""
         app = _make_throttle_app(threshold=5)
         client = TestClient(app)
 
@@ -193,12 +207,16 @@ class TestSuccessClearsCounter:
             client.get("/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"})
 
         # Successful auth
-        resp = client.get("/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"})
+        resp = client.get(
+            "/api/data", headers={"Authorization": f"Bearer {_VALID_KEY}"}
+        )
         assert resp.status_code == 200
 
         # After reset, need another full threshold of failures to lock
         for _ in range(4):
-            resp = client.get("/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"})
+            resp = client.get(
+                "/api/data", headers={"Authorization": f"Bearer {_BAD_KEY}"}
+            )
             assert resp.status_code == 401
 
         # 5th failure post-reset still not locked yet (threshold=5, this is the 5th)
@@ -206,4 +224,7 @@ class TestSuccessClearsCounter:
         # The 5th failure triggers the lockout on the 5th call (threshold=5 means 5 triggers lockout)
         # After recording the 5th failure it becomes locked; is_locked will return True
         # The test just confirms the counter was reset after success
-        assert resp.status_code in {401, 429}  # 5th failure may or may not hit threshold
+        assert resp.status_code in {
+            401,
+            429,
+        }  # 5th failure may or may not hit threshold

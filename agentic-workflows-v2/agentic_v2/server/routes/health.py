@@ -112,8 +112,8 @@ async def _check_redis(redis_url: str | None) -> DependencyStatus:
 def _routing_health() -> tuple[int, list[str]]:
     """Return (degraded_selection_count, open_circuit_breaker_models).
 
-    Reads the process-global SmartModelRouter without forcing creation of
-    backend connections — purely an in-memory state inspection.
+    Reads the process-global SmartModelRouter without forcing creation
+    of backend connections — purely an in-memory state inspection.
     """
     from ...models.smart_router import get_smart_router
 

@@ -9,8 +9,8 @@ from agentic_v2.agents.base import BaseAgent
 
 
 class EchoAgent(BaseAgent):
-    async def run(self, input):
-        return {"echo": input}
+    async def run(self, task):
+        return {"echo": task}
 
 
 async def main():

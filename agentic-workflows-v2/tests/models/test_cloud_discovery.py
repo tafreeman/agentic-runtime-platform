@@ -70,7 +70,9 @@ def _route(
     """Install a ``httpx.get`` serving ``routes``; record (url, headers)."""
     calls: list[tuple[str, dict[str, str]]] = []
 
-    def _fake_get(url: str, headers: Any = None, params: Any = None, timeout: Any = None):
+    def _fake_get(
+        url: str, headers: Any = None, params: Any = None, timeout: Any = None
+    ):
         calls.append((url, headers or {}))
         resp = routes.get(url)
         if resp is None:
@@ -168,8 +170,13 @@ class TestGemini:
                                 "name": "models/text-embedding-004",
                                 "supportedGenerationMethods": ["embedContent"],
                             },
-                            {"name": "models/gemini-3-pro", "supportedGenerationMethods": [
-                                "generateContent", "countTokens"]},
+                            {
+                                "name": "models/gemini-3-pro",
+                                "supportedGenerationMethods": [
+                                    "generateContent",
+                                    "countTokens",
+                                ],
+                            },
                         ]
                     }
                 )
@@ -235,8 +242,10 @@ class TestNVIDIA:
                         "data": [
                             {"id": "meta/llama-3.1-70b-instruct"},
                             {"id": "nvidia/nemotron-mini-4b-instruct"},
-                            {"id": "nvidia/nv-embed-v1"},          # embedding → filtered
-                            {"id": "nvidia/llama-3.2-nv-rerankqa-1b-v1"},  # rerank → filtered
+                            {"id": "nvidia/nv-embed-v1"},  # embedding → filtered
+                            {
+                                "id": "nvidia/llama-3.2-nv-rerankqa-1b-v1"
+                            },  # rerank → filtered
                         ]
                     }
                 )
@@ -276,7 +285,8 @@ class TestNVIDIA:
     def test_base_url_without_v1_suffix_gets_v1_appended(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A NVIDIA_BASE_URL missing /v1 must still hit /v1/models (Gemini review #132)."""
+        """A NVIDIA_BASE_URL missing /v1 must still hit /v1/models (Gemini review
+        #132)."""
         monkeypatch.setenv("NVIDIA_API_KEY", "nvapi-test")
         monkeypatch.setenv("NVIDIA_BASE_URL", "http://nim.local:8000")
         calls = _route(
@@ -309,9 +319,7 @@ class TestNVIDIA:
 
 
 class TestAggregate:
-    def test_only_keyed_providers_probed(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_only_keyed_providers_probed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         monkeypatch.setenv("GITHUB_TOKEN", "ghp_x")
         calls = _route(

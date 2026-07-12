@@ -248,9 +248,7 @@ class TestExpressionEvaluatorBooleanOps:
 
         # Both true: env is production AND review_depth is not quick.
         ctx = ExecutionContext()
-        ctx.set_sync(
-            "inputs", {"target_env": "production", "review_depth": "thorough"}
-        )
+        ctx.set_sync("inputs", {"target_env": "production", "review_depth": "thorough"})
         evaluator = ExpressionEvaluator(ctx)
         assert evaluator.evaluate(expr) is True
 
@@ -268,9 +266,7 @@ class TestExpressionEvaluatorBooleanOps:
 
         # Mixed: thorough review but not production -> first clause fails.
         ctx = ExecutionContext()
-        ctx.set_sync(
-            "inputs", {"target_env": "staging", "review_depth": "thorough"}
-        )
+        ctx.set_sync("inputs", {"target_env": "staging", "review_depth": "thorough"})
         evaluator = ExpressionEvaluator(ctx)
         assert evaluator.evaluate(expr) is False
 
@@ -646,9 +642,9 @@ class TestAdditionalEscapeVectors:
             evaluator._safe_eval("compile('1', '<str>', 'eval')")
 
     def test_getattr_builtin_bypass_rejected(self) -> None:
-        """``getattr(ctx, '__class__')`` bypasses the AST dunder-name guard
-        because ``__class__`` appears as a constant string arg, not as an
-        ``ast.Attribute`` or ``ast.Name`` node.
+        """``getattr(ctx, '__class__')`` bypasses the AST dunder-name guard because
+        ``__class__`` appears as a constant string arg, not as an ``ast.Attribute`` or
+        ``ast.Name`` node.
 
         The callable allowlist (``Only coalesce()``) must catch this because
         ``getattr`` is not ``_coalesce``, blocking the bypass before the
@@ -699,9 +695,9 @@ class TestAdditionalEscapeVectors:
             evaluator._safe_eval("ctx.__getattribute__('x')")
 
     def test_deeply_nested_expression_does_not_hang(self) -> None:
-        """A deeply nested binary expression must terminate (evaluate or raise),
-        never hang.  Python's own ast.parse raises SyntaxError at extreme depths;
-        at moderate depths the pure-Python evaluator resolves the result.
+        """A deeply nested binary expression must terminate (evaluate or raise), never
+        hang.  Python's own ast.parse raises SyntaxError at extreme depths; at moderate
+        depths the pure-Python evaluator resolves the result.
 
         This is a resource-exhaustion guard: verify the evaluator is bounded.
         """
@@ -1031,8 +1027,8 @@ class TestWave2CallableAllowlist:
             evaluator._safe_eval("data.split(':')")
 
     def test_str_format_dunder_bypass_globals(self) -> None:
-        """'{0.__globals__}'.format(coalesce) bypasses dunder AST check via
-        str.format — must be rejected at the callable allowlist, not just AST."""
+        """'{0.__globals__}'.format(coalesce) bypasses dunder AST check via str.format —
+        must be rejected at the callable allowlist, not just AST."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         # The format() call is the outer ast.Call; the dunder is inside a string
@@ -1042,8 +1038,8 @@ class TestWave2CallableAllowlist:
             evaluator._safe_eval("'{0.__globals__}'.format(coalesce)")
 
     def test_str_format_dunder_bypass_class_mro(self) -> None:
-        """'{0.__class__.__mro__}'.format(ctx) — information disclosure via
-        str.format dunder bypass must be rejected by the callable allowlist."""
+        """'{0.__class__.__mro__}'.format(ctx) — information disclosure via str.format
+        dunder bypass must be rejected by the callable allowlist."""
         ctx = ExecutionContext()
         ctx.set_sync("x", "value")
         evaluator = ExpressionEvaluator(ctx)
@@ -1051,8 +1047,8 @@ class TestWave2CallableAllowlist:
             evaluator._safe_eval("'{0.__class__.__mro__}'.format(x)")
 
     def test_format_map_dunder_bypass_rejected(self) -> None:
-        """'{x.__class__}'.format_map({'x': coalesce}) — format_map variant
-        of the same dunder bypass; callable allowlist must reject it."""
+        """'{x.__class__}'.format_map({'x': coalesce}) — format_map variant of the same
+        dunder bypass; callable allowlist must reject it."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         with pytest.raises(ValueError, match="Only coalesce"):
@@ -1079,8 +1075,8 @@ class TestWave2SequenceMultiplyDoS:
             evaluator._safe_eval("'a' * 100001")
 
     def test_string_mult_chained_large_rejected(self) -> None:
-        """'a' * 100000 * 100000 — chained multiply must be rejected at the
-        first over-limit operand."""
+        """'a' * 100000 * 100000 — chained multiply must be rejected at the first over-
+        limit operand."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         with pytest.raises(ValueError, match="Sequence multiply"):
@@ -1094,17 +1090,20 @@ class TestWave2SequenceMultiplyDoS:
             evaluator._safe_eval("[0] * 100001")
 
     def test_string_mult_chained_under_raw_cap_rejected(self) -> None:
-        """'a' * 9999 * 9999 — each raw multiplier is under the cap, but the
-        resulting allocation (~100 MB) is not. The guard must reject based on
-        the *resulting* size (len(seq) * n), closing the chained bypass."""
+        """'a' * 9999 * 9999 — each raw multiplier is under the cap, but the.
+
+        resulting allocation (~100 MB) is not. The guard must reject
+        based on the *resulting* size (len(seq) * n), closing the
+        chained bypass.
+        """
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         with pytest.raises(ValueError, match="Sequence multiply"):
             evaluator._safe_eval("'a' * 9999 * 9999")
 
     def test_string_mult_chained_5000_rejected(self) -> None:
-        """'a' * 5000 * 5000 — inner result is 5000 chars; 5000 * 5000 = 25M
-        exceeds the cap and must be rejected."""
+        """'a' * 5000 * 5000 — inner result is 5000 chars; 5000 * 5000 = 25M exceeds the
+        cap and must be rejected."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         with pytest.raises(ValueError, match="Sequence multiply"):
@@ -1167,8 +1166,9 @@ class TestNullSafeInternals:
         from agentic_v2.engine.expressions import _NullSafe
 
         ns = _NullSafe()
-        # __ne__ for None must return False
-        assert (ns != None) is False  # noqa: E711 — intentional: tests _NullSafe.__ne__(None)
+        # Intentional literal-None comparison: this exercises
+        # _NullSafe.__ne__(None) itself; `is not None` would bypass it.
+        assert (ns != None) is False  # noqa: E711
 
     def test_nullsafe_ne_another_nullsafe_returns_false(self) -> None:
         """_NullSafe() != _NullSafe() must return False."""
@@ -1227,7 +1227,8 @@ class TestFromNamespaceConversions:
 
 
 class TestEvaluateFallbackBranch:
-    """AttributeError/SyntaxError fallback: non-'not in'/'!=' expressions return False."""
+    """AttributeError/SyntaxError fallback: non-'not in'/'!=' expressions return
+    False."""
 
     def test_missing_attribute_eq_returns_false(self) -> None:
         """${steps.missing.status == 'success'} falls back to False (not True)."""
@@ -1399,7 +1400,8 @@ class TestASTInterpreterNodeTypes:
             evaluator._safe_eval("10 // 3")
 
     def test_binop_eval_node_unsupported_operator_raises(self) -> None:
-        """_eval_node with a BinOp whose operator is not in _BINOP_OPS raises ValueError.
+        """_eval_node with a BinOp whose operator is not in _BINOP_OPS raises
+        ValueError.
 
         We bypass _validate_ast by injecting a custom AST node with a recognized
         BinOp wrapper but a FloorDiv operator that _eval_node doesn't handle.
@@ -1430,7 +1432,8 @@ class TestASTInterpreterNodeTypes:
             evaluator._safe_eval("~ctx.x")
 
     def test_unary_eval_node_unsupported_operator_raises(self) -> None:
-        """_eval_node with a UnaryOp whose operator is not in _UNARYOP_OPS raises ValueError."""
+        """_eval_node with a UnaryOp whose operator is not in _UNARYOP_OPS raises
+        ValueError."""
         import ast as ast_mod
 
         ctx = ExecutionContext()
@@ -1451,7 +1454,7 @@ class TestASTInterpreterNodeTypes:
             evaluator._safe_eval("1 if True else 2")
 
     def test_sequence_multiply_right_operand_oversized_raises(self) -> None:
-        """n * 'seq' where n > _MAX_SEQUENCE_MULTIPLY must raise ValueError."""
+        """N * 'seq' where n > _MAX_SEQUENCE_MULTIPLY must raise ValueError."""
         ctx = ExecutionContext()
         evaluator = ExpressionEvaluator(ctx)
         with pytest.raises(ValueError, match="Sequence multiply"):
@@ -1462,27 +1465,27 @@ class TestParsePathBracketSyntax:
     """Test _parse_path bracket variants: string keys, int keys, non-int fallback."""
 
     def test_string_key_in_brackets(self) -> None:
-        """a['key'] must parse to ['a', 'key'] (string token)."""
+        """A['key'] must parse to ['a', 'key'] (string token)."""
         tokens = ExpressionEvaluator._parse_path("a['key']")
         assert tokens == ["a", "key"]
 
     def test_double_quoted_key_in_brackets(self) -> None:
-        """a["key"] must parse the same as single-quoted."""
+        """A["key"] must parse the same as single-quoted."""
         tokens = ExpressionEvaluator._parse_path('a["key"]')
         assert tokens == ["a", "key"]
 
     def test_int_key_in_brackets(self) -> None:
-        """a[2] must parse to ['a', 2] (integer token)."""
+        """A[2] must parse to ['a', 2] (integer token)."""
         tokens = ExpressionEvaluator._parse_path("a[2]")
         assert tokens == ["a", 2]
 
     def test_unclosed_bracket_returns_empty(self) -> None:
-        """a[unclosed path must return [] (invalid path)."""
+        """A[unclosed path must return [] (invalid path)."""
         tokens = ExpressionEvaluator._parse_path("a[0")
         assert tokens == []
 
     def test_non_int_bare_key_in_brackets(self) -> None:
-        """a[notanint] (no quotes, not a number) appends the raw string."""
+        """A[notanint] (no quotes, not a number) appends the raw string."""
         tokens = ExpressionEvaluator._parse_path("a[notanint]")
         assert tokens == ["a", "notanint"]
 
@@ -1529,7 +1532,8 @@ class TestGetStepViewNormalization:
     """Test _get_step_view output/outputs normalization edge cases."""
 
     def test_ctx_step_outputs_without_output_gets_normalized(self) -> None:
-        """A ctx step dict with 'outputs' but no 'output' must gain an 'output' alias."""
+        """A ctx step dict with 'outputs' but no 'output' must gain an 'output'
+        alias."""
         ctx = ExecutionContext()
         ctx.set_sync(
             "steps",
