@@ -12,6 +12,8 @@ Sources of truth:
     ``agentic_v2/server/models.py``          → tests/schemas/workflow_input_schema.schema.json
     ``agentic_v2/server/models.py``          → tests/schemas/workflow_editor_step.schema.json
     ``agentic_v2/server/models.py``          → tests/schemas/runs_summary.schema.json
+    ``agentic_v2/contracts/chat.py``         → tests/schemas/chat_request.schema.json
+    ``agentic_v2/contracts/chat.py``         → tests/schemas/chat_stream_event.schema.json
 
 Run it manually when editing either contract:
 
@@ -21,6 +23,7 @@ Run it manually when editing either contract:
 CI regenerates these files and fails the ``wire-format-drift`` job if the
 output does not match what's committed.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,6 +31,7 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
+from agentic_v2.contracts.chat import ChatRequest, ChatStreamEvent
 from agentic_v2.contracts.events import ExecutionEvent
 from agentic_v2.server.models import (
     DAGResponse,
@@ -45,6 +49,8 @@ DAG_RESPONSE_OUT_PATH = _SCHEMAS_DIR / "dag_response.schema.json"
 WORKFLOW_INPUT_SCHEMA_OUT_PATH = _SCHEMAS_DIR / "workflow_input_schema.schema.json"
 WORKFLOW_EDITOR_STEP_OUT_PATH = _SCHEMAS_DIR / "workflow_editor_step.schema.json"
 RUNS_SUMMARY_OUT_PATH = _SCHEMAS_DIR / "runs_summary.schema.json"
+CHAT_REQUEST_OUT_PATH = _SCHEMAS_DIR / "chat_request.schema.json"
+CHAT_STREAM_EVENT_OUT_PATH = _SCHEMAS_DIR / "chat_stream_event.schema.json"
 
 
 def _write_schema(schema: dict, out_path: Path) -> None:
@@ -86,6 +92,14 @@ def main() -> None:
     # --- RunsSummaryResponse + RunSummaryModel (run list views) ---
     runs_adapter: TypeAdapter[RunsSummaryResponse] = TypeAdapter(RunsSummaryResponse)
     _write_schema(runs_adapter.json_schema(), RUNS_SUMMARY_OUT_PATH)
+
+    # --- ChatRequest (POST /api/chat request body) ---
+    chat_request_adapter: TypeAdapter[ChatRequest] = TypeAdapter(ChatRequest)
+    _write_schema(chat_request_adapter.json_schema(), CHAT_REQUEST_OUT_PATH)
+
+    # --- ChatStreamEvent (discriminated union streamed by POST /api/chat) ---
+    chat_event_adapter: TypeAdapter[ChatStreamEvent] = TypeAdapter(ChatStreamEvent)
+    _write_schema(chat_event_adapter.json_schema(), CHAT_STREAM_EVENT_OUT_PATH)
 
 
 if __name__ == "__main__":

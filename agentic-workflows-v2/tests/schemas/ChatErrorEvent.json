@@ -1,0 +1,25 @@
+{
+  "description": "Terminal frame: the stream failed.\n\n``category`` is an :class:`agentic_v2.core.errors.ErrorCode` value\nderived via ``classify_error`` (e.g. ``auth_error``, ``rate_limited``).\n``message`` is scrubbed of bearer tokens and API keys server-side before\nit reaches the wire.",
+  "properties": {
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "type": {
+      "const": "error",
+      "default": "error",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "message",
+    "category"
+  ],
+  "title": "ChatErrorEvent",
+  "type": "object"
+}

@@ -20,8 +20,20 @@ Exports by category:
   code generation, code review, and test generation I/O shapes.
 - **Issue types**: :class:`CodeIssue`, :class:`Severity`,
   :class:`IssueCategory`, :class:`TestType`, :class:`TestCase`.
+- **Chat playground**: :class:`ChatMessage`, :class:`ChatRequest`,
+  :data:`ChatStreamEvent` (token/done/error SSE union for ``POST /api/chat``).
 """
 
+from .chat import (
+    ChatDoneEvent,
+    ChatErrorEvent,
+    ChatMessage,
+    ChatRequest,
+    ChatRole,
+    ChatStreamEvent,
+    ChatTokenEvent,
+    validate_chat_stream_event,
+)
 from .events import (
     ApprovalDecisionEvent,
     ApprovalRequiredEvent,
@@ -110,4 +122,13 @@ __all__ = [
     "ApprovalRequiredEvent",
     "ApprovalDecisionEvent",
     "validate_event",
+    # Chat playground (POST /api/chat wire format)
+    "ChatRole",
+    "ChatMessage",
+    "ChatRequest",
+    "ChatStreamEvent",
+    "ChatTokenEvent",
+    "ChatDoneEvent",
+    "ChatErrorEvent",
+    "validate_chat_stream_event",
 ]

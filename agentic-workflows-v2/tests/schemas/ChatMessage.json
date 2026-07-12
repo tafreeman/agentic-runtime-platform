@@ -1,0 +1,25 @@
+{
+  "description": "One conversation turn submitted to the chat playground.\n\n``content`` is capped well above any real chat turn so a single request\ncannot buffer unbounded memory through the sanitization middleware.",
+  "properties": {
+    "content": {
+      "maxLength": 100000,
+      "title": "Content",
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "system",
+        "user",
+        "assistant"
+      ],
+      "title": "Role",
+      "type": "string"
+    }
+  },
+  "required": [
+    "role",
+    "content"
+  ],
+  "title": "ChatMessage",
+  "type": "object"
+}

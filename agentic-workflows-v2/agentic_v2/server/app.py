@@ -32,6 +32,7 @@ from .middleware.tracing import TraceparentMiddleware
 from .routes import (
     agents,
     catalog,
+    chat,
     evaluation_routes,
     health,
     model_finder,
@@ -159,6 +160,7 @@ def create_app() -> FastAPI:
     app.include_router(catalog.router, prefix="/api")
     app.include_router(settings_routes.router, prefix="/api")
     app.include_router(models.router, prefix="/api")
+    app.include_router(chat.router, prefix="/api")
     app.include_router(workflows.router, prefix="/api")
     app.include_router(evaluation_routes.router, prefix="/api")
     app.include_router(model_finder.router, prefix="/api")

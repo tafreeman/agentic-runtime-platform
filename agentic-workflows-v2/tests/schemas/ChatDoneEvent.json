@@ -1,0 +1,20 @@
+{
+  "description": "Terminal frame: the reply for ``model`` completed normally.",
+  "properties": {
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "type": {
+      "const": "done",
+      "default": "done",
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "model"
+  ],
+  "title": "ChatDoneEvent",
+  "type": "object"
+}
