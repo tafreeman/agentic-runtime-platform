@@ -160,16 +160,30 @@ test.describe('run detail', () => {
     }>;
     expect(Array.isArray(runs), 'GET /api/runs must return an array').toBe(true);
 
-    if (runs.length === 0) {
+    let [first] = runs;
+    if (!first) {
       // No history to deep-link: fall back to the list's empty placeholder.
+      // A prior spec's background execution can persist a record between the
+      // cold API check above and this page load (observed in CI, where the
+      // suite starts with an empty runs dir) — re-check once and, if history
+      // appeared, run the full deep-link flow against it instead.
       await page.goto('/runs');
-      await expect(page.getByText(/no runs yet/i)).toBeVisible({ timeout: 30_000 });
-      return;
+      const recheck = await request.get('/api/runs?limit=1');
+      expect(recheck.ok(), `GET /api/runs?limit=1 -> ${recheck.status()}`).toBe(
+        true,
+      );
+      const freshRuns = (await recheck.json()) as typeof runs;
+      if (freshRuns.length === 0) {
+        await expect(page.getByText(/no runs yet/i)).toBeVisible({
+          timeout: 30_000,
+        });
+        return;
+      }
+      [first] = freshRuns;
     }
 
     // The stored filename already carries its .json suffix; the route takes it
     // verbatim (react-router decodes the segment back to the raw filename).
-    const [first] = runs;
     const file = String(first.filename);
     await page.goto(`/runs/${encodeURIComponent(file)}`);
 
