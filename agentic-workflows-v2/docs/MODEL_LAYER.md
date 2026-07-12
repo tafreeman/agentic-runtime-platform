@@ -309,8 +309,9 @@ local providers; both are best‑effort and surface as `tier 0` router entries:
   (currently *loaded* models only) is the fallback for older servers. Host
   from `LMSTUDIO_HOST`; with it unset, ports `1234` then `12340` are tried and
   the first reachable wins. Lights up once LM Studio's server is running.
-- **ONNX (`onnx:`):** bounded‑depth walk for `genai_config.json` under the ONNX
-  root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default `~/.cache/aigallery`).
+- **ONNX (`onnx:`):** bounded‑depth walk for **genai_config.json** marker files
+  under the ONNX root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default
+  `~/.cache/aigallery`).
   Returns `onnx:<relpath>` relative to that root — the *same* root `OnnxBackend`
   resolves against, so **discovered == runnable**. The aigallery cache works out
   of the box; point `ONNX_MODEL_DIR` at `~/.aitk/models` or `~/.foundry/cache/...`
