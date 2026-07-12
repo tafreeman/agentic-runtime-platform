@@ -208,18 +208,14 @@ class SmartModelRouter(ModelRouter):
     )
 
     # Background save tasks — prevent GC of fire-and-forget Redis writes
-    _background_tasks: set[asyncio.Task[None]] = field(
-        default_factory=set, repr=False
-    )
+    _background_tasks: set[asyncio.Task[None]] = field(default_factory=set, repr=False)
 
     # Serializes _save_stats_to_redis: record_success/record_failure spawn a
     # fire-and-forget save task each, and two concurrent saves for the same
     # model would read the same baseline, compute the same delta, and CAS it
     # twice (over-counting). The lock makes the second save wait, so it sees
     # the updated baseline and persists only the genuinely new delta.
-    _redis_save_lock: asyncio.Lock = field(
-        default_factory=asyncio.Lock, repr=False
-    )
+    _redis_save_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
 
     # Last model selection result (for degraded-mode inspection)
     _last_selection: ModelSelection | None = field(default=None, repr=False)
@@ -247,9 +243,7 @@ class SmartModelRouter(ModelRouter):
     @property
     def _should_persist(self) -> bool:
         """Whether persistence is configured (Redis or file)."""
-        redis_ok = (
-            self._redis_store is not None and self._redis_store.is_connected
-        )
+        redis_ok = self._redis_store is not None and self._redis_store.is_connected
         return bool(self.stats_file) or redis_ok
 
     def _get_stats(self, model: str) -> ModelStats:
@@ -793,9 +787,7 @@ class SmartModelRouter(ModelRouter):
                 # already-persisted counts, which would double-count).
                 for model, stats in loaded.items():
                     self._redis_counter_baselines[model] = _counter_snapshot(stats)
-                logger.info(
-                    "Loaded %d model stats from Redis", len(loaded)
-                )
+                logger.info("Loaded %d model stats from Redis", len(loaded))
         except Exception:
             logger.warning(
                 "Failed to load stats from Redis; using local state",

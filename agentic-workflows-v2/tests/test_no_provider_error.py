@@ -1,7 +1,8 @@
 """Tests for NoProviderConfiguredError in SmartModelRouter.get_model_for_tier().
 
-When zero providers are available AND AGENTIC_NO_LLM is not set, the router
-must raise NoProviderConfiguredError instead of silently returning None.
+When zero providers are available AND AGENTIC_NO_LLM is not set, the
+router must raise NoProviderConfiguredError instead of silently
+returning None.
 """
 
 from __future__ import annotations
@@ -50,8 +51,7 @@ def test_raises_no_provider_error_when_no_candidates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """get_model_for_tier() raises NoProviderConfiguredError when all models are
-    unavailable and AGENTIC_NO_LLM is not set.
-    """
+    unavailable and AGENTIC_NO_LLM is not set."""
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
     router = SmartModelRouter()
@@ -67,9 +67,8 @@ def test_raises_no_provider_error_when_no_candidates(
 def test_returns_none_silently_when_no_llm_flag_set(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """When AGENTIC_NO_LLM=1 and no models are available, get_model_for_tier()
-    returns None (caller handles no-LLM path).
-    """
+    """When AGENTIC_NO_LLM=1 and no models are available, get_model_for_tier() returns
+    None (caller handles no-LLM path)."""
     monkeypatch.setenv("AGENTIC_NO_LLM", "1")
 
     router = SmartModelRouter()
@@ -135,16 +134,21 @@ def test_router_error_uses_core_message(monkeypatch: pytest.MonkeyPatch) -> None
 def test_cli_catches_no_provider_error_gracefully(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """CLI must catch NoProviderConfiguredError and render Rich Panel without traceback."""
+    """CLI must catch NoProviderConfiguredError and render Rich Panel without
+    traceback."""
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
 
     cli_main = importlib.import_module("agentic_v2.cli.main")
 
     runner = CliRunner()
-    fake_workflow = SimpleNamespace(name="test_no_provider", description="Test workflow")
+    fake_workflow = SimpleNamespace(
+        name="test_no_provider", description="Test workflow"
+    )
 
     with (
-        patch.object(cli_main, "load_workflow_config", return_value=fake_workflow, create=True),
+        patch.object(
+            cli_main, "load_workflow_config", return_value=fake_workflow, create=True
+        ),
         patch.object(
             cli_main,
             "_run_via_adapter",
@@ -183,7 +187,9 @@ def test_server_maps_no_provider_to_503(monkeypatch: pytest.MonkeyPatch) -> None
         raise NoProviderConfiguredError()
 
     # Insert test route at the beginning to avoid catch-all
-    app.routes.insert(0, APIRoute("/_tests/no-provider", _raise_no_provider, methods=["GET"]))
+    app.routes.insert(
+        0, APIRoute("/_tests/no-provider", _raise_no_provider, methods=["GET"])
+    )
 
     with TestClient(app) as client:
         response = client.get("/_tests/no-provider")

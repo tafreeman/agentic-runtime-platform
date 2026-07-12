@@ -274,10 +274,11 @@ class OnnxBackend(LLMBackend):
     def _messages_to_prompt(messages: list[dict[str, Any]]) -> str:
         """Flatten chat messages into a generic role-tagged prompt.
 
-        ONNX model folders ship their own chat template metadata, but the
-        onnxruntime-genai Python surface does not apply it automatically.
-        A simple, model-agnostic role layout keeps the backend usable
-        across model families without hard-coding per-model templates.
+        ONNX model folders ship their own chat template metadata, but
+        the onnxruntime-genai Python surface does not apply it
+        automatically. A simple, model-agnostic role layout keeps the
+        backend usable across model families without hard-coding per-
+        model templates.
         """
         parts: list[str] = []
         for msg in messages:

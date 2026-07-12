@@ -106,9 +106,7 @@ class RecursiveChunker:
                 self._flush_segment(
                     current, separator, chunk_size, overlap, separators, results
                 )
-                current, current_len = self._carry_overlap(
-                    current, separator, overlap
-                )
+                current, current_len = self._carry_overlap(current, separator, overlap)
 
             current.append(part)
             current_len += part_len

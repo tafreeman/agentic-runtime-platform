@@ -153,9 +153,10 @@ class AuthThrottle:
     def record_failure(self, ip: str) -> None:
         """Record a failed authentication attempt for *ip*.
 
-        If the failure count within the sliding window reaches *threshold*,
-        the IP enters a lockout period.  The failure deque is cleared when
-        a lockout starts so the counter does not keep growing.
+        If the failure count within the sliding window reaches
+        *threshold*, the IP enters a lockout period.  The failure deque
+        is cleared when a lockout starts so the counter does not keep
+        growing.
         """
         now = self._clock()
         state = self._state[ip]
@@ -394,7 +395,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         is_locked, retry_after = throttle.is_locked(client_host)
         if is_locked:
             logger.warning(
-                "Auth throttle: rejecting locked IP %s (retry after %.0fs)", client_host, retry_after
+                "Auth throttle: rejecting locked IP %s (retry after %.0fs)",
+                client_host,
+                retry_after,
             )
             await audit_auth_request_event(
                 request,
@@ -423,7 +426,9 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
                     outcome="denied",
                     metadata={
                         "path": path,
-                        "token_source": token.source if token is not None else "missing",
+                        "token_source": (
+                            token.source if token is not None else "missing"
+                        ),
                         "status_code": 429,
                         "retry_after": int(max(1, retry_after)),
                     },

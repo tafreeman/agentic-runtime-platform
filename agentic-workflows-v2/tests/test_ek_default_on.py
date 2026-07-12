@@ -109,9 +109,9 @@ def test_ek_tool_loop_defers_to_native_when_executionkit_absent(monkeypatch):
     monkeypatch.setattr(
         iu,
         "find_spec",
-        lambda name, *a, **k: None
-        if name == "executionkit"
-        else orig_find_spec(name, *a, **k),
+        lambda name, *a, **k: (
+            None if name == "executionkit" else orig_find_spec(name, *a, **k)
+        ),
     )
     ar._executionkit_available.cache_clear()
     try:

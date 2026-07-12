@@ -1,6 +1,7 @@
 """Unit tests for AuthThrottle — per-IP sliding-window brute-force protection.
 
-Tests use an injectable clock so time can be controlled without real sleeps.
+Tests use an injectable clock so time can be controlled without real
+sleeps.
 """
 
 from __future__ import annotations
@@ -36,7 +37,9 @@ def _make_throttle(
 ) -> tuple[AuthThrottle, FakeClock]:
     """Create an AuthThrottle with a fake clock and given thresholds."""
     clk = clock or FakeClock()
-    throttle = AuthThrottle(window=window, threshold=threshold, lockout=lockout, clock=clk)
+    throttle = AuthThrottle(
+        window=window, threshold=threshold, lockout=lockout, clock=clk
+    )
     return throttle, clk
 
 

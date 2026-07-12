@@ -27,8 +27,8 @@ pytestmark = pytest.mark.security
 def _make_request(run_id: str | None) -> WorkflowRunRequest:
     """Instantiate a minimal ``WorkflowRunRequest`` with the given ``run_id``.
 
-    All other fields default, so the validator under test is exercised in
-    isolation.
+    All other fields default, so the validator under test is exercised
+    in isolation.
     """
     return WorkflowRunRequest(workflow="test_wf", run_id=run_id)
 

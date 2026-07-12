@@ -66,9 +66,7 @@ def _mock_sdk(agent: ClaudeAgent, text: str) -> AsyncMock:
         content=[types.SimpleNamespace(type="text", text=text)]
     )
     create = AsyncMock(return_value=resp)
-    agent._client = types.SimpleNamespace(
-        messages=types.SimpleNamespace(create=create)
-    )
+    agent._client = types.SimpleNamespace(messages=types.SimpleNamespace(create=create))
     return create
 
 
@@ -163,9 +161,7 @@ async def test_inbound_blocks_unsafe_text_in_list_content() -> None:
         }
     ]
     with pytest.raises(ValueError, match="sanitization"):
-        await client.sanitize_inbound_messages(
-            msgs, source="t", tier=ModelTier.TIER_2
-        )
+        await client.sanitize_inbound_messages(msgs, source="t", tier=ModelTier.TIER_2)
 
 
 async def test_outbound_sanitizes_text_blocks_in_list_content() -> None:

@@ -38,11 +38,7 @@ DEFAULT_SCHEMA_PATH = (
     REPO_ROOT / "agentic-workflows-v2" / "schemas" / "workflow.schema.json"
 )
 DEFAULT_DEFINITIONS_DIR = (
-    REPO_ROOT
-    / "agentic-workflows-v2"
-    / "agentic_v2"
-    / "workflows"
-    / "definitions"
+    REPO_ROOT / "agentic-workflows-v2" / "agentic_v2" / "workflows" / "definitions"
 )
 
 
@@ -67,11 +63,15 @@ def _manual_validate(data: Any, yaml_path: Path) -> list[str]:
     errors: list[str] = []
 
     if not isinstance(data, dict):
-        return [f"{yaml_path.name}: top-level value must be a mapping, got {type(data).__name__}"]
+        return [
+            f"{yaml_path.name}: top-level value must be a mapping, got {type(data).__name__}"
+        ]
 
     for field in sorted(REQUIRED_TOP_LEVEL):
         if field not in data:
-            errors.append(f"{yaml_path.name}: missing required top-level field '{field}'")
+            errors.append(
+                f"{yaml_path.name}: missing required top-level field '{field}'"
+            )
 
     steps = data.get("steps")
     if steps is None:
@@ -79,7 +79,9 @@ def _manual_validate(data: Any, yaml_path: Path) -> list[str]:
         return errors
 
     if not isinstance(steps, list):
-        errors.append(f"{yaml_path.name}: 'steps' must be a list, got {type(steps).__name__}")
+        errors.append(
+            f"{yaml_path.name}: 'steps' must be a list, got {type(steps).__name__}"
+        )
         return errors
 
     if len(steps) == 0:
@@ -88,7 +90,9 @@ def _manual_validate(data: Any, yaml_path: Path) -> list[str]:
     for idx, step in enumerate(steps):
         prefix = f"{yaml_path.name}: step[{idx}]"
         if not isinstance(step, dict):
-            errors.append(f"{prefix}: each step must be a mapping, got {type(step).__name__}")
+            errors.append(
+                f"{prefix}: each step must be a mapping, got {type(step).__name__}"
+            )
             continue
 
         step_name = step.get("name", f"<index {idx}>")
@@ -219,9 +223,7 @@ def _validate_one_file(yaml_path: Path, schema: dict) -> list[str]:
     return errors
 
 
-def _validate_all_files(
-    yaml_files: list[Path], schema: dict
-) -> dict[str, list[str]]:
+def _validate_all_files(yaml_files: list[Path], schema: dict) -> dict[str, list[str]]:
     """Validate each YAML file, returning a ``{filename: errors}`` mapping."""
     all_errors: dict[str, list[str]] = {}
     for yaml_path in yaml_files:

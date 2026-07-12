@@ -1,9 +1,9 @@
 """Local model finder routes backed by host hardware profiling.
 
-The endpoint intentionally works without privileged probes or network access. It
-builds a conservative hardware profile from the local machine, derives a few
-performance estimates, and ranks a curated open-model catalog against that
-profile.
+The endpoint intentionally works without privileged probes or network
+access. It builds a conservative hardware profile from the local
+machine, derives a few performance estimates, and ranks a curated open-
+model catalog against that profile.
 """
 
 from __future__ import annotations
@@ -59,7 +59,9 @@ class SystemProfile(BaseModel):
     cpu_max_mhz: float | None = None
     ram_gb: float
     accelerators: list[Accelerator] = Field(default_factory=list)
-    system_tops: float | None = None  # sum of all accelerator TOPS (INT8); None when unknown
+    system_tops: float | None = (
+        None  # sum of all accelerator TOPS (INT8); None when unknown
+    )
     estimated_cinebench_r23_multi: int
     estimated_tokens_per_second_7b_q4: float
     performance_tier: Literal["entry", "mainstream", "workstation", "accelerated"]
@@ -390,7 +392,9 @@ def _load_hardware_override() -> dict[str, Any]:
         data = yaml.safe_load(override_path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except Exception as exc:
-        logger.warning("Failed to load hardware override from %s: %s", override_path, exc)
+        logger.warning(
+            "Failed to load hardware override from %s: %s", override_path, exc
+        )
         return {}
 
 
@@ -459,16 +463,36 @@ def get_system_profile() -> SystemProfile:
     npu_tops = sum(a.tops or 0 for a in accelerators if a.kind == "npu")
     all_tops = sum(a.tops or 0 for a in accelerators)
     # system_tops override lets the YAML express the true total (incl. CPU VNNI/TOPS
-    # that aren't modelled as an Accelerator entry).
+    # that aren't modelled as an Accelerator entry). A malformed value must
+    # degrade to the computed accelerator total, not 500 the route.
     system_tops_raw = override.get("system_tops")
-    system_tops: float | None = (
-        float(system_tops_raw) if system_tops_raw is not None
-        else (round(all_tops, 1) if all_tops > 0 else None)
-    )
+    system_tops: float | None = None
+    if system_tops_raw is not None:
+        try:
+            # bool is an int subclass — float(True) == 1.0 — so a YAML
+            # `system_tops: true` would silently claim 1 TOPS; reject it
+            # into the same fallback path as any other non-numeric value.
+            if isinstance(system_tops_raw, bool):
+                raise TypeError("booleans are not numeric system_tops values")
+            system_tops = float(system_tops_raw)
+        except (ValueError, TypeError):
+            logger.warning(
+                "Ignoring non-numeric system_tops hardware override %r; "
+                "falling back to the computed accelerator total.",
+                system_tops_raw,
+            )
+    if system_tops is None:
+        system_tops = round(all_tops, 1) if all_tops > 0 else None
     cinebench = int(logical * ((max_mhz or 2500) / 1000) * 620)
     # NPU TOPS contribute ~0.15 t/s per TOPS for INT4/INT8 quantized 7B models.
     tps = round(
-        max(1.5, (logical * ((max_mhz or 2500) / 2500) * 0.9) + (gpu_memory * 1.7) + (npu_tops * 0.15)), 1
+        max(
+            1.5,
+            (logical * ((max_mhz or 2500) / 2500) * 0.9)
+            + (gpu_memory * 1.7)
+            + (npu_tops * 0.15),
+        ),
+        1,
     )
     if gpu_memory >= 8 or any(a.kind == "npu" for a in accelerators):
         tier = "accelerated"

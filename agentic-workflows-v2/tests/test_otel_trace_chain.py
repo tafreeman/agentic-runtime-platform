@@ -9,6 +9,7 @@ Audit findings (2026-04-21):
 - Tool layer: no instrumentation yet (tools called inline from agents)
 - RAG layer: no instrumentation yet (called from rag_agent)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -71,9 +72,7 @@ def _assert_parent_child(parent_span, child_span, exporter):
         f"Expected a span containing '{child_span}' but found none. "
         f"Available spans: {_get_span_names(exporter)}"
     )
-    assert child_span.parent is not None, (
-        f"Span '{child_span.name}' has no parent"
-    )
+    assert child_span.parent is not None, f"Span '{child_span.name}' has no parent"
     assert child_span.parent.span_id == parent_span.context.span_id, (
         f"Expected '{child_span.name}' parent to be '{parent_span.name}' "
         f"but got span_id {child_span.parent.span_id}"
@@ -103,12 +102,12 @@ async def test_engine_agent_trace_chain(otel_memory_exporter):
     engine_span = _find_span(otel_memory_exporter, "engine.")
     agent_span = _find_span(otel_memory_exporter, "agent.")
 
-    assert engine_span is not None, (
-        f"No engine span found. Spans: {_get_span_names(otel_memory_exporter)}"
-    )
-    assert agent_span is not None, (
-        f"No agent span found. Spans: {_get_span_names(otel_memory_exporter)}"
-    )
+    assert (
+        engine_span is not None
+    ), f"No engine span found. Spans: {_get_span_names(otel_memory_exporter)}"
+    assert (
+        agent_span is not None
+    ), f"No agent span found. Spans: {_get_span_names(otel_memory_exporter)}"
     _assert_parent_child(engine_span, agent_span, otel_memory_exporter)
 
     tool_span = _find_span(otel_memory_exporter, "tool.")

@@ -50,6 +50,7 @@ class _FailingStaticEmbedder(_StaticEmbedder):
     async def embed(self, texts: list[str]) -> list[list[float]]:
         raise EmbeddingError("provider failed")
 
+
 # ── InMemoryEmbedder ────────────────────────────────────────────────
 
 

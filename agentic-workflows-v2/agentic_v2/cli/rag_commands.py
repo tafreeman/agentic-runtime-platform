@@ -66,9 +66,7 @@ def rag_ingest(
         agentic rag ingest --source ./docs --collection my_project
     """
     try:
-        _rag_ingest_impl = _compat_impl(
-            "_rag_ingest_impl", _default_rag_ingest_impl
-        )
+        _rag_ingest_impl = _compat_impl("_rag_ingest_impl", _default_rag_ingest_impl)
         chunk_count = _rag_ingest_impl(str(source))
         console.print(f"[green]Ingested {chunk_count} chunks[/green] from {source}")
     except FileNotFoundError as e:

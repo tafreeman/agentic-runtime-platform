@@ -18,10 +18,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["models"])
 
 
-@router.get("/models/probe", responses={
-    500: {"description": "Internal Server Error"},
-    503: {"description": "Service Unavailable"},
-})
+@router.get(
+    "/models/probe",
+    responses={
+        500: {"description": "Internal Server Error"},
+        503: {"description": "Service Unavailable"},
+    },
+)
 async def probe_models() -> dict[str, Any]:
     """Re-probe available LLM providers and return current tier defaults.
 

@@ -269,8 +269,8 @@ class TestEvaluateRunEndpoint:
         assert self.captured["kwargs"]["dataset_sample"] is None
 
     def test_rehydration_failure_recorded_in_dataset_meta(self, monkeypatch, tmp_path):
-        """A rehydration that degrades must be visible in the scored payload's
-        dataset block, not just a server log line."""
+        """A rehydration that degrades must be visible in the scored payload's dataset
+        block, not just a server log line."""
         record = _run_record(
             dataset={
                 "source": "local",
@@ -295,8 +295,8 @@ class TestEvaluateRunEndpoint:
     def test_persisted_evaluation_error_served_by_detail_endpoint(
         self, monkeypatch, tmp_path
     ):
-        """A judge_required failure recorded at run time must stay visible
-        after the live stream is gone (issue #172 review, round 7)."""
+        """A judge_required failure recorded at run time must stay visible after the
+        live stream is gone (issue #172 review, round 7)."""
         record = _run_record(
             extra={
                 "evaluation_requested": True,

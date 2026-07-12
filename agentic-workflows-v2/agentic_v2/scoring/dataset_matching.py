@@ -502,8 +502,8 @@ def _resolve_adapted_value(
 ) -> Any:
     """Resolve a value for one workflow input via name-based heuristics.
 
-    Mirrors the original if/elif fallback chain used when the sample has no
-    value directly keyed by the input name.
+    Mirrors the original if/elif fallback chain used when the sample has
+    no value directly keyed by the input name.
     """
     if "file" in lowered or "patch" in lowered:
         return _pick_first(sample, _ADAPT_FILE_FIELD_KEYS)
@@ -583,9 +583,7 @@ def adapt_sample_to_workflow_inputs(
         value = sample.get(name)
 
         if value in (None, ""):
-            value = _resolve_adapted_value(
-                lowered, definition, sample, generic_text
-            )
+            value = _resolve_adapted_value(lowered, definition, sample, generic_text)
 
         if value in (None, ""):
             continue

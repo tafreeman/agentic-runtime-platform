@@ -102,6 +102,7 @@ def _host_shell_command(command: str) -> tuple[str, ...]:
     if os.name == "nt":
         return ("cmd", "/c", command)
     from agentic_v2.settings import get_settings
+
     shell = get_settings().shell
     return (shell, "-lc", command)
 

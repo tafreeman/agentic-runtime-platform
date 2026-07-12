@@ -83,7 +83,9 @@ def verify_model_weights(
     configured_hash = expected_hash.strip().lower() if expected_hash else None
 
     if configured_hash is not None and not _SHA256_RE.fullmatch(configured_hash):
-        raise TrustedHashConfigError("expected_hash must be a 64-character SHA-256 hex digest")
+        raise TrustedHashConfigError(
+            "expected_hash must be a 64-character SHA-256 hex digest"
+        )
 
     if configured_hash is None:
         config_path = _trusted_hash_config_path()
@@ -198,9 +200,7 @@ def load_trusted_hashes(config_path: Path | None = None) -> list[TrustedModelHas
     if not isinstance(raw, dict):
         raise TrustedHashConfigError("trusted hash config must be a mapping")
     if raw.get("schema_version") != _SCHEMA_VERSION:
-        raise TrustedHashConfigError(
-            f"schema_version must be {_SCHEMA_VERSION!r}"
-        )
+        raise TrustedHashConfigError(f"schema_version must be {_SCHEMA_VERSION!r}")
 
     models = raw.get("models")
     if models is None:
@@ -241,9 +241,7 @@ def _parse_trusted_hash_entry(
     sha256 = _require_string(item, "sha256", index).lower()
     algorithm = str(item.get("algorithm", "sha256")).lower()
     if algorithm != "sha256":
-        raise TrustedHashConfigError(
-            f"models[{index}].algorithm must be 'sha256'"
-        )
+        raise TrustedHashConfigError(f"models[{index}].algorithm must be 'sha256'")
     if not _SHA256_RE.fullmatch(sha256):
         raise TrustedHashConfigError(
             f"models[{index}].sha256 must be a 64-character SHA-256 hex digest"
@@ -355,7 +353,9 @@ def _emit_audit_event(result: VerificationResult) -> None:
                     "expected_sha256": result.expected_hash,
                     "status": result.status,
                     "strict": result.strict,
-                    "config_path": str(result.config_path) if result.config_path else None,
+                    "config_path": (
+                        str(result.config_path) if result.config_path else None
+                    ),
                     "warnings": result.warnings,
                 },
             )

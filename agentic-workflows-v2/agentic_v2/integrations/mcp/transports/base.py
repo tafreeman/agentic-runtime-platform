@@ -104,4 +104,6 @@ class McpTransport(ABC):
                     self.on_close()
                 except Exception as e:
                     # Don't crash during cleanup
-                    self._emit_error(RuntimeError(f"Close handler raised exception: {e}"))
+                    self._emit_error(
+                        RuntimeError(f"Close handler raised exception: {e}")
+                    )

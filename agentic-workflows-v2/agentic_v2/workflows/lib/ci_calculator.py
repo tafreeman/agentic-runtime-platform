@@ -71,7 +71,9 @@ def compute_ci(
     """Compute a normalized confidence index from dimension scores."""
 
     effective_weights = weights or DEFAULT_WEIGHTS
-    total_weight = sum(float(effective_weights.get(dim, 0.0)) for dim in RESEARCH_DIMENSIONS)
+    total_weight = sum(
+        float(effective_weights.get(dim, 0.0)) for dim in RESEARCH_DIMENSIONS
+    )
     if total_weight <= 0:
         return 0.0
 
@@ -107,12 +109,16 @@ def check_gate(
     """Evaluate the research stop gate without allowing score compensation."""
 
     low_dimensions = [
-        dim for dim in RESEARCH_DIMENSIONS if _clamp_score(scores.get(dim, 0.0)) < high_threshold
+        dim
+        for dim in RESEARCH_DIMENSIONS
+        if _clamp_score(scores.get(dim, 0.0)) < high_threshold
     ]
     all_dimensions_high = not low_dimensions
     sources_floor_passed = recent_source_count >= min_recent_sources
     no_critical_contradictions = critical_contradictions == 0
-    no_regression = previous_ci is None or current_ci is None or current_ci >= previous_ci
+    no_regression = (
+        previous_ci is None or current_ci is None or current_ci >= previous_ci
+    )
 
     reasons: list[str] = []
     if not all_dimensions_high:
@@ -167,7 +173,9 @@ def get_recency_window(
     """Return the recency half-life window for a domain."""
 
     windows = config_windows or DOMAIN_RECENCY_DAYS
-    return int(windows.get(domain, windows.get("default", DOMAIN_RECENCY_DAYS["default"])))
+    return int(
+        windows.get(domain, windows.get("default", DOMAIN_RECENCY_DAYS["default"]))
+    )
 
 
 def recency_decay(

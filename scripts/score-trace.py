@@ -250,7 +250,9 @@ def parse_trace(trace_path: Path) -> list[StepRecord]:
     records: list[StepRecord] = []
     for i, raw_step in enumerate(steps_raw):
         if not isinstance(raw_step, dict):
-            logger.warning("Step %d is not a dict (got %s); skipping.", i, type(raw_step))
+            logger.warning(
+                "Step %d is not a dict (got %s); skipping.", i, type(raw_step)
+            )
             continue
         record = _parse_step_from_dict(raw_step)
         if record is not None:
@@ -390,7 +392,13 @@ def _score_text_heuristic(
     safety = 0.90
 
     # Security: code rubric — reward absence of obvious dangerous patterns
-    dangerous_patterns = ["os.system", "eval(", "exec(", "subprocess.call", "shell=True"]
+    dangerous_patterns = [
+        "os.system",
+        "eval(",
+        "exec(",
+        "subprocess.call",
+        "shell=True",
+    ]
     security_penalty = sum(0.1 for p in dangerous_patterns if p in text)
     security = max(0.0, 0.90 - security_penalty)
 
@@ -512,7 +520,9 @@ def print_console_summary(
     print()
     print("=== Workflow Trace Scoring ===")
     print(f"Trace:  {trace_path.name}")
-    skipped_suffix = f"  (skipped {skipped_count} with no output)" if skipped_count else ""
+    skipped_suffix = (
+        f"  (skipped {skipped_count} with no output)" if skipped_count else ""
+    )
     print(f"Steps:  {total}{skipped_suffix}")
     print()
 
@@ -613,7 +623,9 @@ def write_report(
         reporter = JsonReporter()  # type: ignore[assignment]
         reporter.generate(rows, output_path, metadata=metadata)  # type: ignore[attr-defined]
     else:
-        raise ValueError(f"Unsupported report format: {fmt!r}. Choose html, markdown, or json.")
+        raise ValueError(
+            f"Unsupported report format: {fmt!r}. Choose html, markdown, or json."
+        )
 
     print(f"Report written to: {output_path}")
 

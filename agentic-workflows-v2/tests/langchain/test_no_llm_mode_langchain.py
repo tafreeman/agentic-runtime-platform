@@ -25,9 +25,8 @@ _PLACEHOLDER_PREFIX = "[AGENTIC_NO_LLM placeholder]"
 
 @pytest.fixture(autouse=True)
 def _isolate_settings(monkeypatch):
-    """Bust the settings LRU cache before and after every test so that
-    monkeypatch env changes are visible to get_settings() callers.
-    """
+    """Bust the settings LRU cache before and after every test so that monkeypatch env
+    changes are visible to get_settings() callers."""
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
@@ -35,8 +34,8 @@ def _isolate_settings(monkeypatch):
 
 @pytest.mark.unit
 def test_flag_returns_placeholder_chat_model_without_credentials(monkeypatch):
-    """AGENTIC_NO_LLM=1 must let get_chat_model() return a placeholder model
-    even when GITHUB_TOKEN is absent — no credential error should be raised.
+    """AGENTIC_NO_LLM=1 must let get_chat_model() return a placeholder model even when
+    GITHUB_TOKEN is absent — no credential error should be raised.
 
     FAILS today: get_chat_model() calls build_github_model() which raises
     ValueError("GITHUB_TOKEN environment variable is required...") before
@@ -50,15 +49,15 @@ def test_flag_returns_placeholder_chat_model_without_credentials(monkeypatch):
 
     model = get_chat_model("gh:openai/gpt-4o")
 
-    assert model._llm_type == "placeholder", (
-        f"Expected _llm_type='placeholder', got {model._llm_type!r}"
-    )
+    assert (
+        model._llm_type == "placeholder"
+    ), f"Expected _llm_type='placeholder', got {model._llm_type!r}"
 
 
 @pytest.mark.unit
 def test_flag_placeholder_generates_prefixed_aimessage(monkeypatch):
-    """Invoking the placeholder model must return an AIMessage whose content
-    starts with the placeholder prefix.
+    """Invoking the placeholder model must return an AIMessage whose content starts with
+    the placeholder prefix.
 
     FAILS today: get_chat_model() never reaches the placeholder path.
     """
@@ -114,11 +113,11 @@ def test_flag_bind_tools_is_noop_and_still_returns_placeholder(monkeypatch):
 
 @pytest.mark.unit
 def test_flag_unset_still_raises_on_missing_credentials(monkeypatch):
-    """When AGENTIC_NO_LLM is absent, get_chat_model('gh:...') must still
-    raise ValueError mentioning GITHUB_TOKEN when the token is not set.
+    """When AGENTIC_NO_LLM is absent, get_chat_model('gh:...') must still raise
+    ValueError mentioning GITHUB_TOKEN when the token is not set.
 
-    This is the no-regression control — the short-circuit must be strictly
-    gated on the flag.
+    This is the no-regression control — the short-circuit must be
+    strictly gated on the flag.
     """
     monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
@@ -130,9 +129,8 @@ def test_flag_unset_still_raises_on_missing_credentials(monkeypatch):
 
 @pytest.mark.unit
 async def test_flag_astream_yields_single_placeholder_chunk(monkeypatch):
-    """Under the flag, ``PlaceholderChatModel._astream`` must yield exactly
-    one chunk containing the placeholder prefix (P1 from Sprint B #5
-    follow-up review).
+    """Under the flag, ``PlaceholderChatModel._astream`` must yield exactly one chunk
+    containing the placeholder prefix (P1 from Sprint B #5 follow-up review).
 
     Without an explicit ``_astream``, LangChain falls back to running
     ``_generate`` in a thread executor, whose signature has broken across
@@ -146,10 +144,7 @@ async def test_flag_astream_yields_single_placeholder_chunk(monkeypatch):
     get_settings.cache_clear()
 
     model = get_chat_model("gh:openai/gpt-4o")
-    all_chunks = [
-        chunk
-        async for chunk in model.astream([HumanMessage(content="hi")])
-    ]
+    all_chunks = [chunk async for chunk in model.astream([HumanMessage(content="hi")])]
 
     # langchain-core>=1.4 / langgraph>=1.2 emit a trailing empty chunk with
     # ``chunk_position='last'`` for streaming v2 protocol compatibility.
@@ -170,8 +165,8 @@ async def test_flag_astream_yields_single_placeholder_chunk(monkeypatch):
 
 @pytest.mark.unit
 def test_flag_bind_tools_returns_new_instance_not_self(monkeypatch):
-    """``bind_tools`` must return a *new* ``PlaceholderChatModel`` instance,
-    not ``self`` (P3 from Sprint B #5 follow-up review).
+    """``bind_tools`` must return a *new* ``PlaceholderChatModel`` instance, not
+    ``self`` (P3 from Sprint B #5 follow-up review).
 
     Sharing a single instance across bind_tools calls could become a
     concurrency footgun if future maintainers add mutable state to the
@@ -195,11 +190,11 @@ def test_flag_bind_tools_returns_new_instance_not_self(monkeypatch):
             }
         ]
     )
-    assert bound is not model, (
-        "bind_tools should return a NEW PlaceholderChatModel instance, not self"
-    )
+    assert (
+        bound is not model
+    ), "bind_tools should return a NEW PlaceholderChatModel instance, not self"
     # But both should be instances of the SAME cached class (P4 — class
     # identity must be stable across calls so ``isinstance`` checks work).
-    assert type(bound) is type(model), (
-        "bound and original should share the same PlaceholderChatModel class"
-    )
+    assert type(bound) is type(
+        model
+    ), "bound and original should share the same PlaceholderChatModel class"

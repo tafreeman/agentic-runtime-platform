@@ -520,9 +520,7 @@ class RedisCircuitBreakerStore:
     def _handle_connection_loss(self, exc: BaseException) -> None:
         """Mark the store as disconnected on connection-class errors."""
         if isinstance(exc, (RedisConnectionError, OSError)):
-            logger.error(
-                "Redis connection lost; falling back to local state: %s", exc
-            )
+            logger.error("Redis connection lost; falling back to local state: %s", exc)
             self._connected = False
 
     async def close(self) -> None:

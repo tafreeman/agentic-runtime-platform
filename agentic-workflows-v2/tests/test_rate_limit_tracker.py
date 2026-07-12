@@ -608,9 +608,7 @@ class TestSmartModelRouterHardening:
             async def complete(self, model: str, prompt: str, **kwargs: object) -> str:
                 return "unused"
 
-            async def complete_stream(
-                self, model: str, prompt: str, **kwargs: object
-            ):
+            async def complete_stream(self, model: str, prompt: str, **kwargs: object):
                 self.started.set()
                 await self.release.wait()
                 yield "a"
@@ -650,7 +648,9 @@ class TestSmartModelRouterHardening:
                 self.started = asyncio.Event()
                 self.release = asyncio.Event()
 
-            async def complete_chat(self, *args: object, **kwargs: object) -> dict[str, object]:
+            async def complete_chat(
+                self, *args: object, **kwargs: object
+            ) -> dict[str, object]:
                 self.started.set()
                 await self.release.wait()
                 return {"content": "done", "usage": {"total_tokens": 3}}

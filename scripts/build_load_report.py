@@ -185,8 +185,17 @@ def _render_scale_table(runs: dict[int, dict[str, Any]]) -> str:
 
     lines = [header, sep]
     lines.append(row("Total requests", "total_requests", lambda v: _fmt(v)))
-    lines.append(row("Throughput (req/s)", "req_per_sec", lambda v: _fmt(v, "", 2), delta=True))
-    lines.append(row("Runs accepted (POST /api/run)", "runs_accepted", lambda v: _fmt(v), delta=True))
+    lines.append(
+        row("Throughput (req/s)", "req_per_sec", lambda v: _fmt(v, "", 2), delta=True)
+    )
+    lines.append(
+        row(
+            "Runs accepted (POST /api/run)",
+            "runs_accepted",
+            lambda v: _fmt(v),
+            delta=True,
+        )
+    )
     lines.append(row("p50 latency", "p50_ms", lambda v: _fmt(v, " ms")))
     lines.append(row("p95 latency", "p95_ms", lambda v: _fmt(v, " ms")))
     lines.append(row("p99 latency", "p99_ms", lambda v: _fmt(v, " ms")))
@@ -196,7 +205,9 @@ def _render_scale_table(runs: dict[int, dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _render_cas_section(probe: dict[str, Any] | None, cas_run: dict[str, Any] | None) -> str:
+def _render_cas_section(
+    probe: dict[str, Any] | None, cas_run: dict[str, Any] | None
+) -> str:
     """Render the Redis-CAS consistency evidence from the probe + k6 JSON."""
     if not probe:
         return (
@@ -316,7 +327,7 @@ def build_report(results_dir: str) -> str:
     parts: list[str] = []
     parts.append("# Load proof: Redis-CAS + horizontal scale\n")
     parts.append(
-        "!!! abstract \"Auto-generated — do not hand-edit\"\n"
+        '!!! abstract "Auto-generated — do not hand-edit"\n'
         "    Every number on this page is derived by "
         "`scripts/build_load_report.py` from the committed k6 JSON in "
         "`load/results/`. Re-run `bash load/run_load.sh` then the generator to "

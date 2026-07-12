@@ -48,7 +48,10 @@ class TestNormalizePath:
     def test_uuid_segment_replaced(self) -> None:
         from agentic_v2.integrations.metrics import normalize_path
 
-        assert normalize_path("/api/runs/abc12345-1234-1234-1234-abcdef012345") == "/api/runs/{id}"
+        assert (
+            normalize_path("/api/runs/abc12345-1234-1234-1234-abcdef012345")
+            == "/api/runs/{id}"
+        )
 
     def test_nested_ids_replaced(self) -> None:
         from agentic_v2.integrations.metrics import normalize_path
@@ -74,7 +77,9 @@ class TestIsMetricsEnabled:
 
         assert is_metrics_enabled() is True
 
-    def test_enabled_case_insensitive_true(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_enabled_case_insensitive_true(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("AGENTIC_METRICS", "TRUE")
         from agentic_v2.integrations.metrics import is_metrics_enabled
 
@@ -156,7 +161,9 @@ class TestGetMeterReturnsNoneWhenDisabled:
 class TestGetMetricsAppWhenDisabled:
     """get_metrics_app returns None when not enabled."""
 
-    def test_returns_none_when_env_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_returns_none_when_env_disabled(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.delenv("AGENTIC_METRICS", raising=False)
         from agentic_v2.integrations.metrics import get_metrics_app
 
@@ -222,7 +229,8 @@ class TestNoopWhenOtelNotInstalled:
 
 @pytest.mark.unit
 class TestMetricsMiddleware:
-    """MetricsMiddleware records http_request_duration_seconds and http_requests_total."""
+    """MetricsMiddleware records http_request_duration_seconds and
+    http_requests_total."""
 
     async def test_middleware_calls_record_http_request(self) -> None:
         """Middleware calls record_http_request with correct arguments."""
@@ -234,7 +242,9 @@ class TestMetricsMiddleware:
 
         recorded: list[dict[str, Any]] = []
 
-        def fake_record(method: str, path: str, status_code: int, duration_seconds: float) -> None:
+        def fake_record(
+            method: str, path: str, status_code: int, duration_seconds: float
+        ) -> None:
             recorded.append(
                 {
                     "method": method,
@@ -252,7 +262,9 @@ class TestMetricsMiddleware:
 
         app.add_middleware(MetricsMiddleware)
 
-        with patch("agentic_v2.server.middleware.metrics.record_http_request", fake_record):
+        with patch(
+            "agentic_v2.server.middleware.metrics.record_http_request", fake_record
+        ):
             client = TestClient(app, raise_server_exceptions=True)
             resp = client.get("/api/health")
 
@@ -274,7 +286,9 @@ class TestMetricsMiddleware:
 
         recorded: list[dict[str, Any]] = []
 
-        def fake_record(method: str, path: str, status_code: int, duration_seconds: float) -> None:
+        def fake_record(
+            method: str, path: str, status_code: int, duration_seconds: float
+        ) -> None:
             recorded.append({"path": path})
 
         app = FastAPI()
@@ -285,7 +299,9 @@ class TestMetricsMiddleware:
 
         app.add_middleware(MetricsMiddleware)
 
-        with patch("agentic_v2.server.middleware.metrics.record_http_request", fake_record):
+        with patch(
+            "agentic_v2.server.middleware.metrics.record_http_request", fake_record
+        ):
             client = TestClient(app)
             client.get("/metrics")
 
@@ -302,7 +318,9 @@ class TestMetricsMiddleware:
 
         recorded: list[dict[str, Any]] = []
 
-        def fake_record(method: str, path: str, status_code: int, duration_seconds: float) -> None:
+        def fake_record(
+            method: str, path: str, status_code: int, duration_seconds: float
+        ) -> None:
             recorded.append({"status_code": status_code})
 
         app = FastAPI()
@@ -313,7 +331,9 @@ class TestMetricsMiddleware:
 
         app.add_middleware(MetricsMiddleware)
 
-        with patch("agentic_v2.server.middleware.metrics.record_http_request", fake_record):
+        with patch(
+            "agentic_v2.server.middleware.metrics.record_http_request", fake_record
+        ):
             client = TestClient(app, raise_server_exceptions=False)
             client.get("/boom")
 
@@ -390,12 +410,18 @@ class TestSmartRouterMetrics:
 
         # Mocked backend response shape: OpenAI-flavoured usage dict, exactly
         # what backends_cloud.py's complete_chat implementations return.
-        mocked_usage = {"prompt_tokens": 42, "completion_tokens": 17, "total_tokens": 59}
+        mocked_usage = {
+            "prompt_tokens": 42,
+            "completion_tokens": 17,
+            "total_tokens": 59,
+        }
 
         orig = sr_module._record_llm_request
         try:
             sr_module._record_llm_request = fake_record_llm
-            router.record_success("anthropic:claude-3-5-sonnet", 100.0, usage=mocked_usage)
+            router.record_success(
+                "anthropic:claude-3-5-sonnet", 100.0, usage=mocked_usage
+            )
         finally:
             sr_module._record_llm_request = orig
 
@@ -407,9 +433,8 @@ class TestSmartRouterMetrics:
         assert calls[0]["output_tokens"] == mocked_usage["completion_tokens"]
 
     def test_record_success_without_usage_reports_zero_tokens(self) -> None:
-        """Omitting usage (legacy text-completion callers) is still safe —
-        tokens report as 0 rather than raising, preserving prior behavior.
-        """
+        """Omitting usage (legacy text-completion callers) is still safe — tokens report
+        as 0 rather than raising, preserving prior behavior."""
         router = self._make_router()
         calls: list[dict[str, Any]] = []
 
@@ -590,6 +615,7 @@ class TestMetricsEndpointIntegration:
         pytest.importorskip("fastapi")
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
+
         monkeypatch.setenv("AGENTIC_METRICS", "1")
 
         # Re-import to pick up env var

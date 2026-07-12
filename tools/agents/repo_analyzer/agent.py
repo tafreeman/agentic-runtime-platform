@@ -132,9 +132,7 @@ def build_agent(model_id: str | None = None) -> Any:
         ValueError: If the selected provider or model cannot be resolved.
     """
     if not _LANGGRAPH_AVAILABLE:
-        raise ImportError(
-            "langgraph is required. Install with: pip install langgraph"
-        )
+        raise ImportError("langgraph is required. Install with: pip install langgraph")
 
     # Combine repo-specific tools with shared file/search tools
     from agentic_v2.langchain.models import get_chat_model, get_model_for_tier
@@ -285,9 +283,7 @@ def _extract_last_ai_text(messages: list[Any]) -> str:
         if isinstance(content, str) and content.strip():
             return content
         if isinstance(content, list):
-            parts = [
-                p["text"] for p in content if isinstance(p, dict) and "text" in p
-            ]
+            parts = [p["text"] for p in content if isinstance(p, dict) and "text" in p]
             combined = " ".join(parts).strip()
             if combined:
                 return combined
@@ -391,9 +387,7 @@ def _build_structured_report(
     )
 
 
-def _collect_native_tool_calls(
-    msg: Any, calls: dict[str, dict[str, Any]]
-) -> None:
+def _collect_native_tool_calls(msg: Any, calls: dict[str, dict[str, Any]]) -> None:
     """Collect LangChain-native ``tool_calls`` from *msg* into *calls*."""
     for call in getattr(msg, "tool_calls", []) or []:
         if not isinstance(call, dict):
@@ -404,9 +398,7 @@ def _collect_native_tool_calls(
             calls[call_id] = _coerce_tool_args(args)
 
 
-def _collect_openai_tool_calls(
-    msg: Any, calls: dict[str, dict[str, Any]]
-) -> None:
+def _collect_openai_tool_calls(msg: Any, calls: dict[str, dict[str, Any]]) -> None:
     """Collect OpenAI-style ``additional_kwargs`` tool calls from *msg*."""
     import json
 

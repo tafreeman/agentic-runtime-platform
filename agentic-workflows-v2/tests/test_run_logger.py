@@ -279,14 +279,11 @@ class TestBuildStepRecord:
         # Original status surfaced for forensics
         assert record["metadata"]["original_status"] == "success"
         # Loudly logged — never silently swallowed
-        assert any(
-            "validation failed" in r.message.lower() for r in caplog.records
-        )
+        assert any("validation failed" in r.message.lower() for r in caplog.records)
 
     def test_validation_success_still_returns_validated_dict(self):
-        """A well-formed step round-trips through StepResultRecord without
-        the fallback path firing.
-        """
+        """A well-formed step round-trips through StepResultRecord without the fallback
+        path firing."""
         step = _step(metadata={"tokens_used": 42})
         record = build_step_record(step)
         # Happy path: no validation_error metadata key, real status preserved.
@@ -378,7 +375,9 @@ class TestRunLogger:
         assert "wf-test-1" in path.name
         assert "success" in path.name
 
-    def test_log_filenames_do_not_collide_for_same_timestamp(self, tmp_path, monkeypatch):
+    def test_log_filenames_do_not_collide_for_same_timestamp(
+        self, tmp_path, monkeypatch
+    ):
         """ADR-008 Phase 3: concurrent logs keep distinct filenames per run id."""
         rl = RunLogger(runs_dir=tmp_path)
         frozen_now = datetime(2026, 5, 2, 18, 20, 21, 123456, tzinfo=UTC)

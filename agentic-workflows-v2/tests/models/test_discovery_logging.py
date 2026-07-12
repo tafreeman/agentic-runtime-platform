@@ -175,9 +175,10 @@ class TestInstallRedactionFilter:
     def test_importing_cloud_discovery_guards_httpx_logger(self) -> None:
         """Importing the discovery module attaches the filter to httpx's logger.
 
-        The module is usually already imported by the suite (a bare import
-        would be a cached no-op) and the autouse fixture strips the filter
-        between tests, so force the module-level side effect with a reload.
+        The module is usually already imported by the suite (a bare
+        import would be a cached no-op) and the autouse fixture strips
+        the filter between tests, so force the module-level side effect
+        with a reload.
         """
         import importlib
 

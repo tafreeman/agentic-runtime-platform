@@ -86,7 +86,6 @@ def _default_checkpointer() -> Any:
         return None
 
 
-
 def _checkpointer_from_url(url: str) -> Any:
     """Build an AsyncPostgresSaver from a connection URL.
 

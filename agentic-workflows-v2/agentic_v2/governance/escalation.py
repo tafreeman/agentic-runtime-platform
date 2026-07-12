@@ -143,9 +143,9 @@ def get_escalation_sink() -> EscalationSink | None:
 async def route_handoff(handoff: HandoffSummary) -> HandoffSummary:
     """Route *handoff* to the registered sink (if any) and return it.
 
-    Always logs the handoff at WARNING so an exhausted chain is never silent.
-    Sink failures are logged but never propagate — escalation must not mask the
-    original failure with a new one.
+    Always logs the handoff at WARNING so an exhausted chain is never
+    silent. Sink failures are logged but never propagate — escalation
+    must not mask the original failure with a new one.
     """
     logger.warning(
         "Escalation handoff: subtask=%s failure=%s attempted=%s",

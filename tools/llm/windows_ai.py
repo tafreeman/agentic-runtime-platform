@@ -99,9 +99,7 @@ class WindowsAIModel:
         except Exception as e:
             return f"[ERROR] Windows AI API error: {e!s}"
 
-    def _call_phi_silica(
-        self, prompt: str
-    ) -> str:
+    def _call_phi_silica(self, prompt: str) -> str:
         """Call Phi Silica model via C# bridge.
 
         Uses subprocess to call the PhiSilicaBridge C# application which

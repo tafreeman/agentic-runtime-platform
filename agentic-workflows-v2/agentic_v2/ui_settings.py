@@ -151,8 +151,8 @@ def get_ui_settings_path() -> Path:
 def load_ui_settings(path: Path | None = None) -> UiSettings:
     """Load the settings document, returning defaults when absent or invalid.
 
-    A corrupt file is logged and treated as empty rather than failing the
-    request path — the UI can always re-save a clean document.
+    A corrupt file is logged and treated as empty rather than failing
+    the request path — the UI can always re-save a clean document.
     """
     settings_path = path or get_ui_settings_path()
     if not settings_path.exists():
@@ -189,7 +189,7 @@ def save_ui_settings(settings: UiSettings, path: Path | None = None) -> Path:
 def tier_override_models(tier: int) -> list[str]:
     """Return the UI-configured model ranking for a tier (empty when unset).
 
-    Used by the LangChain model dispatch layer between the env-var override
-    and the probed tier default.
+    Used by the LangChain model dispatch layer between the env-var
+    override and the probed tier default.
     """
     return list(load_ui_settings().tier_overrides.get(tier, []))

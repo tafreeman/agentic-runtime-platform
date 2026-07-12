@@ -41,9 +41,7 @@ except ImportError:  # pragma: no cover - guarded for isolated environments
         allow_module_level=True,
     )
 
-FIXTURE_DIR = (
-    Path(__file__).parent.parent / "fixtures" / "backend_responses"
-)
+FIXTURE_DIR = Path(__file__).parent.parent / "fixtures" / "backend_responses"
 
 
 @pytest.fixture(autouse=True)
@@ -153,7 +151,7 @@ ALL_FIXTURES = [
 @pytest.mark.unit
 @pytest.mark.parametrize("fixture_name", ALL_FIXTURES)
 def test_dict_to_llm_response_preserves_core_fields(fixture_name: str) -> None:
-    """content, tool_calls cardinality+names, finish_reason, usage survive."""
+    """Content, tool_calls cardinality+names, finish_reason, usage survive."""
     canonical = _canonical(fixture_name)
     resp = dict_to_llm_response(canonical)
 

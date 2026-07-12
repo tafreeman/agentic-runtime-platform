@@ -134,9 +134,7 @@ class McpServerInfo(BaseModel):
 
     name: str = Field(..., description="Server name")
     version: str = Field(..., description="Server version")
-    instructions: str | None = Field(
-        None, description="Usage instructions from server"
-    )
+    instructions: str | None = Field(None, description="Usage instructions from server")
 
 
 class McpToolDescriptor(BaseModel):

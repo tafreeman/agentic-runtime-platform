@@ -128,7 +128,7 @@ def test_evaluate_includes_judge_fingerprint_on_success() -> None:
 
 
 def test_evaluate_passes_seed_to_client() -> None:
-    """seed= kwarg is forwarded to the LLM client's generate_text call."""
+    """Seed= kwarg is forwarded to the LLM client's generate_text call."""
     client = FakeLLMClient("ok")
     evaluator = LLMEvaluator(
         model_id="judge-model",
@@ -161,4 +161,3 @@ def test_evaluate_custom_seed_in_fingerprint() -> None:
 
     assert result["judge_model_id"] == "gpt-4o-mini"
     assert result["judge_seed"] == 99
-

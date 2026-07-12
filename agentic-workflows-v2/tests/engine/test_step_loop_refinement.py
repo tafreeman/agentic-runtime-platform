@@ -44,9 +44,7 @@ def _seed_implement_view(ctx: ExecutionContext, code: str) -> None:
     ctx.set_sync("steps", {"implement": {"outputs": {"code": code}}})
 
 
-def _make_reviewer(
-    *, approve_after_passes: int, seen: list[str]
-) -> Any:
+def _make_reviewer(*, approve_after_passes: int, seen: list[str]) -> Any:
     """Build a reviewer/reworker step func.
 
     It reads the ``code`` input (resolved fresh each iteration when the engine
@@ -90,8 +88,9 @@ def _refine_loop_step(func: Any, *, loop_max: int) -> StepDefinition:
 async def test_refinement_feedback_flows_into_next_iteration() -> None:
     """Each iteration must see the previous iteration's reworked output.
 
-    Without per-iteration input re-resolution the reviewer sees the seed code
-    forever (passes==0), never approves, and the loop exhausts its bound.
+    Without per-iteration input re-resolution the reviewer sees the seed
+    code forever (passes==0), never approves, and the loop exhausts its
+    bound.
     """
     seen: list[str] = []
     ctx = ExecutionContext()

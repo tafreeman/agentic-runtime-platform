@@ -1,8 +1,8 @@
 """Tests for Redis-backed circuit breaker state store.
 
 Unit tests use fakeredis to simulate Redis without a running server.
-Integration tests (marked @pytest.mark.integration) require a real
-Redis instance at localhost:6379.
+Integration tests (marked @pytest.mark.integration) require a real Redis
+instance at localhost:6379.
 """
 
 from __future__ import annotations
@@ -55,9 +55,7 @@ async def _make_fake_store(
 ) -> RedisCircuitBreakerStore:
     """Create a store backed by fakeredis."""
     fake_server = fakeredis.FakeServer()
-    fake_client = fakeredis.FakeAsyncRedis(
-        server=fake_server, decode_responses=True
-    )
+    fake_client = fakeredis.FakeAsyncRedis(server=fake_server, decode_responses=True)
     store = RedisCircuitBreakerStore(
         redis_url="redis://fake",
         prefix=prefix,
@@ -82,9 +80,7 @@ async def _make_store_on_server(
     Two stores sharing one ``FakeServer`` model two worker processes talking
     to the same Redis — the setup required to exercise concurrent CAS writes.
     """
-    fake_client = fakeredis.FakeAsyncRedis(
-        server=fake_server, decode_responses=True
-    )
+    fake_client = fakeredis.FakeAsyncRedis(server=fake_server, decode_responses=True)
     store = RedisCircuitBreakerStore(
         redis_url="redis://fake",
         prefix=prefix,
@@ -618,11 +614,12 @@ class TestConcurrentCircuitBreakerPersistence:
     async def test_baseline_stays_local_after_cross_worker_merge(self):
         """A worker's CAS baseline must be its LOCAL snapshot, not the merge.
 
-        PR #73 review (Codex): A persists 1 failure; B persists its first
-        failure on top (Redis == 2). If B's baseline were the merged value
-        (2) while its local count is 1, B's next failure (local == 2) would
-        produce a zero delta and that failure would never persist. With the
-        local-snapshot baseline the delta is 1 and Redis reaches 3.
+        PR #73 review (Codex): A persists 1 failure; B persists its
+        first failure on top (Redis == 2). If B's baseline were the
+        merged value (2) while its local count is 1, B's next failure
+        (local == 2) would produce a zero delta and that failure would
+        never persist. With the local-snapshot baseline the delta is 1
+        and Redis reaches 3.
         """
         server = fakeredis.FakeServer()
         store_a = await _make_store_on_server(server)
@@ -654,8 +651,9 @@ class TestConcurrentCircuitBreakerPersistence:
         """Two in-flight saves from one router must not re-apply the delta.
 
         record_success/record_failure spawn fire-and-forget save tasks;
-        without the per-router save lock, both tasks read the same baseline,
-        compute the same delta, and the CAS retry path applies it twice.
+        without the per-router save lock, both tasks read the same
+        baseline, compute the same delta, and the CAS retry path applies
+        it twice.
         """
         store = await _make_fake_store()
         model = "ollama:phi4"

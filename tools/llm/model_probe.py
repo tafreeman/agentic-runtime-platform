@@ -378,9 +378,7 @@ def _discover_provider_models(provider: str) -> list[str]:
     """Discover available models for a single provider via discovery, best-effort."""
     try:
         discovered = discover_all_models(verbose=False)
-        return (
-            discovered.get("providers", {}).get(provider, {}).get("available", [])
-        )
+        return discovered.get("providers", {}).get(provider, {}).get("available", [])
     except Exception:
         return []
 
