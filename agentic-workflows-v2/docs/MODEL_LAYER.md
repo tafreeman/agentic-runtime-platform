@@ -117,26 +117,25 @@ sequenceDiagram
   participant D as discovery modules
   participant P as Provider APIs
   U->>R: GET /api/models/probe
-  R->>M: probe_and_update_tier_defaults()
+  R->>D: discover_cloud_models() - ONE shared sweep, skipped when AGENTIC_NO_LLM=1
+  D->>P: cloud list-models per KEYED provider (concurrent, 8s bound each)
+  P-->>D: model ids (best-effort - a failure contributes nothing)
+  R->>M: probe_and_update_tier_defaults(cloud_listing)
   loop each provider in PROVIDER_ENV_KEYS
     M->>G: is_provider_available(provider)
     G-->>M: True / False (env-key presence only)
   end
   M->>M: _configure_native_router(availability)
-  M->>D: detect_registry_drift() - quarantine retired ids (ADR-040), no-op when AGENTIC_NO_LLM=1
-  D->>P: 1st cloud list-models sweep (keyed providers, concurrent)
+  M->>M: detect_registry_drift(cloud_listing) - quarantine retired ids (ADR-040)
   M->>M: resolve tier defaults from chains, skipping quarantined ids
-  R->>M: enumerate_known_models()
+  R->>M: enumerate_known_models(cloud_listing)
   M->>D: _merge_ollama_models() + _merge_local_models()
   D->>P: Ollama /api/tags + /api/ps, LM Studio /api/v0/models, ONNX dir walk
-  M->>D: _merge_cloud_models() - skipped when AGENTIC_NO_LLM=1
-  D->>P: 2nd cloud list-models sweep (keyed providers, concurrent, 8s bound each)
-  P-->>D: model ids (best-effort - a failure contributes nothing)
-  D-->>M: tier-0 entries merged into catalog
+  M->>M: _merge_cloud_models(cloud_listing) - tier-0 merge, skipped when AGENTIC_NO_LLM=1
   M-->>R: models[] = static chains + live-discovered (tier 0)
   R->>R: add no_llm_mode = is_agentic_no_llm_enabled()
   R-->>U: available_providers, tier_defaults, drift, models, no_llm_mode
-  Note over M,P: Live list-models APIs ARE contacted on every rescan - the cloud sweep<br/>runs TWICE per probe (drift check + catalog merge; only OpenRouter's<br/>slice is TTL-cached). Availability flags alone are env-key presence.
+  Note over M,P: Live list-models APIs ARE contacted on every rescan - the cloud sweep runs<br/>ONCE per probe, shared by the drift check and the catalog merge (standalone<br/>callers fetch their own). Availability flags alone are env-key presence.
 ```
 
 ## Provider gate — `PROVIDER_ENV_KEYS` (`langchain/model_utils.py`)
@@ -180,8 +179,8 @@ set, or when the provider needs **no** key (local providers always pass).
   `ollama:gemma3:4b`).
 - `detect_registry_drift()` warns and **quarantines** registry ids a provider
   has retired; discovery never auto‑promotes a discovered id into a chain. It
-  runs inside every probe *before* tier defaults resolve, with its **own**
-  live cloud sweep (see the rescan diagram's note).
+  runs inside every probe *before* tier defaults resolve, reusing the probe
+  request's shared cloud sweep (standalone calls fetch their own).
 - `enumerate_known_models()` returns the static chain **union** as
   `{ id, provider, tier (lowest tier it appears in), available }`, **merged
   with every live‑discovered model**: Ollama (ADR‑037), LM Studio + ONNX
@@ -355,10 +354,11 @@ placeholder, so a live listing would mislead, and the gate keeps the unit suite
 discovery (localhost, free) stays ungated; cloud discovery (internet, metered)
 does not. Covered by mocked‑HTTP tests in `tests/models/test_cloud_discovery.py`.
 
-**Known inefficiency:** a full probe currently runs this cloud sweep **twice** —
-once inside `detect_registry_drift()` (the ADR‑040 quarantine pass) and once in
-`_merge_cloud_models()` — and only OpenRouter's slice is TTL‑cached. Flagged
-for a follow‑up optimization (share one listing per probe request).
+**Shared sweep:** a probe request runs this cloud sweep **once** — the route
+fetches the listing and threads it through `detect_registry_drift()` (the
+ADR‑040 quarantine pass) and `_merge_cloud_models()` via their `cloud_listing`
+parameter. Standalone callers (e.g. the server‑startup probe) pass nothing and
+fetch their own.
 
 ### OpenRouter — curated + TTL‑cached (ADR‑050, PR #188)
 

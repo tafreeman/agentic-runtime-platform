@@ -681,3 +681,83 @@ class TestRegistryDriftDetection:
             "quarantine added by concurrent probe was overwritten"
         )
         assert concurrent_id in report.quarantined
+
+
+class TestSharedCloudListing:
+    """The probe route pre-fetches ONE cloud listing and shares it (#190 review).
+
+    Both consumers must use a provided ``cloud_listing`` verbatim and make no
+    discovery call of their own; ``None`` keeps the fetch-here behavior for
+    standalone callers such as the server-startup probe.
+    """
+
+    @staticmethod
+    def _forbid_fetch(monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        calls = {"n": 0}
+
+        def _tracked() -> list[CloudModelInfo]:
+            calls["n"] += 1
+            return []
+
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_cloud_models", _tracked
+        )
+        return calls
+
+    def test_drift_uses_provided_listing_without_fetching(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.langchain import models as lcm
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        calls = self._forbid_fetch(monkeypatch)
+
+        report = lcm.detect_registry_drift(
+            cloud_listing=[CloudModelInfo(id="zzfake:model-a")]
+        )
+
+        assert calls["n"] == 0
+        assert "zzfake" in report.checked_providers
+
+    def test_enumerate_merges_provided_listing_without_fetching(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from agentic_v2.models.cloud_discovery import CloudModelInfo
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        calls = self._forbid_fetch(monkeypatch)
+
+        by_id = {
+            m["id"]: m
+            for m in enumerate_known_models(
+                cloud_listing=[CloudModelInfo(id="openai:zz-shared-sweep")]
+            )
+        }
+
+        assert calls["n"] == 0
+        entry = by_id.get("openai:zz-shared-sweep")
+        assert entry is not None
+        assert entry["tier"] == 0
+
+    def test_none_listing_still_fetches_once_per_consumer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Standalone callers (no pre-fetched listing) keep the old behavior."""
+        from agentic_v2.langchain import models as lcm
+
+        monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        calls = self._forbid_fetch(monkeypatch)
+
+        lcm.detect_registry_drift()
+        enumerate_known_models()
+
+        assert calls["n"] == 2

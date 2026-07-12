@@ -42,7 +42,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -50,7 +50,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ..models.router import FallbackChain, ModelRouter, ModelTier
 
-from ..models.cloud_discovery import discover_cloud_models
+from ..models.cloud_discovery import CloudModelInfo, discover_cloud_models
 from ..models.local_discovery import (
     LocalModelInfo,
     discover_lmstudio_models,
@@ -161,13 +161,17 @@ def probe_available_providers() -> dict[str, bool]:
     return {prov: is_provider_available(prov) for prov in PROVIDER_ENV_KEYS}
 
 
-def probe_and_update_tier_defaults() -> dict[str, Any]:
+def probe_and_update_tier_defaults(
+    cloud_listing: Sequence[CloudModelInfo] | None = None,
+) -> dict[str, Any]:
     """Probe providers and update ``_TIER_DEFAULTS`` to the best available model per
     tier.
 
     Called on module import and can be re-called at server startup to pick up
     env changes.  Also installs a health-checker on the native ``ModelRouter``
-    so both engines benefit from the same availability data.
+    so both engines benefit from the same availability data. ``cloud_listing``
+    is threaded through to :func:`detect_registry_drift` so the probe route can
+    share one cloud sweep with :func:`enumerate_known_models`.
 
     Returns a summary dict with provider availability and resolved tier defaults.
     """
@@ -183,7 +187,7 @@ def probe_and_update_tier_defaults() -> dict[str, Any]:
     # lists right now: quarantine retired pinned ids so neither engine routes to
     # them (ADR-040). Run BEFORE resolving tier defaults so a quarantined model is
     # never chosen as a default. No-op in no-LLM mode and for unkeyed providers.
-    drift = detect_registry_drift()
+    drift = detect_registry_drift(cloud_listing=cloud_listing)
 
     from ..models.model_registry import is_quarantined, provider_for
 
@@ -243,7 +247,11 @@ def _registry_strict_enabled() -> bool:
     )
 
 
-def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
+def detect_registry_drift(
+    *,
+    strict: bool | None = None,
+    cloud_listing: Sequence[CloudModelInfo] | None = None,
+) -> DriftReport:
     """Diff the curated registry against live provider listings; quarantine retired ids.
 
     For every curated model whose provider returned a live listing, if its id is
@@ -252,6 +260,10 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     or a failed probe) is skipped entirely -- a missing listing means "unknown",
     never "everything retired". Newly discovered ids are never auto-promoted into
     a chain (curated-for-judgments; see ADR-040).
+
+    ``cloud_listing`` is a pre-fetched :func:`discover_cloud_models` result (the
+    probe route shares one sweep between this drift pass and the catalog merge);
+    ``None`` means fetch here, so standalone callers keep their old behavior.
 
     Skipped in no-LLM mode (no network). When ``strict`` (or
     ``AGENTIC_REGISTRY_STRICT``) is set and any id is quarantined, raises
@@ -269,7 +281,10 @@ def detect_registry_drift(*, strict: bool | None = None) -> DriftReport:
     # Snapshot quarantine before the network call; re-read after and union both
     # so quarantines added by a concurrent probe during discovery are not lost.
     prior_snapshot = registry.quarantined_ids()
-    live_ids = {info.id for info in discover_cloud_models()}
+    live_source = (
+        discover_cloud_models() if cloud_listing is None else cloud_listing
+    )
+    live_ids = {info.id for info in live_source}
     checked_providers = {registry.provider_for(mid) for mid in live_ids}
     # Union: any id quarantined by a concurrent probe during the network window.
     all_prior = prior_snapshot | registry.quarantined_ids()
@@ -394,20 +409,26 @@ def _merge_local_models(models: list[dict[str, Any]]) -> None:
         models.append(entry)
 
 
-def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
+def _merge_cloud_models(
+    models: list[dict[str, Any]],
+    cloud_listing: Sequence[CloudModelInfo] | None = None,
+) -> None:
     """Append live cloud-provider listings as tier-0 catalog entries.
 
     Skipped entirely in no-LLM mode: every tier routes to the placeholder
     there, so a live listing would mislead and cost network (it also keeps the
     ``AGENTIC_NO_LLM=1`` unit suite hermetic). Availability reflects the key
     env — OpenRouter's keyless static-fallback entries honestly show False.
+    ``cloud_listing`` is the probe route's pre-fetched sweep (shared with the
+    drift pass); ``None`` means fetch here.
     """
     from ..settings import is_agentic_no_llm_enabled
 
     if is_agentic_no_llm_enabled():
         return
+    listing = discover_cloud_models() if cloud_listing is None else cloud_listing
     known_ids = {m["id"] for m in models}
-    for info in discover_cloud_models():
+    for info in listing:
         if info.id in known_ids:
             continue
         known_ids.add(info.id)
@@ -421,7 +442,9 @@ def _merge_cloud_models(models: list[dict[str, Any]]) -> None:
         )
 
 
-def enumerate_known_models() -> list[dict[str, Any]]:
+def enumerate_known_models(
+    cloud_listing: Sequence[CloudModelInfo] | None = None,
+) -> list[dict[str, Any]]:
     """Return every tier-chain model plus live-discovered local/cloud models.
 
     Each entry carries the model id, its provider prefix, the lowest tier the
@@ -452,7 +475,7 @@ def enumerate_known_models() -> list[dict[str, Any]]:
 
     _merge_ollama_models(models)
     _merge_local_models(models)
-    _merge_cloud_models(models)
+    _merge_cloud_models(models, cloud_listing)
 
     models.sort(key=lambda m: (m["tier"], str(m["provider"]), str(m["id"])))
     return models

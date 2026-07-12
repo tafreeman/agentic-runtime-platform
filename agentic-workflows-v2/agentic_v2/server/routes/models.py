@@ -34,14 +34,21 @@ async def probe_models() -> dict[str, Any]:
             enumerate_known_models,
             probe_and_update_tier_defaults,
         )
+        from ...models.cloud_discovery import discover_cloud_models
         from ...settings import is_agentic_no_llm_enabled
 
         def _probe() -> dict[str, Any]:
             # Both calls perform blocking network I/O (Ollama/LM Studio httpx
             # requests, up to ~5s each). Run together in a thread so the async
             # event loop is never frozen for concurrent requests.
-            result = probe_and_update_tier_defaults()
-            result["models"] = enumerate_known_models()
+            # Fetch the cloud listing ONCE and share it between the registry
+            # drift pass and the catalog merge — each previously ran its own
+            # full sweep per request (only OpenRouter's slice is TTL-cached).
+            cloud_listing = (
+                None if is_agentic_no_llm_enabled() else discover_cloud_models()
+            )
+            result = probe_and_update_tier_defaults(cloud_listing=cloud_listing)
+            result["models"] = enumerate_known_models(cloud_listing=cloud_listing)
             return result
 
         summary = await asyncio.to_thread(_probe)
