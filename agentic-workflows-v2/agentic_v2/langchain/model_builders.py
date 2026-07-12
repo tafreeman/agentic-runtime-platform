@@ -12,6 +12,7 @@ Supported providers
 - GitHub Models     — ``build_github_model``
 - OpenAI            — ``build_openai_model``
 - NVIDIA NIM        — ``build_nvidia_model``
+- OpenRouter        — ``build_openrouter_model``
 - Anthropic         — ``build_anthropic_model``
 - Gemini            — ``build_gemini_model``
 - NotebookLM alias  — ``build_notebooklm_model`` (routes to Gemini)
@@ -257,6 +258,68 @@ def build_nvidia_model(model_name: str, temperature: float) -> Any:
         base_url=base_url,
         api_key=api_key,
         temperature=temperature,
+    )
+
+
+def build_openrouter_model(model_name: str, temperature: float) -> Any:
+    """Build a ChatOpenAI instance pointed at the OpenRouter aggregator.
+
+    OpenRouter exposes an OpenAI-compatible ``/v1`` surface for every model it
+    fronts, so a ``ChatOpenAI`` with a swapped ``base_url`` is the whole
+    backend. The base URL is resolved by :func:`resolve_openrouter_base_url` —
+    the same helper discovery uses — so a model surfaced by the probe is
+    reachable here. An ``X-Title`` default header attributes traffic to this
+    app, per OpenRouter's attribution convention.
+
+    Parameters
+    ----------
+    model_name:
+        Bare model name after the ``openrouter:`` prefix. OpenRouter expects
+        the full ``publisher/model`` id, and free-tier ids append ``:free``
+        (a full app id such as ``openrouter:meta-llama/llama-3.1-8b-instruct:free``
+        carries two colons), so it is passed through verbatim — unlike GitHub
+        Models, the publisher segment is **not** stripped.
+    temperature:
+        Sampling temperature.
+
+    Returns
+    -------
+    A ``ChatOpenAI`` instance configured for the OpenRouter endpoint.
+
+    Raises
+    ------
+    ImportError
+        If ``langchain-openai`` is not installed.
+    ValueError
+        If ``OPENROUTER_API_KEY`` is not set. OpenRouter is always
+        authenticated — there is no keyless or self-hosted mode, so no
+        placeholder key is substituted.
+    """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "langchain-openai is required for OpenRouter models. "
+            "Install with: pip install langchain-openai"
+        ) from exc
+
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "OPENROUTER_API_KEY environment variable is required for "
+            "OpenRouter models."
+        )
+
+    from ..models.cloud_discovery import resolve_openrouter_base_url
+
+    base_url = resolve_openrouter_base_url()
+    logger.debug("Using OpenRouter: %s at %s", model_name, base_url)
+    return ChatOpenAI(
+        model=model_name,
+        base_url=base_url,
+        api_key=api_key,
+        temperature=temperature,
+        default_headers={"X-Title": "agentic-runtime-platform"},
     )
 
 
@@ -660,9 +723,7 @@ def _get_placeholder_chat_model_cls() -> Any:
         ) -> Any:
             return ChatResult(
                 generations=[
-                    ChatGeneration(
-                        message=AIMessage(content=PLACEHOLDER_RESPONSE_TEXT)
-                    )
+                    ChatGeneration(message=AIMessage(content=PLACEHOLDER_RESPONSE_TEXT))
                 ]
             )
 
@@ -714,8 +775,8 @@ def _reset_placeholder_state_for_tests() -> None:
     """Reset module-level placeholder caches.  For test fixtures only.
 
     Clears both the warning flag (so caplog assertions work across
-    tests) and the cached class (so test runs that toggle the flag
-    mid-session don't see a stale class object).
+    tests) and the cached class (so test runs that toggle the flag mid-
+    session don't see a stale class object).
     """
     global _PLACEHOLDER_WARNED, _PLACEHOLDER_CHAT_MODEL_CLS
     _PLACEHOLDER_WARNED = False

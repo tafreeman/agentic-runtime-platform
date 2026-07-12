@@ -20,18 +20,26 @@ Providers probed (best-effort, only when their key env var is set):
   (``NVIDIA_API_KEY``; ``NVIDIA_BASE_URL`` honored for on-prem NIM deployments);
   ids keep their ``publisher/model`` form (e.g.
   ``nvidia:meta/llama-3.1-70b-instruct``).
+- **OpenRouter** (``openrouter:``) — ``GET https://openrouter.ai/api/v1/models``
+  (``OPENROUTER_API_KEY``; ``OPENROUTER_BASE_URL`` honored for gateways). The
+  300-400 model catalog is curated to free-tier + flagship ids, the live result
+  is TTL-cached (a deliberate deviation from the no-cache baseline; ADR-050),
+  and a missing key yields a small static fallback instead of an empty list.
 
-Best-effort by design: a missing key contributes nothing (no network call), and
-any probe failure (network, auth, schema drift) degrades to "no models for this
-provider" rather than raising — callers keep the static catalog. The probe is
-bounded by an 8 s per-request timeout. API keys are sent as auth headers/params
-and are never logged.
+Best-effort by design: a missing key makes no network call and — OpenRouter's
+static fallback aside — contributes nothing, and any probe failure (network,
+auth, schema drift) degrades to "no models for this provider" rather than
+raising — callers keep the static catalog. The probe is bounded by an 8 s
+per-request timeout. API keys are sent as auth headers/params and are never
+logged.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any
@@ -270,13 +278,233 @@ def discover_nvidia_models() -> list[CloudModelInfo]:
     return _dedup_prefixed("nvidia", _data_ids(payload))
 
 
+# ---------------------------------------------------------------------------
+# OpenRouter
+# ---------------------------------------------------------------------------
+
+_OPENROUTER_DEFAULT_BASE = "https://openrouter.ai/api/v1"
+
+# Curated keyless fallback (bare ids — the ``openrouter:`` prefix is applied by
+# ``_dedup_prefixed``). Free-tier ids carry OpenRouter's ``:free`` suffix, so a
+# full app id has TWO colons: ``openrouter:meta-llama/llama-3.1-8b-instruct:free``.
+_OPENROUTER_STATIC_FALLBACK: tuple[str, ...] = (
+    "deepseek/deepseek-chat-v3-0324:free",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "qwen/qwen3-14b:free",
+    "anthropic/claude-sonnet-4",
+    "deepseek/deepseek-chat",
+    "google/gemini-2.5-flash",
+    "openai/gpt-4o-mini",
+)
+
+# Flagship-family id prefixes kept from the live catalog (besides ``:free`` ids).
+_OPENROUTER_FLAGSHIP_PREFIXES: tuple[str, ...] = (
+    "openai/gpt-5",
+    "openai/gpt-4o",
+    "openai/o3",
+    "openai/o4",
+    "anthropic/claude",
+    "google/gemini-2",
+    "google/gemini-3",
+    "meta-llama/llama-3",
+    "meta-llama/llama-4",
+    "deepseek/deepseek",
+    "qwen/qwen3",
+    "mistralai/mistral-large",
+    "x-ai/grok",
+)
+
+# Curation caps keep the 300-400 model catalog readable in the console.
+_OPENROUTER_FREE_CAP = 25
+_OPENROUTER_FLAGSHIP_CAP = 15
+
+# TTL cache holding the LIVE catalog fetch only (never the static fallback).
+# Caching at all is a deliberate deviation from ADR-039's cache-free design,
+# justified by the catalog size above (recorded in ADR-050). Lock-guarded
+# because ``discover_cloud_models`` runs its probes in a ThreadPoolExecutor.
+_OPENROUTER_CACHE_TTL_SECONDS = 300.0
+_openrouter_cache_lock = threading.Lock()
+_openrouter_cache: tuple[float, tuple[CloudModelInfo, ...]] | None = None
+
+
+def resolve_openrouter_base_url() -> str:
+    """Resolve the OpenRouter OpenAI-compatible ``/v1`` base URL.
+
+    Honors ``OPENROUTER_BASE_URL`` for proxies/gateways; falls back to the
+    public aggregator endpoint. The ``/v1`` segment is appended when the
+    operator omits it so callers can append ``/models`` or
+    ``/chat/completions`` unconditionally. This is the single source of truth
+    shared by discovery and the runtime backends, so a discovered id is
+    reachable at the host inference targets.
+    """
+    base = (os.environ.get("OPENROUTER_BASE_URL") or _OPENROUTER_DEFAULT_BASE).rstrip(
+        "/"
+    )
+    if not base.endswith("/v1"):
+        base = f"{base}/v1"
+    return base
+
+
+def _read_openrouter_cache(*, allow_expired: bool) -> list[CloudModelInfo] | None:
+    """Return the cached live listing as a fresh list, or ``None`` on a miss.
+
+    ``allow_expired=True`` serves a stale entry (used when a re-fetch fails —
+    yesterday's live listing beats the static fallback).
+    """
+    with _openrouter_cache_lock:
+        if _openrouter_cache is None:
+            return None
+        fetched_at, models = _openrouter_cache
+        age = time.monotonic() - fetched_at
+        if not allow_expired and age >= _OPENROUTER_CACHE_TTL_SECONDS:
+            return None
+        return list(models)
+
+
+def _write_openrouter_cache(models: list[CloudModelInfo]) -> None:
+    """Store a live listing with its fetch timestamp."""
+    global _openrouter_cache
+    with _openrouter_cache_lock:
+        _openrouter_cache = (time.monotonic(), tuple(models))
+
+
+def _reset_openrouter_discovery_cache() -> None:
+    """Clear the OpenRouter TTL cache.
+
+    For test fixtures only.
+    """
+    global _openrouter_cache
+    with _openrouter_cache_lock:
+        _openrouter_cache = None
+
+
+def _openrouter_text_chat_id(entry: Any) -> str | None:
+    """Return the entry's id when it is a text-output chat model, else ``None``.
+
+    Skips entries whose ``architecture.output_modalities`` exists and lacks
+    ``"text"`` (image/audio-only models), and reuses the shared non-chat id
+    blocklist so embeddings/rerankers never consume a curation slot.
+    """
+    if not isinstance(entry, dict):
+        return None
+    model_id = entry.get("id")
+    if not isinstance(model_id, str) or not model_id:
+        return None
+    if not _is_chat_model_id(model_id):
+        return None
+    architecture = entry.get("architecture")
+    if isinstance(architecture, dict):
+        modalities = architecture.get("output_modalities")
+        if isinstance(modalities, list) and "text" not in modalities:
+            return None
+    return model_id
+
+
+def _interleave_flagship_families(flagship: list[str]) -> list[str]:
+    """Fill the flagship slots fairly across families, newest-ish first.
+
+    A single global alphabetical sort lets one prolific publisher consume the
+    whole cap (anthropic alone ships 15+ ``claude`` ids, starving every other
+    declared family). Instead the slots are filled round-robin across the
+    families in :data:`_OPENROUTER_FLAGSHIP_PREFIXES` declaration order, taking
+    each family's reverse-sorted (highest version sorts first) ids one rank at
+    a time, so every family with a live id survives the cap. Deterministic for
+    a given catalog.
+    """
+    by_family: dict[str, list[str]] = {}
+    for model_id in sorted(flagship, reverse=True):
+        family = next(
+            p for p in _OPENROUTER_FLAGSHIP_PREFIXES if model_id.startswith(p)
+        )
+        by_family.setdefault(family, []).append(model_id)
+    families = [p for p in _OPENROUTER_FLAGSHIP_PREFIXES if p in by_family]
+    picks: list[str] = []
+    rank = 0
+    while len(picks) < _OPENROUTER_FLAGSHIP_CAP:
+        rank_had_ids = False
+        for family in families:
+            ids = by_family[family]
+            if rank >= len(ids):
+                continue
+            rank_had_ids = True
+            picks.append(ids[rank])
+            if len(picks) == _OPENROUTER_FLAGSHIP_CAP:
+                break
+        if not rank_had_ids:
+            break
+        rank += 1
+    return picks
+
+
+def _curate_openrouter_ids(payload: Any) -> list[str] | None:
+    """Curate the raw catalog to free + flagship ids, or ``None`` on a bad shape.
+
+    OpenRouter lists 300-400 models; dumping them all would drown the console,
+    so only ``:free`` ids (alphabetical, capped) and flagship-family ids
+    (family-fair round-robin, see :func:`_interleave_flagship_families`) are
+    kept. Deterministic output for a given catalog.
+    """
+    if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+        return None
+    free: list[str] = []
+    flagship: list[str] = []
+    for entry in payload["data"]:
+        model_id = _openrouter_text_chat_id(entry)
+        if model_id is None:
+            continue
+        if model_id.endswith(":free"):
+            free.append(model_id)
+        elif model_id.startswith(_OPENROUTER_FLAGSHIP_PREFIXES):
+            flagship.append(model_id)
+    return sorted(free)[:_OPENROUTER_FREE_CAP] + _interleave_flagship_families(
+        flagship
+    )
+
+
+def discover_openrouter_models() -> list[CloudModelInfo]:
+    """List a curated slice of the OpenRouter catalog (best-effort, TTL-cached).
+
+    Unlike the other keyed providers, a missing ``OPENROUTER_API_KEY`` returns
+    the small static fallback — still with no network call — so the console can
+    advertise the aggregator's free tier; the catalog entry's availability flag
+    (derived from the key env by the merge layer) tells the UI the key is
+    absent. With a key, the live listing is fetched, curated, and cached for
+    :data:`_OPENROUTER_CACHE_TTL_SECONDS`; a failed fetch falls back to the
+    last live result, then to the static list. Ids keep their
+    ``publisher/model[:free]`` form so they round-trip to the backends.
+    """
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        return _dedup_prefixed("openrouter", list(_OPENROUTER_STATIC_FALLBACK))
+    cached = _read_openrouter_cache(allow_expired=False)
+    if cached is not None:
+        return cached
+    url = f"{resolve_openrouter_base_url()}/models"
+    payload = _get_json(url, headers={"Authorization": f"Bearer {api_key}"})
+    curated = _curate_openrouter_ids(payload)
+    if not curated:
+        # ``None`` (transport failure / bad shape) and ``[]`` (a catalog with
+        # nothing matching the curation — e.g. a self-hosted gateway behind
+        # OPENROUTER_BASE_URL) both fall back rather than caching an empty
+        # listing that would beat the static fallback for a whole TTL.
+        stale = _read_openrouter_cache(allow_expired=True)
+        if stale is not None:
+            return stale
+        return _dedup_prefixed("openrouter", list(_OPENROUTER_STATIC_FALLBACK))
+    discovered = _dedup_prefixed("openrouter", curated)
+    _write_openrouter_cache(discovered)
+    return discovered
+
+
 def discover_cloud_models() -> list[CloudModelInfo]:
     """Aggregate live listings from every keyed cloud provider (best-effort).
 
-    Providers without a configured key contribute nothing and make no network
-    call. The four probes run concurrently so worst-case latency is a single
-    timeout (~8s) rather than the sum of all four; provider order is preserved.
-    Never raises.
+    Providers without a configured key make no network call and
+    contribute nothing (except OpenRouter, which contributes its static
+    fallback). The probes run concurrently so worst-case latency is a
+    single timeout (~8s) rather than the sum of all probes; provider
+    order is preserved. Never raises.
     """
     probes = (
         discover_openai_models,
@@ -284,6 +512,7 @@ def discover_cloud_models() -> list[CloudModelInfo]:
         discover_gemini_models,
         discover_github_models,
         discover_nvidia_models,
+        discover_openrouter_models,
     )
     discovered: list[CloudModelInfo] = []
     with ThreadPoolExecutor(max_workers=len(probes)) as executor:
@@ -304,5 +533,7 @@ __all__ = [
     "discover_github_models",
     "discover_nvidia_models",
     "discover_openai_models",
+    "discover_openrouter_models",
     "resolve_nvidia_base_url",
+    "resolve_openrouter_base_url",
 ]
