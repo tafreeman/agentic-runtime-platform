@@ -11,6 +11,7 @@ request URL (see ``test_cloud_discovery.py``).
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 
 import pytest
 
@@ -24,10 +25,38 @@ from agentic_v2.models.discovery_logging import (
 _FAKE_KEY = "fake-discovery-key-not-real"
 
 
-def _drop_redaction_filters(target: logging.Logger) -> None:
-    for existing in list(target.filters):
-        if isinstance(existing, SecretQueryParamFilter):
-            target.removeFilter(existing)
+# Loggers a test in this module may install the filter on: the test-local
+# names, plus the two process-global loggers cloud_discovery guards at import.
+_GUARDED_LOGGER_NAMES = (
+    "test.redaction.idempotent",
+    "test.redaction.e2e",
+    "httpx",
+    "agentic_v2.models.cloud_discovery",
+)
+
+
+@pytest.fixture(autouse=True)
+def _reset_redaction_filters() -> Iterator[None]:
+    """Remove only the redaction filters a test itself installed.
+
+    Loggers are process-global singletons, but stripping every
+    SecretQueryParamFilter would also remove the import-time install
+    cloud_discovery puts on ``httpx`` — and the cached module never re-runs
+    it, leaving the REST of the pytest run unprotected. Snapshot what each
+    guarded logger carried before the test and drop only the additions.
+    """
+    before = {
+        name: set(logging.getLogger(name).filters) for name in _GUARDED_LOGGER_NAMES
+    }
+    yield
+    for name in _GUARDED_LOGGER_NAMES:
+        target = logging.getLogger(name)
+        for existing in list(target.filters):
+            if (
+                isinstance(existing, SecretQueryParamFilter)
+                and existing not in before[name]
+            ):
+                target.removeFilter(existing)
 
 
 class TestRedactUrlSecrets:
@@ -127,7 +156,6 @@ class TestSecretQueryParamFilter:
 class TestInstallRedactionFilter:
     def test_idempotent_install(self) -> None:
         target = logging.getLogger("test.redaction.idempotent")
-        _drop_redaction_filters(target)
         install_redaction_filter(target)
         install_redaction_filter(target)
         installed = sum(isinstance(f, SecretQueryParamFilter) for f in target.filters)
@@ -138,7 +166,6 @@ class TestInstallRedactionFilter:
     ) -> None:
         """A URL logged with a credential query param reaches the log scrubbed."""
         target = logging.getLogger("test.redaction.e2e")
-        _drop_redaction_filters(target)
         install_redaction_filter(target)
         with caplog.at_level(logging.INFO, logger="test.redaction.e2e"):
             target.info("HTTP Request: GET %s", f"https://h/models?key={_FAKE_KEY}")
@@ -146,8 +173,17 @@ class TestInstallRedactionFilter:
         assert "key=REDACTED" in caplog.text
 
     def test_importing_cloud_discovery_guards_httpx_logger(self) -> None:
-        """Importing the discovery module attaches the filter to httpx's logger."""
-        import agentic_v2.models.cloud_discovery  # noqa: F401  (import side effect)
+        """Importing the discovery module attaches the filter to httpx's logger.
+
+        The module is usually already imported by the suite (a bare import
+        would be a cached no-op) and the autouse fixture strips the filter
+        between tests, so force the module-level side effect with a reload.
+        """
+        import importlib
+
+        from agentic_v2.models import cloud_discovery
+
+        importlib.reload(cloud_discovery)
 
         httpx_logger = logging.getLogger("httpx")
         assert any(isinstance(f, SecretQueryParamFilter) for f in httpx_logger.filters)
