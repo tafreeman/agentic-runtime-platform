@@ -63,6 +63,7 @@ except ImportError:  # pragma: no cover — guarded for isolated environments
         allow_module_level=True,
     )
 
+
 @pytest.fixture(autouse=True, scope="module")
 def _force_no_llm_env() -> Any:
     """Set ``AGENTIC_NO_LLM=1`` for THIS module only (restored at teardown).
@@ -85,6 +86,7 @@ def _force_no_llm_env() -> Any:
     finally:
         mp.undo()
         get_settings.cache_clear()
+
 
 _TIER = ModelTier.TIER_2
 _PROMPT = "hi"
@@ -157,9 +159,7 @@ class _FakeBackend(LLMBackend):
         tools: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        self.chat_calls.append(
-            {"model": model, "messages": messages, "tools": tools}
-        )
+        self.chat_calls.append({"model": model, "messages": messages, "tools": tools})
         step = self._script.pop(0)
         if isinstance(step, Exception):
             raise step
@@ -230,9 +230,9 @@ def _router_single_tier(chain: tuple[str, ...]) -> SmartModelRouter:
 def _wrapper(router: SmartModelRouter, backend: LLMBackend) -> LLMClientWrapper:
     """An LLMClientWrapper wired to the given router + backend, cache off.
 
-    Caching is disabled by default so each test controls the cache surface it
-    cares about explicitly (the dedicated legacy/budget tests set it as
-    needed).
+    Caching is disabled by default so each test controls the cache
+    surface it cares about explicitly (the dedicated legacy/budget tests
+    set it as needed).
     """
     return LLMClientWrapper(backend=backend, router=router, enable_cache=False)
 
@@ -276,9 +276,7 @@ async def test_a_tool_calls_finish_reason_usage_survive(ek_flag_on: None) -> Non
     # The chat path was used (not the legacy text path) and the messages
     # envelope was built correctly.
     assert backend.text_calls == []
-    assert backend.chat_calls[0]["messages"] == [
-        {"role": "user", "content": _PROMPT}
-    ]
+    assert backend.chat_calls[0]["messages"] == [{"role": "user", "content": _PROMPT}]
     # record_success fired exactly once.
     stats = router.model_stats["openai:gpt-4o-mini"]
     assert stats.success_count == 1
@@ -386,9 +384,7 @@ async def test_d_bulkhead_caps_concurrency(
     assert admitted, "expected at least one admitted call to complete"
     assert all(content == "ok" for content, _, _ in admitted)
     assert all(
-        isinstance(r, ProviderError)
-        for r in results
-        if isinstance(r, BaseException)
+        isinstance(r, ProviderError) for r in results if isinstance(r, BaseException)
     )
 
 

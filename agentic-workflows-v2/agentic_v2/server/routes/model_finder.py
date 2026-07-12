@@ -469,8 +469,9 @@ def get_system_profile() -> SystemProfile:
     system_tops: float | None = None
     if system_tops_raw is not None:
         try:
-            # bool is an int subclass, so float(True) == 1.0 would silently
-            # pass; a YAML `system_tops: true` must fall back, not mean 1 TOPS.
+            # bool is an int subclass — float(True) == 1.0 — so a YAML
+            # `system_tops: true` would silently claim 1 TOPS; reject it
+            # into the same fallback path as any other non-numeric value.
             if isinstance(system_tops_raw, bool):
                 raise TypeError("booleans are not numeric system_tops values")
             system_tops = float(system_tops_raw)

@@ -216,16 +216,16 @@ class TestGetModelCandidatesForTier:
 class TestEnumerateKnownModelsMerge:
     """enumerate_known_models merges live-discovered Ollama models.
 
-    Discovery itself is unit-tested in tests/models/test_ollama_discovery.py
-    and test_local_discovery.py; here it is patched to isolate the
-    merge/enrichment logic.
+    Discovery itself is unit-tested in
+    tests/models/test_ollama_discovery.py and test_local_discovery.py;
+    here it is patched to isolate the merge/enrichment logic.
     """
 
     @pytest.fixture(autouse=True)
     def _stub_local_discovery(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Default the LM Studio + ONNX + cloud sources to empty so these tests
-        don't touch a live LM Studio server, the real aigallery cache, or a
-        keyed cloud provider."""
+        """Default the LM Studio + ONNX + cloud sources to empty so these tests don't
+        touch a live LM Studio server, the real aigallery cache, or a keyed cloud
+        provider."""
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
         )
@@ -323,9 +323,9 @@ class TestEnumerateKnownModelsMerge:
         )
         models = enumerate_known_models()
         assert models, "static catalog must still be returned"
-        assert all(m["tier"] >= 1 for m in models), (
-            "no tier-0 discovered entries should exist when discovery is empty"
-        )
+        assert all(
+            m["tier"] >= 1 for m in models
+        ), "no tier-0 discovered entries should exist when discovery is empty"
 
     def test_undiscovered_catalog_model_has_no_metadata_keys(
         self, monkeypatch: pytest.MonkeyPatch
@@ -346,8 +346,8 @@ class TestEnumerateKnownModelsMerge:
     def test_lmstudio_and_onnx_models_are_merged(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """LM Studio and ONNX discoveries surface as tier-0 entries under their
-        own provider prefixes (ADR-038)."""
+        """LM Studio and ONNX discoveries surface as tier-0 entries under their own
+        provider prefixes (ADR-038)."""
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_ollama_models", lambda: []
         )
@@ -464,9 +464,9 @@ class TestEnumerateKnownModelsMerge:
 class TestRegistryDriftDetection:
     """detect_registry_drift quarantines retired pinned ids (ADR-040).
 
-    discover_cloud_models is patched so these tests never touch a keyed provider;
-    they drive the drift logic in langchain.models directly (the coverage-measured
-    path) rather than through the live probe.
+    discover_cloud_models is patched so these tests never touch a keyed
+    provider; they drive the drift logic in langchain.models directly
+    (the coverage-measured path) rather than through the live probe.
     """
 
     @staticmethod
@@ -507,8 +507,8 @@ class TestRegistryDriftDetection:
     def test_no_false_positive_when_provider_returns_nothing(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A provider that returns no listing (no key / failed probe) must not
-        have its pinned ids quarantined -- missing means unknown, not retired."""
+        """A provider that returns no listing (no key / failed probe) must not have its
+        pinned ids quarantined -- missing means unknown, not retired."""
         from agentic_v2.langchain import models as lcm
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
@@ -564,8 +564,8 @@ class TestRegistryDriftDetection:
     def test_probe_tier_defaults_skip_quarantined(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """probe_and_update_tier_defaults runs drift first, so a quarantined model
-        is never reported/used as a tier default (no misleading tier_defaults)."""
+        """probe_and_update_tier_defaults runs drift first, so a quarantined model is
+        never reported/used as a tier default (no misleading tier_defaults)."""
         from agentic_v2.langchain import models as lcm
         from agentic_v2.models import model_registry as mr
 
@@ -578,9 +578,9 @@ class TestRegistryDriftDetection:
         try:
             summary = lcm.probe_and_update_tier_defaults()
             for _tier, model_id in summary["tier_defaults"].items():
-                assert not mr.is_quarantined(model_id), (
-                    f"tier default {model_id} is quarantined"
-                )
+                assert not mr.is_quarantined(
+                    model_id
+                ), f"tier default {model_id} is quarantined"
         finally:
             lcm._TIER_DEFAULTS.clear()
             lcm._TIER_DEFAULTS.update(saved)
@@ -588,8 +588,8 @@ class TestRegistryDriftDetection:
     def test_smart_router_excludes_quarantined(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The production native path (SmartModelRouter._find_candidates_in_tier)
-        drops quarantined ids, not just the base ModelRouter."""
+        """The production native path (SmartModelRouter._find_candidates_in_tier) drops
+        quarantined ids, not just the base ModelRouter."""
         from agentic_v2.models import model_registry as mr
         from agentic_v2.models.router import ModelTier
         from agentic_v2.models.smart_router import SmartModelRouter
@@ -643,8 +643,8 @@ class TestRegistryDriftDetection:
     def test_concurrent_probe_quarantine_not_overwritten(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """A slower probe must not erase quarantines added by a faster concurrent
-        probe during the network-discovery window.
+        """A slower probe must not erase quarantines added by a faster concurrent probe
+        during the network-discovery window.
 
         Simulation: probe A snapshots an empty quarantine, then during its
         discovery step a concurrent probe B quarantines a model.  When probe A
@@ -677,7 +677,7 @@ class TestRegistryDriftDetection:
 
         # Probe A checked anthropic, not gemini -- so B's gemini quarantine must
         # be preserved in the final set, not silently dropped.
-        assert mr.is_quarantined(concurrent_id), (
-            "quarantine added by concurrent probe was overwritten"
-        )
+        assert mr.is_quarantined(
+            concurrent_id
+        ), "quarantine added by concurrent probe was overwritten"
         assert concurrent_id in report.quarantined

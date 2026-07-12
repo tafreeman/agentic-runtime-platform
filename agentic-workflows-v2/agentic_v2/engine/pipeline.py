@@ -277,7 +277,8 @@ class PipelineExecutor:
     ) -> bool:
         """Record step results and fire progress callbacks.
 
-        Returns True if fail-fast was triggered (caller should return *result*).
+        Returns True if fail-fast was triggered (caller should return
+        *result*).
         """
         for step_result in step_results:
             result.add_step(step_result)

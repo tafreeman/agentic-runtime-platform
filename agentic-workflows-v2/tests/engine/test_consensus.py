@@ -74,7 +74,7 @@ class TestMajorityVote:
         assert len(result.votes) == 1
 
     def test_extract_applied_before_voting_raw_preserved(self):
-        """extract pulls the answer out; raw samples are still preserved."""
+        """Extract pulls the answer out; raw samples are still preserved."""
         samples = [
             {"reasoning": "...", "answer": "ship"},
             {"reasoning": "diff", "answer": "ship"},
@@ -171,7 +171,7 @@ class TestSelfConsistency:
 
     @pytest.mark.asyncio
     async def test_n_one_degenerate(self):
-        """n=1 produces a unanimous single-sample result."""
+        """N=1 produces a unanimous single-sample result."""
 
         async def generate() -> str:
             return "solo"
@@ -184,7 +184,7 @@ class TestSelfConsistency:
 
     @pytest.mark.asyncio
     async def test_n_less_than_one_raises(self):
-        """n < 1 is rejected."""
+        """N < 1 is rejected."""
 
         async def generate() -> str:
             return "x"

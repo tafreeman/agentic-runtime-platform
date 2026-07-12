@@ -306,13 +306,15 @@ def record_llm_request(
     if _llm_request_duration is None and _llm_tokens is None:
         return
     if _llm_request_duration is not None:
-        _llm_request_duration.record(
-            duration_seconds, {METRIC_LLM_PROVIDER: provider}
-        )
+        _llm_request_duration.record(duration_seconds, {METRIC_LLM_PROVIDER: provider})
     if _llm_tokens is not None and input_tokens > 0:
-        _llm_tokens.add(input_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "input"})
+        _llm_tokens.add(
+            input_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "input"}
+        )
     if _llm_tokens is not None and output_tokens > 0:
-        _llm_tokens.add(output_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "output"})
+        _llm_tokens.add(
+            output_tokens, {METRIC_LLM_PROVIDER: provider, "direction": "output"}
+        )
 
 
 def record_circuit_breaker_trip(provider: str, state: str) -> None:

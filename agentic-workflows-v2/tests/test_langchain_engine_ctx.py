@@ -437,7 +437,7 @@ async def test_runner_astream_merges_ctx_variables_into_state() -> None:
 
 
 async def test_runner_astream_does_not_sync_context_without_final_state() -> None:
-    """astream() documents no ctx write-back because final state is unavailable."""
+    """Astream() documents no ctx write-back because final state is unavailable."""
     from agentic_v2.engine.context import ExecutionContext
     from agentic_v2.langchain.runner import WorkflowRunner
 

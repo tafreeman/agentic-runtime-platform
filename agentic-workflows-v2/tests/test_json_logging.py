@@ -198,7 +198,9 @@ def test_fallback_to_text_when_pythonjsonlogger_missing() -> None:
         if "pythonjsonlogger" in key:
             del sys.modules[key]
 
-    with patch.dict(sys.modules, {"pythonjsonlogger": None, "pythonjsonlogger.json": None}):
+    with patch.dict(
+        sys.modules, {"pythonjsonlogger": None, "pythonjsonlogger.json": None}
+    ):
         # Reload logging_config so it re-evaluates the import
         import agentic_v2.logging_config as lc_module
 

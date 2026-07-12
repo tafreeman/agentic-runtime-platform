@@ -201,8 +201,9 @@ class OtelTraceAdapter(TraceAdapter):
     def _end_workflow_span(self, event: CanonicalEvent, run_id: Any) -> None:
         """End and deregister the span for a workflow_end event.
 
-        Records an ERROR status (and an exception event) when the workflow
-        completed in a failed state, so failed runs do not render green.
+        Records an ERROR status (and an exception event) when the
+        workflow completed in a failed state, so failed runs do not
+        render green.
         """
         if run_id and run_id in self._workflow_spans:
             span = self._workflow_spans.pop(run_id)

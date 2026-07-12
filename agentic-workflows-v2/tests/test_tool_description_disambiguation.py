@@ -134,9 +134,9 @@ def test_search_description_matches_actual_behavior() -> None:
     assert "500" in search_desc
     guard_index = search_desc.index("500")
     window = search_desc[max(0, guard_index - 40) : guard_index + 40]
-    assert "regex" in window, (
-        "the 500-char guard must be scoped to regex mode in the description"
-    )
+    assert (
+        "regex" in window
+    ), "the 500-char guard must be scoped to regex mode in the description"
 
     # Semantic ordering is described as per-file (no global cross-file re-rank).
     assert "within each file" in search_desc or "per file" in search_desc

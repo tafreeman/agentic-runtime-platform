@@ -287,8 +287,8 @@ class TestAdaptiveDecomposition:
     async def test_run_adaptive_no_files_reports_failure(self):
         """An empty plan is a no-op, not a success — run_adaptive must fail it.
 
-        A task naming no files yields zero subtasks; surfacing success=True there
-        would mask a silent no-op (D1).
+        A task naming no files yields zero subtasks; surfacing
+        success=True there would mask a silent no-op (D1).
         """
         orch = OrchestratorAgent()
         result = await orch.run_adaptive("Make the system faster")

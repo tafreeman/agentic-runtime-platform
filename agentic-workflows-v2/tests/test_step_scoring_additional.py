@@ -13,7 +13,9 @@ def test_step_scoring_helpers_cover_mapping_and_output_conversion() -> None:
     assert step_scoring._rubric_for_agent("unknown") == "default"
 
     assert step_scoring._pass_threshold("code", {"thresholds": {"pass": "0.8"}}) == 0.8
-    assert step_scoring._pass_threshold("agent", {"thresholds": {"pass": "bad"}}) == 0.70
+    assert (
+        step_scoring._pass_threshold("agent", {"thresholds": {"pass": "bad"}}) == 0.70
+    )
     assert step_scoring._pass_threshold("missing", {}) == 0.60
 
     assert step_scoring._infer_agent_type("Tier2_Coder_Step") == "coder"
@@ -25,15 +27,23 @@ def test_step_scoring_helpers_cover_mapping_and_output_conversion() -> None:
     assert step_scoring._output_to_text(42) == "42"
 
 
-def test_score_step_handles_eval_unavailable_and_missing_default(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_score_step_handles_eval_unavailable_and_missing_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", False)
     assert step_scoring.score_step("coder_step", "coder", "output") is None
 
     if not hasattr(step_scoring, "load_rubric"):
-        pytest.skip("agentic_v2_eval not installed; load_rubric not in module namespace")
+        pytest.skip(
+            "agentic_v2_eval not installed; load_rubric not in module namespace"
+        )
 
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", True)
-    monkeypatch.setattr(step_scoring, "load_rubric", lambda _name: (_ for _ in ()).throw(FileNotFoundError()))
+    monkeypatch.setattr(
+        step_scoring,
+        "load_rubric",
+        lambda _name: (_ for _ in ()).throw(FileNotFoundError()),
+    )
     assert step_scoring.score_step("coder_step", "coder", "output") is None
 
 
@@ -41,7 +51,9 @@ def test_score_step_handles_eval_unavailable_and_missing_default(monkeypatch: py
     not hasattr(step_scoring, "load_rubric"),
     reason="agentic_v2_eval not installed; load_rubric/Scorer not in module namespace",
 )
-def test_score_step_falls_back_to_default_rubric(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_score_step_falls_back_to_default_rubric(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     rubric_calls: list[str] = []
 
     def _load_rubric(name: str):
@@ -52,7 +64,10 @@ def test_score_step_falls_back_to_default_rubric(monkeypatch: pytest.MonkeyPatch
 
     class _FakeScorer:
         def __init__(self, _rubric):
-            self.criteria = [SimpleNamespace(name="quality"), SimpleNamespace(name="safety")]
+            self.criteria = [
+                SimpleNamespace(name="quality"),
+                SimpleNamespace(name="safety"),
+            ]
 
         def score(self, results):
             assert results == {"quality": 0.7, "safety": 0.7}
@@ -75,7 +90,9 @@ def test_score_step_falls_back_to_default_rubric(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_step_scoring_listener_and_factory_paths(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_step_scoring_listener_and_factory_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", False)
     disabled = step_scoring.StepScoringListener(enabled=True)
     assert disabled.enabled is False
@@ -92,14 +109,18 @@ async def test_step_scoring_listener_and_factory_paths(monkeypatch: pytest.Monke
     )
 
     monkeypatch.setattr(step_scoring, "_EVAL_AVAILABLE", True)
-    monkeypatch.setattr(step_scoring, "score_step", lambda *_args, **_kwargs: fake_score)
+    monkeypatch.setattr(
+        step_scoring, "score_step", lambda *_args, **_kwargs: fake_score
+    )
 
     listener = step_scoring.StepScoringListener(enabled=True)
     listener(ExecutorEvent.WORKFLOW_START, {"step": "ignored"})
     listener(ExecutorEvent.STEP_END, {})
     listener(ExecutorEvent.STEP_END, {"step": "coder_step", "output": {"body": "ok"}})
     await listener.handle_update({"type": "heartbeat"})
-    await listener.handle_update({"type": "step_end", "step": "coder_step", "output": "ok"})
+    await listener.handle_update(
+        {"type": "step_end", "step": "coder_step", "output": "ok"}
+    )
 
     scores = listener.get_scores()
     assert len(scores) == 2

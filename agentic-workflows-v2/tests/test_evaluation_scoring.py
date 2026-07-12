@@ -1244,9 +1244,8 @@ class TestJudgeSkipVisibility:
     def test_arbitrary_provider_exception_still_skips(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Provider errors are not curated exception types (executionkit
-        raises plain Exception subclasses) — they must record a skip, not
-        crash the evaluation."""
+        """Provider errors are not curated exception types (executionkit raises plain
+        Exception subclasses) — they must record a skip, not crash the evaluation."""
         # Pin declared-no-LLM mode OFF: with it on, every failure classifies
         # as not_configured by design.
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
@@ -1272,9 +1271,9 @@ class TestJudgeSkipVisibility:
     def test_no_llm_mode_classifies_as_not_configured(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Under AGENTIC_NO_LLM the placeholder MockBackend responds with
-        canned text and the judge fails JSON parsing — that is the declared
-        no-LLM mode, not a provider failure (alerting must not page)."""
+        """Under AGENTIC_NO_LLM the placeholder MockBackend responds with canned text
+        and the judge fails JSON parsing — that is the declared no-LLM mode, not a
+        provider failure (alerting must not page)."""
         monkeypatch.setenv("AGENTIC_NO_LLM", "1")
 
         def _placeholder_garbage(

@@ -58,7 +58,9 @@ class SanitizationASGIMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
             return JSONResponse(
                 status_code=503,
-                content={"detail": "Service unavailable: sanitization layer not initialized"},
+                content={
+                    "detail": "Service unavailable: sanitization layer not initialized"
+                },
             )
 
         content_type = request.headers.get("content-type", "")

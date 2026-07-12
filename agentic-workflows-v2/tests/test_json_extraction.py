@@ -25,7 +25,7 @@ class _Schema(BaseModel):
 
 def test_find_json_string_generic_fence() -> None:
     """Strategy 2: generic ``` ``` fence (no `json` tag) wrapping a JSON object."""
-    text = "Here you go:\n```\n{\"name\": \"x\", \"count\": 1}\n```\n"
+    text = 'Here you go:\n```\n{"name": "x", "count": 1}\n```\n'
     assert _find_json_string(text) == '{"name": "x", "count": 1}'
 
 
@@ -61,13 +61,12 @@ def test_extract_json_validation_failure_logs_and_raises(
     with caplog.at_level("WARNING"), pytest.raises(ValidationError):
         extract_json(text, _Schema)
     assert any(
-        "JSON schema validation failed" in record.message
-        for record in caplog.records
+        "JSON schema validation failed" in record.message for record in caplog.records
     )
 
 
 def test_extract_json_returns_dict_without_schema() -> None:
     """Untyped extraction returns a plain dict via `json.loads`."""
-    text = "noise ```json\n{\"name\": \"x\", \"count\": 2}\n``` more noise"
+    text = 'noise ```json\n{"name": "x", "count": 2}\n``` more noise'
     result = extract_json(text)
     assert result == {"name": "x", "count": 2}

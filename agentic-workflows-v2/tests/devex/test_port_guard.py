@@ -37,7 +37,8 @@ def test_check_port_free_returns_true_and_none() -> None:
 
 
 def test_check_port_bound_returns_false() -> None:
-    """A port held open by a server socket is reported as in use with the correct tuple shape."""
+    """A port held open by a server socket is reported as in use with the correct tuple
+    shape."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
         server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind(("127.0.0.1", 0))

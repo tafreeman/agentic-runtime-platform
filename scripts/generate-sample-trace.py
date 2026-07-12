@@ -367,7 +367,9 @@ def main(argv: list[str] | None = None) -> int:
     print()
     print("To score it, run:")
     print(f"  python scripts/score-trace.py {output_path}")
-    print(f"  python scripts/score-trace.py {output_path} --output report.html --format html")
+    print(
+        f"  python scripts/score-trace.py {output_path} --output report.html --format html"
+    )
     return 0
 
 

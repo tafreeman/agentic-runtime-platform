@@ -21,7 +21,6 @@ import pytest
 from agentic_v2_eval.evaluators.pattern import PatternEvaluator
 from agentic_v2_eval.evaluators.standard import StandardEvaluator
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -50,7 +49,10 @@ class TestPatternEvaluatorParseJsonResponse:
     """Tier 2: _parse_json_response parses fenced-JSON correctly."""
 
     def test_parses_fenced_json_block(self):
-        """A ```json ... ``` fenced block is extracted and parsed."""
+        """A ```json ...
+
+        ``` fenced block is extracted and parsed.
+        """
         evaluator = _make_pattern_evaluator()
         payload = {
             "PIF": 5,
@@ -102,7 +104,10 @@ class TestStandardEvaluatorParseResponse:
     """Tier 2: _parse_response parses fenced-JSON correctly."""
 
     def test_parses_fenced_json_block(self):
-        """A ```json ... ``` fenced block is extracted and parsed."""
+        """A ```json ...
+
+        ``` fenced block is extracted and parsed.
+        """
         evaluator = _make_standard_evaluator()
         payload = {
             "scores": {

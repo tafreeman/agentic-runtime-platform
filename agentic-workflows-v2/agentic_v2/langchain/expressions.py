@@ -41,8 +41,7 @@ _COALESCE_PATTERN = re.compile(r"^coalesce\((.+)\)$", re.DOTALL)
 
 
 class ConditionEvaluationError(RuntimeError):
-    """Raised when a workflow ``when`` / ``loop_until`` condition cannot
-    be evaluated.
+    """Raised when a workflow ``when`` / ``loop_until`` condition cannot be evaluated.
 
     Propagating (rather than returning a silent ``False``) makes the
     condition path fail closed: a step is never silently skipped, and a

@@ -78,8 +78,8 @@ class TestStepConfigParsing:
     def test_parse_tolerates_invalid_values_on_load_path(self):
         """Hand-edited YAML with junk params must not fail workflow load.
 
-        The validation path (editor save) rejects these; the parse-only path
-        (load_workflow_config) drops them with a warning instead.
+        The validation path (editor save) rejects these; the parse-only
+        path (load_workflow_config) drops them with a warning instead.
         """
         from agentic_v2.langchain.config import _parse_model_params
 

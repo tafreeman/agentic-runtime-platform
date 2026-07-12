@@ -70,9 +70,9 @@ logger = logging.getLogger(__name__)
 class JudgeRequiredError(RuntimeError):
     """The judge is mandatory (``evaluation.scoring.judge_required``) but unavailable.
 
-    A distinct type so callers can map the *policy* failure (persist the run
-    with an evaluation error, return a structured HTTP 422) without also
-    catching the ordinary judge failures it escalates.
+    A distinct type so callers can map the *policy* failure (persist the
+    run with an evaluation error, return a structured HTTP 422) without
+    also catching the ordinary judge failures it escalates.
     """
 
 
@@ -829,9 +829,10 @@ def _finalize_grade_and_pass(
 class _ScoreLayers:
     """Intermediate score artifacts produced by the layered scoring pass.
 
-    Bundles the per-criterion payloads, the objective/advisory/judge/hybrid
-    score layers, and the running aggregates so the orchestrator can assemble
-    the final payload without threading a dozen positional values.
+    Bundles the per-criterion payloads, the
+    objective/advisory/judge/hybrid score layers, and the running
+    aggregates so the orchestrator can assemble the final payload
+    without threading a dozen positional values.
     """
 
     criteria: list[dict[str, Any]]
@@ -862,9 +863,10 @@ def _compute_score_layers(
 ) -> _ScoreLayers:
     """Compute the objective, advisory, judge, and hybrid score layers.
 
-    Runs per-criterion scoring, derives the advisory similarity/efficiency
-    heuristics, applies the optional LLM judge (annotating criterion payloads
-    in place), and composes the hybrid 0--100 weighted score.
+    Runs per-criterion scoring, derives the advisory
+    similarity/efficiency heuristics, applies the optional LLM judge
+    (annotating criterion payloads in place), and composes the hybrid 0
+    --100 weighted score.
     """
     total_weight = sum(weights.values()) or 1.0
     criteria, normalized_scores, weighted_sum, raw_sum = _compute_criteria_scores(
@@ -1000,9 +1002,10 @@ def _apply_gates_and_finalize(
 ) -> dict[str, Any]:
     """Resolve hard gates, finalize the grade/pass verdict, and enrich payload.
 
-    Determines dataset/workflow compatibility, runs the hard gates against the
-    base payload, applies floor-cap and hard-gate rules to the grade, and
-    returns a new payload with the gate-derived fields attached.
+    Determines dataset/workflow compatibility, runs the hard gates
+    against the base payload, applies floor-cap and hard-gate rules to
+    the grade, and returns a new payload with the gate-derived fields
+    attached.
     """
     dataset_compatible = _resolve_dataset_compatible(
         dataset_meta,

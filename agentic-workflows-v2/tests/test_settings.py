@@ -180,9 +180,9 @@ def test_token_budget_rejects_unparseable_value(monkeypatch):
 
 
 def test_token_budget_blank_string_is_silently_unset(monkeypatch, caplog):
-    """A blank/whitespace AGENTIC_TOKEN_BUDGET= means 'unset', not a typo: it
-    coerces to None WITHOUT the noisy 'not a valid integer' warning that a
-    genuine typo triggers."""
+    """A blank/whitespace AGENTIC_TOKEN_BUDGET= means 'unset', not a typo: it coerces to
+    None WITHOUT the noisy 'not a valid integer' warning that a genuine typo
+    triggers."""
     monkeypatch.setenv("AGENTIC_TOKEN_BUDGET", "   ")
 
     from agentic_v2.settings import Settings
@@ -191,6 +191,6 @@ def test_token_budget_blank_string_is_silently_unset(monkeypatch, caplog):
         s = Settings()
 
     assert s.agentic_token_budget is None
-    assert "AGENTIC_TOKEN_BUDGET" not in caplog.text, (
-        "a blank env var must not warn — only a genuine typo should"
-    )
+    assert (
+        "AGENTIC_TOKEN_BUDGET" not in caplog.text
+    ), "a blank env var must not warn — only a genuine typo should"

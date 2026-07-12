@@ -60,7 +60,9 @@ class EnvSecretProvider:
 
     def get(self, name: str, default: str | None = None) -> str | None:
         self._load_dotenv_once()
-        source = self.env if self.env is not None else os.environ  # env-pass: secrets abstraction reads env by design
+        source = (
+            self.env if self.env is not None else os.environ
+        )  # env-pass: secrets abstraction reads env by design
         return _normalize_secret(source.get(name)) or default
 
     def refresh(self) -> None:

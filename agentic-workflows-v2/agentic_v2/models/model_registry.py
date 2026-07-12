@@ -322,11 +322,11 @@ def quarantine(ids: Iterable[str]) -> None:
 def set_quarantine(ids: Iterable[str]) -> None:
     """Replace the quarantine set atomically with ``ids``.
 
-    Rebinds the module global to a freshly-built set in a single assignment
-    (atomic under the GIL), so readers never observe a half-built set. Drift
-    detection uses this to swap in the new quarantine *after* network discovery
-    completes, rather than clearing first and leaving a gap concurrent requests
-    could route through.
+    Rebinds the module global to a freshly-built set in a single
+    assignment (atomic under the GIL), so readers never observe a half-
+    built set. Drift detection uses this to swap in the new quarantine
+    *after* network discovery completes, rather than clearing first and
+    leaving a gap concurrent requests could route through.
     """
     global _quarantined
     _quarantined = set(ids)

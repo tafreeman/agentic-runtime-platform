@@ -61,9 +61,7 @@ async def _snapshot_observed_state(store: RedisCircuitBreakerStore) -> dict[str,
         counters = {f: stats_dict.get(f, 0) for f in _COUNTER_FIELDS}
         # Coherence: counters must be non-negative ints (a torn CAS write or a
         # lost-update merge bug would surface as a negative or missing counter).
-        model_coherent = all(
-            isinstance(v, int) and v >= 0 for v in counters.values()
-        )
+        model_coherent = all(isinstance(v, int) and v >= 0 for v in counters.values())
         coherent = coherent and model_coherent
         per_model[model] = {
             "counters": counters,
@@ -134,9 +132,13 @@ async def _run_cas_torture(store: RedisCircuitBreakerStore) -> dict[str, Any]:
 
 
 async def main() -> int:
-    store = await RedisCircuitBreakerStore.connect(redis_url=REDIS_URL, prefix=CB_PREFIX)
+    store = await RedisCircuitBreakerStore.connect(
+        redis_url=REDIS_URL, prefix=CB_PREFIX
+    )
     if not store.is_connected:
-        print(f"FATAL: probe could not connect to Redis at {REDIS_URL}", file=sys.stderr)
+        print(
+            f"FATAL: probe could not connect to Redis at {REDIS_URL}", file=sys.stderr
+        )
         return 2
 
     observed_state = await _snapshot_observed_state(store)

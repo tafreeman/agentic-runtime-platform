@@ -5,6 +5,7 @@ Failure modes this catches:
 - A field is renamed server-side but the client still expects the old name
 - A required field is dropped
 """
+
 from __future__ import annotations
 
 import pytest

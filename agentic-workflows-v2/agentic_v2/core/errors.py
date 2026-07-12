@@ -46,8 +46,7 @@ class ConfigurationError(AgenticError):
     """Error in configuration loading or validation."""
 
 
-_NO_PROVIDER_MSG = dedent(
-    """
+_NO_PROVIDER_MSG = dedent("""
     No LLM provider configured.
 
     To fix this, do ONE of the following:
@@ -62,8 +61,7 @@ _NO_PROVIDER_MSG = dedent(
          (Returns deterministic placeholder output - good for flow testing.)
 
     More details: docs/NO_LLM_MODE.md
-    """
-).strip()
+    """).strip()
 
 
 class NoProviderConfiguredError(ConfigurationError):
@@ -92,9 +90,15 @@ def classify_error(error_message: str) -> tuple[ErrorCode, bool]:
         permanent errors (auth, not-found) and ``True`` for transient ones.
     """
     msg = error_message.lower()
-    if any(kw in msg for kw in ("rate limit", "rate_limit", "ratelimit", "429", "too many requests")):
+    if any(
+        kw in msg
+        for kw in ("rate limit", "rate_limit", "ratelimit", "429", "too many requests")
+    ):
         return ErrorCode.RATE_LIMITED, True
-    if any(kw in msg for kw in ("401", "403", "unauthorized", "forbidden", "authentication")):
+    if any(
+        kw in msg
+        for kw in ("401", "403", "unauthorized", "forbidden", "authentication")
+    ):
         return ErrorCode.AUTH_ERROR, False
     if "404" in msg or "not found" in msg:
         return ErrorCode.NOT_FOUND, False

@@ -158,7 +158,9 @@ def _resolve_whisper_model_path(
 
     # Try alternative naming
     whisper_base = whisper_path.parent
-    available = list(whisper_base.glob("whisper_*.onnx")) if whisper_base.exists() else []
+    available = (
+        list(whisper_base.glob("whisper_*.onnx")) if whisper_base.exists() else []
+    )
     if available:
         whisper_path = available[0]  # Use first available
         if verbose:
@@ -190,6 +192,7 @@ def _load_audio_16khz(audio_path: str, verbose: bool):
     if sample_rate != 16000:
         try:
             import librosa
+
             audio_data = librosa.resample(
                 audio_data, orig_sr=sample_rate, target_sr=16000
             )

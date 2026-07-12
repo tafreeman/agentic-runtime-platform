@@ -17,10 +17,18 @@ _WINDOWS_EXECUTABLE_SUFFIXES = frozenset({".exe", ".bat", ".cmd", ".com"})
 # Commands that are unconditionally dangerous — blocked regardless of arguments.
 _UNCONDITIONALLY_BLOCKED_COMMANDS = frozenset({"format", "mkfs"})
 # Flags that indicate recursive or forced deletion on file-removal commands.
-_DANGEROUS_RECURSIVE_FLAGS = frozenset({
-    "-r", "-rf", "-fr", "-R", "-Rf", "-fR", "--recursive",
-    "/s",  # Windows: rmdir /s, del /s
-})
+_DANGEROUS_RECURSIVE_FLAGS = frozenset(
+    {
+        "-r",
+        "-rf",
+        "-fr",
+        "-R",
+        "-Rf",
+        "-fR",
+        "--recursive",
+        "/s",  # Windows: rmdir /s, del /s
+    }
+)
 
 
 def _split_command(command: str) -> list[str]:
@@ -65,7 +73,7 @@ def _shell_policy_error(program: str, args: list[str] | None = None) -> str | No
     lowered_args = [arg.lower() for arg in args or []]
     if exe in _DANGEROUS_COMMANDS and (
         any(arg in _DANGEROUS_RECURSIVE_FLAGS for arg in lowered_args)
-        or "/" in lowered_args   # bare filesystem root, e.g. rm /
+        or "/" in lowered_args  # bare filesystem root, e.g. rm /
         or "\\" in lowered_args  # bare Windows root, e.g. rmdir \
     ):
         return f"Dangerous shell command blocked: {exe}"

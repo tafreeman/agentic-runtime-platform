@@ -109,7 +109,9 @@ def demo_scoped_routing() -> None:
     print(f"  Normal TIER_2 model: {normal_model}")
 
     # Scoped override — restrict to only local models for this operation
-    with router.scoped(ModelTier.TIER_2, [MODEL_OLLAMA_PHI4, "ollama:mistral"]) as scoped:
+    with router.scoped(
+        ModelTier.TIER_2, [MODEL_OLLAMA_PHI4, "ollama:mistral"]
+    ) as scoped:
         scoped_model = scoped.get_model()
         all_available = scoped.get_all_available()
         print(f"  Scoped TIER_2 model: {scoped_model}")

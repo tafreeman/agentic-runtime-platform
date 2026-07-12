@@ -191,9 +191,7 @@ def _windows_ai_error_context(err_msg: str) -> str:
     return err_msg
 
 
-def _classify_windows_ai_output(
-    model: str, r: Any, start: float
-) -> ProbeResult:
+def _classify_windows_ai_output(model: str, r: Any, start: float) -> ProbeResult:
     """Interpret the bridge subprocess output into a ProbeResult."""
     stdout = (r.stdout or "").strip()
     stderr = (r.stderr or "").strip()

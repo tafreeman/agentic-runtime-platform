@@ -140,17 +140,16 @@ def test_load_local_dataset_sample_golden_escape_rejected():
 
 
 def test_degenerate_golden_records_error():
-    """A golden captured from a failed run (final_output: null) must not
-    silently become the literal expected text "null"."""
+    """A golden captured from a failed run (final_output: null) must not silently become
+    the literal expected text "null"."""
     sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=3)
     assert "golden_output_text" not in sample
     assert "empty golden content" in meta["golden_output_error"]
 
 
 def test_hollow_golden_records_error():
-    """A golden whose final_output null-strips to {} (e.g. {"review": null})
-    must not be inlined as tokenless expected text with
-    expected_text_present=true."""
+    """A golden whose final_output null-strips to {} (e.g. {"review": null}) must not be
+    inlined as tokenless expected text with expected_text_present=true."""
     sample, meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=6)
     assert "golden_output_text" not in sample
     assert "empty golden content" in meta["golden_output_error"]
@@ -165,8 +164,8 @@ def test_nested_hollow_golden_records_error():
 
 
 def test_tokenless_golden_records_error(tmp_path, monkeypatch):
-    """A golden with content leaves but zero scoring tokens (e.g. all short
-    numerics) cannot participate in overlap scoring — reject it loudly."""
+    """A golden with content leaves but zero scoring tokens (e.g. all short numerics)
+    cannot participate in overlap scoring — reject it loudly."""
     from agentic_v2.server import datasets as datasets_mod
 
     monkeypatch.setattr(
@@ -230,8 +229,8 @@ def test_rehydrate_unparseable_index_bails_loudly():
 
 
 def test_rehydrate_task_id_mismatch_bails_loudly():
-    """A dataset that shrank/reordered since the run must not silently swap
-    in a different task's golden."""
+    """A dataset that shrank/reordered since the run must not silently swap in a
+    different task's golden."""
     from agentic_v2.server.evaluation import rehydrate_dataset_sample
 
     meta = {
@@ -246,8 +245,8 @@ def test_rehydrate_task_id_mismatch_bails_loudly():
 
 
 def test_rehydrate_numeric_task_id_still_verified():
-    """Integer task ids (common in numeric benchmarks) must not silently
-    bypass the mismatch verification."""
+    """Integer task ids (common in numeric benchmarks) must not silently bypass the
+    mismatch verification."""
     from agentic_v2.server.evaluation import rehydrate_dataset_sample
 
     meta = {
@@ -299,10 +298,12 @@ def _build_generated_result(content: str, duration_s: float) -> WorkflowResult:
 
 
 def test_issue_172_distinct_runs_score_distinctly_with_loaded_golden():
-    """Regression for issue #172: three synthetic runs with different content
-    and durations all scored an identical 83.97/B because the golden never
-    loaded, the judge silently skipped, and the duration penalty saturated.
-    With the golden resolved by the loader, differing runs must diverge."""
+    """Regression for issue #172: three synthetic runs with different content and
+    durations all scored an identical 83.97/B because the golden never loaded, the judge
+    silently skipped, and the duration penalty saturated.
+
+    With the golden resolved by the loader, differing runs must diverge.
+    """
     sample, _meta = load_local_dataset_sample(_GOLDEN_SMOKE_DATASET, sample_index=0)
     on_golden = _build_generated_result(
         "The clamp function raises TypeError when lower exceeds upper instead "
@@ -968,10 +969,9 @@ async def test_run_log_evaluation_has_gate_fields(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_run_log_persists_when_judge_required_unmet(monkeypatch):
-    """judge_required=true fails the *evaluation*, never the run record: a
-    completed workflow must not vanish from run history (issue #172 review),
-    and the live stream must get a terminal event or the UI sticks in
-    "evaluating"."""
+    """judge_required=true fails the *evaluation*, never the run record: a completed
+    workflow must not vanish from run history (issue #172 review), and the live stream
+    must get a terminal event or the UI sticks in "evaluating"."""
     captured: dict = {}
     events: list[dict] = []
 

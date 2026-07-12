@@ -143,7 +143,8 @@ class TestParseGevalCriterion:
         assert result is None
 
     def test_cap_guard_executes_for_short_input(self):
-        """The 256 KB cap line is exercised for any call — normal inputs pass through."""
+        """The 256 KB cap line is exercised for any call — normal inputs pass
+        through."""
         model = _make_model()
         response = '{"score": 3, "reasoning": [], "summary": "brief"}'
 

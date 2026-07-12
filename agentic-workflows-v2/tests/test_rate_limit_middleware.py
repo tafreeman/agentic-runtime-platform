@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("slowapi", reason="slowapi not installed — rate-limit tests skipped")
+pytest.importorskip(
+    "slowapi", reason="slowapi not installed — rate-limit tests skipped"
+)
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -134,9 +136,9 @@ class TestPublicPathExempt:
         # Health endpoint must still work
         for _ in range(5):
             health_resp = client.get("/api/health")
-            assert health_resp.status_code == 200, (
-                f"Health endpoint returned {health_resp.status_code} — should be exempt"
-            )
+            assert (
+                health_resp.status_code == 200
+            ), f"Health endpoint returned {health_resp.status_code} — should be exempt"
 
     def test_docs_endpoint_never_rate_limited(self) -> None:
         """GET /docs is exempt from rate limiting."""
@@ -174,9 +176,13 @@ class TestRateLimitDisabled:
 
         client = TestClient(no_limit_app, raise_server_exceptions=False)
         codes = [client.get("/api/data").status_code for _ in range(10)]
-        assert all(c == 200 for c in codes), f"Expected all 200 when disabled, got: {codes}"
+        assert all(
+            c == 200 for c in codes
+        ), f"Expected all 200 when disabled, got: {codes}"
 
-    def test_create_app_respects_disabled_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_create_app_respects_disabled_flag(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """create_app() wires no limiter when AGENTIC_RATE_LIMIT_DISABLED=1.
 
         The module-level ``_RATE_LIMIT_DISABLED`` flag is evaluated at import
@@ -213,7 +219,9 @@ class TestRateLimitDisabled:
 class TestCreateAppRateLimitIntegration:
     """Smoke test: create_app() correctly wires slowapi when not disabled."""
 
-    def test_create_app_sets_limiter_on_state(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_create_app_sets_limiter_on_state(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """app.state.limiter is set when slowapi is available and not disabled."""
         monkeypatch.delenv("AGENTIC_RATE_LIMIT_DISABLED", raising=False)
         monkeypatch.setenv("AGENTIC_DEFAULT_ADAPTER", "native")
@@ -223,7 +231,9 @@ class TestCreateAppRateLimitIntegration:
 
         app = create_app()
         # The limiter should be registered on app.state
-        assert hasattr(app.state, "limiter"), "app.state.limiter not set by create_app()"
+        assert hasattr(
+            app.state, "limiter"
+        ), "app.state.limiter not set by create_app()"
         assert app.state.limiter is not None
 
     def test_create_app_sets_auth_throttle_on_state(

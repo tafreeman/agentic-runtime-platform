@@ -15,8 +15,10 @@ repos:
         stages: [commit-msg]
         always_run: true
 
+  # Rev pinned to the same version as ci-constraints.txt (black==26.5.1) so
+  # local hooks and CI-era tooling format identically; bump both together.
   - repo: https://github.com/psf/black
-    rev: 26.1.0
+    rev: 26.5.1
     hooks:
       - id: black
         args: ["--line-length", "88"]
@@ -28,8 +30,11 @@ repos:
   # splits comment-tagged imports onto their own line), so the two never reach
   # a fixpoint under `pre-commit run --all-files`. ruff is the single sorter.
 
+  # Rev matches ci-constraints.txt (ruff==0.15.17): CI's lint job runs this
+  # exact version over agentic_v2/ and tests/, so a hook-version skew would
+  # let local and CI disagree about what "clean" means.
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.15.17
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -46,16 +51,22 @@ repos:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
 
-  # mypy: enabled for agentic-v2-eval/ (strict mode, 0 findings).
-  # The broader agentic-workflows-v2/ type debt is tracked separately (target Q3 2026).
+  # mypy: strict on the agentic-v2-eval PACKAGE SOURCE only (0 findings at
+  # this rev, verified). Scoped to src/ — the eval tests were never written
+  # to strict typing, and without --follow-imports=skip mypy wanders into the
+  # repo-root tools/ package and strict-checks it too (same reason the CI
+  # typecheck-core-contracts job passes that flag). Rev matches
+  # ci-constraints.txt (mypy==2.1.0). The broader agentic-workflows-v2/ type
+  # debt is tracked separately (target Q3 2026).
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v2.1.0
     hooks:
       - id: mypy
-        name: mypy (agentic-v2-eval)
-        files: ^agentic-v2-eval/
+        name: mypy (agentic-v2-eval src)
+        files: ^agentic-v2-eval/src/
         args:
           - "--config-file=agentic-v2-eval/pyproject.toml"
+          - "--follow-imports=skip"
         additional_dependencies:
           - "types-PyYAML"
 

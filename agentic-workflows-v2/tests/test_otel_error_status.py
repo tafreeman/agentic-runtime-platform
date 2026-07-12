@@ -34,8 +34,9 @@ from agentic_v2.integrations.tracing import OtelTraceAdapter
 def exporter_and_adapter():
     """Return an (InMemorySpanExporter, OtelTraceAdapter) pair.
 
-    The adapter is wired to a real tracer backed by the in-memory exporter so
-    that emitted canonical events produce inspectable OTEL spans.
+    The adapter is wired to a real tracer backed by the in-memory
+    exporter so that emitted canonical events produce inspectable OTEL
+    spans.
     """
     exporter = InMemorySpanExporter()
     provider = TracerProvider()
@@ -108,7 +109,7 @@ def test_failed_workflow_span_has_error_status(exporter_and_adapter):
 
 
 def test_error_status_string_also_marks_error(exporter_and_adapter):
-    """status='error' (not just 'failed') is treated as a failure."""
+    """Status='error' (not just 'failed') is treated as a failure."""
     exporter, adapter = exporter_and_adapter
     run_id = "run-err-3"
 
@@ -131,16 +132,14 @@ def test_successful_spans_are_not_marked_error(exporter_and_adapter):
     adapter.emit(_event("workflow_start", workflow_name="wf", run_id=run_id))
     adapter.emit(_event("step_start", step_name="analyze", run_id=run_id))
     adapter.emit(
-        _event(
-            "step_complete", step_name="analyze", run_id=run_id, status="success"
-        )
+        _event("step_complete", step_name="analyze", run_id=run_id, status="success")
     )
     adapter.emit(_event("workflow_end", run_id=run_id, status="success"))
 
     for span in exporter.get_finished_spans():
-        assert span.status.status_code is not StatusCode.ERROR, (
-            f"span {span.name} unexpectedly marked ERROR on a successful run"
-        )
+        assert (
+            span.status.status_code is not StatusCode.ERROR
+        ), f"span {span.name} unexpectedly marked ERROR on a successful run"
         assert "exception" not in [e.name for e in span.events]
 
 
@@ -157,9 +156,7 @@ def test_step_span_is_child_of_workflow_span(exporter_and_adapter):
     adapter.emit(_event("workflow_start", workflow_name="wf", run_id=run_id))
     adapter.emit(_event("step_start", step_name="analyze", run_id=run_id))
     adapter.emit(
-        _event(
-            "step_complete", step_name="analyze", run_id=run_id, status="success"
-        )
+        _event("step_complete", step_name="analyze", run_id=run_id, status="success")
     )
     adapter.emit(_event("workflow_end", run_id=run_id, status="success"))
 
@@ -168,9 +165,9 @@ def test_step_span_is_child_of_workflow_span(exporter_and_adapter):
 
     assert wf_span is not None and step_span is not None
     assert step_span.parent is not None, "step span has no parent — flat trace"
-    assert step_span.parent.span_id == wf_span.context.span_id, (
-        "step span is not parented to the workflow span"
-    )
+    assert (
+        step_span.parent.span_id == wf_span.context.span_id
+    ), "step span is not parented to the workflow span"
     # Same trace → they belong to one logical workflow trace.
     assert step_span.context.trace_id == wf_span.context.trace_id
 
@@ -184,17 +181,13 @@ def test_multiple_steps_all_child_of_workflow(exporter_and_adapter):
     for step in ("analyze", "generate", "review"):
         adapter.emit(_event("step_start", step_name=step, run_id=run_id))
         adapter.emit(
-            _event(
-                "step_complete", step_name=step, run_id=run_id, status="success"
-            )
+            _event("step_complete", step_name=step, run_id=run_id, status="success")
         )
     adapter.emit(_event("workflow_end", run_id=run_id, status="success"))
 
     wf_span = _span_by_type(exporter, "workflow_start")
     assert wf_span is not None
-    step_spans = [
-        s for s in exporter.get_finished_spans() if s.name == "step_start"
-    ]
+    step_spans = [s for s in exporter.get_finished_spans() if s.name == "step_start"]
     assert len(step_spans) == 3
     for step_span in step_spans:
         assert step_span.parent is not None

@@ -167,9 +167,7 @@ class TestLiveCatalog:
         assert calls[0][0] == _OPENROUTER
         assert calls[0][1]["Authorization"] == "Bearer test-key"
 
-    def test_flagship_cap_is_family_fair(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_flagship_cap_is_family_fair(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """One prolific publisher must not consume every flagship slot.
 
         The live catalog carries 15+ ``anthropic/claude*`` ids; a global
@@ -222,9 +220,10 @@ class TestLiveCatalog:
     ) -> None:
         """A 200 catalog with nothing curatable must not beat the fallback.
 
-        e.g. OPENROUTER_BASE_URL pointing at a self-hosted gateway whose model
-        list matches no ``:free``/flagship pattern — serving (and caching) an
-        empty listing would be strictly worse than the static fallback.
+        e.g. OPENROUTER_BASE_URL pointing at a self-hosted gateway whose
+        model list matches no ``:free``/flagship pattern — serving (and
+        caching) an empty listing would be strictly worse than the
+        static fallback.
         """
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
         payload = _Resp({"data": [_entry("mycorp/internal-model", ["text"])]})

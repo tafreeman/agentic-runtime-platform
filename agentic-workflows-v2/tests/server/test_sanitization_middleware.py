@@ -93,7 +93,8 @@ async def test_real_detector_scan_error_returns_500() -> None:
 
 
 async def test_no_sanitizer_returns_503() -> None:
-    """When sanitizer is None (init failed), requests must be rejected with 503 (fail-closed)."""
+    """When sanitizer is None (init failed), requests must be rejected with 503 (fail-
+    closed)."""
     app = _make_app(None)
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -125,7 +126,8 @@ async def test_unconfigured_sanitizer_attr_returns_503() -> None:
 async def test_no_sanitizer_passes_through_when_fail_open(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """With AGENTIC_SANITIZER_FAIL_OPEN=1, a None sanitizer falls back to pass-through."""
+    """With AGENTIC_SANITIZER_FAIL_OPEN=1, a None sanitizer falls back to pass-
+    through."""
     monkeypatch.setenv("AGENTIC_SANITIZER_FAIL_OPEN", "1")
     app = _make_app(None)
     async with AsyncClient(

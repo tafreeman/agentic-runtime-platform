@@ -66,11 +66,16 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
     payload = await workflows.list_workflows()
     assert payload.workflows == ["wf-a", "wf-b"]
 
-    monkeypatch.setattr("agentic_v2.adapters.get_registry", lambda: SimpleNamespace(list_adapters=lambda: ["native", "langchain"]))
+    monkeypatch.setattr(
+        "agentic_v2.adapters.get_registry",
+        lambda: SimpleNamespace(list_adapters=lambda: ["native", "langchain"]),
+    )
     adapters = await workflows.list_adapters()
     assert adapters["adapters"] == ["native", "langchain"]
 
-    monkeypatch.setattr(workflows, "load_workflow_config", lambda _name: _workflow_config("wf-dag"))
+    monkeypatch.setattr(
+        workflows, "load_workflow_config", lambda _name: _workflow_config("wf-dag")
+    )
     dag = await workflows.get_workflow_dag("wf-dag")
     assert dag["name"] == "wf-dag"
     assert len(dag["nodes"]) == 2
@@ -97,7 +102,9 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
     monkeypatch.setattr(
         workflows,
         "validate_workflow_document",
-        lambda _doc, expected_name=None: SimpleNamespace(name=expected_name or "wf-dag", steps=[1, 2]),
+        lambda _doc, expected_name=None: SimpleNamespace(
+            name=expected_name or "wf-dag", steps=[1, 2]
+        ),
     )
     editor = await workflows.get_workflow_editor("wf-dag")
     assert editor.name == "wf-dag"
@@ -106,8 +113,14 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
     monkeypatch.setattr(
         workflows,
         "save_workflow_document",
-        lambda _name, _doc: (Path("saved.yaml"), {"name": "saved"}, SimpleNamespace(name="saved", steps=[1]), "name: saved\n"),
+        lambda _name, _doc: (
+            Path("saved.yaml"),
+            {"name": "saved"},
+            SimpleNamespace(name="saved", steps=[1]),
+            "name: saved\n",
+        ),
     )
+
     def cached_loader(_name):
         return _workflow_config("saved")
 
@@ -116,18 +129,28 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
 
     cached_loader.cache_clear = _cache_clear
     monkeypatch.setattr(workflows, "load_workflow_config", cached_loader)
-    saved = await workflows.save_workflow_editor("saved", WorkflowEditorRequest(document={"name": "saved"}))
+    saved = await workflows.save_workflow_editor(
+        "saved", WorkflowEditorRequest(document={"name": "saved"})
+    )
     assert saved.name == "saved"
 
-    monkeypatch.setattr(workflows, "render_workflow_document", lambda doc: f"name: {doc['name']}\n")
-    monkeypatch.setattr(workflows, "_compile_workflow_for_validation", lambda _cfg: None)
+    monkeypatch.setattr(
+        workflows, "render_workflow_document", lambda doc: f"name: {doc['name']}\n"
+    )
+    monkeypatch.setattr(
+        workflows, "_compile_workflow_for_validation", lambda _cfg: None
+    )
     validated = await workflows.validate_workflow_editor(
         WorkflowEditorRequest(document={"name": "wf-validate"})
     )
     assert validated.valid is True
     assert validated.name == "wf-validate"
 
-    monkeypatch.setattr(workflows, "load_workflow_config", lambda _name: (_ for _ in ()).throw(RuntimeError("missing wf")))
+    monkeypatch.setattr(
+        workflows,
+        "load_workflow_config",
+        lambda _name: (_ for _ in ()).throw(RuntimeError("missing wf")),
+    )
     with pytest.raises(HTTPException) as exc_info:
         await workflows.get_workflow_dag("missing")
     assert exc_info.value.status_code == 404
@@ -147,7 +170,9 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
         lambda _name, _doc: (_ for _ in ()).throw(OSError("readonly")),
     )
     with pytest.raises(HTTPException) as exc_info:
-        await workflows.save_workflow_editor("wf", WorkflowEditorRequest(document={"name": "wf"}))
+        await workflows.save_workflow_editor(
+            "wf", WorkflowEditorRequest(document={"name": "wf"})
+        )
     assert exc_info.value.status_code == 503
 
     monkeypatch.setattr(
@@ -163,7 +188,9 @@ async def test_workflow_route_helpers_cover_success_and_error_paths(monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_evaluation_routes_cover_redirects_filters_and_path_endpoints(monkeypatch):
+async def test_evaluation_routes_cover_redirects_filters_and_path_endpoints(
+    monkeypatch,
+):
     tenant = TenantContext(tenant_id="tenant-a", source="default")
     request = _request("/api/eval")
 
@@ -200,7 +227,10 @@ async def test_evaluation_routes_cover_redirects_filters_and_path_endpoints(monk
     monkeypatch.setattr(
         evaluation_routes,
         "load_repository_dataset_sample",
-        lambda dataset_id, sample_index=0: ({"code_file": "repo.py"}, {"source": "repository"}),
+        lambda dataset_id, sample_index=0: (
+            {"code_file": "repo.py"},
+            {"source": "repository"},
+        ),
     )
     monkeypatch.setattr(
         evaluation_routes,
@@ -210,18 +240,25 @@ async def test_evaluation_routes_cover_redirects_filters_and_path_endpoints(monk
     monkeypatch.setattr(
         evaluation_routes,
         "match_workflow_dataset",
-        lambda _wf, sample: ("code_file" in sample, ["missing: code_file"] if "code_file" not in sample else []),
+        lambda _wf, sample: (
+            "code_file" in sample,
+            ["missing: code_file"] if "code_file" not in sample else [],
+        ),
     )
 
     filtered = await evaluation_routes.list_evaluation_datasets("wf", tenant)
     assert [dataset.id for dataset in filtered.local] == ["good.json"]
     assert [dataset.id for dataset in filtered.repository] == ["repo.json"]
 
-    redirect = await evaluation_routes.list_dataset_samples("local", "dir/file.json", workflow="wf")
+    redirect = await evaluation_routes.list_dataset_samples(
+        "local", "dir/file.json", workflow="wf"
+    )
     assert redirect.status_code == 302
     assert "workflow=wf" in redirect.headers["location"]
 
-    detail_redirect = await evaluation_routes.get_dataset_sample_detail("local", "dir/file.json", sample_index=2)
+    detail_redirect = await evaluation_routes.get_dataset_sample_detail(
+        "local", "dir/file.json", sample_index=2
+    )
     assert detail_redirect.status_code == 302
     assert detail_redirect.headers["location"].endswith("/samples/2")
 
@@ -309,7 +346,9 @@ async def test_evaluation_routes_cover_redirects_filters_and_path_endpoints(monk
 
 @pytest.mark.asyncio
 async def test_workflow_helper_branches_cover_sanitization_and_run_errors(monkeypatch):
-    request_obj = WorkflowRunRequest(workflow="wf", input_data={"prompt": "hi"}, adapter="native")
+    request_obj = WorkflowRunRequest(
+        workflow="wf", input_data={"prompt": "hi"}, adapter="native"
+    )
 
     class _BlockedResult:
         def __init__(self):
@@ -393,21 +432,29 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
         lambda _name, _doc: (_ for _ in ()).throw(ValueError("bad save")),
     )
     with pytest.raises(HTTPException) as exc_info:
-        await workflows.save_workflow_editor("wf", WorkflowEditorRequest(document={"name": "wf"}))
+        await workflows.save_workflow_editor(
+            "wf", WorkflowEditorRequest(document={"name": "wf"})
+        )
     assert exc_info.value.status_code == 422
 
     monkeypatch.setattr(
         workflows,
         "validate_workflow_document",
-        lambda _doc, expected_name=None: SimpleNamespace(name=expected_name or "wf", steps=[]),
+        lambda _doc, expected_name=None: SimpleNamespace(
+            name=expected_name or "wf", steps=[]
+        ),
     )
     monkeypatch.setattr(
         workflows,
         "_compile_workflow_for_validation",
-        lambda _cfg: (_ for _ in ()).throw(HTTPException(status_code=501, detail="missing extras")),
+        lambda _cfg: (_ for _ in ()).throw(
+            HTTPException(status_code=501, detail="missing extras")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
-        await workflows.validate_workflow_editor(WorkflowEditorRequest(document={"name": "wf"}))
+        await workflows.validate_workflow_editor(
+            WorkflowEditorRequest(document={"name": "wf"})
+        )
     assert exc_info.value.status_code == 501
 
     monkeypatch.setattr(
@@ -421,13 +468,17 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
         lambda _doc, expected_name=None: (_ for _ in ()).throw(RuntimeError("explode")),
     )
     with pytest.raises(HTTPException) as exc_info:
-        await workflows.validate_workflow_editor(WorkflowEditorRequest(document={"name": "wf"}))
+        await workflows.validate_workflow_editor(
+            WorkflowEditorRequest(document={"name": "wf"})
+        )
     assert exc_info.value.status_code == 422
 
     request = _request("/api/eval")
     tenant = TenantContext(tenant_id="tenant-a", source="default")
 
-    assert evaluation_routes._call_with_supported_kwargs(lambda value: value, "ok") == "ok"
+    assert (
+        evaluation_routes._call_with_supported_kwargs(lambda value: value, "ok") == "ok"
+    )
 
     def _with_kwargs(*_args, **kwargs):
         return kwargs["tenant_id"]
@@ -476,11 +527,18 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
         await evaluation_routes.list_evaluation_datasets("wf", tenant)
     assert exc_info.value.status_code == 404
 
-    monkeypatch.setattr(evaluation_routes, "load_workflow_config", lambda _name: SimpleNamespace(inputs={}))
+    monkeypatch.setattr(
+        evaluation_routes,
+        "load_workflow_config",
+        lambda _name: SimpleNamespace(inputs={}),
+    )
     monkeypatch.setattr(
         evaluation_routes,
         "load_repository_dataset_sample",
-        lambda _dataset_id, sample_index=0: ({"prompt": "hi"}, {"sample_index": sample_index}),
+        lambda _dataset_id, sample_index=0: (
+            {"prompt": "hi"},
+            {"sample_index": sample_index},
+        ),
     )
     monkeypatch.setattr(
         evaluation_routes,
@@ -521,7 +579,10 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
         evaluation_routes,
         "load_repository_dataset_samples",
         lambda _dataset_id, offset=0, limit=20: [
-            ({"sample_id": "1", "name": "Repo sample", "body": "Repo body"}, {"sample_index": 0})
+            (
+                {"sample_id": "1", "name": "Repo sample", "body": "Repo body"},
+                {"sample_index": 0},
+            )
         ],
     )
     repo_listing = await evaluation_routes.list_dataset_samples_path_based(
@@ -535,7 +596,9 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
     monkeypatch.setattr(
         evaluation_routes,
         "load_repository_dataset_sample",
-        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(ValueError("bad sample")),
+        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(
+            ValueError("bad sample")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
         await evaluation_routes.get_dataset_sample_detail_path_based(
@@ -564,7 +627,9 @@ def test_workflow_import_guards_cover_missing_dependency_paths(
             raise ImportError("missing langchain")
         return real_langchain_getattr(name)
 
-    monkeypatch.setattr(workflows, "is_missing_langchain_dependency_error", lambda exc: True)
+    monkeypatch.setattr(
+        workflows, "is_missing_langchain_dependency_error", lambda exc: True
+    )
     monkeypatch.setattr(
         workflows,
         "to_missing_langchain_dependency_error",
@@ -636,11 +701,17 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
         )
     assert exc_info.value.status_code == 404
 
-    monkeypatch.setattr(evaluation_routes, "load_workflow_config", lambda _name: SimpleNamespace(inputs={}))
+    monkeypatch.setattr(
+        evaluation_routes,
+        "load_workflow_config",
+        lambda _name: SimpleNamespace(inputs={}),
+    )
     monkeypatch.setattr(
         evaluation_routes,
         "load_local_dataset_sample",
-        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(ValueError("bad local sample")),
+        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(
+            ValueError("bad local sample")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
         await evaluation_routes.preview_dataset_inputs(
@@ -655,7 +726,9 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
     monkeypatch.setattr(
         evaluation_routes,
         "load_local_dataset_samples",
-        lambda _dataset_id, offset=0, limit=20: (_ for _ in ()).throw(ValueError("bad batch")),
+        lambda _dataset_id, offset=0, limit=20: (_ for _ in ()).throw(
+            ValueError("bad batch")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
         await evaluation_routes.list_dataset_samples_path_based(
@@ -669,7 +742,9 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
     monkeypatch.setattr(
         evaluation_routes,
         "load_local_dataset_samples",
-        lambda _dataset_id, offset=0, limit=20: (_ for _ in ()).throw(RuntimeError("broken batch")),
+        lambda _dataset_id, offset=0, limit=20: (_ for _ in ()).throw(
+            RuntimeError("broken batch")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
         await evaluation_routes.list_dataset_samples_path_based(
@@ -701,7 +776,9 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
     monkeypatch.setattr(
         evaluation_routes,
         "load_local_dataset_sample",
-        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(RuntimeError("broken sample")),
+        lambda _dataset_id, sample_index=0: (_ for _ in ()).throw(
+            RuntimeError("broken sample")
+        ),
     )
     with pytest.raises(HTTPException) as exc_info:
         await evaluation_routes.get_dataset_sample_detail_path_based(
@@ -716,9 +793,16 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
     monkeypatch.setattr(
         evaluation_routes,
         "load_local_dataset_sample",
-        lambda _dataset_id, sample_index=0: ({"body": "hello"}, {"sample_index": sample_index}),
+        lambda _dataset_id, sample_index=0: (
+            {"body": "hello"},
+            {"sample_index": sample_index},
+        ),
     )
-    monkeypatch.setattr(evaluation_routes, "load_workflow_config", lambda _name: SimpleNamespace(inputs={}))
+    monkeypatch.setattr(
+        evaluation_routes,
+        "load_workflow_config",
+        lambda _name: SimpleNamespace(inputs={}),
+    )
     monkeypatch.setattr(
         evaluation_routes,
         "match_workflow_dataset",
@@ -737,7 +821,9 @@ async def test_evaluation_route_remaining_error_paths(monkeypatch: pytest.Monkey
 
 @pytest.mark.asyncio
 async def test_workflow_final_branch_coverage(monkeypatch: pytest.MonkeyPatch):
-    request = WorkflowEditorRequest.model_construct(document="not-a-mapping", yaml_text=None)
+    request = WorkflowEditorRequest.model_construct(
+        document="not-a-mapping", yaml_text=None
+    )
     with pytest.raises(HTTPException) as exc_info:
         await workflows.validate_workflow_editor(request)
     assert exc_info.value.status_code == 422
@@ -755,7 +841,9 @@ async def test_workflow_final_branch_coverage(monkeypatch: pytest.MonkeyPatch):
             raise ImportError("unexpected import failure")
         return real_langchain_getattr(name)
 
-    monkeypatch.setattr(workflows, "is_missing_langchain_dependency_error", lambda exc: False)
+    monkeypatch.setattr(
+        workflows, "is_missing_langchain_dependency_error", lambda exc: False
+    )
     monkeypatch.setattr(langchain_module, "__getattr__", _fake_langchain_getattr)
     monkeypatch.setattr(builtins, "__import__", _fake_import)
     monkeypatch.setitem(sys.modules, "agentic_v2.langchain.graph", None)
@@ -777,7 +865,9 @@ async def test_workflow_final_branch_coverage(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         workflows,
         "load_workflow_config",
-        lambda _name: (_ for _ in ()).throw(workflows.NoProviderConfiguredError("no provider")),
+        lambda _name: (_ for _ in ()).throw(
+            workflows.NoProviderConfiguredError("no provider")
+        ),
     )
 
     with pytest.raises(workflows.NoProviderConfiguredError):

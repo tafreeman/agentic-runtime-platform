@@ -26,10 +26,11 @@ _PLACEHOLDER_PREFIX = "[AGENTIC_NO_LLM placeholder]"
 def _isolate_client_and_settings(monkeypatch):
     """Reset all singleton state before and after every test in this module.
 
-    The autouse=True on the root conftest._reset_llm_client fixture still
-    fires, but that fixture calls get_client(auto_configure=False).  We need
-    full reset so env changes are visible; we add a second teardown here that
-    is scoped only to these tests.
+    The autouse=True on the root conftest._reset_llm_client fixture
+    still fires, but that fixture calls
+    get_client(auto_configure=False).  We need full reset so env changes
+    are visible; we add a second teardown here that is scoped only to
+    these tests.
     """
     get_settings.cache_clear()
     reset_client()
@@ -40,8 +41,8 @@ def _isolate_client_and_settings(monkeypatch):
 
 @pytest.mark.unit
 def test_flag_installs_mock_backend_and_placeholder_prefix(monkeypatch):
-    """AGENTIC_NO_LLM=1 must cause get_client() to install a MockBackend
-    whose default_response starts with the placeholder prefix.
+    """AGENTIC_NO_LLM=1 must cause get_client() to install a MockBackend whose
+    default_response starts with the placeholder prefix.
 
     FAILS today: Settings has no agentic_no_llm field; get_client() never
     installs MockBackend based on that flag.
@@ -52,9 +53,9 @@ def test_flag_installs_mock_backend_and_placeholder_prefix(monkeypatch):
 
     client = get_client(auto_configure=True)
 
-    assert isinstance(client.backend, MockBackend), (
-        f"Expected MockBackend when AGENTIC_NO_LLM=1, got {type(client.backend)}"
-    )
+    assert isinstance(
+        client.backend, MockBackend
+    ), f"Expected MockBackend when AGENTIC_NO_LLM=1, got {type(client.backend)}"
     assert client.backend.default_response.startswith(_PLACEHOLDER_PREFIX), (
         f"default_response {client.backend.default_response!r} does not start "
         f"with {_PLACEHOLDER_PREFIX!r}"
@@ -63,8 +64,8 @@ def test_flag_installs_mock_backend_and_placeholder_prefix(monkeypatch):
 
 @pytest.mark.unit
 def test_flag_unset_still_probes_providers(monkeypatch):
-    """When AGENTIC_NO_LLM is absent, get_client(auto_configure=True) must
-    actually attempt provider probing AND must NOT install MockBackend.
+    """When AGENTIC_NO_LLM is absent, get_client(auto_configure=True) must actually
+    attempt provider probing AND must NOT install MockBackend.
 
     This is a no-regression control.  MED-3 from Sprint B #5 review: the
     previous version of this test only asserted ``not isinstance(MockBackend)``,
@@ -101,15 +102,15 @@ def test_flag_unset_still_probes_providers(monkeypatch):
         "probe path entirely (regression: MockBackend may have been installed "
         "unconditionally before the probe branch)."
     )
-    assert not isinstance(client.backend, MockBackend), (
-        "MockBackend must NOT be installed when AGENTIC_NO_LLM is unset"
-    )
+    assert not isinstance(
+        client.backend, MockBackend
+    ), "MockBackend must NOT be installed when AGENTIC_NO_LLM is unset"
 
 
 @pytest.mark.unit
 async def test_complete_chat_returns_placeholder_under_flag(monkeypatch):
-    """complete_chat() on the MockBackend installed under the flag must return
-    a dict with content starting with the placeholder prefix and tool_calls=None.
+    """complete_chat() on the MockBackend installed under the flag must return a dict
+    with content starting with the placeholder prefix and tool_calls=None.
 
     FAILS today: MockBackend is never installed by the flag path.
     """
@@ -130,18 +131,18 @@ async def test_complete_chat_returns_placeholder_under_flag(monkeypatch):
     )
 
     assert isinstance(result, dict), f"Expected dict, got {type(result)}"
-    assert result["content"].startswith(_PLACEHOLDER_PREFIX), (
-        f"content {result['content']!r} does not start with {_PLACEHOLDER_PREFIX!r}"
-    )
-    assert result["tool_calls"] is None, (
-        f"tool_calls should be None, got {result['tool_calls']!r}"
-    )
+    assert result["content"].startswith(
+        _PLACEHOLDER_PREFIX
+    ), f"content {result['content']!r} does not start with {_PLACEHOLDER_PREFIX!r}"
+    assert (
+        result["tool_calls"] is None
+    ), f"tool_calls should be None, got {result['tool_calls']!r}"
 
 
 @pytest.mark.unit
 def test_reset_client_plus_cache_clear_reflects_env_change(monkeypatch):
-    """Flipping AGENTIC_NO_LLM and calling cache_clear() + reset_client()
-    must switch the installed backend from non-Mock to Mock.
+    """Flipping AGENTIC_NO_LLM and calling cache_clear() + reset_client() must switch
+    the installed backend from non-Mock to Mock.
 
     FAILS today: same root cause as test 1 — flag path not wired.
     """
@@ -163,9 +164,9 @@ def test_reset_client_plus_cache_clear_reflects_env_change(monkeypatch):
     reset_client()
 
     client_before = get_client(auto_configure=True)
-    assert not isinstance(client_before.backend, MockBackend), (
-        "Phase A: MockBackend must NOT be installed when flag is absent"
-    )
+    assert not isinstance(
+        client_before.backend, MockBackend
+    ), "Phase A: MockBackend must NOT be installed when flag is absent"
 
     # Phase B: flip flag on, bust caches, get a fresh client
     monkeypatch.setenv("AGENTIC_NO_LLM", "1")
@@ -173,9 +174,9 @@ def test_reset_client_plus_cache_clear_reflects_env_change(monkeypatch):
     reset_client()
 
     client_after = get_client(auto_configure=True)
-    assert isinstance(client_after.backend, MockBackend), (
-        "Phase B: MockBackend must be installed after AGENTIC_NO_LLM=1 + cache_clear() + reset_client()"
-    )
+    assert isinstance(
+        client_after.backend, MockBackend
+    ), "Phase B: MockBackend must be installed after AGENTIC_NO_LLM=1 + cache_clear() + reset_client()"
 
 
 # ---------------------------------------------------------------------------
@@ -211,13 +212,12 @@ def test_reset_client_plus_cache_clear_reflects_env_change(monkeypatch):
     ],
 )
 def test_agentic_no_llm_truthiness(monkeypatch, raw, expected):
-    """The ``agentic_no_llm`` field validator must normalise common bool-ish
-    strings and coerce unknowns to False rather than raise ``ValidationError``
-    (P2 from Sprint B #5 follow-up review).
-    """
+    """The ``agentic_no_llm`` field validator must normalise common bool-ish strings and
+    coerce unknowns to False rather than raise ``ValidationError`` (P2 from Sprint B #5
+    follow-up review)."""
     monkeypatch.setenv("AGENTIC_NO_LLM", raw)
     get_settings.cache_clear()
 
-    assert get_settings().agentic_no_llm is expected, (
-        f"AGENTIC_NO_LLM={raw!r} should coerce to {expected}"
-    )
+    assert (
+        get_settings().agentic_no_llm is expected
+    ), f"AGENTIC_NO_LLM={raw!r} should coerce to {expected}"

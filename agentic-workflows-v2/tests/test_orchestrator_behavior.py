@@ -261,9 +261,9 @@ class TestCapabilityScoredAssignment:
             "Expected sec_task to be absent from assignments when no agent matches; "
             f"assignments = {assignments}"
         )
-        assert orch._subtasks["sec_task"].assigned_agent is None, (
-            "assigned_agent should remain None when no capable agent is registered"
-        )
+        assert (
+            orch._subtasks["sec_task"].assigned_agent is None
+        ), "assigned_agent should remain None when no capable agent is registered"
 
 
 # ---------------------------------------------------------------------------
@@ -272,7 +272,8 @@ class TestCapabilityScoredAssignment:
 
 
 class TestDependencyOrdering:
-    """Tests that DAG topological ordering and orchestrator ready-step logic are correct."""
+    """Tests that DAG topological ordering and orchestrator ready-step logic are
+    correct."""
 
     def _make_dag_step(self, name: str, deps: list[str]) -> StepDefinition:
         async def _noop(ctx):
@@ -290,9 +291,11 @@ class TestDependencyOrdering:
 
         order = dag.get_execution_order()
 
-        assert order == ["A", "B", "C"], (
-            f"Linear chain A→B→C must yield [A, B, C]; got {order}"
-        )
+        assert order == [
+            "A",
+            "B",
+            "C",
+        ], f"Linear chain A→B→C must yield [A, B, C]; got {order}"
 
     def test_diamond_ordering_constraints(self):
         """Test 6: Diamond A→(B,C)→D: A first, D last, B and C after A and before D."""
@@ -333,15 +336,15 @@ class TestDependencyOrdering:
 
         # Nothing executed yet
         ready_before = {st.id for st in orch._find_ready_subtasks(set())}
-        assert ready_before == {"A"}, (
-            f"Before any execution only A should be ready; got {ready_before}"
-        )
+        assert ready_before == {
+            "A"
+        }, f"Before any execution only A should be ready; got {ready_before}"
 
         # After A completes
         ready_after = {st.id for st in orch._find_ready_subtasks({"A"})}
-        assert ready_after == {"B"}, (
-            f"After A completes only B should be ready; got {ready_after}"
-        )
+        assert ready_after == {
+            "B"
+        }, f"After A completes only B should be ready; got {ready_after}"
 
 
 # ---------------------------------------------------------------------------
@@ -363,8 +366,9 @@ class TestFallbackChainRecovery:
         """Build an orchestrator with agents listed in (name, raises) order.
 
         The first candidate becomes the assigned_agent; the rest go into
-        _fallback_chains.  All agents share the same capability so scoring
-        gives them equal weight, but we force ordering by injecting directly.
+        _fallback_chains.  All agents share the same capability so
+        scoring gives them equal weight, but we force ordering by
+        injecting directly.
         """
         orch = OrchestratorAgent()
         cap = CapabilitySet.from_types(CapabilityType.CODE_GENERATION)
@@ -405,9 +409,9 @@ class TestFallbackChainRecovery:
         task_id, result = await orch._execute_subtask_with_fallback(st)
 
         assert task_id == "fallback_task"
-        assert st.status == StepStatus.SUCCESS, (
-            f"Expected SUCCESS after fallback recovered; got {st.status}"
-        )
+        assert (
+            st.status == StepStatus.SUCCESS
+        ), f"Expected SUCCESS after fallback recovered; got {st.status}"
         assert "primary" in call_log, "Primary agent should have been attempted"
         assert "fallback1" in call_log, "Fallback agent should have been invoked"
 
@@ -422,9 +426,11 @@ class TestFallbackChainRecovery:
 
         _, result = await orch._execute_subtask_with_fallback(st)
 
-        assert call_log == ["primary", "fb1", "fb2"], (
-            f"Agents must be tried in primary→fb1→fb2 order; invocations were: {call_log}"
-        )
+        assert call_log == [
+            "primary",
+            "fb1",
+            "fb2",
+        ], f"Agents must be tried in primary→fb1→fb2 order; invocations were: {call_log}"
         assert st.status == StepStatus.SUCCESS
 
     @pytest.mark.asyncio
@@ -444,13 +450,13 @@ class TestFallbackChainRecovery:
         task_id, result = await orch._execute_subtask_with_fallback(st)
 
         assert task_id == "fallback_task"
-        assert st.status == StepStatus.FAILED, (
-            f"All agents failed; expected FAILED status; got {st.status}"
-        )
+        assert (
+            st.status == StepStatus.FAILED
+        ), f"All agents failed; expected FAILED status; got {st.status}"
         # Structured handoff shape (no bare 'error' key).
-        assert result.get("handoff") is True, (
-            f"Exhaustion must emit a structured handoff; got {result}"
-        )
+        assert (
+            result.get("handoff") is True
+        ), f"Exhaustion must emit a structured handoff; got {result}"
         assert result["subtask_id"] == "fallback_task"
         assert result["failure_type"] == "all_agents_exhausted"
         assert result["attempted_agents"] == ["a1", "a2", "a3"]
@@ -459,9 +465,11 @@ class TestFallbackChainRecovery:
         assert result["suggested_next_action"], "must suggest a next action"
         assert "fallback_task" in result["suggested_next_action"]
         # All three agents attempted
-        assert call_log == ["a1", "a2", "a3"], (
-            f"All agents should be tried before giving up; log={call_log}"
-        )
+        assert call_log == [
+            "a1",
+            "a2",
+            "a3",
+        ], f"All agents should be tried before giving up; log={call_log}"
 
     @pytest.mark.asyncio
     async def test_failed_subtask_does_not_poison_independent_sibling(self):

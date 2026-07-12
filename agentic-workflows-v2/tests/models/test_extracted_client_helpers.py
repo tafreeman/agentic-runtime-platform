@@ -254,10 +254,11 @@ class TestRunWithFallback:
     async def test_circuit_resolved_skips_without_recording_failure(self) -> None:
         """CircuitResolvedError must not be treated as a model failure.
 
-        PR #74 review: a prior probe resolving the HALF_OPEN circuit means
-        the model is healthy (or freshly re-opened) — on_error must not run
-        (no failure recorded against a healthy model) and the loop moves to
-        the next candidate, mirroring call_with_fallback.
+        PR #74 review: a prior probe resolving the HALF_OPEN circuit
+        means the model is healthy (or freshly re-opened) — on_error
+        must not run (no failure recorded against a healthy model) and
+        the loop moves to the next candidate, mirroring
+        call_with_fallback.
         """
         from agentic_v2.models.model_stats import CircuitState
         from agentic_v2.models.smart_router import CircuitResolvedError

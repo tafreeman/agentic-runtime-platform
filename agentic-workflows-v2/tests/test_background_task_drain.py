@@ -31,9 +31,7 @@ skip_no_fakeredis = pytest.mark.skipif(
 async def _make_fake_store() -> RedisCircuitBreakerStore:
     """Create an in-memory Redis store backed by fakeredis."""
     fake_server = fakeredis.FakeServer()
-    fake_client = fakeredis.FakeAsyncRedis(
-        server=fake_server, decode_responses=True
-    )
+    fake_client = fakeredis.FakeAsyncRedis(server=fake_server, decode_responses=True)
     store = RedisCircuitBreakerStore(
         redis_url="redis://fake",
         prefix="test:drain:",
@@ -85,9 +83,9 @@ async def test_no_pending_tasks_after_drain() -> None:
 
     # Wait until at least one save task has started so the set is non-empty
     await save_started.wait()
-    assert len(router._background_tasks) > 0, (
-        "_background_tasks must be non-empty before drain (proves the test is non-trivial)"
-    )
+    assert (
+        len(router._background_tasks) > 0
+    ), "_background_tasks must be non-empty before drain (proves the test is non-trivial)"
 
     # Release the gated saves and drain
     drain_allowed.set()
@@ -111,7 +109,7 @@ async def test_drain_is_idempotent_when_no_tasks() -> None:
 @skip_no_fakeredis
 @pytest.mark.asyncio
 async def test_aclose_drains_tasks() -> None:
-    """aclose() delegates to drain_background_tasks() and empties the set."""
+    """Aclose() delegates to drain_background_tasks() and empties the set."""
     store = await _make_fake_store()
     router = SmartModelRouter(_redis_store=store, _auto_save=True)
     router._available_models.add("ollama:phi4")
