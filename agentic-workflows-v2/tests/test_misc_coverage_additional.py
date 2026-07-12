@@ -29,12 +29,18 @@ async def test_model_probe_route_covers_success_importerror_and_runtime_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake_module = SimpleNamespace(
-        probe_and_update_tier_defaults=lambda: {"available_providers": ["openai"]},
-        enumerate_known_models=lambda: [
+        probe_and_update_tier_defaults=lambda cloud_listing=None: {
+            "available_providers": ["openai"]
+        },
+        enumerate_known_models=lambda cloud_listing=None: [
             {"id": "openai:gpt-4o", "provider": "openai", "tier": 2, "available": True}
         ],
     )
     monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", fake_module)
+    # The route pre-fetches one shared cloud listing; keep it off the network.
+    monkeypatch.setattr(
+        "agentic_v2.models.cloud_discovery.discover_cloud_models", lambda: []
+    )
     result = await model_routes.probe_models()
     assert result["available_providers"] == ["openai"]
     assert result["models"] == [
@@ -43,10 +49,10 @@ async def test_model_probe_route_covers_success_importerror_and_runtime_failure(
     assert "no_llm_mode" in result
 
     fake_module = SimpleNamespace(
-        probe_and_update_tier_defaults=lambda: (_ for _ in ()).throw(
+        probe_and_update_tier_defaults=lambda cloud_listing=None: (_ for _ in ()).throw(
             RuntimeError("boom")
         ),
-        enumerate_known_models=lambda: [],
+        enumerate_known_models=lambda cloud_listing=None: [],
     )
     monkeypatch.setitem(sys.modules, "agentic_v2.langchain.models", fake_module)
     with pytest.raises(Exception) as exc_info:
