@@ -691,6 +691,19 @@ class TestSharedCloudListing:
     standalone callers such as the server-startup probe.
     """
 
+    @pytest.fixture(autouse=True)
+    def _stub_local_discovery(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Hermetic: no Ollama/LM Studio port probes, no ONNX filesystem walk."""
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_lmstudio_models", lambda: []
+        )
+        monkeypatch.setattr(
+            "agentic_v2.langchain.models.discover_onnx_models", lambda: []
+        )
+
     @staticmethod
     def _forbid_fetch(monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
         from agentic_v2.models.cloud_discovery import CloudModelInfo
@@ -728,9 +741,6 @@ class TestSharedCloudListing:
         from agentic_v2.models.cloud_discovery import CloudModelInfo
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
-        monkeypatch.setattr(
-            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
-        )
         calls = self._forbid_fetch(monkeypatch)
 
         by_id = {
@@ -752,9 +762,6 @@ class TestSharedCloudListing:
         from agentic_v2.langchain import models as lcm
 
         monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
-        monkeypatch.setattr(
-            "agentic_v2.langchain.models.discover_ollama_models", lambda: []
-        )
         calls = self._forbid_fetch(monkeypatch)
 
         lcm.detect_registry_drift()
