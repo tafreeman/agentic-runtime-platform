@@ -8,6 +8,7 @@ To update snapshots after an intentional schema change:
     git add tests/schemas/
     git commit -m "chore(schemas): update schema snapshots for <ModelName>"
 """
+
 from __future__ import annotations
 
 import json
@@ -17,6 +18,11 @@ import pytest
 
 from agentic_v2.contracts import (
     AgentMessage,
+    ChatDoneEvent,
+    ChatErrorEvent,
+    ChatMessage,
+    ChatRequest,
+    ChatTokenEvent,
     CodeGenerationOutput,
     CodeReviewInput,
     CodeReviewOutput,
@@ -55,6 +61,11 @@ COVERED_MODELS = [
     WorkflowEndEvent,
     EvaluationStartEvent,
     EvaluationCompleteEvent,
+    ChatMessage,
+    ChatRequest,
+    ChatTokenEvent,
+    ChatDoneEvent,
+    ChatErrorEvent,
 ]
 
 
