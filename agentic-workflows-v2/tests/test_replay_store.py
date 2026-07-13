@@ -18,6 +18,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from agentic_v2.server import replay_store as replay_store_module
 from agentic_v2.server.replay_store import (
     _REDIS_AVAILABLE,
     _SQLITE_AVAILABLE,
@@ -372,58 +373,92 @@ class TestSqliteReplayStore:
 # ---------------------------------------------------------------------------
 
 
+class _FakeTime:
+    """Stand-in for replay_store's ``time`` module: a hand-advanced clock.
+
+    The retention sweep compares each row's ``created_at`` stamp against
+    ``time.time()``; both sites live in ``replay_store``, so rebinding that
+    module's ``time`` attribute makes retention "elapse" only when a test
+    says so. Real sleeps raced the wall clock — a stalled CI runner could
+    age a *fresh* event past the 50ms retention window between its append
+    and the assertion reading it back (the flake this replaces).
+    """
+
+    def __init__(self, start: float = 1_000_000.0) -> None:
+        self.now = start
+
+    def time(self) -> float:
+        return self.now
+
+    def advance(self, seconds: float) -> None:
+        self.now += seconds
+
+
 @pytest.mark.skipif(not _SQLITE_AVAILABLE, reason="aiosqlite not installed")
 class TestSqliteReplayStoreRetention:
     """Tests for the lazy retention sweep on SqliteReplayStore.
 
     Rows are purged during append()/get_events()/_initialize() rather
-    than via a background sweep thread. Tests inject a tiny
-    retention_seconds (well under the 0.5s slow-test threshold) instead
-    of sleeping for the real default (3600s).
+    than via a background sweep thread. The store's clock is replaced by
+    :class:`_FakeTime`, so tests advance time deterministically instead of
+    sleeping — no wall-clock dependence, no real waiting.
     """
 
-    _TINY_RETENTION = 0.05
+    _RETENTION = 60.0
 
     @pytest.fixture
-    async def store(self, tmp_path):
-        """Provide a SqliteReplayStore with a tiny retention window."""
+    def clock(self, monkeypatch: pytest.MonkeyPatch) -> _FakeTime:
+        """Swap replay_store's time source for a manual clock."""
+        fake = _FakeTime()
+        monkeypatch.setattr(replay_store_module, "time", fake)
+        return fake
+
+    @pytest.fixture
+    async def store(self, tmp_path, clock):
+        """Provide a SqliteReplayStore driven by the fake clock."""
         db_path = str(tmp_path / "retention_test.db")
         instance = await SqliteReplayStore.connect(
-            db_path=db_path, retention_seconds=self._TINY_RETENTION
+            db_path=db_path, retention_seconds=self._RETENTION
         )
         yield instance
         await instance.close()
 
     @pytest.mark.asyncio
-    async def test_events_survive_within_grace_window(self, store) -> None:
-        """A just-appended event is still present immediately after append()."""
+    async def test_events_survive_within_grace_window(self, store, clock) -> None:
+        """An event younger than retention survives every sweep trigger."""
         await store.append("run-1", _event(0))
+        clock.advance(self._RETENTION / 2)
 
         assert await store.get_events("run-1") == [_event(0)]
 
     @pytest.mark.asyncio
-    async def test_events_purged_after_retention_via_append(self, store) -> None:
+    async def test_events_purged_after_retention_via_append(self, store, clock) -> None:
         """A later append() call sweeps rows that outlived retention_seconds."""
         await store.append("run-1", _event(0))
-        await asyncio.sleep(self._TINY_RETENTION * 4)
+        clock.advance(self._RETENTION + 1)
 
         # A second run's append triggers the lazy sweep; run-1's stale row
         # must be gone even though this append targets a different run_id.
+        # run-2's row is appended at the *current* fake instant, so it can
+        # never expire before the read below — the race the old sleep-based
+        # version left open.
         await store.append("run-2", _event(1))
 
         assert await store.get_events("run-1") == []
         assert await store.get_events("run-2") == [_event(1)]
 
     @pytest.mark.asyncio
-    async def test_events_purged_after_retention_via_get_events(self, store) -> None:
+    async def test_events_purged_after_retention_via_get_events(
+        self, store, clock
+    ) -> None:
         """get_events() alone (no new append) also converges on the sweep."""
         await store.append("run-1", _event(0))
-        await asyncio.sleep(self._TINY_RETENTION * 4)
+        clock.advance(self._RETENTION + 1)
 
         assert await store.get_events("run-1") == []
 
     @pytest.mark.asyncio
-    async def test_zero_retention_disables_sweep(self, tmp_path) -> None:
+    async def test_zero_retention_disables_sweep(self, tmp_path, clock) -> None:
         """retention_seconds=0 (or negative) disables the sweep entirely."""
         db_path = str(tmp_path / "no_retention.db")
         no_retention_store = await SqliteReplayStore.connect(
@@ -431,13 +466,15 @@ class TestSqliteReplayStoreRetention:
         )
         try:
             await no_retention_store.append("run-1", _event(0))
-            await asyncio.sleep(self._TINY_RETENTION * 4)
+            clock.advance(self._RETENTION * 100)
             assert await no_retention_store.get_events("run-1") == [_event(0)]
         finally:
             await no_retention_store.close()
 
     @pytest.mark.asyncio
-    async def test_initialize_sweeps_pre_existing_expired_rows(self, tmp_path) -> None:
+    async def test_initialize_sweeps_pre_existing_expired_rows(
+        self, tmp_path, clock
+    ) -> None:
         """A fresh connect() call sweeps rows already expired on disk.
 
         Simulates a process restart: the first store instance writes an
@@ -447,15 +484,15 @@ class TestSqliteReplayStoreRetention:
         """
         db_path = str(tmp_path / "restart_test.db")
         first_store = await SqliteReplayStore.connect(
-            db_path=db_path, retention_seconds=self._TINY_RETENTION
+            db_path=db_path, retention_seconds=self._RETENTION
         )
         await first_store.append("run-1", _event(0))
         await first_store.close()
 
-        await asyncio.sleep(self._TINY_RETENTION * 4)
+        clock.advance(self._RETENTION + 1)
 
         second_store = await SqliteReplayStore.connect(
-            db_path=db_path, retention_seconds=self._TINY_RETENTION
+            db_path=db_path, retention_seconds=self._RETENTION
         )
         try:
             assert await second_store.get_events("run-1") == []
