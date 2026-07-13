@@ -54,19 +54,13 @@ test.describe('full-stack workflow run', () => {
     // itself has non-zero dimensions — a zero-sized canvas hides every node,
     // and asserting on nodes first turns a container-sizing failure into a
     // misleading "node hidden" timeout (the PR #203 flake's failure shape).
+    // toBeVisible() asserts a non-empty bounding box (width AND height > 0),
+    // so it is exactly this guard, with Playwright-native rechecking.
     const flowCanvas = page.locator('.react-flow').first();
-    await expect
-      .poll(
-        async () => {
-          const box = await flowCanvas.boundingBox();
-          return box ? Math.min(box.width, box.height) : 0;
-        },
-        {
-          timeout: 15_000,
-          message: 'ReactFlow canvas must acquire a non-zero size',
-        }
-      )
-      .toBeGreaterThan(0);
+    await expect(
+      flowCanvas,
+      'ReactFlow canvas must acquire a non-zero size'
+    ).toBeVisible({ timeout: 15_000 });
 
     // The live DAG renders (ReactFlow nodes carry data-testid="dag-node-<id>")
     // and mounts every step from the definition — not just the entry node.
