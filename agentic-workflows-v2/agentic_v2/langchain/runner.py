@@ -802,7 +802,9 @@ class WorkflowRunner:
         Returns:
             Number of cache entries removed (0 if nothing was cached).
         """
-        stale_keys = [key for key in self._graph_cache if key[0] == workflow_name]
+        # Snapshot the keys: sync routes run in FastAPI's threadpool, so
+        # another request may insert into the cache mid-iteration.
+        stale_keys = [key for key in list(self._graph_cache) if key[0] == workflow_name]
         for key in stale_keys:
             del self._graph_cache[key]
         return len(stale_keys)

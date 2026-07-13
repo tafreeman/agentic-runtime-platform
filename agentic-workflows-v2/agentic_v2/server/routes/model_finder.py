@@ -46,9 +46,12 @@ SortField = Literal["downloads", "release_date", "likes", "forks", "fit"]
 class Accelerator(BaseModel):
     kind: Literal["gpu", "npu"]
     name: str
-    memory_gb: float | None = None
+    # ge=0, not gt: shared with the SystemProfile response, and probes may
+    # legitimately report 0 for shared-memory iGPUs.
+    memory_gb: float | None = Field(default=None, ge=0)
     vendor: str | None = None
-    tops: float | None = None  # INT8 AI throughput in TOPS; None when unknown
+    # INT8 AI throughput in TOPS; None when unknown.
+    tops: float | None = Field(default=None, ge=0)
 
 
 class SystemProfile(BaseModel):
@@ -77,12 +80,15 @@ class HardwareOverrideRequest(BaseModel):
     keeps coming from the live probes in :func:`get_system_profile`.
     """
 
+    # The form's min="0" is client-side only; without server bounds a negative
+    # override corrupts recommendation scoring until cleared (PR #199 review).
+    # system_tops may be exactly 0 ("no accelerators"), the rest cannot.
     cpu_name: str | None = None
-    cpu_cores_logical: int | None = None
-    cpu_cores_physical: int | None = None
-    cpu_max_mhz: float | None = None
-    ram_gb: float | None = None
-    system_tops: float | None = None
+    cpu_cores_logical: int | None = Field(default=None, gt=0)
+    cpu_cores_physical: int | None = Field(default=None, gt=0)
+    cpu_max_mhz: float | None = Field(default=None, gt=0)
+    ram_gb: float | None = Field(default=None, gt=0)
+    system_tops: float | None = Field(default=None, ge=0)
     accelerators: list[Accelerator] | None = None
 
     @field_validator(
@@ -656,10 +662,12 @@ def _write_hardware_override(payload: dict[str, Any]) -> Path:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(text)
         os.replace(tmp_name, override_path)
-    except OSError:
+    # Exception, not OSError: any failure (encoding, serialization quirks)
+    # must not strand the temp file. The with-block owns fd cleanup.
+    except Exception:
         try:
             os.unlink(tmp_name)
-        except FileNotFoundError:
+        except OSError:
             pass
         raise
     return override_path

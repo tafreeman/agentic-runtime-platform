@@ -113,6 +113,67 @@ class TestPutProfileOverride:
         assert response.status_code == 422
         assert not override_path.exists()
 
+    @pytest.mark.parametrize(
+        "field",
+        ["cpu_cores_logical", "cpu_cores_physical", "cpu_max_mhz", "ram_gb"],
+    )
+    def test_negative_numeric_override_is_422(
+        self, client, override_path, field
+    ) -> None:
+        """The form's min="0" is client-side only; the server must reject too."""
+        response = client.put(
+            "/api/model-finder/profile-override",
+            json={field: -4, "accelerators": []},
+        )
+
+        assert response.status_code == 422
+        assert not override_path.exists()
+
+    @pytest.mark.parametrize("field", ["cpu_cores_logical", "ram_gb"])
+    def test_zero_core_or_ram_override_is_422(
+        self, client, override_path, field
+    ) -> None:
+        """Zero cores/RAM is as corrupting as negative for fit scoring."""
+        response = client.put(
+            "/api/model-finder/profile-override",
+            json={field: 0, "accelerators": []},
+        )
+
+        assert response.status_code == 422
+        assert not override_path.exists()
+
+    def test_negative_system_tops_is_422_but_zero_allowed(
+        self, client, override_path
+    ) -> None:
+        """system_tops is a sum: exactly 0 means "no accelerators" and is legal."""
+        rejected = client.put(
+            "/api/model-finder/profile-override",
+            json={"system_tops": -1, "accelerators": []},
+        )
+        assert rejected.status_code == 422
+        assert not override_path.exists()
+
+        accepted = client.put(
+            "/api/model-finder/profile-override",
+            json={"system_tops": 0, "accelerators": []},
+        )
+        assert accepted.status_code == 200, accepted.text
+
+    def test_negative_accelerator_memory_or_tops_is_422(
+        self, client, override_path
+    ) -> None:
+        for payload in (
+            {"kind": "gpu", "name": "Bad GPU", "memory_gb": -8},
+            {"kind": "npu", "name": "Bad NPU", "tops": -40},
+        ):
+            response = client.put(
+                "/api/model-finder/profile-override",
+                json={"accelerators": [payload]},
+            )
+
+            assert response.status_code == 422, payload
+            assert not override_path.exists()
+
     def test_accelerators_drive_system_tops_and_tier(self, client) -> None:
         body = {
             "accelerators": [
@@ -147,8 +208,7 @@ class TestDeleteProfileOverride:
         assert not override_path.exists()
         # GET agrees the override is gone.
         assert (
-            client.get("/api/model-finder/profile-override").json()["override"]
-            is None
+            client.get("/api/model-finder/profile-override").json()["override"] is None
         )
 
     def test_missing_file_is_tolerated(self, client, override_path) -> None:
