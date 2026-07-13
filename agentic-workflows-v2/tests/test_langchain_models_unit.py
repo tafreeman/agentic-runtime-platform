@@ -241,12 +241,14 @@ class TestEnumerateKnownModelsMerge:
     ) -> None:
         """A discovered model absent from every tier chain is appended at tier 0
         carrying its cloud/capability/running metadata."""
+        # smollm2 is deliberately NOT declared in model_registry.yaml — the
+        # test needs a discovered-only id (gemma4:31b graduated into tier 1).
         monkeypatch.setattr(
             "agentic_v2.langchain.models.discover_ollama_models",
             lambda: [
                 OllamaModelInfo(
-                    id="ollama:gemma4:31b",
-                    name="gemma4:31b",
+                    id="ollama:smollm2:135m",
+                    name="smollm2:135m",
                     cloud=False,
                     capabilities=("completion", "tools", "thinking"),
                     running=True,
@@ -254,14 +256,14 @@ class TestEnumerateKnownModelsMerge:
             ],
         )
         models = enumerate_known_models()
-        gemma = next((m for m in models if m["id"] == "ollama:gemma4:31b"), None)
-        assert gemma is not None, "discovered local model must appear in the catalog"
-        assert gemma["tier"] == 0
-        assert gemma["provider"] == "ollama"
-        assert gemma["available"] is True
-        assert gemma["cloud"] is False
-        assert gemma["capabilities"] == ["completion", "tools", "thinking"]
-        assert gemma["running"] is True
+        smollm = next((m for m in models if m["id"] == "ollama:smollm2:135m"), None)
+        assert smollm is not None, "discovered local model must appear in the catalog"
+        assert smollm["tier"] == 0
+        assert smollm["provider"] == "ollama"
+        assert smollm["available"] is True
+        assert smollm["cloud"] is False
+        assert smollm["capabilities"] == ["completion", "tools", "thinking"]
+        assert smollm["running"] is True
 
     def test_discovered_cloud_model_marked_cloud(
         self, monkeypatch: pytest.MonkeyPatch
@@ -768,3 +770,92 @@ class TestSharedCloudListing:
         enumerate_known_models()
 
         assert calls["n"] == 2
+
+
+class TestBuildOllamaModelRouting:
+    """Local-first vs ollama.com routing in build_ollama_model (ADR-051)."""
+
+    @pytest.fixture(autouse=True)
+    def _clean_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+        monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
+
+    def _patch_local_names(
+        self, monkeypatch: pytest.MonkeyPatch, names: frozenset[str]
+    ) -> None:
+        monkeypatch.setattr(
+            "agentic_v2.models.ollama_discovery.local_model_names",
+            lambda: names,
+        )
+
+    def test_no_key_stays_local_without_probing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Without OLLAMA_API_KEY behavior is unchanged and no probe happens."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        def _boom() -> frozenset[str]:  # pragma: no cover - must not be called
+            raise AssertionError("local tags must not be probed without a key")
+
+        monkeypatch.setattr(
+            "agentic_v2.models.ollama_discovery.local_model_names", _boom
+        )
+        model = build_ollama_model("gpt-oss:120b", 0.0)
+        assert model.base_url == "http://localhost:11434"
+        assert not model.client_kwargs
+
+    def test_key_with_locally_served_model_stays_local(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A model present in local /api/tags keeps using the local daemon."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        self._patch_local_names(monkeypatch, frozenset({"qwen3-coder:30b"}))
+        model = build_ollama_model("qwen3-coder:30b", 0.0)
+        assert model.base_url == "http://localhost:11434"
+        assert not model.client_kwargs
+
+    def test_key_with_latest_alias_stays_local(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A bare request name matches its ':latest' local tag."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        self._patch_local_names(monkeypatch, frozenset({"phi4:latest"}))
+        model = build_ollama_model("phi4", 0.0)
+        assert model.base_url == "http://localhost:11434"
+
+    def test_key_with_mixed_case_request_stays_local(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Tag matching is case-insensitive in both directions: the daemon
+        resolves ``Gemma4:31b`` and ``gemma4:31b`` to the same model, and
+        locally pulled tags may themselves carry mixed case."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        self._patch_local_names(
+            monkeypatch,
+            frozenset({"gemma4:31b", "hf.co/lmstudio/Qwen3.6-27B-GGUF:Q8_0"}),
+        )
+        for requested in ("Gemma4:31b", "hf.co/lmstudio/qwen3.6-27b-gguf:Q8_0"):
+            model = build_ollama_model(requested, 0.0)
+            assert model.base_url == "http://localhost:11434"
+            assert not model.client_kwargs
+
+    def test_key_with_cloud_only_model_routes_to_ollama_com(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A model absent locally routes to ollama.com with bearer auth on both the sync
+        and async clients."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        self._patch_local_names(monkeypatch, frozenset({"qwen3-coder:30b"}))
+        model = build_ollama_model("gpt-oss:120b", 0.0)
+        assert model.base_url == "https://ollama.com"
+        expected = {"headers": {"Authorization": "Bearer test-key"}}
+        assert model.client_kwargs == expected
+        assert model.async_client_kwargs == expected

@@ -43,9 +43,10 @@ ModelStatus = Literal["active", "deprecated", "quarantined"]
 
 _TOKENS_PER_MTOK = 1_000_000
 
-# Default ultimate fallback if the registry is missing/empty (mirrors the historic
-# hardcoded value in langchain.models.get_model_candidates_for_tier).
-_DEFAULT_ULTIMATE_FALLBACK = "ollama:qwen3:8b"
+# Default ultimate fallback if the registry is missing/empty (mirrors the
+# registry's special.tier_ultimate_fallback; must be a model actually kept
+# pulled on the local daemon).
+_DEFAULT_ULTIMATE_FALLBACK = "ollama:qwen3-coder:30b"
 
 
 # ---------------------------------------------------------------------------

@@ -327,3 +327,85 @@ def test_api_key_never_appears_in_logs(
 
     assert result == []
     assert "super-secret-token" not in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# local_model_names (cached /api/tags name set for builder routing, ADR-051)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _reset_local_tags_cache(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Isolate the module-level tags cache between tests."""
+    monkeypatch.setattr(ollama_discovery, "_local_tags_cache", None)
+
+
+@pytest.mark.unit
+def test_local_model_names_parses_and_caches(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """First call probes /api/tags; the second is served from the cache."""
+    calls: list[tuple[str, dict[str, str] | None]] = []
+    routes = {
+        _LOCAL_TAGS: {
+            "models": [
+                {"name": "gemma4:31b"},
+                {"model": "qwen3-coder:30b"},
+                {"name": 123},
+            ]
+        }
+    }
+    _install_fake_get(monkeypatch, routes, calls)
+
+    first = ollama_discovery.local_model_names()
+    second = ollama_discovery.local_model_names()
+
+    assert first == frozenset({"gemma4:31b", "qwen3-coder:30b"})
+    assert second == first
+    assert len(calls) == 1
+
+
+@pytest.mark.unit
+def test_local_model_names_failure_caches_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A down daemon yields an empty set and is not re-probed within the TTL."""
+    calls: list[tuple[str, dict[str, str] | None]] = []
+    _install_fake_get(monkeypatch, {}, calls)
+
+    assert ollama_discovery.local_model_names() == frozenset()
+    assert ollama_discovery.local_model_names() == frozenset()
+    assert len(calls) == 1
+
+
+@pytest.mark.unit
+def test_local_model_names_refreshes_after_ttl(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The cache expires after _LOCAL_TAGS_TTL_SECONDS and re-probes."""
+    calls: list[tuple[str, dict[str, str] | None]] = []
+    routes = {_LOCAL_TAGS: {"models": [{"name": "gemma4:31b"}]}}
+    _install_fake_get(monkeypatch, routes, calls)
+
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(ollama_discovery.time, "monotonic", lambda: clock["now"])
+
+    ollama_discovery.local_model_names()
+    clock["now"] += ollama_discovery._LOCAL_TAGS_TTL_SECONDS + 1
+    ollama_discovery.local_model_names()
+
+    assert len(calls) == 2
+
+
+@pytest.mark.unit
+def test_local_model_names_honors_base_url_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OLLAMA_BASE_URL redirects the tags probe (trailing slash tolerated)."""
+    calls: list[tuple[str, dict[str, str] | None]] = []
+    routes = {"http://box:11434/api/tags": {"models": [{"name": "phi4"}]}}
+    _install_fake_get(monkeypatch, routes, calls)
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://box:11434/")
+
+    assert ollama_discovery.local_model_names() == frozenset({"phi4"})
+    assert calls[0][0] == "http://box:11434/api/tags"

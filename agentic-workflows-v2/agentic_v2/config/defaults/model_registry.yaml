@@ -33,8 +33,12 @@ models:
     price_in: null
     price_out: null
     context_window: null
-  - id: openai:gpt-4o-mini
-    provider: openai
+  # In this deployment OPENAI_BASE_URL is aliased to NVIDIA NIM, so plain
+  # ``openai:`` OpenAI ids (gpt-4o*) can never be served and were permanently
+  # quarantined by the boot drift check — the NIM catalog is declared under
+  # the ``nvidia:`` provider instead (ADR-051).
+  - id: nvidia:meta/llama-3.1-8b-instruct
+    provider: nvidia
     tiers: [1]
     capability: fast
     status: active
@@ -49,7 +53,7 @@ models:
     price_in: null
     price_out: null
     context_window: null
-  - id: ollama:gemma3:4b
+  - id: ollama:gemma4:31b
     provider: ollama
     tiers: [1]
     capability: local
@@ -75,15 +79,17 @@ models:
     price_in: null
     price_out: null
     context_window: null
-  - id: openai:gpt-4o
-    provider: openai
-    tiers: [2, 3, 4, 5]
+  - id: nvidia:deepseek-ai/deepseek-v4-flash
+    provider: nvidia
+    tiers: [2, 3]
     capability: balanced
     status: active
     price_in: null
     price_out: null
     context_window: null
-  - id: anthropic:claude-sonnet-4-6-20260219
+  # Undated alias: Anthropic dropped the dated ``-20260219`` id from its
+  # /v1/models listing (the boot probe quarantined it on every start).
+  - id: anthropic:claude-sonnet-4-6
     provider: anthropic
     tiers: [2, 3, 4]
     capability: balanced
@@ -91,17 +97,9 @@ models:
     price_in: null
     price_out: null
     context_window: null
-  - id: ollama:qwen3:8b
-    provider: ollama
-    tiers: [2]
-    capability: local
-    status: active
-    price_in: 0.0
-    price_out: 0.0
-    context_window: null
   - id: ollama:qwen3-coder:30b
     provider: ollama
-    tiers: [3, 4, 5]
+    tiers: [2, 3, 4, 5]
     capability: local
     status: active
     price_in: 0.0
@@ -111,6 +109,14 @@ models:
   # --- tier 4-5: capability escalation (hard problems, deep analysis) ---
   - id: gemini:gemini-2.5-pro
     provider: gemini
+    tiers: [4, 5]
+    capability: reasoning
+    status: active
+    price_in: null
+    price_out: null
+    context_window: null
+  - id: nvidia:deepseek-ai/deepseek-v4-pro
+    provider: nvidia
     tiers: [4, 5]
     capability: reasoning
     status: active
@@ -134,31 +140,31 @@ tiers:
   1:
     - gemini:gemini-2.5-flash-lite
     - gh:openai/gpt-4o-mini
-    - openai:gpt-4o-mini
+    - nvidia:meta/llama-3.1-8b-instruct
     - anthropic:claude-haiku-4-5-20251001
-    - ollama:gemma3:4b
+    - ollama:gemma4:31b
   2:
     - gemini:gemini-2.5-flash
     - gh:openai/gpt-4o
-    - openai:gpt-4o
-    - anthropic:claude-sonnet-4-6-20260219
-    - ollama:qwen3:8b
+    - nvidia:deepseek-ai/deepseek-v4-flash
+    - anthropic:claude-sonnet-4-6
+    - ollama:qwen3-coder:30b
   3:
     - gemini:gemini-2.5-flash
-    - anthropic:claude-sonnet-4-6-20260219
-    - openai:gpt-4o
+    - anthropic:claude-sonnet-4-6
+    - nvidia:deepseek-ai/deepseek-v4-flash
     - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
   4:
     - gemini:gemini-2.5-pro
-    - anthropic:claude-sonnet-4-6-20260219
-    - openai:gpt-4o
+    - anthropic:claude-sonnet-4-6
+    - nvidia:deepseek-ai/deepseek-v4-pro
     - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
   5:
     - gemini:gemini-2.5-pro
     - anthropic:claude-opus-4-6
-    - openai:gpt-4o
+    - nvidia:deepseek-ai/deepseek-v4-pro
     - gh:openai/gpt-4o
     - ollama:qwen3-coder:30b
 
@@ -173,4 +179,4 @@ tiers:
 special:
   judge_default: gh:openai/gpt-4o
   notebooklm_fallback: gemini:gemini-2.5-pro
-  tier_ultimate_fallback: ollama:qwen3:8b
+  tier_ultimate_fallback: ollama:qwen3-coder:30b
