@@ -486,8 +486,10 @@ class TestSqliteReplayStoreRetention:
         first_store = await SqliteReplayStore.connect(
             db_path=db_path, retention_seconds=self._RETENTION
         )
-        await first_store.append("run-1", _event(0))
-        await first_store.close()
+        try:
+            await first_store.append("run-1", _event(0))
+        finally:
+            await first_store.close()
 
         clock.advance(self._RETENTION + 1)
 
