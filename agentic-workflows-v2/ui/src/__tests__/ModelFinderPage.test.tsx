@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ModelFinderPage from "../pages/ModelFinderPage";
+import { recordVerification } from "../lib/modelVerification";
 import type {
   ModelCandidate,
   ModelProbeResponse,
@@ -10,6 +12,9 @@ import type {
 
 const mockGetModelRecommendations = vi.fn();
 const mockProbeModels = vi.fn();
+const mockGetHardwareOverride = vi.fn();
+const mockPutHardwareOverride = vi.fn();
+const mockDeleteHardwareOverride = vi.fn();
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual("../api/client");
@@ -18,6 +23,10 @@ vi.mock("../api/client", async () => {
     getModelRecommendations: (...args: unknown[]) =>
       mockGetModelRecommendations(...args),
     probeModels: (...args: unknown[]) => mockProbeModels(...args),
+    getHardwareOverride: (...args: unknown[]) => mockGetHardwareOverride(...args),
+    putHardwareOverride: (...args: unknown[]) => mockPutHardwareOverride(...args),
+    deleteHardwareOverride: (...args: unknown[]) =>
+      mockDeleteHardwareOverride(...args),
   };
 });
 
@@ -109,13 +118,20 @@ function makeProbe(
   };
 }
 
-function renderPage() {
+function renderPage(initialEntry = "/models") {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ModelFinderPage />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path="/models" element={<ModelFinderPage />} />
+        </Routes>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -123,8 +139,18 @@ function renderPage() {
 describe("ModelFinderPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     mockGetModelRecommendations.mockResolvedValue(makeResponse());
     mockProbeModels.mockResolvedValue(makeProbe());
+    mockGetHardwareOverride.mockResolvedValue({ override: null });
+    mockPutHardwareOverride.mockResolvedValue({
+      profile: makeResponse().profile,
+      override: {},
+    });
+    mockDeleteHardwareOverride.mockResolvedValue({
+      profile: makeResponse().profile,
+      override: null,
+    });
   });
 
   it("exposes the category and sort selects with accessible names", async () => {
@@ -350,5 +376,221 @@ describe("ModelFinderPage", () => {
     expect(
       screen.getByRole("button", { name: "Rescan providers" }),
     ).toBeInTheDocument();
+  });
+
+  it("labels keyed providers honestly instead of claiming they are live", async () => {
+    renderPage();
+
+    const copy = await screen.findByText(/4 models · 2 providers keyed/);
+    expect(copy).toHaveAttribute(
+      "title",
+      "providers with credentials configured — not a liveness check",
+    );
+    expect(screen.queryByText(/2 live/)).not.toBeInTheDocument();
+  });
+
+  it("opens the playground with the deep-linked model preselected", async () => {
+    renderPage("/models?tab=playground&model=openai:gpt-4o");
+
+    // Playground tab is active straight from the URL — no finder sections.
+    expect(screen.queryByTestId("probe-mode")).not.toBeInTheDocument();
+    const picker = (await screen.findByTestId(
+      "chat-model-picker",
+    )) as HTMLSelectElement;
+    await waitFor(() => expect(picker.value).toBe("openai:gpt-4o"));
+  });
+
+  it("filters the catalog by substring and auto-expands matching providers", async () => {
+    renderPage();
+    await screen.findByTestId("probe-mode");
+
+    fireEvent.change(screen.getByTestId("catalog-search"), {
+      target: { value: "qwen" },
+    });
+
+    expect(screen.getByTestId("catalog-search-count")).toHaveTextContent(
+      "1 / 4 models",
+    );
+    // The match renders without clicking through the accordion…
+    expect(screen.getByText("ollama:qwen3:8b")).toBeInTheDocument();
+    // …and non-matching models/providers are filtered out entirely.
+    expect(
+      screen.queryByText("anthropic:claude-haiku-4-5"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /anthropic/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows an empty search state when nothing matches", async () => {
+    renderPage();
+    await screen.findByTestId("probe-mode");
+
+    fireEvent.change(screen.getByTestId("catalog-search"), {
+      target: { value: "does-not-exist" },
+    });
+
+    expect(screen.getByTestId("catalog-search-count")).toHaveTextContent(
+      "0 / 4 models",
+    );
+    expect(screen.getByText(/no models match/)).toBeInTheDocument();
+  });
+
+  it("deep-links a catalog model into the playground via its chat action", async () => {
+    renderPage();
+
+    const anthropicRow = await screen.findByRole("button", {
+      name: /anthropic.*ready/,
+    });
+    fireEvent.click(anthropicRow);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Open anthropic:claude-sonnet-4-6 in playground",
+      }),
+    );
+
+    // Tab flips to the playground with the model preloaded from the URL.
+    const picker = (await screen.findByTestId(
+      "chat-model-picker",
+    )) as HTMLSelectElement;
+    await waitFor(() => expect(picker.value).toBe("anthropic:claude-sonnet-4-6"));
+    expect(screen.queryByTestId("probe-mode")).not.toBeInTheDocument();
+  });
+
+  it("shows playground-verified badges on catalog rows", async () => {
+    recordVerification("anthropic:claude-haiku-4-5", "ok");
+    recordVerification("anthropic:claude-sonnet-4-6", "error", "quota hit");
+    renderPage();
+
+    const anthropicRow = await screen.findByRole("button", {
+      name: /anthropic.*ready/,
+    });
+    fireEvent.click(anthropicRow);
+
+    expect(screen.getByText("✓ ok")).toBeInTheDocument();
+    expect(screen.getByText("✗ failed")).toBeInTheDocument();
+  });
+
+  it("collapses empty fit bands to a compact one-line row", async () => {
+    renderPage();
+
+    // Default fixture: S, A, C populated; B empty.
+    expect(await screen.findByTestId("fit-band-empty-b")).toHaveTextContent(
+      "workable — none",
+    );
+    expect(screen.queryByText("no models in this band")).not.toBeInTheDocument();
+    // Populated bands still render their full cards.
+    expect(screen.getByText("acme/headroom-7b")).toBeInTheDocument();
+  });
+
+  it("captions the S band when every runnable model fits with headroom", async () => {
+    mockGetModelRecommendations.mockResolvedValue(
+      makeResponse({
+        models: [
+          makeModel({ id: "s-1", name: "acme/headroom-7b", fit_score: 95 }),
+          makeModel({ id: "s-2", name: "acme/second-7b", fit_score: 90 }),
+        ],
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByTestId("fit-headroom-caption")).toHaveTextContent(
+      "all matches fit with headroom on this machine",
+    );
+    // Every other band is empty and compact.
+    expect(screen.getByTestId("fit-band-empty-a")).toBeInTheDocument();
+    expect(screen.getByTestId("fit-band-empty-b")).toBeInTheDocument();
+    expect(screen.getByTestId("fit-band-empty-c")).toBeInTheDocument();
+  });
+
+  it("saves the hardware override with a typed PUT body and refreshes", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId("edit-specs"));
+    await waitFor(() => expect(mockGetHardwareOverride).toHaveBeenCalled());
+
+    fireEvent.change(await screen.findByTestId("spec-ram-gb"), {
+      target: { value: "64" },
+    });
+    fireEvent.change(screen.getByTestId("spec-cpu-cores"), {
+      target: { value: "24" },
+    });
+    fireEvent.change(screen.getByTestId("spec-cpu-name"), {
+      target: { value: "Ryzen 9 7900X" },
+    });
+    fireEvent.change(screen.getByTestId("spec-system-tops"), {
+      target: { value: "45" },
+    });
+    fireEvent.change(screen.getByTestId("spec-accel-kind"), {
+      target: { value: "gpu" },
+    });
+    fireEvent.change(screen.getByTestId("spec-accel-name"), {
+      target: { value: "RTX 5090" },
+    });
+    fireEvent.change(screen.getByTestId("spec-accel-memory"), {
+      target: { value: "32" },
+    });
+    fireEvent.change(screen.getByTestId("spec-accel-tops"), {
+      target: { value: "1300" },
+    });
+
+    fireEvent.click(screen.getByTestId("save-specs"));
+
+    await waitFor(() => expect(mockPutHardwareOverride).toHaveBeenCalledTimes(1));
+    expect(mockPutHardwareOverride).toHaveBeenCalledWith({
+      cpu_name: "Ryzen 9 7900X",
+      cpu_cores_logical: 24,
+      ram_gb: 64,
+      system_tops: 45,
+      accelerators: [
+        { kind: "gpu", name: "RTX 5090", memory_gb: 32, tops: 1300 },
+      ],
+    });
+
+    // Saving invalidates both derived queries so the page re-derives.
+    await waitFor(() => {
+      expect(mockProbeModels).toHaveBeenCalledTimes(2);
+      expect(mockGetModelRecommendations).toHaveBeenCalledTimes(2);
+    });
+    // The form closes after a successful save.
+    expect(
+      screen.queryByTestId("hardware-override-form"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("prefills the specs form from the persisted override", async () => {
+    mockGetHardwareOverride.mockResolvedValue({
+      override: {
+        ram_gb: 128,
+        cpu_name: "Pinned CPU",
+        accelerators: [{ kind: "npu", name: "NPU X", memory_gb: 16, tops: 40 }],
+      },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId("edit-specs"));
+
+    expect(await screen.findByTestId("spec-ram-gb")).toHaveValue(128);
+    expect(screen.getByTestId("spec-cpu-name")).toHaveValue("Pinned CPU");
+    expect(screen.getByTestId("spec-accel-kind")).toHaveValue("npu");
+    expect(screen.getByTestId("spec-accel-name")).toHaveValue("NPU X");
+    expect(screen.getByTestId("spec-accel-memory")).toHaveValue(16);
+    expect(screen.getByTestId("spec-accel-tops")).toHaveValue(40);
+  });
+
+  it("clears the hardware override via DELETE and refreshes", async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId("edit-specs"));
+    fireEvent.click(await screen.findByTestId("clear-specs"));
+
+    await waitFor(() =>
+      expect(mockDeleteHardwareOverride).toHaveBeenCalledTimes(1),
+    );
+    await waitFor(() => expect(mockProbeModels).toHaveBeenCalledTimes(2));
+    expect(
+      screen.queryByTestId("hardware-override-form"),
+    ).not.toBeInTheDocument();
   });
 });

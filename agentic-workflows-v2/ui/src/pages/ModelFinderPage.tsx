@@ -1,15 +1,16 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Cpu, Gauge, HardDrive, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import BTopBar from "../components/layout/BTopBar";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
+import HardwareOverrideForm from "../components/models/HardwareOverrideForm";
+import ProviderProbeList from "../components/models/ProviderProbeList";
 import { getModelRecommendations, probeModels } from "../api/client";
 import type {
   ModelCandidate,
-  ModelProbeResponse,
   ModelSortField,
   ModelTaskCategory,
-  ProbedModel,
 } from "../api/types";
 
 const CATEGORIES: Array<ModelTaskCategory | "all"> = [
@@ -86,48 +87,6 @@ const CAPABILITY_TIERS: readonly CapabilityTier[] = [
     match: (m) => !m.runnable,
   },
 ];
-
-// Provider backends from the live probe — the full known catalog grouped by
-// provider, available (keys present) first.
-interface ProbeProviderGroup {
-  readonly name: string;
-  readonly available: boolean;
-  readonly models: ProbedModel[];
-}
-
-function groupProbeByProvider(
-  probe: ModelProbeResponse | undefined,
-): ProbeProviderGroup[] {
-  if (!probe) return [];
-  const available = new Set(probe.available_providers);
-  const byName = new Map<string, ProbedModel[]>();
-  for (const model of probe.models) {
-    const bucket = byName.get(model.provider);
-    if (bucket) bucket.push(model);
-    else byName.set(model.provider, [model]);
-  }
-  return Array.from(byName.entries())
-    .map(([name, list]) => ({
-      name,
-      available: available.has(name),
-      models: list
-        .slice()
-        .sort((a, b) => a.tier - b.tier || a.id.localeCompare(b.id)),
-    }))
-    .sort(
-      (a, b) =>
-        Number(b.available) - Number(a.available) ||
-        b.models.length - a.models.length ||
-        a.name.localeCompare(b.name),
-    );
-}
-
-/** Capability-tier (1–5) accent: T1/T2 blue, T3 amber, T4/T5 clay. */
-function probeTierColor(tier: number): string {
-  if (tier >= 4) return "rgb(var(--b-clay))";
-  if (tier === 3) return "rgb(var(--b-amber))";
-  return "rgb(var(--b-blue))";
-}
 
 const SECTION_LABEL =
   "font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint";
@@ -213,10 +172,38 @@ function TabButton({
 }
 
 export default function ModelFinderPage() {
-  const [tab, setTab] = useState<ModelRouterTab>("finder");
+  // URL-driven tab state (contract: /models?tab=playground&model=<id>) so the
+  // playground is deep-linkable from anywhere in the console.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: ModelRouterTab =
+    searchParams.get("tab") === "playground" ? "playground" : "finder";
+  const initialPlaygroundModel = searchParams.get("model") ?? "";
+
   const [category, setCategory] = useState<ModelTaskCategory | "all">("all");
   const [sortBy, setSortBy] = useState<ModelSortField>("downloads");
-  const [openProvider, setOpenProvider] = useState<string | null>(null);
+  const [specsOpen, setSpecsOpen] = useState(false);
+
+  const openTab = (next: ModelRouterTab) => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (next === "playground") {
+        params.set("tab", "playground");
+      } else {
+        params.delete("tab");
+        params.delete("model");
+      }
+      return params;
+    });
+  };
+
+  const openModelInPlayground = (modelId: string) => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("tab", "playground");
+      params.set("model", modelId);
+      return params;
+    });
+  };
 
   const {
     data,
@@ -253,8 +240,26 @@ export default function ModelFinderPage() {
       .join(" / ");
   }, [data]);
 
-  const models = data?.models ?? [];
-  const probeProviders = useMemo(() => groupProbeByProvider(probe), [probe]);
+  const models = useMemo(() => data?.models ?? [], [data]);
+
+  // Fit bands: keep the full cards only where models exist — on capable
+  // hardware the scorer is bimodal (everything lands in S), so empty A/B/C
+  // bands collapse to one compact line each instead of noisy empty boxes.
+  const tierBuckets = useMemo(
+    () =>
+      CAPABILITY_TIERS.map((tier) => ({
+        tier,
+        tierModels: models.filter(tier.match),
+      })),
+    [models],
+  );
+  const populatedBuckets = tierBuckets.filter((b) => b.tierModels.length > 0);
+  const emptyBuckets = tierBuckets.filter((b) => b.tierModels.length === 0);
+  const runnableCount = models.filter((m) => m.runnable).length;
+  const headroomCount =
+    tierBuckets.find((b) => b.tier.key === "s")?.tierModels.length ?? 0;
+  const allFitWithHeadroom =
+    !isLoading && runnableCount > 0 && headroomCount === runnableCount;
 
   // Rescan refreshes both the local hardware fit and the live provider probe.
   const rescan = () => {
@@ -285,19 +290,24 @@ export default function ModelFinderPage() {
         <TabButton
           label="finder"
           active={tab === "finder"}
-          onClick={() => setTab("finder")}
+          onClick={() => openTab("finder")}
         />
         <TabButton
           label="playground"
           active={tab === "playground"}
-          onClick={() => setTab("playground")}
+          onClick={() => openTab("playground")}
           testId="chat-playground-tab"
         />
       </div>
 
       <div className="h-full overflow-y-auto p-6">
         {tab === "playground" && (
-          <ChatPlaygroundPanel probe={probe} probeLoading={probing} />
+          <ChatPlaygroundPanel
+            probe={probe}
+            probeLoading={probing}
+            probeError={probeError ?? null}
+            initialModel={initialPlaygroundModel}
+          />
         )}
         {tab === "finder" && (
         <div className="flex flex-col gap-5">
@@ -359,12 +369,29 @@ export default function ModelFinderPage() {
 
           {/* ─── SYSTEM PROFILE ─── */}
           <div>
-            <div className={`${SECTION_LABEL} mb-3`}>
-              SYSTEM PROFILE · DISCOVERY ·{" "}
-              <span className="text-b-text-dim">
-                tier {data?.profile.performance_tier ?? "—"}
+            <div className={`${SECTION_LABEL} mb-3 flex flex-wrap items-center gap-x-3 gap-y-1`}>
+              <span>
+                SYSTEM PROFILE · DISCOVERY ·{" "}
+                <span className="text-b-text-dim">
+                  tier {data?.profile.performance_tier ?? "—"}
+                </span>
               </span>
+              <button
+                type="button"
+                data-testid="edit-specs"
+                aria-label="Edit hardware specs"
+                aria-expanded={specsOpen}
+                onClick={() => setSpecsOpen((open) => !open)}
+                className="font-mono text-[9px] uppercase tracking-[1.2px] text-b-text-dim transition-colors hover:text-b-clay"
+              >
+                [edit specs]
+              </button>
             </div>
+            {specsOpen && (
+              <div className="mb-3.5">
+                <HardwareOverrideForm onClose={() => setSpecsOpen(false)} />
+              </div>
+            )}
             <div className="grid gap-3.5 lg:grid-cols-4">
               <ProfileStat
                 loading={isLoading}
@@ -406,10 +433,22 @@ export default function ModelFinderPage() {
             <div className={`${SECTION_LABEL} mb-3`}>
               CAPABILITY TIERS · FIT-WEIGHTED SELECTION
             </div>
-            <div className="grid gap-3.5 md:grid-cols-2">
-              {CAPABILITY_TIERS.map((tier) => {
-                const tierModels = models.filter(tier.match);
-                return (
+            {isLoading && (
+              <div className="grid gap-3.5 md:grid-cols-2">
+                {CAPABILITY_TIERS.map((tier) => (
+                  <div
+                    key={tier.key}
+                    className="border-b-line bg-b-bg1 px-[17px] py-[15px]"
+                    style={CARD_STYLE}
+                  >
+                    <div className="h-5 w-40 animate-pulse rounded bg-b-bg3" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {!isLoading && populatedBuckets.length > 0 && (
+              <div className="grid gap-3.5 md:grid-cols-2">
+                {populatedBuckets.map(({ tier, tierModels }) => (
                   <div
                     key={tier.key}
                     className="border-b-line bg-b-bg1 px-[17px] py-[15px]"
@@ -433,241 +472,67 @@ export default function ModelFinderPage() {
                       </span>
                     </div>
                     <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                      {isLoading && (
-                        <div className="h-5 w-40 animate-pulse rounded bg-b-bg3" />
-                      )}
-                      {!isLoading && tierModels.length === 0 && (
-                        <span className="font-mono text-[9.5px] text-b-text-faint">
-                          no models in this band
-                        </span>
-                      )}
-                      {!isLoading &&
-                        tierModels.map((model) => (
-                          <a
-                            key={model.id}
-                            href={model.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            title={`${model.name} · ${model.fit_score}% fit`}
-                            className="inline-flex max-w-[200px] items-center gap-1.5 border px-[9px] py-1 font-mono text-[10px] text-b-text-mid transition-colors hover:text-b-clay"
-                            style={{
-                              ...CHIP_STYLE,
-                              borderColor: tier.color,
-                              backgroundColor: "rgb(var(--b-bg2))",
-                            }}
-                          >
-                            <span className="truncate">{model.name}</span>
-                            <span className="flex-none text-b-text-dim">
-                              {model.fit_score}%
-                            </span>
-                          </a>
-                        ))}
+                      {tierModels.map((model) => (
+                        <a
+                          key={model.id}
+                          href={model.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={`${model.name} · ${model.fit_score}% fit`}
+                          className="inline-flex max-w-[200px] items-center gap-1.5 border px-[9px] py-1 font-mono text-[10px] text-b-text-mid transition-colors hover:text-b-clay"
+                          style={{
+                            ...CHIP_STYLE,
+                            borderColor: tier.color,
+                            backgroundColor: "rgb(var(--b-bg2))",
+                          }}
+                        >
+                          <span className="truncate">{model.name}</span>
+                          <span className="flex-none text-b-text-dim">
+                            {model.fit_score}%
+                          </span>
+                        </a>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
+            {/* Empty bands collapse to one compact line each — no empty boxes. */}
+            {!isLoading && emptyBuckets.length > 0 && (
+              <div
+                className={`${
+                  populatedBuckets.length > 0 ? "mt-2 " : ""
+                }flex flex-wrap gap-x-5 gap-y-1`}
+              >
+                {emptyBuckets.map(({ tier }) => (
+                  <span
+                    key={tier.key}
+                    data-testid={`fit-band-empty-${tier.key}`}
+                    className="font-mono text-[9.5px] text-b-text-faint"
+                  >
+                    <span style={{ color: tier.color }}>{tier.letter}</span>{" "}
+                    {tier.label} — none
+                  </span>
+                ))}
+              </div>
+            )}
+            {allFitWithHeadroom && (
+              <p
+                data-testid="fit-headroom-caption"
+                className="mt-2 font-mono text-[9.5px] text-b-text-dim"
+              >
+                all matches fit with headroom on this machine
+              </p>
+            )}
           </div>
 
           {/* ─── PROVIDER BACKENDS · live probe ─── */}
-          <div>
-            <div
-              className={`${SECTION_LABEL} mb-3 flex flex-wrap items-center gap-x-2 gap-y-1`}
-            >
-              <span>PROVIDER BACKENDS · PROBE</span>
-              {probe && (
-                <>
-                  <span className="text-b-text-dim">
-                    {probe.models.length} models ·{" "}
-                    {probe.available_providers.length} live
-                  </span>
-                  <span
-                    data-testid="probe-mode"
-                    className="border px-1.5 py-px text-[8.5px] tracking-[0.3px]"
-                    style={{
-                      borderRadius: "var(--b-rad-sm)",
-                      color: probe.no_llm_mode
-                        ? "rgb(var(--b-amber))"
-                        : "rgb(var(--b-green))",
-                      borderColor: probe.no_llm_mode
-                        ? "rgb(var(--b-amber))"
-                        : "rgb(var(--b-green))",
-                    }}
-                  >
-                    {probe.no_llm_mode ? "no-LLM mode" : "LLM mode"}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {probeError && (
-              <div
-                role="alert"
-                className="mb-3 border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
-                style={CARD_STYLE}
-              >
-                probe failed: {probeError.message}
-              </div>
-            )}
-
-            <div
-              className="overflow-hidden border-b-line bg-b-bg1"
-              style={CARD_STYLE}
-            >
-              {!probe && probing && (
-                <div className="space-y-px">
-                  {["sk-prov-0", "sk-prov-1", "sk-prov-2"].map((k) => (
-                    <div key={k} className="px-4 py-3">
-                      <div className="h-4 w-full animate-pulse rounded bg-b-bg3" />
-                    </div>
-                  ))}
-                </div>
-              )}
-              {probe && probe.available_providers.length === 0 && (
-                <div className="p-6 font-mono text-[12px] text-b-text-dim">
-                  no providers have credentials configured
-                </div>
-              )}
-              {probeProviders.map((provider, index) => {
-                const isOpen = openProvider === provider.name;
-                // In no-LLM mode every tier is routed to the placeholder model,
-                // so a green "ready"/key-present status is misleading — show a
-                // neutral/amber "placeholder" instead.
-                const placeholderMode = probe?.no_llm_mode ?? false;
-                const statusColor = placeholderMode
-                  ? "rgb(var(--b-amber))"
-                  : provider.available
-                    ? "rgb(var(--b-green))"
-                    : "rgb(var(--b-red))";
-                const statusText = placeholderMode
-                  ? "placeholder"
-                  : provider.available
-                    ? "ready"
-                    : "no keys";
-                return (
-                  <div
-                    key={provider.name}
-                    className={index > 0 ? "border-t border-b-line-soft" : ""}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenProvider(isOpen ? null : provider.name)
-                      }
-                      aria-expanded={isOpen}
-                      className="flex w-full items-center gap-3 px-[18px] py-[11px] text-left font-mono text-[11px] transition-colors hover:bg-b-bg2/50 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-b-clay/50"
-                    >
-                      <span className="w-2.5 flex-none text-[10px] text-b-text-faint">
-                        {isOpen ? "▾" : "▸"}
-                      </span>
-                      <span className="flex-1 font-medium text-b-text">
-                        {provider.name}
-                      </span>
-                      <span
-                        className="flex items-center gap-1.5 text-[10.5px]"
-                        style={{ color: statusColor }}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: statusColor }}
-                        />
-                        {statusText}
-                      </span>
-                      <span className="w-20 flex-none text-right text-[9.5px] text-b-text-dim">
-                        {provider.models.length} model
-                        {provider.models.length === 1 ? "" : "s"}
-                      </span>
-                    </button>
-                    {isOpen && (
-                      <div className="bg-b-bg0 py-1 pl-10 pr-[18px]">
-                        {provider.models.map((model) => {
-                          const color = probeTierColor(model.tier);
-                          // Suppress the "default" marker in no-LLM mode: the
-                          // tier defaults are bypassed for the placeholder model.
-                          const isDefault =
-                            probe && !probe.no_llm_mode
-                              ? Object.values(probe.tier_defaults).includes(
-                                  model.id,
-                                )
-                              : false;
-                          return (
-                            <div
-                              key={model.id}
-                              className="flex items-center gap-2.5 border-b border-b-line-soft py-1.5 last:border-b-0"
-                            >
-                              <span
-                                className="flex-none border px-1.5 py-px font-mono text-[8.5px] tracking-[0.3px]"
-                                style={{
-                                  borderColor: color,
-                                  color,
-                                  borderRadius: "3px",
-                                }}
-                              >
-                                T{model.tier}
-                              </span>
-                              <span
-                                title={model.id}
-                                className="flex-1 truncate text-[11px] text-b-text-mid"
-                              >
-                                {model.id}
-                              </span>
-                              {model.capabilities
-                                ?.filter((cap) => cap !== "completion")
-                                .map((cap) => (
-                                  <span
-                                    key={cap}
-                                    className="flex-none border border-b-line px-1.5 py-px font-mono text-[8px] uppercase tracking-[0.3px] text-b-text-dim"
-                                    style={{ borderRadius: "3px" }}
-                                  >
-                                    {cap}
-                                  </span>
-                                ))}
-                              {model.cloud && (
-                                <span
-                                  className="flex-none border px-1.5 py-px font-mono text-[8.5px] tracking-[0.3px]"
-                                  style={{
-                                    borderColor: "rgb(var(--b-purple))",
-                                    color: "rgb(var(--b-purple))",
-                                    borderRadius: "3px",
-                                  }}
-                                >
-                                  cloud
-                                </span>
-                              )}
-                              {model.running && (
-                                <span
-                                  className="flex flex-none items-center gap-1 font-mono text-[9px] text-b-green"
-                                  title="loaded in memory"
-                                >
-                                  <span
-                                    className="h-1.5 w-1.5 rounded-full"
-                                    style={{
-                                      backgroundColor: "rgb(var(--b-green))",
-                                    }}
-                                  />
-                                  running
-                                </span>
-                              )}
-                              {isDefault && (
-                                <span className="flex-none font-mono text-[9px] text-b-clay">
-                                  default
-                                </span>
-                              )}
-                              {!model.available && (
-                                <span className="flex-none font-mono text-[9px] text-b-text-dim">
-                                  no keys
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <ProviderProbeList
+            probe={probe}
+            probing={probing}
+            probeError={probeError ?? null}
+            onOpenInPlayground={openModelInPlayground}
+          />
 
           {data?.profile.notes.map((note) => (
             <p key={note} className="font-mono text-[10px] text-b-text-dim">

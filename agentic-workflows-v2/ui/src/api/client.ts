@@ -34,6 +34,12 @@ import type {
   ModelSortField,
   ModelTaskCategory,
 } from "./types";
+import type {
+  HardwareOverride,
+  HardwareOverrideClearResponse,
+  HardwareOverrideGetResponse,
+  HardwareOverrideUpdateResponse,
+} from "./hardware";
 
 const BASE = "/api";
 
@@ -579,4 +585,31 @@ export function compareRuns(
 /** Health check. */
 export function healthCheck(): Promise<HealthCheckResponse> {
   return fetchJSON(`${BASE}/health`);
+}
+
+// ---------------------------------------------------------------------------
+// Hardware profile override — /api/model-finder/profile-override
+// ---------------------------------------------------------------------------
+
+/** Get the persisted hardware override, if any. */
+export function getHardwareOverride(): Promise<HardwareOverrideGetResponse> {
+  return fetchJSON(`${BASE}/model-finder/profile-override`);
+}
+
+/** Persist a hardware override and get the re-derived system profile back. */
+export function putHardwareOverride(
+  override: HardwareOverride,
+): Promise<HardwareOverrideUpdateResponse> {
+  return fetchJSON(`${BASE}/model-finder/profile-override`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(override),
+  });
+}
+
+/** Clear the hardware override, reverting to live-detected hardware. */
+export function deleteHardwareOverride(): Promise<HardwareOverrideClearResponse> {
+  return fetchJSON(`${BASE}/model-finder/profile-override`, {
+    method: "DELETE",
+  });
 }

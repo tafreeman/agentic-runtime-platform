@@ -1,6 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
+import {
+  VERIFICATION_STORAGE_KEY,
+  loadVerifications,
+  type ModelVerification,
+} from "../lib/modelVerification";
 import type {
   ChatRequest,
   ChatStreamEvent,
@@ -46,10 +51,20 @@ function makeChatProbe(
 function renderPanel(
   probe: ModelProbeResponse | undefined,
   probeLoading = false,
+  extraProps: { initialModel?: string; probeError?: Error | null } = {},
 ) {
   return render(
-    <ChatPlaygroundPanel probe={probe} probeLoading={probeLoading} />,
+    <ChatPlaygroundPanel
+      probe={probe}
+      probeLoading={probeLoading}
+      {...extraProps}
+    />,
   );
+}
+
+/** Seed the verification registry with explicit timestamps (recency-safe). */
+function seedVerifications(entries: Record<string, ModelVerification>): void {
+  localStorage.setItem(VERIFICATION_STORAGE_KEY, JSON.stringify(entries));
 }
 
 async function pickerWithDefault(expected: string): Promise<HTMLSelectElement> {
@@ -61,6 +76,7 @@ async function pickerWithDefault(expected: string): Promise<HTMLSelectElement> {
 describe("ChatPlaygroundPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     mockSendChat.mockResolvedValue(undefined);
   });
 
@@ -406,5 +422,266 @@ describe("ChatPlaygroundPanel", () => {
     expect(
       (screen.getByTestId("chat-model-picker") as HTMLSelectElement).value,
     ).toBe("anthropic:claude-haiku-4-5");
+  });
+
+  it("sends on Enter but not on Shift+Enter", async () => {
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    const input = screen.getByTestId("chat-input");
+    fireEvent.change(input, { target: { value: "via keyboard" } });
+
+    // Shift+Enter is a line break — no request goes out.
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
+    expect(mockSendChat).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(mockSendChat).toHaveBeenCalledTimes(1));
+    const request = mockSendChat.mock.calls[0]?.[0] as ChatRequest;
+    expect(request.messages).toEqual([
+      { role: "user", content: "via keyboard" },
+    ]);
+  });
+
+  it("explains the blocked send while the probe is still loading", () => {
+    renderPanel(undefined, true);
+
+    expect(screen.getByTestId("chat-blocked-hint")).toHaveTextContent(
+      "probing providers…",
+    );
+  });
+
+  it("explains the blocked send when the probe found no models", () => {
+    renderPanel(
+      makeChatProbe({
+        available_providers: [],
+        unavailable_providers: [],
+        models: [],
+      }),
+      false,
+    );
+
+    expect(screen.getByTestId("chat-blocked-hint")).toHaveTextContent(
+      "no model selected",
+    );
+  });
+
+  it("explains the blocked send while a stream is in flight, then clears", async () => {
+    mockSendChat.mockImplementation(
+      (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({ type: "token", delta: "…" });
+        // Stalled provider: promise never settles on its own.
+        return new Promise<void>(() => {});
+      },
+    );
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    // A sendable composer shows no hint.
+    expect(screen.queryByTestId("chat-blocked-hint")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "hang" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    expect(await screen.findByTestId("chat-blocked-hint")).toHaveTextContent(
+      "streaming — press stop first",
+    );
+
+    fireEvent.click(screen.getByTestId("chat-stop"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("chat-blocked-hint")).not.toBeInTheDocument(),
+    );
+  });
+
+  it("prefers a running model over a merely-available one as the default", async () => {
+    renderPanel(
+      makeChatProbe({
+        models: [
+          { id: "openai:gpt-4o", provider: "openai", tier: 2, available: false },
+          {
+            id: "anthropic:claude-haiku-4-5",
+            provider: "anthropic",
+            tier: 1,
+            available: true,
+          },
+          {
+            id: "ollama:qwen3:8b",
+            provider: "ollama",
+            tier: 2,
+            available: true,
+            running: true,
+          },
+        ],
+      }),
+    );
+
+    // anthropic sorts first among available providers, but the loaded-in-
+    // memory ollama model is the stronger liveness signal.
+    await pickerWithDefault("ollama:qwen3:8b");
+  });
+
+  it("prefers the most-recently-verified-ok model over running/available", async () => {
+    seedVerifications({
+      "anthropic:claude-haiku-4-5": {
+        status: "ok",
+        at: "2026-07-12T10:00:00.000Z",
+      },
+      "openai:gpt-4o": { status: "ok", at: "2026-07-13T09:00:00.000Z" },
+    });
+    renderPanel(
+      makeChatProbe({
+        models: [
+          // openai has no keys yet verified ok most recently — it wins.
+          { id: "openai:gpt-4o", provider: "openai", tier: 2, available: false },
+          {
+            id: "anthropic:claude-haiku-4-5",
+            provider: "anthropic",
+            tier: 1,
+            available: true,
+          },
+          {
+            id: "ollama:qwen3:8b",
+            provider: "ollama",
+            tier: 2,
+            available: true,
+            running: true,
+          },
+        ],
+      }),
+    );
+
+    await pickerWithDefault("openai:gpt-4o");
+  });
+
+  it("labels options with live / ok / failed / no-keys suffixes", async () => {
+    seedVerifications({
+      "anthropic:claude-haiku-4-5": {
+        status: "ok",
+        at: "2026-07-13T09:00:00.000Z",
+      },
+      "openai:gpt-4o": {
+        status: "error",
+        at: "2026-07-13T09:01:00.000Z",
+        message: "auth failed",
+      },
+    });
+    renderPanel(
+      makeChatProbe({
+        models: [
+          { id: "openai:gpt-4o", provider: "openai", tier: 2, available: false },
+          {
+            id: "anthropic:claude-haiku-4-5",
+            provider: "anthropic",
+            tier: 1,
+            available: true,
+          },
+          {
+            id: "ollama:qwen3:8b",
+            provider: "ollama",
+            tier: 2,
+            available: true,
+            running: true,
+          },
+        ],
+      }),
+    );
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    expect(
+      screen.getByRole("option", { name: "ollama:qwen3:8b · live" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "anthropic:claude-haiku-4-5 · ok" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "openai:gpt-4o · failed · no keys" }),
+    ).toBeInTheDocument();
+  });
+
+  it("preselects the deep-linked initialModel over the computed default", async () => {
+    renderPanel(makeChatProbe(), false, { initialModel: "openai:gpt-4o" });
+
+    const picker = screen.getByTestId("chat-model-picker") as HTMLSelectElement;
+    await waitFor(() => expect(picker.value).toBe("openai:gpt-4o"));
+  });
+
+  it("records a verified-ok outcome when the stream completes", async () => {
+    mockSendChat.mockImplementation(
+      async (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({ type: "token", delta: "pong" });
+        onEvent({ type: "done", model: "anthropic:claude-haiku-4-5" });
+      },
+    );
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "ping" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    await waitFor(() =>
+      expect(
+        loadVerifications()["anthropic:claude-haiku-4-5"]?.status,
+      ).toBe("ok"),
+    );
+  });
+
+  it("records a failed outcome with the message on an error frame", async () => {
+    mockSendChat.mockImplementation(
+      async (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({
+          type: "error",
+          message: "provider rejected the API key",
+          category: "auth_error",
+        });
+      },
+    );
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "hello?" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+    await screen.findByTestId("chat-error");
+
+    expect(loadVerifications()["anthropic:claude-haiku-4-5"]).toMatchObject({
+      status: "error",
+      message: "provider rejected the API key",
+    });
+  });
+
+  it("does not record verifications in no-LLM placeholder mode", async () => {
+    mockSendChat.mockImplementation(
+      async (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({ type: "token", delta: "canned" });
+        onEvent({ type: "done", model: "anthropic:claude-haiku-4-5" });
+      },
+    );
+    renderPanel(makeChatProbe({ no_llm_mode: true }));
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "ping" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("chat-message")).toHaveLength(2),
+    );
+
+    // Placeholder replies would fake-verify the whole catalog.
+    expect(loadVerifications()).toEqual({});
+  });
+
+  it("surfaces a page-level probe failure inside the playground", () => {
+    renderPanel(undefined, false, {
+      probeError: new Error("API 500: probe exploded"),
+    });
+
+    const alert = screen.getByTestId("playground-probe-error");
+    expect(alert).toHaveTextContent("probe failed: API 500: probe exploded");
   });
 });

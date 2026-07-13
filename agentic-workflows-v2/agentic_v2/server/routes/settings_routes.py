@@ -22,6 +22,7 @@ from ...ui_settings import (
     KNOWN_MODEL_CAPABILITIES,
     ProviderType,
     UiSettings,
+    is_valid_api_key_env,
     load_ui_settings,
     save_ui_settings,
 )
@@ -36,6 +37,13 @@ from ..models_settings import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["settings"])
+
+#: 422 detail for a credential-shaped ``api_key_env`` (write-side hardening;
+#: reads stay lenient via the load-time sanitizer in ``agentic_v2.ui_settings``).
+_API_KEY_ENV_DETAIL = (
+    "api_key_env must be an environment variable NAME "
+    "(e.g. OLLAMA_API_KEY), never the credential itself"
+)
 
 
 def _env_configured_providers() -> list[str]:
@@ -69,7 +77,17 @@ async def get_provider_settings() -> ProviderSettingsResponse:
 async def put_provider_settings(
     request: ProviderSettingsUpdateRequest,
 ) -> ProviderSettingsResponse:
-    """Replace the provider endpoint list."""
+    """Replace the provider endpoint list.
+
+    Writes are strict about ``api_key_env``: it must be an environment
+    variable NAME, so a raw credential pasted into the field is rejected
+    before it can be persisted (and later echoed) by the settings store.
+    """
+    for provider in request.providers:
+        if provider.api_key_env is not None and not is_valid_api_key_env(
+            provider.api_key_env
+        ):
+            raise HTTPException(status_code=422, detail=_API_KEY_ENV_DETAIL)
     current = load_ui_settings()
     try:
         updated = UiSettings(

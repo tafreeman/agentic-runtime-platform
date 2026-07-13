@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useEvaluationDatasets } from "../../hooks/useWorkflows";
+import { useDatasetSamples } from "../../hooks/useDatasets";
+import { probeModels } from "../../api/client";
 import type {
+  DatasetSampleSummary,
   ExecutionProfileRequest,
+  ProbedModel,
   WorkflowInputSchema,
 } from "../../api/types";
 
@@ -11,6 +16,8 @@ export interface RunConfigValues {
   inputValues: Record<string, string>;
   executionProfile: ExecutionProfileRequest;
   rubricId: string;
+  /** Full prefixed model id to force on every step; "" means no override. */
+  modelOverride: string;
   evaluation: {
     enabled: boolean;
     datasetSource: DatasetSource;
@@ -21,10 +28,21 @@ export interface RunConfigValues {
   };
 }
 
+/** Seed values for the evaluation panel (deep-link prefill). */
+export interface InitialEvaluationConfig {
+  datasetSource: DatasetSource;
+  datasetId: string;
+  evalSetId?: string;
+  sampleText: string;
+  runsPerRecord?: number;
+}
+
 interface RunConfigFormProps {
   inputs: WorkflowInputSchema[];
   workflowName: string;
   onChange: (values: RunConfigValues) => void;
+  /** When provided, opens the advanced panel and enables evaluation. */
+  initialEvaluation?: InitialEvaluationConfig;
 }
 
 function defaultValue(input: WorkflowInputSchema): string {
@@ -81,6 +99,49 @@ function humanFileSize(bytes: number): string {
   const kb = bytes / 1024;
   if (kb < 1024) return `${kb.toFixed(1)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+/** How many sample rows the selected-sample preview fetches. */
+const SAMPLE_PREVIEW_LIMIT = 20;
+
+/** Max characters of sample summary shown per preview line. */
+const SAMPLE_PREVIEW_SUMMARY_CHARS = 60;
+
+/** Truncate to `max` characters with a trailing ellipsis. */
+function truncateText(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+/** Order probe models: running DESC, available DESC, tier ASC, id ASC. */
+function compareProbedModels(a: ProbedModel, b: ProbedModel): number {
+  const runningDelta = Number(b.running ?? false) - Number(a.running ?? false);
+  if (runningDelta !== 0) return runningDelta;
+  const availableDelta = Number(b.available) - Number(a.available);
+  if (availableDelta !== 0) return availableDelta;
+  if (a.tier !== b.tier) return a.tier - b.tier;
+  return a.id.localeCompare(b.id);
+}
+
+/** Option label with liveness / credential suffixes. */
+function probedModelLabel(model: ProbedModel): string {
+  let label = model.id;
+  if (model.running) label += " · live";
+  if (!model.available) label += " · no keys";
+  return label;
+}
+
+/** One preview line for a selected sample index against the fetched page. */
+function samplePreviewLine(
+  index: number,
+  samples: DatasetSampleSummary[]
+): string {
+  const sample = samples.find((s) => s.sample_index === index);
+  if (!sample) return `#${index} · (beyond first ${SAMPLE_PREVIEW_LIMIT})`;
+  const label = sample.task_id ?? sample.sample_id ?? sample.title;
+  return `${index} · ${label} · ${truncateText(
+    sample.summary,
+    SAMPLE_PREVIEW_SUMMARY_CHARS
+  )}`;
 }
 
 interface FileInputFieldProps {
@@ -160,6 +221,7 @@ export default function RunConfigForm({
   inputs,
   workflowName,
   onChange,
+  initialEvaluation,
 }: RunConfigFormProps) {
   const [inputValues, setInputValues] = useState<Record<string, string>>(() =>
     buildInitialValues(inputs)
@@ -167,16 +229,29 @@ export default function RunConfigForm({
   const [fileFields, setFileFields] = useState<Record<string, FileFieldState>>(
     {}
   );
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const seededSource = initialEvaluation?.datasetSource ?? "none";
+  const [advancedOpen, setAdvancedOpen] = useState(initialEvaluation != null);
   const [runtime, setRuntime] =
     useState<ExecutionProfileRequest["runtime"]>("subprocess");
   const [rubricId, setRubricId] = useState("");
-  const [evaluationEnabled, setEvaluationEnabled] = useState(false);
-  const [datasetSource, setDatasetSource] = useState<DatasetSource>("none");
-  const [datasetId, setDatasetId] = useState("");
-  const [evalSetId, setEvalSetId] = useState("");
-  const [sampleText, setSampleText] = useState("0");
-  const [runsPerRecord, setRunsPerRecord] = useState(1);
+  const [modelOverride, setModelOverride] = useState("");
+  const [evaluationEnabled, setEvaluationEnabled] = useState(
+    seededSource !== "none"
+  );
+  const [datasetSource, setDatasetSource] =
+    useState<DatasetSource>(seededSource);
+  const [datasetId, setDatasetId] = useState(
+    initialEvaluation?.datasetId ?? ""
+  );
+  const [evalSetId, setEvalSetId] = useState(
+    initialEvaluation?.evalSetId ?? ""
+  );
+  const [sampleText, setSampleText] = useState(
+    initialEvaluation?.sampleText ?? "0"
+  );
+  const [runsPerRecord, setRunsPerRecord] = useState(
+    initialEvaluation?.runsPerRecord ?? 1
+  );
   // Datasets are fetched lazily — only once the advanced panel is opened — via
   // the shared react-query hook so the result is cached and retried like the
   // rest of the data layer (replaces a hand-rolled fetch + cancellation dance).
@@ -204,6 +279,18 @@ export default function RunConfigForm({
 
   const evalSetOptions = datasets?.eval_sets ?? [];
 
+  // Probe the model catalog lazily — only once the advanced panel is open —
+  // sharing the page-level ["model-probe"] cache used elsewhere in the UI.
+  const modelProbeQuery = useQuery({
+    queryKey: ["model-probe"],
+    queryFn: probeModels,
+    enabled: advancedOpen,
+  });
+  const modelOptions = useMemo(
+    () => [...(modelProbeQuery.data?.models ?? [])].sort(compareProbedModels),
+    [modelProbeQuery.data]
+  );
+
   const selectedSamples = useMemo(() => {
     const parsed = sampleText
       .split(",")
@@ -212,11 +299,34 @@ export default function RunConfigForm({
     return parsed.length > 0 ? parsed : [0];
   }, [sampleText]);
 
+  // Selected-sample preview: fetch the first page of sample rows only when a
+  // concrete repository/local dataset is chosen for an enabled evaluation.
+  const previewSource =
+    evaluationEnabled &&
+    (datasetSource === "repository" || datasetSource === "local") &&
+    datasetId !== ""
+      ? datasetSource
+      : null;
+  const samplePreviewQuery = useDatasetSamples(
+    previewSource,
+    previewSource ? datasetId : null,
+    0,
+    SAMPLE_PREVIEW_LIMIT
+  );
+  const samplePreviewError =
+    samplePreviewQuery.error instanceof Error
+      ? samplePreviewQuery.error.message
+      : samplePreviewQuery.error
+        ? "failed to load samples"
+        : null;
+  const previewSamples = samplePreviewQuery.data?.samples;
+
   const values = useMemo<RunConfigValues>(
     () => ({
       inputValues,
       executionProfile: { runtime },
       rubricId,
+      modelOverride,
       evaluation: {
         enabled: evaluationEnabled,
         datasetSource,
@@ -232,6 +342,7 @@ export default function RunConfigForm({
       evalSetId,
       evaluationEnabled,
       inputValues,
+      modelOverride,
       rubricId,
       runtime,
       runsPerRecord,
@@ -436,6 +547,31 @@ export default function RunConfigForm({
       {advancedOpen ? (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <div
+            data-testid="model-override-config"
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
+          >
+            <label className="block font-mono text-[10px] uppercase tracking-[0.5px] text-b-text-dim">
+              model override
+              <select
+                aria-label="Model override"
+                data-testid="model-override-select"
+                value={modelOverride}
+                onChange={(event) => setModelOverride(event.target.value)}
+                style={CONTROL_TOKENS}
+                className="mt-1 w-full border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+              >
+                <option value="">tier default (no override)</option>
+                {modelOptions.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {probedModelLabel(model)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div
             data-testid="runtime-config"
             style={CARD_TOKENS}
             className="border border-solid border-b-line bg-b-bg1 p-3"
@@ -568,6 +704,29 @@ export default function RunConfigForm({
                 className="border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
               />
             </div>
+            {previewSource ? (
+              <div data-testid="sample-preview" className="mt-2 space-y-0.5">
+                {samplePreviewQuery.isLoading ? (
+                  <div className="font-mono text-[10px] text-b-text-dim">
+                    loading samples…
+                  </div>
+                ) : samplePreviewError ? (
+                  <div className="font-mono text-[10px] text-b-red">
+                    [!] {samplePreviewError}
+                  </div>
+                ) : previewSamples ? (
+                  selectedSamples.map((index) => (
+                    <div
+                      key={index}
+                      data-testid={`sample-preview-line-${index}`}
+                      className="truncate font-mono text-[10px] text-b-text-dim"
+                    >
+                      {samplePreviewLine(index, previewSamples)}
+                    </div>
+                  ))
+                ) : null}
+              </div>
+            ) : null}
             {datasetsError ? (
               <div className="mt-2 font-mono text-[10px] text-b-red">
                 [!] {datasetsError}

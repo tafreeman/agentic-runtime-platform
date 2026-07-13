@@ -117,6 +117,68 @@ describe("RunsPage", () => {
     expect(strip).toHaveTextContent("avg duration");
   });
 
+  it("headlines 'showing X of Y' from the fetched window and the summary total", () => {
+    mockUseRuns.mockReturnValue({ data: [makeRun()], isLoading: false });
+    mockUseRunsSummary.mockReturnValue({
+      data: {
+        total_runs: 312,
+        success: 300,
+        failed: 12,
+        avg_duration_ms: 340,
+        workflows: [],
+      },
+    });
+    renderPage();
+
+    // The list endpoint returns a capped window (limit 50); the header must
+    // not present that window as the total.
+    expect(screen.getByText(/showing 1 of 312/)).toBeInTheDocument();
+  });
+
+  it("falls back to the window size for the total while the summary loads", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "a.json", run_id: "a1" }),
+        makeRun({ filename: "b.json", run_id: "b2" }),
+      ],
+      isLoading: false,
+    });
+    // beforeEach leaves the summary undefined.
+    renderPage();
+
+    expect(screen.getByText(/showing 2 of 2/)).toBeInTheDocument();
+  });
+
+  it("truncates long run ids inside the run cell instead of overflowing the grid", () => {
+    const longId =
+      "review_flow-2026-07-13T045959-really-long-identifier-abcdef1234567890";
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({
+          filename: "long.json",
+          run_id: longId,
+          workflow_name: "long_flow",
+        }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    // CopyId must flex (not flex-none) with min-w-0 so the id truncates in
+    // its grid column instead of painting across the status glyph.
+    const copyButton = screen.getByRole("button", { name: longId });
+    expect(copyButton.className).toContain("flex-1");
+    expect(copyButton.className).toContain("min-w-0");
+    expect(copyButton.className).not.toContain("flex-none");
+
+    const inner = copyButton.querySelector("span.truncate");
+    expect(inner).not.toBeNull();
+    expect(inner).toHaveTextContent(longId);
+
+    // Belt-and-braces: the wrapping cell clips anything that still escapes.
+    expect(copyButton.parentElement?.className).toContain("overflow-hidden");
+  });
+
   it("renders run rows and filters by query", () => {
     mockUseRuns.mockReturnValue({
       data: [

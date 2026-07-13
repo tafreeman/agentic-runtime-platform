@@ -58,16 +58,19 @@ export default function ConsoleHeader() {
         </span>
       </Link>
 
+      {/* The palette is pure navigation today — the visible copy says so.
+          The accessible name keeps the "search runs, workflows, actions"
+          phrase so existing queries/muscle memory still resolve it. */}
       <button
         type="button"
         onClick={openPalette}
-        aria-label="Search runs, workflows, actions"
+        aria-label="Jump to page (search runs, workflows, actions)"
         className="mx-auto flex h-7 w-full max-w-md flex-none items-center gap-2 border border-b-line bg-b-bg0 px-2.5 font-mono text-[11px] text-b-text-dim transition-colors hover:border-b-clay/50 hover:text-b-text focus:outline-none focus:ring-1 focus:ring-b-clay/50"
         style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
       >
         <Search size={12} aria-hidden="true" className="flex-none" />
         <span className="min-w-0 flex-1 truncate text-left">
-          Search runs, workflows, actions…
+          jump to page… (g+key)
         </span>
         <span className="flex flex-none items-center gap-1">
           <Kbd>⌘</Kbd>

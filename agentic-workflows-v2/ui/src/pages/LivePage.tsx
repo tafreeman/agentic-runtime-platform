@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
+import { useRuns } from "../hooks/useRuns";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
 import type { StepState } from "../hooks/useWorkflowStream";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
@@ -55,6 +56,73 @@ function formatElapsed(ms: number): string {
 
 export default function LivePage() {
   const { runId } = useParams<{ runId: string }>();
+  // "/live/latest" is a deep-link alias (sidebar, palette, g-e) — the stream
+  // endpoint has no "latest" run id (the server accepts the socket and holds
+  // it open forever), so resolve it to a real run before mounting the stream.
+  if (runId === "latest") return <LatestRunGate />;
+  return <LiveRunView runId={runId} />;
+}
+
+/**
+ * Resolves the "/live/latest" alias: finds the newest running run from the
+ * (polling) runs list and replaces the URL with its real id. While nothing is
+ * active it renders an idle card instead of a stream that can never connect.
+ */
+function LatestRunGate() {
+  const navigate = useNavigate();
+  const { data: runs, isLoading } = useRuns();
+
+  const activeRun = useMemo(
+    () =>
+      (runs ?? []).find(
+        (r) => r.status === "running" || r.status === "in_progress"
+      ),
+    [runs]
+  );
+
+  useEffect(() => {
+    if (!activeRun) return;
+    const id = activeRun.run_id ?? activeRun.filename;
+    navigate(`/live/${encodeURIComponent(id)}`, { replace: true });
+  }, [activeRun, navigate]);
+
+  const resolving = isLoading || Boolean(activeRun);
+
+  return (
+    <div className="flex h-full flex-col">
+      <BTopBar path="live/latest" />
+      <div className="flex flex-1 items-center justify-center bg-b-bg0 p-[18px]">
+        <div
+          className="border-b-line bg-b-bg1 px-[28px] py-[24px] text-center"
+          style={CARD_STYLE}
+          data-testid="live-idle-card"
+        >
+          {resolving ? (
+            <div className="font-mono text-[11px] text-b-text-dim">
+              $ resolving latest run…
+            </div>
+          ) : (
+            <>
+              <div className="font-mono text-[11px] text-b-text-dim">
+                $ no active run — trigger one from workflows
+              </div>
+              <Link
+                to="/workflows"
+                aria-label="Go to workflows"
+                data-testid="live-idle-workflows-link"
+                className="mt-3 inline-block font-mono text-[10.5px] text-b-clay hover:underline"
+              >
+                workflows →
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
   const navigate = useNavigate();
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const { stepStates, events, workflowStatus, evaluation, error } = useWorkflowStream(

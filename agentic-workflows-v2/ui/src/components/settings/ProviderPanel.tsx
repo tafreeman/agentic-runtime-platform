@@ -29,6 +29,43 @@ const INPUT_CLASS =
 /** Valid provider id: lowercase slug, must start alphanumeric. */
 const ID_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 
+/**
+ * A plausible environment-variable NAME (`OLLAMA_API_KEY`), as opposed to a
+ * raw secret pasted by mistake (`sk-ant-…`). Values failing this are masked
+ * on display and flagged in the form so a real key never sits on screen.
+ */
+const ENV_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+const KEY_WARNING_TEXT = "looks like a raw key — use an env var name";
+
+const CHIP_CLASS =
+  "border border-b-line bg-b-bg2 px-1.5 py-px text-[9.5px] text-b-text-mid";
+
+/** Renders a provider's api_key_env: `$NAME` chip, or a masked raw value. */
+function KeyEnvValue({ value }: Readonly<{ value: string | null }>) {
+  if (!value) return <span className="text-b-text-faint">none</span>;
+  if (ENV_NAME_PATTERN.test(value)) {
+    return (
+      <span className={CHIP_CLASS} style={{ borderRadius: "var(--b-rad-sm)" }}>
+        ${value}
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className={CHIP_CLASS} style={{ borderRadius: "var(--b-rad-sm)" }}>
+        {value.slice(0, 4)}…
+      </span>
+      <span
+        className="border border-b-amber/40 px-1.5 py-px text-[9px] text-b-amber"
+        style={{ borderRadius: "var(--b-rad-sm)" }}
+      >
+        {KEY_WARNING_TEXT}
+      </span>
+    </span>
+  );
+}
+
 interface TypePreset {
   readonly label: string;
   readonly base_url: string;
@@ -259,16 +296,7 @@ export default function ProviderPanel() {
                     key env
                   </dt>
                   <dd>
-                    {p.api_key_env ? (
-                      <span
-                        className="border border-b-line bg-b-bg2 px-1.5 py-px text-[9.5px] text-b-text-mid"
-                        style={{ borderRadius: "var(--b-rad-sm)" }}
-                      >
-                        ${p.api_key_env}
-                      </span>
-                    ) : (
-                      <span className="text-b-text-faint">none</span>
-                    )}
+                    <KeyEnvValue value={p.api_key_env ?? null} />
                   </dd>
                 </div>
                 <div className="flex gap-2">
@@ -372,6 +400,7 @@ export default function ProviderPanel() {
                   id="provider-key-env"
                   value={draft.api_key_env}
                   onChange={(e) => updateDraft({ api_key_env: e.target.value })}
+                  placeholder="OLLAMA_API_KEY (env var name, not the key)"
                   className={INPUT_CLASS}
                   style={INPUT_STYLE}
                 />
@@ -379,6 +408,15 @@ export default function ProviderPanel() {
                   name of the environment variable — the key itself is never
                   stored
                 </p>
+                {draft.api_key_env.trim() !== "" &&
+                  !ENV_NAME_PATTERN.test(draft.api_key_env.trim()) && (
+                    <p
+                      role="alert"
+                      className="mt-1 font-mono text-[9px] text-b-amber"
+                    >
+                      {KEY_WARNING_TEXT}
+                    </p>
+                  )}
               </div>
               <div>
                 <label htmlFor="provider-default-model" className={FIELD_LABEL_CLASS}>

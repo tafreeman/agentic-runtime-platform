@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useMemo, useRef, useState } from "react";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Play, ArrowLeft, Loader2, Pencil } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
@@ -9,6 +9,7 @@ import InlineError from "../components/states/InlineError";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
 import RunList from "../components/runs/RunList";
 import RunConfigForm, {
+  type InitialEvaluationConfig,
   type RunConfigValues,
 } from "../components/runs/RunConfigForm";
 import { isWorkflowBuilderEnabled } from "../config/featureFlags";
@@ -107,6 +108,35 @@ function buildEvalRequest(
   };
 }
 
+/** Dataset sources accepted from the `eval_source` deep-link param. */
+const DEEP_LINK_SOURCES = ["repository", "local", "eval_set"] as const;
+
+type DeepLinkSource = (typeof DEEP_LINK_SOURCES)[number];
+
+/**
+ * Parse the run-prefill deep link (`?eval_source=&eval_dataset=&samples=&runs=`)
+ * into RunConfigForm seed values, or undefined when absent/invalid.
+ */
+function parseEvalDeepLink(
+  params: URLSearchParams,
+): InitialEvaluationConfig | undefined {
+  const source = params.get("eval_source");
+  const dataset = params.get("eval_dataset");
+  if (!dataset || !DEEP_LINK_SOURCES.includes(source as DeepLinkSource)) {
+    return undefined;
+  }
+  const typedSource = source as DeepLinkSource;
+  const runsRaw = params.get("runs");
+  const runs = runsRaw ? Number.parseInt(runsRaw, 10) : Number.NaN;
+  return {
+    datasetSource: typedSource,
+    datasetId: typedSource === "eval_set" ? "" : dataset,
+    evalSetId: typedSource === "eval_set" ? dataset : undefined,
+    sampleText: params.get("samples") ?? "0",
+    runsPerRecord: Number.isInteger(runs) && runs > 0 ? runs : undefined,
+  };
+}
+
 /** Expand selected samples × runs-per-record into a flat job list. */
 function buildJobList(
   evaluation: RunConfigValues["evaluation"],
@@ -129,6 +159,11 @@ function buildJobList(
 export default function WorkflowDetailPage() {
   const { name } = useParams<{ name: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialEvaluation = useMemo(
+    () => parseEvalDeepLink(searchParams),
+    [searchParams],
+  );
   const workflowBuilderEnabled = isWorkflowBuilderEnabled();
   const {
     data: dag,
@@ -151,6 +186,7 @@ export default function WorkflowDetailPage() {
     inputValues: {},
     executionProfile: { runtime: "subprocess" },
     rubricId: "",
+    modelOverride: "",
     evaluation: {
       enabled: false,
       datasetSource: "none",
@@ -177,7 +213,13 @@ export default function WorkflowDetailPage() {
 
   const runMutation = useMutation({
     mutationFn: async () => {
-      const { executionProfile, rubricId, evaluation } = configRef.current;
+      const { executionProfile, rubricId, evaluation, modelOverride } =
+        configRef.current;
+      // Only serialize model_override when a concrete override is selected —
+      // "" means "tier default" and must stay off the wire.
+      const overrideField = modelOverride
+        ? { model_override: modelOverride }
+        : {};
 
       const jobs = buildJobList(evaluation);
       const isBatch = jobs.length > 1;
@@ -192,6 +234,7 @@ export default function WorkflowDetailPage() {
             jobs[0] ? jobs[0].sampleIndex : 0,
           ),
           execution_profile: executionProfile,
+          ...overrideField,
         });
       }
 
@@ -206,6 +249,7 @@ export default function WorkflowDetailPage() {
             jobs[i]?.sampleIndex ?? 0,
           ),
           execution_profile: executionProfile,
+          ...overrideField,
         });
         setBatchProgress({ done: i + 1, total: jobs.length });
       }
@@ -394,6 +438,7 @@ export default function WorkflowDetailPage() {
                 <RunConfigForm
                   inputs={dag.inputs ?? []}
                   workflowName={name!}
+                  initialEvaluation={initialEvaluation}
                   onChange={(values) => {
                     configRef.current = values;
                   }}

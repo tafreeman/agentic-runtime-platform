@@ -232,8 +232,12 @@ export default function RunsPage() {
               >
                 Runs
               </h1>
+              {/* The list endpoint caps at 50 rows; the summary carries the
+                  real total — say so instead of presenting the window as
+                  "total". */}
               <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-                $ {runs?.length ?? 0} total · filter with{" "}
+                $ showing {runs?.length ?? 0} of{" "}
+                {summary?.total_runs ?? runs?.length ?? 0} · filter with{" "}
                 <span className="text-b-clay">/</span>
               </div>
             </div>
@@ -445,11 +449,14 @@ export default function RunsPage() {
                                 : "bg-transparent"
                           }`}
                         />
-                        {/* RUN — copyable id + deep-link to the full page */}
-                        <span className="flex min-w-0 items-center gap-1.5 text-b-text">
+                        {/* RUN — copyable id + deep-link to the full page.
+                            CopyId is flex-1 + min-w-0 so long ids truncate
+                            inside the grid cell instead of painting across
+                            the status column; the [↗] link stays flex-none. */}
+                        <span className="flex min-w-0 items-center gap-1.5 overflow-hidden text-b-text">
                           <CopyId
                             text={runId(r)}
-                            className="min-w-0 flex-none text-[10px]"
+                            className="min-w-0 flex-1 overflow-hidden text-[10px]"
                           />
                           <Link
                             to={`/runs/${encodeURIComponent(r.filename)}`}

@@ -133,6 +133,60 @@ describe("SettingsPage", () => {
     expect(screen.getByText("openai")).toBeInTheDocument();
   });
 
+  it("masks an api_key_env value that looks like a raw key and warns", async () => {
+    const rawKey =
+      "sk-ant-api03-0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+    mockGetProviderSettings.mockResolvedValue(
+      makeProviderResponse({
+        providers: [makeProvider({ api_key_env: rawKey })],
+      }),
+    );
+
+    renderPage();
+
+    // Only the first four characters survive, with no "$" env prefix.
+    expect(await screen.findByText("sk-a…")).toBeInTheDocument();
+    expect(screen.queryByText(rawKey)).not.toBeInTheDocument();
+    expect(screen.queryByText(`$${rawKey}`)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/looks like a raw key — use an env var name/),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps rendering legit env var names unmasked with the $ prefix", async () => {
+    renderPage();
+
+    expect(await screen.findByText("$ANTHROPIC_API_KEY")).toBeInTheDocument();
+    expect(
+      screen.queryByText(/looks like a raw key/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("warns under the key-env input when the draft value looks like a raw key", async () => {
+    renderPage();
+    await screen.findByRole("switch", {
+      name: "Toggle provider anthropic-main",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add OpenAI provider" }));
+
+    const keyEnvInput = screen.getByLabelText(/api key env var/i);
+    expect(keyEnvInput).toHaveAttribute(
+      "placeholder",
+      "OLLAMA_API_KEY (env var name, not the key)",
+    );
+    // The preset ("OPENAI_API_KEY") is a valid env name — no warning yet.
+    expect(screen.queryByText(/looks like a raw key/)).not.toBeInTheDocument();
+
+    fireEvent.change(keyEnvInput, { target: { value: "sk-proj-abc123" } });
+    expect(
+      screen.getByText(/looks like a raw key — use an env var name/),
+    ).toBeInTheDocument();
+
+    fireEvent.change(keyEnvInput, { target: { value: "MY_PROVIDER_KEY" } });
+    expect(screen.queryByText(/looks like a raw key/)).not.toBeInTheDocument();
+  });
+
   it("renders tier sections T0–T5 with effective chains and the routing winner", async () => {
     renderPage();
 

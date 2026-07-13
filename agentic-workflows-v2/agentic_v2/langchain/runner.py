@@ -15,6 +15,7 @@ call sites continue to work without change.
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import sys
 import time
@@ -56,6 +57,26 @@ def _checkpoint_thread_id(
     if checkpointer is None:
         return None
     return run_id
+
+
+def _apply_model_override(config: WorkflowConfig, override: str) -> WorkflowConfig:
+    """Return a copy of *config* with every step's model override set.
+
+    Pure helper: the input config and its steps are never mutated.  Each
+    :class:`~.config.StepConfig` is copied via :func:`dataclasses.replace`
+    with ``model_override`` set to *override*, and a new
+    :class:`~.config.WorkflowConfig` referencing the copied steps is
+    returned.
+
+    Model candidates are frozen into the graph at compile time
+    (``graph_wiring._build_llm_node``), so callers must compile the returned
+    copy — bypassing the compiled-graph cache — for the override to take
+    effect for a single run.
+    """
+    overridden_steps = [
+        dataclasses.replace(step, model_override=override) for step in config.steps
+    ]
+    return dataclasses.replace(config, steps=overridden_steps)
 
 
 def _default_checkpointer() -> Any:
@@ -406,6 +427,7 @@ class WorkflowRunner:
         use_cache: bool = True,
         thread_id: str | None = None,
         run_config: dict[str, Any] | None = None,
+        model_override: str | None = None,
         **inputs: Any,
     ) -> WorkflowResult:
         """Run a workflow asynchronously.
@@ -419,12 +441,19 @@ class WorkflowRunner:
             merged into the LangGraph ``state["context"]`` so that workflow
             steps can access caller-supplied state (e.g. ``workflow_id``,
             ``run_id``, and any variables set on the context before the run).
+        model_override:
+            Optional full prefixed model id (e.g. ``ollama:qwen3-coder:30b``)
+            applied to every step for this run.  The overridden config copy
+            is compiled with the graph cache bypassed so the cached graph
+            for the unmodified workflow is never read or poisoned.
         inputs:
             Keyword arguments matching the workflow's declared inputs.
         """
         config = load_workflow_config(workflow_name, self._definitions_dir)
+        if model_override is not None:
+            config = _apply_model_override(config, model_override)
         validated = self._validate_inputs(config, inputs)
-        graph = self._get_or_compile(config, use_cache)
+        graph = self._get_or_compile(config, use_cache and model_override is None)
         run_id = thread_id or str(uuid.uuid4())
         langgraph_config = self._build_langgraph_config(
             _checkpoint_thread_id(
@@ -553,6 +582,7 @@ class WorkflowRunner:
         use_cache: bool = True,
         thread_id: str | None = None,
         run_config: dict[str, Any] | None = None,
+        model_override: str | None = None,
         **inputs: Any,
     ) -> AsyncIterator[dict[str, Any]]:
         """Stream workflow execution events asynchronously.
@@ -567,12 +597,19 @@ class WorkflowRunner:
             begins.  Final context values are not synced back into ``ctx``:
             supported LangGraph ``astream`` implementations yield event
             deltas, not one reliable aggregate final state.
+        model_override:
+            Optional full prefixed model id (e.g. ``ollama:qwen3-coder:30b``)
+            applied to every step for this run.  The overridden config copy
+            is compiled with the graph cache bypassed so the cached graph
+            for the unmodified workflow is never read or poisoned.
         inputs:
             Keyword arguments matching the workflow's declared inputs.
         """
         config = load_workflow_config(workflow_name, self._definitions_dir)
+        if model_override is not None:
+            config = _apply_model_override(config, model_override)
         validated = self._validate_inputs(config, inputs)
-        graph = self._get_or_compile(config, use_cache)
+        graph = self._get_or_compile(config, use_cache and model_override is None)
         run_id = thread_id or str(uuid.uuid4())
         langgraph_config = self._build_langgraph_config(
             _checkpoint_thread_id(
@@ -751,6 +788,24 @@ class WorkflowRunner:
     def list_workflows(self) -> list[str]:
         """List available workflow names."""
         return list_workflows(self._definitions_dir)
+
+    def invalidate_compiled_workflow(self, workflow_name: str) -> int:
+        """Drop every cached compiled graph for *workflow_name*.
+
+        The compiled-graph cache is keyed by workflow name (plus the
+        checkpointer/trace-adapter identities), so a workflow that is edited
+        and saved would otherwise keep executing its stale compiled graph
+        until the process restarts.  The editor save path
+        (``PUT /api/workflows/{name}``) calls this right after clearing the
+        YAML config cache so the next run recompiles from the new document.
+
+        Returns:
+            Number of cache entries removed (0 if nothing was cached).
+        """
+        stale_keys = [key for key in self._graph_cache if key[0] == workflow_name]
+        for key in stale_keys:
+            del self._graph_cache[key]
+        return len(stale_keys)
 
     @staticmethod
     def extract_metadata(

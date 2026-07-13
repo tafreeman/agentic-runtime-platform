@@ -32,6 +32,9 @@ interface DatasetRowProps {
 function DatasetRow({ dataset, active, onSelect }: Readonly<DatasetRowProps>) {
   return (
     <button
+      type="button"
+      aria-label={`Select dataset ${dataset.name}`}
+      data-testid={`dataset-row-${dataset.id}`}
       onClick={onSelect}
       className={`relative grid w-full grid-cols-[1fr_auto] items-center gap-2 border-b border-b-line-soft px-3 py-2 text-left transition-colors hover:bg-b-bg2 ${
         active ? "bg-b-bg3" : ""

@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import inspect
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, Final
 from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -102,6 +102,85 @@ def _extract_sample_summary_text(sample: dict[str, Any], field_names: list[str])
     return ""
 
 
+# Title derivation key groups, in priority order (see _derive_sample_title).
+# Real benchmark rows (humaneval, mbpp, swe_bench, code_review_instruct,
+# code_instructions, react_code_instructions) carry none of the classic
+# title/name keys, so id-like keys and prose previews carry the weight.
+_TITLE_EXPLICIT_KEYS: Final[tuple[str, ...]] = ("title", "name")
+_TITLE_ID_KEYS: Final[tuple[str, ...]] = (
+    "task_id",
+    "question_id",
+    "problem_id",
+    "instance_id",
+    "case_id",
+    "id",
+    "sample_id",
+)
+_TITLE_TEXT_KEYS: Final[tuple[str, ...]] = (
+    "problem",
+    "question",
+    "prompt",
+    "problem_statement",
+    "text",
+    "instruction",
+    "description",
+    "body",
+)
+_TITLE_MAX_CHARS: Final[int] = 120
+_TITLE_PREVIEW_MAX_CHARS: Final[int] = 80
+
+
+def _single_line(text: str) -> str:
+    """Collapse all whitespace runs (including newlines) into single spaces."""
+    return " ".join(text.split())
+
+
+def _first_string_value(sample: dict[str, Any], keys: tuple[str, ...]) -> str | None:
+    """Return the first non-blank string value among ``keys``, else None."""
+    for key in keys:
+        raw = sample.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return raw
+    return None
+
+
+def _chat_message_preview(sample: dict[str, Any]) -> str | None:
+    """Return the first chat message's content for ``messages``-shaped rows."""
+    messages = sample.get("messages")
+    if not (isinstance(messages, list) and messages):
+        return None
+    first = messages[0]
+    if not isinstance(first, dict):
+        return None
+    content = first.get("content")
+    if isinstance(content, str) and content.strip():
+        return content
+    return None
+
+
+def _derive_sample_title(sample: dict[str, Any], sample_index: int) -> str:
+    """Derive a human-scannable title from a raw dataset sample.
+
+    Priority order: explicit ``title``/``name``, string-valued id-like keys
+    (``task_id``, ``instance_id``, ...), an 80-char single-line preview of
+    the first prose field, the first chat message for ``messages``-shaped
+    rows, then ``Sample {index}``.
+    """
+    explicit = _first_string_value(sample, _TITLE_EXPLICIT_KEYS)
+    if explicit is not None:
+        return _single_line(explicit)[:_TITLE_MAX_CHARS]
+    id_like = _first_string_value(sample, _TITLE_ID_KEYS)
+    if id_like is not None:
+        return _single_line(id_like)[:_TITLE_MAX_CHARS]
+    prose = _first_string_value(sample, _TITLE_TEXT_KEYS)
+    if prose is not None:
+        return _single_line(prose)[:_TITLE_PREVIEW_MAX_CHARS]
+    chat = _chat_message_preview(sample)
+    if chat is not None:
+        return _single_line(chat)[:_TITLE_PREVIEW_MAX_CHARS]
+    return f"Sample {sample_index}"
+
+
 def _make_sample_summary(
     sample: dict[str, Any], sample_index: int, _meta: dict[str, Any]
 ) -> DatasetSampleSummary:
@@ -114,12 +193,7 @@ def _make_sample_summary(
     )
     task_id = str(sample.get("task_id", "")) or None
 
-    title = f"Sample {sample_index}"
-    for title_key in ("title", "name", "problem", "question", "task"):
-        raw = sample.get(title_key)
-        if isinstance(raw, str) and raw.strip():
-            title = raw[:120]
-            break
+    title = _derive_sample_title(sample, sample_index)
 
     summary = _extract_sample_summary_text(sample, field_names)
 
