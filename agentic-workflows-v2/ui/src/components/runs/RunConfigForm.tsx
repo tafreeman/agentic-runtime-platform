@@ -138,8 +138,10 @@ function samplePreviewLine(
   const sample = samples.find((s) => s.sample_index === index);
   if (!sample) return `#${index} · (beyond first ${SAMPLE_PREVIEW_LIMIT})`;
   const label = sample.task_id ?? sample.sample_id ?? sample.title;
+  // The API type promises a string, but nothing validates the JSON at
+  // runtime — a skewed backend must degrade to an empty preview, not throw.
   return `${index} · ${label} · ${truncateText(
-    sample.summary,
+    sample.summary ?? "",
     SAMPLE_PREVIEW_SUMMARY_CHARS
   )}`;
 }

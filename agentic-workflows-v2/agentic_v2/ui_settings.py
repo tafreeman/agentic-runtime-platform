@@ -44,6 +44,7 @@ _SECRET_SHAPE_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"^sk-[A-Za-z0-9_-]{8,}$"),
     re.compile(r"^gh[pousr]_[A-Za-z0-9]{16,}$"),
     re.compile(r"^github_pat_[A-Za-z0-9_]{20,}$"),
+    re.compile(r"^hf_[A-Za-z0-9]{34,}$"),
     re.compile(r"^nvapi-[A-Za-z0-9_-]{16,}$"),
     re.compile(r"^AIza[0-9A-Za-z_-]{30,}$"),
     re.compile(r"^[0-9a-fA-F]{32,}$"),

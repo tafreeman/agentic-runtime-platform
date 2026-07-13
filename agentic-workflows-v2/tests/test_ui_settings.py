@@ -130,9 +130,7 @@ class TestApiKeyEnvHardening:
             encoding="utf-8",
         )
 
-    def test_loading_raw_key_nulls_it_with_warning(
-        self, tmp_path, monkeypatch, caplog
-    ):
+    def test_loading_raw_key_nulls_it_with_warning(self, tmp_path, monkeypatch, caplog):
         path = _settings_path(tmp_path)
         raw_key = "sk-proj-abc123def456ghi789"  # pragma: allowlist secret
         self._write_store(path, raw_key)
@@ -157,6 +155,16 @@ class TestApiKeyEnvHardening:
 
         assert settings.providers[0].api_key_env is None
 
+    def test_loading_huggingface_token_shape_is_nulled(self, tmp_path, monkeypatch):
+        # hf_ tokens are valid shell identifiers too (PR #199/#201 review).
+        path = _settings_path(tmp_path)
+        self._write_store(path, "hf_" + "A1b2C3d4" * 5)
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
+
+        settings = load_ui_settings()
+
+        assert settings.providers[0].api_key_env is None
+
     def test_loading_valid_env_name_is_untouched(self, tmp_path, monkeypatch):
         path = _settings_path(tmp_path)
         self._write_store(path, "OLLAMA_API_KEY")
@@ -171,7 +179,9 @@ class TestApiKeyEnvHardening:
         assert is_valid_api_key_env("_PRIVATE_KEY_VAR")
         assert is_valid_api_key_env("x")
         # Shape violations.
-        assert not is_valid_api_key_env("sk-abc123def456ghi")  # pragma: allowlist secret
+        assert not is_valid_api_key_env(
+            "sk-abc123def456ghi"
+        )  # pragma: allowlist secret
         assert not is_valid_api_key_env("has space")
         assert not is_valid_api_key_env("1STARTS_WITH_DIGIT")
         assert not is_valid_api_key_env("")
@@ -179,6 +189,7 @@ class TestApiKeyEnvHardening:
         # Secret shapes that happen to be valid identifiers.
         assert not is_valid_api_key_env("ghp_" + "a1B2c3D4" * 3)
         assert not is_valid_api_key_env("github_pat_" + "A0" * 12)
+        assert not is_valid_api_key_env("hf_" + "A1b2C3d4" * 5)
         assert not is_valid_api_key_env("deadbeef" * 4)
 
 
