@@ -233,7 +233,7 @@ export default function CommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Search runs, workflows, actions…"
+            placeholder="jump to page… (g+key)"
             aria-label="Search commands"
             autoComplete="off"
             spellCheck={false}

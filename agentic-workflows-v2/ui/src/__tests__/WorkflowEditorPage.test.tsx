@@ -183,6 +183,19 @@ describe("WorkflowEditorPage", () => {
     });
   });
 
+  it("gives the graph pane an explicit height so React Flow can measure it", () => {
+    const { container } = renderPage();
+
+    // React Flow (#004) needs a parent with resolved width AND height. The
+    // pane must carry a real height class — min-h/flex-1 chains resolve the
+    // h-full canvas root to 0px and the builder canvas renders invisible.
+    const pane = container.querySelector('[data-testid="editor-graph-pane"]');
+    expect(pane).not.toBeNull();
+    expect(pane!.className).toContain("h-[420px]");
+    expect(pane!.className).not.toContain("min-h-[380px]");
+    expect(pane!.className).not.toContain("flex-1");
+  });
+
   it("renders the graph and selects a node into the inspector", async () => {
     renderPage();
 

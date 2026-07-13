@@ -445,7 +445,15 @@ export default function WorkflowEditorPage() {
                     add step
                   </button>
                 </div>
-                <div className="mt-2.5 min-h-[380px] flex-1 overflow-hidden">
+                {/* Explicit height, not min-h/flex-1: WorkflowDAG's root is
+                    h-full and React Flow needs a measurable parent (#004).
+                    Percentage heights don't resolve against ancestors that
+                    only carry min-height, so the pane was 0px tall and the
+                    canvas rendered invisible. */}
+                <div
+                  data-testid="editor-graph-pane"
+                  className="mt-2.5 h-[420px] overflow-hidden"
+                >
                   <WorkflowDAG
                     dagNodes={graph.nodes}
                     dagEdges={graph.edges}

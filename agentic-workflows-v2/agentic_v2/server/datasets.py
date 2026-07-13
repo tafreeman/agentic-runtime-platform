@@ -748,10 +748,8 @@ def load_repository_dataset_samples(
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
     """Load a paginated batch of samples from a repository dataset in one call.
 
-    Replaces the O(n^2) loop pattern where the route called
-    :func:`load_repository_dataset_sample` per ``sample_index``. The
-    underlying ``load_benchmark`` helper supports ``offset`` and ``limit``
-    natively, so the batch fetches exactly ``limit`` rows.
+    The underlying ``load_benchmark`` helper supports ``offset`` and
+    ``limit`` natively, so one call fetches the whole page (no N+1 loop).
 
     Args:
         dataset_id: Benchmark registry identifier.
@@ -763,21 +761,23 @@ def load_repository_dataset_samples(
         ``sample_index`` values are absolute (not page-local).
 
     Raises:
-        ValueError: If the benchmark cannot be loaded or the dataset is
-            unknown to the registry.
+        ValueError: If the benchmark cannot be loaded, the dataset is
+            unknown to the registry, or an in-range page came back empty
+            (cache missing/expired and the network fetch failed).
     """
+    page_start = max(offset, 0)
     try:
         from tools.agents.benchmarks.loader import load_benchmark
 
         tasks = load_benchmark(
-            benchmark_id=dataset_id, offset=max(offset, 0), limit=max(limit, 0)
+            benchmark_id=dataset_id, offset=page_start, limit=max(limit, 0)
         )
         sample_count = _repository_sample_count(dataset_id, fallback=len(tasks))
 
         results: list[tuple[dict[str, Any], dict[str, Any]]] = []
         for local_idx, task in enumerate(tasks):
             sample = task.to_dict() if hasattr(task, "to_dict") else asdict(task)
-            absolute_index = max(offset, 0) + local_idx
+            absolute_index = page_start + local_idx
             meta = {
                 "source": "repository",
                 "dataset_id": dataset_id,
@@ -787,9 +787,20 @@ def load_repository_dataset_samples(
                 "sample_count": sample_count,
             }
             results.append((sample, meta))
-        return results
     except (ImportError, ValueError, KeyError, OSError, TypeError) as exc:
         raise ValueError(
             f"Unable to load repository dataset '{dataset_id}'. "
             "Choose a local JSON dataset or ensure benchmark dependencies are available."
         ) from exc
+
+    # Listing honesty: the registry advertises samples for this in-range page,
+    # so an empty batch means the load failed (expired cache + failed network
+    # fetch) — surface it instead of returning [] as if the dataset were
+    # empty. Paging past the end stays a legitimate empty page, and an
+    # unknown registry (fallback size 0) stays lenient.
+    if not results and limit > 0 and page_start < sample_count:
+        raise ValueError(
+            f"repository dataset '{dataset_id}' returned no samples: local cache "
+            "is missing/expired and the network fetch failed; retry with connectivity"
+        )
+    return results

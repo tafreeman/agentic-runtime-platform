@@ -3,11 +3,18 @@ import { sendChat } from "../../api/client";
 import type {
   ChatMessage, ChatRequest, ChatStreamEvent, ModelProbeResponse, ProbedModel,
 } from "../../api/types";
+import {
+  loadVerifications,
+  recordVerification,
+  type ModelVerification,
+} from "../../lib/modelVerification";
 
 // Chat playground — direct POST /api/chat probe for any model in the catalog.
 // Unavailable/local models stay selectable on purpose: sending a message is
 // how you find out whether a backend actually replies, so auth/quota/
 // connection failures are surfaced prominently instead of filtered away.
+// Terminal stream outcomes are persisted to the verification registry, which
+// then drives picker ordering, default selection, and finder catalog badges.
 
 const SECTION_LABEL =
   "font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint";
@@ -35,11 +42,35 @@ interface PickerGroup {
   readonly models: readonly ProbedModel[];
 }
 
+type VerificationMap = Readonly<Record<string, ModelVerification>>;
+
+/**
+ * Only-use-working-models ordering inside a provider group: playground-
+ * verified-ok first, then currently-running (loaded in memory), then tier,
+ * then id — evidence of liveness beats static catalog order.
+ */
+function compareModels(
+  a: ProbedModel,
+  b: ProbedModel,
+  verifications: VerificationMap,
+): number {
+  const aOk = verifications[a.id]?.status === "ok" ? 1 : 0;
+  const bOk = verifications[b.id]?.status === "ok" ? 1 : 0;
+  if (aOk !== bOk) return bOk - aOk;
+  const aRunning = a.running ? 1 : 0;
+  const bRunning = b.running ? 1 : 0;
+  if (aRunning !== bRunning) return bRunning - aRunning;
+  return a.tier - b.tier || a.id.localeCompare(b.id);
+}
+
 /**
  * Group + sort probe models by provider — available providers first, models
- * by tier then id (mirrors groupProbeByProvider in ModelFinderPage).
+ * ordered by verified/running/tier/id (see compareModels).
  */
-function groupModelsByProvider(probe: ModelProbeResponse | undefined): PickerGroup[] {
+function groupModelsByProvider(
+  probe: ModelProbeResponse | undefined,
+  verifications: VerificationMap,
+): PickerGroup[] {
   if (!probe) return [];
   const available = new Set(probe.available_providers);
   const byName = new Map<string, ProbedModel[]>();
@@ -52,7 +83,7 @@ function groupModelsByProvider(probe: ModelProbeResponse | undefined): PickerGro
     .map(([name, list]) => ({
       name,
       available: available.has(name),
-      models: list.slice().sort((a, b) => a.tier - b.tier || a.id.localeCompare(b.id)),
+      models: list.slice().sort((a, b) => compareModels(a, b, verifications)),
     }))
     .sort(
       (a, b) =>
@@ -60,6 +91,19 @@ function groupModelsByProvider(probe: ModelProbeResponse | undefined): PickerGro
         b.models.length - a.models.length ||
         a.name.localeCompare(b.name),
     );
+}
+
+/** Option label with liveness / verification / credential suffixes. */
+function optionLabel(
+  item: ProbedModel,
+  verification: ModelVerification | undefined,
+): string {
+  const parts = [item.id];
+  if (item.running) parts.push("· live");
+  if (verification?.status === "ok") parts.push("· ok");
+  if (verification?.status === "error") parts.push("· failed");
+  if (!item.available) parts.push("· no keys");
+  return parts.join(" ");
 }
 
 /** Parse the temperature field, falling back to the server default. */
@@ -115,6 +159,13 @@ interface ChatPlaygroundPanelProps {
   /** Probe from the page-level ["model-probe"] query (shared, not re-fetched). */
   probe: ModelProbeResponse | undefined;
   probeLoading: boolean;
+  /**
+   * Deep-linked model id (?model= search param). Seeds the picker on mount —
+   * safe as a mount-time initializer because the panel remounts per tab switch.
+   */
+  initialModel?: string;
+  /** Probe query failure — surfaced inline so playground-tab failures are visible. */
+  probeError?: Error | null;
 }
 
 /**
@@ -123,44 +174,82 @@ interface ChatPlaygroundPanelProps {
  * reply token-by-token into the transcript.
  */
 export default function ChatPlaygroundPanel({
-  probe, probeLoading,
+  probe, probeLoading, initialModel = "", probeError = null,
 }: Readonly<ChatPlaygroundPanelProps>) {
-  const [model, setModel] = useState("");
+  const [model, setModel] = useState(initialModel);
   const [temperature, setTemperature] = useState(String(DEFAULT_TEMPERATURE));
   const [messages, setMessages] = useState<readonly ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<PlaygroundError | null>(null);
+  const [verifications, setVerifications] = useState<VerificationMap>(() =>
+    loadVerifications(),
+  );
   const abortRef = useRef<AbortController | null>(null);
 
-  const groups = useMemo(() => groupModelsByProvider(probe), [probe]);
+  const groups = useMemo(
+    () => groupModelsByProvider(probe, verifications),
+    [probe, verifications],
+  );
+
+  // Default preference: most-recently-verified-ok model present in the probe,
+  // then the first running (loaded) model, then the first with credentials,
+  // then the first overall — strongest liveness evidence wins.
   const defaultModelId = useMemo(() => {
     const ordered = groups.flatMap((group) => group.models);
-    return ordered.find((item) => item.available)?.id ?? ordered[0]?.id ?? "";
-  }, [groups]);
+    const verifiedOk = ordered
+      .filter((item) => verifications[item.id]?.status === "ok")
+      .sort((a, b) =>
+        (verifications[b.id]?.at ?? "").localeCompare(verifications[a.id]?.at ?? ""),
+      );
+    return (
+      verifiedOk[0]?.id ??
+      ordered.find((item) => item.running)?.id ??
+      ordered.find((item) => item.available)?.id ??
+      ordered[0]?.id ??
+      ""
+    );
+  }, [groups, verifications]);
 
   // Effective selection: an explicit pick sticks; until then the default
-  // (first available model, else the first overall) applies as soon as the
-  // probe arrives. Derived at render time so the select never sits on ""
-  // while options exist — state adoption via effect would lag one frame.
+  // applies as soon as the probe arrives. Derived at render time so the
+  // select never sits on "" while options exist — state adoption via effect
+  // would lag one frame.
   const effectiveModel = model !== "" ? model : defaultModelId;
+
+  // In no-LLM mode every model "answers" via the deterministic placeholder,
+  // so a done frame would fake-verify the whole catalog — skip recording.
+  const verificationEnabled = !(probe?.no_llm_mode ?? false);
 
   // Abort any in-flight stream when the panel unmounts (e.g. tab switch).
   useEffect(() => () => abortRef.current?.abort(), []);
 
-  const failStream = (message: string, category: string | null) => {
+  const recordOutcome = (
+    modelId: string,
+    status: "ok" | "error",
+    message?: string,
+  ) => {
+    if (!verificationEnabled) return;
+    recordVerification(modelId, status, message);
+    setVerifications(loadVerifications());
+  };
+
+  const failStream = (modelId: string, message: string, category: string | null) => {
+    recordOutcome(modelId, "error", message);
     setMessages((prev) => withoutEmptyAssistantTail(prev));
     setError({ message, category });
     setStreaming(false);
   };
 
-  const handleEvent = (event: ChatStreamEvent) => {
+  const handleEvent = (modelId: string, event: ChatStreamEvent) => {
     if (event.type === "token") {
       setMessages((prev) => withDelta(prev, event.delta));
     } else if (event.type === "done") {
+      // A completed stream is the strongest liveness signal the UI has.
+      recordOutcome(modelId, "ok");
       setStreaming(false);
     } else {
-      failStream(event.message, event.category);
+      failStream(modelId, event.message, event.category);
     }
   };
 
@@ -183,14 +272,20 @@ export default function ChatPlaygroundPanel({
     setStreaming(true);
     const controller = new AbortController();
     abortRef.current = controller;
-    sendChat(request, handleEvent, { signal: controller.signal })
+    sendChat(request, (event) => handleEvent(request.model, event), {
+      signal: controller.signal,
+    })
       .then(() => {
         // Defensive: unlock if the server closed without a terminal frame.
         if (!controller.signal.aborted) setStreaming(false);
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        failStream(err instanceof Error ? err.message : String(err), null);
+        failStream(
+          request.model,
+          err instanceof Error ? err.message : String(err),
+          null,
+        );
       });
   };
 
@@ -217,6 +312,16 @@ export default function ChatPlaygroundPanel({
     setInput("");
   };
 
+  // Why is send a no-op right now? Rendered as a dim status line so Enter
+  // "doing nothing" during a slow probe or a hung stream is explained.
+  const blockedHint = streaming
+    ? "streaming — press stop first"
+    : effectiveModel === ""
+      ? probeLoading
+        ? "probing providers…"
+        : "no model selected"
+      : null;
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -232,6 +337,16 @@ export default function ChatPlaygroundPanel({
           sending a message is the probe, and failures surface below.
         </p>
       </div>
+
+      {probeError && (
+        <div
+          role="alert" data-testid="playground-probe-error"
+          className="border-b-red/40 bg-b-bg1 p-3 font-mono text-[11px] text-b-red"
+          style={CARD_STYLE}
+        >
+          probe failed: {probeError.message}
+        </div>
+      )}
 
       {probe?.no_llm_mode && (
         <div
@@ -262,7 +377,7 @@ export default function ChatPlaygroundPanel({
                 <optgroup key={group.name} label={group.name}>
                   {group.models.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {`${item.id}${item.available ? "" : " · no keys"}`}
+                      {optionLabel(item, verifications[item.id])}
                     </option>
                   ))}
                 </optgroup>
@@ -362,6 +477,15 @@ export default function ChatPlaygroundPanel({
           send
         </button>
       </div>
+
+      {blockedHint && (
+        <div
+          data-testid="chat-blocked-hint"
+          className="-mt-3 font-mono text-[10px] text-b-text-dim"
+        >
+          send blocked — {blockedHint}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,9 @@ import type { WorkflowInputSchema } from "../api/types";
 
 const clientMocks = vi.hoisted(() => ({
   listEvaluationDatasets: vi.fn(),
+  listDatasetSamples: vi.fn(),
+  getDatasetSampleDetail: vi.fn(),
+  probeModels: vi.fn(),
 }));
 
 vi.mock("../api/client", () => clientMocks);
@@ -68,6 +71,58 @@ describe("RunConfigForm", () => {
           name: "Eval Bundle",
           description: "Bundled eval set",
           datasets: ["repo-eval", "local-smoke"],
+        },
+      ],
+    });
+    clientMocks.probeModels.mockResolvedValue({
+      available_providers: ["ollama"],
+      unavailable_providers: ["anthropic"],
+      tier_defaults: {},
+      models: [
+        {
+          id: "anthropic:claude-x",
+          provider: "anthropic",
+          tier: 1,
+          available: false,
+        },
+        {
+          id: "ollama:qwen3:8b",
+          provider: "ollama",
+          tier: 2,
+          available: true,
+          running: true,
+        },
+        {
+          id: "ollama:llama3:8b",
+          provider: "ollama",
+          tier: 1,
+          available: true,
+        },
+      ],
+      no_llm_mode: false,
+    });
+    clientMocks.listDatasetSamples.mockResolvedValue({
+      dataset_source: "local",
+      dataset_id: "local-smoke",
+      sample_count: 40,
+      offset: 0,
+      limit: 20,
+      samples: [
+        {
+          sample_index: 0,
+          sample_id: "s-0",
+          task_id: "task-alpha",
+          title: "Sample 0",
+          summary: "First local smoke sample about parsing behaviour",
+          field_names: ["prompt"],
+        },
+        {
+          sample_index: 1,
+          sample_id: "s-1",
+          task_id: null,
+          title: "Sample 1",
+          summary: "Second sample",
+          field_names: ["prompt"],
         },
       ],
     });
@@ -324,5 +379,164 @@ describe("RunConfigForm", () => {
         selectedSamples: [0, 1],
       });
     });
+  });
+
+  it("seeds evaluation state and opens the advanced panel from initialEvaluation", async () => {
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm
+        inputs={[]}
+        workflowName="test"
+        initialEvaluation={{
+          datasetSource: "local",
+          datasetId: "local-smoke",
+          sampleText: "0,2",
+          runsPerRecord: 2,
+        }}
+        onChange={onChange}
+      />
+    );
+
+    // Advanced panel auto-opens without clicking the toggle.
+    expect(screen.getByTestId("runtime-config")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /eval/i })).toBeChecked();
+    expect(screen.getByLabelText("Dataset source")).toHaveValue("local");
+    expect(screen.getByLabelText("Sample indexes")).toHaveValue("0,2");
+    expect(screen.getByLabelText("Runs per record")).toHaveValue(2);
+
+    await waitFor(() => {
+      const lastCall = onChange.mock.calls.at(-1)?.[0];
+      expect(lastCall.evaluation).toMatchObject({
+        enabled: true,
+        datasetSource: "local",
+        datasetId: "local-smoke",
+        selectedSamples: [0, 2],
+        runsPerRecord: 2,
+      });
+    });
+  });
+
+  it("seeds an eval-set selection from initialEvaluation", async () => {
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm
+        inputs={[]}
+        workflowName="test"
+        initialEvaluation={{
+          datasetSource: "eval_set",
+          datasetId: "",
+          evalSetId: "eval-bundle",
+          sampleText: "1",
+        }}
+        onChange={onChange}
+      />
+    );
+
+    await waitFor(() => {
+      const lastCall = onChange.mock.calls.at(-1)?.[0];
+      expect(lastCall.evaluation).toMatchObject({
+        enabled: true,
+        datasetSource: "eval_set",
+        evalSetId: "eval-bundle",
+        selectedSamples: [1],
+      });
+    });
+  });
+
+  it("renders probe models live-first in the override select and emits modelOverride", async () => {
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm inputs={[]} workflowName="test" onChange={onChange} />
+    );
+
+    fireEvent.click(screen.getByTestId("advanced-toggle"));
+    const select = screen.getByTestId(
+      "model-override-select"
+    ) as HTMLSelectElement;
+
+    // Ordered running DESC, available DESC, tier ASC, id ASC — with suffixes.
+    await waitFor(() => {
+      const labels = Array.from(select.querySelectorAll("option")).map(
+        (option) => option.textContent
+      );
+      expect(labels).toEqual([
+        "tier default (no override)",
+        "ollama:qwen3:8b · live",
+        "ollama:llama3:8b",
+        "anthropic:claude-x · no keys",
+      ]);
+    });
+
+    // Default is "no override" — modelOverride flows out as "".
+    expect(onChange.mock.calls.at(-1)?.[0].modelOverride).toBe("");
+
+    fireEvent.change(select, { target: { value: "ollama:qwen3:8b" } });
+    await waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0].modelOverride).toBe(
+        "ollama:qwen3:8b"
+      );
+    });
+  });
+
+  it("previews selected samples with task ids and flags beyond-page indexes", async () => {
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm
+        inputs={[]}
+        workflowName="test"
+        initialEvaluation={{
+          datasetSource: "local",
+          datasetId: "local-smoke",
+          sampleText: "0,1,25",
+        }}
+        onChange={onChange}
+      />
+    );
+
+    expect(await screen.findByTestId("sample-preview-line-0")).toHaveTextContent(
+      "0 · task-alpha · First local smoke sample about parsing behaviour"
+    );
+    // task_id missing → falls back to sample_id.
+    expect(screen.getByTestId("sample-preview-line-1")).toHaveTextContent(
+      "1 · s-1 · Second sample"
+    );
+    // Index past the fetched first page.
+    expect(screen.getByTestId("sample-preview-line-25")).toHaveTextContent(
+      "#25 · (beyond first 20)"
+    );
+    expect(clientMocks.listDatasetSamples).toHaveBeenCalledWith(
+      "local",
+      "local-smoke",
+      0,
+      20
+    );
+  });
+
+  it("surfaces a sample preview error line when the fetch fails", async () => {
+    clientMocks.listDatasetSamples.mockRejectedValue(
+      new Error("API 422: dataset 'local-smoke' has no samples")
+    );
+    const onChange = vi.fn();
+
+    renderForm(
+      <RunConfigForm
+        inputs={[]}
+        workflowName="test"
+        initialEvaluation={{
+          datasetSource: "local",
+          datasetId: "local-smoke",
+          sampleText: "0",
+        }}
+        onChange={onChange}
+      />
+    );
+
+    expect(
+      await screen.findByText(/API 422: dataset 'local-smoke' has no samples/)
+    ).toBeInTheDocument();
   });
 });

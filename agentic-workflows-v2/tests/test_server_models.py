@@ -81,6 +81,37 @@ class TestWorkflowRunRequest:
         with pytest.raises(ValidationError):
             WorkflowRunRequest()  # type: ignore[call-arg]
 
+    def test_model_override_defaults_to_none(self) -> None:
+        """model_override is optional and defaults to None."""
+        req = WorkflowRunRequest(workflow="test")
+        assert req.model_override is None
+
+    def test_model_override_accepts_prefixed_model_id(self) -> None:
+        """A full prefixed model id is accepted and preserved."""
+        req = WorkflowRunRequest(
+            workflow="test",
+            model_override="ollama:qwen3-coder:30b",
+        )
+        assert req.model_override == "ollama:qwen3-coder:30b"
+
+    @pytest.mark.parametrize("blank", ["", " ", "  ", "\t", "\n  \t"])
+    def test_model_override_whitespace_only_normalizes_to_none(
+        self, blank: str
+    ) -> None:
+        """Empty / whitespace-only overrides normalize to None."""
+        req = WorkflowRunRequest(workflow="test", model_override=blank)
+        assert req.model_override is None
+
+    def test_model_override_strips_surrounding_whitespace(self) -> None:
+        """Surrounding whitespace is stripped from a real override."""
+        req = WorkflowRunRequest(workflow="test", model_override="  ollama:phi4  ")
+        assert req.model_override == "ollama:phi4"
+
+    def test_model_override_over_max_length_raises(self) -> None:
+        """Overrides longer than 200 characters raise ValidationError."""
+        with pytest.raises(ValidationError):
+            WorkflowRunRequest(workflow="test", model_override="x" * 201)
+
 
 class TestWorkflowEvaluationRequest:
     """Tests for WorkflowEvaluationRequest model."""

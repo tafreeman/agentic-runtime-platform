@@ -46,7 +46,7 @@ from ...langchain.dependencies import (
 )
 from ...workflows.run_logger import RunLogger
 from ..audit_log import audit_request_event
-from ..execution import _run_and_evaluate
+from ..execution import _run_and_evaluate, invalidate_compiled_workflow
 from ..models import (
     ListWorkflowsResponse,
     WorkflowEditorRequest,
@@ -306,12 +306,19 @@ async def get_workflow_editor(name: str):
     },
 )
 async def save_workflow_editor(name: str, request: WorkflowEditorRequest):
-    """Validate and persist a workflow document."""
+    """Validate and persist a workflow document.
+
+    Clears both the YAML config cache and the LangChain runner's
+    compiled-graph cache for this workflow, so the saved definition takes
+    effect on the next run without a process restart (compiled graphs
+    freeze their model candidates and topology at compile time).
+    """
     try:
         path, persisted_document, _config, yaml_text = save_workflow_document(
             name, request.document
         )
         load_workflow_config.cache_clear()
+        invalidate_compiled_workflow(name)
         return _workflow_editor_response(
             name,
             str(path),
@@ -392,6 +399,12 @@ async def run_workflow(
             f"Available: {_get_adapter_registry().list_adapters()}",
         ) from exc
 
+    if request.model_override is not None and adapter_name != "langchain":
+        raise HTTPException(
+            status_code=422,
+            detail="model_override requires the langchain adapter",
+        )
+
     if adapter_name == "langchain":
         _require_langchain_runtime()
     try:
@@ -424,6 +437,7 @@ async def run_workflow(
             dataset_meta,
             adapter_name,
             tenant_ctx.tenant_id,
+            model_override=request.model_override,
         )
         await audit_request_event(
             http_request,

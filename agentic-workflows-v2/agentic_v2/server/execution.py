@@ -23,6 +23,8 @@ Public API
 ----------
 _get_lc_runner
     Lazily initialise the LangChain runner singleton.
+invalidate_compiled_workflow
+    Drop the runner's compiled-graph cache entries for one workflow.
 _resolve_judge_model
     Resolve the LLM model identifier for the evaluation judge.
 _merge_stream_state
@@ -117,6 +119,21 @@ def _get_lc_runner() -> Any:
     if _lc_runner is None:
         _lc_runner = LangChainRunner(trace_adapter=create_trace_adapter())
     return _lc_runner
+
+
+def invalidate_compiled_workflow(workflow_name: str) -> int:
+    """Drop the runner's compiled-graph cache entries for *workflow_name*.
+
+    Called from the ``PUT /api/workflows/{name}`` save path (right after the
+    YAML config cache is cleared) so an edited workflow definition takes
+    effect on the next run without a process restart.  Safe no-op returning
+    0 when the LangChain runner singleton has not been initialised yet —
+    nothing can be cached before first use.
+    """
+    if _lc_runner is None:
+        return 0
+    removed: int = _lc_runner.invalidate_compiled_workflow(workflow_name)
+    return removed
 
 
 def _resolve_judge_model() -> str | None:
@@ -332,6 +349,7 @@ async def _stream_and_run(
     workflow_inputs: dict[str, Any],
     adapter_name: str = "langchain",
     tenant_id: str = DEFAULT_TENANT_ID,
+    model_override: str | None = None,
 ) -> WorkflowResult:
     """Stream LangGraph node events to WebSocket clients, then build a final
     WorkflowResult.
@@ -346,6 +364,9 @@ async def _stream_and_run(
         run_id: Unique run identifier.
         workflow_inputs: Input variables for the workflow.
         adapter_name: Execution adapter to use (default ``"langchain"``).
+        model_override: Optional full prefixed model id applied to every
+            step for this run (langchain adapter only; the route rejects it
+            for other adapters).
 
     Returns:
         The completed :class:`WorkflowResult`.
@@ -382,6 +403,7 @@ async def _stream_and_run(
         async for node_update in _get_lc_runner().astream(
             workflow_name,
             thread_id=run_id,
+            model_override=model_override,
             **workflow_inputs,
         ):
             if not isinstance(node_update, Mapping):
@@ -415,6 +437,7 @@ async def _stream_and_run(
         fallback = await _get_lc_runner().run(
             workflow_name,
             thread_id=run_id,
+            model_override=model_override,
             **workflow_inputs,
         )
         return normalize_workflow_result(
@@ -477,6 +500,7 @@ async def _run_and_evaluate(
     dataset_meta: dict[str, Any] | None,
     adapter_name: str = "langchain",
     tenant_id: str = DEFAULT_TENANT_ID,
+    model_override: str | None = None,
 ) -> None:
     """Background task: execute workflow, optionally evaluate, broadcast
     events, and log.
@@ -498,6 +522,8 @@ async def _run_and_evaluate(
         dataset_sample: Dataset sample dict for scoring (or None).
         dataset_meta: Dataset metadata dict for scoring (or None).
         adapter_name: Execution adapter to use (default ``"langchain"``).
+        model_override: Optional full prefixed model id applied to every
+            step for this run (langchain adapter only).
     """
     try:
         logger.info("Starting background execution for run_id=%s", run_id)
@@ -516,6 +542,7 @@ async def _run_and_evaluate(
             workflow_inputs,
             adapter_name=adapter_name,
             tenant_id=tenant_id,
+            model_override=model_override,
         )
 
         status = result.overall_status.value

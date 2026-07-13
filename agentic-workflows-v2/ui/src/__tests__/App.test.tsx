@@ -43,6 +43,18 @@ async function renderAppAt(path: string, workflowBuilderEnabled: boolean) {
   vi.doMock("../pages/EvaluationsPage", () => ({
     default: () => <div>Evaluations Page</div>,
   }));
+  // Mock the remaining routed pages too: their real import graphs (model
+  // catalog, settings, runs) are heavy enough to blow the 5s test timeout on
+  // a cold transform, and App routing is what's under test here.
+  vi.doMock("../pages/ModelFinderPage", () => ({
+    default: () => <div>Model Finder Page</div>,
+  }));
+  vi.doMock("../pages/SettingsPage", () => ({
+    default: () => <div>Settings Page</div>,
+  }));
+  vi.doMock("../pages/RunsPage", () => ({
+    default: () => <div>Runs Page</div>,
+  }));
   vi.doMock("../components/states/NotFoundPage", () => ({
     default: () => <div>Not Found Page</div>,
   }));
