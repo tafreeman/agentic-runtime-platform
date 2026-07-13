@@ -214,3 +214,70 @@ accelerators:
         assert accelerators[0]["name"] == "Legacy GPU"
         assert accelerators[0]["memory_gb"] is None
         assert accelerators[0]["tops"] is None
+
+    def test_legacy_negative_scalar_override_is_inert_everywhere(
+        self,
+        client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A bad persisted scalar must be ignored by BOTH consumers.
+
+        Before the loader-side sanitizer, a pre-bounds ``ram_gb: -4`` made
+        GET /profile-override report ``override: null`` while
+        get_system_profile() still consumed -4 for fit scoring — the
+        override looked unset but silently corrupted recommendations.
+        """
+        self._install_override(
+            tmp_path,
+            monkeypatch,
+            """
+cpu_cores_logical: 8
+ram_gb: -4
+accelerators: []
+""",
+        )
+
+        profile = client.get("/api/model-finder/profile")
+        assert profile.status_code == 200
+        # The bad field falls back to the live probe (which may report 0.0
+        # in CI where psutil is absent, but never the persisted negative);
+        # the good field still applies.
+        assert profile.json()["ram_gb"] >= 0
+        assert profile.json()["cpu_cores_logical"] == 8
+
+        state = client.get("/api/model-finder/profile-override")
+        assert state.status_code == 200
+        override = state.json()["override"]
+        # Consistent story: the surviving field is reported, the bad one
+        # is gone — not the all-or-nothing null of the unsanitized path.
+        assert override is not None
+        assert override["cpu_cores_logical"] == 8
+        assert override["ram_gb"] is None
+
+    def test_boolean_accelerator_yaml_override_degrades(
+        self,
+        client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A persisted boolean tops must degrade to None, not claim 1.0 TOPS."""
+        self._install_override(
+            tmp_path,
+            monkeypatch,
+            """
+cpu_cores_logical: 8
+ram_gb: 32
+accelerators:
+  - kind: npu
+    name: Bool NPU
+    tops: true
+""",
+        )
+
+        response = client.get("/api/model-finder/profile")
+
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["accelerators"][0]["tops"] is None
+        assert payload["system_tops"] is None

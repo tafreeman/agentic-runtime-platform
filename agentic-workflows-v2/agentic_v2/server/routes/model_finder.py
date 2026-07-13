@@ -53,6 +53,16 @@ class Accelerator(BaseModel):
     # INT8 AI throughput in TOPS; None when unknown.
     tops: float | None = Field(default=None, ge=0)
 
+    @field_validator("memory_gb", "tops", mode="before")
+    @classmethod
+    def _reject_boolean_numbers(cls, value: Any) -> Any:
+        # bool is an int subclass (float(True) == 1.0): a JSON ``true`` would
+        # otherwise coerce, pass ge=0, and silently claim real hardware.
+        # Mirrors the HardwareOverrideRequest guard (#194).
+        if isinstance(value, bool):
+            raise ValueError("must be a number, not a boolean")
+        return value
+
 
 class SystemProfile(BaseModel):
     os: str
@@ -443,18 +453,93 @@ def _resolve_override_path() -> Path:
 
 
 def _load_hardware_override() -> dict[str, Any]:
-    """Return the hardware override dict, or {} when none is configured."""
+    """Return the sanitized hardware override dict, or {} when none is configured."""
     override_path = _resolve_override_path()
     if not override_path.is_file():
         return {}
     try:
         data = yaml.safe_load(override_path.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
+        return _sanitize_hardware_override(data) if isinstance(data, dict) else {}
     except Exception as exc:
         logger.warning(
             "Failed to load hardware override from %s: %s", override_path, exc
         )
         return {}
+
+
+# Numeric override fields and their lower-bound contracts (mirrors the
+# HardwareOverrideRequest Field bounds): gt-fields discard <= 0, ge-fields
+# discard < 0. Booleans are discarded everywhere — bool is an int subclass,
+# so float(True) == 1.0 would silently claim real hardware.
+_GT_ZERO_OVERRIDE_FIELDS = (
+    "cpu_cores_logical",
+    "cpu_cores_physical",
+    "cpu_max_mhz",
+    "ram_gb",
+)
+_GE_ZERO_OVERRIDE_FIELDS = ("system_tops",)
+_ACCELERATOR_NUMERIC_FIELDS = ("memory_gb", "tops")
+
+
+def _is_discarded_override_number(value: Any, *, minimum_exclusive: bool) -> bool:
+    """True when a persisted numeric override value must be discarded."""
+    if isinstance(value, bool):
+        return True
+    try:
+        number = float(value)
+    except (ValueError, TypeError):
+        # Non-numeric values keep their existing per-consumer degradation
+        # paths (_safe_int/_safe_float, the system_tops fallback).
+        return False
+    return number <= 0 if minimum_exclusive else number < 0
+
+
+def _sanitize_hardware_override(data: dict[str, Any]) -> dict[str, Any]:
+    """Drop out-of-bounds fields from a persisted override (never raises).
+
+    Pre-bounds override files may persist values the API now rejects
+    (negatives, booleans). Discarding them here — in the one loader that
+    both ``get_system_profile()`` and ``GET /profile-override`` consume —
+    keeps every reader consistent: a bad field is inert everywhere instead
+    of nulling the reported override while still corrupting fit scoring.
+    """
+    cleaned = dict(data)
+    bounded_fields = [(field, True) for field in _GT_ZERO_OVERRIDE_FIELDS] + [
+        (field, False) for field in _GE_ZERO_OVERRIDE_FIELDS
+    ]
+    for field, exclusive in bounded_fields:
+        if field in cleaned and _is_discarded_override_number(
+            cleaned[field], minimum_exclusive=exclusive
+        ):
+            logger.warning(
+                "Ignoring out-of-bounds hardware override %s=%r.",
+                field,
+                cleaned[field],
+            )
+            del cleaned[field]
+
+    raw_accelerators = cleaned.get("accelerators")
+    if isinstance(raw_accelerators, list):
+        cleaned_accelerators: list[Any] = []
+        for entry in raw_accelerators:
+            if not isinstance(entry, dict):
+                cleaned_accelerators.append(entry)
+                continue
+            entry_copy = dict(entry)
+            for field in _ACCELERATOR_NUMERIC_FIELDS:
+                if field in entry_copy and _is_discarded_override_number(
+                    entry_copy[field], minimum_exclusive=False
+                ):
+                    logger.warning(
+                        "Ignoring out-of-bounds accelerator override %s=%r for %r.",
+                        field,
+                        entry_copy[field],
+                        entry_copy.get("name"),
+                    )
+                    del entry_copy[field]
+            cleaned_accelerators.append(entry_copy)
+        cleaned["accelerators"] = cleaned_accelerators
+    return cleaned
 
 
 def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
@@ -479,23 +564,9 @@ def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
             memory_gb = float(memory_raw) if memory_raw is not None else None
         except (ValueError, TypeError):
             memory_gb = None
-        # Legacy override files written before the ge=0 bounds may persist
-        # negative values; Accelerator would now raise ValidationError, and a
-        # malformed persisted value must degrade, not 500 the profile routes.
-        if tops is not None and tops < 0:
-            logger.warning(
-                "Ignoring negative accelerator tops override %r for %s.",
-                tops_raw,
-                name,
-            )
-            tops = None
-        if memory_gb is not None and memory_gb < 0:
-            logger.warning(
-                "Ignoring negative accelerator memory_gb override %r for %s.",
-                memory_raw,
-                name,
-            )
-            memory_gb = None
+        # Out-of-bounds/boolean persisted values are already discarded by
+        # _sanitize_hardware_override in the loader (the only feed for this
+        # parser), so construction below cannot trip the ge=0 bounds.
         vendor_raw = entry.get("vendor")
         result.append(
             Accelerator(
