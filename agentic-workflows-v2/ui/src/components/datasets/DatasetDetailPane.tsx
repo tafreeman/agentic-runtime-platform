@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDatasetSampleDetail } from "../../hooks/useDatasets";
+import { useWorkflows } from "../../hooks/useWorkflows";
 import BPill from "../common/BPill";
 import JsonViewer from "../common/JsonViewer";
 
@@ -7,6 +9,68 @@ interface DatasetDetailPaneProps {
   datasetSource: string;
   datasetId: string;
   sampleIndex: number;
+}
+
+interface RunWithSampleProps {
+  datasetSource: string;
+  datasetId: string;
+  sampleIndex: number;
+}
+
+/** Workflow picker + deep link that prefills a run with this sample. */
+function RunWithSample({
+  datasetSource,
+  datasetId,
+  sampleIndex,
+}: Readonly<RunWithSampleProps>) {
+  const [workflow, setWorkflow] = useState("");
+  const { data: workflows, isLoading } = useWorkflows();
+  const effectiveWorkflow = workflow || workflows?.[0] || "";
+  const runHref = `/workflows/${encodeURIComponent(effectiveWorkflow)}?eval_source=${datasetSource}&eval_dataset=${encodeURIComponent(datasetId)}&samples=${sampleIndex}`;
+
+  return (
+    <div data-testid="run-with-sample">
+      <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[1.5px] text-b-text-faint">
+        run with this sample
+      </div>
+      <div className="flex items-center gap-2">
+        <select
+          aria-label="Workflow to run"
+          data-testid="run-with-sample-workflow"
+          value={effectiveWorkflow}
+          onChange={(event) => setWorkflow(event.target.value)}
+          className="min-w-0 flex-1 border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text"
+          style={{
+            borderRadius: "var(--b-rad-sm)",
+            borderWidth: "var(--b-bw)",
+          }}
+          disabled={isLoading || !workflows?.length}
+        >
+          {!workflows?.length ? (
+            <option value="">
+              {isLoading ? "loading workflows…" : "no workflows"}
+            </option>
+          ) : (
+            workflows.map((wf) => (
+              <option key={wf} value={wf}>
+                {wf}
+              </option>
+            ))
+          )}
+        </select>
+        {effectiveWorkflow ? (
+          <Link
+            to={runHref}
+            aria-label="Configure run with this sample"
+            data-testid="run-with-sample-link"
+            className="flex-none font-mono text-[10px] text-b-clay hover:text-b-text"
+          >
+            configure run →
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function FieldValue({ value }: Readonly<{ value: unknown }>) {
@@ -118,10 +182,18 @@ export default function DatasetDetailPane({
         ))}
       </div>
 
+      {/* Run with this sample — deep link into the run config form */}
+      <RunWithSample
+        datasetSource={datasetSource}
+        datasetId={datasetId}
+        sampleIndex={sampleIndex}
+      />
+
       {/* Dataset meta (collapsed by default) */}
       <div>
         <button
           type="button"
+          aria-label="Toggle dataset metadata"
           aria-expanded={metaOpen}
           aria-controls={metaPanelId}
           onClick={() => setMetaOpen((v) => !v)}

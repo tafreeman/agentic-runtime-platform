@@ -12,14 +12,16 @@ import { healthCheck } from "../api/client";
  * Note: `refetchInterval` is per-observer and is NOT suppressed by `staleTime`
  * (that only gates stale-triggered refetches like mount/focus/reconnect), so a
  * single polling owner — not `staleTime` alone — is what actually dedupes the
- * interval traffic.
+ * interval traffic. `staleTime` (20s) exceeds the 15s poll interval so a
+ * secondary consumer remounting between polls reads the cache instead of
+ * firing an extra `/api/health` request.
  */
 export function useBackendHealth({ poll = false }: { poll?: boolean } = {}) {
   return useQuery({
     queryKey: ["backend-health"],
     queryFn: healthCheck,
     retry: false,
-    staleTime: 10_000,
+    staleTime: 20_000,
     refetchInterval: poll ? 15_000 : false,
   });
 }

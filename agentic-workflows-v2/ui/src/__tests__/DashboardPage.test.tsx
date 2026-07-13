@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "../pages/DashboardPage";
 
@@ -19,10 +19,6 @@ vi.mock("../hooks/useWorkflows", () => ({
   useWorkflows: () => mockUseWorkflows(),
 }));
 
-vi.mock("../hooks/useHotkeys", () => ({
-  useHotkeys: () => {},
-}));
-
 vi.mock("../api/client", () => ({
   healthCheck: () => mockHealthCheck(),
   listAgents: () => mockListAgents(),
@@ -37,8 +33,11 @@ function renderDashboard() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <DashboardPage />
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/workflows" element={<div>workflows page stub</div>} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -212,6 +211,85 @@ describe("DashboardPage", () => {
     renderDashboard();
 
     expect(await screen.findByText("A")).toBeInTheDocument();
+  });
+
+  it("shows a real header status line instead of the fake workspace copy", () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 3, success: 2, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          filename: "run1.json",
+          run_id: "run-001",
+          workflow_name: "triage",
+          status: "running",
+          start_time: null,
+          step_count: 1,
+          failed_step_count: 0,
+          total_duration_ms: null,
+          evaluation_score: null,
+        },
+        {
+          filename: "run2.json",
+          run_id: "run-002",
+          workflow_name: "review",
+          status: "success",
+          start_time: null,
+          step_count: 1,
+          failed_step_count: 0,
+          total_duration_ms: 2000,
+          evaluation_score: null,
+        },
+      ],
+      isLoading: false,
+    });
+    mockUseWorkflows.mockReturnValue({ data: ["triage", "review"] });
+
+    renderDashboard();
+
+    // No invented workspace/sync copy anywhere on the page.
+    expect(screen.queryByText(/acme/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/synced just now/i)).not.toBeInTheDocument();
+    // Honest line: workflow count · live-run count · last refresh time (the
+    // mocked query exposes no dataUpdatedAt, so the time renders as a dash).
+    expect(
+      screen.getByText(/2 workflows · 1 running · updated —/)
+    ).toBeInTheDocument();
+  });
+
+  it("navigates to the workflows page on the n hotkey", () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 0, success: 0, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: "n" });
+    expect(screen.getByText("workflows page stub")).toBeInTheDocument();
+  });
+
+  it("keeps the n hotkey inert while the filter input has focus", () => {
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 0, success: 0, failed: 0 },
+      isLoading: false,
+    });
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    mockUseWorkflows.mockReturnValue({ data: ["triage"], isLoading: false });
+
+    renderDashboard();
+
+    const filterInput = screen.getByLabelText("Filter runs");
+    filterInput.focus();
+    fireEvent.keyDown(filterInput, { key: "n" });
+
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.queryByText("workflows page stub")).not.toBeInTheDocument();
   });
 
   it("renders the empty state when there are no runs", () => {

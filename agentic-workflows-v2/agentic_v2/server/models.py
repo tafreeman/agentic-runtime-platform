@@ -179,6 +179,8 @@ class WorkflowRunRequest(BaseModel):
         adapter: Execution adapter name. Named YAML workflow requests default
             to ``"langchain"``; pass ``"native"`` for the native DAG/Pipeline
             path.
+        model_override: Optional full prefixed model id applied to every step
+            of this run (langchain adapter only).
         evaluation: Optional evaluation settings for scored runs.
         execution_profile: Optional runtime execution controls.
     """
@@ -213,6 +215,24 @@ class WorkflowRunRequest(BaseModel):
         if isinstance(v, str) and v.strip().lower() == "default":
             return "langchain"
         return v
+
+    model_override: str | None = Field(
+        None,
+        max_length=200,
+        description=(
+            "Full prefixed model id (e.g. ollama:qwen3-coder:30b) applied as "
+            "the model override for every step of this run. Langchain "
+            "adapter only."
+        ),
+    )
+
+    @field_validator("model_override")
+    @classmethod
+    def _normalize_model_override(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        stripped = v.strip()
+        return stripped or None
 
     evaluation: WorkflowEvaluationRequest | None = Field(
         None, description="Optional evaluation settings for scored runs"

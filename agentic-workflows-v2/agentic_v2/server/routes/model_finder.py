@@ -14,6 +14,7 @@ import platform
 import re
 import shutil
 import subprocess
+import tempfile
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -29,8 +30,8 @@ _DEFAULT_OVERRIDE = (
     Path(__file__).resolve().parent.parent.parent / "config" / "hardware_override.yaml"
 )
 
-from fastapi import APIRouter, Query
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 router = APIRouter(prefix="/model-finder", tags=["model-finder"])
 
@@ -66,6 +67,53 @@ class SystemProfile(BaseModel):
     estimated_tokens_per_second_7b_q4: float
     performance_tier: Literal["entry", "mainstream", "workstation", "accelerated"]
     notes: list[str] = Field(default_factory=list)
+
+
+class HardwareOverrideRequest(BaseModel):
+    """User-editable hardware override mirroring ``hardware_override.yaml``.
+
+    All fields are optional. ``None`` fields are dropped before persisting so
+    the YAML pins only the values the user actually overrode; everything else
+    keeps coming from the live probes in :func:`get_system_profile`.
+    """
+
+    cpu_name: str | None = None
+    cpu_cores_logical: int | None = None
+    cpu_cores_physical: int | None = None
+    cpu_max_mhz: float | None = None
+    ram_gb: float | None = None
+    system_tops: float | None = None
+    accelerators: list[Accelerator] | None = None
+
+    @field_validator(
+        "cpu_cores_logical",
+        "cpu_cores_physical",
+        "cpu_max_mhz",
+        "ram_gb",
+        "system_tops",
+        mode="before",
+    )
+    @classmethod
+    def _reject_boolean_numbers(cls, value: Any) -> Any:
+        # bool is an int subclass (float(True) == 1.0): a JSON ``true`` would
+        # otherwise coerce and silently claim e.g. 1 TOPS. Reject it outright,
+        # consistent with the get_system_profile parsing hardening (#194).
+        if isinstance(value, bool):
+            raise ValueError("must be a number, not a boolean")
+        return value
+
+
+class HardwareOverrideStateResponse(BaseModel):
+    """Response for ``GET /model-finder/profile-override``."""
+
+    override: HardwareOverrideRequest | None = None
+
+
+class HardwareOverrideUpdateResponse(BaseModel):
+    """Response for ``PUT`` and ``DELETE /model-finder/profile-override``."""
+
+    profile: SystemProfile
+    override: HardwareOverrideRequest | None = None
 
 
 class ModelCandidate(BaseModel):
@@ -382,10 +430,15 @@ def _accelerators() -> list[Accelerator]:
     return accelerators
 
 
+def _resolve_override_path() -> Path:
+    """Resolve the hardware-override YAML path (env override wins)."""
+    path_env = os.environ.get("HARDWARE_OVERRIDE_PATH")
+    return Path(path_env) if path_env else _DEFAULT_OVERRIDE
+
+
 def _load_hardware_override() -> dict[str, Any]:
     """Return the hardware override dict, or {} when none is configured."""
-    path_env = os.environ.get("HARDWARE_OVERRIDE_PATH")
-    override_path = Path(path_env) if path_env else _DEFAULT_OVERRIDE
+    override_path = _resolve_override_path()
     if not override_path.is_file():
         return {}
     try:
@@ -587,10 +640,101 @@ def sorted_candidates(
     return sorted(candidates, key=key, reverse=True)
 
 
+def _write_hardware_override(payload: dict[str, Any]) -> Path:
+    """Atomically persist the override YAML (tempfile + ``os.replace``).
+
+    Mirrors the ``ui_settings.save_ui_settings`` atomic-write pattern so a
+    crashed write can never leave a torn YAML behind.
+    """
+    override_path = _resolve_override_path()
+    override_path.parent.mkdir(parents=True, exist_ok=True)
+    text = yaml.safe_dump(payload, sort_keys=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(override_path.parent), prefix=override_path.name, suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        os.replace(tmp_name, override_path)
+    except OSError:
+        try:
+            os.unlink(tmp_name)
+        except FileNotFoundError:
+            pass
+        raise
+    return override_path
+
+
 @router.get("/profile")
 def profile() -> SystemProfile:
     """Return the detected local system resource profile."""
     return get_system_profile()
+
+
+@router.get("/profile-override", response_model=HardwareOverrideStateResponse)
+def get_profile_override() -> HardwareOverrideStateResponse:
+    """Return the persisted hardware override, or ``null`` when absent."""
+    data = _load_hardware_override()
+    if not data:
+        return HardwareOverrideStateResponse(override=None)
+    try:
+        override = HardwareOverrideRequest.model_validate(data)
+    except ValidationError as exc:
+        logger.warning(
+            "Persisted hardware override at %s does not validate; reporting "
+            "no override (profile computation degrades per-field): %s",
+            _resolve_override_path(),
+            exc,
+        )
+        return HardwareOverrideStateResponse(override=None)
+    return HardwareOverrideStateResponse(override=override)
+
+
+@router.put(
+    "/profile-override",
+    response_model=HardwareOverrideUpdateResponse,
+    responses={
+        422: {"description": "Invalid hardware override values"},
+        503: {"description": "Hardware override store is not writable"},
+    },
+)
+def put_profile_override(
+    request: HardwareOverrideRequest,
+) -> HardwareOverrideUpdateResponse:
+    """Persist a hardware override and return the recomputed profile."""
+    payload = request.model_dump(exclude_none=True)
+    try:
+        override_path = _write_hardware_override(payload)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Hardware override store is not writable: {exc}",
+        ) from exc
+    get_system_profile.cache_clear()
+    logger.info(
+        "Hardware override persisted to %s (keys: %s)",
+        override_path,
+        sorted(payload),
+    )
+    return HardwareOverrideUpdateResponse(
+        profile=get_system_profile(), override=request
+    )
+
+
+@router.delete("/profile-override", response_model=HardwareOverrideUpdateResponse)
+def delete_profile_override() -> HardwareOverrideUpdateResponse:
+    """Remove the persisted override (missing file tolerated) and re-profile."""
+    override_path = _resolve_override_path()
+    try:
+        override_path.unlink(missing_ok=True)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Hardware override store is not writable: {exc}",
+        ) from exc
+    get_system_profile.cache_clear()
+    logger.info("Hardware override removed at %s", override_path)
+    return HardwareOverrideUpdateResponse(profile=get_system_profile(), override=None)
 
 
 @router.get("/recommendations")

@@ -9,6 +9,30 @@ const mockUseRuns = vi.fn();
 const mockRunWorkflow = vi.fn();
 const mockFlag = vi.fn();
 
+/** Baseline RunConfigValues the stubbed form emits on render. */
+function defaultFormValues() {
+  return {
+    inputValues: { prompt: "hello" },
+    executionProfile: { runtime: "subprocess" },
+    rubricId: "",
+    modelOverride: "",
+    evaluation: {
+      enabled: false,
+      datasetSource: "none",
+      datasetId: "",
+      evalSetId: "",
+      selectedSamples: [0],
+      runsPerRecord: 1,
+    },
+  };
+}
+
+/** Captures the props the page hands to RunConfigForm + the values to emit. */
+const formSpy = vi.hoisted(() => ({
+  lastProps: null as Record<string, unknown> | null,
+  values: null as Record<string, unknown> | null,
+}));
+
 vi.mock("../hooks/useWorkflows", () => ({
   useWorkflowDAG: (...args: unknown[]) => mockUseWorkflowDAG(...args),
 }));
@@ -38,20 +62,12 @@ vi.mock("../components/runs/RunList", () => ({
 }));
 
 vi.mock("../components/runs/RunConfigForm", () => ({
-  default: ({ onChange }: { onChange: (values: unknown) => void }) => {
-    onChange({
-      inputValues: { prompt: "hello" },
-      executionProfile: { runtime: "subprocess" },
-      rubricId: "",
-      evaluation: {
-        enabled: false,
-        datasetSource: "none",
-        datasetId: "",
-        evalSetId: "",
-        selectedSamples: [0],
-        runsPerRecord: 1,
-      },
-    });
+  default: (props: {
+    onChange: (values: unknown) => void;
+    initialEvaluation?: unknown;
+  }) => {
+    formSpy.lastProps = props as unknown as Record<string, unknown>;
+    props.onChange(formSpy.values);
     return <div>Run Config Form</div>;
   },
 }));
@@ -78,6 +94,8 @@ function renderPage(path = "/workflows/review_flow") {
 describe("WorkflowDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    formSpy.lastProps = null;
+    formSpy.values = defaultFormValues();
     mockFlag.mockReturnValue(true);
     mockUseWorkflowDAG.mockReturnValue({
       data: {
@@ -218,5 +236,81 @@ describe("WorkflowDetailPage", () => {
         execution_profile: { runtime: "subprocess" },
       });
     });
+  });
+
+  it("passes no initialEvaluation to the form without deep-link params", () => {
+    renderPage();
+
+    expect(formSpy.lastProps).not.toBeNull();
+    expect(formSpy.lastProps?.initialEvaluation).toBeUndefined();
+  });
+
+  it("parses the run-prefill deep link into initialEvaluation", () => {
+    renderPage(
+      "/workflows/review_flow?eval_source=repository&eval_dataset=swe%2Fbench_lite&samples=0,2&runs=3"
+    );
+
+    expect(formSpy.lastProps?.initialEvaluation).toEqual({
+      datasetSource: "repository",
+      datasetId: "swe/bench_lite",
+      evalSetId: undefined,
+      sampleText: "0,2",
+      runsPerRecord: 3,
+    });
+  });
+
+  it("routes an eval_set deep link into evalSetId", () => {
+    renderPage(
+      "/workflows/review_flow?eval_source=eval_set&eval_dataset=eval-bundle&samples=1"
+    );
+
+    expect(formSpy.lastProps?.initialEvaluation).toEqual({
+      datasetSource: "eval_set",
+      datasetId: "",
+      evalSetId: "eval-bundle",
+      sampleText: "1",
+      runsPerRecord: undefined,
+    });
+  });
+
+  it("ignores a deep link with an unknown eval_source", () => {
+    renderPage(
+      "/workflows/review_flow?eval_source=bogus&eval_dataset=swe%2Fbench_lite"
+    );
+
+    expect(formSpy.lastProps?.initialEvaluation).toBeUndefined();
+  });
+
+  it("includes model_override in the run payload only when set", async () => {
+    formSpy.values = { ...defaultFormValues(), modelOverride: "ollama:qwen3:8b" };
+
+    renderPage();
+
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    await waitFor(() => {
+      expect(mockRunWorkflow).toHaveBeenCalledWith({
+        workflow: "review_flow",
+        input_data: { prompt: "hello" },
+        evaluation: undefined,
+        execution_profile: { runtime: "subprocess" },
+        model_override: "ollama:qwen3:8b",
+      });
+    });
+  });
+
+  it("omits model_override from the run payload when no override is chosen", async () => {
+    renderPage();
+
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    await waitFor(() => {
+      expect(mockRunWorkflow).toHaveBeenCalled();
+    });
+    const payload = mockRunWorkflow.mock.calls.at(-1)?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect("model_override" in payload).toBe(false);
   });
 });

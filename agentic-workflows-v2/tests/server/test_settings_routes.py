@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 
@@ -67,6 +69,67 @@ class TestProviderSettings:
         providers = [{"id": "leaky", "type": "custom", "options": {"api_key": "sk-x"}}]
         response = client.put("/api/settings/providers", json={"providers": providers})
         assert response.status_code == 422
+
+    def test_put_rejects_raw_key_shaped_api_key_env(self, client):
+        providers = [
+            {
+                "id": "leaky",
+                "type": "custom",
+                "api_key_env": "sk-abc123def456ghi789jkl",  # pragma: allowlist secret
+            }
+        ]
+        response = client.put("/api/settings/providers", json={"providers": providers})
+        assert response.status_code == 422
+        assert "environment variable NAME" in response.json()["detail"]
+        # Nothing was persisted — a follow-up GET stays empty.
+        assert client.get("/api/settings/providers").json()["providers"] == []
+
+    def test_put_rejects_github_token_shaped_api_key_env(self, client):
+        # ghp_ tokens are valid shell identifiers, but still credentials.
+        providers = [
+            {"id": "gh-box", "type": "gh", "api_key_env": "ghp_" + "a1B2" * 6}
+        ]
+        response = client.put("/api/settings/providers", json={"providers": providers})
+        assert response.status_code == 422
+        assert "never the credential itself" in response.json()["detail"]
+
+    def test_put_accepts_legit_env_var_names(self, client):
+        providers = [
+            {"id": "team-ollama", "type": "ollama", "api_key_env": "OLLAMA_API_KEY"},
+            {"id": "lab", "type": "custom", "api_key_env": "_MY_LAB_KEY"},
+        ]
+        response = client.put("/api/settings/providers", json={"providers": providers})
+        assert response.status_code == 200
+        saved = response.json()["providers"]
+        assert saved[0]["api_key_env"] == "OLLAMA_API_KEY"
+        assert saved[1]["api_key_env"] == "_MY_LAB_KEY"
+
+    def test_get_nulls_raw_key_persisted_by_older_versions(self, client, tmp_path):
+        # Legacy store written before write-side hardening: the raw key must
+        # be cleared on read, never echoed back through the API.
+        store = tmp_path / "ui_settings.json"
+        store.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "providers": [
+                        {
+                            "id": "legacy",
+                            "type": "custom",
+                            "api_key_env": "sk-legacy123456789abcdef",  # pragma: allowlist secret
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        response = client.get("/api/settings/providers")
+
+        assert response.status_code == 200
+        provider = response.json()["providers"][0]
+        assert provider["id"] == "legacy"
+        assert provider["api_key_env"] is None
 
 
 class TestTierSettings:

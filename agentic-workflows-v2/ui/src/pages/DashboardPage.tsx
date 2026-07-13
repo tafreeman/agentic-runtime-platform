@@ -192,7 +192,11 @@ export default function DashboardPage() {
     filterRef.current?.blur();
   }, []);
 
-  useHotkeys({ filter: focusFilter, escape: clearFilter });
+  // "n" mirrors the header button: both land on /workflows, where a new run
+  // is actually triggered.
+  const goWorkflows = useCallback(() => navigate("/workflows"), [navigate]);
+
+  useHotkeys({ new: goWorkflows, filter: focusFilter, escape: clearFilter });
 
   const recent: RunSummary[] = useMemo(() => {
     const all = (runs ?? []).slice(0, 7);
@@ -219,6 +223,13 @@ export default function DashboardPage() {
       : "—";
 
   const modelRows = (agents ?? []).slice(0, 6);
+
+  // Header status line — real data only: workflow count, live-run count, and
+  // when the runs list actually last refreshed (no fake workspace/sync copy).
+  const workflowCount = workflows?.length ?? 0;
+  const updatedLabel = runsQuery.dataUpdatedAt
+    ? new Date(runsQuery.dataUpdatedAt).toLocaleTimeString()
+    : "—";
 
   const hasNoRuns = (runs?.length ?? 0) === 0;
   const loadError =
@@ -265,7 +276,8 @@ export default function DashboardPage() {
                 Dashboard
               </h1>
               <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-                $ workspace acme · {activeCount} runs active · synced just now
+                $ {workflowCount} workflows · {activeCount} running · updated{" "}
+                {updatedLabel}
               </div>
             </div>
             <div className="flex items-center gap-3">

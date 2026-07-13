@@ -5,6 +5,7 @@ import LivePage from "../pages/LivePage";
 
 const mockUseWorkflowStream = vi.fn();
 const mockUseWorkflowDAG = vi.fn();
+const mockUseRuns = vi.fn();
 
 vi.mock("../hooks/useWorkflowStream", () => ({
   useWorkflowStream: (...args: unknown[]) => mockUseWorkflowStream(...args),
@@ -12,6 +13,10 @@ vi.mock("../hooks/useWorkflowStream", () => ({
 
 vi.mock("../hooks/useWorkflows", () => ({
   useWorkflowDAG: (...args: unknown[]) => mockUseWorkflowDAG(...args),
+}));
+
+vi.mock("../hooks/useRuns", () => ({
+  useRuns: (...args: unknown[]) => mockUseRuns(...args),
 }));
 
 vi.mock("../components/dag/WorkflowDAG", () => ({
@@ -42,11 +47,12 @@ vi.mock("../components/live/TokenCounter", () => ({
   default: () => <div>Token count</div>,
 }));
 
-function renderPage() {
+function renderPage(initialEntry = "/live/review_flow-1234abcd") {
   return render(
-    <MemoryRouter initialEntries={["/live/review_flow-1234abcd"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/live/:runId" element={<LivePage />} />
+        <Route path="/workflows" element={<div>workflows page stub</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -55,6 +61,7 @@ function renderPage() {
 describe("LivePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseRuns.mockReturnValue({ data: [], isLoading: false });
   });
 
   it("renders the connecting state before DAG data arrives", () => {
@@ -160,6 +167,73 @@ describe("LivePage", () => {
     expect(screen.getByText(/judge skipped/)).toBeInTheDocument();
     expect(screen.queryByText("llm-as-judge")).toBeNull();
     expect(screen.getByText(/score is shape-only/)).toBeInTheDocument();
+  });
+
+  describe("/live/latest alias", () => {
+    it("shows the idle card and mounts no stream when nothing is running", () => {
+      mockUseRuns.mockReturnValue({
+        data: [
+          { filename: "done.json", run_id: "done-1", status: "success" },
+          { filename: "failed.json", run_id: "failed-1", status: "failed" },
+        ],
+        isLoading: false,
+      });
+
+      renderPage("/live/latest");
+
+      expect(
+        screen.getByText(/no active run — trigger one from workflows/)
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("live-idle-workflows-link")).toHaveAttribute(
+        "href",
+        "/workflows"
+      );
+      // The stream hook must never open a socket for the literal "latest"
+      // id — the server would accept it and hold it open forever.
+      expect(mockUseWorkflowStream).not.toHaveBeenCalled();
+    });
+
+    it("redirects (replace) to the newest running run instead of streaming 'latest'", () => {
+      mockUseWorkflowStream.mockReturnValue({
+        stepStates: new Map(),
+        events: [],
+        workflowStatus: "connecting",
+        evaluation: null,
+        error: null,
+      });
+      mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+      mockUseRuns.mockReturnValue({
+        data: [
+          // Newest-first list: the first running entry wins even when a
+          // finished run sits above it.
+          { filename: "done.json", run_id: "done-1", status: "success" },
+          {
+            filename: "active.json",
+            run_id: "review_flow-9",
+            status: "running",
+          },
+        ],
+        isLoading: false,
+      });
+
+      renderPage("/live/latest");
+
+      expect(screen.getByTestId("run-id")).toHaveAttribute(
+        "data-run-id",
+        "review_flow-9"
+      );
+      expect(mockUseWorkflowStream).toHaveBeenCalledWith("review_flow-9");
+      expect(mockUseWorkflowStream).not.toHaveBeenCalledWith("latest");
+    });
+
+    it("shows a resolving state while the runs list loads", () => {
+      mockUseRuns.mockReturnValue({ data: undefined, isLoading: true });
+
+      renderPage("/live/latest");
+
+      expect(screen.getByText(/resolving latest run/)).toBeInTheDocument();
+      expect(mockUseWorkflowStream).not.toHaveBeenCalled();
+    });
   });
 
   it("renders failed workflow status directly", () => {

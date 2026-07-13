@@ -144,6 +144,11 @@ export interface WorkflowRunRequest {
   run_id?: string;
   evaluation?: WorkflowEvaluationRequest;
   execution_profile?: ExecutionProfileRequest;
+  /**
+   * Full prefixed model id (e.g. "ollama:qwen3:8b") applied to every step for
+   * this run — langchain adapter only. Omit/null for tier defaults.
+   */
+  model_override?: string | null;
 }
 
 /** POST /api/run response. */
@@ -423,6 +428,8 @@ export interface LocalAccelerator {
   name: string;
   memory_gb?: number | null;
   vendor?: string | null;
+  /** Vendor-rated peak throughput in TOPS, when known. */
+  tops?: number | null;
 }
 
 export interface SystemProfile {
@@ -434,6 +441,8 @@ export interface SystemProfile {
   cpu_max_mhz?: number | null;
   ram_gb: number;
   accelerators: LocalAccelerator[];
+  /** Aggregate system TOPS estimate across accelerators, when known. */
+  system_tops?: number | null;
   estimated_cinebench_r23_multi: number;
   estimated_tokens_per_second_7b_q4: number;
   performance_tier: "entry" | "mainstream" | "workstation" | "accelerated";

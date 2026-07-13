@@ -6,6 +6,9 @@ const mockUseEvaluationDatasets = vi.fn();
 
 vi.mock("../hooks/useWorkflows", () => ({
   useEvaluationDatasets: () => mockUseEvaluationDatasets(),
+  // DatasetDetailPane (transitively imported) pulls useWorkflows from this
+  // module — provide it so the mocked module exposes every consumed export.
+  useWorkflows: vi.fn(() => ({ data: [], isLoading: false })),
 }));
 
 describe("DatasetsPage", () => {
@@ -72,5 +75,14 @@ describe("DatasetsPage", () => {
     expect(screen.getByText("2 linked datasets")).toBeInTheDocument();
     expect(screen.getAllByText("repo-1")).toHaveLength(2);
     expect(screen.getAllByText("local-1")).toHaveLength(2);
+
+    // Dataset rows are accessible, explicitly-typed buttons.
+    const repoRow = screen.getByRole("button", {
+      name: "Select dataset Repository Dataset",
+    });
+    expect(repoRow).toHaveAttribute("type", "button");
+    expect(
+      screen.getByRole("button", { name: "Select dataset Local Dataset" })
+    ).toBeInTheDocument();
   });
 });

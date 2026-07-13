@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 import pytest
 from pydantic import ValidationError
@@ -10,6 +11,7 @@ from pydantic import ValidationError
 from agentic_v2.ui_settings import (
     ProviderConfig,
     UiSettings,
+    is_valid_api_key_env,
     load_ui_settings,
     save_ui_settings,
     tier_override_models,
@@ -109,6 +111,75 @@ class TestStoreRoundtrip:
         on_disk = json.loads(_settings_path(tmp_path).read_text(encoding="utf-8"))
         assert on_disk["providers"][0]["api_key_env"] == "OPENAI_API_KEY"
         assert "api_key" not in on_disk["providers"][0]
+
+
+class TestApiKeyEnvHardening:
+    """Reads are lenient (null + warn); the predicate is shared with writes."""
+
+    @staticmethod
+    def _write_store(path, api_key_env: str) -> None:
+        path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "providers": [
+                        {"id": "legacy", "type": "custom", "api_key_env": api_key_env}
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    def test_loading_raw_key_nulls_it_with_warning(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        path = _settings_path(tmp_path)
+        raw_key = "sk-proj-abc123def456ghi789"  # pragma: allowlist secret
+        self._write_store(path, raw_key)
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
+
+        with caplog.at_level(logging.WARNING, logger="agentic_v2.ui_settings"):
+            settings = load_ui_settings()
+
+        assert settings.providers[0].api_key_env is None
+        assert "api_key_env" in caplog.text
+        assert "legacy" in caplog.text
+        # The credential itself must never reach the log.
+        assert raw_key not in caplog.text
+
+    def test_loading_github_token_shape_is_nulled(self, tmp_path, monkeypatch):
+        # A ghp_ token passes the env-var-name regex but is still a secret.
+        path = _settings_path(tmp_path)
+        self._write_store(path, "ghp_" + "a1B2c3D4" * 3)
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
+
+        settings = load_ui_settings()
+
+        assert settings.providers[0].api_key_env is None
+
+    def test_loading_valid_env_name_is_untouched(self, tmp_path, monkeypatch):
+        path = _settings_path(tmp_path)
+        self._write_store(path, "OLLAMA_API_KEY")
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
+
+        settings = load_ui_settings()
+
+        assert settings.providers[0].api_key_env == "OLLAMA_API_KEY"
+
+    def test_is_valid_api_key_env_predicate(self):
+        assert is_valid_api_key_env("OLLAMA_API_KEY")
+        assert is_valid_api_key_env("_PRIVATE_KEY_VAR")
+        assert is_valid_api_key_env("x")
+        # Shape violations.
+        assert not is_valid_api_key_env("sk-abc123def456ghi")  # pragma: allowlist secret
+        assert not is_valid_api_key_env("has space")
+        assert not is_valid_api_key_env("1STARTS_WITH_DIGIT")
+        assert not is_valid_api_key_env("")
+        assert not is_valid_api_key_env("X" * 129)
+        # Secret shapes that happen to be valid identifiers.
+        assert not is_valid_api_key_env("ghp_" + "a1B2c3D4" * 3)
+        assert not is_valid_api_key_env("github_pat_" + "A0" * 12)
+        assert not is_valid_api_key_env("deadbeef" * 4)
 
 
 class TestTierOverrideAccessor:

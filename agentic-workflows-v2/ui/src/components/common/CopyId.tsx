@@ -28,9 +28,9 @@ export default function CopyId({
       type="button"
       onClick={copy}
       title={`Copy ${text}`}
-      className={`inline-flex items-center gap-1.5 font-mono text-b-clay hover:underline ${className}`}
+      className={`inline-flex min-w-0 items-center gap-1.5 font-mono text-b-clay hover:underline ${className}`}
     >
-      {text}
+      <span className="min-w-0 truncate">{text}</span>
       {copied ? (
         <Check size={12} className="flex-none text-b-green" />
       ) : (

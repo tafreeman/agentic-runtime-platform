@@ -8,12 +8,18 @@ export default defineConfig(({ mode }) => {
     env.VITE_API_PROXY_TARGET || process.env.VITE_API_PROXY_TARGET || "";
   const apiProxyTarget = explicitApiTarget || "http://localhost:8010";
   const wsProxyTarget = apiProxyTarget.replace(/^http/i, "ws");
-  const workflowBuilderFlag =
+  const workflowBuilderFlagRaw =
     env.VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     env.AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     process.env.VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     process.env.AGENTIC_ENABLE_WORKFLOW_BUILDER ??
     "";
+  // The builder is on by default in dev; set the env flag to "0" to opt out.
+  // Production builds still require the explicit flag until the editor GAs.
+  const workflowBuilderFlag =
+    workflowBuilderFlagRaw === "" && mode === "development"
+      ? "1"
+      : workflowBuilderFlagRaw;
 
   // In dev, always inject the backend URL so websocket.ts can connect directly
   // (Vite's proxy silently drops WebSocket upgrades). In production, omit it

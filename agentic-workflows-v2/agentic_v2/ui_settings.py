@@ -34,6 +34,21 @@ _DEFAULT_SETTINGS_PATH = (
 
 _PROVIDER_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
+# api_key_env must be an environment variable NAME, never the credential.
+_ENV_VAR_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
+
+# Well-known credential shapes (mirrors server/routes/chat.py). A value that
+# *looks* like a token is rejected even when it happens to be a valid env-var
+# name — GitHub's ``ghp_...`` tokens, for example, are legal shell identifiers.
+_SECRET_SHAPE_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"^sk-[A-Za-z0-9_-]{8,}$"),
+    re.compile(r"^gh[pousr]_[A-Za-z0-9]{16,}$"),
+    re.compile(r"^github_pat_[A-Za-z0-9_]{20,}$"),
+    re.compile(r"^nvapi-[A-Za-z0-9_-]{16,}$"),
+    re.compile(r"^AIza[0-9A-Za-z_-]{30,}$"),
+    re.compile(r"^[0-9a-fA-F]{32,}$"),
+)
+
 # Option keys that suggest a raw credential is being smuggled into the store.
 _FORBIDDEN_OPTION_KEYS = frozenset({"api_key", "apikey", "token", "secret", "password"})
 
@@ -140,6 +155,37 @@ class UiSettings(BaseModel):
         return value
 
 
+def is_valid_api_key_env(value: str) -> bool:
+    """Return True when ``value`` is a plausible environment variable NAME.
+
+    Rejects anything failing the shell-identifier shape, and additionally
+    rejects values matching well-known credential shapes: a pasted GitHub
+    token is a valid identifier but is still a secret, not a name.
+    """
+    if not _ENV_VAR_NAME_PATTERN.fullmatch(value):
+        return False
+    return not any(pattern.match(value) for pattern in _SECRET_SHAPE_PATTERNS)
+
+
+def _sanitize_loaded_provider(provider: ProviderConfig) -> ProviderConfig:
+    """Null out a legacy ``api_key_env`` value that is not an env-var name.
+
+    Reads stay lenient: a pre-hardening store may carry a raw credential in
+    this field. It must never crash loads nor echo back through the API, so
+    the field is cleared with a warning. The value itself is deliberately
+    not logged — it may be the secret.
+    """
+    if provider.api_key_env is None or is_valid_api_key_env(provider.api_key_env):
+        return provider
+    logger.warning(
+        "Provider %r: api_key_env does not look like an environment variable "
+        "name; clearing it. Store the credential in an env var and reference "
+        "it by name instead.",
+        provider.id,
+    )
+    return provider.model_copy(update={"api_key_env": None})
+
+
 def get_ui_settings_path() -> Path:
     """Resolve the settings file path (env override wins)."""
     override = (os.environ.get("AGENTIC_UI_SETTINGS_PATH") or "").strip()
@@ -153,16 +199,22 @@ def load_ui_settings(path: Path | None = None) -> UiSettings:
 
     A corrupt file is logged and treated as empty rather than failing
     the request path — the UI can always re-save a clean document.
+    Legacy ``api_key_env`` values that look like raw credentials are
+    cleared (with a warning) rather than served back to clients.
     """
     settings_path = path or get_ui_settings_path()
     if not settings_path.exists():
         return UiSettings()
     try:
         data = json.loads(settings_path.read_text(encoding="utf-8"))
-        return UiSettings.model_validate(data)
+        settings = UiSettings.model_validate(data)
     except (OSError, ValueError) as exc:
         logger.warning("Ignoring invalid UI settings at %s: %s", settings_path, exc)
         return UiSettings()
+    providers = [_sanitize_loaded_provider(p) for p in settings.providers]
+    if providers == settings.providers:
+        return settings
+    return settings.model_copy(update={"providers": providers})
 
 
 def save_ui_settings(settings: UiSettings, path: Path | None = None) -> Path:

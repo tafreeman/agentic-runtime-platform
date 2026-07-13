@@ -508,9 +508,14 @@ async def test_workflow_editor_and_evaluation_helper_error_paths(monkeypatch):
     )
     monkeypatch.setattr(evaluation_routes.inspect, "signature", original_signature)
 
+    # 'body' now feeds the title-preview chain (sample rows must be
+    # recognizable in the browser), so the generic fallback needs a sample
+    # with no preview-able fields at all.
     summary = evaluation_routes._make_sample_summary({"body": "Details"}, 3, {})
-    assert summary.title == "Sample 3"
+    assert summary.title == "Details"
     assert summary.summary == "Details"
+    fallback = evaluation_routes._make_sample_summary({"count": 7}, 3, {})
+    assert fallback.title == "Sample 3"
 
     monkeypatch.setattr(evaluation_routes, "_LANGCHAIN_AVAILABLE", False)
     with pytest.raises(HTTPException) as exc_info:
