@@ -178,3 +178,39 @@ system_tops: definitely-not-a-number
         payload = response.json()
         assert payload["profile"]["system_tops"] is None
         assert payload["models"]
+
+    def test_legacy_negative_accelerator_override_degrades(
+        self,
+        client: TestClient,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Pre-bounds override files may persist negative accelerator values.
+
+        Accelerator now rejects negatives at the API boundary (ge=0), so
+        the loader must degrade those persisted fields to None instead
+        of letting ValidationError 500 the profile/recommendations
+        routes.
+        """
+        self._install_override(
+            tmp_path,
+            monkeypatch,
+            """
+cpu_cores_logical: 8
+ram_gb: 32
+accelerators:
+  - kind: gpu
+    name: Legacy GPU
+    memory_gb: -8
+    tops: -40
+""",
+        )
+
+        profile_response = client.get("/api/model-finder/profile")
+
+        assert profile_response.status_code == 200
+        accelerators = profile_response.json()["accelerators"]
+        assert len(accelerators) == 1
+        assert accelerators[0]["name"] == "Legacy GPU"
+        assert accelerators[0]["memory_gb"] is None
+        assert accelerators[0]["tops"] is None

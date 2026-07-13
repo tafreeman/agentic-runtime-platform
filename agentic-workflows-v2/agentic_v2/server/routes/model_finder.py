@@ -479,6 +479,23 @@ def _accelerators_from_override(raw: list[Any]) -> list[Accelerator]:
             memory_gb = float(memory_raw) if memory_raw is not None else None
         except (ValueError, TypeError):
             memory_gb = None
+        # Legacy override files written before the ge=0 bounds may persist
+        # negative values; Accelerator would now raise ValidationError, and a
+        # malformed persisted value must degrade, not 500 the profile routes.
+        if tops is not None and tops < 0:
+            logger.warning(
+                "Ignoring negative accelerator tops override %r for %s.",
+                tops_raw,
+                name,
+            )
+            tops = None
+        if memory_gb is not None and memory_gb < 0:
+            logger.warning(
+                "Ignoring negative accelerator memory_gb override %r for %s.",
+                memory_raw,
+                name,
+            )
+            memory_gb = None
         vendor_raw = entry.get("vendor")
         result.append(
             Accelerator(

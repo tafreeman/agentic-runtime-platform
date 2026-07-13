@@ -803,10 +803,12 @@ class WorkflowRunner:
             Number of cache entries removed (0 if nothing was cached).
         """
         # Snapshot the keys: sync routes run in FastAPI's threadpool, so
-        # another request may insert into the cache mid-iteration.
+        # another request may insert into the cache mid-iteration. pop(),
+        # not del: two concurrent invalidations of the same workflow must
+        # not KeyError racing to delete the same entry.
         stale_keys = [key for key in list(self._graph_cache) if key[0] == workflow_name]
         for key in stale_keys:
-            del self._graph_cache[key]
+            self._graph_cache.pop(key, None)
         return len(stale_keys)
 
     @staticmethod
