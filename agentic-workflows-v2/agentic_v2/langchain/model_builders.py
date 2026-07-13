@@ -435,11 +435,15 @@ def _ollama_served_locally(model_name: str) -> bool:
 
     Tag names are fully qualified (``qwen3-coder:30b``); a bare request name
     also matches its ``:latest`` alias, mirroring the daemon's own resolution.
+    Matching is case-insensitive — the daemon resolves ``Gemma4:31b`` and
+    ``gemma4:31b`` to the same model, and locally pulled tags may carry mixed
+    case (``hf.co/...Qwen3.6-27B-GGUF:Q8_0``).
     """
     from ..models.ollama_discovery import local_model_names
 
-    names = local_model_names()
-    return model_name in names or f"{model_name}:latest" in names
+    names = {name.lower() for name in local_model_names()}
+    requested = model_name.lower()
+    return requested in names or f"{requested}:latest" in names
 
 
 def build_ollama_model(model_name: str, temperature: float) -> Any:

@@ -827,6 +827,24 @@ class TestBuildOllamaModelRouting:
         model = build_ollama_model("phi4", 0.0)
         assert model.base_url == "http://localhost:11434"
 
+    def test_key_with_mixed_case_request_stays_local(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Tag matching is case-insensitive in both directions: the daemon
+        resolves ``Gemma4:31b`` and ``gemma4:31b`` to the same model, and
+        locally pulled tags may themselves carry mixed case."""
+        from agentic_v2.langchain.model_builders import build_ollama_model
+
+        monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+        self._patch_local_names(
+            monkeypatch,
+            frozenset({"gemma4:31b", "hf.co/lmstudio/Qwen3.6-27B-GGUF:Q8_0"}),
+        )
+        for requested in ("Gemma4:31b", "hf.co/lmstudio/qwen3.6-27b-gguf:Q8_0"):
+            model = build_ollama_model(requested, 0.0)
+            assert model.base_url == "http://localhost:11434"
+            assert not model.client_kwargs
+
     def test_key_with_cloud_only_model_routes_to_ollama_com(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

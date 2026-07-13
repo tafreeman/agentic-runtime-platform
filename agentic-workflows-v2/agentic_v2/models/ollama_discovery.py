@@ -168,8 +168,11 @@ def local_model_names() -> frozenset[str]:
     """
     global _local_tags_cache
     now = time.monotonic()
-    if _local_tags_cache is not None and now < _local_tags_cache[0]:
-        return _local_tags_cache[1]
+    # Snapshot the global before checking: another thread may rebind or clear
+    # it between the null check and the tuple access.
+    cache = _local_tags_cache
+    if cache is not None and now < cache[0]:
+        return cache[1]
 
     base_url = os.environ.get(ENV_BASE_URL, DEFAULT_LOCAL_HOST).rstrip("/")
     data = _get_json(f"{base_url}{_TAGS_PATH}")
@@ -180,8 +183,9 @@ def local_model_names() -> frozenset[str]:
         name = entry.get("name") or entry.get("model")
         if isinstance(name, str) and name:
             names.add(name)
-    _local_tags_cache = (now + _LOCAL_TAGS_TTL_SECONDS, frozenset(names))
-    return _local_tags_cache[1]
+    resolved = frozenset(names)
+    _local_tags_cache = (now + _LOCAL_TAGS_TTL_SECONDS, resolved)
+    return resolved
 
 
 def discover_ollama_models() -> list[OllamaModelInfo]:
