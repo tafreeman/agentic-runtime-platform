@@ -9,6 +9,7 @@ import {
   type Connection,
   MarkerType,
   BackgroundVariant,
+  Position,
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -216,6 +217,29 @@ function WorkflowDAGInner({
         // replace the estimated height as soon as the cycle does run.
         initialWidth: STEP_NODE_WIDTH,
         initialHeight: STEP_NODE_ESTIMATED_HEIGHT,
+        // Pre-measure handle geometry (same SSR contract): edges only draw
+        // from measured handle bounds unless these are supplied, so without
+        // them the degraded window renders disconnected nodes. Mirrors
+        // StepNode's actual handles: 6x6, target top-center, source
+        // bottom-center.
+        handles: [
+          {
+            type: "target" as const,
+            position: Position.Top,
+            x: STEP_NODE_WIDTH / 2 - 3,
+            y: -3,
+            width: 6,
+            height: 6,
+          },
+          {
+            type: "source" as const,
+            position: Position.Bottom,
+            x: STEP_NODE_WIDTH / 2 - 3,
+            y: STEP_NODE_ESTIMATED_HEIGHT - 3,
+            width: 6,
+            height: 6,
+          },
+        ],
         data: data as unknown as Record<string, unknown>,
       };
     });
