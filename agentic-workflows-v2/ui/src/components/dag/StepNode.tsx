@@ -72,6 +72,14 @@ function resolveStatusLabel(status: StepStatus): string {
  * the design ref ("[ ok ]", "[ •• ]", "[ -- ]"); error/skipped/cancelled keep
  * their compact bracket variants.
  */
+// Rendered node dimensions. Width is exact (fixed in the node's style);
+// height is a pre-measure estimate for @xyflow/react's initialWidth/
+// initialHeight hints — without them nodes stay visibility:hidden until a
+// ResizeObserver/rAF measurement cycle that throttled headless CI runners
+// can starve indefinitely (the PR #203 e2e flake).
+export const STEP_NODE_WIDTH = 154;
+export const STEP_NODE_ESTIMATED_HEIGHT = 96;
+
 const ASCII_STATUS: Record<StepStatus, string> = {
   pending: "[ -- ]",
   running: "[ •• ]",
@@ -144,7 +152,7 @@ function StepNodeComponent({ id, data }: NodeProps) {
         data-testid={`dag-node-${id}`}
         style={{
           position: "relative",
-          width: 154,
+          width: STEP_NODE_WIDTH,
           background: "rgb(var(--b-bg2))",
           border: `var(--b-bw) solid ${borderColor}`,
           borderRadius: "var(--b-rad-sm)",

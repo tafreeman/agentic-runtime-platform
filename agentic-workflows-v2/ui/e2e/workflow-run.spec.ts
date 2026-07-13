@@ -50,6 +50,24 @@ test.describe('full-stack workflow run', () => {
     const runId = await runHeader.getAttribute('data-run-id');
     expect(runId, 'run-id must expose a data-run-id after kickoff').toBeTruthy();
 
+    // Guard: node visibility is only meaningful once the ReactFlow canvas
+    // itself has non-zero dimensions — a zero-sized canvas hides every node,
+    // and asserting on nodes first turns a container-sizing failure into a
+    // misleading "node hidden" timeout (the PR #203 flake's failure shape).
+    const flowCanvas = page.locator('.react-flow').first();
+    await expect
+      .poll(
+        async () => {
+          const box = await flowCanvas.boundingBox();
+          return box ? Math.min(box.width, box.height) : 0;
+        },
+        {
+          timeout: 15_000,
+          message: 'ReactFlow canvas must acquire a non-zero size',
+        }
+      )
+      .toBeGreaterThan(0);
+
     // The live DAG renders (ReactFlow nodes carry data-testid="dag-node-<id>")
     // and mounts every step from the definition — not just the entry node.
     // ReactFlow keeps all nodes in the DOM (no onlyRenderVisibleElements), so
