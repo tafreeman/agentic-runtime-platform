@@ -13,7 +13,11 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import StepNode, { type StepNodeData } from "./StepNode";
+import StepNode, {
+  STEP_NODE_ESTIMATED_HEIGHT,
+  STEP_NODE_WIDTH,
+  type StepNodeData,
+} from "./StepNode";
 import { layoutDAG } from "./dagLayout";
 import { useAutoPanZoom } from "../../hooks/useAutoPanZoom";
 import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
@@ -204,6 +208,14 @@ function WorkflowDAGInner({
         id: dn.id,
         type: "step" as const,
         position: { x: pos?.x ?? 0, y: pos?.y ?? 0 },
+        // Pre-measure dimension hints: without them @xyflow/react keeps
+        // nodes visibility:hidden until a ResizeObserver/rAF measurement
+        // cycle completes, which throttled headless CI runners can starve
+        // indefinitely (nodes present in the DOM but hidden for the whole
+        // assertion window — the PR #203 e2e flake). Real measurements
+        // replace the estimated height as soon as the cycle does run.
+        initialWidth: STEP_NODE_WIDTH,
+        initialHeight: STEP_NODE_ESTIMATED_HEIGHT,
         data: data as unknown as Record<string, unknown>,
       };
     });
