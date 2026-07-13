@@ -24,11 +24,12 @@ const links: readonly NavItem[] = [
   { to: "/", testid: "dashboard", label: "overview", num: "01", title: "overview", end: true, goKey: "d" },
   { to: "/live/latest", testid: "live", label: "live execution", num: "02", title: "live execution", end: false, live: true, goKey: "e" },
   { to: "/runs", testid: "runs", label: "runs", num: "03", title: "runs", end: false, goKey: "r" },
-  { to: "/models", testid: "models", label: "model router", num: "04", title: "model router", end: false, goKey: "m" },
-  { to: "/evaluations", testid: "evals", label: "evaluations", num: "05", title: "evaluations", end: false, goKey: "l" },
-  { to: "/workflows", testid: "workflows", label: "workflow builder", num: "06", title: "workflow builder", end: false, goKey: "w" },
-  { to: "/datasets", testid: "datasets", label: "datasets", num: "07", title: "datasets", end: false, goKey: "a" },
-  { to: "/settings", testid: "settings", label: "providers & tiers", num: "08", title: "providers & tiers", end: false, goKey: "s" },
+  { to: "/telemetry", testid: "telemetry", label: "telemetry", num: "04", title: "telemetry", end: false, goKey: "t" },
+  { to: "/models", testid: "models", label: "model router", num: "05", title: "model router", end: false, goKey: "m" },
+  { to: "/evaluations", testid: "evals", label: "evaluations", num: "06", title: "evaluations", end: false, goKey: "l" },
+  { to: "/workflows", testid: "workflows", label: "workflow builder", num: "07", title: "workflow builder", end: false, goKey: "w" },
+  { to: "/datasets", testid: "datasets", label: "datasets", num: "08", title: "datasets", end: false, goKey: "a" },
+  { to: "/settings", testid: "settings", label: "providers & tiers", num: "09", title: "providers & tiers", end: false, goKey: "s" },
 ];
 
 // Inline values for theme-driven tokens (radius / border-width / heading font)

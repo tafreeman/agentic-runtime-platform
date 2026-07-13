@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { RunSummary } from "../../api/types";
 import DurationDisplay from "../common/DurationDisplay";
+import StatusBadge from "../common/StatusBadge";
 import { gradeColorClass, gradeLetter } from "../../lib/grades";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
@@ -11,19 +12,9 @@ interface RunListProps {
   isLoading: boolean;
 }
 
-/** ASCII status glyph + its CSS color variable, colored by run status. */
-function statusAscii(status: string | null | undefined): {
-  label: string;
-  color: string;
-} {
-  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
-  if (status === "failed" || status === "error") {
-    return { label: "[err ]", color: "var(--b-red)" };
-  }
-  if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", color: "var(--b-clay)" };
-  }
-  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
+/** A run that finished passing but had step failures renders as DEGRADED. */
+function isDegraded(run: RunSummary): boolean {
+  return run.status === "success" && (run.failed_step_count ?? 0) > 0;
 }
 
 function shortId(run: RunSummary): string {
@@ -160,7 +151,6 @@ export default function RunList({ runs, isLoading }: RunListProps) {
           </div>
 
           {filteredRuns.map((run) => {
-            const ascii = statusAscii(run.status);
             const grade = gradeLetter(run.evaluation_grade, run.evaluation_score);
             const target = `/runs/${encodeURIComponent(run.filename)}`;
             return (
@@ -178,12 +168,7 @@ export default function RunList({ runs, isLoading }: RunListProps) {
                 }}
                 className="grid cursor-pointer grid-cols-[80px_1.5fr_78px_50px_72px] items-center gap-2.5 border-b border-solid border-b-line-soft px-3 py-2 font-mono text-[11px] transition-colors last:border-b-0 hover:bg-b-bg2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-b-clay"
               >
-                <span
-                  className="text-[9px] tracking-[0.5px]"
-                  style={{ color: ascii.color }}
-                >
-                  {ascii.label}
-                </span>
+                <StatusBadge status={run.status} degraded={isDegraded(run)} />
                 <span className="min-w-0 truncate text-b-text">
                   <Link
                     to={target}

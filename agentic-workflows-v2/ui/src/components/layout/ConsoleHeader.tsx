@@ -28,6 +28,30 @@ export default function ConsoleHeader() {
   const health = useBackendHealth({ poll: true });
   const noLlmMode = health.data?.no_llm_mode ?? false;
 
+  // Env badge — honest by construction. The environment comes from the build
+  // (Vite dev server vs production build), never a hardcoded "prod"; the
+  // "· live" suffix is only claimed once GET /api/health has actually
+  // succeeded, and it flips to "no-llm" when the server reports deterministic
+  // placeholder mode.
+  const envLabel = import.meta.env.DEV ? "dev" : "prod";
+  let badgeDotClass = "bg-b-text-faint";
+  let badgeTextClass = "text-b-text-dim";
+  let badgeText = envLabel; // health still pending — claim nothing yet
+  let badgeTitle = "checking backend health…";
+  if (health.isError) {
+    badgeDotClass = "bg-b-red";
+    badgeTextClass = "text-b-red";
+    badgeText = "api down";
+    badgeTitle = "GET /api/health failed — backend unreachable";
+  } else if (health.isSuccess) {
+    badgeDotClass = "bg-b-green";
+    badgeTextClass = noLlmMode ? "text-b-blue" : "text-b-green";
+    badgeText = noLlmMode ? `${envLabel} · no-llm` : `${envLabel} · live`;
+    badgeTitle = noLlmMode
+      ? "backend healthy — deterministic placeholder mode, no provider calls"
+      : "backend healthy — live providers";
+  }
+
   const openPalette = () => {
     globalThis.dispatchEvent(new CustomEvent("open-command-palette"));
   };
@@ -79,16 +103,17 @@ export default function ConsoleHeader() {
       </button>
 
       <span
-        className={`flex-none font-mono text-[10px] tracking-[0.5px] ${
-          noLlmMode ? "text-b-teal" : "text-b-green"
-        }`}
-        title={
-          noLlmMode
-            ? "deterministic placeholder mode — no provider calls"
-            : "live providers"
-        }
+        role="status"
+        data-testid="env-badge"
+        aria-label={`environment: ${badgeText}`}
+        title={badgeTitle}
+        className={`flex flex-none items-center gap-1.5 font-mono text-[10px] tracking-[0.5px] ${badgeTextClass}`}
       >
-        {noLlmMode ? "no-llm · deterministic" : "prod · live"}
+        <span
+          aria-hidden="true"
+          className={`h-1.5 w-1.5 flex-none rounded-full ${badgeDotClass}`}
+        />
+        {badgeText}
       </span>
     </header>
   );

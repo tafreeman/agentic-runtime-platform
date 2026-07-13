@@ -6,12 +6,18 @@ import BTopBar from "../components/layout/BTopBar";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import HardwareOverrideForm from "../components/models/HardwareOverrideForm";
 import ProviderProbeList from "../components/models/ProviderProbeList";
-import { getModelRecommendations, probeModels } from "../api/client";
+import {
+  getModelRankings,
+  getModelRecommendations,
+  probeModels,
+  startAutorank,
+} from "../api/client";
 import type {
   ModelCandidate,
   ModelSortField,
   ModelTaskCategory,
 } from "../api/types";
+import type { ModelRankingsResponse } from "../api/rankings";
 
 const CATEGORIES: Array<ModelTaskCategory | "all"> = [
   "all",
@@ -36,6 +42,21 @@ function compactNumber(value: number): string {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+/** Ranking-cache TTL — matches the backend's 7-day freshness window. */
+const RANKINGS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * True when the ranking cache warrants an automatic re-rank on rescan:
+ * never ranked (empty), or ranked more than 7 days ago. A still-loading
+ * query or an in-flight job never re-kicks.
+ */
+function rankingsStale(rankings: ModelRankingsResponse | undefined): boolean {
+  if (rankings === undefined || rankings.status === "running") return false;
+  if (rankings.status === "empty") return true;
+  if (rankings.updated_at === null) return true;
+  return Date.now() - Date.parse(rankings.updated_at) > RANKINGS_MAX_AGE_MS;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +249,15 @@ export default function ModelFinderPage() {
     queryFn: probeModels,
   });
 
+  // Cached LLM model-family rankings (scores + provenance). Polls every 5s
+  // ONLY while a ranking job is actually running server-side.
+  const { data: rankings, refetch: refetchRankings } = useQuery({
+    queryKey: ["model-rankings"],
+    queryFn: getModelRankings,
+    refetchInterval: (query) =>
+      query.state.data?.status === "running" ? 5000 : false,
+  });
+
   const acceleratorText = useMemo(() => {
     const accelerators = data?.profile.accelerators ?? [];
     if (accelerators.length === 0) return "CPU only";
@@ -261,10 +291,19 @@ export default function ModelFinderPage() {
   const allFitWithHeadroom =
     !isLoading && runnableCount > 0 && headroomCount === runnableCount;
 
-  // Rescan refreshes both the local hardware fit and the live provider probe.
+  // Rescan refreshes the local hardware fit and the live provider probe, and
+  // — when the ranking cache is empty or past its 7-day TTL — kicks a fresh
+  // autorank job, then refetches so the "running" state is visible right away.
   const rescan = () => {
     void refetch();
     void refetchProbe();
+    if (rankingsStale(rankings)) {
+      void startAutorank()
+        // 503 (no-LLM mode) and transport failures leave the cache untouched;
+        // the refetch below re-syncs the UI with what the server really has.
+        .catch(() => undefined)
+        .then(() => refetchRankings());
+    }
   };
 
   return (
@@ -531,6 +570,7 @@ export default function ModelFinderPage() {
             probe={probe}
             probing={probing}
             probeError={probeError ?? null}
+            rankings={rankings}
             onOpenInPlayground={openModelInPlayground}
           />
 

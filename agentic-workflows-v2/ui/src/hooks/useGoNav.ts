@@ -18,6 +18,7 @@ export const GO_TARGETS: Readonly<Record<string, GoTarget>> = {
   d: { path: "/", cli: "agentic dashboard" },
   e: { path: "/live/latest", cli: "agentic runs watch latest --follow" },
   r: { path: "/runs", cli: "agentic runs list" },
+  t: { path: "/telemetry", cli: "agentic runs stats" },
   m: { path: "/models", cli: "agentic models list" },
   l: { path: "/evaluations", cli: "agentic evals list" },
   w: { path: "/workflows", cli: "agentic workflows list" },

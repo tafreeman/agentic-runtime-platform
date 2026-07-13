@@ -14,6 +14,7 @@ import DatasetsPage from "./pages/DatasetsPage";
 import EvaluationsPage from "./pages/EvaluationsPage";
 import ModelFinderPage from "./pages/ModelFinderPage";
 import SettingsPage from "./pages/SettingsPage";
+import TelemetryPage from "./pages/TelemetryPage";
 import NotFoundPage from "./components/states/NotFoundPage";
 import CliStrip from "./components/layout/CliStrip";
 import CommandPalette from "./components/common/CommandPalette";
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/datasets" element={<DatasetsPage />} />
           <Route path="/evaluations" element={<EvaluationsPage />} />
           <Route path="/models" element={<ModelFinderPage />} />
+          <Route path="/telemetry" element={<TelemetryPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/runs" element={<RunsPage />} />
           <Route path="/runs/:filename" element={<RunDetailPage />} />

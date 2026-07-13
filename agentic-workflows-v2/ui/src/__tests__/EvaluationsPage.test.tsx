@@ -90,7 +90,7 @@ describe("EvaluationsPage", () => {
     expect(refetch).toHaveBeenCalledTimes(1);
   });
 
-  it("renders evaluated runs in a table", () => {
+  it("renders scored runs in the results table with grade chips", () => {
     mockUseRuns.mockReturnValue({
       isLoading: false,
       data: [SCORED_RUN, { ...UNSCORED_RUN, status: "failed" }],
@@ -98,20 +98,42 @@ describe("EvaluationsPage", () => {
 
     renderPage();
 
-    // The evaluated workflow surfaces in both the run-picker banner and the
-    // eval-runs table, so assert on presence (≥1) rather than uniqueness.
+    // The evaluated workflow surfaces in both the setup run-picker and the
+    // results table, so assert on presence (≥1) rather than uniqueness.
     expect(screen.getAllByText("review_flow").length).toBeGreaterThan(0);
     // 91.4 renders in the SCORE column and, since this is the only scored run,
-    // also as the scorecard mean sub-label (now in matching 0..100 units), so
+    // also as the scorecard mean sub-label (in matching 0..100 units), so
     // assert on presence rather than uniqueness.
     expect(screen.getAllByText("91.4").length).toBeGreaterThan(0);
-    // Grade "A" renders in the table cell and also in the scorecard tier scale.
-    expect(screen.getAllByText("A").length).toBeGreaterThan(0);
-    // Exact name "view" targets the table's aria-labelled detail link.
-    expect(screen.getByRole("link", { name: "view" })).toHaveAttribute(
-      "href",
-      "/runs/run-1.json"
+    // Grade chip carries the letter with the shared grade color mapping.
+    expect(screen.getByTestId("eval-grade-run-1.json")).toHaveTextContent("A");
+    // EVAL column links the short run id to the run detail page.
+    expect(
+      screen.getByRole("link", { name: "view run run-1.json" })
+    ).toHaveAttribute("href", "/runs/run-1.json");
+    // Unscored runs are excluded from the results table (they still appear
+    // in the setup picker for scoring).
+    expect(screen.queryByTestId("eval-row-run-2.json")).not.toBeInTheDocument();
+    // Window caption honestly reflects the fetched window, not a time range.
+    expect(screen.getByTestId("eval-results-window")).toHaveTextContent(
+      "last 1 scored run"
     );
+  });
+
+  it("filters the results table by grade bucket", () => {
+    mockUseRuns.mockReturnValue({ isLoading: false, data: [SCORED_RUN] });
+
+    renderPage();
+
+    // The only scored run is an A — the failing (D–F) bucket is empty.
+    fireEvent.click(screen.getByTestId("eval-filter-failing"));
+    expect(screen.getByTestId("eval-filter-empty")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("eval-row-run-1.json")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("eval-filter-passing"));
+    expect(screen.getByTestId("eval-row-run-1.json")).toBeInTheDocument();
   });
 
   it("evaluates a selected previous run and shows the score", async () => {

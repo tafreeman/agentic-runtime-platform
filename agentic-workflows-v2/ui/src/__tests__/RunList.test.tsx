@@ -63,6 +63,9 @@ describe("RunList", () => {
 
     expect(screen.getByText("review_flow")).toBeInTheDocument();
     expect(screen.getByText("triage_flow")).toBeInTheDocument();
+    // Status column uses the shared design chips.
+    expect(screen.getByText("● PASSING")).toBeInTheDocument();
+    expect(screen.getByText("● FAILED")).toBeInTheDocument();
     // SCORE column renders a colored letter grade; run-1 carries grade "A".
     expect(screen.getByText("A")).toBeInTheDocument();
 
@@ -92,6 +95,21 @@ describe("RunList", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Failed" }));
     expect(screen.getByText("No runs found")).toBeInTheDocument();
+  });
+
+  it("marks a passing run with step failures as DEGRADED", () => {
+    render(
+      <MemoryRouter>
+        <RunList
+          runs={[{ ...runs[0]!, failed_step_count: 1 }]}
+          isLoading={false}
+        />
+      </MemoryRouter>
+    );
+
+    // status "success" + failed_step_count > 0 → amber degraded chip.
+    expect(screen.getByText("● DEGRADED")).toBeInTheDocument();
+    expect(screen.queryByText("● PASSING")).toBeNull();
   });
 
   it("grades a 0..100 score after normalizing (run-1 score 91.4 → A)", () => {

@@ -8,6 +8,7 @@ import DurationDisplay from "../components/common/DurationDisplay";
 import CopyId from "../components/common/CopyId";
 import InlineError from "../components/states/InlineError";
 import RunDetailPanel from "../components/runs/RunDetailPanel";
+import StatusBadge from "../components/common/StatusBadge";
 import { gradeColorClass, gradeLetter } from "../lib/grades";
 import type { RunSummary } from "../api/types";
 
@@ -20,19 +21,32 @@ const STATUS_FILTERS: readonly StatusFilter[] = [
   "running",
 ];
 
-/** ASCII status glyph + its CSS color variable, colored by run status. */
-function statusAscii(status: string | null | undefined): {
-  label: string;
-  color: string;
-} {
-  if (status === "success") return { label: "[ ok ]", color: "var(--b-green)" };
-  if (status === "failed" || status === "error") {
-    return { label: "[err ]", color: "var(--b-red)" };
-  }
-  if (status === "running" || status === "in_progress") {
-    return { label: "[ .. ]", color: "var(--b-clay)" };
-  }
-  return { label: `[${status ?? "?"}]`, color: "var(--b-text-faint)" };
+const DAY_MS = 24 * 60 * 60 * 1000;
+const P95_QUANTILE = 0.95;
+
+/**
+ * Map run-log status spellings onto the StatusBadge vocabulary
+ * ("error"/"in_progress" are the run-level names for failed/running).
+ */
+function normalizeRunStatus(status: string | null | undefined): string {
+  if (status === "error") return "failed";
+  if (status === "in_progress") return "running";
+  return status ?? "pending";
+}
+
+function formatMs(ms: number | null): string {
+  if (ms == null) return "—";
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
+}
+
+/** 95th percentile of an ascending-sorted list, or null when empty. */
+function p95Of(sortedAsc: readonly number[]): number | null {
+  if (sortedAsc.length === 0) return null;
+  const index = Math.min(
+    sortedAsc.length - 1,
+    Math.ceil(sortedAsc.length * P95_QUANTILE) - 1,
+  );
+  return sortedAsc[index];
 }
 
 function formatWhen(iso: string | null | undefined): string {
@@ -62,13 +76,14 @@ function shortId(run: RunSummary): string {
 function Kpi({
   value,
   label,
-}: Readonly<{ value: string; label: string }>) {
+  testId,
+}: Readonly<{ value: string; label: string; testId: string }>) {
   return (
-    <div className="px-4 py-3">
+    <div className="px-4 py-3" data-testid={testId}>
       <div className="font-mono text-[26px] leading-none text-b-text tabular-nums">
         {value}
       </div>
-      <div className="mt-1.5 font-mono text-[10px] text-b-text-mid">
+      <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[1px] text-b-text-mid">
         {label}
       </div>
     </div>
@@ -132,6 +147,27 @@ export default function RunsPage() {
       failed: all.filter((r) => r.status === "failed" || r.status === "error").length,
       running: all.filter((r) => r.status === "running" || r.status === "in_progress").length,
     };
+  }, [runs]);
+
+  // Stat-strip inputs, computed from the fetched window only (the list
+  // endpoint caps at 50 rows) — captions must name the window they actually
+  // cover, never imply a period the data cannot support.
+  const durationsSorted = useMemo(
+    () =>
+      (runs ?? [])
+        .map((r) => r.total_duration_ms)
+        .filter((d): d is number => typeof d === "number" && Number.isFinite(d))
+        .sort((a, b) => a - b),
+    [runs],
+  );
+
+  const runsLast24h = useMemo(() => {
+    const cutoff = Date.now() - DAY_MS;
+    return (runs ?? []).filter((r) => {
+      if (!r.start_time) return false;
+      const t = Date.parse(r.start_time);
+      return Number.isFinite(t) && t >= cutoff;
+    }).length;
   }, [runs]);
 
   // Keep the keyboard cursor in range whenever the filtered set shrinks/grows
@@ -207,15 +243,17 @@ export default function RunsPage() {
   // Column order mirrors the design kit's runs table (RUN first, WHEN last);
   // the grid narrows to the four identity columns while the inspector is open.
   const gridCols = selected
-    ? "grid-cols-[minmax(120px,0.9fr)_1fr_64px_84px]"
-    : "grid-cols-[minmax(120px,0.9fr)_1.4fr_64px_84px_56px_56px_80px]";
+    ? "grid-cols-[minmax(120px,0.9fr)_1fr_92px_84px]"
+    : "grid-cols-[minmax(120px,0.9fr)_1.4fr_92px_84px_56px_56px_80px]";
 
-  const avgDuration =
-    summary?.avg_duration_ms == null
-      ? "—"
-      : summary.avg_duration_ms >= 1000
-        ? `${(summary.avg_duration_ms / 1000).toFixed(1)}s`
-        : `${Math.round(summary.avg_duration_ms)}ms`;
+  const windowSize = runs?.length ?? 0;
+  const totalRuns = summary?.total_runs ?? windowSize;
+  // When every fetched run falls inside 24h AND the capped window hides older
+  // runs, a "runs / 24h" caption would understate reality (more 24h runs may
+  // exist beyond the window) — so the caption names the window instead.
+  const windowClipped =
+    windowSize > 0 && runsLast24h === windowSize && totalRuns > windowSize;
+  const p95Ms = p95Of(durationsSorted);
 
   return (
     <div className="flex h-full flex-col">
@@ -242,7 +280,11 @@ export default function RunsPage() {
               </div>
             </div>
 
-            {/* KPI strip — design kit's four-cell stats band */}
+            {/* KPI strip — design kit's four-cell stats band. The design ref
+                also shows "$ spend" and "failovers" cells; neither pricing nor
+                failover events exist in the backend data, so they are omitted
+                rather than faked. Windowed stats (24h count, p95) come from
+                the capped 50-row fetch and say so in their captions. */}
             <div
               style={{
                 borderRadius: "var(--b-rad-lg)",
@@ -252,18 +294,33 @@ export default function RunsPage() {
               aria-label="run statistics"
             >
               <Kpi
-                value={String(summary?.total_runs ?? runs?.length ?? 0)}
-                label="runs total"
+                value={String(runsLast24h)}
+                label={windowClipped ? `runs · last ${windowSize}` : "runs / 24h"}
+                testId="kpi-runs-24h"
               />
               <Kpi
-                value={String(summary?.success ?? counts.success)}
-                label="passing"
+                value={formatMs(p95Ms)}
+                label={
+                  durationsSorted.length > 0
+                    ? `p95 · last ${durationsSorted.length}`
+                    : "p95"
+                }
+                testId="kpi-p95"
               />
               <Kpi
                 value={String(summary?.failed ?? counts.failed)}
-                label="failed"
+                label={
+                  summary?.failed == null
+                    ? `failed · last ${windowSize}`
+                    : "failed"
+                }
+                testId="kpi-failed"
               />
-              <Kpi value={avgDuration} label="avg duration" />
+              <Kpi
+                value={String(totalRuns)}
+                label="runs total"
+                testId="kpi-total"
+              />
             </div>
 
             {/* Filter row — status/workflow selects, live tail, trigger run */}
@@ -395,10 +452,13 @@ export default function RunsPage() {
                   <span className="text-right">Duration</span>
                   {!selected && (
                     <>
-                      {/* DESIGN-GAP: design ref shows SPANS/ROUTE columns; the
-                          runs list exposes step counts and eval grade instead,
-                          so Steps/Score stand in until the backend surfaces
-                          span totals and route data. */}
+                      {/* DESIGN-GAP: design ref shows SPANS/ROUTE columns.
+                          ROUTE is omitted deliberately — the list record
+                          (server RunSummaryModel) carries no model/tier field,
+                          and step-level model_used lives only in run detail
+                          (fetching 50 details for one column is off the
+                          table). Steps/Score stand in until the backend
+                          surfaces route data on the list endpoint. */}
                       <span className="text-right">Steps</span>
                       <span className="text-center">Score</span>
                       <span className="text-right">When</span>
@@ -416,7 +476,10 @@ export default function RunsPage() {
                   filtered.map((r, index) => {
                     const grade = gradeLetter(r.evaluation_grade, r.evaluation_score);
                     const scoreClass = gradeColorClass(grade);
-                    const ascii = statusAscii(r.status);
+                    // A run that finished ok but dropped steps ("8/1" in the
+                    // Steps cell) reads DEGRADED, not PASSING.
+                    const isDegraded =
+                      r.status === "success" && (r.failed_step_count ?? 0) > 0;
                     const isSelected = selected?.filename === r.filename;
                     const isFocused = index === cursor;
                     return (
@@ -485,11 +548,11 @@ export default function RunsPage() {
                             "—"
                           )}
                         </span>
-                        <span
-                          className="text-[9px] tracking-[0.5px]"
-                          style={{ color: ascii.color }}
-                        >
-                          {ascii.label}
+                        <span className="min-w-0">
+                          <StatusBadge
+                            status={normalizeRunStatus(r.status)}
+                            degraded={isDegraded}
+                          />
                         </span>
                         <span className="text-right tabular-nums text-b-text-dim">
                           <DurationDisplay ms={r.total_duration_ms} />

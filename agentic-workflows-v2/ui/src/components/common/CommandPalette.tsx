@@ -9,6 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  BarChart3,
   Command,
   CornerDownLeft,
   Database,
@@ -87,6 +88,13 @@ export default function CommandPalette() {
         hint: "history & inspector",
         icon: List,
         run: () => goTo("/runs", "agentic runs list"),
+      },
+      {
+        id: "telemetry",
+        label: "Telemetry",
+        hint: "run durations & totals",
+        icon: BarChart3,
+        run: () => goTo("/telemetry", "agentic runs stats"),
       },
       {
         id: "workflows",

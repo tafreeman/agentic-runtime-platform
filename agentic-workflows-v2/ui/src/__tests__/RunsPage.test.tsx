@@ -93,8 +93,28 @@ describe("RunsPage", () => {
     expect(screen.getByText(/no runs yet/i)).toBeInTheDocument();
   });
 
-  it("renders the KPI strip from the runs summary", () => {
-    mockUseRuns.mockReturnValue({ data: [makeRun()], isLoading: false });
+  it("renders the design stat strip: runs/24h, p95, failed, total", () => {
+    const now = Date.now();
+    mockUseRuns.mockReturnValue({
+      data: [
+        // Inside the 24h window, fast.
+        makeRun({
+          filename: "recent.json",
+          run_id: "r1",
+          start_time: new Date(now - 60_000).toISOString(),
+          total_duration_ms: 1000,
+        }),
+        // Three days old, slow — excluded from the 24h count but part of the
+        // p95 window (its duration is the p95 of [1000, 5000]).
+        makeRun({
+          filename: "old.json",
+          run_id: "r2",
+          start_time: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          total_duration_ms: 5000,
+        }),
+      ],
+      isLoading: false,
+    });
     mockUseRunsSummary.mockReturnValue({
       data: {
         total_runs: 312,
@@ -106,15 +126,150 @@ describe("RunsPage", () => {
     });
     renderPage();
 
+    const runs24h = screen.getByTestId("kpi-runs-24h");
+    expect(runs24h).toHaveTextContent("1");
+    expect(runs24h).toHaveTextContent("runs / 24h");
+
+    const p95 = screen.getByTestId("kpi-p95");
+    expect(p95).toHaveTextContent("5.0s");
+    // The p95 window is the fetched runs, not a time period — the caption
+    // says which window it covers.
+    expect(p95).toHaveTextContent("p95 · last 2");
+
+    const failed = screen.getByTestId("kpi-failed");
+    expect(failed).toHaveTextContent("12");
+    expect(failed).toHaveTextContent("failed");
+
+    const total = screen.getByTestId("kpi-total");
+    expect(total).toHaveTextContent("312");
+    expect(total).toHaveTextContent("runs total");
+
+    // No pricing or failover data exists in the backend — the design's
+    // "$ spend" / "failovers" cells must not appear.
     const strip = screen.getByLabelText("run statistics");
-    expect(strip).toHaveTextContent("312");
-    expect(strip).toHaveTextContent("runs total");
-    expect(strip).toHaveTextContent("300");
-    expect(strip).toHaveTextContent("passing");
-    expect(strip).toHaveTextContent("12");
-    expect(strip).toHaveTextContent("failed");
-    expect(strip).toHaveTextContent("340ms");
-    expect(strip).toHaveTextContent("avg duration");
+    expect(strip).not.toHaveTextContent("$");
+    expect(strip).not.toHaveTextContent(/failover/i);
+  });
+
+  it("relabels the 24h cell to the fetched window when the capped list is all recent", () => {
+    // Both fetched runs fall inside 24h (makeRun defaults start_time to now)
+    // but the summary says more runs exist beyond the 50-row window — a
+    // "runs / 24h" caption would understate reality, so the caption names
+    // the window instead.
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "a.json", run_id: "a1" }),
+        makeRun({ filename: "b.json", run_id: "b2" }),
+      ],
+      isLoading: false,
+    });
+    mockUseRunsSummary.mockReturnValue({
+      data: { total_runs: 312, success: 300, failed: 12, workflows: [] },
+    });
+    renderPage();
+
+    const runs24h = screen.getByTestId("kpi-runs-24h");
+    expect(runs24h).toHaveTextContent("2");
+    expect(runs24h).toHaveTextContent("runs · last 2");
+    expect(runs24h).not.toHaveTextContent("runs / 24h");
+  });
+
+  it("dashes p95 when no fetched run carries a duration", () => {
+    mockUseRuns.mockReturnValue({
+      data: [makeRun({ total_duration_ms: null })],
+      isLoading: false,
+    });
+    renderPage();
+
+    const p95 = screen.getByTestId("kpi-p95");
+    expect(p95).toHaveTextContent("—");
+    // No window caption when there is nothing to aggregate.
+    expect(p95).not.toHaveTextContent("last");
+  });
+
+  it("labels the failed cell with the window while the summary is loading", () => {
+    // beforeEach leaves the summary undefined — the fallback count comes from
+    // the fetched window, and the caption must say so.
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "ok.json", run_id: "ok1" }),
+        makeRun({ filename: "bad.json", run_id: "bad1", status: "failed" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    const failed = screen.getByTestId("kpi-failed");
+    expect(failed).toHaveTextContent("1");
+    expect(failed).toHaveTextContent("failed · last 2");
+  });
+
+  it("renders run status through StatusBadge with the design vocabulary", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({ filename: "ok.json", run_id: "ok1", workflow_name: "ok_flow" }),
+        makeRun({
+          filename: "bad.json",
+          run_id: "bad1",
+          workflow_name: "bad_flow",
+          status: "failed",
+          failed_step_count: 3,
+        }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    // Case-sensitive on purpose: the chip labels are uppercase; the status
+    // filter options ("status: failed") are lowercase and must not match.
+    expect(screen.getByText(/PASSING/)).toBeInTheDocument();
+    expect(screen.getByText(/FAILED/)).toBeInTheDocument();
+  });
+
+  it("marks a passing run with failed steps as DEGRADED", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        // Finished ok overall, but dropped a step — DEGRADED, not PASSING.
+        makeRun({
+          filename: "deg.json",
+          run_id: "deg1",
+          workflow_name: "deg_flow",
+          status: "success",
+          failed_step_count: 1,
+        }),
+        makeRun({ filename: "ok.json", run_id: "ok2", workflow_name: "ok_flow" }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    expect(screen.getByText(/DEGRADED/)).toBeInTheDocument();
+    // The clean run still reads PASSING (exactly one of each).
+    expect(screen.getByText(/PASSING/)).toBeInTheDocument();
+  });
+
+  it("normalizes run-log status spellings (error → FAILED, in_progress → RUNNING)", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        makeRun({
+          filename: "err.json",
+          run_id: "e1",
+          workflow_name: "err_flow",
+          status: "error",
+        }),
+        makeRun({
+          filename: "prog.json",
+          run_id: "p1",
+          workflow_name: "prog_flow",
+          status: "in_progress",
+        }),
+      ],
+      isLoading: false,
+    });
+    renderPage();
+
+    expect(screen.getByText(/FAILED/)).toBeInTheDocument();
+    expect(screen.getByText(/RUNNING/)).toBeInTheDocument();
   });
 
   it("headlines 'showing X of Y' from the fetched window and the summary total", () => {

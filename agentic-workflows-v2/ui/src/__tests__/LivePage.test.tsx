@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import LivePage from "../pages/LivePage";
@@ -31,24 +31,34 @@ vi.mock("../components/dag/WorkflowDAG", () => ({
   ),
 }));
 
-vi.mock("../components/live/StepLogPanel", () => ({
-  default: () => <div>Step logs</div>,
-}));
-
-vi.mock("../components/live/LiveStepDetails", () => ({
-  default: ({
-    selectedStep,
-  }: {
-    selectedStep: string | null;
-  }) => <div>Selected {selectedStep ?? "none"}</div>,
-}));
+// Mock only the drill-down list; keep the module's real named exports
+// (DagProgressList imports formatDuration from this module).
+vi.mock("../components/live/LiveStepDetails", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("../components/live/LiveStepDetails")
+  >();
+  return {
+    ...actual,
+    default: ({ selectedStep }: { selectedStep: string | null }) => (
+      <div>Selected {selectedStep ?? "none"}</div>
+    ),
+  };
+});
 
 vi.mock("../components/live/TokenCounter", () => ({
   default: () => <div>Token count</div>,
 }));
 
-function renderPage(initialEntry = "/live/review_flow-1234abcd") {
-  return render(
+const emptyStream = {
+  stepStates: new Map(),
+  events: [],
+  workflowStatus: "connecting",
+  evaluation: null,
+  error: null,
+};
+
+function pageAt(initialEntry: string) {
+  return (
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/live/:runId" element={<LivePage />} />
@@ -58,6 +68,10 @@ function renderPage(initialEntry = "/live/review_flow-1234abcd") {
   );
 }
 
+function renderPage(initialEntry = "/live/review_flow-1234abcd") {
+  return render(pageAt(initialEntry));
+}
+
 describe("LivePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,18 +79,14 @@ describe("LivePage", () => {
   });
 
   it("renders the connecting state before DAG data arrives", () => {
-    mockUseWorkflowStream.mockReturnValue({
-      stepStates: new Map(),
-      events: [],
-      workflowStatus: "connecting",
-      evaluation: null,
-      error: null,
-    });
+    mockUseWorkflowStream.mockReturnValue(emptyStream);
     mockUseWorkflowDAG.mockReturnValue({ data: undefined });
 
     renderPage();
 
-    expect(screen.getByText("review_flow")).toBeInTheDocument();
+    // Header: EXECUTION label, workflow name inferred from the run id.
+    expect(screen.getByText("execution")).toBeInTheDocument();
+    expect(screen.getByText("· review_flow")).toBeInTheDocument();
     // Component renders "$ connecting…" (unicode ellipsis) in the DAG placeholder area
     expect(screen.getByText("$ connecting…")).toBeInTheDocument();
     // Status pill renders the workflowStatus value directly
@@ -194,13 +204,7 @@ describe("LivePage", () => {
     });
 
     it("redirects (replace) to the newest running run instead of streaming 'latest'", () => {
-      mockUseWorkflowStream.mockReturnValue({
-        stepStates: new Map(),
-        events: [],
-        workflowStatus: "connecting",
-        evaluation: null,
-        error: null,
-      });
+      mockUseWorkflowStream.mockReturnValue(emptyStream);
       mockUseWorkflowDAG.mockReturnValue({ data: undefined });
       mockUseRuns.mockReturnValue({
         data: [
@@ -254,5 +258,172 @@ describe("LivePage", () => {
     renderPage();
 
     expect(screen.getByText("failed")).toBeInTheDocument();
+  });
+
+  describe("log tail", () => {
+    const t = (iso: string) => iso; // readability alias for event timestamps
+
+    const streamedEvents = [
+      {
+        type: "workflow_start",
+        workflow_name: "review_flow",
+        run_id: "r1",
+        timestamp: t("2026-07-13T10:00:00.000Z"),
+      },
+      {
+        type: "step_start",
+        step: "analyze",
+        run_id: "r1",
+        timestamp: t("2026-07-13T10:00:01.250Z"),
+      },
+      {
+        type: "step_complete",
+        step: "analyze",
+        status: "success",
+        duration_ms: 1250,
+        tokens_used: 321,
+        model_used: "qwen3:8b",
+        run_id: "r1",
+        timestamp: t("2026-07-13T10:00:02.500Z"),
+      },
+      {
+        type: "step_error",
+        step: "review",
+        status: "failed",
+        duration_ms: 400,
+        error: "boom",
+        run_id: "r1",
+        timestamp: t("2026-07-13T10:01:02.900Z"),
+      },
+    ];
+
+    it("builds timestamped, source-tagged rows from the real event sequence", () => {
+      mockUseWorkflowStream.mockReturnValue({
+        ...emptyStream,
+        workflowStatus: "failed",
+        events: streamedEvents,
+      });
+      mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+      renderPage();
+
+      const rows = screen.getAllByTestId("log-row");
+      expect(rows).toHaveLength(4);
+
+      // Offsets are mm:ss.mmm from the first timestamped event.
+      expect(rows[0]).toHaveTextContent("00:00.000");
+      expect(rows[0]).toHaveTextContent('workflow "review_flow" started');
+      expect(rows[1]).toHaveTextContent("00:01.250");
+      expect(rows[1]).toHaveTextContent("analyze started");
+
+      // LLM-backed completion: green source tag, real token count + model.
+      expect(rows[2]).toHaveAttribute("data-source", "llm");
+      expect(rows[2]).toHaveTextContent("321 tok");
+      expect(rows[2]).toHaveTextContent("qwen3:8b");
+
+      // Failure: red source tag with the duration and error carried on the wire.
+      expect(rows[3]).toHaveAttribute("data-source", "err");
+      expect(rows[3]).toHaveTextContent("01:02.900");
+      expect(rows[3]).toHaveTextContent("review failed · 400ms · boom");
+
+      // Header shows "started {relative}" derived from the workflow_start event.
+      expect(screen.getByText(/· started .+ ago/)).toBeInTheDocument();
+    });
+
+    it("pause tail freezes visible rows, buffers new ones, and resume re-attaches", () => {
+      mockUseWorkflowStream.mockReturnValue({
+        ...emptyStream,
+        workflowStatus: "running",
+        events: streamedEvents.slice(0, 2),
+      });
+      mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+      const view = renderPage();
+      expect(screen.getAllByTestId("log-row")).toHaveLength(2);
+
+      fireEvent.click(screen.getByTestId("pause-tail-toggle"));
+
+      // Two more events arrive while paused — the tail must not append them.
+      mockUseWorkflowStream.mockReturnValue({
+        ...emptyStream,
+        workflowStatus: "running",
+        events: streamedEvents,
+      });
+      view.rerender(pageAt("/live/review_flow-1234abcd"));
+
+      expect(screen.getAllByTestId("log-row")).toHaveLength(2);
+      expect(screen.getByTestId("log-tail-paused")).toHaveTextContent(
+        "+2 buffered"
+      );
+      expect(
+        screen.getByRole("button", { name: "Resume log tail" })
+      ).toHaveTextContent("(+2)");
+
+      // Resume re-attaches: the buffered rows appear.
+      fireEvent.click(screen.getByTestId("pause-tail-toggle"));
+      expect(screen.getAllByTestId("log-row")).toHaveLength(4);
+      expect(screen.queryByTestId("log-tail-paused")).toBeNull();
+    });
+  });
+
+  describe("dag progress rows", () => {
+    it("tags agent-backed steps LLM, deterministic steps CORE, and turns the duration chip red on failure", () => {
+      mockUseWorkflowStream.mockReturnValue({
+        ...emptyStream,
+        workflowStatus: "failed",
+        stepStates: new Map([
+          ["analyze", { status: "success", durationMs: 1250, tokensUsed: 321 }],
+          ["review", { status: "failed", durationMs: 400, error: "boom" }],
+        ]),
+      });
+      mockUseWorkflowDAG.mockReturnValue({
+        data: {
+          nodes: [
+            { id: "analyze", agent: "reviewer", description: "", depends_on: [] },
+            { id: "review", agent: null, description: "", depends_on: ["analyze"] },
+            { id: "publish", agent: null, description: "", depends_on: ["review"] },
+          ],
+          edges: [],
+        },
+      });
+
+      renderPage();
+
+      const analyzeRow = screen.getByTestId("dag-progress-row-analyze");
+      expect(within(analyzeRow).getByText("LLM")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("dag-progress-duration-analyze")
+      ).toHaveTextContent("1.25s");
+
+      const reviewRow = screen.getByTestId("dag-progress-row-review");
+      expect(within(reviewRow).getByText("CORE")).toBeInTheDocument();
+      const failedChip = screen.getByTestId("dag-progress-duration-review");
+      expect(failedChip).toHaveTextContent("400ms");
+      expect(failedChip.className).toContain("text-b-red");
+
+      // A DAG node that has not streamed any state yet renders as pending.
+      expect(
+        screen.getByTestId("dag-progress-duration-publish")
+      ).toHaveTextContent("pending");
+    });
+
+    it("selects a step for the drill-down when its row is clicked", () => {
+      mockUseWorkflowStream.mockReturnValue({
+        ...emptyStream,
+        workflowStatus: "completed",
+        stepStates: new Map([
+          ["analyze", { status: "success", durationMs: 10 }],
+        ]),
+      });
+      mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+
+      renderPage();
+
+      expect(screen.getByText("Selected none")).toBeInTheDocument();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Select step analyze" })
+      );
+      expect(screen.getByText("Selected analyze")).toBeInTheDocument();
+    });
   });
 });

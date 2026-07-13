@@ -1,5 +1,9 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { startAutorank } from "../../api/client";
+import type { ModelRankingsResponse } from "../../api/rankings";
 import type { ModelProbeResponse, ProbedModel } from "../../api/types";
+import { normalizeFamily } from "../../lib/modelFamily";
 import {
   loadVerifications,
   type ModelVerification,
@@ -7,7 +11,9 @@ import {
 
 // PROVIDER BACKENDS section of the model router — the full probed catalog
 // grouped by provider, with substring search, per-model badges (tier /
-// capability / cloud / running / playground-verified), and a per-model
+// capability / cloud / running / playground-verified), LLM family-rank
+// chips (always provenance-labelled: ranker model, web vs knowledge,
+// date), a name/rank sort toggle, an [autorank] action, and a per-model
 // "chat" action that deep-links into the playground tab.
 
 const SECTION_LABEL =
@@ -58,15 +64,67 @@ function probeTierColor(tier: number): string {
   return "rgb(var(--b-blue))";
 }
 
+/** Catalog ordering inside one provider group. */
+type CatalogSortMode = "name" | "rank";
+
+/** Rank-chip payload for one row: rounded score + provenance tooltip. */
+interface RankChip {
+  readonly score: number;
+  readonly title: string;
+}
+
+/** ISO timestamp → plain date part ("unknown date" when never ranked). */
+function rankDate(updatedAt: string | null): string {
+  return updatedAt === null ? "unknown date" : updatedAt.slice(0, 10);
+}
+
+/**
+ * Build one row's rank chip; null when the model's family is unranked.
+ * Honesty rule: the tooltip always carries the ranker model, grounding mode
+ * (web vs knowledge), date, and reasoning — a score never travels alone.
+ */
+function toRankChip(
+  rankings: ModelRankingsResponse | undefined,
+  modelId: string,
+): RankChip | null {
+  const entry = rankings?.families[normalizeFamily(modelId)];
+  if (rankings === undefined || entry === undefined) return null;
+  const mode = rankings.grounded ? "web-ranked" : "knowledge-ranked";
+  return {
+    score: Math.round(entry.score),
+    title: `${mode} via ${rankings.ranked_with ?? "unknown"} · ${rankDate(
+      rankings.updated_at,
+    )} — ${entry.reasoning}`,
+  };
+}
+
+/** Rank-desc comparator, unranked models last (name order as tiebreak). */
+function compareByRank(
+  a: ProbedModel,
+  b: ProbedModel,
+  scoreOf: (modelId: string) => number | null,
+): number {
+  const scoreA = scoreOf(a.id);
+  const scoreB = scoreOf(b.id);
+  if (scoreA !== null && scoreB !== null && scoreA !== scoreB) {
+    return scoreB - scoreA;
+  }
+  if (scoreA !== null && scoreB === null) return -1;
+  if (scoreA === null && scoreB !== null) return 1;
+  return a.tier - b.tier || a.id.localeCompare(b.id);
+}
+
 function ProbedModelRow({
   model,
   isDefault,
   verification,
+  rankChip,
   onOpenInPlayground,
 }: Readonly<{
   model: ProbedModel;
   isDefault: boolean;
   verification: ModelVerification | null;
+  rankChip: RankChip | null;
   onOpenInPlayground: (modelId: string) => void;
 }>) {
   const color = probeTierColor(model.tier);
@@ -84,6 +142,16 @@ function ProbedModelRow({
       >
         {model.id}
       </span>
+      {rankChip && (
+        <span
+          data-testid={`rank-chip-${model.id}`}
+          title={rankChip.title}
+          className="flex-none border border-b-line px-1.5 py-px font-mono text-[8.5px] tabular-nums tracking-[0.3px] text-b-text-mid"
+          style={{ borderRadius: "3px" }}
+        >
+          {rankChip.score}
+        </span>
+      )}
       {model.capabilities
         ?.filter((cap) => cap !== "completion")
         .map((cap) => (
@@ -163,6 +231,8 @@ interface ProviderProbeListProps {
   probe: ModelProbeResponse | undefined;
   probing: boolean;
   probeError: Error | null;
+  /** Cached LLM family rankings (scores + provenance) from the page query. */
+  rankings: ModelRankingsResponse | undefined;
   /** Deep-link a model into the playground tab (?tab=playground&model=…). */
   onOpenInPlayground: (modelId: string) => void;
 }
@@ -171,15 +241,41 @@ export default function ProviderProbeList({
   probe,
   probing,
   probeError,
+  rankings,
   onOpenInPlayground,
 }: Readonly<ProviderProbeListProps>) {
+  const queryClient = useQueryClient();
   const [openProvider, setOpenProvider] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<CatalogSortMode>("name");
+  const [autorankPending, setAutorankPending] = useState(false);
+  const [autorankError, setAutorankError] = useState<string | null>(null);
   // Verified-outcome registry, read once per mount — the finder tab unmounts
   // on a tab switch, so playground results are fresh whenever it returns.
   const [verifications] = useState<Readonly<Record<string, ModelVerification>>>(
     () => loadVerifications(),
   );
+
+  const rankingBusy = rankings?.status === "running" || autorankPending;
+
+  // Forced re-rank; the follow-up invalidation re-runs the rankings GET so
+  // the job's "running" state (and later its result) is what the UI shows.
+  const kickAutorank = async (): Promise<void> => {
+    setAutorankPending(true);
+    setAutorankError(null);
+    try {
+      await startAutorank(undefined, true);
+    } catch (error) {
+      // 503 (no-LLM mode) or transport failure — surface it dimly below.
+      setAutorankError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setAutorankPending(false);
+      await queryClient.invalidateQueries({ queryKey: ["model-rankings"] });
+    }
+  };
+
+  const familyScore = (modelId: string): number | null =>
+    rankings?.families[normalizeFamily(modelId)]?.score ?? null;
 
   const term = search.trim().toLowerCase();
   const searchActive = term !== "";
@@ -260,6 +356,29 @@ export default function ProviderProbeList({
             className="w-full max-w-[340px] border border-solid border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[11px] text-b-text placeholder:text-b-text-faint focus:border-b-clay focus:outline-none"
             style={{ borderRadius: "var(--b-rad-sm)" }}
           />
+          <button
+            type="button"
+            data-testid="autorank"
+            aria-label="Rank model families with an LLM"
+            disabled={rankingBusy}
+            onClick={() => void kickAutorank()}
+            className="flex-none border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[10px] text-b-text-dim transition-colors hover:border-b-clay hover:text-b-clay disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ borderRadius: "var(--b-rad-sm)" }}
+          >
+            {rankingBusy ? "ranking…" : "[autorank]"}
+          </button>
+          <button
+            type="button"
+            data-testid="catalog-sort"
+            aria-label="Toggle model ordering between name and rank"
+            onClick={() =>
+              setSortMode((mode) => (mode === "name" ? "rank" : "name"))
+            }
+            className="flex-none border border-b-line bg-b-bg0 px-2 py-1.5 font-mono text-[10px] text-b-text-dim transition-colors hover:border-b-clay hover:text-b-clay"
+            style={{ borderRadius: "var(--b-rad-sm)" }}
+          >
+            sort: {sortMode}
+          </button>
           <span
             data-testid="catalog-search-count"
             className="font-mono text-[10px] text-b-text-dim"
@@ -267,6 +386,37 @@ export default function ProviderProbeList({
             {filteredModels.length} / {totalCount} models
           </span>
         </div>
+      )}
+
+      {/* Ranking provenance — honesty rule: scores never render without the
+          ranker model, grounding mode, and cache date alongside them. */}
+      {rankings?.status === "ready" && (
+        <p
+          data-testid="rankings-provenance"
+          className="mb-2 font-mono text-[9.5px] text-b-text-dim"
+        >
+          {`ranked ${Object.keys(rankings.families).length} families via ${
+            rankings.ranked_with ?? "unknown"
+          } (${rankings.grounded ? "web" : "knowledge"}) · ${rankDate(
+            rankings.updated_at,
+          )}`}
+        </p>
+      )}
+      {rankings?.status === "failed" && (
+        <p
+          data-testid="rankings-error"
+          className="mb-2 font-mono text-[9.5px] text-b-text-dim"
+        >
+          {`ranking failed: ${rankings.error ?? "unknown error"}`}
+        </p>
+      )}
+      {autorankError && (
+        <p
+          data-testid="autorank-error"
+          className="mb-2 font-mono text-[9.5px] text-b-text-dim"
+        >
+          {`autorank failed: ${autorankError}`}
+        </p>
       )}
 
       <div
@@ -345,7 +495,14 @@ export default function ProviderProbeList({
               </button>
               {isOpen && (
                 <div className="bg-b-bg0 py-1 pl-10 pr-[18px]">
-                  {provider.models.map((model) => {
+                  {/* "name" keeps the grouped tier/id order; "rank" sorts by
+                      family score desc with unranked models last. */}
+                  {(sortMode === "rank"
+                    ? [...provider.models].sort((a, b) =>
+                        compareByRank(a, b, familyScore),
+                      )
+                    : provider.models
+                  ).map((model) => {
                     // Suppress the "default" marker in no-LLM mode: the
                     // tier defaults are bypassed for the placeholder model.
                     const isDefault =
@@ -358,6 +515,7 @@ export default function ProviderProbeList({
                         model={model}
                         isDefault={isDefault}
                         verification={verifications[model.id] ?? null}
+                        rankChip={toRankChip(rankings, model.id)}
                         onOpenInPlayground={onOpenInPlayground}
                       />
                     );

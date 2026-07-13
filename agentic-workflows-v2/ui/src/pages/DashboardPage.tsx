@@ -8,6 +8,7 @@ import { useHotkeys } from "../hooks/useHotkeys";
 import { listAgents } from "../api/client";
 import BBox from "../components/common/BBox";
 import ConsoleStatus from "../components/common/ConsoleStatus";
+import StatusBadge from "../components/common/StatusBadge";
 import GettingStartedCard from "../components/dashboard/GettingStartedCard";
 import BTopBar from "../components/layout/BTopBar";
 import type { AgentInfo, RunSummary } from "../api/types";
@@ -30,23 +31,6 @@ const TIER_BADGE_STYLE = {
   border: "1px solid currentColor",
   borderRadius: "var(--b-rad-sm)",
 } as const;
-
-/** Bracketed mono status glyph, colored by run status. */
-function statusAscii(status: string | null | undefined): string {
-  if (status === "success") return "[ ok ]";
-  if (status === "failed" || status === "error") return "[fail]";
-  if (status === "running" || status === "in_progress") return "[ •• ]";
-  if (status === "cancelled") return "[skip]";
-  return `[${status ?? "?"}]`;
-}
-
-function statusColorClass(status: string | null | undefined): string {
-  if (status === "success") return "text-b-green";
-  if (status === "failed" || status === "error") return "text-b-red";
-  if (status === "running" || status === "in_progress") return "text-b-blue";
-  if (status === "cancelled") return "text-b-amber";
-  return "text-b-text-dim";
-}
 
 /** A short human description for a run row (workflow context, not internal id). */
 function runDescription(run: RunSummary): string {
@@ -382,10 +366,14 @@ export default function DashboardPage() {
                     to={`/runs/${encodeURIComponent(r.filename)}`}
                     className="flex items-center gap-[14px] border-t border-b-line-soft py-[11px] transition-colors hover:bg-b-bg2"
                   >
-                    <span
-                      className={`w-[46px] flex-none font-mono text-[9.5px] tracking-[0.5px] ${statusColorClass(r.status)}`}
-                    >
-                      {statusAscii(r.status)}
+                    <span className="w-[88px] flex-none">
+                      <StatusBadge
+                        status={r.status}
+                        degraded={
+                          r.status === "success" &&
+                          (r.failed_step_count ?? 0) > 0
+                        }
+                      />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12px] text-b-text">

@@ -12,6 +12,7 @@ function renderPalette() {
         <Routes>
           <Route path="/" element={<div>home page</div>} />
           <Route path="/workflows" element={<div>workflows page</div>} />
+          <Route path="/telemetry" element={<div>telemetry page</div>} />
         </Routes>
       </MemoryRouter>
     </CliProvider>
@@ -46,6 +47,19 @@ describe("CommandPalette", () => {
     fireEvent.click(screen.getByRole("option", { name: /Workflows/ }));
 
     expect(screen.getByText("workflows page")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("navigates to the telemetry page from its palette entry", () => {
+    renderPalette();
+    openPalette();
+
+    fireEvent.change(screen.getByLabelText("Search commands"), {
+      target: { value: "telem" },
+    });
+    fireEvent.click(screen.getByRole("option", { name: /Telemetry/ }));
+
+    expect(screen.getByText("telemetry page")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

@@ -55,6 +55,9 @@ async function renderAppAt(path: string, workflowBuilderEnabled: boolean) {
   vi.doMock("../pages/RunsPage", () => ({
     default: () => <div>Runs Page</div>,
   }));
+  vi.doMock("../pages/TelemetryPage", () => ({
+    default: () => <div>Telemetry Page</div>,
+  }));
   vi.doMock("../components/states/NotFoundPage", () => ({
     default: () => <div>Not Found Page</div>,
   }));
@@ -82,5 +85,10 @@ describe("App routing", () => {
   it("falls back to the 404 page when the feature flag is disabled", async () => {
     await renderAppAt("/workflows/review/edit", false);
     expect(screen.getByText("Not Found Page")).toBeInTheDocument();
+  });
+
+  it("renders the telemetry page at /telemetry", async () => {
+    await renderAppAt("/telemetry", false);
+    expect(screen.getByText("Telemetry Page")).toBeInTheDocument();
   });
 });

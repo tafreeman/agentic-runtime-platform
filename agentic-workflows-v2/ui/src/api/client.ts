@@ -40,6 +40,7 @@ import type {
   HardwareOverrideGetResponse,
   HardwareOverrideUpdateResponse,
 } from "./hardware";
+import type { AutorankResponse, ModelRankingsResponse } from "./rankings";
 
 const BASE = "/api";
 
@@ -612,4 +613,47 @@ export function deleteHardwareOverride(): Promise<HardwareOverrideClearResponse>
   return fetchJSON(`${BASE}/model-finder/profile-override`, {
     method: "DELETE",
   });
+}
+
+// ---------------------------------------------------------------------------
+// Model-family rankings — /api/models/rankings + /api/models/autorank
+// ---------------------------------------------------------------------------
+
+/** Get the cached model-family rankings (scores + provenance). */
+export function getModelRankings(): Promise<ModelRankingsResponse> {
+  return fetchJSON(`${BASE}/models/rankings`);
+}
+
+/**
+ * Kick off an LLM ranking job (or reuse the fresh cache when force=false).
+ *
+ * 409 — another ranking job already in flight — is a normal outcome, not a
+ * failure: it is normalized to `{status: "already-running", detail}` so
+ * callers can fall through to polling GET /models/rankings. Every other
+ * non-2xx status (e.g. 503 in AGENTIC_NO_LLM mode) still throws the
+ * canonical `API {status}: {text}` error.
+ */
+export async function startAutorank(
+  model?: string,
+  force = false,
+): Promise<AutorankResponse> {
+  const res = await fetch(resolveRequestUrl(`${BASE}/models/autorank`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: model ?? null, force }),
+  });
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => ({}))) as { detail?: unknown };
+    return {
+      status: "already-running",
+      detail:
+        typeof body.detail === "string"
+          ? body.detail
+          : "a ranking job is already running",
+    };
+  }
+  if (!res.ok) {
+    throw await toApiError(res);
+  }
+  return res.json() as Promise<AutorankResponse>;
 }

@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ModelFinderPage from "../pages/ModelFinderPage";
 import { recordVerification } from "../lib/modelVerification";
+import type { ModelRankingsResponse } from "../api/rankings";
 import type {
   ModelCandidate,
   ModelProbeResponse,
@@ -15,6 +16,8 @@ const mockProbeModels = vi.fn();
 const mockGetHardwareOverride = vi.fn();
 const mockPutHardwareOverride = vi.fn();
 const mockDeleteHardwareOverride = vi.fn();
+const mockGetModelRankings = vi.fn();
+const mockStartAutorank = vi.fn();
 
 vi.mock("../api/client", async () => {
   const actual = await vi.importActual("../api/client");
@@ -27,6 +30,8 @@ vi.mock("../api/client", async () => {
     putHardwareOverride: (...args: unknown[]) => mockPutHardwareOverride(...args),
     deleteHardwareOverride: (...args: unknown[]) =>
       mockDeleteHardwareOverride(...args),
+    getModelRankings: (...args: unknown[]) => mockGetModelRankings(...args),
+    startAutorank: (...args: unknown[]) => mockStartAutorank(...args),
   };
 });
 
@@ -118,6 +123,21 @@ function makeProbe(
   };
 }
 
+function makeRankings(
+  overrides: Partial<ModelRankingsResponse> = {},
+): ModelRankingsResponse {
+  return {
+    status: "ready",
+    ranked_with: "anthropic:claude-sonnet-4-6",
+    grounded: true,
+    // Fresh by default so rescan tests don't trip the staleness auto-kick.
+    updated_at: new Date().toISOString(),
+    error: null,
+    families: {},
+    ...overrides,
+  };
+}
+
 function renderPage(initialEntry = "/models") {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -150,6 +170,11 @@ describe("ModelFinderPage", () => {
     mockDeleteHardwareOverride.mockResolvedValue({
       profile: makeResponse().profile,
       override: null,
+    });
+    mockGetModelRankings.mockResolvedValue(makeRankings());
+    mockStartAutorank.mockResolvedValue({
+      status: "started",
+      ranked_with: "anthropic:claude-sonnet-4-6",
     });
   });
 
@@ -592,5 +617,253 @@ describe("ModelFinderPage", () => {
     expect(
       screen.queryByTestId("hardware-override-form"),
     ).not.toBeInTheDocument();
+  });
+
+  describe("model rankings", () => {
+    it("renders rank chips with the full provenance title; unranked models get none", async () => {
+      mockProbeModels.mockResolvedValue(
+        makeProbe({
+          models: [
+            {
+              id: "ollama:qwen3-coder:30b",
+              provider: "ollama",
+              tier: 2,
+              available: true,
+            },
+            {
+              id: "ollama:llama3:8b",
+              provider: "ollama",
+              tier: 2,
+              available: true,
+            },
+          ],
+        }),
+      );
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({
+          grounded: true,
+          ranked_with: "gemini:gemini-2.5-pro",
+          updated_at: "2026-07-10T12:00:00Z",
+          families: {
+            "qwen3-coder": { score: 87.4, reasoning: "strong local coder" },
+          },
+        }),
+      );
+      renderPage();
+
+      fireEvent.click(await screen.findByRole("button", { name: /ollama/ }));
+
+      const chip = await screen.findByTestId(
+        "rank-chip-ollama:qwen3-coder:30b",
+      );
+      expect(chip).toHaveTextContent("87");
+      expect(chip).toHaveAttribute(
+        "title",
+        "web-ranked via gemini:gemini-2.5-pro · 2026-07-10 — strong local coder",
+      );
+      // Unranked models get no chip.
+      expect(
+        screen.queryByTestId("rank-chip-ollama:llama3:8b"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the provenance line when rankings are ready", async () => {
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({
+          grounded: false,
+          ranked_with: "ollama:qwen3:8b",
+          updated_at: "2026-07-11T08:00:00Z",
+          families: {
+            "gpt-4o": { score: 92, reasoning: "frontier" },
+            "qwen3-coder": { score: 87, reasoning: "strong local coder" },
+          },
+        }),
+      );
+      renderPage();
+
+      expect(await screen.findByTestId("rankings-provenance")).toHaveTextContent(
+        "ranked 2 families via ollama:qwen3:8b (knowledge) · 2026-07-11",
+      );
+    });
+
+    it("disables the autorank button and polls every 5s while a job runs", async () => {
+      vi.useFakeTimers();
+      try {
+        mockGetModelRankings.mockResolvedValue(
+          makeRankings({ status: "running", updated_at: null, families: {} }),
+        );
+        renderPage();
+
+        // Flush the initial query round-trips under fake timers.
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(0);
+        });
+
+        const button = screen.getByTestId("autorank");
+        expect(button).toBeDisabled();
+        expect(button).toHaveTextContent("ranking…");
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(1);
+
+        // status === "running" arms the 5s refetch interval…
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(5000);
+        });
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("kicks a forced autorank from the catalog button and refreshes the cache", async () => {
+      renderPage();
+
+      const button = await screen.findByTestId("autorank");
+      await waitFor(() =>
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(1),
+      );
+
+      fireEvent.click(button);
+
+      await waitFor(() =>
+        expect(mockStartAutorank).toHaveBeenCalledWith(undefined, true),
+      );
+      // Invalidation re-runs the GET so the job state becomes visible.
+      await waitFor(() =>
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it("sorts models within a provider by rank desc with unranked last", async () => {
+      mockProbeModels.mockResolvedValue(
+        makeProbe({
+          available_providers: ["ollama"],
+          models: [
+            { id: "ollama:alpha:7b", provider: "ollama", tier: 1, available: true },
+            { id: "ollama:beta:7b", provider: "ollama", tier: 1, available: true },
+            { id: "ollama:gamma:7b", provider: "ollama", tier: 1, available: true },
+          ],
+        }),
+      );
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({
+          families: {
+            alpha: { score: 55, reasoning: "solid" },
+            gamma: { score: 91, reasoning: "excellent" },
+          },
+        }),
+      );
+      renderPage();
+
+      await screen.findByTestId("rankings-provenance");
+      fireEvent.click(await screen.findByRole("button", { name: /ollama/ }));
+
+      const idsInOrder = () =>
+        screen
+          .getAllByRole("button", { name: /Open .* in playground/ })
+          .map((el) => el.getAttribute("data-testid"));
+
+      // Default "name" keeps the existing tier/id ordering.
+      expect(screen.getByTestId("catalog-sort")).toHaveTextContent("sort: name");
+      expect(idsInOrder()).toEqual([
+        "open-in-playground-ollama:alpha:7b",
+        "open-in-playground-ollama:beta:7b",
+        "open-in-playground-ollama:gamma:7b",
+      ]);
+
+      fireEvent.click(screen.getByTestId("catalog-sort"));
+
+      expect(screen.getByTestId("catalog-sort")).toHaveTextContent("sort: rank");
+      expect(idsInOrder()).toEqual([
+        "open-in-playground-ollama:gamma:7b", // 91
+        "open-in-playground-ollama:alpha:7b", // 55
+        "open-in-playground-ollama:beta:7b", // unranked last
+      ]);
+    });
+
+    it("renders the ranking failure dimly instead of silent staleness", async () => {
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({
+          status: "failed",
+          error: "ranker quota exhausted",
+          families: {},
+        }),
+      );
+      renderPage();
+
+      expect(await screen.findByTestId("rankings-error")).toHaveTextContent(
+        "ranking failed: ranker quota exhausted",
+      );
+      expect(
+        screen.queryByTestId("rankings-provenance"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("rescan auto-kicks an autorank when the ranking cache is empty", async () => {
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({
+          status: "empty",
+          ranked_with: null,
+          grounded: null,
+          updated_at: null,
+          families: {},
+        }),
+      );
+      renderPage();
+
+      const rescanButton = await screen.findByRole("button", {
+        name: "Rescan providers",
+      });
+      await waitFor(() => {
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(1);
+        expect(rescanButton).not.toBeDisabled();
+      });
+
+      fireEvent.click(rescanButton);
+
+      // Default-body kick (model=null, force=false) + a visible refetch.
+      await waitFor(() => expect(mockStartAutorank).toHaveBeenCalledWith());
+      await waitFor(() =>
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it("rescan auto-kicks an autorank when rankings are older than 7 days", async () => {
+      const eightDaysAgo = new Date(
+        Date.now() - 8 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      mockGetModelRankings.mockResolvedValue(
+        makeRankings({ updated_at: eightDaysAgo }),
+      );
+      renderPage();
+
+      const rescanButton = await screen.findByRole("button", {
+        name: "Rescan providers",
+      });
+      await waitFor(() => {
+        expect(mockGetModelRankings).toHaveBeenCalledTimes(1);
+        expect(rescanButton).not.toBeDisabled();
+      });
+
+      fireEvent.click(rescanButton);
+
+      await waitFor(() => expect(mockStartAutorank).toHaveBeenCalledTimes(1));
+    });
+
+    it("rescan leaves a fresh ranking cache alone", async () => {
+      renderPage();
+
+      const rescanButton = await screen.findByRole("button", {
+        name: "Rescan providers",
+      });
+      await waitFor(() => {
+        expect(mockProbeModels).toHaveBeenCalledTimes(1);
+        expect(rescanButton).not.toBeDisabled();
+      });
+
+      fireEvent.click(rescanButton);
+
+      await waitFor(() => expect(mockProbeModels).toHaveBeenCalledTimes(2));
+      expect(mockStartAutorank).not.toHaveBeenCalled();
+    });
   });
 });

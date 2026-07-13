@@ -56,6 +56,10 @@ describe("Sidebar", () => {
       "/live/latest"
     );
     expect(screen.getByTestId("nav-runs")).toHaveAttribute("href", "/runs");
+    expect(screen.getByTestId("nav-telemetry")).toHaveAttribute(
+      "href",
+      "/telemetry"
+    );
     expect(screen.getByTestId("nav-models")).toHaveAttribute("href", "/models");
   });
 
