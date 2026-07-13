@@ -174,6 +174,22 @@ class TestPutProfileOverride:
             assert response.status_code == 422, payload
             assert not override_path.exists()
 
+    def test_boolean_accelerator_memory_or_tops_is_422(
+        self, client, override_path
+    ) -> None:
+        """Bool coerces to 1.0 without the guard, silently claiming hardware."""
+        for payload in (
+            {"kind": "gpu", "name": "Bool GPU", "memory_gb": True},
+            {"kind": "npu", "name": "Bool NPU", "tops": True},
+        ):
+            response = client.put(
+                "/api/model-finder/profile-override",
+                json={"accelerators": [payload]},
+            )
+
+            assert response.status_code == 422, payload
+            assert not override_path.exists()
+
     def test_accelerators_drive_system_tops_and_tier(self, client) -> None:
         body = {
             "accelerators": [
