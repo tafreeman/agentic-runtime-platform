@@ -24,7 +24,11 @@ name: Dependency Audit
 
 on:
   push:
-    branches: [main, agenticv2]
+    # agenticv2 was removed from this list when the branch was retired from
+    # origin; if it is ever recreated, add it BOTH here and to
+    # dependency-review.yml's pull_request.branches so PRs into it keep a
+    # diff-scoped dependency gate.
+    branches: [main]
   schedule:
     # Weekly scan: Monday 06:00 UTC
     - cron: "0 6 * * 1"
