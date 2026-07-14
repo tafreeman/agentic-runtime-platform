@@ -346,6 +346,44 @@ def validate_workflow_document(
     return config
 
 
+def validate_workflow_inputs(
+    config: WorkflowConfig,
+    supplied: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate supplied workflow inputs and apply declared defaults.
+
+    Returns a new dict of validated inputs; raises ``ValueError`` listing every
+    violation (missing/empty required inputs, enum mismatches) so callers can
+    reject a run before it starts.
+    """
+    result: dict[str, Any] = {}
+    errors: list[str] = []
+
+    for name, input_cfg in config.inputs.items():
+        if name in supplied:
+            value = supplied[name]
+            # Treat empty string as missing for required string inputs
+            if input_cfg.required and isinstance(value, str) and not value.strip():
+                errors.append(f"Required input '{name}' must not be empty")
+                continue
+            if input_cfg.enum and value not in input_cfg.enum:
+                errors.append(
+                    f"Input '{name}' must be one of {input_cfg.enum}, got '{value}'"
+                )
+            result[name] = value
+        elif input_cfg.default is not None:
+            result[name] = input_cfg.default
+        elif input_cfg.required:
+            errors.append(f"Missing required input: '{name}'")
+
+    if errors:
+        raise ValueError(
+            f"Input validation failed for '{config.name}': " + "; ".join(errors)
+        )
+
+    return result
+
+
 def save_workflow_document(
     name: str,
     document: dict[str, Any],

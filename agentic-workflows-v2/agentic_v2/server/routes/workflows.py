@@ -39,6 +39,7 @@ from ...langchain.config import (
     render_workflow_document,
     save_workflow_document,
     validate_workflow_document,
+    validate_workflow_inputs,
 )
 from ...langchain.dependencies import (
     is_missing_langchain_dependency_error,
@@ -425,6 +426,13 @@ async def run_workflow(
                 artifacts_dir=tenant_artifacts_dir,
                 tenant_id=tenant_ctx.tenant_id,
             )
+
+        # Reject invalid inputs at submit time so the client gets a 422 with
+        # the violation list instead of a run that errors asynchronously.
+        try:
+            validate_workflow_inputs(workflow_def, workflow_inputs)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
         background_tasks.add_task(
             _run_and_evaluate,

@@ -209,12 +209,40 @@ export default function WorkflowDetailPage() {
     return data;
   };
 
+  /** Required inputs that would be sent empty — mirrors buildInputData. */
+  const missingRequiredInputs = (): string[] => {
+    if (!dag?.inputs) return [];
+    const vals = configRef.current.inputValues;
+    return dag.inputs
+      .filter((inp) => {
+        if (!inp.required) return false;
+        const val = vals[inp.name] ?? defaultInputValue(inp.default);
+        return !val.trim();
+      })
+      .map((inp) => inp.name);
+  };
+
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   const runMutation = useMutation({
     mutationFn: async () => {
       const { executionProfile, rubricId, evaluation, modelOverride } =
         configRef.current;
+      // Dataset-backed evaluation fills inputs from the dataset sample
+      // server-side, so only enforce form inputs for plain runs.
+      const probeEval = buildEvalRequest(evaluation, rubricId, 0);
+      const datasetBacked =
+        probeEval != null && probeEval.dataset_source !== "none";
+      if (!datasetBacked) {
+        const missing = missingRequiredInputs();
+        if (missing.length > 0) {
+          throw new Error(
+            `required input${missing.length > 1 ? "s" : ""} ${missing
+              .map((m) => `'${m}'`)
+              .join(", ")} must not be empty`,
+          );
+        }
+      }
       // Only serialize model_override when a concrete override is selected —
       // "" means "tier default" and must stay off the wire.
       const overrideField = modelOverride

@@ -66,7 +66,9 @@ def _patch_run_route_happy_path(
     monkeypatch.setattr("agentic_v2.adapters.get_registry", lambda: registry)
     monkeypatch.setattr(workflows, "_require_langchain_runtime", lambda: None)
     monkeypatch.setattr(
-        workflows, "load_workflow_config", lambda _name: SimpleNamespace(name="wf")
+        workflows,
+        "load_workflow_config",
+        lambda _name: SimpleNamespace(name="wf", inputs={}),
     )
     monkeypatch.setattr(workflows, "audit_request_event", _noop_audit)
     monkeypatch.setattr(workflows, "tenant_dataset_dir", lambda _tenant_id: tmp_path)

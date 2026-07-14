@@ -186,6 +186,71 @@ describe("WorkflowDetailPage", () => {
     });
   });
 
+  it("blocks the run and shows an error when a required input is empty", async () => {
+    formSpy.values = {
+      ...defaultFormValues(),
+      inputValues: { prompt: "   " },
+    };
+
+    renderPage();
+
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(
+      await screen.findByText(/required input 'prompt' must not be empty/i)
+    ).toBeInTheDocument();
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("lists every empty required input in the validation error", async () => {
+    mockUseWorkflowDAG.mockReturnValue({
+      data: {
+        name: "review_flow",
+        description: "Review workflow",
+        nodes: [{ id: "ingest", agent: "collector", description: "", depends_on: [], tier: null }],
+        edges: [],
+        inputs: [
+          { name: "prompt", type: "string", description: "", default: "", required: true, enum: null },
+          { name: "code_file", type: "string", description: "", default: "", required: true, enum: null },
+        ],
+      },
+      isLoading: false,
+    });
+    formSpy.values = { ...defaultFormValues(), inputValues: {} };
+
+    renderPage();
+
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    expect(
+      await screen.findByText(/required inputs 'prompt', 'code_file' must not be empty/i)
+    ).toBeInTheDocument();
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+  });
+
+  it("skips form-input validation for dataset-backed evaluation runs", async () => {
+    formSpy.values = {
+      ...defaultFormValues(),
+      inputValues: { prompt: "" },
+      evaluation: {
+        enabled: true,
+        datasetSource: "repository",
+        datasetId: "swe/bench_lite",
+        evalSetId: "",
+        selectedSamples: [0],
+        runsPerRecord: 1,
+      },
+    };
+
+    renderPage();
+
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    await waitFor(() => {
+      expect(mockRunWorkflow).toHaveBeenCalled();
+    });
+  });
+
   it("surfaces tier badges in the DAG header when nodes declare a tier", () => {
     mockUseWorkflowDAG.mockReturnValue({
       data: {

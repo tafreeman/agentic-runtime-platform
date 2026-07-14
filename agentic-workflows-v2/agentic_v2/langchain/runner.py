@@ -28,7 +28,12 @@ from ..contracts import WorkflowResult
 from ..integrations.base import TraceAdapter
 from ..integrations.tracing import NullTraceAdapter
 from ..settings import get_settings
-from .config import WorkflowConfig, list_workflows, load_workflow_config
+from .config import (
+    WorkflowConfig,
+    list_workflows,
+    load_workflow_config,
+    validate_workflow_inputs,
+)
 from .expressions import resolve_expression
 from .graph import compile_workflow
 from .result_builder import (
@@ -866,34 +871,7 @@ class WorkflowRunner:
         supplied: dict[str, Any],
     ) -> dict[str, Any]:
         """Validate and apply defaults for workflow inputs."""
-        result: dict[str, Any] = {}
-        errors: list[str] = []
-
-        for name, input_cfg in config.inputs.items():
-            if name in supplied:
-                value = supplied[name]
-                # Treat empty string as missing for required string inputs
-                if input_cfg.required and isinstance(value, str) and not value.strip():
-                    errors.append(f"Required input '{name}' must not be empty")
-                    continue
-                # Enum validation
-                if input_cfg.enum and value not in input_cfg.enum:
-                    errors.append(
-                        f"Input '{name}' must be one of {input_cfg.enum}, "
-                        f"got '{value}'"
-                    )
-                result[name] = value
-            elif input_cfg.default is not None:
-                result[name] = input_cfg.default
-            elif input_cfg.required:
-                errors.append(f"Missing required input: '{name}'")
-
-        if errors:
-            raise ValueError(
-                f"Input validation failed for '{config.name}': " + "; ".join(errors)
-            )
-
-        return result
+        return validate_workflow_inputs(config, supplied)
 
     @staticmethod
     def resolve_outputs(
