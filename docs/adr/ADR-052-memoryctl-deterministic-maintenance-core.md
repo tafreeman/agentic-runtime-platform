@@ -5,8 +5,9 @@
 
 ## Context
 
-The agent context system design (`D:\source\prompts\docs\AGENT_CONTEXT_SYSTEM.md`)
-defines a file-based, self-managed memory layer for Claude Code agents:
+The agent context system design (maintained in a separate private
+workspace) defines a file-based, self-managed memory layer for Claude
+Code agents:
 topic files with YAML frontmatter, a generated `MEMORY.md` index, and a
 maintenance loop (validate, index, links, budget, staleness, verify,
 dedupe, archive, stats, report). The design's core principle is
