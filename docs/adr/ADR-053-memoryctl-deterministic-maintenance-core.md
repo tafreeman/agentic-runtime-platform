@@ -1,4 +1,4 @@
-# ADR-052: memoryctl — deterministic maintenance core for agent memory
+# ADR-053: memoryctl — deterministic maintenance core for agent memory
 
 **Status:** Accepted
 **Date:** 2026-07-14
