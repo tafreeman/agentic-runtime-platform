@@ -123,6 +123,7 @@ postgres = [
 
 [project.scripts]
 agentic = "agentic_v2.cli:main"
+memoryctl = "agentic_v2.memoryctl.cli:main"
 
 
 [tool.hatch.build]
