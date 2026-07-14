@@ -230,3 +230,30 @@ def test_index_cmd_missing_dir_warns_without_crashing(tmp_path: Path) -> None:
     assert [f.code for f in result.findings] == ["index.missing-dir"]
     assert result.findings[0].severity == SEVERITY_WARN
     assert result.changed == ()
+
+
+def test_index_cmd_drops_lines_for_archived_files(
+    index_cmd_cfg: MemoryctlConfig,
+    index_cmd_memory_dir: Path,
+    index_cmd_frozen_now: datetime,
+) -> None:
+    """A dangling line whose target sits in archive/ is dropped, not harvested."""
+    _write(index_cmd_memory_dir, "alpha.md", _topic_text("alpha", "first fact"))
+    archive_dir = index_cmd_memory_dir / "archive"
+    archive_dir.mkdir()
+    _write(archive_dir, "old-fact.md", _topic_text("old-fact", "superseded fact"))
+    _write(
+        index_cmd_memory_dir,
+        "MEMORY.md",
+        "# Memory Index\n\n"
+        "- [alpha](alpha.md) — first fact (updated 2026-07-10)\n"
+        "- [old-fact](old-fact.md) — superseded fact (updated 2026-07-01)\n",
+    )
+
+    result = index_cmd.run(index_cmd_cfg)
+
+    assert not any(f.code == "index.harvested" for f in result.findings)
+    assert not (index_cmd_memory_dir / f"harvested-{FROZEN_DAY}.md").exists()
+    content = (index_cmd_memory_dir / "MEMORY.md").read_text(encoding="utf-8")
+    assert "old-fact" not in content
+    assert result.summary == "1 dirs, 1 entries, 0 harvested"

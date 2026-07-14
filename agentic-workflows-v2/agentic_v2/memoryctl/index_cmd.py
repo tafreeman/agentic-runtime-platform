@@ -16,6 +16,7 @@ from datetime import date
 from pathlib import Path
 
 from agentic_v2.memoryctl._shared import (
+    ARCHIVE_DIR_NAME,
     DATE_FORMAT,
     SEVERITY_INFO,
     SEVERITY_WARN,
@@ -85,19 +86,26 @@ def _harvest_candidates(index_path: Path, topic_names: frozenset[str]) -> list[s
 
     A line survives (is *not* harvested) only when it is blank, a
     header, or a ``- [text](target.md) ...`` list entry whose target
-    exists as a topic file. Everything else was written by another
-    writer and must be preserved as a topic file before regeneration.
+    exists as a topic file — or existed and was moved to ``archive/``
+    (an archived target's line is intentionally dropped on regeneration,
+    not harvested back into a bogus topic file). Everything else was
+    written by another writer and must be preserved as a topic file
+    before regeneration.
     """
     if not index_path.is_file():
         return []
+    archive_dir = index_path.parent / ARCHIVE_DIR_NAME
+    archived_names = frozenset(p.name for p in archive_dir.glob("*.md"))
     candidates: list[str] = []
     for raw_line in index_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
         match = _LIST_LINE_RE.match(line)
-        if match is not None and Path(match.group(1)).name in topic_names:
-            continue
+        if match is not None:
+            name = Path(match.group(1)).name
+            if name in topic_names or name in archived_names:
+                continue
         candidates.append(line)
     return candidates
 

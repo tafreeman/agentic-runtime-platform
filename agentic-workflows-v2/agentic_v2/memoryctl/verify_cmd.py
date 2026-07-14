@@ -10,7 +10,11 @@ mutates files.
 
 from __future__ import annotations
 
+import contextlib
+import os
+import signal
 import subprocess
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -70,21 +74,51 @@ def _would_run_finding(command: str, path: Path) -> Finding:
     )
 
 
-def _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:
-    """Execute one verify command and map its outcome to a finding."""
-    try:
-        # shell=True is required and intentional here: verify commands are
-        # user-authored shell snippets in the same trust domain as hooks
-        # (design doc §4.1) — they are configuration, not external input.
-        proc = subprocess.run(  # noqa: S602
+def _spawn_shell(command: str) -> subprocess.Popen[str]:
+    """Start one verify command's shell.
+
+    shell=True is required and intentional: verify commands are
+    user-authored shell snippets in the same trust domain as hooks
+    (design doc §4.1) — configuration, not external input. On POSIX the
+    shell gets its own session so a timeout can kill the whole process
+    group, not just the shell; on Windows ``Popen.kill`` terminates the
+    shell only (grandchildren are not tracked — accepted limitation).
+    """
+    if sys.platform == "win32":
+        return subprocess.Popen(  # noqa: S602
             command,
             shell=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout_s,
-            check=False,
         )
+    return subprocess.Popen(  # noqa: S602
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+
+
+def _kill_tree(proc: subprocess.Popen[str]) -> None:
+    """Kill a timed-out verify process — on POSIX, its whole group."""
+    if sys.platform != "win32":
+        with contextlib.suppress(ProcessLookupError, PermissionError):
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        return
+    proc.kill()
+
+
+def _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:
+    """Execute one verify command and map its outcome to a finding."""
+    proc = _spawn_shell(command)
+    try:
+        _stdout, stderr = proc.communicate(timeout=timeout_s)
     except subprocess.TimeoutExpired:
+        _kill_tree(proc)
+        proc.communicate()
         return Finding(
             code=CODE_TIMEOUT,
             severity=SEVERITY_ERROR,
@@ -100,7 +134,7 @@ def _execute_verify(command: str, path: Path, timeout_s: int) -> Finding:
             path=path,
             data={"command": command},
         )
-    stderr_tail = (proc.stderr or "")[-STDERR_TAIL_CHARS:]
+    stderr_tail = (stderr or "")[-STDERR_TAIL_CHARS:]
     return Finding(
         code=CODE_FAIL,
         severity=SEVERITY_ERROR,

@@ -16,9 +16,11 @@ Two responsibilities:
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import timedelta
 from pathlib import Path
 
+from agentic_v2.memoryctl import index_cmd
 from agentic_v2.memoryctl._shared import (
     ARCHIVE_DIR_NAME,
     SEVERITY_INFO,
@@ -79,11 +81,19 @@ def _archive_superseded(
     dry_run: bool,
     findings: list[Finding],
     changed: list[Path],
-) -> None:
-    """Move superseded topic files in one memory dir to its archive/."""
+) -> bool:
+    """Move superseded topic files in one memory dir to its archive/.
+
+    Returns True when files were actually moved (never on dry runs), so
+    the caller can regenerate the index — the moves leave dangling index
+    lines otherwise. Regeneration happens *after* this helper returns:
+    ``FileLock`` instances on the same lock file are not reentrant
+    across objects, so nesting ``index_cmd``'s lock inside ours would
+    deadlock until timeout.
+    """
     sources = _superseded_files(cfg, memory_dir)
     if not sources:
-        return
+        return False
     archive_dir = memory_dir / ARCHIVE_DIR_NAME
     if dry_run:
         for src in sources:
@@ -91,7 +101,7 @@ def _archive_superseded(
             findings.append(
                 _move_finding("archive.superseded", src, dest, dry_run=True)
             )
-        return
+        return False
     with acquire_lock(cfg, memory_dir):
         archive_dir.mkdir(parents=True, exist_ok=True)
         for src in sources:
@@ -101,6 +111,7 @@ def _archive_superseded(
                 _move_finding("archive.superseded", src, dest, dry_run=False)
             )
             changed.append(dest)
+    return True
 
 
 def _reduced_run_ids(fleet_dir: Path) -> set[str]:
@@ -189,9 +200,27 @@ def run(cfg: MemoryctlConfig, *, dry_run: bool = False) -> CommandResult:
     findings: list[Finding] = []
     changed: list[Path] = []
     for memory_dir in cfg.memory_dirs:
-        if memory_dir.is_dir():
-            _archive_superseded(
-                cfg, memory_dir, dry_run=dry_run, findings=findings, changed=changed
+        if not memory_dir.is_dir():
+            continue
+        moved = _archive_superseded(
+            cfg, memory_dir, dry_run=dry_run, findings=findings, changed=changed
+        )
+        if moved:
+            # Close the dangling-index window in the same command run:
+            # the moved files' index lines would otherwise be harvested
+            # as bogus topics by the next index pass (PR #205 review).
+            index_result = index_cmd.run(replace(cfg, memory_dirs=(memory_dir,)))
+            changed.extend(index_result.changed)
+            findings.append(
+                Finding(
+                    code="archive.index-regenerated",
+                    severity=SEVERITY_INFO,
+                    message=(
+                        f"regenerated {cfg.index_name} after archiving "
+                        "superseded topic(s)"
+                    ),
+                    path=memory_dir / cfg.index_name,
+                )
             )
     if cfg.fleet_dir is not None and cfg.fleet_dir.is_dir():
         _rotate_runs(

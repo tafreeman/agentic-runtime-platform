@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -105,7 +104,7 @@ def test_dry_run_lists_commands_and_executes_nothing(
     def _forbid(*args: Any, **kwargs: Any) -> None:
         raise AssertionError("dry_run must not execute commands")
 
-    monkeypatch.setattr(subprocess, "run", _forbid)
+    monkeypatch.setattr(verify_cmd, "_spawn_shell", _forbid)
     result = verify_cmd.run(verify_cmd_cfg, dry_run=True)
 
     assert result.changed == ()
@@ -134,12 +133,13 @@ def test_stderr_tail_is_capped_at_300_chars(
 ) -> None:
     _write_verify_topic(verify_cmd_memory_dir, "noisy", "noisy-command")
 
-    def _fake_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
-        return subprocess.CompletedProcess(
-            args=args[0], returncode=2, stdout="", stderr="x" * 1000
-        )
+    class _FakeProc:
+        returncode = 2
 
-    monkeypatch.setattr(subprocess, "run", _fake_run)
+        def communicate(self, timeout: float | None = None) -> tuple[str, str]:
+            return "", "x" * 1000
+
+    monkeypatch.setattr(verify_cmd, "_spawn_shell", lambda command: _FakeProc())
     result = verify_cmd.run(verify_cmd_cfg)
 
     finding = result.findings[0]

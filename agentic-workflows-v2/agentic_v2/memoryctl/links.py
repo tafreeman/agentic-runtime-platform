@@ -153,13 +153,26 @@ def _wiki_findings(path: Path, body: str, stems: set[str]) -> list[Finding]:
 
 
 def _dead_link_findings(path: Path, body: str) -> list[Finding]:
-    """One ``links.dead`` error per relative markdown link that fails to resolve."""
+    """One ``links.dead`` error per markdown link that fails to resolve.
+
+    Relative targets resolve against the containing file's directory.
+    Absolute targets are checked as-is: memory files are agent/user-
+    authored local pointers in the same trust domain as ``verify:``
+    commands (design doc §4.1), and pointer resolution — does the
+    referenced machine path still exist? — is exactly the guarantee this
+    command provides (restorable compression, P2). Targets are never
+    re-rooted against a repository root: memory directories are not
+    repositories, so a rooted target like ``/docs/x.md`` simply fails to
+    resolve and is flagged for cleanup.
+    """
     out: list[Finding] = []
     for match in MD_LINK_RE.finditer(body):
         target = _normalize_md_target(match.group(1))
         if target is None:
             continue
-        if not (path.parent / target).exists():
+        target_path = Path(target)
+        resolved = target_path if target_path.is_absolute() else path.parent / target
+        if not resolved.exists():
             out.append(
                 Finding(
                     code=CODE_DEAD,

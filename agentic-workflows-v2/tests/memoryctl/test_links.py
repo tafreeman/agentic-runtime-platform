@@ -260,3 +260,34 @@ class TestContract:
         wet = links.run(links_cfg, dry_run=False)
 
         assert dry == wet
+
+
+class TestAbsoluteTargets:
+    def test_absolute_target_that_exists_is_clean(
+        self, links_memory_dir: Path, links_cfg: MemoryctlConfig, tmp_path: Path
+    ) -> None:
+        pointer_target = tmp_path / "design-doc.md"
+        pointer_target.write_text("design", encoding="utf-8")
+        _write(
+            links_memory_dir / "pointer.md",
+            f"See [design]({pointer_target.as_posix()}) for detail.",
+        )
+
+        result = links.run(links_cfg)
+
+        assert _by_code(result, links.CODE_DEAD) == []
+
+    def test_absolute_target_that_is_missing_is_dead(
+        self, links_memory_dir: Path, links_cfg: MemoryctlConfig, tmp_path: Path
+    ) -> None:
+        missing = tmp_path / "gone" / "doc.md"
+        _write(
+            links_memory_dir / "pointer.md",
+            f"See [design]({missing.as_posix()}) for detail.",
+        )
+
+        result = links.run(links_cfg)
+
+        dead = _by_code(result, links.CODE_DEAD)
+        assert len(dead) == 1
+        assert dead[0].data["target"] == missing.as_posix()

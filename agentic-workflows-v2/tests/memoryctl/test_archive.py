@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from agentic_v2.memoryctl import archive
+from agentic_v2.memoryctl import archive, index_cmd
 from agentic_v2.memoryctl._shared import MemoryctlConfig, now_utc
 
 OLD_AGE_DAYS = 200
@@ -85,7 +85,10 @@ def test_superseded_file_moves_to_archive(
     assert dest.is_file()
     assert (archive_memory_dir / "active-fact.md").is_file()
     assert dest in result.changed
-    assert [f.code for f in result.findings] == ["archive.superseded"]
+    assert [f.code for f in result.findings] == [
+        "archive.superseded",
+        "archive.index-regenerated",
+    ]
 
 
 def test_collision_appends_numeric_suffix(
@@ -166,3 +169,22 @@ def test_missing_stats_file_treats_all_expired_as_unreduced(tmp_path: Path) -> N
 
     assert (fleet / "runs" / "run-old").is_dir()
     assert [f.code for f in result.findings] == ["archive.unreduced-run"]
+
+
+def test_archive_regenerates_index_after_tombstone(
+    archive_cfg: MemoryctlConfig, archive_memory_dir: Path
+) -> None:
+    """Tombstone moves must not leave dangling index lines (PR #205 review)."""
+    index_cmd.run(archive_cfg)
+    before = (archive_memory_dir / "MEMORY.md").read_text(encoding="utf-8")
+    assert "old-fact" in before
+
+    result = archive.run(archive_cfg)
+
+    after = (archive_memory_dir / "MEMORY.md").read_text(encoding="utf-8")
+    assert "old-fact" not in after
+    assert "active-fact" in after
+    assert archive_memory_dir / "MEMORY.md" in result.changed
+    assert any(f.code == "archive.index-regenerated" for f in result.findings)
+    follow_up = index_cmd.run(archive_cfg)
+    assert not any(f.code == "index.harvested" for f in follow_up.findings)
