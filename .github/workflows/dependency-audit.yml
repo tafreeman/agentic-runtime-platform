@@ -3,9 +3,16 @@
 # Implements NIST SP 800-218 (SSDF) PW.4.1:
 #   "Verify software for vulnerabilities prior to release."
 #   Both Python packages (via pip-audit) and the npm UI (via npm audit) are
-#   scanned on every push/PR and on a weekly schedule. Any HIGH or CRITICAL
-#   finding fails the build so that vulnerable dependencies cannot reach
-#   production without a deliberate exception.
+#   scanned on every push to main, on a weekly schedule, and on demand. Any
+#   HIGH or CRITICAL finding fails the build so that vulnerable dependencies
+#   cannot reach production without a deliberate exception.
+#
+# Deliberately NOT run on pull requests: these audits are environment-scoped —
+# their outcome changes when a new advisory is published against an existing
+# dependency, not when a PR's diff changes — so as a PR gate they redline
+# unrelated PRs the day an advisory drops. The diff-scoped PR gate is
+# dependency-review.yml ("did THIS change introduce a vulnerable package?");
+# this workflow monitors the environment on main instead.
 #
 # pip-audit does not expose a --severity filter flag. We use its JSON output
 # and a Python post-processor to fail only on vulnerabilities that either
@@ -18,11 +25,10 @@ name: Dependency Audit
 on:
   push:
     branches: [main, agenticv2]
-  pull_request:
-    branches: [main, agenticv2]
   schedule:
     # Weekly scan: Monday 06:00 UTC
     - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 jobs:
   python-audit:
