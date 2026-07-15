@@ -93,16 +93,23 @@ steps:
   # Phase 2: Parallel development (depends on architecture)
   - name: generate_api
     agent: tier2_coder
-    description: Generate backend API endpoints
+    description: Generate backend API endpoints. Return backend_code and backend_tests as non-empty relative-path-to-source file maps.
     depends_on: [design_architecture]
     inputs:
       api_spec: ${coalesce(steps.design_architecture.outputs.api_spec, steps.design_architecture.outputs.api_design)}
       db_schema: ${coalesce(steps.design_architecture.outputs.db_schema, steps.design_architecture.outputs.database_schema)}
     outputs:
-      api_code: backend_code
       backend_code: backend_code
-      api_tests: backend_tests
       backend_tests: backend_tests
+    output_contracts:
+      backend_code:
+        kind: code_artifact
+        required: true
+        aliases: [api_code]
+      backend_tests:
+        kind: code_artifact
+        required: true
+        aliases: [api_tests]
 
   - name: generate_frontend
     agent: tier2_coder
@@ -133,8 +140,12 @@ steps:
     description: Generate integration tests
     depends_on: [generate_api, generate_frontend]
     inputs:
-      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
       frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
     outputs:
       integration_tests: e2e_tests
       e2e_tests: e2e_tests
@@ -145,10 +156,14 @@ steps:
     description: Review all generated code
     depends_on: [generate_api, generate_frontend, generate_migrations, generate_integration_tests]
     inputs:
-      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
       frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
       migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
       tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
     outputs:
       review_report: code_review
       code_review: code_review
@@ -163,12 +178,16 @@ steps:
     depends_on: [review_code]
     when: ${coalesce(steps.review_code.outputs.review_report.overall_status, steps.review_code.outputs.overall_status)} != 'APPROVED'
     inputs:
-      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
       frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
       migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
       tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
       review_report: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
       suggested_fixes: ${coalesce(steps.review_code.outputs.suggested_fixes, steps.review_code.outputs.fixes)}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
     outputs:
       rework_report: rework_report
 
@@ -178,10 +197,14 @@ steps:
     description: Assemble final feature package
     depends_on: [review_code]
     inputs:
-      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
       frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
       migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}
       tests: ${coalesce(steps.generate_integration_tests.outputs.integration_tests, steps.generate_integration_tests.outputs.e2e_tests)}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
     outputs:
       package: feature_package
 
@@ -193,6 +216,6 @@ outputs:
     from: ${coalesce(steps.review_code.outputs.review_report, steps.review_code.outputs.code_review)}
   all_code:
     from:
-      backend: ${coalesce(steps.generate_api.outputs.api_code, steps.generate_api.outputs.backend_code)}
+      backend: ${coalesce(steps.generate_api.outputs.backend_code, steps.generate_api.outputs.api_code)}
       frontend: ${coalesce(steps.generate_frontend.outputs.ui_code, steps.generate_frontend.outputs.frontend_code)}
       migrations: ${coalesce(steps.generate_migrations.outputs.migrations, steps.generate_migrations.outputs.db_migrations)}

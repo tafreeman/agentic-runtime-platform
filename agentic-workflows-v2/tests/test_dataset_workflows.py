@@ -79,9 +79,9 @@ class TestDatasetLoading:
         for name, info in summary.items():
             assert info["file_exists"], f"{name} fixture file missing"
             expected = expected_counts.get(name, 20)
-            assert (
-                info["sample_count"] == expected
-            ), f"{name} expected {expected} samples, got {info['sample_count']}"
+            assert info["sample_count"] == expected, (
+                f"{name} expected {expected} samples, got {info['sample_count']}"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -157,22 +157,25 @@ class TestWorkflowValidationWithDatasets:
             assert result is not None
 
     @pytest.mark.asyncio
-    async def test_fullstack_inputs_pass_validation(self):
+    async def test_fullstack_inputs_pass_validation(self, monkeypatch):
         """Real dataset inputs pass fullstack_generation.yaml input validation.
 
-        Note: Without an LLM backend, placeholder outputs don't populate
-        nested fields like ``review_report.approved``, so the conditional
-        ``assemble_feature`` step may raise.  We still verify that input
-        validation succeeds and the DAG runs through its earlier phases.
+        Under ``AGENTIC_NO_LLM=1``, placeholder prose cannot satisfy the
+        fullstack code-artifact contract. The workflow must return an honest
+        FAILED result rather than a structurally successful empty package.
         """
+        from agentic_v2.settings import is_agentic_no_llm_enabled
         from agentic_v2.workflows.runner import WorkflowRunner
 
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
         runner = WorkflowRunner()
         for inp in fullstack_generation_inputs(limit=2):
             clean = {k: v for k, v in inp.items() if not k.startswith("_")}
-            try:
-                result = await runner.run("fullstack_generation", **clean)
-            except AttributeError:
-                # Expected: when clause references nested attr on placeholder
-                continue
+            result = await runner.run("fullstack_generation", **clean)
             assert result is not None
+            if is_agentic_no_llm_enabled():
+                assert result.overall_status.value == "failed"
+                assert any(
+                    step.step_name == "generate_api" and step.is_failed
+                    for step in result.steps
+                )

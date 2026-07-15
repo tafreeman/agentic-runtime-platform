@@ -12,6 +12,11 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, TypeVar
 if TYPE_CHECKING:
     from ..contracts.verification import VerificationPolicy
 
+from ..artifact_contracts import (
+    ArtifactContract,
+    ArtifactContractError,
+    validate_and_normalize_artifacts,
+)
 from ..contracts import ReviewStatus, StepResult, StepStatus
 from ..models import ModelTier
 from .context import ExecutionContext
@@ -116,6 +121,8 @@ class StepDefinition:
     output_mapping: dict[str, str] = field(
         default_factory=dict
     )  # step_output -> context_var
+    input_contracts: dict[str, ArtifactContract] = field(default_factory=dict)
+    output_contracts: dict[str, ArtifactContract] = field(default_factory=dict)
 
     # Hooks
     pre_hooks: list[HookFunction] = field(default_factory=list)
@@ -278,7 +285,11 @@ class StepExecutor:
             return result
 
         # Prepare inputs
-        child_ctx = await self._prepare_inputs(step_def, ctx, result)
+        try:
+            child_ctx = await self._prepare_inputs(step_def, ctx, result)
+        except ArtifactContractError as error:
+            await self._fail_input_contract(step_def, ctx, result, error)
+            return result
 
         # Execute with retry
         attempt = 0
@@ -298,7 +309,16 @@ class StepExecutor:
                 #   * don't spend the error-retry budget on it, so loop_max
                 #     (not retry.max_retries) bounds the number of rounds.
                 if step_def.loop_until and result.status == StepStatus.RUNNING:
-                    child_ctx = await self._prepare_inputs(step_def, ctx, result)
+                    try:
+                        child_ctx = await self._prepare_inputs(step_def, ctx, result)
+                    except ArtifactContractError as error:
+                        await self._fail_input_contract(
+                            step_def,
+                            ctx,
+                            result,
+                            error,
+                        )
+                        return result
                     attempt -= 1
                 continue  # re-run the step body
             if outcome is _AttemptOutcome.RETURN:
@@ -347,13 +367,19 @@ class StepExecutor:
         output: dict[str, Any] | None,
     ) -> _AttemptOutcome:
         """Finalize a successful execution: map outputs, run hooks, gate, and loop."""
-        # Success - map outputs
-        result.status = StepStatus.SUCCESS
         result.output_data = output or {}
 
         self._extract_meta(result)
         self._salvage_review_report(step_def, result)
         self._normalize_review_report(result)
+        result.output_data = validate_and_normalize_artifacts(
+            result.output_data,
+            step_def.output_contracts,
+        )
+        result.error = None
+        result.error_type = None
+        result.metadata.pop("contract_diagnostics", None)
+        result.status = StepStatus.SUCCESS
         await self._map_outputs(step_def, ctx, result)
         await self._store_step_view(step_def, ctx, result)
 
@@ -419,6 +445,11 @@ class StepExecutor:
         """Handle a step failure: retry if eligible, else run error hooks and fail."""
         result.error = str(error)
         result.error_type = type(error).__name__
+        if isinstance(error, ArtifactContractError):
+            result.output_data = {}
+            result.metadata["contract_diagnostics"] = [
+                item.as_dict() for item in error.diagnostics
+            ]
 
         # Check if should retry
         if attempt <= step_def.retry.max_retries and step_def.retry.should_retry(error):
@@ -433,6 +464,23 @@ class StepExecutor:
         result.status = StepStatus.FAILED
         await ctx.mark_step_failed(step_def.name, result.error)
         return _AttemptOutcome.BREAK
+
+    async def _fail_input_contract(
+        self,
+        step_def: StepDefinition,
+        ctx: ExecutionContext,
+        result: StepResult,
+        error: ArtifactContractError,
+    ) -> None:
+        """Fail before invocation or during loop refresh with diagnostics."""
+        result.error_type = type(error).__name__
+        result.output_data = {}
+        result.metadata["contract_diagnostics"] = [
+            item.as_dict() for item in error.diagnostics
+        ]
+        await self._run_error_hooks(step_def, ctx)
+        result.mark_complete(False, str(error))
+        await ctx.mark_step_failed(step_def.name, str(error))
 
     @staticmethod
     async def _run_error_hooks(
@@ -480,6 +528,15 @@ class StepExecutor:
             if value is None:
                 null_inputs[step_input] = ctx_var
         result.input_data = mapped_inputs
+
+        validated_inputs = validate_and_normalize_artifacts(
+            mapped_inputs,
+            step_def.input_contracts,
+        )
+        if validated_inputs != mapped_inputs:
+            result.input_data = validated_inputs
+            for step_input, value in validated_inputs.items():
+                await child_ctx.set(step_input, value)
 
         if null_inputs:
             logger.warning(
