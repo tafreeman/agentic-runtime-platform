@@ -139,6 +139,8 @@ Each entry in `steps:` defines a DAG node. The required and optional fields are:
 | `description` | Yes | string | What this step does -- passed to the LLM as task context |
 | `inputs` | Yes | mapping | Maps step-local input names to `${...}` expressions |
 | `outputs` | Yes | mapping | Maps step output keys to context variable names |
+| `input_contracts` | No | mapping | Validates opted-in step inputs before invocation |
+| `output_contracts` | No | mapping | Validates and normalizes opted-in outputs before success |
 | `depends_on` | No | list | Step names that must complete before this step runs |
 | `when` | No | string | Boolean `${...}` expression; step runs only if `true` |
 | `tools` | No | list | Explicit tool allowlist (omit for tier-default tools) |
@@ -167,6 +169,61 @@ steps:
       review_report: code_review             # stored in context as "code_review"
       suggested_fixes: fixes
 ```
+
+### Typed artifact contracts
+
+Step input/output mappings normally enforce names only. For generated code,
+opt into semantic validation with `input_contracts` and `output_contracts`:
+
+```yaml
+steps:
+  - name: generate_api
+    agent: tier2_coder
+    description: >-
+      Generate the API. Return backend_code as a non-empty
+      relative-path-to-source file map.
+    outputs:
+      backend_code: backend_code
+    output_contracts:
+      backend_code:
+        kind: code_artifact
+        required: true
+        aliases: [api_code]  # parse-only checkpoint migration alias
+
+  - name: review_code
+    agent: tier3_reviewer
+    depends_on: [generate_api]
+    inputs:
+      backend: ${coalesce(
+        steps.generate_api.outputs.backend_code,
+        steps.generate_api.outputs.api_code
+      )}
+    input_contracts:
+      backend:
+        kind: code_artifact
+        required: true
+    outputs:
+      review_report: review_report
+```
+
+`code_artifact` accepts a non-empty mapping of safe relative file paths to
+non-blank source strings, or one or more complete `FILE`/`ENDFILE` blocks. It
+rejects absolute/traversal paths, empty content, placeholders, refusals, and
+reference-only prose.
+
+Use one canonical output name in `outputs`. A contract alias is read only for
+legacy response/checkpoint compatibility and is not requested from the model.
+A valid canonical value always wins; an alias is promoted only if the
+canonical value is absent or invalid and the alias validates independently.
+Put the canonical expression first in downstream `coalesce()` calls. The
+contract, not `coalesce()`, decides whether content is usable.
+
+Contracts are optional, so workflows without them retain key-only behavior.
+Currently `code_artifact` is the only supported kind. This inline content
+contract does not implement the run-scoped path materialization proposed by
+[ADR-034](adr/ADR-034-path-first-workflow-io-contracts.md); see
+[ADR-052](adr/ADR-052-typed-step-artifact-contracts.md) for the bounded
+decision.
 
 ### Agent naming convention
 

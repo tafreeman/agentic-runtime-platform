@@ -16,6 +16,11 @@ from typing import Any
 
 import yaml
 
+from ..artifact_contracts import (
+    ArtifactContract,
+    parse_artifact_contracts,
+    validate_contract_bindings,
+)
 from ..utils.path_safety import ensure_within_base
 
 logger = logging.getLogger(__name__)
@@ -53,6 +58,8 @@ class StepConfig:
     depends_on: list[str] = field(default_factory=list)
     inputs: dict[str, Any] = field(default_factory=dict)
     outputs: dict[str, str] = field(default_factory=dict)
+    input_contracts: dict[str, ArtifactContract] = field(default_factory=dict)
+    output_contracts: dict[str, ArtifactContract] = field(default_factory=dict)
     when: str | None = None
     loop_until: str | None = None
     loop_max: int = 3
@@ -535,13 +542,35 @@ def _parse_model_params(raw: Any) -> ModelParamsConfig | None:
 def _parse_step(raw: dict[str, Any], inputs: dict[str, InputConfig]) -> StepConfig:
     """Parse a single raw step mapping into a ``StepConfig``."""
     loop_max, loop_max_expr = _parse_loop_max(raw.get("loop_max", 3), inputs)
+    step_inputs = dict(raw.get("inputs", {}))
+    step_outputs = dict(raw.get("outputs", {}))
+    input_contracts = parse_artifact_contracts(
+        raw.get("input_contracts"),
+        location=f"steps.{raw['name']}.input_contracts",
+    )
+    output_contracts = parse_artifact_contracts(
+        raw.get("output_contracts"),
+        location=f"steps.{raw['name']}.output_contracts",
+    )
+    validate_contract_bindings(
+        input_contracts,
+        step_inputs,
+        location=f"steps.{raw['name']}.input_contracts",
+    )
+    validate_contract_bindings(
+        output_contracts,
+        step_outputs,
+        location=f"steps.{raw['name']}.output_contracts",
+    )
     return StepConfig(
         name=raw["name"],
         agent=raw.get("agent", ""),
         description=raw.get("description", ""),
         depends_on=raw.get("depends_on", []),
-        inputs=dict(raw.get("inputs", {})),
-        outputs=dict(raw.get("outputs", {})),
+        inputs=step_inputs,
+        outputs=step_outputs,
+        input_contracts=input_contracts,
+        output_contracts=output_contracts,
         when=raw.get("when"),
         loop_until=raw.get("loop_until"),
         loop_max=loop_max,

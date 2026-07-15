@@ -37,6 +37,11 @@ except ImportError as _lg_err:  # pragma: no cover
         "Install them with: pip install langchain-core langgraph"
     ) from _lg_err
 
+from ..artifact_contracts import (
+    ArtifactContractError,
+    expected_output_keys,
+    validate_and_normalize_artifacts,
+)
 from ..engine.llm_output_parsing import (
     extract_json_candidates,
     normalize_expected_structure,
@@ -189,6 +194,12 @@ def resolve_inputs_into_context(
         ctx[key] = value
         if value is None:
             null_inputs[key] = expr
+
+    resolved_inputs = validate_and_normalize_artifacts(
+        resolved_inputs,
+        step.input_contracts,
+    )
+    ctx.update(resolved_inputs)
 
     if null_inputs:
         logger.warning(
@@ -516,7 +527,31 @@ def _build_tier0_node(step: StepConfig, trace: TraceAdapter) -> Any:
         run_id = state.get("context", {}).get("workflow_run_id", "")
         start_time = datetime.now(UTC)
 
-        ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        try:
+            ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        except ArtifactContractError as error:
+            diagnostics = [item.as_dict() for item in error.diagnostics]
+            trace.emit_step_start(step.name, run_id, {})
+            return _build_failure_update(
+                step,
+                state,
+                dict(state.get("context", {})),
+                {},
+                run_id,
+                start_time,
+                trace,
+                [
+                    {
+                        "model": None,
+                        "error": str(error),
+                        "retryable": False,
+                        "contract_diagnostics": diagnostics,
+                    }
+                ],
+                [],
+                failure_message=str(error),
+                failure_metadata={"contract_diagnostics": diagnostics},
+            )
         trace.emit_step_start(step.name, run_id, resolved_inputs)
 
         updated = {**state, "context": ctx}
@@ -528,6 +563,33 @@ def _build_tier0_node(step: StepConfig, trace: TraceAdapter) -> Any:
 
         # Move step outputs from __current__ into named step
         step_outputs = result.get("steps", {}).get("__current__", {}).get("outputs", {})
+        try:
+            step_outputs = validate_and_normalize_artifacts(
+                step_outputs,
+                step.output_contracts,
+            )
+        except ArtifactContractError as error:
+            diagnostics = [item.as_dict() for item in error.diagnostics]
+            return _build_failure_update(
+                step,
+                state,
+                ctx,
+                resolved_inputs,
+                run_id,
+                start_time,
+                trace,
+                [
+                    {
+                        "model": None,
+                        "error": str(error),
+                        "retryable": False,
+                        "contract_diagnostics": diagnostics,
+                    }
+                ],
+                [],
+                failure_message=str(error),
+                failure_metadata={"contract_diagnostics": diagnostics},
+            )
         end_time = datetime.now(UTC)
         steps = record_step_result(
             state,
@@ -583,6 +645,8 @@ def _invoke_with_failover(
     model_candidates: list[str],
     get_agent_for_model: Any,
     response_ok: Callable[[str], bool] | None = None,
+    *,
+    reject_last_invalid: bool = False,
 ) -> dict[str, Any]:
     """Invoke the agent across candidate models, returning the attempt outcome.
 
@@ -594,9 +658,9 @@ def _invoke_with_failover(
     treated like a failed attempt and the next candidate model is tried —
     this catches "successful" responses that are actually unusable, e.g. a
     weak model politely refusing a generation task because none of its
-    bound tools apply. The LAST candidate's response is always returned
-    as-is, preserving the historical raw_response-plus-warning behavior
-    when every model declines.
+    bound tools apply. The LAST candidate's response is normally returned
+    as-is, preserving the historical raw_response-plus-warning behavior.
+    Typed contracts set *reject_last_invalid* so unusable content fails closed.
     """
     attempt_errors: list[dict[str, Any]] = []
     attempted_models: list[str] = []
@@ -610,24 +674,23 @@ def _invoke_with_failover(
                 {"messages": [HumanMessage(content=task_description)]}
             )
             response_text = extract_agent_response_text(agent_result)
-            if (
-                response_ok is not None
-                and index < last_index
-                and not response_ok(response_text)
-            ):
+            invalid_response = response_ok is not None and not response_ok(
+                response_text
+            )
+            if invalid_response and (index < last_index or reject_last_invalid):
                 attempt_errors.append(
                     {
                         "model": model_id,
                         "error": (
-                            "response contained none of the step's declared "
-                            "output keys; failing over to the next candidate"
+                            "response failed the step's declared output requirements"
                         ),
-                        "retryable": True,
+                        "retryable": index < last_index,
+                        "semantic_invalid": True,
                     }
                 )
                 logger.warning(
-                    "Step %s response from %s produced no declared outputs "
-                    "(likely a refusal or format miss); failing over "
+                    "Step %s response from %s failed declared output "
+                    "requirements; failing over "
                     "(%d/%d candidates tried)",
                     step.name,
                     model_id,
@@ -680,10 +743,13 @@ def _build_failure_update(
     trace: TraceAdapter,
     attempt_errors: list[dict[str, Any]],
     attempted_models: list[str],
+    *,
+    failure_message: str | None = None,
+    failure_metadata: dict[str, Any] | None = None,
 ) -> "_AwaitableStateUpdate":
     """Record a failed step (all model attempts exhausted) and emit traces."""
-    err_text = "All model attempts failed"
-    if attempt_errors:
+    err_text = failure_message or "All model attempts failed"
+    if attempt_errors and failure_message is None:
         last = attempt_errors[-1]
         err_text = f"{err_text} (last model={last.get('model')}: {last.get('error')})"
     end_time = datetime.now(UTC)
@@ -694,6 +760,7 @@ def _build_failure_update(
         {},
         error=err_text,
         inputs=resolved_inputs,
+        metadata=failure_metadata,
         start_time=start_time,
         end_time=end_time,
     )
@@ -737,7 +804,15 @@ def _build_success_update(
 
     step_outputs = parse_step_outputs(
         response_text,
-        expected_output_keys=list(step.outputs.keys()) or None,
+        expected_output_keys=expected_output_keys(
+            step.outputs,
+            step.output_contracts,
+        )
+        or None,
+    )
+    step_outputs = validate_and_normalize_artifacts(
+        step_outputs,
+        step.output_contracts,
     )
 
     # Map outputs to context
@@ -810,7 +885,31 @@ def _build_llm_node(
     def _llm_node(state: WorkflowState) -> dict[str, Any]:
         run_id = state.get("context", {}).get("workflow_run_id", "")
         start_time = datetime.now(UTC)
-        ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        try:
+            ctx, resolved_inputs = resolve_inputs_into_context(step, state)
+        except ArtifactContractError as error:
+            diagnostics = [item.as_dict() for item in error.diagnostics]
+            trace.emit_step_start(step.name, run_id, {})
+            return _build_failure_update(
+                step,
+                state,
+                dict(state.get("context", {})),
+                {},
+                run_id,
+                start_time,
+                trace,
+                [
+                    {
+                        "model": None,
+                        "error": str(error),
+                        "retryable": False,
+                        "contract_diagnostics": diagnostics,
+                    }
+                ],
+                [],
+                failure_message=str(error),
+                failure_metadata={"contract_diagnostics": diagnostics},
+            )
         trace.emit_step_start(step.name, run_id, resolved_inputs)
 
         task_description = build_task_description(step, resolved_inputs)
@@ -818,11 +917,16 @@ def _build_llm_node(
         # A response that yields none of the step's declared outputs (e.g. a
         # weak model refusing because no bound tool "generates migrations")
         # is as unusable as a provider error — let the failover loop try the
-        # next candidate. Skipped in no-LLM placeholder mode, where prose-only
-        # responses are the expected behavior, not a model miss.
-        declared_keys = [key for key in step.outputs if key != "raw_response"]
+        # next candidate. Uncontracted no-LLM steps preserve placeholder-mode
+        # behavior; contracted steps reject placeholder content honestly.
+        declared_keys = [
+            key
+            for key in expected_output_keys(step.outputs, step.output_contracts)
+            if key != "raw_response"
+        ]
+        contract_diagnostics: list[dict[str, str]] = []
         response_ok: Callable[[str], bool] | None = None
-        if declared_keys and not is_agentic_no_llm_enabled():
+        if declared_keys and (step.output_contracts or not is_agentic_no_llm_enabled()):
 
             def response_ok(text: str) -> bool:
                 parsed = parse_step_outputs(
@@ -830,6 +934,19 @@ def _build_llm_node(
                     expected_output_keys=declared_keys,
                     warn_on_missing=False,
                 )
+                if step.output_contracts:
+                    contract_diagnostics.clear()
+                    try:
+                        validate_and_normalize_artifacts(
+                            parsed,
+                            step.output_contracts,
+                        )
+                    except ArtifactContractError as error:
+                        contract_diagnostics.extend(
+                            item.as_dict() for item in error.diagnostics
+                        )
+                        return False
+                    return True
                 return any(key in parsed for key in declared_keys)
 
         outcome = _invoke_with_failover(
@@ -838,9 +955,14 @@ def _build_llm_node(
             model_candidates,
             _get_agent_for_model,
             response_ok=response_ok,
+            reject_last_invalid=bool(step.output_contracts),
         )
 
         if outcome["agent_result"] is None:
+            terminal_error = (
+                outcome["attempt_errors"][-1] if outcome["attempt_errors"] else {}
+            )
+            terminal_semantic = terminal_error.get("semantic_invalid") is True
             return _build_failure_update(
                 step,
                 state,
@@ -851,6 +973,11 @@ def _build_llm_node(
                 trace,
                 outcome["attempt_errors"],
                 outcome["attempted_models"],
+                failure_metadata=(
+                    {"contract_diagnostics": contract_diagnostics}
+                    if contract_diagnostics and terminal_semantic
+                    else None
+                ),
             )
 
         return _build_success_update(

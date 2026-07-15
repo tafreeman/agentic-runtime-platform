@@ -25,6 +25,11 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+from ..artifact_contracts import (
+    ArtifactContractConfigError,
+    parse_artifact_contracts,
+    validate_contract_bindings,
+)
 from ..engine.agent_resolver import resolve_agent
 from ..engine.dag import DAG
 from ..engine.step import StepDefinition
@@ -587,6 +592,27 @@ class WorkflowLoader:
 
         input_mapping = self._parse_step_input_mapping(data.get("inputs", {}))
         output_mapping = self._parse_step_output_mapping(data.get("outputs", {}))
+        try:
+            input_contracts = parse_artifact_contracts(
+                data.get("input_contracts"),
+                location=f"steps.{name}.input_contracts",
+            )
+            output_contracts = parse_artifact_contracts(
+                data.get("output_contracts"),
+                location=f"steps.{name}.output_contracts",
+            )
+            validate_contract_bindings(
+                input_contracts,
+                input_mapping,
+                location=f"steps.{name}.input_contracts",
+            )
+            validate_contract_bindings(
+                output_contracts,
+                output_mapping,
+                location=f"steps.{name}.output_contracts",
+            )
+        except ArtifactContractConfigError as error:
+            raise WorkflowLoadError(str(error)) from error
         when_func = self._build_when_condition(data.get("when"))
         loop_max, loop_max_expr = self._parse_loop_max(data.get("loop_max", 3))
 
@@ -597,6 +623,8 @@ class WorkflowLoader:
             when=when_func,
             input_mapping=input_mapping,
             output_mapping=output_mapping,
+            input_contracts=input_contracts,
+            output_contracts=output_contracts,
             loop_until=data.get("loop_until") or None,
             loop_max=loop_max,
             metadata={
