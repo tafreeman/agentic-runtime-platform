@@ -19,9 +19,12 @@ def test_settings_defaults_load_without_env(monkeypatch):
     assert s.shell == "/bin/bash"
 
 
-def test_block_private_ips_default_on(monkeypatch):
+def test_block_private_ips_default_on(monkeypatch, tmp_path):
     """SSRF guard is ON by default (P1 #13 — default flipped from False to True)."""
     monkeypatch.delenv("AGENTIC_BLOCK_PRIVATE_IPS", raising=False)
+    # Settings intentionally reads a repo-local .env. Move to an empty
+    # directory so this test exercises the code default, not developer config.
+    monkeypatch.chdir(tmp_path)
 
     import agentic_v2.settings as settings_mod
 

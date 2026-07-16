@@ -306,8 +306,7 @@ def build_openrouter_model(model_name: str, temperature: float) -> Any:
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         raise ValueError(
-            "OPENROUTER_API_KEY environment variable is required for "
-            "OpenRouter models."
+            "OPENROUTER_API_KEY environment variable is required for OpenRouter models."
         )
 
     from ..models.cloud_discovery import resolve_openrouter_base_url
@@ -536,6 +535,7 @@ def build_lmstudio_model(model_name: str, temperature: float) -> Any:
     # first reachable of :1234 / :12340) so a model surfaced by the probe is
     # reachable at the host we send inference to — discovered == runnable.
     from ..models.local_discovery import resolve_lmstudio_host
+    from ..models.secrets import get_first_secret
 
     base_url = resolve_lmstudio_host()
     if not base_url.endswith("/v1"):
@@ -545,7 +545,7 @@ def build_lmstudio_model(model_name: str, temperature: float) -> Any:
     return ChatOpenAI(
         model=model_name,
         base_url=base_url,
-        api_key="lm-studio",
+        api_key=get_first_secret("LM_API_TOKEN", default="") or "lm-studio",
         temperature=temperature,
     )
 

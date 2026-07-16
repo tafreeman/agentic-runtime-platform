@@ -5,6 +5,7 @@ import WorkflowsPage from "../pages/WorkflowsPage";
 
 const mockUseWorkflows = vi.fn();
 const mockUseRuns = vi.fn();
+const mockBuilderFlag = vi.fn();
 
 vi.mock("../hooks/useWorkflows", () => ({
   useWorkflows: () => mockUseWorkflows(),
@@ -14,10 +15,15 @@ vi.mock("../hooks/useRuns", () => ({
   useRuns: () => mockUseRuns(),
 }));
 
+vi.mock("../config/featureFlags", () => ({
+  isWorkflowBuilderEnabled: () => mockBuilderFlag(),
+}));
+
 describe("WorkflowsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseRuns.mockReturnValue({ data: [], isLoading: false });
+    mockBuilderFlag.mockReturnValue(true);
   });
 
   it("renders loading placeholders", () => {
@@ -109,7 +115,7 @@ describe("WorkflowsPage", () => {
     expect(screen.getByText("missing")).toBeInTheDocument();
   });
 
-  it("links each workflow to its detail route", () => {
+  it("links each workflow to its detail and editor routes", () => {
     mockUseWorkflows.mockReturnValue({
       data: ["code_review", "triage_workflow"],
       isLoading: false,
@@ -124,7 +130,27 @@ describe("WorkflowsPage", () => {
     // Behavioral: the testid-tagged link must point at the detail route.
     const link = screen.getByTestId("workflow-link-code_review");
     expect(link).toHaveAttribute("href", "/workflows/code_review");
+    const editLink = screen.getByTestId("workflow-edit-code_review");
+    expect(editLink).toHaveAttribute("href", "/workflows/code_review/edit");
+    expect(editLink).toHaveAccessibleName("Edit code_review workflow");
     // Presentational: definitions count is surfaced as a stat numeric.
     expect(screen.getByText("Definitions")).toBeInTheDocument();
+  });
+
+  it("hides edit actions when the workflow builder is disabled", () => {
+    mockBuilderFlag.mockReturnValue(false);
+    mockUseWorkflows.mockReturnValue({
+      data: ["code_review"],
+      isLoading: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <WorkflowsPage />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId("workflow-link-code_review")).toBeInTheDocument();
+    expect(screen.queryByTestId("workflow-edit-code_review")).not.toBeInTheDocument();
   });
 });

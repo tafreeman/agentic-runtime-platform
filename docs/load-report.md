@@ -1,7 +1,7 @@
 # Load proof: Redis-CAS + horizontal scale
 
 !!! abstract "Auto-generated — do not hand-edit"
-    Every number on this page is derived by `scripts/build_load_report.py` from the committed k6 JSON in `load/results/`. Re-run `bash load/run_load.sh` then the generator to refresh it. Generated **2026-06-14 03:52 UTC**.
+    Every number on this page is derived by `scripts/build_load_report.py` from the committed k6 JSON in `load/results/`. Re-run `bash load/run_load.sh` then the generator to refresh it. Evidence captured **2026-06-14 03:48 UTC**.
 
 This page turns ARP's Redis-CAS circuit-breaker and horizontal-scale engineering from *described in code* into *proven with real numbers*. The proof runs locally and free (the `grafana/k6` image hammering a multi-replica `docker compose` stack with `AGENTIC_NO_LLM=1`); only the resulting JSON is published here.
 

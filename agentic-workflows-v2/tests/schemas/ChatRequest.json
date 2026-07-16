@@ -1,12 +1,70 @@
 {
   "$defs": {
+    "ChatImagePart": {
+      "description": "A request-local raster image sent to a vision-capable model.",
+      "properties": {
+        "detail": {
+          "default": "auto",
+          "enum": [
+            "auto",
+            "low",
+            "high"
+          ],
+          "title": "Detail",
+          "type": "string"
+        },
+        "type": {
+          "const": "image_url",
+          "default": "image_url",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 7100000,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "ChatImagePart",
+      "type": "object"
+    },
     "ChatMessage": {
       "description": "One conversation turn submitted to the chat playground.\n\n``content`` is capped well above any real chat turn so a single request\ncannot buffer unbounded memory through the sanitization middleware.",
       "properties": {
         "content": {
-          "maxLength": 100000,
-          "title": "Content",
-          "type": "string"
+          "anyOf": [
+            {
+              "maxLength": 100000,
+              "type": "string"
+            },
+            {
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "image_url": "#/$defs/ChatImagePart",
+                    "text": "#/$defs/ChatTextPart"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ChatTextPart"
+                  },
+                  {
+                    "$ref": "#/$defs/ChatImagePart"
+                  }
+                ]
+              },
+              "maxItems": 12,
+              "minItems": 1,
+              "type": "array"
+            }
+          ],
+          "description": "Plain text or provider-neutral text/image content blocks",
+          "title": "Content"
         },
         "role": {
           "enum": [
@@ -24,39 +82,111 @@
       ],
       "title": "ChatMessage",
       "type": "object"
-    }
-  },
-  "description": "Request body for ``POST /api/chat``.\n\n``model`` is a FULL prefixed model id (e.g.\n``openrouter:meta-llama/llama-3.1-8b-instruct:free``). The endpoint\nbuilds exactly that model via ``langchain.models.get_chat_model``,\nbypassing ``SmartModelRouter`` tier selection.",
-  "properties": {
-    "messages": {
-      "description": "Conversation history, oldest first",
-      "items": {
-        "$ref": "#/$defs/ChatMessage"
+    },
+    "ChatTextPart": {
+      "description": "Text content inside a multimodal conversation turn.",
+      "properties": {
+        "text": {
+          "maxLength": 100000,
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        }
       },
-      "maxItems": 100,
-      "minItems": 1,
-      "title": "Messages",
-      "type": "array"
+      "required": [
+        "text"
+      ],
+      "title": "ChatTextPart",
+      "type": "object"
     },
-    "model": {
-      "description": "Full prefixed model id to chat with",
-      "maxLength": 200,
-      "title": "Model",
-      "type": "string"
+    "ModelChatRequest": {
+      "additionalProperties": false,
+      "description": "Direct-model constructor for ``POST /api/chat``.",
+      "properties": {
+        "messages": {
+          "description": "Conversation history, oldest first",
+          "items": {
+            "$ref": "#/$defs/ChatMessage"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Messages",
+          "type": "array"
+        },
+        "model": {
+          "description": "Full prefixed model id to chat with directly",
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "temperature": {
+          "default": 0.2,
+          "description": "Sampling temperature",
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "title": "Temperature",
+          "type": "number"
+        }
+      },
+      "required": [
+        "messages",
+        "model"
+      ],
+      "title": "ModelChatRequest",
+      "type": "object"
     },
-    "temperature": {
-      "default": 0.2,
-      "description": "Sampling temperature",
-      "maximum": 2.0,
-      "minimum": 0.0,
-      "title": "Temperature",
-      "type": "number"
+    "TierChatRequest": {
+      "additionalProperties": false,
+      "description": "Tier-routed constructor for ``POST /api/chat``.",
+      "properties": {
+        "messages": {
+          "description": "Conversation history, oldest first",
+          "items": {
+            "$ref": "#/$defs/ChatMessage"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Messages",
+          "type": "array"
+        },
+        "temperature": {
+          "default": 0.2,
+          "description": "Sampling temperature",
+          "maximum": 2.0,
+          "minimum": 0.0,
+          "title": "Temperature",
+          "type": "number"
+        },
+        "tier": {
+          "description": "Capability tier to resolve through the model router (1-5)",
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Tier",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "messages",
+        "tier"
+      ],
+      "title": "TierChatRequest",
+      "type": "object"
     }
   },
-  "required": [
-    "model",
-    "messages"
+  "anyOf": [
+    {
+      "$ref": "#/$defs/ModelChatRequest"
+    },
+    {
+      "$ref": "#/$defs/TierChatRequest"
+    }
   ],
-  "title": "ChatRequest",
-  "type": "object"
+  "description": "Overloaded request body for ``POST /api/chat``.\n\nExactly one routing constructor is accepted:\n\n* ``for_model`` / ``model`` builds one FULL prefixed model id directly;\n* ``for_tier`` / ``tier`` resolves the configured tier and fallback chain.\n\nHTTP clients use the equivalent JSON union by sending either ``model`` or\n``tier``. Supplying both or neither is rejected by the two strict variants.",
+  "title": "ChatRequest"
 }

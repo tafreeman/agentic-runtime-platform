@@ -416,7 +416,8 @@ def _merge_cloud_models(
     Skipped entirely in no-LLM mode: every tier routes to the placeholder
     there, so a live listing would mislead and cost network (it also keeps the
     ``AGENTIC_NO_LLM=1`` unit suite hermetic). Availability reflects the key
-    env — OpenRouter's keyless static-fallback entries honestly show False.
+    env — OpenRouter's public catalog entries honestly show False without the
+    key still required for inference.
     ``cloud_listing`` is the probe route's pre-fetched sweep (shared with the
     drift pass); ``None`` means fetch here.
     """

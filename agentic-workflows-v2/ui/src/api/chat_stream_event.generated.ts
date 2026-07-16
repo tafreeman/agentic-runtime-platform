@@ -9,14 +9,31 @@
  * CI fails the 'wire-format-drift' job if this file does not match a fresh
  * regeneration from the committed schema.
  */
-export type ChatStreamEvent = ChatTokenEvent | ChatDoneEvent | ChatErrorEvent;
+export type ChatStreamEvent = ChatRouteEvent | ChatTokenEvent | ChatMediaEvent | ChatDoneEvent | ChatErrorEvent;
 
+/**
+ * Selected model for a tier-routed request, emitted before output tokens.
+ */
+export interface ChatRouteEvent {
+  model: string;
+  requested_tier: number;
+  type?: 'route';
+}
 /**
  * Incremental text delta streamed from the model reply.
  */
 export interface ChatTokenEvent {
   delta: string;
   type?: 'token';
+}
+/**
+ * A safe image emitted by a multimodal model response.
+ */
+export interface ChatMediaEvent {
+  alt?: string;
+  mime_type: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif';
+  type?: 'media';
+  url: string;
 }
 /**
  * Terminal frame: the reply for ``model`` completed normally.

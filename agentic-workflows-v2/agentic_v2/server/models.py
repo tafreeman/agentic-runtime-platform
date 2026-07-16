@@ -40,6 +40,7 @@ from pydantic import (
 )
 
 from ..contracts import StepStatus
+from ..ui_settings import ModelPackRef
 
 
 class HealthResponse(BaseModel):
@@ -233,6 +234,14 @@ class WorkflowRunRequest(BaseModel):
             return None
         stripped = v.strip()
         return stripped or None
+
+    model_pack: ModelPackRef | None = Field(
+        None,
+        description=(
+            "Optional immutable routing-pack reference. Deployment environment "
+            "pins and model_override retain their documented precedence."
+        ),
+    )
 
     evaluation: WorkflowEvaluationRequest | None = Field(
         None, description="Optional evaluation settings for scored runs"

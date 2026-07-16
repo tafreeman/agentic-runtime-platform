@@ -198,14 +198,17 @@ def test_sample_count_meta_populated_from_registry(
 
 
 def _hf_datasets_available() -> bool:
-    """Return True when the optional ``datasets`` extra is importable."""
+    """Return True when the Hugging Face ``datasets`` extra is usable.
+
+    A different top-level package named ``datasets`` can be importable in a
+    monorepo checkout. The integration test needs the HF API specifically.
+    """
     try:
         import datasets as _datasets
 
-        _ = _datasets.__name__
+        return callable(getattr(_datasets, "load_dataset", None))
     except ImportError:
         return False
-    return True
 
 
 @pytest.mark.integration

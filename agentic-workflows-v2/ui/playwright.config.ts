@@ -26,7 +26,8 @@ const venvPython = fs.existsSync(venvAbsolute) ? venvCandidate : 'python';
  * - Spawns backend + frontend via `webServer` so contributors can run
  *   `npm run test:e2e` with no prior setup.
  * - Backend health check on `/api/health`.
- * - `reuseExistingServer` locally so dev servers on 8010/5173 are reused.
+ * - Always owns its backend/frontend pair so a credential-aware dev server
+ *   cannot silently replace the deterministic no-LLM test environment.
  * - No retries: flake rate is observable, not masked.
  */
 export default defineConfig({
@@ -34,6 +35,7 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
+  workers: 4,
   retries: 0,
   reporter: [
     ['list'],
@@ -52,7 +54,10 @@ export default defineConfig({
       cwd: '..',
       url: 'http://127.0.0.1:8010/api/health',
       timeout: 60_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
+      env: {
+        AGENTIC_NO_LLM: '1',
+      },
       stdout: 'pipe',
       stderr: 'pipe',
     },
@@ -61,7 +66,7 @@ export default defineConfig({
       command: 'npm run dev -- --host 127.0.0.1 --strictPort',
       url: 'http://127.0.0.1:5173',
       timeout: 60_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
     },
   ],
   projects: [

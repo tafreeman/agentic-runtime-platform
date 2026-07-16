@@ -265,7 +265,7 @@ for provider, info in discovered["providers"].items():
 8. `anthropic` — passive check (key present only; no list endpoint used)
 9. `windows_ai` — runs `dotnet run --project PhiSilicaBridge -- --info` if on Win32
 10. `ai_toolkit` — scans `~/.aitk/models/` for VS Code AI Toolkit models
-11. `lmstudio` — probes `http://127.0.0.1:12340/v1/models` (the configured default in `probe_config.py`; note LM Studio's own out-of-the-box port is 1234 — set `LMSTUDIO_HOST` if your server listens there)
+11. `lmstudio` — probes `{LMSTUDIO_HOST}/api/v1/models` (the current native catalog; `LM_API_TOKEN` is sent when configured). The shared tool default remains `:12340`; LM Studio's out-of-the-box port is `:1234`, so set `LMSTUDIO_HOST` when needed.
 12. `local_openai_compatible` — probes `OPENAI_BASE_URL` / `LOCAL_AI_API_BASE_URL` if set
 
 ### CLI

@@ -21,17 +21,24 @@ Exports by category:
 - **Issue types**: :class:`CodeIssue`, :class:`Severity`,
   :class:`IssueCategory`, :class:`TestType`, :class:`TestCase`.
 - **Chat playground**: :class:`ChatMessage`, :class:`ChatRequest`,
-  :data:`ChatStreamEvent` (token/done/error SSE union for ``POST /api/chat``).
+  :data:`ChatStreamEvent` (route/token/media/done/error SSE union for
+  ``POST /api/chat``).
 """
 
 from .chat import (
     ChatDoneEvent,
     ChatErrorEvent,
+    ChatImagePart,
+    ChatMediaEvent,
     ChatMessage,
     ChatRequest,
     ChatRole,
+    ChatRouteEvent,
     ChatStreamEvent,
+    ChatTextPart,
     ChatTokenEvent,
+    ModelChatRequest,
+    TierChatRequest,
     validate_chat_stream_event,
 )
 from .events import (
@@ -124,10 +131,16 @@ __all__ = [
     "validate_event",
     # Chat playground (POST /api/chat wire format)
     "ChatRole",
+    "ChatTextPart",
+    "ChatImagePart",
     "ChatMessage",
     "ChatRequest",
+    "ModelChatRequest",
+    "TierChatRequest",
     "ChatStreamEvent",
+    "ChatRouteEvent",
     "ChatTokenEvent",
+    "ChatMediaEvent",
     "ChatDoneEvent",
     "ChatErrorEvent",
     "validate_chat_stream_event",

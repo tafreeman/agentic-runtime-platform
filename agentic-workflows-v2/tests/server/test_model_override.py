@@ -381,9 +381,7 @@ async def test_save_workflow_editor_invalidates_compiled_graph(
         invalidated.append(name)
         return 1
 
-    monkeypatch.setattr(
-        workflows, "invalidate_compiled_workflow", _capture_invalidate
-    )
+    monkeypatch.setattr(workflows, "invalidate_compiled_workflow", _capture_invalidate)
     monkeypatch.setattr(
         workflows,
         "save_workflow_document",

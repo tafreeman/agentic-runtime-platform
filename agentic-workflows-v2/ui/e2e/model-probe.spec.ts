@@ -45,7 +45,7 @@ test.describe('model probe', () => {
     const expectedMode = probeBody.no_llm_mode ? 'no-LLM mode' : 'LLM mode';
 
     await expect(
-      page.getByRole('heading', { name: /local model fit finder/i }),
+      page.getByRole('heading', { name: /model catalog/i }),
     ).toBeVisible();
 
     // Probe resolved: the mode badge only renders once probe data lands, and

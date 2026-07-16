@@ -21,17 +21,16 @@ Providers probed (best-effort, only when their key env var is set):
   ids keep their ``publisher/model`` form (e.g.
   ``nvidia:meta/llama-3.1-70b-instruct``).
 - **OpenRouter** (``openrouter:``) — ``GET https://openrouter.ai/api/v1/models``
-  (``OPENROUTER_API_KEY``; ``OPENROUTER_BASE_URL`` honored for gateways). The
-  300-400 model catalog is curated to free-tier + flagship ids, the live result
-  is TTL-cached (a deliberate deviation from the no-cache baseline; ADR-050),
-  and a missing key yields a small static fallback instead of an empty list.
+  (optional ``OPENROUTER_API_KEY``; ``OPENROUTER_BASE_URL`` honored for
+  gateways). The full chat-compatible catalog is requested with
+  ``output_modalities=all`` and TTL-cached; a static list is used only when the
+  live endpoint cannot be reached.
 
-Best-effort by design: a missing key makes no network call and — OpenRouter's
-static fallback aside — contributes nothing, and any probe failure (network,
-auth, schema drift) degrades to "no models for this provider" rather than
-raising — callers keep the static catalog. The probe is bounded by an 8 s
-per-request timeout. API keys are sent as auth headers/params and are never
-logged.
+Best-effort by design: a missing key makes no network call for keyed providers
+other than OpenRouter's public catalog, and any probe failure (network, auth,
+schema drift) degrades to "no models for this provider" rather than raising —
+callers keep the static catalog. The probe is bounded by an 8 s per-request
+timeout. API keys are sent as auth headers and are never logged.
 """
 
 from __future__ import annotations
@@ -95,6 +94,7 @@ def _get_json(
     url: str,
     *,
     headers: dict[str, str] | None = None,
+    params: dict[str, str] | None = None,
 ) -> Any | None:
     """GET ``url`` and return parsed JSON (list or dict), or ``None`` on failure.
 
@@ -104,7 +104,9 @@ def _get_json(
     so a secret cannot appear in httpx's request-line logs.
     """
     try:
-        response = httpx.get(url, headers=headers, timeout=_TIMEOUT_SECONDS)
+        response = httpx.get(
+            url, headers=headers, params=params, timeout=_TIMEOUT_SECONDS
+        )
         response.raise_for_status()
         return response.json()
     except Exception as exc:
@@ -294,9 +296,9 @@ def discover_nvidia_models() -> list[CloudModelInfo]:
 
 _OPENROUTER_DEFAULT_BASE = "https://openrouter.ai/api/v1"
 
-# Curated keyless fallback (bare ids — the ``openrouter:`` prefix is applied by
-# ``_dedup_prefixed``). Free-tier ids carry OpenRouter's ``:free`` suffix, so a
-# full app id has TWO colons: ``openrouter:meta-llama/llama-3.1-8b-instruct:free``.
+# Emergency static fallback (bare ids — the ``openrouter:`` prefix is applied
+# by ``_dedup_prefixed``). Free-tier ids carry OpenRouter's ``:free`` suffix, so
+# a full app id has two colons.
 _OPENROUTER_STATIC_FALLBACK: tuple[str, ...] = (
     "deepseek/deepseek-chat-v3-0324:free",
     "meta-llama/llama-3.1-8b-instruct:free",
@@ -307,27 +309,6 @@ _OPENROUTER_STATIC_FALLBACK: tuple[str, ...] = (
     "google/gemini-2.5-flash",
     "openai/gpt-4o-mini",
 )
-
-# Flagship-family id prefixes kept from the live catalog (besides ``:free`` ids).
-_OPENROUTER_FLAGSHIP_PREFIXES: tuple[str, ...] = (
-    "openai/gpt-5",
-    "openai/gpt-4o",
-    "openai/o3",
-    "openai/o4",
-    "anthropic/claude",
-    "google/gemini-2",
-    "google/gemini-3",
-    "meta-llama/llama-3",
-    "meta-llama/llama-4",
-    "deepseek/deepseek",
-    "qwen/qwen3",
-    "mistralai/mistral-large",
-    "x-ai/grok",
-)
-
-# Curation caps keep the 300-400 model catalog readable in the console.
-_OPENROUTER_FREE_CAP = 25
-_OPENROUTER_FLAGSHIP_CAP = 15
 
 # TTL cache holding the LIVE catalog fetch only (never the static fallback).
 # Caching at all is a deliberate deviation from ADR-039's cache-free design,
@@ -394,7 +375,7 @@ def _openrouter_text_chat_id(entry: Any) -> str | None:
 
     Skips entries whose ``architecture.output_modalities`` exists and lacks
     ``"text"`` (image/audio-only models), and reuses the shared non-chat id
-    blocklist so embeddings/rerankers never consume a curation slot.
+    blocklist so embeddings/rerankers never enter the chat catalog.
     """
     if not isinstance(entry, dict):
         return None
@@ -411,106 +392,64 @@ def _openrouter_text_chat_id(entry: Any) -> str | None:
     return model_id
 
 
-def _interleave_flagship_families(flagship: list[str]) -> list[str]:
-    """Fill the flagship slots fairly across families, newest-ish first.
+def _parse_openrouter_ids(payload: Any) -> list[str] | None:
+    """Return every chat-compatible id, or ``None`` for an invalid payload.
 
-    A single global alphabetical sort lets one prolific publisher consume the
-    whole cap (anthropic alone ships 15+ ``claude`` ids, starving every other
-    declared family). Instead the slots are filled round-robin across the
-    families in :data:`_OPENROUTER_FLAGSHIP_PREFIXES` declaration order, taking
-    each family's reverse-sorted (highest version sorts first) ids one rank at
-    a time, so every family with a live id survives the cap. Deterministic for
-    a given catalog.
-    """
-    by_family: dict[str, list[str]] = {}
-    for model_id in sorted(flagship, reverse=True):
-        family = next(
-            p for p in _OPENROUTER_FLAGSHIP_PREFIXES if model_id.startswith(p)
-        )
-        by_family.setdefault(family, []).append(model_id)
-    families = [p for p in _OPENROUTER_FLAGSHIP_PREFIXES if p in by_family]
-    picks: list[str] = []
-    rank = 0
-    while len(picks) < _OPENROUTER_FLAGSHIP_CAP:
-        rank_had_ids = False
-        for family in families:
-            ids = by_family[family]
-            if rank >= len(ids):
-                continue
-            rank_had_ids = True
-            picks.append(ids[rank])
-            if len(picks) == _OPENROUTER_FLAGSHIP_CAP:
-                break
-        if not rank_had_ids:
-            break
-        rank += 1
-    return picks
-
-
-def _curate_openrouter_ids(payload: Any) -> list[str] | None:
-    """Curate the raw catalog to free + flagship ids, or ``None`` on a bad shape.
-
-    OpenRouter lists 300-400 models; dumping them all would drown the console,
-    so only ``:free`` ids (alphabetical, capped) and flagship-family ids
-    (family-fair round-robin, see :func:`_interleave_flagship_families`) are
-    kept. Deterministic output for a given catalog.
+    The API request asks for every output modality. The playground currently
+    consumes text streams, so image/audio-only and obvious non-chat models are
+    excluded while multimodal models that can output text remain available.
     """
     if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
         return None
-    free: list[str] = []
-    flagship: list[str] = []
+    model_ids: list[str] = []
     for entry in payload["data"]:
         model_id = _openrouter_text_chat_id(entry)
-        if model_id is None:
-            continue
-        if model_id.endswith(":free"):
-            free.append(model_id)
-        elif model_id.startswith(_OPENROUTER_FLAGSHIP_PREFIXES):
-            flagship.append(model_id)
-    return sorted(free)[:_OPENROUTER_FREE_CAP] + _interleave_flagship_families(flagship)
+        if model_id is not None:
+            model_ids.append(model_id)
+    return sorted(set(model_ids))
 
 
 def discover_openrouter_models() -> list[CloudModelInfo]:
-    """List a curated slice of the OpenRouter catalog (best-effort, TTL-cached).
+    """List the full chat-compatible OpenRouter catalog (best-effort, cached).
 
-    Unlike the other keyed providers, a missing ``OPENROUTER_API_KEY`` returns
-    the small static fallback — still with no network call — so the console can
-    advertise the aggregator's free tier; the catalog entry's availability flag
-    (derived from the key env by the merge layer) tells the UI the key is
-    absent. With a key, the live listing is fetched, curated, and cached for
-    :data:`_OPENROUTER_CACHE_TTL_SECONDS`; a failed fetch falls back to the
-    last live result, then to the static list. Ids keep their
-    ``publisher/model[:free]`` form so they round-trip to the backends.
+    OpenRouter's catalog endpoint is public, so it is queried with or without
+    ``OPENROUTER_API_KEY``; a configured key is still sent as bearer auth for
+    gateways that require it. Failed fetches reuse the last live listing, then
+    the static fallback. Ids retain ``publisher/model[:free]`` so they
+    round-trip to the runtime backends.
     """
     api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        return _dedup_prefixed("openrouter", list(_OPENROUTER_STATIC_FALLBACK))
     cached = _read_openrouter_cache(allow_expired=False)
     if cached is not None:
         return cached
     url = f"{resolve_openrouter_base_url()}/models"
-    payload = _get_json(url, headers={"Authorization": f"Bearer {api_key}"})
-    curated = _curate_openrouter_ids(payload)
-    if not curated:
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else None
+    payload = _get_json(
+        url,
+        headers=headers,
+        params={"output_modalities": "all"},
+    )
+    model_ids = _parse_openrouter_ids(payload)
+    if not model_ids:
         # ``None`` (transport failure / bad shape) and ``[]`` (a catalog with
-        # nothing matching the curation — e.g. a self-hosted gateway behind
+        # no chat-compatible models — e.g. a self-hosted gateway behind
         # OPENROUTER_BASE_URL) both fall back rather than caching an empty
         # listing that would beat the static fallback for a whole TTL.
         stale = _read_openrouter_cache(allow_expired=True)
         if stale is not None:
             return stale
         return _dedup_prefixed("openrouter", list(_OPENROUTER_STATIC_FALLBACK))
-    discovered = _dedup_prefixed("openrouter", curated)
+    discovered = _dedup_prefixed("openrouter", model_ids)
     _write_openrouter_cache(discovered)
     return discovered
 
 
 def discover_cloud_models() -> list[CloudModelInfo]:
-    """Aggregate live listings from every keyed cloud provider (best-effort).
+    """Aggregate live cloud-provider listings (best-effort).
 
-    Providers without a configured key make no network call and
-    contribute nothing (except OpenRouter, which contributes its static
-    fallback). The probes run concurrently so worst-case latency is a
+    Providers without a configured key make no network call and contribute
+    nothing, except OpenRouter's public catalog. The probes run concurrently so
+    worst-case latency is a
     single timeout (~8s) rather than the sum of all probes; provider
     order is preserved. Never raises.
     """

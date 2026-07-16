@@ -31,6 +31,10 @@ const links: readonly NavItem[] = [
   { to: "/settings", testid: "settings", label: "providers & tiers", num: "08", title: "providers & tiers", end: false, goKey: "s" },
 ];
 
+const mobileLinks = links.filter((link) =>
+  ["dashboard", "live", "runs", "workflows", "models"].includes(link.testid),
+);
+
 // Inline values for theme-driven tokens (radius / border-width / heading font)
 // that have no Tailwind utility. Colours flow through Tailwind b-* classes.
 const radSm = { borderRadius: "var(--b-rad-sm)" } as const;
@@ -72,9 +76,10 @@ export default function Sidebar() {
   const nextTheme = theme === "dark" ? "paper" : "dark";
 
   return (
+    <>
     <aside
-      className={`flex h-full flex-col border-r border-b-line bg-b-bg1 transition-[width] ${
-        collapsed ? "w-16" : "w-52"
+      className={`hidden h-full flex-col border-r border-b-line bg-b-bg1 transition-[width] md:flex ${
+        collapsed ? "w-16" : "w-[216px]"
       }`}
     >
       {/* Brand */}
@@ -98,10 +103,10 @@ export default function Sidebar() {
               className="text-[14px] font-semibold tracking-tight text-b-text"
               style={headingFont}
             >
-              agentic
+              Evidence
             </div>
             <div className="mt-[3px] text-[9.5px] tracking-[1px] text-b-text-faint">
-              RUNTIME · v0.4.2
+              LEDGER · v0.4.2
             </div>
           </div>
         )}
@@ -270,5 +275,26 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    <nav
+      aria-label="Mobile navigation"
+      className="fixed inset-x-0 bottom-9 z-40 grid h-14 grid-cols-5 border-t border-el-divider bg-el-raised md:hidden"
+    >
+      {mobileLinks.map((link) => (
+        <NavLink
+          key={link.to}
+          to={link.to}
+          end={link.end}
+          className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-1 text-[10px] font-medium ${
+              isActive ? "text-el-accent-strong" : "text-el-muted"
+            }`
+          }
+        >
+          <span className="font-mono text-[9px]" aria-hidden="true">{link.num}</span>
+          <span>{link.label.replace(" execution", "")}</span>
+        </NavLink>
+      ))}
+    </nav>
+    </>
   );
 }

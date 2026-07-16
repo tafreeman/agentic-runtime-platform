@@ -71,6 +71,7 @@ from ..integrations.otel import create_trace_adapter
 from ..scoring.evaluation_scoring import JudgeRequiredError
 from ..scoring.judge import LLMJudge
 from ..scoring.step_scoring import build_step_scoring_listener
+from ..ui_settings import ModelPack, model_pack_routing
 from ..workflows.run_logger import RunLogger
 from . import websocket
 from ._step_events import (  # noqa: F401
@@ -501,6 +502,8 @@ async def _run_and_evaluate(
     adapter_name: str = "langchain",
     tenant_id: str = DEFAULT_TENANT_ID,
     model_override: str | None = None,
+    model_pack: ModelPack | None = None,
+    model_pack_source: str = "default",
 ) -> None:
     """Background task: execute workflow, optionally evaluate, broadcast
     events, and log.
@@ -536,14 +539,15 @@ async def _run_and_evaluate(
                 "timestamp": datetime.now(UTC).isoformat(),
             },
         )
-        result = await _stream_and_run(
-            workflow_name,
-            run_id,
-            workflow_inputs,
-            adapter_name=adapter_name,
-            tenant_id=tenant_id,
-            model_override=model_override,
-        )
+        with model_pack_routing(model_pack):
+            result = await _stream_and_run(
+                workflow_name,
+                run_id,
+                workflow_inputs,
+                adapter_name=adapter_name,
+                tenant_id=tenant_id,
+                model_override=model_override,
+            )
 
         status = result.overall_status.value
         workflow_errors = [
@@ -647,6 +651,28 @@ async def _run_and_evaluate(
         log_extra: dict[str, Any] = {
             "evaluation_requested": bool(evaluation and evaluation.enabled),
             "evaluation": scored_evaluation,
+            "routing": {
+                "source": model_pack_source,
+                "requested_model_override": model_override,
+                "pack": (
+                    model_pack.model_dump(mode="json")
+                    if model_pack is not None
+                    else None
+                ),
+                "resolved_steps": [
+                    {
+                        "step": step.step_name,
+                        "tier": step.tier,
+                        "model": step.model_used,
+                        "provider": (
+                            step.model_used.split(":", 1)[0]
+                            if step.model_used and ":" in step.model_used
+                            else None
+                        ),
+                    }
+                    for step in result.steps
+                ],
+            },
         }
         if evaluation_error is not None:
             log_extra["evaluation_error"] = evaluation_error

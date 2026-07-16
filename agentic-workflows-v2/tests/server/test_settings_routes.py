@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import httpx
 import pytest
 
 
@@ -87,7 +88,11 @@ class TestProviderSettings:
     def test_put_rejects_github_token_shaped_api_key_env(self, client):
         # ghp_ tokens are valid shell identifiers, but still credentials.
         providers = [
-            {"id": "gh-box", "type": "gh", "api_key_env": "ghp_" + "a1B2" * 6}
+            {
+                "id": "gh-box",
+                "type": "gh",
+                "api_key_env": "ghp_" + "a1B2" * 6,  # pragma: allowlist secret
+            }
         ]
         response = client.put("/api/settings/providers", json={"providers": providers})
         assert response.status_code == 422
@@ -95,14 +100,82 @@ class TestProviderSettings:
 
     def test_put_accepts_legit_env_var_names(self, client):
         providers = [
-            {"id": "team-ollama", "type": "ollama", "api_key_env": "OLLAMA_API_KEY"},
-            {"id": "lab", "type": "custom", "api_key_env": "_MY_LAB_KEY"},
+            {
+                "id": "team-ollama",
+                "type": "ollama",
+                "api_key_env": "OLLAMA_API_KEY",  # pragma: allowlist secret
+            },
+            {
+                "id": "lab",
+                "type": "custom",
+                "api_key_env": "_MY_LAB_KEY",  # pragma: allowlist secret
+            },
         ]
         response = client.put("/api/settings/providers", json={"providers": providers})
         assert response.status_code == 200
         saved = response.json()["providers"]
-        assert saved[0]["api_key_env"] == "OLLAMA_API_KEY"
-        assert saved[1]["api_key_env"] == "_MY_LAB_KEY"
+        assert saved[0]["api_key_env"] == "OLLAMA_API_KEY"  # pragma: allowlist secret
+        assert saved[1]["api_key_env"] == "_MY_LAB_KEY"  # pragma: allowlist secret
+
+    def test_put_rejects_unsafe_or_credentialed_base_urls(self, client):
+        for base_url in (
+            "ftp://models.example.test",
+            "https://user:pass@example.test",  # pragma: allowlist secret
+        ):
+            response = client.put(
+                "/api/settings/providers",
+                json={
+                    "providers": [
+                        {"id": "unsafe", "type": "custom", "base_url": base_url}
+                    ]
+                },
+            )
+            assert response.status_code == 422
+
+    def test_probe_calls_saved_discovery_endpoint_without_redirects(
+        self, client, monkeypatch
+    ):
+        import agentic_v2.server.routes.settings_routes as settings_routes
+
+        client.put(
+            "/api/settings/providers",
+            json={
+                "providers": [
+                    {
+                        "id": "lab",
+                        "type": "custom",
+                        "base_url": "https://models.example.test/v1",
+                        "api_key_env": "LAB_API_KEY",  # pragma: allowlist secret
+                    }
+                ]
+            },
+        )
+        monkeypatch.setenv("LAB_API_KEY", "test-credential")  # pragma: allowlist secret
+        seen: dict[str, object] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen["url"] = str(request.url)
+            seen["authorization"] = request.headers.get("authorization")
+            return httpx.Response(200, json={"data": [{"id": "model-a"}]})
+
+        real_client = httpx.AsyncClient
+
+        def mock_client(**kwargs):
+            seen["follow_redirects"] = kwargs.get("follow_redirects")
+            return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+        monkeypatch.setattr(settings_routes.httpx, "AsyncClient", mock_client)
+
+        response = client.post("/api/settings/providers/lab/probe")
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "available"
+        assert response.json()["discovered_model_count"] == 1
+        assert seen == {
+            "follow_redirects": False,
+            "url": "https://models.example.test/v1/models",
+            "authorization": "Bearer test-credential",
+        }
 
     def test_get_nulls_raw_key_persisted_by_older_versions(self, client, tmp_path):
         # Legacy store written before write-side hardening: the raw key must
@@ -205,3 +278,93 @@ class TestTierSettings:
         )
         candidates = get_model_candidates_for_tier(2, include_unavailable=True)
         assert candidates[0] == "gh:openai/gpt-4o-mini"
+
+
+class TestModelPacks:
+    def test_create_version_validate_and_export_are_immutable(self, client):
+        created = client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "review-stable",
+                "name": "Review stable",
+                "description": "Pinned review routing",
+                "source": "defaults",
+            },
+        )
+        assert created.status_code == 201
+        version_one = created.json()
+        assert version_one["version"] == 1
+        assert version_one["tier_chains"]
+
+        versioned = client.put(
+            "/api/settings/model-packs/review-stable",
+            json={"description": "Second immutable snapshot"},
+        )
+        assert versioned.status_code == 200
+        assert versioned.json()["version"] == 2
+
+        listed = client.get("/api/settings/model-packs").json()["packs"]
+        assert [(pack["id"], pack["version"]) for pack in listed] == [
+            ("review-stable", 2),
+            ("review-stable", 1),
+        ]
+        assert listed[1]["description"] == "Pinned review routing"
+
+        validation = client.post(
+            "/api/settings/model-packs/review-stable/validate?version=2"
+        )
+        assert validation.status_code == 200
+        assert validation.json()["valid"] is True
+
+        exported = client.get(
+            "/api/settings/model-packs/review-stable/export?version=1"
+        )
+        assert exported.status_code == 200
+        assert exported.json()["schema_version"] == 1
+        assert exported.json()["pack"]["version"] == 1
+
+    def test_activate_duplicate_import_and_dependency_guard(self, client):
+        source = client.post(
+            "/api/settings/model-packs",
+            json={"id": "source-pack", "name": "Source pack", "source": "defaults"},
+        ).json()
+        activated = client.post(
+            "/api/settings/model-packs/source-pack/activate?version=1"
+        )
+        assert activated.status_code == 200
+        assert activated.json()["active"] == {"id": "source-pack", "version": 1}
+
+        blocked = client.post("/api/settings/model-packs/source-pack/archive?version=1")
+        assert blocked.status_code == 409
+
+        duplicate = client.post(
+            "/api/settings/model-packs/source-pack/duplicate?version=1",
+            json={
+                "source": {"id": "source-pack", "version": 1},
+                "new_id": "source-copy",
+                "name": "Source copy",
+            },
+        )
+        assert duplicate.status_code == 201
+        assert duplicate.json()["source"] == "duplicate"
+
+        imported = client.post(
+            "/api/settings/model-packs/import",
+            json={
+                "schema_version": 1,
+                "pack": {
+                    "id": "imported-pack",
+                    "name": "Imported pack",
+                    "tier_chains": source["tier_chains"],
+                    "allowed_providers": source["allowed_providers"],
+                },
+            },
+        )
+        assert imported.status_code == 201
+        assert imported.json()["source"] == "imported"
+
+        dependencies = client.get(
+            "/api/settings/model-packs/source-pack/dependencies?version=1"
+        ).json()
+        assert dependencies["globally_active"] is True
+        assert dependencies["workflows"] == []

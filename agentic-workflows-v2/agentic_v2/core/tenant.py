@@ -5,9 +5,23 @@ from __future__ import annotations
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-from fastapi import Request
+if TYPE_CHECKING:
+    from fastapi import Request
+else:
+    try:
+        from fastapi import Request as _FastAPIRequest
+    except ModuleNotFoundError as exc:
+        if exc.name != "fastapi":
+            raise
+        # FastAPI belongs to the optional ``server`` extra. Keep the runtime's
+        # tenant helpers importable for base-wheel consumers.
+        Request = Any
+    else:
+        # Preserve the concrete runtime annotation for FastAPI's dependency-
+        # injection inspection when the server extra is installed.
+        Request = _FastAPIRequest
 
 from ..settings import get_settings
 

@@ -1,4 +1,6 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { loadLmStudioModel } from "../../api/client";
 import type { ModelProbeResponse, ProbedModel } from "../../api/types";
 import {
   loadVerifications,
@@ -27,9 +29,13 @@ interface ProbeProviderGroup {
 function groupProbeByProvider(
   models: readonly ProbedModel[],
   availableProviders: readonly string[],
+  providerNames: readonly string[] = [],
 ): ProbeProviderGroup[] {
   const available = new Set(availableProviders);
   const byName = new Map<string, ProbedModel[]>();
+  for (const provider of providerNames) {
+    if (provider) byName.set(provider, []);
+  }
   for (const model of models) {
     const bucket = byName.get(model.provider);
     if (bucket) bucket.push(model);
@@ -62,14 +68,22 @@ function ProbedModelRow({
   model,
   isDefault,
   verification,
+  loadBusy,
+  loading,
+  onLoadInLmStudio,
   onOpenInPlayground,
 }: Readonly<{
   model: ProbedModel;
   isDefault: boolean;
   verification: ModelVerification | null;
+  loadBusy: boolean;
+  loading: boolean;
+  onLoadInLmStudio: (modelId: string) => void;
   onOpenInPlayground: (modelId: string) => void;
 }>) {
   const color = probeTierColor(model.tier);
+  const canLoad =
+    model.provider === "lmstudio" && model.available && !model.running;
   return (
     <div className="flex items-center gap-2.5 border-b border-b-line-soft py-1.5 last:border-b-0">
       <span
@@ -145,6 +159,19 @@ function ProbedModelRow({
           ✗ failed
         </span>
       )}
+      {canLoad && (
+        <button
+          type="button"
+          aria-label={`Load ${model.id} in LM Studio`}
+          aria-busy={loading}
+          disabled={loadBusy}
+          onClick={() => onLoadInLmStudio(model.id)}
+          className="flex-none border border-b-clay px-1.5 py-px font-mono text-[9px] text-b-clay transition-colors hover:bg-b-clay/10 disabled:cursor-wait disabled:opacity-50"
+          style={{ borderRadius: "3px" }}
+        >
+          {loading ? "loading…" : "load"}
+        </button>
+      )}
       <button
         type="button"
         aria-label={`Open ${model.id} in playground`}
@@ -173,6 +200,7 @@ export default function ProviderProbeList({
   probeError,
   onOpenInPlayground,
 }: Readonly<ProviderProbeListProps>) {
+  const queryClient = useQueryClient();
   const [openProvider, setOpenProvider] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   // Verified-outcome registry, read once per mount — the finder tab unmounts
@@ -180,6 +208,17 @@ export default function ProviderProbeList({
   const [verifications] = useState<Readonly<Record<string, ModelVerification>>>(
     () => loadVerifications(),
   );
+  const loadMutation = useMutation({
+    mutationFn: (modelId: string) => loadLmStudioModel(modelId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["model-probe"] });
+    },
+  });
+
+  const beginLmStudioLoad = (modelId: string) => {
+    loadMutation.reset();
+    loadMutation.mutate(modelId);
+  };
 
   const term = search.trim().toLowerCase();
   const searchActive = term !== "";
@@ -195,9 +234,44 @@ export default function ProviderProbeList({
     );
   }, [probe, term]);
 
+  const allProviderNames = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(probe?.available_providers ?? []),
+          ...(probe?.unavailable_providers ?? []),
+          ...(probe?.models.map((model) => model.provider) ?? []),
+        ]),
+      ),
+    [probe],
+  );
+
+  const allProviderGroups = useMemo(
+    () =>
+      groupProbeByProvider(
+        probe?.models ?? [],
+        probe?.available_providers ?? [],
+        allProviderNames,
+      ),
+    [allProviderNames, probe],
+  );
+
+  const matchingProviderNames = useMemo(
+    () =>
+      searchActive
+        ? allProviderNames.filter((provider) => provider.toLowerCase().includes(term))
+        : allProviderNames,
+    [allProviderNames, searchActive, term],
+  );
+
   const providerGroups = useMemo(
-    () => groupProbeByProvider(filteredModels, probe?.available_providers ?? []),
-    [filteredModels, probe],
+    () =>
+      groupProbeByProvider(
+        filteredModels,
+        probe?.available_providers ?? [],
+        matchingProviderNames,
+      ),
+    [filteredModels, matchingProviderNames, probe],
   );
 
   const placeholderMode = probe?.no_llm_mode ?? false;
@@ -245,6 +319,76 @@ export default function ProviderProbeList({
           style={CARD_STYLE}
         >
           probe failed: {probeError.message}
+        </div>
+      )}
+
+      {loadMutation.error && (
+        <div
+          role="alert"
+          className="mb-3 border-b-red/40 bg-b-bg1 p-4 font-mono text-[12px] text-b-red"
+          style={CARD_STYLE}
+        >
+          LM Studio load failed: {loadMutation.error.message}
+        </div>
+      )}
+
+      {probe && (
+        <div
+          data-testid="provider-card-grid"
+          className="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2.5"
+        >
+          {allProviderGroups.map((provider) => {
+            const statusColor = placeholderMode
+              ? "rgb(var(--b-amber))"
+              : !provider.available
+                ? "rgb(var(--b-red))"
+                : provider.models.length === 0
+                  ? "rgb(var(--b-amber))"
+                  : "rgb(var(--b-green))";
+            const statusText = placeholderMode
+              ? "placeholder"
+              : !provider.available
+                ? "needs key"
+                : provider.models.length === 0
+                  ? "not detected"
+                  : "configured";
+            return (
+              <article
+                key={provider.name}
+                data-testid={`provider-card-${provider.name}`}
+                className="relative min-w-0 overflow-hidden border border-b-line bg-b-bg1 p-3.5"
+                style={CARD_STYLE}
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 w-[2px]"
+                  style={{ backgroundColor: statusColor }}
+                />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="truncate font-mono text-[12px] font-semibold text-b-text">
+                      {provider.name}
+                    </h3>
+                    <p className="mt-1 font-mono text-[9px] text-b-text-dim">
+                      {provider.models.length} detected model
+                      {provider.models.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <span
+                    className="mt-0.5 h-2 w-2 flex-none rounded-full"
+                    style={{ backgroundColor: statusColor }}
+                    title={statusText}
+                  />
+                </div>
+                <div
+                  className="mt-3 font-mono text-[8.5px] uppercase tracking-[0.8px]"
+                  style={{ color: statusColor }}
+                >
+                  {statusText}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -301,14 +445,18 @@ export default function ProviderProbeList({
           // neutral/amber "placeholder" instead.
           const statusColor = placeholderMode
             ? "rgb(var(--b-amber))"
-            : provider.available
-              ? "rgb(var(--b-green))"
-              : "rgb(var(--b-red))";
+            : !provider.available
+              ? "rgb(var(--b-red))"
+              : provider.models.length === 0
+                ? "rgb(var(--b-amber))"
+                : "rgb(var(--b-green))";
           const statusText = placeholderMode
             ? "placeholder"
-            : provider.available
-              ? "ready"
-              : "no keys";
+            : !provider.available
+              ? "no keys"
+              : provider.models.length === 0
+                ? "not detected"
+                : "ready";
           return (
             <div
               key={provider.name}
@@ -358,6 +506,12 @@ export default function ProviderProbeList({
                         model={model}
                         isDefault={isDefault}
                         verification={verifications[model.id] ?? null}
+                        loadBusy={loadMutation.isPending}
+                        loading={
+                          loadMutation.isPending &&
+                          loadMutation.variables === model.id
+                        }
+                        onLoadInLmStudio={beginLmStudioLoad}
                         onOpenInPlayground={onOpenInPlayground}
                       />
                     );

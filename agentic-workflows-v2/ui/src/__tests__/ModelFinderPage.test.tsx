@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +12,7 @@ import type {
 
 const mockGetModelRecommendations = vi.fn();
 const mockProbeModels = vi.fn();
+const mockLoadLmStudioModel = vi.fn();
 const mockGetHardwareOverride = vi.fn();
 const mockPutHardwareOverride = vi.fn();
 const mockDeleteHardwareOverride = vi.fn();
@@ -23,6 +24,7 @@ vi.mock("../api/client", async () => {
     getModelRecommendations: (...args: unknown[]) =>
       mockGetModelRecommendations(...args),
     probeModels: (...args: unknown[]) => mockProbeModels(...args),
+    loadLmStudioModel: (...args: unknown[]) => mockLoadLmStudioModel(...args),
     getHardwareOverride: (...args: unknown[]) => mockGetHardwareOverride(...args),
     putHardwareOverride: (...args: unknown[]) => mockPutHardwareOverride(...args),
     deleteHardwareOverride: (...args: unknown[]) =>
@@ -142,6 +144,13 @@ describe("ModelFinderPage", () => {
     localStorage.clear();
     mockGetModelRecommendations.mockResolvedValue(makeResponse());
     mockProbeModels.mockResolvedValue(makeProbe());
+    mockLoadLmStudioModel.mockResolvedValue({
+      model: "lmstudio:qwen/qwen3.5-9b",
+      status: "loaded",
+      instance_id: "qwen-instance",
+      load_time_seconds: 1.5,
+      running: true,
+    });
     mockGetHardwareOverride.mockResolvedValue({ override: null });
     mockPutHardwareOverride.mockResolvedValue({
       profile: makeResponse().profile,
@@ -209,6 +218,57 @@ describe("ModelFinderPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders a card for every supported provider even with zero detected models", async () => {
+    mockProbeModels.mockResolvedValue(
+      makeProbe({
+        available_providers: ["ollama", "local", "lmstudio", "onnx", "local_api"],
+        unavailable_providers: [
+          "openai",
+          "anthropic",
+          "gemini",
+          "gh",
+          "nvidia",
+          "openrouter",
+        ],
+        models: [
+          {
+            id: "ollama:qwen3:8b",
+            provider: "ollama",
+            tier: 2,
+            available: true,
+          },
+        ],
+      }),
+    );
+    renderPage();
+
+    expect(await screen.findByTestId("provider-card-grid")).toBeInTheDocument();
+    for (const provider of [
+      "ollama",
+      "local",
+      "lmstudio",
+      "onnx",
+      "local_api",
+      "openai",
+      "anthropic",
+      "gemini",
+      "gh",
+      "nvidia",
+      "openrouter",
+    ]) {
+      expect(screen.getByTestId(`provider-card-${provider}`)).toBeInTheDocument();
+    }
+    expect(screen.getByTestId("provider-card-lmstudio")).toHaveTextContent(
+      "0 detected models",
+    );
+    expect(screen.getByTestId("provider-card-lmstudio")).toHaveTextContent(
+      "not detected",
+    );
+    expect(screen.getByTestId("provider-card-openrouter")).toHaveTextContent(
+      "needs key",
+    );
+  });
+
   it("flags no-LLM mode when the runtime is on the placeholder model", async () => {
     mockProbeModels.mockResolvedValue(makeProbe({ no_llm_mode: true }));
     renderPage();
@@ -265,6 +325,100 @@ describe("ModelFinderPage", () => {
     // "completion" is filtered out as noise (every model has it).
     expect(screen.queryByText("completion")).not.toBeInTheDocument();
     expect(screen.getByText("running")).toBeInTheDocument();
+  });
+
+  it("loads an unloaded LM Studio model and refreshes its running state", async () => {
+    const unloaded = makeProbe({
+      available_providers: ["lmstudio"],
+      unavailable_providers: [],
+      models: [
+        {
+          id: "lmstudio:qwen/qwen3.5-9b",
+          provider: "lmstudio",
+          tier: 0,
+          available: true,
+          capabilities: ["tools"],
+          running: false,
+        },
+      ],
+    });
+    const loaded = makeProbe({
+      available_providers: ["lmstudio"],
+      unavailable_providers: [],
+      models: [{ ...unloaded.models[0]!, running: true }],
+    });
+    mockProbeModels.mockResolvedValueOnce(unloaded).mockResolvedValue(loaded);
+
+    let finishLoad: ((value: unknown) => void) | undefined;
+    mockLoadLmStudioModel.mockReturnValue(
+      new Promise((resolve) => {
+        finishLoad = resolve;
+      }),
+    );
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /lmstudio.*ready/ }));
+    const loadButton = screen.getByRole("button", {
+      name: "Load lmstudio:qwen/qwen3.5-9b in LM Studio",
+    });
+    fireEvent.click(loadButton);
+
+    await waitFor(() =>
+      expect(mockLoadLmStudioModel).toHaveBeenCalledWith(
+        "lmstudio:qwen/qwen3.5-9b",
+      ),
+    );
+    expect(loadButton).toHaveAttribute("aria-busy", "true");
+    expect(loadButton).toHaveTextContent("loading…");
+
+    await act(async () => {
+      finishLoad?.({
+        model: "lmstudio:qwen/qwen3.5-9b",
+        status: "loaded",
+        instance_id: "qwen-instance",
+        load_time_seconds: 1.5,
+        running: true,
+      });
+    });
+
+    await waitFor(() => expect(mockProbeModels).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("running")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "Load lmstudio:qwen/qwen3.5-9b in LM Studio",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a classified inline error when LM Studio rejects a load", async () => {
+    mockProbeModels.mockResolvedValue(
+      makeProbe({
+        available_providers: ["lmstudio"],
+        unavailable_providers: [],
+        models: [
+          {
+            id: "lmstudio:qwen/qwen3.5-9b",
+            provider: "lmstudio",
+            tier: 0,
+            available: true,
+            running: false,
+          },
+        ],
+      }),
+    );
+    mockLoadLmStudioModel.mockRejectedValue(new Error("API 502: load rejected"));
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /lmstudio.*ready/ }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Load lmstudio:qwen/qwen3.5-9b in LM Studio",
+      }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "LM Studio load failed: API 502: load rejected",
+    );
   });
 
   it("rescan refreshes both the recommendations and the probe", async () => {
@@ -369,7 +523,7 @@ describe("ModelFinderPage", () => {
     expect(screen.getByTestId("chat-model-picker")).toBeInTheDocument();
     expect(screen.queryByTestId("probe-mode")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "finder" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Models" }));
     expect(await screen.findByTestId("probe-mode")).toBeInTheDocument();
 
     // The rescan control stays present regardless of the active tab.

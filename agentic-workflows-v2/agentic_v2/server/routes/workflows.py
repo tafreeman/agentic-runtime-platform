@@ -45,6 +45,7 @@ from ...langchain.dependencies import (
     is_missing_langchain_dependency_error,
     to_missing_langchain_dependency_error,
 )
+from ...ui_settings import resolve_model_pack
 from ...workflows.run_logger import RunLogger
 from ..audit_log import audit_request_event
 from ..execution import _run_and_evaluate, invalidate_compiled_workflow
@@ -310,9 +311,9 @@ async def save_workflow_editor(name: str, request: WorkflowEditorRequest):
     """Validate and persist a workflow document.
 
     Clears both the YAML config cache and the LangChain runner's
-    compiled-graph cache for this workflow, so the saved definition takes
-    effect on the next run without a process restart (compiled graphs
-    freeze their model candidates and topology at compile time).
+    compiled-graph cache for this workflow, so the saved definition
+    takes effect on the next run without a process restart (compiled
+    graphs freeze their model candidates and topology at compile time).
     """
     try:
         path, persisted_document, _config, yaml_text = save_workflow_document(
@@ -412,6 +413,18 @@ async def run_workflow(
         workflow_def = load_workflow_config(request.workflow)
         run_id = request.run_id or f"{workflow_def.name}-{uuid.uuid4().hex[:8]}"
         workflow_inputs = dict(request.input_data)
+        try:
+            model_pack, model_pack_source = resolve_model_pack(
+                workflow_name=workflow_def.name,
+                requested=request.model_pack,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if model_pack is not None and adapter_name != "langchain":
+            raise HTTPException(
+                status_code=422,
+                detail="model_pack requires the langchain adapter",
+            )
         evaluation = request.evaluation
         dataset_sample: dict[str, Any] | None = None
         dataset_meta: dict[str, Any] | None = None
@@ -452,6 +465,8 @@ async def run_workflow(
             adapter_name,
             tenant_ctx.tenant_id,
             model_override=request.model_override,
+            model_pack=model_pack,
+            model_pack_source=model_pack_source,
         )
         await audit_request_event(
             http_request,
@@ -469,6 +484,12 @@ async def run_workflow(
                     if evaluation and evaluation.enabled
                     else None
                 ),
+                "model_pack": (
+                    {"id": model_pack.id, "version": model_pack.version}
+                    if model_pack is not None
+                    else None
+                ),
+                "model_pack_source": model_pack_source,
             },
         )
         return WorkflowRunResponse(run_id=run_id, status=StepStatus.PENDING)

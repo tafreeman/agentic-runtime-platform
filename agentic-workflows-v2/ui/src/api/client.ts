@@ -14,7 +14,17 @@ import type {
   ListObserversResponse,
   ListPersonasResponse,
   ListToolsResponse,
+  LmStudioLoadResponse,
+  ModelPack,
+  ModelPackCreateRequest,
+  ModelPackDependenciesResponse,
+  ModelPackExportResponse,
+  ModelPackListResponse,
+  ModelPackRef,
+  ModelPackUpdateRequest,
+  ModelPackValidationResponse,
   ProviderEndpointConfig,
+  ProviderProbeResponse,
   ProviderSettingsResponse,
   RunDetail,
   RunEvaluationDetailResponse,
@@ -424,6 +434,15 @@ export function probeModels(): Promise<ModelProbeResponse> {
   return fetchJSON(`${BASE}/models/probe`);
 }
 
+/** Load one downloaded LM Studio model into memory through its native v1 API. */
+export function loadLmStudioModel(model: string): Promise<LmStudioLoadResponse> {
+  return fetchJSON(`${BASE}/models/lmstudio/load`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Chat playground streaming — POST /api/chat (SSE over fetch)
 // ---------------------------------------------------------------------------
@@ -555,6 +574,14 @@ export function putProviderSettings(
   });
 }
 
+/** Run a focused, server-side provider connection test. */
+export function probeProvider(providerId: string): Promise<ProviderProbeResponse> {
+  return fetchJSON(
+    `${BASE}/settings/providers/${encodeURIComponent(providerId)}/probe`,
+    { method: "POST" }
+  );
+}
+
 /** Get tier rankings and model capability tags. */
 export function getTierSettings(): Promise<TierSettingsResponse> {
   return fetchJSON(`${BASE}/settings/tiers`);
@@ -568,6 +595,125 @@ export function putTierSettings(
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(update),
+  });
+}
+
+/** List immutable model-pack versions and current bindings. */
+export function listModelPacks(): Promise<ModelPackListResponse> {
+  return fetchJSON(`${BASE}/settings/model-packs`);
+}
+
+/** Create the first version of a named model pack. */
+export function createModelPack(
+  request: ModelPackCreateRequest
+): Promise<ModelPack> {
+  return fetchJSON(`${BASE}/settings/model-packs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+}
+
+/** Append an immutable version to an existing model pack. */
+export function versionModelPack(
+  packId: string,
+  request: ModelPackUpdateRequest
+): Promise<ModelPack> {
+  return fetchJSON(`${BASE}/settings/model-packs/${encodeURIComponent(packId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+}
+
+/** Duplicate one exact pack version under a new stable id. */
+export function duplicateModelPack(
+  ref: ModelPackRef,
+  request: { new_id: string; name: string; description?: string }
+): Promise<ModelPack> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/duplicate?version=${ref.version}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source: ref, ...request }),
+    }
+  );
+}
+
+/** Validate and dry-run one exact pack version. */
+export function validateModelPack(
+  ref: ModelPackRef
+): Promise<ModelPackValidationResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/validate?version=${ref.version}`,
+    { method: "POST" }
+  );
+}
+
+/** Activate one exact pack version as the global UI default. */
+export function activateModelPack(ref: ModelPackRef): Promise<ModelPackListResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/activate?version=${ref.version}`,
+    { method: "POST" }
+  );
+}
+
+/** Bind one exact pack version to a workflow. */
+export function bindModelPack(
+  ref: ModelPackRef,
+  workflowName: string
+): Promise<ModelPackListResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/bindings/${encodeURIComponent(workflowName)}?version=${ref.version}`,
+    { method: "PUT" }
+  );
+}
+
+/** Remove a workflow's instance-scoped model-pack binding. */
+export function clearModelPackBinding(
+  workflowName: string
+): Promise<ModelPackListResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/bindings/${encodeURIComponent(workflowName)}`,
+    { method: "DELETE" }
+  );
+}
+
+/** List pack dependencies before archival. */
+export function getModelPackDependencies(
+  ref: ModelPackRef
+): Promise<ModelPackDependenciesResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/dependencies?version=${ref.version}`
+  );
+}
+
+/** Archive one unbound pack version. */
+export function archiveModelPack(ref: ModelPackRef): Promise<ModelPack> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/archive?version=${ref.version}`,
+    { method: "POST" }
+  );
+}
+
+/** Export one exact pack version through the versioned schema. */
+export function exportModelPack(
+  ref: ModelPackRef
+): Promise<ModelPackExportResponse> {
+  return fetchJSON(
+    `${BASE}/settings/model-packs/${encodeURIComponent(ref.id)}/export?version=${ref.version}`
+  );
+}
+
+/** Import a validated versioned pack document. */
+export function importModelPack(
+  request: { schema_version: 1; pack: ModelPackCreateRequest }
+): Promise<ModelPack> {
+  return fetchJSON(`${BASE}/settings/model-packs/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
   });
 }
 

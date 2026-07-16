@@ -6,6 +6,9 @@ import BTopBar from "../components/layout/BTopBar";
 import ChatPlaygroundPanel from "../components/models/ChatPlaygroundPanel";
 import HardwareOverrideForm from "../components/models/HardwareOverrideForm";
 import ProviderProbeList from "../components/models/ProviderProbeList";
+import ModelPacksPanel from "../components/models/ModelPacksPanel";
+import ProviderPanel from "../components/settings/ProviderPanel";
+import TierBoard from "../components/settings/TierBoard";
 import { getModelRecommendations, probeModels } from "../api/client";
 import type {
   ModelCandidate,
@@ -140,7 +143,22 @@ function ProfileStat({
 }
 
 /** Sub-views of the model router page. */
-type ModelRouterTab = "finder" | "playground";
+type ModelRouterTab =
+  | "finder"
+  | "providers"
+  | "tiers"
+  | "packs"
+  | "playground"
+  | "hardware";
+
+const MODEL_TABS: readonly ModelRouterTab[] = [
+  "finder",
+  "providers",
+  "tiers",
+  "packs",
+  "playground",
+  "hardware",
+];
 
 function TabButton({
   label,
@@ -156,11 +174,12 @@ function TabButton({
   return (
     <button
       type="button"
+      role="tab"
       data-testid={testId}
-      aria-pressed={active}
+      aria-selected={active}
       onClick={onClick}
-      className={`-mb-px border-b-2 px-1 pb-2.5 pt-3 font-mono text-[10px] uppercase tracking-[1.6px] transition-colors ${
-        active ? "text-b-text" : "text-b-text-dim hover:text-b-text"
+      className={`-mb-px whitespace-nowrap border-b-2 px-1 pb-3 pt-4 text-[13px] font-semibold transition-colors ${
+        active ? "text-el-ink" : "text-el-muted hover:text-el-ink"
       }`}
       style={{
         borderBottomColor: active ? "rgb(var(--b-clay))" : "transparent",
@@ -175,8 +194,9 @@ export default function ModelFinderPage() {
   // URL-driven tab state (contract: /models?tab=playground&model=<id>) so the
   // playground is deep-linkable from anywhere in the console.
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab") as ModelRouterTab | null;
   const tab: ModelRouterTab =
-    searchParams.get("tab") === "playground" ? "playground" : "finder";
+    requestedTab && MODEL_TABS.includes(requestedTab) ? requestedTab : "finder";
   const initialPlaygroundModel = searchParams.get("model") ?? "";
 
   const [category, setCategory] = useState<ModelTaskCategory | "all">("all");
@@ -186,11 +206,12 @@ export default function ModelFinderPage() {
   const openTab = (next: ModelRouterTab) => {
     setSearchParams((prev) => {
       const params = new URLSearchParams(prev);
-      if (next === "playground") {
-        params.set("tab", "playground");
-      } else {
+      if (next === "finder") {
         params.delete("tab");
         params.delete("model");
+      } else {
+        params.set("tab", next);
+        if (next !== "playground") params.delete("model");
       }
       return params;
     });
@@ -285,22 +306,28 @@ export default function ModelFinderPage() {
         </button>
       </BTopBar>
 
-      {/* Sub-view tabs: catalog/fit finder vs direct chat playground. */}
-      <div className="flex items-center gap-4 border-b border-b-line px-6">
+      <div className="flex items-center gap-6 overflow-x-auto border-b border-el-divider px-5 sm:px-8 lg:px-10" role="tablist" aria-label="Model router sections">
         <TabButton
-          label="finder"
+          label="Models"
           active={tab === "finder"}
           onClick={() => openTab("finder")}
         />
+        <TabButton label="Providers" active={tab === "providers"} onClick={() => openTab("providers")} />
+        <TabButton label="Tiers" active={tab === "tiers"} onClick={() => openTab("tiers")} />
+        <TabButton label="Packs" active={tab === "packs"} onClick={() => openTab("packs")} />
         <TabButton
-          label="playground"
+          label="Playground"
           active={tab === "playground"}
           onClick={() => openTab("playground")}
           testId="chat-playground-tab"
         />
+        <TabButton label="Hardware" active={tab === "hardware"} onClick={() => openTab("hardware")} />
       </div>
 
-      <div className="h-full overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-8 lg:p-10">
+        {tab === "providers" && <ProviderPanel />}
+        {tab === "tiers" && <TierBoard />}
+        {tab === "packs" && <ModelPacksPanel />}
         {tab === "playground" && (
           <ChatPlaygroundPanel
             probe={probe}
@@ -308,6 +335,22 @@ export default function ModelFinderPage() {
             probeError={probeError ?? null}
             initialModel={initialPlaygroundModel}
           />
+        )}
+        {tab === "hardware" && (
+          <div className="mx-auto max-w-5xl space-y-8">
+            <div className="max-w-3xl">
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">Local inference profile</div>
+              <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Hardware</h1>
+              <p className="mt-3 text-[14px] leading-6 text-el-muted">Review detected compute and override discovery values used by the local model fit recommendations.</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <ProfileStat loading={isLoading} icon={<HardDrive className="h-5 w-5 text-el-accent-strong" />} value={`${data?.profile.ram_gb ?? 0} GB`} label="usable memory" />
+              <ProfileStat loading={isLoading} icon={<Cpu className="h-5 w-5 text-el-info" />} value={`${data?.profile.cpu_cores_logical ?? 0} threads`} label={data?.profile.cpu_name ?? "detecting CPU"} />
+              <ProfileStat loading={isLoading} icon={<Gauge className="h-5 w-5 text-el-success" />} value={compactNumber(data?.profile.estimated_cinebench_r23_multi ?? 0)} label="estimated CPU score" />
+              <ProfileStat loading={isLoading} icon={<SlidersHorizontal className="h-5 w-5 text-el-warning" />} value={<span className="text-[12px]">{acceleratorText}</span>} label="accelerators" />
+            </div>
+            <HardwareOverrideForm onClose={() => openTab("finder")} />
+          </div>
         )}
         {tab === "finder" && (
         <div className="flex flex-col gap-5">
@@ -317,9 +360,9 @@ export default function ModelFinderPage() {
                 className="text-[24px] font-semibold text-b-text"
                 style={{ fontFamily: "var(--b-font-heading)", letterSpacing: "-0.5px" }}
               >
-                local model fit finder
+                Model catalog
               </h1>
-              <p className="mt-1 max-w-3xl font-mono text-[11px] leading-5 text-b-text-dim">
+              <p className="mt-2 max-w-3xl text-[14px] leading-6 text-el-muted">
                 Profiles RAM, CPU, GPU/NPU hints, estimated Cinebench-class CPU
                 score, and estimated 7B Q4 throughput, then ranks local LLMs by
                 your selected metric with popularity/newness/forks tie-breakers.

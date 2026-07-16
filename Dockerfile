@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM python:3.14-slim AS python-base
+FROM python:3.11-slim AS python-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -19,7 +19,7 @@ COPY . /workspace
 
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -e . -c ci-constraints.txt \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing,langchain]" -c ci-constraints.txt \
     && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" -c ci-constraints.txt
 
 # Run as non-root user (S6471)
@@ -38,10 +38,11 @@ FROM python-base AS production
 
 COPY . /workspace
 
-# Install only runtime extras — no dev/test tooling (pytest, mypy, black, etc.)
+# Install runtime extras for the server's default LangChain adapter — no
+# dev/test tooling (pytest, mypy, black, etc.).
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -e . -c ci-constraints.txt \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[server,tracing]" -c ci-constraints.txt
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[server,tracing,langchain]" -c ci-constraints.txt
 
 # Run as non-root user (S6471) — mirrors the dev stage setup
 RUN groupadd --system appgroup \
@@ -70,7 +71,7 @@ COPY . /workspace
 
 RUN python -m pip install --upgrade pip \
     && pip install --no-cache-dir -e . -c ci-constraints.txt \
-    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing]" -c ci-constraints.txt \
+    && pip install --no-cache-dir -e "./agentic-workflows-v2[dev,server,tracing,langchain]" -c ci-constraints.txt \
     && pip install --no-cache-dir -e "./agentic-v2-eval[dev]" -c ci-constraints.txt \
     && npm --prefix /workspace/agentic-workflows-v2/ui install \
     && groupadd --system appgroup \

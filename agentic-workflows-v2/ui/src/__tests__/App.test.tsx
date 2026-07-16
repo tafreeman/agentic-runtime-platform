@@ -76,11 +76,11 @@ afterEach(() => {
 describe("App routing", () => {
   it("renders the workflow editor route when the feature flag is enabled", async () => {
     await renderAppAt("/workflows/review/edit", true);
-    expect(screen.getByText("Workflow Editor Page")).toBeInTheDocument();
+    expect(await screen.findByText("Workflow Editor Page")).toBeInTheDocument();
   });
 
   it("falls back to the 404 page when the feature flag is disabled", async () => {
     await renderAppAt("/workflows/review/edit", false);
-    expect(screen.getByText("Not Found Page")).toBeInTheDocument();
+    expect(await screen.findByText("Not Found Page")).toBeInTheDocument();
   });
 });

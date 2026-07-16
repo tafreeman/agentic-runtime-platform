@@ -256,7 +256,7 @@ describe("RunDetailPage", () => {
     ).toBeEnabled();
   });
 
-  it("replays the run with its captured inputs and jumps to the live view", async () => {
+  it("confirms before replaying captured inputs and jumps to the live view", async () => {
     mockUseRunDetail.mockReturnValue({ data: RUN_FIXTURE, isLoading: false });
     mockUseWorkflowDAG.mockReturnValue({ data: undefined });
     mockRunWorkflow.mockResolvedValue({ run_id: "replay-999", status: "pending" });
@@ -266,6 +266,11 @@ describe("RunDetailPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /replay with same inputs/i })
     );
+    expect(mockRunWorkflow).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "Provider calls and usage may occur",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start replay" }));
 
     await waitFor(() =>
       expect(screen.getByText("Live view probe")).toBeInTheDocument()

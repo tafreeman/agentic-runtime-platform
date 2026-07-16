@@ -107,20 +107,24 @@ pip-audit --progress-spinner off --desc
 Build:
 
 ```bash
-docker build -t prompts-backend:latest -f Dockerfile .
+docker build --target production -t prompts-backend:latest -f Dockerfile .
 ```
 
-The `Dockerfile` installs the repo-root `agentic-tools` package plus `agentic-workflows-v2` with `[server,tracing]` extras (the dev target adds `[dev]`), pinned to `ci-constraints.txt`, and starts `uvicorn agentic_v2.server.app:app` on port 8010.
+The `production` target installs the repo-root `agentic-tools` package plus
+`agentic-workflows-v2` with `[server,tracing,langchain]` extras, pinned to
+`ci-constraints.txt`, and starts the FastAPI application factory on port 8010.
 
 ### Frontend image
 
 Build:
 
 ```bash
-docker build -t prompts-ui:latest -f Dockerfile.ui .
+docker build --target frontend -t prompts-ui:latest -f Dockerfile.ui .
 ```
 
-The `Dockerfile.ui` runs `npm ci && npm run build` and serves the resulting `dist/` directory via nginx.
+The `frontend` target runs `npm ci && npm run build` and serves the resulting
+SPA from a non-root nginx container on port 8080. Production ingress must route
+same-origin `/api` and `/ws` traffic to the backend.
 
 ### Full stack with Docker Compose
 

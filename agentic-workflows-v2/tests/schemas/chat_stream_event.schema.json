@@ -45,6 +45,71 @@
       "title": "ChatErrorEvent",
       "type": "object"
     },
+    "ChatMediaEvent": {
+      "description": "A safe image emitted by a multimodal model response.",
+      "properties": {
+        "alt": {
+          "default": "Model-generated image",
+          "maxLength": 300,
+          "title": "Alt",
+          "type": "string"
+        },
+        "mime_type": {
+          "enum": [
+            "image/png",
+            "image/jpeg",
+            "image/webp",
+            "image/gif"
+          ],
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "type": {
+          "const": "media",
+          "default": "media",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 7100000,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mime_type",
+        "url"
+      ],
+      "title": "ChatMediaEvent",
+      "type": "object"
+    },
+    "ChatRouteEvent": {
+      "description": "Selected model for a tier-routed request, emitted before output tokens.",
+      "properties": {
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "requested_tier": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Requested Tier",
+          "type": "integer"
+        },
+        "type": {
+          "const": "route",
+          "default": "route",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requested_tier",
+        "model"
+      ],
+      "title": "ChatRouteEvent",
+      "type": "object"
+    },
     "ChatTokenEvent": {
       "description": "Incremental text delta streamed from the model reply.",
       "properties": {
@@ -70,13 +135,21 @@
     "mapping": {
       "done": "#/$defs/ChatDoneEvent",
       "error": "#/$defs/ChatErrorEvent",
+      "media": "#/$defs/ChatMediaEvent",
+      "route": "#/$defs/ChatRouteEvent",
       "token": "#/$defs/ChatTokenEvent"
     },
     "propertyName": "type"
   },
   "oneOf": [
     {
+      "$ref": "#/$defs/ChatRouteEvent"
+    },
+    {
       "$ref": "#/$defs/ChatTokenEvent"
+    },
+    {
+      "$ref": "#/$defs/ChatMediaEvent"
     },
     {
       "$ref": "#/$defs/ChatDoneEvent"

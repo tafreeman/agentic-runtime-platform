@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:25-bookworm-slim AS frontend-dev
+FROM node:20.20.2-bookworm-slim AS frontend-dev
 
 WORKDIR /workspace/agentic-workflows-v2/ui
 
@@ -16,3 +16,24 @@ USER node
 EXPOSE 5173
 
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+
+FROM frontend-dev AS frontend-build
+
+RUN npm run build
+
+
+# The production UI is a static SPA. API and WebSocket paths are expected to
+# be routed to the backend by the deployment ingress, as documented in the
+# deployment guide.
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS frontend
+
+COPY agentic-workflows-v2/ui/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=frontend-build /workspace/agentic-workflows-v2/ui/dist/ /usr/share/nginx/html/
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/healthz || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

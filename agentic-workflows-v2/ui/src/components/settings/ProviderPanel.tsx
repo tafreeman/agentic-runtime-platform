@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getProviderSettings, putProviderSettings } from "../../api/client";
+import { getProviderSettings, probeProvider, putProviderSettings } from "../../api/client";
 import type {
   ProviderEndpointConfig,
+  ProviderProbeResponse,
   ProviderSettingsResponse,
   ProviderType,
 } from "../../api/types";
@@ -145,8 +146,11 @@ function draftToConfig(type: ProviderType, draft: DraftProvider): ProviderEndpoi
 export default function ProviderPanel() {
   const queryClient = useQueryClient();
   const [addType, setAddType] = useState<ProviderType | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<DraftProvider | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [probeResults, setProbeResults] = useState<Record<string, ProviderProbeResponse>>({});
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["provider-settings"],
@@ -159,16 +163,39 @@ export default function ProviderPanel() {
     onSuccess: (fresh: ProviderSettingsResponse) => {
       queryClient.setQueryData(["provider-settings"], fresh);
       setAddType(null);
+      setEditId(null);
       setDraft(null);
       setValidationError(null);
     },
+  });
+
+  const probeMutation = useMutation({
+    mutationFn: probeProvider,
+    onSuccess: (result) =>
+      setProbeResults((current) => ({ ...current, [result.provider_id]: result })),
   });
 
   const providers = data?.providers ?? [];
 
   const openAddForm = (type: ProviderType) => {
     setAddType(type);
+    setEditId(null);
     setDraft(draftFor(type, providers));
+    setValidationError(null);
+    saveMutation.reset();
+  };
+
+  const openEditForm = (provider: ProviderEndpointConfig) => {
+    setAddType(provider.type);
+    setEditId(provider.id);
+    setDraft({
+      id: provider.id,
+      label: provider.label,
+      base_url: provider.base_url ?? "",
+      api_key_env: provider.api_key_env ?? "",
+      default_model: provider.default_model ?? "",
+      enabled: provider.enabled,
+    });
     setValidationError(null);
     saveMutation.reset();
   };
@@ -186,12 +213,17 @@ export default function ProviderPanel() {
       );
       return;
     }
-    if (providers.some((p) => p.id === id)) {
+    if (providers.some((p) => p.id === id && p.id !== editId)) {
       setValidationError(`a provider with id "${id}" already exists`);
       return;
     }
     setValidationError(null);
-    saveMutation.mutate([...providers, draftToConfig(addType, draft)]);
+    const config = draftToConfig(addType, draft);
+    saveMutation.mutate(
+      editId
+        ? providers.map((provider) => (provider.id === editId ? config : provider))
+        : [...providers, config],
+    );
   };
 
   const toggleEnabled = (id: string) => {
@@ -202,12 +234,15 @@ export default function ProviderPanel() {
 
   const deleteProvider = (id: string) => {
     saveMutation.mutate(providers.filter((p) => p.id !== id));
+    setPendingDeleteId(null);
   };
 
   return (
     <section aria-label="provider endpoints">
-      <div className="mb-3 font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint">
-        PROVIDER ENDPOINTS · GET/PUT /api/settings/providers
+      <div className="mb-8 max-w-3xl">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">Endpoint registry</div>
+        <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Providers</h1>
+        <p className="mt-3 text-[14px] leading-6 text-el-muted">Manage saved endpoints, environment-variable references, availability, and live discovery probes. Credentials are never accepted or displayed.</p>
       </div>
 
       {error && (
@@ -250,6 +285,26 @@ export default function ProviderPanel() {
                 <span className="ml-auto flex items-center gap-2">
                   <button
                     type="button"
+                    aria-label={`Probe provider ${p.id}`}
+                    disabled={probeMutation.isPending || !p.enabled}
+                    onClick={() => probeMutation.mutate(p.id)}
+                    className="border border-b-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.5px] text-b-text-dim transition-colors hover:border-b-blue/40 hover:text-b-blue disabled:opacity-40"
+                    style={{ borderRadius: "var(--b-rad-sm)" }}
+                  >
+                    probe
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Edit provider ${p.id}`}
+                    disabled={saveMutation.isPending}
+                    onClick={() => openEditForm(p)}
+                    className="border border-b-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.5px] text-b-text-dim transition-colors hover:text-b-text disabled:opacity-40"
+                    style={{ borderRadius: "var(--b-rad-sm)" }}
+                  >
+                    edit
+                  </button>
+                  <button
+                    type="button"
                     role="switch"
                     aria-checked={p.enabled}
                     aria-label={`Toggle provider ${p.id}`}
@@ -268,7 +323,7 @@ export default function ProviderPanel() {
                     type="button"
                     aria-label={`Delete provider ${p.id}`}
                     disabled={saveMutation.isPending}
-                    onClick={() => deleteProvider(p.id)}
+                    onClick={() => setPendingDeleteId(p.id)}
                     className="border border-b-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.5px] text-b-text-dim transition-colors hover:border-b-red/40 hover:text-b-red disabled:opacity-40"
                     style={{ borderRadius: "var(--b-rad-sm)" }}
                   >
@@ -308,6 +363,27 @@ export default function ProviderPanel() {
                   </dd>
                 </div>
               </dl>
+              {probeResults[p.id] && (
+                <div
+                  className={`mt-3 border-l-2 px-3 py-2 text-[11px] ${
+                    probeResults[p.id]!.status === "available"
+                      ? "border-el-success bg-el-surface text-el-success"
+                      : "border-el-danger bg-el-surface text-el-danger"
+                  }`}
+                  role="status"
+                >
+                  <span className="font-semibold">{probeResults[p.id]!.status}</span>
+                  {` · ${probeResults[p.id]!.latency_ms} ms · ${probeResults[p.id]!.discovered_model_count} models`}
+                  <span className="mt-1 block text-el-muted">{probeResults[p.id]!.detail}</span>
+                </div>
+              )}
+              {pendingDeleteId === p.id && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-l-2 border-el-danger bg-el-surface px-3 py-2 text-[11px] text-el-danger" role="alert">
+                  <span className="mr-auto">Remove this saved endpoint? Environment variables are unaffected.</span>
+                  <button type="button" className="px-2 py-1 text-el-muted" onClick={() => setPendingDeleteId(null)}>Cancel</button>
+                  <button type="button" className="bg-el-danger px-2 py-1 font-semibold text-white" onClick={() => deleteProvider(p.id)}>Remove provider</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -351,7 +427,7 @@ export default function ProviderPanel() {
             }}
           >
             <div className="mb-3 font-mono text-[9.5px] uppercase tracking-[1.5px] text-b-clay">
-              NEW {TYPE_PRESETS[addType].label} ENDPOINT
+              {editId ? "EDIT" : "NEW"} {TYPE_PRESETS[addType].label} ENDPOINT
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div>
@@ -363,6 +439,7 @@ export default function ProviderPanel() {
                   value={draft.id}
                   onChange={(e) => updateDraft({ id: e.target.value })}
                   required
+                  disabled={editId !== null}
                   className={INPUT_CLASS}
                   style={INPUT_STYLE}
                 />
@@ -456,12 +533,17 @@ export default function ProviderPanel() {
                 className="bg-b-clay px-3 py-1.5 font-mono text-[11px] font-semibold text-b-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{ borderRadius: "var(--b-rad-sm)" }}
               >
-                {saveMutation.isPending ? "saving…" : "save provider"}
+                {saveMutation.isPending
+                  ? "saving…"
+                  : editId
+                    ? "save changes"
+                    : "save provider"}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setAddType(null);
+                  setEditId(null);
                   setDraft(null);
                   setValidationError(null);
                   saveMutation.reset();

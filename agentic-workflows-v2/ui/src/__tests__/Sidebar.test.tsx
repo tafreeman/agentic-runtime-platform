@@ -33,8 +33,7 @@ describe("Sidebar", () => {
   it("renders the main navigation links by stable test id", () => {
     renderSidebar("/workflows");
 
-    // Brand text is "agentic" in the redesigned console sidebar.
-    expect(screen.getByText("agentic")).toBeInTheDocument();
+    expect(screen.getByText("Evidence")).toBeInTheDocument();
 
     // Routes are addressed by their preserved data-testid; visible labels are
     // the redesigned numbered console labels. Hrefs must remain unchanged.
@@ -62,16 +61,16 @@ describe("Sidebar", () => {
   it("reflects and toggles between the dark and paper themes only", () => {
     renderSidebar("/");
 
-    // Defaults to dark: the single toggle is not pressed (paper inactive).
+    // Warm paper is the product default; dark is a secondary preference.
     const toggle = screen.getByRole("button", { name: /theme/i });
-    expect(toggle).toHaveAttribute("aria-pressed", "false");
-    expect(toggle).toHaveAccessibleName(/dark theme/i);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    expect(toggle).toHaveAccessibleName(/paper theme/i);
 
-    // Toggling switches to paper and marks the control as pressed.
+    // Toggling switches to warm charcoal and marks paper inactive.
     fireEvent.click(toggle);
-    const paperToggle = screen.getByRole("button", { name: /theme/i });
-    expect(paperToggle).toHaveAttribute("aria-pressed", "true");
-    expect(paperToggle).toHaveAccessibleName(/paper theme/i);
+    const darkToggle = screen.getByRole("button", { name: /theme/i });
+    expect(darkToggle).toHaveAttribute("aria-pressed", "false");
+    expect(darkToggle).toHaveAccessibleName(/dark theme/i);
   });
 
   it("collapses and expands via the collapse control", () => {

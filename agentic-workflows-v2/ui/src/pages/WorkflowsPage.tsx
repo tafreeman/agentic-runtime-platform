@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { useWorkflows } from "../hooks/useWorkflows";
 import { useRuns } from "../hooks/useRuns";
 import BTopBar from "../components/layout/BTopBar";
 import BPill from "../components/common/BPill";
+import { isWorkflowBuilderEnabled } from "../config/featureFlags";
 import type { RunSummary } from "../api/types";
 
 function latestRunFor(runs: RunSummary[] | undefined, name: string) {
@@ -22,6 +23,7 @@ function statusTone(status: string | null | undefined) {
 export default function WorkflowsPage() {
   const { data: workflows, isLoading, isError, error } = useWorkflows();
   const { data: runs } = useRuns();
+  const workflowBuilderEnabled = isWorkflowBuilderEnabled();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const errorMessage =
@@ -167,15 +169,14 @@ export default function WorkflowsPage() {
                 <span className="w-[14px]" aria-hidden="true" />
                 <span className="flex-1">Workflow</span>
                 <span>Last run</span>
+                {workflowBuilderEnabled && <span className="w-[62px]">Edit</span>}
               </div>
               {filtered.map((name) => {
                 const latest = latestRunFor(runs, name);
                 return (
-                  <Link
+                  <div
                     key={name}
-                    to={`/workflows/${name}`}
-                    data-testid={`workflow-link-${name}`}
-                    className="group relative flex items-center gap-3 overflow-hidden border border-b-line bg-b-bg1 px-3 py-[14px] transition-colors hover:bg-b-bg2 focus:outline-none focus:ring-1 focus:ring-b-clay/50"
+                    className="group relative flex items-stretch overflow-hidden border border-b-line bg-b-bg1 transition-colors hover:bg-b-bg2 focus-within:ring-1 focus-within:ring-b-clay/50"
                     style={{
                       borderRadius: "var(--b-rad-lg)",
                       borderWidth: "var(--b-bw)",
@@ -184,29 +185,46 @@ export default function WorkflowsPage() {
                     {/* clay accent bar — primary/active card pattern */}
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-b-clay transition-transform group-hover:scale-x-100 group-focus:scale-x-100"
+                      className="pointer-events-none absolute inset-x-0 top-0 h-[2px] origin-left scale-x-0 bg-b-clay transition-transform group-hover:scale-x-100 group-focus-within:scale-x-100"
                     />
-                    <span className="font-mono text-[14px] text-b-blue">
-                      ▣
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div
-                        className="truncate font-mono text-[14px] font-semibold text-b-text"
-                        style={{ fontFamily: "var(--b-font-mono)" }}
+                    <Link
+                      to={`/workflows/${name}`}
+                      data-testid={`workflow-link-${name}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-[14px] focus:outline-none"
+                    >
+                      <span className="font-mono text-[14px] text-b-blue">
+                        ▣
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className="truncate font-mono text-[14px] font-semibold text-b-text"
+                          style={{ fontFamily: "var(--b-font-mono)" }}
+                        >
+                          {name}
+                        </div>
+                        <div className="mt-0.5 truncate font-mono text-[10px] text-b-text-dim">
+                          #{name.replaceAll("_", "-")}
+                        </div>
+                      </div>
+                      {latest && (
+                        <BPill tone={statusTone(latest.status)}>
+                          {latest.status ?? "—"}
+                        </BPill>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-b-text-faint group-hover:text-b-clay" />
+                    </Link>
+                    {workflowBuilderEnabled && (
+                      <Link
+                        to={`/workflows/${name}/edit`}
+                        aria-label={`Edit ${name} workflow`}
+                        data-testid={`workflow-edit-${name}`}
+                        className="relative z-10 flex w-[74px] shrink-0 flex-col items-center justify-center gap-1 border-l border-b-line font-mono text-[9px] uppercase tracking-[0.8px] text-b-text-dim transition-colors hover:bg-b-clay/10 hover:text-b-clay focus:outline-none focus:ring-1 focus:ring-inset focus:ring-b-clay/60"
                       >
-                        {name}
-                      </div>
-                      <div className="mt-0.5 truncate font-mono text-[10px] text-b-text-dim">
-                        #{name.replaceAll("_", "-")}
-                      </div>
-                    </div>
-                    {latest && (
-                      <BPill tone={statusTone(latest.status)}>
-                        {latest.status ?? "—"}
-                      </BPill>
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                        edit
+                      </Link>
                     )}
-                    <ChevronRight className="h-4 w-4 text-b-text-faint group-hover:text-b-clay" />
-                  </Link>
+                  </div>
                 );
               })}
 

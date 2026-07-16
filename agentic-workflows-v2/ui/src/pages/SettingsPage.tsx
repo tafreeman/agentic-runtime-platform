@@ -9,19 +9,11 @@ export default function SettingsPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-6xl space-y-[18px] p-6">
+        <div className="mx-auto max-w-6xl space-y-8 p-6">
           <div>
-            <h1
-              className="text-[24px] font-semibold text-b-text"
-              style={{ fontFamily: "var(--b-font-heading)", letterSpacing: "-0.5px" }}
-            >
-              Settings
-            </h1>
-            <div className="mt-1 font-mono text-[11px] text-b-text-dim">
-              $ provider endpoints · tier routing order · capability tags
-            </div>
+            <h1 className="font-display text-[36px] font-medium text-el-ink">Provider and tier settings</h1>
+            <p className="mt-2 text-[14px] text-el-muted">Compatibility surface; production navigation consolidates this work under Models.</p>
           </div>
-
           <ProviderPanel />
           <TierBoard />
         </div>

@@ -176,17 +176,14 @@ export default function WorkflowDetailPage() {
     dagQueryError instanceof Error ? dagQueryError.message : "failed to load dag";
   const hasWorkflowSteps = (dag?.nodes.length ?? 0) > 0;
   const tiers = collectTiers(dag?.nodes);
-  const supportsDeterministicDemo =
-    name === "test_deterministic" ||
-    (!!dag &&
-      dag.nodes.length > 0 &&
-      dag.nodes.every((node) => node.tier?.toLowerCase().startsWith("tier0")));
+  const supportsDeterministicDemo = name === "test_deterministic";
 
   const configRef = useRef<RunConfigValues>({
     inputValues: {},
     executionProfile: { runtime: "subprocess" },
     rubricId: "",
     modelOverride: "",
+    modelPack: null,
     evaluation: {
       enabled: false,
       datasetSource: "none",
@@ -222,11 +219,31 @@ export default function WorkflowDetailPage() {
       .map((inp) => inp.name);
   };
 
+  const buildDemoInputData = (): Record<string, unknown> => {
+    const data: Record<string, unknown> = {};
+    for (const input of dag?.inputs ?? []) {
+      const configured = configRef.current.inputValues[input.name];
+      const declared = defaultInputValue(input.default);
+      let value = configured || declared || input.enum?.[0] || "";
+      if (!value && input.required) {
+        if (input.type === "number") value = "1";
+        else if (input.type === "boolean") value = "true";
+        else if (input.type === "object") value = "{}";
+        else if (input.type === "array") value = "[]";
+        else value = "hello";
+      }
+      if (value || input.required) {
+        data[input.name] = coerceInputValue(input.type, value);
+      }
+    }
+    return data;
+  };
+
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
 
   const runMutation = useMutation({
     mutationFn: async () => {
-      const { executionProfile, rubricId, evaluation, modelOverride } =
+      const { executionProfile, rubricId, evaluation, modelOverride, modelPack } =
         configRef.current;
       // Dataset-backed evaluation fills inputs from the dataset sample
       // server-side, so only enforce form inputs for plain runs.
@@ -248,6 +265,7 @@ export default function WorkflowDetailPage() {
       const overrideField = modelOverride
         ? { model_override: modelOverride }
         : {};
+      const packField = modelPack ? { model_pack: modelPack } : {};
 
       const jobs = buildJobList(evaluation);
       const isBatch = jobs.length > 1;
@@ -262,6 +280,7 @@ export default function WorkflowDetailPage() {
             jobs[0] ? jobs[0].sampleIndex : 0,
           ),
           execution_profile: executionProfile,
+          ...packField,
           ...overrideField,
         });
       }
@@ -277,6 +296,7 @@ export default function WorkflowDetailPage() {
             jobs[i]?.sampleIndex ?? 0,
           ),
           execution_profile: executionProfile,
+          ...packField,
           ...overrideField,
         });
         setBatchProgress({ done: i + 1, total: jobs.length });
@@ -294,6 +314,17 @@ export default function WorkflowDetailPage() {
     onError: () => {
       setBatchProgress(null);
     },
+  });
+
+  const demoMutation = useMutation({
+    mutationFn: () =>
+      runWorkflow({
+        workflow: name!,
+        input_data: buildDemoInputData(),
+        evaluation: undefined,
+        execution_profile: { runtime: "subprocess" },
+      }),
+    onSuccess: (data) => navigate(`/live/${data.run_id}`),
   });
 
   const runLabel = runButtonLabel(
@@ -326,12 +357,12 @@ export default function WorkflowDetailPage() {
         {supportsDeterministicDemo && (
           <button
             type="button"
-            onClick={() => { if (runMutation.isPending) return; runMutation.mutate(); }}
-            disabled={runMutation.isPending}
+            onClick={() => { if (demoMutation.isPending) return; demoMutation.mutate(); }}
+            disabled={demoMutation.isPending}
             className="btn-ghost"
           >
             <Play className="h-3 w-3" />
-            <span>demo run</span>
+            <span>{demoMutation.isPending ? "starting demo…" : "demo run"}</span>
           </button>
         )}
         <button
@@ -501,12 +532,12 @@ export default function WorkflowDetailPage() {
         </div>
       </div>
 
-      {runMutation.isError && (
+      {(runMutation.isError || demoMutation.isError) && (
         <div
           className="border-t border-b-red bg-b-red/10 px-4 py-2 font-mono text-[11px] text-b-red"
           style={{ borderTopWidth: "var(--b-bw)" }}
         >
-          [!] {runMutation.error.message}
+          [!] {(demoMutation.error ?? runMutation.error)?.message ?? "run failed"}
         </div>
       )}
     </div>

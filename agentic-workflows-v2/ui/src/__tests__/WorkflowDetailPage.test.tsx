@@ -364,6 +364,26 @@ describe("WorkflowDetailPage", () => {
     });
   });
 
+  it("includes the selected exact model-pack version in the run payload", async () => {
+    formSpy.values = {
+      ...defaultFormValues(),
+      modelPack: { id: "review-stable", version: 3 },
+    };
+
+    renderPage();
+    fireEvent.click(screen.getByTestId("run-button"));
+
+    await waitFor(() => {
+      expect(mockRunWorkflow).toHaveBeenCalledWith({
+        workflow: "review_flow",
+        input_data: { prompt: "hello" },
+        evaluation: undefined,
+        execution_profile: { runtime: "subprocess" },
+        model_pack: { id: "review-stable", version: 3 },
+      });
+    });
+  });
+
   it("omits model_override from the run payload when no override is chosen", async () => {
     renderPage();
 

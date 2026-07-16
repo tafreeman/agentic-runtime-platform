@@ -81,8 +81,7 @@ class TestTitleDerivation:
     def test_code_instructions_shape_uses_instruction_preview(self) -> None:
         sample = {
             "instruction": (
-                "Create a function to\ncalculate the sum of a sequence "
-                "of integers."
+                "Create a function to\ncalculate the sum of a sequence " "of integers."
             ),
             "input": "[1, 2, 3, 4, 5]",
             "output": "def sum_sequence(seq): ...",
@@ -213,9 +212,7 @@ class TestEmptyRepositoryBatch:
         monkeypatch.setattr(
             bench_loader, "load_benchmark", lambda **_kwargs: [], raising=False
         )
-        monkeypatch.setattr(
-            bench_datasets, "BENCHMARK_DEFINITIONS", {}, raising=False
-        )
+        monkeypatch.setattr(bench_datasets, "BENCHMARK_DEFINITIONS", {}, raising=False)
 
         batch = datasets_module.load_repository_dataset_samples(
             "mystery-benchmark", offset=0, limit=20

@@ -15,6 +15,17 @@ import CopyId from "../common/CopyId";
 import BPill from "../common/BPill";
 import BAsciiBar from "../common/BAsciiBar";
 import EvaluationRubricAccordion from "../evaluations/EvaluationRubricAccordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 type RunTone = "ok" | "err" | "clay" | "dim";
 type EvalBarColor = "b-green" | "b-amber" | "b-red";
@@ -219,6 +230,7 @@ export default function RunDetailPanel({
     : "Start a new run with this run's captured inputs";
 
   const evalData = run.extra?.evaluation;
+  const routing = run.extra?.routing;
   const evalPct =
     evalData?.weighted_score === undefined
       ? null
@@ -281,20 +293,41 @@ export default function RunDetailPanel({
         className="flex items-center gap-2 border-b border-b-line bg-b-bg0 px-4 py-2"
         style={{ borderBottomWidth: "var(--b-bw)" }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setCli(`agentic run ${run.workflow_name} --replay ${filename}`);
-            replay.mutate();
-          }}
-          disabled={replay.isPending || !run.workflow_name || replayBlocked}
-          title={replayTitle}
-          style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
-          className="flex items-center gap-1.5 border border-solid border-b-clay/60 px-2.5 py-1 font-mono text-[10.5px] text-b-clay transition-colors hover:bg-b-clay-soft disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Play size={10} aria-hidden="true" />
-          {replay.isPending ? "replaying…" : "Replay with same inputs"}
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              disabled={replay.isPending || !run.workflow_name || replayBlocked}
+              title={replayTitle}
+              style={{ borderRadius: "var(--b-rad-sm)", borderWidth: "var(--b-bw)" }}
+              className="flex items-center gap-1.5 border border-solid border-b-clay/60 px-2.5 py-1 font-mono text-[10.5px] text-b-clay transition-colors hover:bg-b-clay-soft disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Play size={10} aria-hidden="true" />
+              {replay.isPending ? "replaying…" : "Replay with same inputs"}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Start a new run?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will execute {run.workflow_name} again using the captured
+                inputs from {run.run_id}. Provider calls and usage may occur.
+                The existing run remains unchanged.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setCli(`agentic run ${run.workflow_name} --replay ${filename}`);
+                  replay.mutate();
+                }}
+              >
+                Start replay
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {replay.isError && (
           <span role="alert" className="font-mono text-[10px] text-b-red">
             replay failed
@@ -380,6 +413,51 @@ export default function RunDetailPanel({
         </DetailCard>
 
         <div className={layout === "page" ? "space-y-3" : "contents"}>
+        {routing && (
+          <DetailCard title="routing provenance">
+            <div className="space-y-4 p-4 text-[12px]">
+              <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                <div>
+                  <dt className="text-b-text-faint">Policy source</dt>
+                  <dd className="mt-0.5 font-semibold text-b-text">{routing.source}</dd>
+                </div>
+                <div>
+                  <dt className="text-b-text-faint">Selected pack</dt>
+                  <dd className="mt-0.5 font-mono text-b-text-mid">
+                    {routing.pack
+                      ? `${routing.pack.id}@${routing.pack.version}`
+                      : "built-in routing"}
+                  </dd>
+                </div>
+                {routing.requested_model_override && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-b-text-faint">Direct override</dt>
+                    <dd className="mt-0.5 font-mono text-b-text-mid">{routing.requested_model_override}</dd>
+                  </div>
+                )}
+              </dl>
+              {routing.resolved_steps.length > 0 && (
+                <div className="overflow-x-auto border-t border-b-line-soft pt-3">
+                  <table className="w-full text-left">
+                    <thead className="text-[10px] uppercase tracking-[0.1em] text-b-text-faint">
+                      <tr><th className="pb-2 pr-4">Step</th><th className="pb-2 pr-4">Tier</th><th className="pb-2 pr-4">Provider</th><th className="pb-2">Resolved model</th></tr>
+                    </thead>
+                    <tbody className="font-mono text-[11px] text-b-text-mid">
+                      {routing.resolved_steps.map((step, index) => (
+                        <tr key={`${step.step}-${index}`} className="border-t border-b-line-soft">
+                          <td className="py-2 pr-4">{step.step}</td>
+                          <td className="py-2 pr-4">{step.tier ?? "—"}</td>
+                          <td className="py-2 pr-4">{step.provider ?? "—"}</td>
+                          <td className="py-2">{step.model ?? "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </DetailCard>
+        )}
         {evalData && evalPct !== null && (
           <div
             style={{ borderRadius: "var(--b-rad-lg)", borderWidth: "var(--b-bw)" }}

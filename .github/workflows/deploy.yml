@@ -4,6 +4,17 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - ".github/workflows/deploy.yml"
+      - "Dockerfile"
+      - "Dockerfile.ui"
+      - "release-manifest.toml"
+      - "scripts/verify_release_artifacts.py"
+      - "pyproject.toml"
+      - "tools/**"
+      - "agentic-workflows-v2/**"
+      - "agentic-v2-eval/**"
   workflow_dispatch:
     inputs:
       publish_release:
@@ -46,13 +57,25 @@ jobs:
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install build twine
 
       - name: Build source and wheel artifacts
         run: |
           python -m build --sdist --wheel .
           python -m build --sdist --wheel agentic-workflows-v2
           python -m build --sdist --wheel agentic-v2-eval
+
+      - name: Validate and smoke-test release artifacts
+        shell: bash
+        env:
+          EXPECTED_RELEASE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || inputs.release_tag }}
+        run: |
+          python -m twine check dist/* agentic-workflows-v2/dist/* agentic-v2-eval/dist/*
+          args=()
+          if [[ -n "${EXPECTED_RELEASE_TAG}" ]]; then
+            args+=(--expected-tag "${EXPECTED_RELEASE_TAG}")
+          fi
+          python scripts/verify_release_artifacts.py "${args[@]}"
 
       - name: Detect Dockerfile
         id: docker_backend
@@ -88,7 +111,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          target: backend
+          target: production
           tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
           outputs: type=oci,dest=release-assets/image/agentic-workflows-backend.oci
 
@@ -117,6 +140,7 @@ jobs:
           mkdir -p release-assets/python/root
           mkdir -p release-assets/python/agentic-workflows-v2
           mkdir -p release-assets/python/agentic-v2-eval
+          cp -v release-manifest.toml release-assets/
           cp -v dist/* release-assets/python/root/
           cp -v agentic-workflows-v2/dist/* release-assets/python/agentic-workflows-v2/
           cp -v agentic-v2-eval/dist/* release-assets/python/agentic-v2-eval/
@@ -208,6 +232,6 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.value }}
-          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+          prerelease: ${{ contains(steps.tag.outputs.value, '-') || (github.event_name == 'workflow_dispatch' && inputs.prerelease) }}
           generate_release_notes: true
           files: release-assets/**

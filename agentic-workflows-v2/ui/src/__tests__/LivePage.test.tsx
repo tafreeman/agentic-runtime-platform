@@ -84,6 +84,16 @@ describe("LivePage", () => {
   });
 
   it("renders live execution details, error banner, and expandable evaluation", () => {
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          run_id: "review_flow-1234abcd",
+          filename: "20260714_review_flow-1234abcd_success.json",
+          status: "success",
+        },
+      ],
+      isLoading: false,
+    });
     mockUseWorkflowStream.mockReturnValue({
       workflowStatus: "completed",
       error: "stream dropped once",
@@ -134,6 +144,10 @@ describe("LivePage", () => {
     expect(screen.getByText("Token count")).toBeInTheDocument();
     // Status pill renders workflowStatus = "completed", runTone = "ok"
     expect(screen.getByText("completed")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open run record →" })).toHaveAttribute(
+      "href",
+      "/runs/20260714_review_flow-1234abcd_success.json",
+    );
     expect(screen.getByText("88.2")).toBeInTheDocument();
     expect(screen.getByText("B+")).toBeInTheDocument();
 
@@ -254,5 +268,36 @@ describe("LivePage", () => {
     renderPage();
 
     expect(screen.getByText("failed")).toBeInTheDocument();
+  });
+
+  it("reconciles a missed terminal socket event from the permanent run record", () => {
+    mockUseWorkflowStream.mockReturnValue({
+      workflowStatus: "running",
+      error: null,
+      stepStates: new Map(),
+      events: [
+        {
+          type: "workflow_start",
+          workflow_name: "review_flow",
+        },
+      ],
+      evaluation: null,
+    });
+    mockUseWorkflowDAG.mockReturnValue({ data: undefined });
+    mockUseRuns.mockReturnValue({
+      data: [
+        {
+          run_id: "review_flow-1234abcd",
+          filename: "20260714_review_flow-1234abcd_success.json",
+          status: "success",
+        },
+      ],
+      isLoading: false,
+    });
+
+    renderPage();
+
+    expect(screen.getByTestId("workflow-status")).toHaveTextContent("completed");
+    expect(mockUseRuns).toHaveBeenLastCalledWith("review_flow", { live: false });
   });
 });

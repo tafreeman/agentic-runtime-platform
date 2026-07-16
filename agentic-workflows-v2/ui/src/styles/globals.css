@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "@fontsource-variable/geist";
 
 @tailwind base;
 @tailwind components;
@@ -7,20 +8,24 @@
 @layer base {
   * {
     box-sizing: border-box;
+    @apply border-border outline-ring/50;
   }
 
   html {
-    background: rgb(var(--b-bg0));
-    color: rgb(var(--b-text));
+    min-width: 320px;
+    background: rgb(var(--el-canvas));
+    color: rgb(var(--el-ink));
+    font-family: var(--el-font-sans);
   }
 
   body {
     margin: 0;
-    font-family: var(--b-font-mono);
-    background: rgb(var(--b-bg0));
-    color: rgb(var(--b-text));
+    font-family: var(--el-font-sans);
+    background: rgb(var(--el-canvas));
+    color: rgb(var(--el-ink));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground;
   }
 
   h1,
@@ -29,7 +34,7 @@
   h4,
   h5,
   h6 {
-    font-family: var(--b-font-heading);
+    font-family: var(--el-font-display);
   }
 
   ::-webkit-scrollbar {
@@ -43,6 +48,22 @@
     background: var(--b-scroll-thumb);
     border-radius: 3px;
   }
+}
+
+.el-app {
+  min-height: 100svh;
+  background: rgb(var(--el-canvas));
+  color: rgb(var(--el-ink));
+}
+
+.el-app :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgb(var(--el-focus));
+  outline-offset: 2px;
+}
+
+.el-app :where(input, select, textarea) {
+  min-height: 40px;
+  border-radius: var(--el-radius-md);
 }
 
 @layer components {

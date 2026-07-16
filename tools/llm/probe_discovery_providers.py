@@ -686,13 +686,19 @@ def _probe_nvidia() -> dict[str, Any]:
 
 
 def _probe_lmstudio() -> dict[str, Any]:
-    """Probe LM Studio OpenAI-compatible local server."""
+    """Probe LM Studio's current native model catalog."""
     # Accept both LMSTUDIO_HOST and LM_STUDIO_HOST; strip trailing path segments
     raw_host = os.getenv(ENV_LMSTUDIO_HOST) or os.getenv(
         ENV_LM_STUDIO_HOST, LMSTUDIO_DEFAULT_HOST
     )
     # Strip /v1/... or /chat/completions suffixes so we get a clean base URL
-    for tail in ["/v1/chat/completions", "/chat/completions", "/v1"]:
+    for tail in [
+        "/v1/chat/completions",
+        "/api/v1/chat",
+        "/chat/completions",
+        "/api/v1",
+        "/v1",
+    ]:
         if raw_host.rstrip("/").endswith(tail.rstrip("/")):
             raw_host = raw_host.rstrip("/")[: -len(tail)]
             break
@@ -702,12 +708,16 @@ def _probe_lmstudio() -> dict[str, Any]:
     lmstudio_reachable = False
 
     try:
-        lm_url = f"{lmstudio_host.rstrip('/')}/v1/models"
-        req = urllib.request.Request(lm_url, headers={"Accept": CONTENT_TYPE_JSON})
+        lm_url = f"{lmstudio_host.rstrip('/')}/api/v1/models"
+        headers = {"Accept": CONTENT_TYPE_JSON}
+        lm_api_token = os.getenv("LM_API_TOKEN", "")
+        if lm_api_token:
+            headers["Authorization"] = f"Bearer {lm_api_token}"
+        req = urllib.request.Request(lm_url, headers=headers)
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            for m in data.get("data", []):
-                mid = m.get("id", "") if isinstance(m, dict) else ""
+            for m in data.get("models", []):
+                mid = m.get("key", "") if isinstance(m, dict) else ""
                 if mid:
                     lmstudio_models.append(f"{PREFIX_LMSTUDIO}{mid}")
             lmstudio_reachable = True
@@ -722,9 +732,8 @@ def _probe_lmstudio() -> dict[str, Any]:
         "count": len(lmstudio_models),
         "error": lmstudio_error,
         "notes": (
-            "Queries OpenAI-compatible API (/v1/models) since native REST "
-            "(/api/v1/chat) lacks Custom Tool support. Override host with "
-            "LMSTUDIO_HOST."
+            "Queries the native model catalog (/api/v1/models). "
+            "Override host with LMSTUDIO_HOST; set LM_API_TOKEN when auth is enabled."
         ),
     }
 

@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useEvaluationDatasets } from "../../hooks/useWorkflows";
 import { useDatasetSamples } from "../../hooks/useDatasets";
-import { probeModels } from "../../api/client";
+import { listModelPacks, probeModels } from "../../api/client";
 import type {
   DatasetSampleSummary,
   ExecutionProfileRequest,
   ProbedModel,
+  ModelPackRef,
   WorkflowInputSchema,
 } from "../../api/types";
 
@@ -18,6 +19,8 @@ export interface RunConfigValues {
   rubricId: string;
   /** Full prefixed model id to force on every step; "" means no override. */
   modelOverride: string;
+  /** Exact immutable routing pack selected for this run, or automatic policy. */
+  modelPack?: ModelPackRef | null;
   evaluation: {
     enabled: boolean;
     datasetSource: DatasetSource;
@@ -237,6 +240,7 @@ export default function RunConfigForm({
     useState<ExecutionProfileRequest["runtime"]>("subprocess");
   const [rubricId, setRubricId] = useState("");
   const [modelOverride, setModelOverride] = useState("");
+  const [modelPackKey, setModelPackKey] = useState("");
   const [evaluationEnabled, setEvaluationEnabled] = useState(
     seededSource !== "none"
   );
@@ -292,6 +296,20 @@ export default function RunConfigForm({
     () => [...(modelProbeQuery.data?.models ?? [])].sort(compareProbedModels),
     [modelProbeQuery.data]
   );
+  const modelPacksQuery = useQuery({
+    queryKey: ["model-packs"],
+    queryFn: listModelPacks,
+    enabled: advancedOpen,
+  });
+  const selectedModelPack = useMemo<ModelPackRef | null>(() => {
+    if (!modelPackKey) return null;
+    const separator = modelPackKey.lastIndexOf("@");
+    if (separator < 1) return null;
+    const version = Number.parseInt(modelPackKey.slice(separator + 1), 10);
+    return Number.isInteger(version)
+      ? { id: modelPackKey.slice(0, separator), version }
+      : null;
+  }, [modelPackKey]);
 
   const selectedSamples = useMemo(() => {
     const parsed = sampleText
@@ -329,6 +347,7 @@ export default function RunConfigForm({
       executionProfile: { runtime },
       rubricId,
       modelOverride,
+      modelPack: selectedModelPack,
       evaluation: {
         enabled: evaluationEnabled,
         datasetSource,
@@ -345,6 +364,7 @@ export default function RunConfigForm({
       evaluationEnabled,
       inputValues,
       modelOverride,
+      selectedModelPack,
       rubricId,
       runtime,
       runsPerRecord,
@@ -548,6 +568,40 @@ export default function RunConfigForm({
 
       {advancedOpen ? (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div
+            data-testid="model-pack-config"
+            style={CARD_TOKENS}
+            className="border border-solid border-b-line bg-b-bg1 p-3 md:col-span-3"
+          >
+            <label className="block text-[12px] font-semibold text-b-text-dim">
+              Model pack
+              <select
+                aria-label="Model pack"
+                data-testid="model-pack-select"
+                value={modelPackKey}
+                onChange={(event) => setModelPackKey(event.target.value)}
+                style={CONTROL_TOKENS}
+                className="mt-2 w-full border border-solid border-b-line bg-b-bg0 px-3 py-2 text-[13px] text-b-text"
+              >
+                <option value="">Automatic · run → workflow → global → defaults</option>
+                {(modelPacksQuery.data?.packs ?? [])
+                  .filter((pack) => !pack.archived)
+                  .map((pack) => (
+                    <option key={`${pack.id}@${pack.version}`} value={`${pack.id}@${pack.version}`}>
+                      {pack.name} · {pack.id}@{pack.version}
+                      {modelPacksQuery.data?.active?.id === pack.id &&
+                      modelPacksQuery.data.active.version === pack.version
+                        ? " · global"
+                        : ""}
+                    </option>
+                  ))}
+              </select>
+            </label>
+            <p className="mt-2 text-[11px] leading-5 text-b-text-faint">
+              Selects an immutable routing policy for this run. A direct model
+              override below has higher precedence and is recorded separately.
+            </p>
+          </div>
           <div
             data-testid="model-override-config"
             style={CARD_TOKENS}

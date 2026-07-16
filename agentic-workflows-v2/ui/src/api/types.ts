@@ -125,8 +125,23 @@ export interface RunDetail {
   extra?: {
     evaluation_requested?: boolean;
     evaluation?: EvaluationResult | null;
+    routing?: RunRoutingProvenance;
     [key: string]: unknown;
   } | null;
+}
+
+export interface RunRoutingStep {
+  step: string;
+  tier?: number | null;
+  model?: string | null;
+  provider?: string | null;
+}
+
+export interface RunRoutingProvenance {
+  source: "run" | "workflow" | "global" | "default";
+  requested_model_override?: string | null;
+  pack?: ModelPack | null;
+  resolved_steps: RunRoutingStep[];
 }
 
 /** Execution profile for runtime configuration. */
@@ -149,6 +164,8 @@ export interface WorkflowRunRequest {
    * this run — langchain adapter only. Omit/null for tier defaults.
    */
   model_override?: string | null;
+  /** Immutable named routing-pack selection for this run. */
+  model_pack?: ModelPackRef | null;
 }
 
 /** POST /api/run response. */
@@ -480,8 +497,9 @@ export interface ModelRecommendationResponse {
 
 /**
  * One model from the live provider probe — the static tier-chain catalog plus
- * models discovered live from the Ollama server/cloud. `cloud`, `capabilities`,
- * and `running` are present only for live-discovered Ollama models.
+ * models discovered live from Ollama, LM Studio, and local runtimes. `cloud`,
+ * `capabilities`, and `running` are present only when the provider exposes
+ * those facts.
  */
 export interface ProbedModel {
   id: string;
@@ -508,6 +526,15 @@ export interface ModelProbeResponse {
   tier_defaults: Record<string, string>;
   models: ProbedModel[];
   no_llm_mode: boolean;
+}
+
+/** Response from `POST /api/models/lmstudio/load`. */
+export interface LmStudioLoadResponse {
+  model: string;
+  status: "loaded" | "already_loaded";
+  instance_id: string | null;
+  load_time_seconds: number | null;
+  running: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -576,6 +603,16 @@ export interface ProviderSettingsResponse {
   env_configured_providers: string[];
 }
 
+export interface ProviderProbeResponse {
+  provider_id: string;
+  status: "available" | "unavailable" | "error";
+  checked_at: string;
+  latency_ms: number;
+  discovered_model_count: number;
+  error_category?: string | null;
+  detail: string;
+}
+
 // ---------------------------------------------------------------------------
 // Tier settings — GET/PUT /api/settings/tiers
 // ---------------------------------------------------------------------------
@@ -603,6 +640,93 @@ export interface TierSettingsResponse {
 export interface TierSettingsUpdateRequest {
   tier_overrides?: Record<string, string[]>;
   model_capabilities?: Record<string, string[]>;
+}
+
+// ---------------------------------------------------------------------------
+// Versioned model packs — /api/settings/model-packs
+// ---------------------------------------------------------------------------
+
+export interface ModelPackRef {
+  id: string;
+  version: number;
+}
+
+export type ModelPackSource =
+  | "effective"
+  | "defaults"
+  | "explicit"
+  | "duplicate"
+  | "imported";
+
+export interface ModelPack {
+  id: string;
+  name: string;
+  description: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  archived: boolean;
+  tier_chains: Record<string, string[]>;
+  allowed_providers: string[];
+  capability_requirements: Record<string, string[]>;
+  model_capabilities: Record<string, string[]>;
+  judge_model?: string | null;
+  source: ModelPackSource;
+}
+
+export interface ModelPackCreateRequest {
+  id: string;
+  name: string;
+  description?: string;
+  source?: ModelPackSource;
+  tier_chains?: Record<string, string[]>;
+  allowed_providers?: string[];
+  capability_requirements?: Record<string, string[]>;
+  model_capabilities?: Record<string, string[]>;
+  judge_model?: string | null;
+}
+
+export interface ModelPackUpdateRequest {
+  name?: string;
+  description?: string;
+  tier_chains?: Record<string, string[]>;
+  allowed_providers?: string[];
+  capability_requirements?: Record<string, string[]>;
+  model_capabilities?: Record<string, string[]>;
+  judge_model?: string | null;
+}
+
+export interface ModelPackListResponse {
+  packs: ModelPack[];
+  active?: ModelPackRef | null;
+  workflow_bindings: Record<string, ModelPackRef>;
+}
+
+export interface ModelPackIssue {
+  severity: "error" | "warning";
+  code: string;
+  message: string;
+  tier?: number | null;
+  model?: string | null;
+}
+
+export interface ModelPackValidationResponse {
+  ref: ModelPackRef;
+  valid: boolean;
+  issues: ModelPackIssue[];
+  candidate_chains: Record<string, string[]>;
+}
+
+export interface ModelPackDependenciesResponse {
+  ref: ModelPackRef;
+  globally_active: boolean;
+  workflows: string[];
+  recent_run_ids: string[];
+}
+
+export interface ModelPackExportResponse {
+  schema_version: 1;
+  pack: ModelPack;
 }
 
 // ---------------------------------------------------------------------------
@@ -658,26 +782,67 @@ export interface EvalComparisonResponse {
 /** Author role for one chat playground message. */
 export type ChatRole = "system" | "user" | "assistant";
 
+export interface ChatTextPart {
+  type: "text";
+  text: string;
+}
+
+export interface ChatImagePart {
+  type: "image_url";
+  url: string;
+  detail?: "auto" | "low" | "high";
+}
+
+export type ChatContentPart = ChatTextPart | ChatImagePart;
+
 /** One turn of the playground transcript. */
 export interface ChatMessage {
   role: ChatRole;
-  content: string;
+  content: string | ChatContentPart[];
 }
 
-/** POST /api/chat request body. */
-export interface ChatRequest {
-  /** FULL prefixed id, e.g. "openrouter:meta-llama/llama-3.1-8b-instruct:free". */
-  model: string;
+interface ChatRequestBase {
   /** Running transcript; the server requires at least one message. */
   messages: ChatMessage[];
   /** Sampling temperature (0.0–2.0); the server defaults it to 0.2. */
   temperature?: number;
 }
 
+/** Direct-model overload for POST /api/chat. */
+export interface ModelChatRequest extends ChatRequestBase {
+  /** FULL prefixed id, e.g. "openrouter:meta-llama/llama-3.1-8b-instruct:free". */
+  model: string;
+  tier?: never;
+}
+
+/** Tier-routed overload for POST /api/chat. */
+export interface TierChatRequest extends ChatRequestBase {
+  tier: 1 | 2 | 3 | 4 | 5;
+  model?: never;
+}
+
+/** POST /api/chat accepts exactly one routing constructor. */
+export type ChatRequest = ModelChatRequest | TierChatRequest;
+
 /** Incremental completion text. */
 export interface ChatTokenEvent {
   type: "token";
   delta: string;
+}
+
+/** Selected model for a tier request, emitted before completion output. */
+export interface ChatRouteEvent {
+  type: "route";
+  requested_tier: 1 | 2 | 3 | 4 | 5;
+  model: string;
+}
+
+/** A safe raster image returned by a multimodal model. */
+export interface ChatMediaEvent {
+  type: "media";
+  mime_type: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+  url: string;
+  alt: string;
 }
 
 /** Terminal success frame — echoes the model that produced the reply. */
@@ -694,7 +859,12 @@ export interface ChatErrorEvent {
 }
 
 /** Discriminated union ("type") of every frame on the chat stream. */
-export type ChatStreamEvent = ChatTokenEvent | ChatDoneEvent | ChatErrorEvent;
+export type ChatStreamEvent =
+  | ChatRouteEvent
+  | ChatTokenEvent
+  | ChatMediaEvent
+  | ChatDoneEvent
+  | ChatErrorEvent;
 
 /** The discriminator values carried by `ChatStreamEvent`. */
 export type ChatStreamEventType = ChatStreamEvent["type"];

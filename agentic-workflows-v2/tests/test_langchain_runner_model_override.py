@@ -111,7 +111,7 @@ class TestApplyModelOverride:
 
 
 class TestRunnerModelOverride:
-    """run/astream with model_override compile a copy, cache untouched."""
+    """Run/astream with model_override compile a copy, cache untouched."""
 
     def _patch_compile(
         self,

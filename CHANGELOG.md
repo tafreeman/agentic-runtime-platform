@@ -13,6 +13,63 @@ All notable changes to this project are documented here.
 ### Workflow runs with empty required inputs rejected at submit (2026-07-14)
 
 - **Empty required inputs now fail at submit with 422.** `POST /api/run` accepted runs whose required inputs were blank and let them die asynchronously — the console navigated to a live view that instantly showed "Input validation failed" with 0/8 steps. The runner's input validation is now a shared `validate_workflow_inputs` helper called at submit (after dataset-backed evaluation inputs resolve), returning 422 with the violation list; the run form blocks the same cases client-side, and dataset-backed evaluation runs skip the client check because their inputs resolve server-side.
+### Release engineering for v0.4.0-rc.1 (2026-07-14)
+
+- Added an explicit platform-bundle manifest that maps the GitHub prerelease tag
+  to the independently versioned `agentic-tools`, `agentic-workflows-v2`, and
+  `agentic-v2-eval` distributions.
+- Added isolated wheel installation, import, CLI, metadata, and tag checks to the
+  release pipeline and exposed the same artifact gate as `just release-check`.
+- Repaired the release image contract: the backend uses its `production` stage
+  with the default LangChain runtime extra, and the dashboard now has a non-root
+  nginx production stage with SPA fallback and a health endpoint.
+- Made the generated load report deterministic by deriving its displayed time
+  from committed evidence instead of the CI runner clock.
+- Refreshed vulnerable Python dependency locks and raised direct runtime floors
+  to the first fixed releases reported by the release dependency audit.
+
+### Evidence Ledger UI, Model Router, and multimodal playground — ADR-054 (2026-07-14)
+
+- Replaced the production shell and semantic token system with the light-first
+  Evidence Ledger design: warm-paper surfaces, editorial display typography,
+  hairline structure, restrained orange focus/action treatment, responsive
+  desktop/mobile navigation, owned shadcn/Radix primitives, and route-level
+  code splitting. `/settings` now redirects into the consolidated Model Router
+  and the mock-only `/prototypes` route is no longer shipped.
+- Added provider editing, safe enable/disable and classified saved-provider
+  probes; tier routing dry-run; and immutable named model packs with versioning,
+  validation, activation, duplication, workflow binding, dependency-aware
+  archive, and JSON import/export. Workflow launches can select an exact pack;
+  context-local resolution prevents concurrent-run leakage and completed runs
+  retain the source, immutable pack snapshot, requested override, and resolved
+  model/provider per step.
+- Promoted the existing SSE chat endpoint into a first-class Playground and
+  added multimodal input/output. Messages accept bounded PNG/JPEG/WebP/GIF data
+  URLs, image previews/removal, attachment-only turns, abortable streaming, and
+  typed safe raster output events. Remote/SVG inputs and unsafe provider media
+  blocks are rejected without exposing credentials.
+- Added Pydantic/JSON/TypeScript drift coverage for multimodal chat contracts,
+  backend lifecycle and precedence tests, UI lifecycle/payload/provenance tests,
+  and updated the UI architecture, page, component, API, migration, and ADR
+  documentation.
+- Made workflow editing discoverable from the workflow catalog with a separate,
+  feature-gated edit action on every definition while preserving the existing
+  run-configuration/detail action.
+- Updated live model discovery to LM Studio's native `/api/v1/models` contract
+  with optional `LM_API_TOKEN`, retained legacy fallbacks, and replaced the
+  capped OpenRouter allowlist with its complete text-output chat catalog via
+  `output_modalities=all`. Ollama discovery remains on the official `/api/tags`.
+- Added per-model LM Studio loading through native `POST /api/v1/models/load`.
+  Downloaded but unloaded chat models now expose a bounded `load` action with
+  progress, classified errors, idempotent already-loaded handling, and an
+  automatic provider rescan when loading completes.
+- Added overloaded HTTP chat requests: clients can provide either an exact
+  `model` or a capability `tier` (1–5). Tier requests reuse the configured
+  model-router candidate chain and emit the selected model as a typed `route`
+  SSE event before completion output.
+- Added a responsive all-provider status-card grid above the searchable model
+  catalog. Providers with no detected models remain visible and use an explicit
+  amber state instead of disappearing or implying liveness.
 
 ### No-LLM badge now server-reported (2026-07-09)
 
