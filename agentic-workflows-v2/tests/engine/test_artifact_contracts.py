@@ -436,6 +436,59 @@ async def test_normalized_away_alias_not_visible_to_step() -> None:
     assert "legacy_backend" not in seen
 
 
+async def test_inherited_alias_masked_from_child_view() -> None:
+    """A normalized-away alias living in the PARENT scope is hidden too.
+
+    With a same-name mapping (legacy checkpoint keys), the alias never enters
+    the child, but ``all_variables()`` merges parent variables first — without
+    masking, the dropped alias would still reach a native step's prompt.
+    """
+    backend = {"Program.cs": "var app = builder.Build();"}
+    seen: dict[str, object] = {}
+
+    async def review(child_ctx: ExecutionContext) -> dict[str, object]:
+        seen.update(child_ctx.all_variables())
+        return {}
+
+    step = StepDefinition(
+        name="review_code",
+        func=review,
+        input_mapping={"backend": "backend", "legacy_backend": "legacy_backend"},
+        input_contracts={"backend": _contract(aliases=("legacy_backend",))},
+    )
+    ctx = ExecutionContext()
+    await ctx.set("backend", "No backend code was available for review.")
+    await ctx.set("legacy_backend", backend)
+
+    result = await StepExecutor().execute(step, ctx)
+
+    assert result.is_success
+    assert seen["backend"] == backend
+    assert "legacy_backend" not in seen
+    # The parent scope is untouched — only the child view is masked.
+    assert await ctx.get("legacy_backend") == backend
+
+
+async def test_mask_inherited_context_semantics() -> None:
+    """mask_inherited hides a parent key from every read path of the child
+    until a local set overrides it; the parent is never mutated."""
+    parent = ExecutionContext()
+    await parent.set("legacy", "placeholder")
+    child = parent.child("step")
+
+    await child.mask_inherited("legacy")
+
+    assert await child.get("legacy", "fallback") == "fallback"
+    assert child.get_sync("legacy", "fallback") == "fallback"
+    assert child.has("legacy") is False
+    assert "legacy" not in child.all_variables()
+    assert await parent.get("legacy") == "placeholder"
+
+    await child.set("legacy", "local override")
+    assert await child.get("legacy") == "local override"
+    assert child.all_variables()["legacy"] == "local override"
+
+
 async def test_null_warning_skipped_when_alias_resolves_none_canonical(
     caplog: pytest.LogCaptureFixture,
 ) -> None:

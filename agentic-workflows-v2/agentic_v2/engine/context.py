@@ -160,6 +160,9 @@ class ExecutionContext:
     _variables: dict[str, Any] = field(default_factory=dict)
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
+    # Inherited keys hidden from this scope (see mask_inherited)
+    _masked: set[str] = field(default_factory=set)
+
     # Parent context (for scoping)
     _parent: "ExecutionContext" | None = None
 
@@ -275,10 +278,16 @@ class ExecutionContext:
                 local_hit = True
                 local_value = self._variables[key]
 
+            masked = self._mask_root(key) in self._masked
             parent = self._parent
 
         if local_hit:
             return local_value
+
+        # A masked key reads as unset in this scope: do not fall back to
+        # the parent (see mask_inherited).
+        if masked:
+            return default
 
         # Delegate to the parent WITHOUT holding self._lock, breaking the
         # inversion: the parent acquires its own lock independently.
@@ -299,6 +308,9 @@ class ExecutionContext:
         elif key in self._variables:
             return self._variables[key]
 
+        if self._mask_root(key) in self._masked:
+            return default
+
         if self._parent is not None:
             return self._parent.get_sync(key, default)
 
@@ -310,6 +322,7 @@ class ExecutionContext:
         async with self._lock:
             old_value = self._variables.get(key)
             self._variables[key] = value
+            self._masked.discard(key)
 
         await self._emit(
             EventType.VARIABLE_SET,
@@ -320,6 +333,7 @@ class ExecutionContext:
         """Synchronous set."""
         self._validate_variable_key(key)
         self._variables[key] = value
+        self._masked.discard(key)
 
     async def merge_step_view(self, step_name: str, step_view: dict[str, Any]) -> None:
         """Atomically record a step's view under the shared ``steps`` namespace.
@@ -391,18 +405,40 @@ class ExecutionContext:
                 return True
             return False
 
+    async def mask_inherited(self, key: str) -> None:
+        """Hide an inherited variable from this scope.
+
+        The parent's value is untouched; within this context the key reads
+        as unset (``get``/``has``/``all_variables``) until a local ``set``
+        overrides the mask. The step executor uses this to keep aliases
+        normalized away by an artifact contract out of the step's variable
+        view.
+        """
+        async with self._lock:
+            self._variables.pop(key, None)
+            self._masked.add(key)
+
+    @staticmethod
+    def _mask_root(key: str) -> str:
+        """Root variable name of a plain key or JMESPath query."""
+        return key.split(".", 1)[0].split("[", 1)[0]
+
     def has(self, key: str) -> bool:
         """Check if variable exists (locally or in parent)."""
         if key in self._variables:
             return True
+        if key in self._masked:
+            return False
         if self._parent is not None:
             return self._parent.has(key)
         return False
 
     def all_variables(self) -> dict[str, Any]:
-        """Get all variables (merged with parent)."""
+        """Get all variables (merged with parent, minus masked keys)."""
         if self._parent is not None:
             merged = self._parent.all_variables()
+            for masked_key in self._masked:
+                merged.pop(masked_key, None)
             merged.update(self._variables)
             return merged
         return self._variables.copy()
