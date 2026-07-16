@@ -369,8 +369,10 @@ def validate_workflow_inputs(
     for name, input_cfg in config.inputs.items():
         if name in supplied:
             value = supplied[name]
-            # Treat empty string as missing for required string inputs
-            if input_cfg.required and isinstance(value, str) and not value.strip():
+            # Treat None or a blank string as missing for required inputs
+            if input_cfg.required and (
+                value is None or (isinstance(value, str) and not value.strip())
+            ):
                 errors.append(f"Required input '{name}' must not be empty")
                 continue
             if input_cfg.enum and value not in input_cfg.enum:

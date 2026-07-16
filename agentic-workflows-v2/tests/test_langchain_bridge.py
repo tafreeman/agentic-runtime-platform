@@ -38,6 +38,23 @@ class TestStepsDictToList:
         result = _steps_dict_to_list(steps)
         assert result[0].status == StepStatus.FAILED
 
+    def test_recorded_step_metadata_survives_with_token_counts(self):
+        # Contract diagnostics recorded by graph_wiring must reach the
+        # StepResult (run log + UI), with token counts layered on top.
+        steps = {
+            "step_d": {
+                "status": "failed",
+                "outputs": {},
+                "metadata": {"contract_diagnostics": [{"code": "placeholder"}]},
+            }
+        }
+        result = _steps_dict_to_list(
+            steps, token_counts={"step_d": {"input": 3, "output": 7}}
+        )
+        assert result[0].metadata["contract_diagnostics"] == [{"code": "placeholder"}]
+        assert result[0].metadata["input_tokens"] == 3
+        assert result[0].metadata["output_tokens"] == 7
+
     def test_skipped_status_mapping(self):
         steps = {"step_d": {"status": "skipped"}}
         result = _steps_dict_to_list(steps)
