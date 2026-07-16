@@ -522,10 +522,7 @@ class StepExecutor:
         mapped_inputs: dict[str, Any] = {}
         null_inputs: dict[str, Any] = {}
         for step_input, ctx_var in step_def.input_mapping.items():
-            value = self._resolve_input_mapping_value(ctx, ctx_var)
-            mapped_inputs[step_input] = value
-            if value is None:
-                null_inputs[step_input] = ctx_var
+            mapped_inputs[step_input] = self._resolve_input_mapping_value(ctx, ctx_var)
         result.input_data = mapped_inputs
 
         validated_inputs = validate_and_normalize_artifacts(
@@ -534,11 +531,15 @@ class StepExecutor:
         )
         if validated_inputs != mapped_inputs:
             result.input_data = validated_inputs
-        # Populate the child context only from the validated inputs so an
-        # alias normalized away by a contract never becomes visible to the
-        # step (native steps build prompts from ctx.all_variables()).
+        # Populate the child context (and the null-input warning below) only
+        # from the validated inputs: an alias normalized away by a contract
+        # must never become visible to the step (native steps build prompts
+        # from ctx.all_variables()), and a None canonical successfully
+        # resolved via an alias is not a null input.
         for step_input, value in validated_inputs.items():
             await child_ctx.set(step_input, value)
+            if value is None:
+                null_inputs[step_input] = step_def.input_mapping.get(step_input)
 
         if null_inputs:
             logger.warning(
