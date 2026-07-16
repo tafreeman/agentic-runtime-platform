@@ -429,8 +429,14 @@ async def run_workflow(
 
         # Reject invalid inputs at submit time so the client gets a 422 with
         # the violation list instead of a run that errors asynchronously.
+        # Merge (not replace) the validated result: it applies declared
+        # defaults, but undeclared keys — e.g. extras carried by a resolved
+        # dataset sample — must keep flowing to the background task.
         try:
-            validate_workflow_inputs(workflow_def, workflow_inputs)
+            workflow_inputs = {
+                **workflow_inputs,
+                **validate_workflow_inputs(workflow_def, workflow_inputs),
+            }
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 

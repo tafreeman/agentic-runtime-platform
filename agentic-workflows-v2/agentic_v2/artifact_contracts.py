@@ -30,6 +30,11 @@ _PLACEHOLDER_TEXT_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _MAX_ARTIFACT_LENGTH = 262144
+# Only scan file sources this short for refusal/placeholder prose. Real
+# generated source files legitimately contain phrases like "see README.md
+# for details" in comments; an LLM refusal standing in for a file is a
+# sentence or two, not hundreds of characters of code.
+_PLACEHOLDER_SCAN_MAX_CHARS = 400
 _WINDOWS_DEVICE_RE = re.compile(
     r"^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.I
 )
@@ -237,7 +242,9 @@ def _mapping_diagnostics(
                     f"file {path_value!r} must contain non-blank source text",
                 )
             )
-        elif _PLACEHOLDER_TEXT_RE.search(source):
+        elif len(source) <= _PLACEHOLDER_SCAN_MAX_CHARS and _PLACEHOLDER_TEXT_RE.search(
+            source
+        ):
             diagnostics.append(
                 _diagnostic(
                     field_name,

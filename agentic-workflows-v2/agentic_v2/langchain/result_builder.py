@@ -66,8 +66,14 @@ def steps_dict_to_list(
             )
             status = StepStatus.FAILED
 
+        # Start from the step's recorded metadata (e.g. structured contract
+        # diagnostics from graph_wiring) so it survives into the run log and
+        # UI; token counts are layered on top.
+        recorded_meta = step_data.get("metadata")
+        meta: dict[str, Any] = (
+            dict(recorded_meta) if isinstance(recorded_meta, dict) else {}
+        )
         step_tokens = token_counts.get(step_name, {})
-        meta: dict[str, Any] = {}
         if step_tokens:
             meta["input_tokens"] = step_tokens.get("input", 0)
             meta["output_tokens"] = step_tokens.get("output", 0)

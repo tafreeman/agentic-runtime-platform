@@ -63,6 +63,15 @@ class TestValidateWorkflowInputs:
         with pytest.raises(ValueError, match="'spec' must not be empty"):
             validate_workflow_inputs(cfg, {"spec": "   "})
 
+    def test_none_required_input_raises(self) -> None:
+        cfg = _config(spec=InputConfig(name="spec", required=True))
+        with pytest.raises(ValueError, match="'spec' must not be empty"):
+            validate_workflow_inputs(cfg, {"spec": None})
+
+    def test_none_optional_input_passes_through(self) -> None:
+        cfg = _config(note=InputConfig(name="note", required=False))
+        assert validate_workflow_inputs(cfg, {"note": None}) == {"note": None}
+
     def test_default_applied_for_omitted_input(self) -> None:
         cfg = _config(stack=InputConfig(name="stack", required=False, default="python"))
         assert validate_workflow_inputs(cfg, {}) == {"stack": "python"}
@@ -235,6 +244,50 @@ async def test_dataset_resolution_runs_before_input_validation(
     assert len(background_tasks.tasks) == 1
     # workflow_inputs is the third positional arg to _run_and_evaluate.
     assert background_tasks.tasks[0].args[2] == {"feature_spec": "from dataset"}
+
+
+async def test_defaults_and_extras_reach_background_task(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Declared defaults are applied to the queued inputs, and undeclared
+    extras survive the merge.
+
+    Regression guard: the route must not discard ``validate_workflow_inputs``'s
+    return value (defaults would be lost to non-LangChain adapters that seed
+    ``ExecutionContext`` directly), and must not replace the inputs wholesale
+    (undeclared keys carried by the request or a dataset sample would vanish).
+    """
+    workflow_def = WorkflowConfig(
+        name="wf",
+        inputs={
+            "spec": InputConfig(name="spec", required=True),
+            "stack": InputConfig(name="stack", required=False, default="python"),
+        },
+        steps=[],
+    )
+    # Reuses the evaluation patch helper; the dataset-resolution stub is
+    # simply never called for a request without evaluation.
+    _patch_run_route_for_evaluation(monkeypatch, tmp_path, workflow_def, {})
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    response = await workflows.run_workflow(
+        WorkflowRunRequest(
+            workflow="wf",
+            input_data={"spec": "a note app", "extra_context": "keep-me"},
+            adapter="langchain",
+        ),
+        background_tasks,
+        _request(),
+        tenant,
+    )
+
+    assert response.status == StepStatus.PENDING
+    assert background_tasks.tasks[0].args[2] == {
+        "spec": "a note app",
+        "extra_context": "keep-me",
+        "stack": "python",
+    }
 
 
 async def test_dataset_resolution_still_enforces_required_inputs(

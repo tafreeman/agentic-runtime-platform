@@ -41,6 +41,22 @@ def test_code_artifact_accepts_file_map_or_complete_sentinel(value: object) -> N
     assert normalized["backend_code"] == value
 
 
+def test_long_source_with_incidental_prose_is_not_placeholder() -> None:
+    # Real generated code may legitimately contain refusal-regex phrases in
+    # comments; only short, prose-sized sources are scanned for placeholders.
+    source = "// see README.md for details on configuration\n" + "\n".join(
+        f"export const value{i} = {i};" for i in range(40)
+    )
+    assert len(source) > 400
+
+    normalized = validate_and_normalize_artifacts(
+        {"backend_code": {"src/config.ts": source}},
+        {"backend_code": _contract()},
+    )
+
+    assert normalized["backend_code"] == {"src/config.ts": source}
+
+
 @pytest.mark.parametrize(
     ("value", "code"),
     [
