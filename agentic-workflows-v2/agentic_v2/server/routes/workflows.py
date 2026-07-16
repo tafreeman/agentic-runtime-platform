@@ -421,10 +421,16 @@ async def run_workflow(
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         if model_pack is not None and adapter_name != "langchain":
-            raise HTTPException(
-                status_code=422,
-                detail="model_pack requires the langchain adapter",
-            )
+            if model_pack_source == "run":
+                raise HTTPException(
+                    status_code=422,
+                    detail="model_pack requires the langchain adapter",
+                )
+            # Ambient workflow/global packs only route the langchain engine;
+            # a native-adapter run ignores them rather than failing on
+            # machine-local settings state.
+            model_pack = None
+            model_pack_source = "default"
         evaluation = request.evaluation
         dataset_sample: dict[str, Any] | None = None
         dataset_meta: dict[str, Any] | None = None
