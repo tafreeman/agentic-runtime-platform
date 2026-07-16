@@ -6,6 +6,14 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Typed step artifact contracts — ADR-052 (2026-07-14)
+
+- **Typed step artifact contracts (ADR-052).** A live `fullstack_generation` run reported 8/8 steps successful while every downstream consumer received an `api_code` placeholder ("see backend_code for implementation") instead of the real `backend_code` file map — `coalesce()` picks the first non-null value, and key presence was the only success criterion. New opt-in per-step `input_contracts`/`output_contracts` (first kind: `code_artifact`) validate artifact content through one shared validator in both execution engines: canonical-first alias promotion, placeholder/refusal-prose rejection, unsafe-path rejection, structured diagnostics. `fullstack_generation` adopts the contract for `backend_code`/`backend_tests` (`api_code`/`api_tests` remain parse-only migration aliases), and a placeholder-only `AGENTIC_NO_LLM=1` run now reports `failed` instead of a hollow success. String payloads are parsed with the canonical FILE/ENDFILE grammar from `engine/llm_output_parsing.py` — contract validation defines no grammar of its own.
+
+### Workflow runs with empty required inputs rejected at submit (2026-07-14)
+
+- **Empty required inputs now fail at submit with 422.** `POST /api/run` accepted runs whose required inputs were blank and let them die asynchronously — the console navigated to a live view that instantly showed "Input validation failed" with 0/8 steps. The runner's input validation is now a shared `validate_workflow_inputs` helper called at submit (after dataset-backed evaluation inputs resolve), returning 422 with the violation list; the run form blocks the same cases client-side, and dataset-backed evaluation runs skip the client check because their inputs resolve server-side.
+
 ### No-LLM badge now server-reported (2026-07-09)
 
 - **No-LLM badge now server-reported.** The dashboard's no-LLM indicator (`Sidebar`, `ConsoleHeader`, `ConsoleStatus`) read `isNoLlmModeEnabled()`, a client build-time flag baked in at `vite build` — it could silently disagree with how the server was started. `GET /api/health` now returns an additive `no_llm_mode` field read live from `AGENTIC_NO_LLM` each request (not the cached `Settings` singleton); all three surfaces derive the badge from it via the shared `["backend-health"]` query. The orphaned build-time flag (`isNoLlmModeEnabled()`, the `__AGENTIC_NO_LLM_MODE__` Vite/Vitest define, `VITE_AGENTIC_NO_LLM` plumbing) was removed as dead code.

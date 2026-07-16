@@ -810,10 +810,39 @@ def _build_success_update(
         )
         or None,
     )
-    step_outputs = validate_and_normalize_artifacts(
-        step_outputs,
-        step.output_contracts,
-    )
+    try:
+        step_outputs = validate_and_normalize_artifacts(
+            step_outputs,
+            step.output_contracts,
+        )
+    except ArtifactContractError as error:
+        # response_ok already validated this text for contracted steps, but
+        # its parse pass uses a different expected-key list, so this
+        # re-validation is not provably redundant. Fail with the same
+        # structured diagnostics the other call sites emit instead of leaking
+        # a raw exception into the stream handler.
+        diagnostics = [item.as_dict() for item in error.diagnostics]
+        return _build_failure_update(
+            step,
+            state,
+            ctx,
+            resolved_inputs,
+            run_id,
+            start_time,
+            trace,
+            [
+                *attempt_errors,
+                {
+                    "model": None,
+                    "error": str(error),
+                    "retryable": False,
+                    "contract_diagnostics": diagnostics,
+                },
+            ],
+            attempted_models,
+            failure_message=str(error),
+            failure_metadata={"contract_diagnostics": diagnostics},
+        )
 
     # Map outputs to context
     ctx = map_step_outputs_to_context(step, step_outputs, ctx)
