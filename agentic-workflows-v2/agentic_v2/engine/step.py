@@ -540,6 +540,11 @@ class StepExecutor:
             await child_ctx.set(step_input, value)
             if value is None:
                 null_inputs[step_input] = step_def.input_mapping.get(step_input)
+        # A normalized-away alias may also exist in the parent scope under
+        # the same name (legacy checkpoint keys); mask it so the merged
+        # variable view the step sees stays canonical-only.
+        for dropped in mapped_inputs.keys() - validated_inputs.keys():
+            await child_ctx.mask_inherited(dropped)
 
         if null_inputs:
             logger.warning(
