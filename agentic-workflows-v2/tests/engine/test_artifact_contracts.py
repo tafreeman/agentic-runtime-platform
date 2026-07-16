@@ -95,6 +95,46 @@ def test_code_artifact_rejects_oversize_content(as_mapping: bool) -> None:
     assert any(item.code == "too_large" for item in exc_info.value.diagnostics)
 
 
+def test_multi_file_payload_with_two_blocks_is_accepted() -> None:
+    payload = (
+        "FILE: src/main.py\n"
+        "print('main')\n"
+        "ENDFILE\n"
+        "\n"
+        "FILE: src/util.py\n"
+        "print('util')\n"
+        "ENDFILE"
+    )
+
+    normalized = validate_and_normalize_artifacts(
+        {"backend_code": payload},
+        {"backend_code": _contract()},
+    )
+
+    assert normalized["backend_code"] == payload
+
+
+def test_multi_file_payload_with_trailing_prose_is_rejected() -> None:
+    payload = (
+        "FILE: src/main.py\n"
+        "print('main')\n"
+        "ENDFILE\n"
+        "\n"
+        "FILE: src/util.py\n"
+        "print('util')\n"
+        "ENDFILE\n"
+        "trailing notes about the change"
+    )
+
+    with pytest.raises(ArtifactContractError) as exc_info:
+        validate_and_normalize_artifacts(
+            {"backend_code": payload},
+            {"backend_code": _contract()},
+        )
+
+    assert any(item.code == "invalid_format" for item in exc_info.value.diagnostics)
+
+
 def test_missing_required_artifact_has_structured_diagnostic() -> None:
     with pytest.raises(ArtifactContractError) as exc_info:
         validate_and_normalize_artifacts({}, {"backend_code": _contract()})
@@ -133,6 +173,34 @@ def test_valid_legacy_alias_is_promoted_when_canonical_is_invalid() -> None:
     assert normalized["backend_code"] is backend
 
 
+def test_optional_contract_field_absent_is_not_required() -> None:
+    """``required: false`` and the field is entirely missing: passes through."""
+    normalized = validate_and_normalize_artifacts(
+        {},
+        {"backend_code": ArtifactContract(kind="code_artifact", required=False)},
+    )
+
+    assert "backend_code" not in normalized
+
+
+def test_optional_contract_field_present_but_invalid_still_raises() -> None:
+    """``required: false`` does not waive validation once the field is present.
+
+    ``validate_and_normalize_artifacts`` only skips a contract when the field
+    (and all its aliases) are absent; a present-but-invalid value for an
+    optional field is rejected exactly like a required one.
+    """
+    with pytest.raises(ArtifactContractError) as exc_info:
+        validate_and_normalize_artifacts(
+            {"backend_code": "not generated"},
+            {"backend_code": ArtifactContract(kind="code_artifact", required=False)},
+        )
+
+    diagnostic = exc_info.value.diagnostics[0]
+    assert diagnostic.field == "backend_code"
+    assert diagnostic.code == "placeholder"
+
+
 def test_contract_parser_returns_frozen_model_and_rejects_unknown_kind() -> None:
     parsed = parse_artifact_contracts(
         {
@@ -164,6 +232,50 @@ def test_contract_parser_rejects_alias_collisions() -> None:
                 },
                 "api_code": {"kind": "code_artifact"},
             },
+            location="steps.generate_api.output_contracts",
+        )
+
+
+@pytest.mark.parametrize(
+    ("raw", "match"),
+    [
+        (["not", "a", "mapping"], "must be a mapping"),
+        ({123: {"kind": "code_artifact"}}, "non-empty strings"),
+        ({"   ": {"kind": "code_artifact"}}, "non-empty strings"),
+        ({"backend_code": ["code_artifact"]}, "must be a mapping or contract kind"),
+        (
+            {"backend_code": {"kind": "code_artifact", "bogus": True}},
+            "unknown fields",
+        ),
+        (
+            {"backend_code": {"kind": "code_artifact", "required": "yes"}},
+            "required must be a boolean",
+        ),
+        (
+            {"backend_code": {"kind": "code_artifact", "aliases": "api_code"}},
+            "aliases must be a list of strings",
+        ),
+        (
+            {"backend_code": {"kind": "code_artifact", "aliases": [123]}},
+            "aliases must be a list of strings",
+        ),
+        (
+            {"backend_code": {"kind": "code_artifact", "aliases": [""]}},
+            "aliases must be a list of strings",
+        ),
+        (
+            {"backend_code": {"kind": "code_artifact", "aliases": ["backend_code"]}},
+            "cannot alias itself",
+        ),
+    ],
+)
+def test_parse_artifact_contracts_rejects_invalid_config(
+    raw: object,
+    match: str,
+) -> None:
+    with pytest.raises(ArtifactContractConfigError, match=match):
+        parse_artifact_contracts(
+            raw,
             location="steps.generate_api.output_contracts",
         )
 
@@ -240,6 +352,41 @@ async def test_native_output_contract_rejects_placeholder_success() -> None:
     assert result.error_type == "ArtifactContractError"
     assert result.metadata["contract_diagnostics"][0]["field"] == "backend_code"
     assert result.output_data == {}
+
+
+async def test_native_alias_promoted_into_context_before_invocation() -> None:
+    """A valid alias is promoted into the canonical key before the step runs.
+
+    Both the canonical field and its alias are declared in ``input_mapping``
+    (mirroring how a real step reads a legacy checkpoint key). When the
+    canonical value is invalid but the alias holds a valid file map, the
+    executor must promote the alias into the canonical context key *before*
+    invoking the step function, so the function only ever observes the
+    canonical key.
+    """
+    backend = {"Program.cs": "var app = builder.Build();"}
+    received: dict[str, object] = {}
+
+    async def review(child_ctx: ExecutionContext) -> dict[str, object]:
+        received["backend"] = await child_ctx.get("backend")
+        return {}
+
+    step = StepDefinition(
+        name="review_code",
+        func=review,
+        input_mapping={"backend": "backend", "legacy_backend": "legacy_backend"},
+        input_contracts={"backend": _contract(aliases=("legacy_backend",))},
+    )
+    ctx = ExecutionContext()
+    await ctx.set("backend", "No backend code was available for review.")
+    await ctx.set("legacy_backend", backend)
+
+    result = await StepExecutor().execute(step, ctx)
+
+    assert result.is_success
+    assert received["backend"] == backend
+    assert result.input_data["backend"] == backend
+    assert "legacy_backend" not in result.input_data
 
 
 async def test_native_retry_clears_stale_contract_failure_state() -> None:

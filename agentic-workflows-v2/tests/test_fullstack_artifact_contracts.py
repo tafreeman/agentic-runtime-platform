@@ -7,7 +7,11 @@ import json
 import pytest
 from langchain_core.messages import AIMessage
 
-from agentic_v2.artifact_contracts import ArtifactContract, ArtifactContractError
+from agentic_v2.artifact_contracts import (
+    ArtifactContract,
+    ArtifactContractError,
+    ContractDiagnostic,
+)
 from agentic_v2.langchain import graph as graph_module
 from agentic_v2.langchain.config import (
     StepConfig,
@@ -305,6 +309,118 @@ async def test_no_llm_placeholder_is_explicitly_unsuccessful(monkeypatch) -> Non
     assert created == ["placeholder"]
     assert updated["steps"]["generate_api"]["status"] == "failed"
     assert updated["errors"]
+
+
+async def test_tier0_node_input_contract_failure_emits_trace_and_diagnostics() -> None:
+    """A tier-0 (deterministic) node enforces input contracts before running.
+
+    Mirrors ``test_pre_invocation_contract_failure_emits_start_then_complete``
+    for the tier1+ node, but for the ``_build_tier0_node`` closure: an
+    ``agent`` string that ``parse_agent_tier`` routes to tier 0 must still
+    fail closed on an invalid contracted input, before the deterministic
+    handler ever runs, and still emit a start/complete trace pair.
+    """
+    trace = _RecordingTrace()
+    step = StepConfig(
+        name="parse_backend",
+        agent="tier0_process",
+        inputs={"backend": "${inputs.backend}"},
+        input_contracts={"backend": _code_contract()},
+    )
+    workflow = WorkflowConfig(name="tier0_input_contract", steps=[step])
+    node = graph_module._make_step_node(step, workflow, trace_adapter=trace)
+    state = initial_state({"backend": "No backend code was available for review."})
+
+    updated = await node(state)
+
+    assert updated["steps"]["parse_backend"]["status"] == "failed"
+    diagnostics = updated["steps"]["parse_backend"]["metadata"]["contract_diagnostics"]
+    assert diagnostics[0]["field"] == "backend"
+    assert trace.starts == [{}]
+    assert len(trace.completions) == 1
+
+
+async def test_tier0_node_output_contract_failure_produces_failed_result() -> None:
+    """A tier-0 node's deterministic output is still checked against its output
+    contract, and a violation fails the step (not a success).
+
+    Uses the real ``tier0_process`` handler (echoes its ``text`` input into
+    ``result``) so the contract violation is on genuine step output, not a
+    stand-in.
+    """
+    step = StepConfig(
+        name="process_backend",
+        agent="tier0_process",
+        inputs={"text": "${inputs.raw_text}"},
+        outputs={"result": "result"},
+        output_contracts={"result": _code_contract()},
+    )
+    workflow = WorkflowConfig(name="tier0_output_contract", steps=[step])
+    node = graph_module._make_step_node(step, workflow)
+    state = initial_state({"raw_text": "No backend code was available for review."})
+
+    updated = await node(state)
+
+    assert updated["steps"]["process_backend"]["status"] == "failed"
+    assert updated["steps"]["process_backend"]["outputs"] == {}
+    metadata = updated["steps"]["process_backend"]["metadata"]
+    assert metadata["contract_diagnostics"][0]["field"] == "result"
+    assert "result" not in updated["context"]
+
+
+async def test_success_update_revalidation_failure_produces_failed_step(
+    monkeypatch,
+) -> None:
+    """The final re-validation in ``_build_success_update`` fails closed.
+
+    ``response_ok`` validates a candidate's text before it is accepted, but
+    ``_build_success_update`` re-parses with a differently-filtered key list
+    and validates again. If that second pass ever rejects, the step must
+    surface a failed result with contract diagnostics instead of leaking a
+    raw ``ArtifactContractError`` out of the node.
+    """
+    monkeypatch.delenv("AGENTIC_NO_LLM", raising=False)
+    node, _created = _wire_contract_node(
+        monkeypatch,
+        {"model-a": json.dumps({"backend_code": _BACKEND})},
+        candidates=["model-a"],
+    )
+
+    from agentic_v2.langchain import graph_wiring
+
+    real_validate = graph_wiring.validate_and_normalize_artifacts
+    output_contract_calls = 0
+
+    def second_pass_rejects(values, contracts):
+        nonlocal output_contract_calls
+        if contracts:
+            output_contract_calls += 1
+            if output_contract_calls > 1:
+                raise ArtifactContractError(
+                    [
+                        ContractDiagnostic(
+                            field="backend_code",
+                            kind="code_artifact",
+                            code="placeholder",
+                            message="rejected on the success-update pass",
+                        )
+                    ]
+                )
+        return real_validate(values, contracts)
+
+    monkeypatch.setattr(
+        graph_wiring,
+        "validate_and_normalize_artifacts",
+        second_pass_rejects,
+    )
+
+    updated = await node(initial_state())
+
+    step_record = updated["steps"]["generate_api"]
+    assert step_record["status"] == "failed"
+    diagnostics = step_record["metadata"]["contract_diagnostics"]
+    assert diagnostics[0]["code"] == "placeholder"
+    assert output_contract_calls == 2
 
 
 def test_native_loader_rejects_unbound_contract(tmp_path) -> None:

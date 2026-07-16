@@ -30,7 +30,10 @@ supported kind is `code_artifact`, accepted only as either:
 
 Contracts reject missing required values, empty or hollow maps, unsafe paths,
 placeholder objects, and placeholder/refusal/reference-only prose. Failures
-carry structured diagnostics with the field, kind, code, and message.
+carry structured diagnostics with the field, kind, code, and message. String
+payloads are parsed with the canonical FILE/ENDFILE grammar owned by
+`agentic_v2/engine/llm_output_parsing.py`; contract validation does not define
+a grammar of its own, so it can never disagree with downstream extraction.
 
 Output contracts name one canonical field and may declare migration aliases.
 A valid canonical value wins. An alias is promoted only when the canonical
@@ -42,6 +45,13 @@ contracted outputs before success mapping. The LangChain adapter applies the
 same shared validator before agent invocation, during model failover, and
 before a success update. Contracted output failover rejects an invalid final
 candidate instead of recording its raw prose as success.
+
+On a contract violation the two engines deliberately keep their existing
+recovery strategies: the native executor treats it like any other step error
+and retries within the step's retry budget (a nondeterministic model may
+produce a valid artifact on a later attempt), while the LangChain adapter
+fails over to the next model candidate. Both paths fail closed once the
+retry budget or candidate list is exhausted.
 
 `fullstack_generation` adopts the contract for `backend_code` and
 `backend_tests`, with `api_code` and `api_tests` as legacy aliases. Consumers

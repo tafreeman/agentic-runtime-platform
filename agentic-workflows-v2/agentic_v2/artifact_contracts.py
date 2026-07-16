@@ -29,10 +29,6 @@ _PLACEHOLDER_TEXT_RE = re.compile(
     r")\b",
     flags=re.IGNORECASE,
 )
-_FILE_BLOCK_RE = re.compile(
-    r"^FILE:[ \t]*(?P<path>[^\r\n]+)\r?\n" r"(?P<content>.*?)^ENDFILE[ \t]*(?:\r?\n|$)",
-    re.DOTALL | re.MULTILINE,
-)
 _MAX_ARTIFACT_LENGTH = 262144
 _WINDOWS_DEVICE_RE = re.compile(
     r"^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.I
@@ -265,8 +261,17 @@ def _mapping_diagnostics(
 
 
 def _parse_complete_file_payload(text: str) -> dict[str, str] | None:
-    """Parse FILE blocks only when they consume the complete payload."""
-    matches = list(_FILE_BLOCK_RE.finditer(text))
+    """Parse FILE blocks only when they consume the complete payload.
+
+    Uses the canonical FILE/ENDFILE grammar owned by
+    ``agentic_v2.engine.llm_output_parsing`` so contract validation can never
+    disagree with downstream extraction (single-parser rule).
+    """
+    # Imported lazily: a module-level import would cycle through
+    # agentic_v2.engine.__init__ -> engine.step -> artifact_contracts.
+    from agentic_v2.engine.llm_output_parsing import FILE_BLOCK_RE
+
+    matches = list(FILE_BLOCK_RE.finditer(text))
     if not matches:
         return None
     cursor = 0
@@ -274,7 +279,7 @@ def _parse_complete_file_payload(text: str) -> dict[str, str] | None:
     for match in matches:
         if text[cursor : match.start()].strip():
             return None
-        files[match.group("path").strip()] = match.group("content")
+        files[match.group(1).strip()] = match.group(2)
         cursor = match.end()
     if text[cursor:].strip():
         return None
@@ -348,9 +353,10 @@ def validate_and_normalize_artifacts(
 ) -> dict[str, Any]:
     """Validate artifact values and promote independently valid aliases.
 
-    A valid canonical value always wins.  An alias is considered only when
-    the canonical value is missing or invalid, and is never promoted unless
-    it independently satisfies the canonical field's contract.
+    A valid canonical value always wins.  An alias is considered only
+    when the canonical value is missing or invalid, and is never
+    promoted unless it independently satisfies the canonical field's
+    contract.
     """
     normalized = dict(values)
     all_diagnostics: list[ContractDiagnostic] = []
