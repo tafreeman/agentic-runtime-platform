@@ -405,6 +405,36 @@ async def test_native_alias_promoted_into_context_before_invocation() -> None:
     assert "legacy_backend" not in result.input_data
 
 
+async def test_normalized_away_alias_not_visible_to_step() -> None:
+    """An alias dropped by input normalization must not leak into the child
+    context — native LLM steps build their prompt from ``ctx.all_variables()``,
+    so a placeholder alias set before validation would still reach the model
+    even though ``result.input_data`` shows only canonical inputs.
+    """
+    backend = {"Program.cs": "var app = builder.Build();"}
+    seen: dict[str, object] = {}
+
+    async def review(child_ctx: ExecutionContext) -> dict[str, object]:
+        seen.update(child_ctx.all_variables())
+        return {}
+
+    step = StepDefinition(
+        name="review_code",
+        func=review,
+        input_mapping={"backend": "draft_backend", "legacy_backend": "old_backend"},
+        input_contracts={"backend": _contract(aliases=("legacy_backend",))},
+    )
+    ctx = ExecutionContext()
+    await ctx.set("draft_backend", "No backend code was available for review.")
+    await ctx.set("old_backend", backend)
+
+    result = await StepExecutor().execute(step, ctx)
+
+    assert result.is_success
+    assert seen["backend"] == backend
+    assert "legacy_backend" not in seen
+
+
 async def test_native_retry_clears_stale_contract_failure_state() -> None:
     calls = 0
     backend = {"Program.cs": "var app = builder.Build();"}
