@@ -524,7 +524,6 @@ class StepExecutor:
         for step_input, ctx_var in step_def.input_mapping.items():
             value = self._resolve_input_mapping_value(ctx, ctx_var)
             mapped_inputs[step_input] = value
-            await child_ctx.set(step_input, value)
             if value is None:
                 null_inputs[step_input] = ctx_var
         result.input_data = mapped_inputs
@@ -535,8 +534,11 @@ class StepExecutor:
         )
         if validated_inputs != mapped_inputs:
             result.input_data = validated_inputs
-            for step_input, value in validated_inputs.items():
-                await child_ctx.set(step_input, value)
+        # Populate the child context only from the validated inputs so an
+        # alias normalized away by a contract never becomes visible to the
+        # step (native steps build prompts from ctx.all_variables()).
+        for step_input, value in validated_inputs.items():
+            await child_ctx.set(step_input, value)
 
         if null_inputs:
             logger.warning(
