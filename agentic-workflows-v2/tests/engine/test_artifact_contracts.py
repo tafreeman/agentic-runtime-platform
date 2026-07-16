@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import FrozenInstanceError
 
 import pytest
@@ -433,6 +434,55 @@ async def test_normalized_away_alias_not_visible_to_step() -> None:
     assert result.is_success
     assert seen["backend"] == backend
     assert "legacy_backend" not in seen
+
+
+async def test_null_warning_skipped_when_alias_resolves_none_canonical(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A None canonical resolved via a valid alias is not a null input.
+
+    The null-input warning must be derived from the validated inputs, not the
+    pre-normalization mapping, or every alias-resolved step logs a false
+    "will run with null input" warning.
+    """
+    backend = {"Program.cs": "var app = builder.Build();"}
+
+    async def review(_ctx: ExecutionContext) -> dict[str, object]:
+        return {}
+
+    step = StepDefinition(
+        name="review_code",
+        func=review,
+        input_mapping={"backend": "draft_backend", "legacy_backend": "old_backend"},
+        input_contracts={"backend": _contract(aliases=("legacy_backend",))},
+    )
+    ctx = ExecutionContext()
+    await ctx.set("old_backend", backend)  # draft_backend left unset -> None
+
+    with caplog.at_level(logging.WARNING, logger="agentic_v2.engine.step"):
+        result = await StepExecutor().execute(step, ctx)
+
+    assert result.is_success
+    assert "null input" not in caplog.text
+
+
+async def test_null_warning_fires_for_uncontracted_null_input(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    async def run(_ctx: ExecutionContext) -> dict[str, object]:
+        return {}
+
+    step = StepDefinition(
+        name="run_step",
+        func=run,
+        input_mapping={"payload": "missing_var"},
+    )
+
+    with caplog.at_level(logging.WARNING, logger="agentic_v2.engine.step"):
+        result = await StepExecutor().execute(step, ExecutionContext())
+
+    assert result.is_success
+    assert "null input" in caplog.text
 
 
 async def test_native_retry_clears_stale_contract_failure_state() -> None:
