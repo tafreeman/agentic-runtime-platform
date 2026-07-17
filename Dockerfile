@@ -64,7 +64,9 @@ FROM python-base AS devcontainer
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g npm@latest \
+    # npm@11 is the last major supporting Node 20 (npm@12 requires >=22);
+    # pin it so an npm release cannot break the devcontainer build again.
+    && npm install -g npm@11 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /workspace
