@@ -76,6 +76,7 @@ class ChatImagePart(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, value: str) -> str:
+        """Reject anything but a bounded, well-formed raster data URL."""
         return _validate_image_data_url(value)
 
 
@@ -161,12 +162,14 @@ class ChatRequest(RootModel[ChatRequestValue]):
     @property
     def messages(self) -> list[ChatMessage]:
         """Conversation history shared by both constructors."""
-        return self.root.messages
+        # cast: with --follow-imports=skip the ratchet sees the union
+        # variants' inherited attributes as Any.
+        return cast("list[ChatMessage]", self.root.messages)
 
     @property
     def temperature(self) -> float:
         """Sampling temperature shared by both constructors."""
-        return self.root.temperature
+        return cast("float", self.root.temperature)
 
     @classmethod
     def for_model(
