@@ -464,6 +464,7 @@ export default function ProviderProbeList({
             >
               <button
                 type="button"
+                data-testid={`provider-row-${provider.name}`}
                 onClick={() =>
                   setOpenProvider(isOpen && !searchActive ? null : provider.name)
                 }

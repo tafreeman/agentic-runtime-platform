@@ -41,6 +41,8 @@ test.describe('model probe', () => {
     const probeBody = (await probeResponse.json()) as {
       no_llm_mode: boolean;
       models?: ReadonlyArray<{ provider: string }>;
+      available_providers?: ReadonlyArray<string>;
+      unavailable_providers?: ReadonlyArray<string>;
     };
     const expectedMode = probeBody.no_llm_mode ? 'no-LLM mode' : 'LLM mode';
 
@@ -55,22 +57,27 @@ test.describe('model probe', () => {
     await expect(badge).toBeVisible({ timeout: 30_000 });
     await expect(badge).toHaveText(expectedMode);
 
-    // Exactly one collapsible provider-backend row renders per distinct
-    // provider in the probe catalog (the page groups by `model.provider`). Each
-    // row carries a live status word — "placeholder" in no-LLM mode, else
-    // "ready"/"no keys" — so this filter matches every provider row in either
-    // mode and nothing else on the shell.
-    const providerRows = page
-      .getByRole('button')
-      .filter({ hasText: /ready|no keys|placeholder/i });
-    const distinctProviders = new Set(
-      (probeBody.models ?? []).map((model) => model.provider),
-    ).size;
+    // Exactly one collapsible provider-backend row renders per provider in
+    // the union the page itself derives: keyed providers, un-keyed providers
+    // (visible as "no keys" instead of disappearing), and providers with
+    // detected models. Rows are counted by their stable testid (a text
+    // filter is unsound here: in no-LLM mode the placeholder model id itself
+    // contains "placeholder", matching unrelated catalog buttons), then the
+    // first row's live status word is verified separately.
+    const providerRows = page.getByTestId(/^provider-row-/);
+    const distinctProviders = new Set([
+      ...(probeBody.available_providers ?? []),
+      ...(probeBody.unavailable_providers ?? []),
+      ...(probeBody.models ?? []).map((model) => model.provider),
+    ]).size;
     expect(
       distinctProviders,
       'probe should return at least one provider backend',
     ).toBeGreaterThan(0);
     await expect(providerRows).toHaveCount(distinctProviders);
+    await expect(providerRows.first()).toContainText(
+      /ready|no keys|not detected|placeholder/i,
+    );
 
     // Expanding a provider reveals its per-model rows, each tagged with a tier
     // badge. Tiers span T0–T5 in the live catalog (local/uncategorized backends
