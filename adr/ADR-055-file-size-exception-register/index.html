@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-044-evaluation-scoring-visibility/">
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-055-file-size-exception-register/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>ADR-044: Evaluation scoring visibility — golden resolution, judge-skip policy, replay rehydration - Agentic Runtime Platform</title>
+        <title>ADR-055: File-Size Exception Register - Agentic Runtime Platform</title>
       
     
     
@@ -63,17 +63,17 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="ADR-044: Evaluation scoring visibility — golden resolution, judge-skip policy, replay rehydration - Agentic Runtime Platform" />
+<meta property="og:title" content="ADR-055: File-Size Exception Register - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-044-evaluation-scoring-visibility.png" />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-055-file-size-exception-register.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-044-evaluation-scoring-visibility/" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-055-file-size-exception-register/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="ADR-044: Evaluation scoring visibility — golden resolution, judge-skip policy, replay rehydration - Agentic Runtime Platform" />
+<meta property="twitter:title" content="ADR-055: File-Size Exception Register - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
-<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-044-evaluation-scoring-visibility.png" />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/ADR-055-file-size-exception-register.png" />
 </head>
   
   
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-044-evaluation-scoring-visibility-golden-resolution-judge-skip-policy-replay-rehydration" class="md-skip">
+        <a href="#adr-055-file-size-exception-register" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-044: Evaluation scoring visibility — golden resolution, judge-skip policy, replay rehydration
+              ADR-055: File-Size Exception Register
             
           </span>
         </div>
@@ -2743,16 +2743,22 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#implicit-contracts-inventoried-for-the-adr-042-migration" class="md-nav__link">
+    <nav class="md-nav" aria-label="Decision">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-i-decided-vs-what-the-assistant-proposed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Implicit contracts inventoried for the ADR-042 migration
+        What I decided vs. what the assistant proposed
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2784,7 +2790,7 @@
 
 
   
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-044-evaluation-scoring-visibility.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/adr/ADR-055-file-size-exception-register.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
     </a>
@@ -2793,112 +2799,191 @@
     
       
     
-    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-044-evaluation-scoring-visibility.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/adr/ADR-055-file-size-exception-register.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
     </a>
   
 
 
-<h1 id="adr-044-evaluation-scoring-visibility-golden-resolution-judge-skip-policy-replay-rehydration">ADR-044: Evaluation scoring visibility — golden resolution, judge-skip policy, replay rehydration<a class="headerlink" href="#adr-044-evaluation-scoring-visibility-golden-resolution-judge-skip-policy-replay-rehydration" title="Permanent link">&para;</a></h1>
+<h1 id="adr-055-file-size-exception-register">ADR-055: File-Size Exception Register<a class="headerlink" href="#adr-055-file-size-exception-register" title="Permanent link">&para;</a></h1>
 <p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2026-07-07
-<strong>Related:</strong> issue #172, PR #173, ADR-0007 (server→scoring direction), ADR-014 (wire-format drift), ADR-032 (scoring extraction), ADR-042 (evalkit adoption)</p>
+<strong>Date:</strong> 2026-07-17
+<strong>Related:</strong> <a href="../../CODING_STANDARDS/"><code>docs/CODING_STANDARDS.md</code></a> (Design
+rules: "Files under 800 lines"), <a href="../ADR-032-extract-scoring-package/">ADR-032</a>
+(documented-exception precedent for <code>evaluation_scoring.py</code>), the twelve files
+listed in the register below (all under <code>agentic-workflows-v2/agentic_v2/</code>)</p>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
-<p>Issue #172: every successful run of a given shape produced an identical hybrid
-evaluation score (83.97/B) regardless of generated content or duration. Three
-compounding mechanisms — the LLM judge silently swallowed its own failure and
-renormalized (removing the only content-quality layer), dataset
-<code>golden_output_path</code> references were never resolved (so the overlap term
-always scored against empty expected text), and the efficiency duration
-penalty saturated at ~37s. A fourth was found during implementation: the
-replay/compare re-evaluation endpoints scored with <code>dataset_sample=None</code>.</p>
-<p>The common failure class is <strong>silent degradation</strong>: a scoring layer that
-cannot run must be visible in the output, not absorbed into a
-plausible-looking number.</p>
+<p><code>docs/CODING_STANDARDS.md</code> states the rule plainly: "Files under 800 lines —
+split before a module grows past this." That rule and the codebase have been
+out of sync for a while. Thirteen Python files under
+<code>agentic-workflows-v2/agentic_v2/</code> exceed 800 physical lines today, and until
+this ADR only one of them — <code>scoring/evaluation_scoring.py</code> — had a documented
+exception. ADR-032 recorded it explicitly: the scoring-package extraction was
+a "move + rewire only" change, and it said outright that
+"<code>evaluation_scoring.py</code> stays over the 800-line guide; splitting it is
+deferred."</p>
+<p>The obvious fix — split the other twelve files to bring the codebase back
+under the rule — was already tried. A 2026-07-01 mechanical-split attempt
+(tracked as ARP-7, part of that day's remediation wave) split files purely
+to satisfy the line-count cap and caused regressions; it was reverted rather
+than merged. PR #145's merged summary is the durable record: "Deferred:
+ARP-7 (800-line file caps) — an attempted split introduced behavior
+regressions and was reverted; flagged for a careful test-guarded pass."
+Splitting a module along a line-count boundary
+instead of a cohesion boundary produces exactly this outcome: the cut doesn't
+track a real seam in responsibility, so it either fractures state that needs
+to stay together or scatters one concern across files that now have to be
+read side by side anyway.</p>
+<p>A 2026-07-01 career-signal audit flagged the resulting gap as "own-rule
+consistency" debt: a standards doc that states a hard limit while a growing
+set of real files sit above it, with no record of why, reads as either an
+unenforced rule or an unreviewed codebase — neither is true, but nothing said
+so. ADR-032 already established the right answer for one file: an explicit,
+dated, ADR-recorded exception beats a silent violation or a regression-prone
+forced split. This ADR extends that precedent into a standing register that
+covers every file currently over the guide, so the rule and the repository
+stop contradicting each other.</p>
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<ol>
-<li>
-<p><strong>Golden resolution lives in the server dataset loader, not the scorer.</strong>
-   <code>agentic_v2/server/datasets.py</code> resolves a sample's <code>golden_output_path</code>
-   at load time (relative to the dataset file, confined to allowed dataset
-   roots, size-capped, reduced to the golden's <code>final_output</code> subtree,
-   null-strip-serialized symmetrically with generated output) and inlines it
-   as <code>golden_output_text</code>. The scoring package stays I/O-free (ADR-0007
-   direction: server → scoring). The loader/scorer contract key is the shared
-   constant <code>scoring_criteria.GOLDEN_OUTPUT_TEXT_KEY</code>. Resolution failures
-   never fail the load — they are recorded as <code>golden_output_error</code> in
-   dataset metadata and logged.</p>
-</li>
-<li>
-<p><strong>A skipped judge is loud and typed.</strong> The evaluation payload carries
-   <code>judge_skipped: bool</code>, <code>judge_skip_reason: str | None</code>, and a
-   machine-readable <code>judge_skip_code</code> (<code>not_configured</code> | <code>judge_error</code>);
-   the UI renders a warn pill + reason. <code>_apply_judge_scores</code> catches broad
-   <code>Exception</code> deliberately — provider errors (e.g. executionkit
-   <code>RateLimitError</code>/<code>PermanentError</code>) are plain <code>Exception</code> subclasses and an
-   escape destroys the whole evaluation instead of recording a skip.
-   Symmetrically, <code>expected_text_present: bool</code> records whether the
-   overlap/similarity term engaged at all.</p>
-</li>
-<li>
-<p><strong><code>evaluation.scoring.judge_required</code> escalates, scoped to the
-   evaluation.</strong> When true, an unavailable judge raises the typed
-   <code>JudgeRequiredError</code> (a <code>RuntimeError</code> subclass so it is distinguishable
-   from the ordinary judge failures it escalates). The fresh-run path
-   catches it, persists the run log with <code>evaluation_error</code> (a completed
-   workflow must never vanish from run history because a post-hoc scoring
-   policy failed), and the replay/compare endpoints map it to HTTP 422 with
-   a <code>judge_required_unmet</code> marker. Default is <code>false</code> so the key-free
-   <code>AGENTIC_NO_LLM=1</code> baseline stays green.</p>
-</li>
-<li>
-<p><strong>Replay re-evaluation rehydrates the dataset sample.</strong> Run logs persist
-   dataset <em>metadata</em> only; <code>rehydrate_dataset_sample</code> reloads the sample for
-   local datasets (never a network fetch), refuses to guess on an
-   unparseable <code>sample_index</code>, cross-checks the stored <code>task_id</code> against the
-   reloaded sample (a dataset that shrank or was reordered must not silently
-   swap in another task's golden), and surfaces degradations as
-   <code>rehydration_error</code> in the payload's dataset block. It is re-exported
-   through the <code>server/evaluation</code> façade; routes must not import
-   <code>server.datasets</code> directly.</p>
-</li>
-<li>
-<p><strong>The efficiency SLO band is config with code-versioned defaults.</strong>
-   <code>evaluation.scoring.efficiency_slo.{good_seconds,bad_seconds}</code> (defaults
-   2s/60s) feeds the same <code>lower_is_better</code> normalization as the advisory
-   layer; invalid config falls back to the defaults. Changing the band
-   re-baselines efficiency scores — historic and new runs are only
-   comparable under the same band, which is why the defaults are also kept
-   in code and the YAML carries a caution comment. Beyond <code>bad_seconds</code> the
-   duration term floors at 0 (per-workflow SLOs are deliberately deferred).</p>
-</li>
-</ol>
-<h2 id="implicit-contracts-inventoried-for-the-adr-042-migration">Implicit contracts inventoried for the ADR-042 migration<a class="headerlink" href="#implicit-contracts-inventoried-for-the-adr-042-migration" title="Permanent link">&para;</a></h2>
-<p>A future evalkit bridge (Slice C/D) must deliberately translate, not drop:</p>
+<p>Maintain a dated register of every file currently over the 800-line guide,
+with an honest cohesion rationale and a stated bar for when a split would be
+justified. <code>scoring/evaluation_scoring.py</code> is not re-registered here — it
+stays covered by ADR-032, which already recorded the same kind of exception
+for it.</p>
+<p>Line counts below are a dated measurement, current as of 2026-07-17. Recording
+a count in a dated ADR is fine — it is a record of that day, not a live
+claim — but <code>docs/CODING_STANDARDS.md</code> itself must stay number-free and
+point here instead of listing files or counts inline.</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Lines (2026-07-17)</th>
+<th>Why it coheres</th>
+<th>What would justify a split</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic_v2/langchain/graph_wiring.py</code></td>
+<td>1319</td>
+<td>Single LangGraph wiring surface: tier-0 step implementations, the LLM-node factory with multi-model failover, the skip-check wrapper, and every <code>add_*</code>/<code>wire_*</code>/<code>build_*</code> edge-assembly helper that turns one <code>WorkflowConfig</code> into one populated <code>StateGraph</code>. <code>build_graph</code> is the sole entry point; splitting would scatter one graph definition's node factories and edge wiring across files that still have to be read together to trace a single compile.</td>
+<td>Node-factory logic (tier-0 steps, the LLM node, failover) growing independently testable from edge/graph-assembly logic (the <code>add_*</code>/<code>wire_*</code> helpers) would justify separating "how a node runs" from "how nodes connect."</td>
+</tr>
+<tr>
+<td><code>agentic_v2/models/smart_router.py</code></td>
+<td>1063</td>
+<td>Almost entirely one class, <code>SmartModelRouter</code> (~870 of 1063 lines): the circuit-breaker state machine (three states, adaptive cooldowns), bulkhead concurrency limits, and health-weighted selection all read and mutate the same per-model state. Splitting the state machine from the selection policy would require passing that shared state across a module boundary for no behavioral gain.</td>
+<td>If bulkhead/circuit-breaker mechanics grow complex enough to be unit-tested in isolation from the selection algorithm that consumes circuit state, split the breaker/cooldown state machine out of the selection logic that reads it.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/models/client.py</code></td>
+<td>1055</td>
+<td>The module docstring names the design intent directly: <code>LLMClientWrapper</code> is "the primary interface for making LLM calls," deliberately combining smart routing, response caching, token-budget enforcement, streaming, and retry-with-jitter behind one facade so callers (the native engine, <code>agents/base.py</code>) have a single object to hold. Budget and cache already have their own modules (<code>cache_budget.py</code>); what's left in <code>client.py</code> is the wrapper that wires them together per-call.</td>
+<td>If a capability currently wired into <code>complete()</code>/<code>complete_chat()</code>/<code>complete_stream()</code> (e.g. streaming) grows enough call-path-specific logic to be independently tested and reused without the rest of the wrapper, extract that call path into its own module the way <code>cache_budget.py</code> was already extracted.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/server/models.py</code></td>
+<td>955</td>
+<td>Pure Pydantic schema module — 36 <code>BaseModel</code> classes with no business logic — defining the entire JSON wire contract between the FastAPI backend and the UI (workflow run/result, DAG visualization, evaluation, dataset sampling). These are exactly the shapes the ADR-014 wire-format-drift gate and the TypeScript generator (<code>generate_ts_types</code> / <code>npm run generate:types</code>) scan as one surface; fragmenting it would fragment that generation step too.</td>
+<td>If one sub-domain (e.g. the evaluation/scoring response models, roughly <code>EvaluationCriterionDetail</code> through <code>DatasetSampleDetailResponse</code>) grows large enough to warrant its own wire-format module, split it out — but only alongside an update to the type-generation scripts so drift detection still covers every fragment.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/langchain/runner.py</code></td>
+<td>891</td>
+<td>One end-to-end lifecycle: <code>WorkflowRunner</code> loads a YAML config, validates inputs, compiles it via <code>graph.py</code>, executes (invoke/stream), and resolves outputs. The private checkpointer-resolution and <code>ExecutionContext</code>-sync helpers exist only to support that one class's lifecycle and aren't meaningfully reusable outside it.</td>
+<td>If checkpointer construction/URL-parsing or the state-sync helpers grow enough independent branching (new checkpoint backends, new sync policies) to need their own test surface, extract them from the <code>WorkflowRunner</code> class they currently support inline.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/models/backends_cloud.py</code></td>
+<td>865</td>
+<td>Already the product of a prior split — <code>backends.py</code> was previously divided into <code>backends_base.py</code> (the shared ABC), <code>backends_local.py</code>, and this file, grouping every cloud-hosted provider (GitHub Models, OpenAI, NVIDIA NIM, OpenRouter, Anthropic, Gemini, Azure OpenAI, Azure Foundry) behind the shared <code>LLMBackend</code> interface and a few genuinely shared helpers (<code>_to_anthropic_tool_choice</code>, the JSON content-type constant). The grouping boundary is "cloud-hosted," already narrower than "all backends."</td>
+<td>If any single provider (e.g. Azure Foundry, which already carries its own retry/streaming variants) grows complex enough to need dedicated tests and maintenance independent of the other cloud backends, give it its own file the same way local vs. cloud was already split out of <code>backends.py</code>.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/server/routes/model_finder.py</code></td>
+<td>849</td>
+<td>One FastAPI feature end to end: hardware profiling (CPU/RAM/accelerator detection with a gitignored override file), a curated open-model catalog, the scoring function that ranks the catalog against the detected profile, and the route handlers that expose all of it under one <code>/model-finder</code> router. The Pydantic models (<code>SystemProfile</code>, <code>ModelCandidate</code>, <code>CatalogItem</code>, etc.) exist only to serve this one page.</td>
+<td>If hardware-profiling/probing (the <code>_cpu_name</code>/<code>_ram_gb</code>/<code>_accelerators</code> family) or catalog scoring (<code>score_model</code>/<code>sorted_candidates</code>) grow enough independent logic to be tested without spinning up the route layer, split profiling and scoring out of the route handlers that currently sit in the same file.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/langchain/models.py</code></td>
+<td>823</td>
+<td>The provider/tier registry: fallback-chain construction, tier-default resolution, availability probing, registry-drift detection, and the merge logic that reconciles Ollama/local/cloud model listings into <code>enumerate_known_models</code>. The module docstring is explicit that builder functions live in <code>model_builders.py</code> and provider-detection utilities live in <code>model_utils.py</code> — this file is deliberately the routing/tier-resolution core those modules feed, not a catch-all.</td>
+<td>If the discovery-merge logic (<code>_merge_ollama_models</code>/<code>_merge_local_models</code>/<code>_merge_cloud_models</code>/<code>detect_registry_drift</code>) grows independently of the tier-fallback/registry-config logic it feeds, split live-discovery merging from static tier-chain configuration.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/langchain/model_builders.py</code></td>
+<td>822</td>
+<td>One <code>build_*</code> factory function per supported provider (eleven: GitHub Models, OpenAI, NVIDIA, OpenRouter, Anthropic, Gemini, NotebookLM alias, Ollama, LM Studio, local API, local ONNX), each importing its provider-specific LangChain package lazily so installing one provider's dependency doesn't require installing all of them. The file is a single dispatch surface reached from one call site (<code>_build_model_by_prefix</code> in <code>models.py</code>).</td>
+<td>If the provider count keeps growing, split along the same cloud/local seam already used for backend implementations (<code>backends_cloud.py</code> vs. <code>backends_local.py</code>): cloud-hosted builders in one file, self-hosted/local builders (Ollama, LM Studio, local API, local ONNX) in another.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/engine/context.py</code></td>
+<td>820</td>
+<td>Almost entirely one class, <code>ExecutionContext</code> (~670 of 820 lines), whose own docstring lists five interdependent responsibilities — hierarchical scoping, JMESPath queries, event hooks, checkpoint/restore, and a DI <code>ServiceContainer</code> — all guarded by the same <code>asyncio.Lock</code> over the same variable dict. Splitting the class would mean passing that lock and the underlying state across a module boundary for capabilities that only make sense in terms of each other.</td>
+<td>If the <code>ServiceContainer</code> DI mechanism or checkpoint/restore serialization grow enough independent surface area to be tested without a live <code>ExecutionContext</code> instance, extract them as standalone collaborators the context composes rather than inline members.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/server/replay_store.py</code></td>
+<td>814</td>
+<td>Three interchangeable implementations (<code>RedisReplayStore</code>, <code>SqliteReplayStore</code>, <code>InMemoryReplayStore</code>) of one <code>ReplayStore</code> Protocol, selected at runtime by <code>Settings.replay_store_backend</code>, plus the factory functions that build whichever one is configured. Keeping the Protocol and all three strategies in one file makes the tradeoffs comparable at a glance — durability, multi-worker support, dependency count — which is the whole point of documenting them as alternatives.</td>
+<td>If any one backend (most likely Redis, given TTL/LTRIM/multi-worker concerns) accumulates enough backend-specific configuration or retry logic to need its own test file independent of the others, split that backend out while keeping the shared <code>ReplayStore</code> Protocol as the common contract.</td>
+</tr>
+<tr>
+<td><code>agentic_v2/server/datasets.py</code></td>
+<td>806</td>
+<td>One dataset-access facade across three sources — repository datasets (HuggingFace/GitHub via <code>tools.agents.benchmarks</code>), local JSON fixtures, and <code>evaluation.yaml</code>-defined eval sets — re-exported by <code>server/evaluation.py</code> for backward compatibility. Sample-extraction helpers (<code>_extract_sample</code>, <code>_sample_from_list</code>) are shared across the repository and local loaders, which is why they still live together.</td>
+<td>If repository-dataset loading (network/HF/GitHub fetch logic) grows enough independent complexity (retries, pagination, caching) to diverge from local-file discovery, split repository loading from local/eval-set discovery — keeping the shared sample-extraction helpers with whichever side uses them more, and re-exporting from the other.</td>
+</tr>
+</tbody>
+</table>
+<p>Policy going forward:</p>
 <ul>
-<li><code>golden_output_text</code> inline-key convention (evalkit's <code>EvalSample</code> has
-  typed expected-output fields — map, don't parallel).</li>
-<li><code>judge_skipped</code> / <code>judge_skip_reason</code> / <code>judge_skip_code</code> /
-  <code>expected_text_present</code> payload semantics (evalkit graders have their own
-  missing-component semantics: abstention shrinks the averaging pool,
-  whereas this scorer renormalizes explicitly and flags it).</li>
-<li><code>judge_required</code> policy and its <code>JudgeRequiredError</code> blast-radius contract.</li>
-<li>The two <code>golden_output_path</code> interpreters (<code>scripts/eval_gate.py</code> vs the
-  server loader — see <code>datasets/default/README.md</code>) converge into one
-  resolver when eval_gate is re-platformed.</li>
+<li>A file may exceed the 800-line guide <strong>only</strong> while it is listed in this
+  register.</li>
+<li>A new entry requires an ADR update to this register (or a new ADR that
+  supersedes it) with the same two things every row above has: an honest
+  cohesion rationale and a stated bar for when a split would be justified.
+  "It's just large" is not sufficient on its own.</li>
+<li>An entry is removed when its file is split below the guide or shrinks under
+  it through unrelated changes. Removal does not require a new ADR; updating
+  this table to drop the row is enough, since the row's absence is itself the
+  record.</li>
+<li>This register does not grandfather <em>future</em> growth of a listed file. A file
+  already on the register that grows further is still expected to be
+  reconsidered against its own "what would justify a split" bar, not treated
+  as permanently exempt.</li>
 </ul>
+<h3 id="what-i-decided-vs-what-the-assistant-proposed">What I decided vs. what the assistant proposed<a class="headerlink" href="#what-i-decided-vs-what-the-assistant-proposed" title="Permanent link">&para;</a></h3>
+<p>The route itself — a documented exception register instead of another
+mechanical split — was decided in the 2026-07-02 remediation work order,
+directly in response to the reverted 2026-07-01 split attempt: forcing files
+under a line count without a matching cohesion seam had just caused
+regressions, and ADR-032 had already shown that a recorded exception is a
+legitimate, lower-risk alternative to splitting on a deadline. That decision,
+and the policy rules above (exceed-only-while-listed, ADR-gated additions,
+no grandfathered future growth), are mine.</p>
+<p>The assistant measured the twelve files' current line counts, read each
+file's module docstring and class/function structure, and drafted the
+per-file cohesion rationale and split-trigger language in the table — grounded
+in what each file actually contains, not templated.</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Stored evaluations re-score lower and honestly once goldens/judge engage;
-  runs that predate the fields validate as <code>None</code> (additive-only model
-  fields, permissive payload validator, UI legacy fallback).</li>
-<li><code>RunEvaluationDetail</code> remains a hand-mirrored shape (Pydantic ↔
-  hand-written <code>ui/src/api/types.ts</code>) <em>outside</em> the ADR-014 drift gate;
-  promoting it into the generated set (and extending the
-  <code>evaluation_complete</code> broadcast whitelist) is tracked as deferred work.</li>
-<li>The <code>AGENTIC_NO_LLM=1</code> smoke path now emits <code>judge_skipped: true</code> +
-  <code>not_configured</code> on every evaluation — expected and asserted in tests.</li>
+<li><code>docs/CODING_STANDARDS.md</code>'s 800-line rule and the actual state of
+  <code>agentic-workflows-v2/agentic_v2/</code> are consistent again: every file above
+  the guide is either covered by ADR-032 or listed here, and the standards
+  doc points to this register instead of silently tolerating the gap.</li>
+<li>Growth is visible and dated. The next time this register is touched, the
+  2026-07-17 counts make it obvious which files grew, by how much, and
+  whether their "why it coheres" rationale still holds.</li>
+<li>Nothing here forecloses splitting any of these files later — several rows
+  above already name the seam a future split would follow. That work can
+  still happen file-by-file, on its own merits, without being forced by a
+  line-count deadline.</li>
+<li>The 800-line guide keeps its teeth for <strong>new</strong> files: nothing in this ADR
+  raises the limit or exempts code that doesn't yet exist. A new file over
+  800 lines is a standards violation, not an automatic register candidate.</li>
 </ul>
 
 
@@ -2922,7 +3007,7 @@ plausible-looking number.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 8, 2026 07:17:21 UTC">July 8, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 03:45:30 UTC">July 18, 2026</span>
   </span>
 
     
@@ -2932,7 +3017,7 @@ plausible-looking number.</p>
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 8, 2026 07:17:21 UTC">July 8, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 03:45:30 UTC">July 18, 2026</span>
   </span>
 
     
