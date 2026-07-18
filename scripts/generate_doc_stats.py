@@ -7,7 +7,9 @@ ADR count was hard-typed as 38 while the repo had already grown to 43 formal
 ADRs. This script recomputes each value from the actual repository state and
 rewrites the two spots in ``docs/index.md`` that quote it (the "By the
 numbers" stat strip and the "written decision record" blurb), so the copy
-can never go stale silently again.
+can never go stale silently again. The ``README.md`` coverage badge is
+stamped the same way, from the enforced ``fail_under`` gate in
+``agentic-workflows-v2/pyproject.toml``.
 
 Usage:
     python scripts/generate_doc_stats.py            # regenerate in place
@@ -20,6 +22,7 @@ import argparse
 import ast
 import re
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -34,6 +37,8 @@ TEST_ROOTS = (
     REPO_ROOT / "tests",
 )
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
+README_MD = REPO_ROOT / "README.md"
+RUNTIME_PYPROJECT = REPO_ROOT / "agentic-workflows-v2" / "pyproject.toml"
 
 ADR_FILENAME_RE = re.compile(r"^ADR((?:-\d{3})+)-")
 
@@ -45,6 +50,7 @@ class DocStats:
     adr_count: int
     production_workflow_count: int
     backend_test_count: int
+    coverage_gate: int
 
 
 def count_adrs(adr_dir: Path = ADR_DIR) -> int:
@@ -115,12 +121,26 @@ def count_backend_tests(test_roots: tuple[Path, ...] = TEST_ROOTS) -> int:
     return total
 
 
+def read_coverage_gate(pyproject: Path = RUNTIME_PYPROJECT) -> int:
+    """Read the enforced coverage floor from ``[tool.coverage.report] fail_under``.
+
+    This is the same value the dedicated ``coverage report --fail-under`` CI
+    step enforces, so the README badge stamped from it states exactly what CI
+    gates — no separate number to keep in sync by hand.
+    """
+    with pyproject.open("rb") as fh:
+        data = tomllib.load(fh)
+    fail_under = data["tool"]["coverage"]["report"]["fail_under"]
+    return int(fail_under)
+
+
 def gather_stats() -> DocStats:
     """Recompute every derived homepage stat from the current repo state."""
     return DocStats(
         adr_count=count_adrs(),
         production_workflow_count=count_production_workflows(),
         backend_test_count=count_backend_tests(),
+        coverage_gate=read_coverage_gate(),
     )
 
 
@@ -169,14 +189,34 @@ def render_index_md(text: str, stats: DocStats) -> str:
     return text
 
 
+def _replace_coverage_badge(text: str, new_value: str) -> str:
+    """Replace the percentage in the README's static coverage badge URL."""
+    pattern = re.compile(r"(shields\.io/badge/coverage-)\d+(%25%20gated%20subset-)")
+    match = pattern.search(text)
+    if not match:
+        raise ValueError("README coverage-badge anchor not found")
+    return (
+        text[: match.start()]
+        + match.group(1)
+        + new_value
+        + match.group(2)
+        + text[match.end() :]
+    )
+
+
+def render_readme_md(text: str, stats: DocStats) -> str:
+    """Return ``README.md`` with the coverage badge stamped from the gate."""
+    return _replace_coverage_badge(text, str(stats.coverage_gate))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--check",
         action="store_true",
         help=(
-            "Exit 1 if docs/index.md stats differ from the freshly derived "
-            "values, without writing anything."
+            "Exit 1 if docs/index.md or README.md stats differ from the "
+            "freshly derived values, without writing anything."
         ),
     )
     return parser.parse_args()
@@ -185,25 +225,44 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    if not INDEX_MD.is_file():
-        print(f"ERROR: not found: {INDEX_MD}", file=sys.stderr)
-        return 2
+    targets = ((INDEX_MD, render_index_md), (README_MD, render_readme_md))
+    for path, _ in targets:
+        if not path.is_file():
+            print(f"ERROR: not found: {path}", file=sys.stderr)
+            return 2
 
     stats = gather_stats()
-    original = INDEX_MD.read_text(encoding="utf-8")
-    try:
-        rendered = render_index_md(original, stats)
-    except ValueError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 2
+    drifted: list[str] = []
+    for path, render in targets:
+        rel = str(path.relative_to(REPO_ROOT))
+        original = path.read_text(encoding="utf-8")
+        try:
+            rendered = render(original, stats)
+        except ValueError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+
+        if rendered == original:
+            if not args.check:
+                print(f"{rel} already current.")
+            continue
+        if args.check:
+            drifted.append(rel)
+        else:
+            path.write_text(rendered, encoding="utf-8")
+            print(f"Updated {rel}.")
 
     if args.check:
-        if rendered != original:
-            print("DOC-STATS DRIFT DETECTED in docs/index.md:", file=sys.stderr)
+        if drifted:
+            print(
+                f"DOC-STATS DRIFT DETECTED in {', '.join(drifted)}:",
+                file=sys.stderr,
+            )
             print(
                 f"  ADRs={stats.adr_count} "
                 f"production_workflows={stats.production_workflow_count} "
-                f"backend_tests={stats.backend_test_count}",
+                f"backend_tests={stats.backend_test_count} "
+                f"coverage_gate={stats.coverage_gate}",
                 file=sys.stderr,
             )
             print(
@@ -211,14 +270,9 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
-        print("OK: docs/index.md stats are current.")
+        print("OK: derived doc stats are current.")
         return 0
 
-    if rendered != original:
-        INDEX_MD.write_text(rendered, encoding="utf-8")
-        print(f"Updated {INDEX_MD.relative_to(REPO_ROOT)}.")
-    else:
-        print(f"{INDEX_MD.relative_to(REPO_ROOT)} already current.")
     return 0
 
 
