@@ -359,11 +359,13 @@ async def test_run_and_evaluate_forwards_model_override(
         adapter_name: str = "langchain",
         tenant_id: str = "default",
         model_override: str | None = None,
+        use_cache: bool = True,
     ) -> Any:
         captured["workflow_name"] = workflow_name
         captured["adapter_name"] = adapter_name
         captured["tenant_id"] = tenant_id
         captured["model_override"] = model_override
+        captured["use_cache"] = use_cache
         return SimpleNamespace(
             overall_status=SimpleNamespace(value="success"),
             steps=[],
@@ -404,6 +406,8 @@ async def test_run_and_evaluate_forwards_model_override(
 
     assert captured["model_override"] == OVERRIDE_ID
     assert captured["workflow_name"] == "wf"
+    # No pack active, so the compiled-graph cache stays in play.
+    assert captured["use_cache"] is True
     # A clean lifecycle proves the error path never fired.
     assert [event["type"] for event in events] == ["workflow_start", "workflow_end"]
 
