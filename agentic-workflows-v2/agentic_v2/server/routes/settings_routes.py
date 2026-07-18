@@ -23,6 +23,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import ValidationError
 
+from ...security.url_guard import validate_url_async
 from ...ui_settings import (
     KNOWN_MODEL_CAPABILITIES,
     ModelPack,
@@ -42,7 +43,6 @@ from ..models_settings import (
     ModelPackDuplicateRequest,
     ModelPackExportResponse,
     ModelPackImportRequest,
-    ModelPackIssue,
     ModelPackListResponse,
     ModelPackUpdateRequest,
     ModelPackValidationResponse,
@@ -54,6 +54,7 @@ from ..models_settings import (
     TierSettingsResponse,
     TierSettingsUpdateRequest,
 )
+from ..pack_validation import validate_pack_issues
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["settings"])
@@ -208,6 +209,22 @@ async def probe_provider(provider_id: str) -> ProviderProbeResponse:
                 error_category="runtime_probe",
                 detail=str(exc.detail),
             )
+
+    # Shared SSRF guard (same policy module as the HTTP tools). Private/LAN
+    # endpoints are a legitimate feature here (local Ollama, LM Studio), so
+    # the private-IP block is opted out — but cloud metadata endpoints stay
+    # always-blocked. Checked before the credential header is built so a
+    # blocked URL never sees the bearer token and never leaves the process.
+    guard_error = await validate_url_async(endpoint, block_private=False)
+    if guard_error is not None:
+        return ProviderProbeResponse(
+            provider_id=provider.id,
+            status="error",
+            checked_at=checked_at,
+            latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            error_category="connection",
+            detail=guard_error,
+        )
 
     headers: dict[str, str] = {}
     if provider.api_key_env:
@@ -382,77 +399,11 @@ def _derived_tier_chains(source: str, settings: UiSettings) -> dict[int, list[st
 def _validate_pack(
     pack: ModelPack, settings: UiSettings
 ) -> ModelPackValidationResponse:
-    issues: list[ModelPackIssue] = []
-    if not pack.tier_chains:
-        issues.append(
-            ModelPackIssue(
-                severity="error",
-                code="empty_pack",
-                message="Add at least one tier chain before using this pack.",
-            )
-        )
-
     available = set(_env_configured_providers())
     available.update(
         provider.type for provider in settings.providers if provider.enabled
     )
-    known_capabilities = set(KNOWN_MODEL_CAPABILITIES)
-    for tier, requirements in pack.capability_requirements.items():
-        unknown = sorted(set(requirements) - known_capabilities)
-        if unknown:
-            issues.append(
-                ModelPackIssue(
-                    severity="error",
-                    code="unknown_capability",
-                    tier=tier,
-                    message=f"Tier {tier} has unknown capabilities: {unknown}.",
-                )
-            )
-
-    for tier, chain in pack.tier_chains.items():
-        if not chain:
-            issues.append(
-                ModelPackIssue(
-                    severity="error",
-                    code="empty_tier",
-                    tier=tier,
-                    message=f"Tier {tier} has no routing candidates.",
-                )
-            )
-        for model in chain:
-            provider = model.split(":", 1)[0] if ":" in model else ""
-            if not provider:
-                issues.append(
-                    ModelPackIssue(
-                        severity="error",
-                        code="unprefixed_model",
-                        tier=tier,
-                        model=model,
-                        message="Model IDs in packs must include a provider prefix.",
-                    )
-                )
-                continue
-            if pack.allowed_providers and provider not in pack.allowed_providers:
-                issues.append(
-                    ModelPackIssue(
-                        severity="error",
-                        code="provider_not_allowed",
-                        tier=tier,
-                        model=model,
-                        message=f"Provider {provider!r} is outside this pack's allowed set.",
-                    )
-                )
-            if provider not in available:
-                issues.append(
-                    ModelPackIssue(
-                        severity="warning",
-                        code="provider_unavailable",
-                        tier=tier,
-                        model=model,
-                        message=f"Provider {provider!r} is not currently available.",
-                    )
-                )
-
+    issues = validate_pack_issues(pack, settings, available_providers=available)
     return ModelPackValidationResponse(
         ref=_pack_ref(pack),
         valid=not any(issue.severity == "error" for issue in issues),
@@ -615,6 +566,27 @@ async def activate_model_pack(
     return _pack_list_response(updated)
 
 
+@router.delete(
+    "/settings/model-packs/active",
+    response_model=ModelPackListResponse,
+)
+async def deactivate_model_pack() -> ModelPackListResponse:
+    """Clear the global model-pack activation, restoring default routing.
+
+    Counterpart to ``activate_model_pack``: ``active_model_pack=None`` is the
+    supported default state, and clearing it is what the archive guard asks
+    for ("Remove global activation ... before archiving."). Idempotent —
+    succeeds with no change when nothing is active. Workflow bindings are
+    untouched; clear those via the bindings routes.
+    """
+    settings = load_ui_settings()
+    updated = UiSettings.model_validate(
+        {**settings.model_dump(), "active_model_pack": None}
+    )
+    _save_or_503(updated)
+    return _pack_list_response(updated)
+
+
 @router.put(
     "/settings/model-packs/{pack_id}/bindings/{workflow_name}",
     response_model=ModelPackListResponse,
@@ -627,6 +599,11 @@ async def bind_model_pack(
     pack = _require_pack(ref, settings)
     if pack.archived:
         raise HTTPException(status_code=409, detail="Archived packs cannot be bound")
+    if not _validate_pack(pack, settings).valid:
+        raise HTTPException(
+            status_code=409,
+            detail="Only a valid pack can be bound to a workflow",
+        )
     from ...langchain.config import list_workflows
 
     if workflow_name not in list_workflows():

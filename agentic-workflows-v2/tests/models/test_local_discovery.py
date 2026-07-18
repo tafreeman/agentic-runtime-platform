@@ -249,9 +249,60 @@ class TestDiscoverLmStudioFallback:
             f"http://127.0.0.1:1234{_OPENAI}",
         ]
         assert [info.id for info in result] == ["lmstudio:gemma-3-12b"]
-        # Shim gives no state/type, so no running flag / capabilities.
-        assert result[0].running is False
+        # The shim lists only loaded models, so every record is running;
+        # it carries no type field, so no capability badges.
+        assert result[0].running is True
         assert result[0].capabilities == ()
+
+    def test_catalog_records_which_api_answered(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The catalog pins the API variant so load actions can be gated.
+
+        Regression: the load route POSTed the v1 load endpoint even when
+        discovery had fallen back to a pre-v1 API where it can only 404.
+        """
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:1234")
+        _route(
+            monkeypatch,
+            {
+                f"http://127.0.0.1:1234{_NATIVE}": _Resp(
+                    {
+                        "data": [
+                            {"id": "gemma-3-4b", "type": "llm", "state": "not-loaded"}
+                        ]
+                    }
+                ),
+            },
+        )
+        catalog = local_discovery.discover_lmstudio_catalog()
+        assert catalog.api == "v0"
+        assert catalog.supports_load is False
+        assert [info.id for info in catalog.models] == ["lmstudio:gemma-3-4b"]
+
+        _route(
+            monkeypatch,
+            {
+                f"http://127.0.0.1:1234{_OPENAI}": _Resp(
+                    {"data": [{"id": "gemma-3-12b"}]}
+                ),
+            },
+        )
+        catalog = local_discovery.discover_lmstudio_catalog()
+        assert catalog.api == "openai"
+        assert catalog.supports_load is False
+
+        _route(
+            monkeypatch,
+            {
+                f"http://127.0.0.1:1234{_V1}": _Resp(
+                    {"models": [{"key": "gemma-3-4b", "type": "llm"}]}
+                ),
+            },
+        )
+        catalog = local_discovery.discover_lmstudio_catalog()
+        assert catalog.api == "v1"
+        assert catalog.supports_load is True
 
     def test_server_down_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:1234")

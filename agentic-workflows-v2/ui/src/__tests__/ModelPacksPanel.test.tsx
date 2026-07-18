@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   versionModelPack: vi.fn(),
   validateModelPack: vi.fn(),
   activateModelPack: vi.fn(),
+  deactivateModelPack: vi.fn(),
   bindModelPack: vi.fn(),
   clearModelPackBinding: vi.fn(),
   duplicateModelPack: vi.fn(),
@@ -20,6 +21,13 @@ const api = vi.hoisted(() => ({
 }));
 
 vi.mock("../api/client", () => api);
+
+const toastSpy = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({ toast: toastSpy }));
 
 const PACK: ModelPack = {
   id: "review-stable",
@@ -117,6 +125,54 @@ describe("ModelPacksPanel", () => {
         description: "",
         source: "effective",
     });
+  });
+
+  it("surfaces a create failure instead of failing silently", async () => {
+    api.createModelPack.mockRejectedValue(
+      new Error("API 409: model pack 'review-stable' already exists"),
+    );
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    fireEvent.click(screen.getByRole("button", { name: /new pack/i }));
+    fireEvent.change(screen.getByLabelText("Stable ID"), {
+      target: { value: "review-stable" },
+    });
+    fireEvent.change(screen.getAllByLabelText("Name")[0]!, {
+      target: { value: "Review stable" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create version 1" }));
+
+    await waitFor(() =>
+      expect(toastSpy.error).toHaveBeenCalledWith(
+        "API 409: model pack 'review-stable' already exists",
+      ),
+    );
+    // The form stays open so the user can correct the input and retry.
+    expect(
+      screen.getByRole("button", { name: "Create version 1" }),
+    ).toBeInTheDocument();
+  });
+
+  it("deactivates the globally active pack", async () => {
+    api.deactivateModelPack.mockResolvedValue({ ...RESPONSE, active: null });
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    const deactivate = screen.getByRole("button", { name: "Deactivate" });
+    expect(deactivate).toBeEnabled();
+    fireEvent.click(deactivate);
+
+    await waitFor(() => expect(api.deactivateModelPack).toHaveBeenCalledTimes(1));
+    expect(toastSpy.success).toHaveBeenCalledWith("Global activation cleared");
+  });
+
+  it("disables deactivate when no pack is globally active", async () => {
+    api.listModelPacks.mockResolvedValue({ ...RESPONSE, active: null });
+    renderPanel();
+    await screen.findByText("Review stable");
+
+    expect(screen.getByRole("button", { name: "Deactivate" })).toBeDisabled();
   });
 
   it("saves edits as a new immutable version", async () => {

@@ -137,16 +137,31 @@ def invalidate_compiled_workflow(workflow_name: str) -> int:
     return removed
 
 
-def _resolve_judge_model() -> str | None:
+def _resolve_judge_model(model_pack: ModelPack | None = None) -> str | None:
     """Resolve the LLM model identifier for the evaluation judge.
 
-    Checks environment variables in priority order:
-    ``AGENTIC_JUDGE_MODEL``, ``AGENTIC_MODEL_TIER_2``, ``AGENTIC_MODEL_TIER_1``.
+    Precedence mirrors tier routing, where deployment/env configuration
+    outranks the run's pack and the pack outranks generic fallbacks:
+
+    1. ``AGENTIC_JUDGE_MODEL`` environment variable.
+    2. ``judge_model`` from the run's resolved model pack, if any.
+    3. ``AGENTIC_MODEL_TIER_2``, then ``AGENTIC_MODEL_TIER_1``.
+
+    Args:
+        model_pack: Model pack resolved for this run, or None when the run
+            uses default routing.
 
     Returns:
         Model identifier string, or None if no judge model is configured.
     """
-    for key in ("AGENTIC_JUDGE_MODEL", "AGENTIC_MODEL_TIER_2", "AGENTIC_MODEL_TIER_1"):
+    env_value = os.getenv("AGENTIC_JUDGE_MODEL")  # env-pass: dynamic model tier config
+    if env_value and env_value.strip():
+        return env_value.strip()
+    if model_pack is not None and model_pack.judge_model:
+        pack_value = model_pack.judge_model.strip()
+        if pack_value:
+            return pack_value
+    for key in ("AGENTIC_MODEL_TIER_2", "AGENTIC_MODEL_TIER_1"):
         value = os.getenv(key)  # env-pass: dynamic model tier config
         if value and value.strip():
             return value.strip()
@@ -351,6 +366,7 @@ async def _stream_and_run(
     adapter_name: str = "langchain",
     tenant_id: str = DEFAULT_TENANT_ID,
     model_override: str | None = None,
+    use_cache: bool = True,
 ) -> WorkflowResult:
     """Stream LangGraph node events to WebSocket clients, then build a final
     WorkflowResult.
@@ -368,6 +384,11 @@ async def _stream_and_run(
         model_override: Optional full prefixed model id applied to every
             step for this run (langchain adapter only; the route rejects it
             for other adapters).
+        use_cache: Whether the LangChain runner may read and populate its
+            shared compiled-graph cache.  Pass False when run-scoped
+            routing state (an active model pack) would be baked into the
+            compiled graph, mirroring the ``model_override`` cache bypass.
+            Ignored by non-langchain adapters.
 
     Returns:
         The completed :class:`WorkflowResult`.
@@ -405,6 +426,7 @@ async def _stream_and_run(
             workflow_name,
             thread_id=run_id,
             model_override=model_override,
+            use_cache=use_cache,
             **workflow_inputs,
         ):
             if not isinstance(node_update, Mapping):
@@ -439,6 +461,7 @@ async def _stream_and_run(
             workflow_name,
             thread_id=run_id,
             model_override=model_override,
+            use_cache=use_cache,
             **workflow_inputs,
         )
         return normalize_workflow_result(
@@ -527,6 +550,14 @@ async def _run_and_evaluate(
         adapter_name: Execution adapter to use (default ``"langchain"``).
         model_override: Optional full prefixed model id applied to every
             step for this run (langchain adapter only).
+        model_pack: Model pack resolved for this run (or None for default
+            routing).  An active pack scopes tier routing via a ContextVar
+            and forces a compiled-graph cache bypass for the run; it also
+            supplies the evaluation judge model when no dedicated judge
+            env var is set.
+        model_pack_source: Provenance of the pack choice (``"run"``,
+            ``"workflow"``, ``"global"``, or ``"default"``); recorded in
+            the run log.
     """
     try:
         logger.info("Starting background execution for run_id=%s", run_id)
@@ -540,6 +571,10 @@ async def _run_and_evaluate(
             },
         )
         with model_pack_routing(model_pack):
+            # Pack tier chains are read at graph-compile time, so a run with
+            # an active pack must bypass the shared compiled-graph cache
+            # (same rule as model_override): the pack-blind cache is neither
+            # read from nor poisoned by pack-specific compiles.
             result = await _stream_and_run(
                 workflow_name,
                 run_id,
@@ -547,6 +582,7 @@ async def _run_and_evaluate(
                 adapter_name=adapter_name,
                 tenant_id=tenant_id,
                 model_override=model_override,
+                use_cache=model_pack is None,
             )
 
         status = result.overall_status.value
@@ -587,7 +623,7 @@ async def _run_and_evaluate(
                     "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
-            judge_model = _resolve_judge_model()
+            judge_model = _resolve_judge_model(model_pack)
             judge = LLMJudge(model=judge_model) if judge_model else LLMJudge()
 
             try:

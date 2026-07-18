@@ -176,7 +176,11 @@ export default function WorkflowDetailPage() {
     dagQueryError instanceof Error ? dagQueryError.message : "failed to load dag";
   const hasWorkflowSteps = (dag?.nodes.length ?? 0) > 0;
   const tiers = collectTiers(dag?.nodes);
-  const supportsDeterministicDemo = name === "test_deterministic";
+  const supportsDeterministicDemo =
+    name === "test_deterministic" ||
+    (!!dag &&
+      dag.nodes.length > 0 &&
+      dag.nodes.every((node) => node.tier?.toLowerCase().startsWith("tier0")));
 
   const configRef = useRef<RunConfigValues>({
     inputValues: {},

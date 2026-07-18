@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, field_validator
 from ...models.local_discovery import (
     LmStudioLoadError,
     LmStudioUnavailableError,
-    discover_lmstudio_models,
+    discover_lmstudio_catalog,
     load_lmstudio_model,
 )
 
@@ -112,6 +112,7 @@ async def probe_models() -> dict[str, Any]:
     response_model=LmStudioLoadResponse,
     responses={
         404: {"description": "Model is not in the downloaded LM Studio library"},
+        409: {"description": "The server lacks the native v1 load API"},
         502: {"description": "LM Studio rejected the load request"},
         503: {"description": "LM Studio is unavailable"},
     },
@@ -122,11 +123,13 @@ async def load_lmstudio(request: LmStudioLoadRequest) -> LmStudioLoadResponse:
     The discovery guard prevents this route from becoming an arbitrary model
     loader: only chat-capable models returned by the configured LM Studio
     library can be loaded. Already-loaded models are an idempotent success.
+    When discovery fell back to a pre-v1 API, loading is rejected up front —
+    POSTing the v1 load endpoint at such a server would only 404.
     """
     key = request.model.removeprefix("lmstudio:")
     full_id = f"lmstudio:{key}"
-    discovered = await asyncio.to_thread(discover_lmstudio_models)
-    info = next((item for item in discovered if item.id == full_id), None)
+    catalog = await asyncio.to_thread(discover_lmstudio_catalog)
+    info = next((item for item in catalog.models if item.id == full_id), None)
     if info is None:
         raise HTTPException(
             status_code=404,
@@ -136,6 +139,15 @@ async def load_lmstudio(request: LmStudioLoadRequest) -> LmStudioLoadResponse:
         )
     if info.running:
         return LmStudioLoadResponse(model=full_id, status="already_loaded")
+    if not catalog.supports_load:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "The LM Studio server does not expose the native v1 load API "
+                f"(discovered via {catalog.api!r}); load the model in the "
+                "LM Studio app instead"
+            ),
+        )
 
     try:
         result = await asyncio.to_thread(load_lmstudio_model, key)
