@@ -128,6 +128,8 @@ function ModelChipRow({
 export default function TierBoard() {
   const queryClient = useQueryClient();
   const [editor, setEditor] = useState<CapabilityEditorState | null>(null);
+  const [dryTier, setDryTier] = useState(2);
+  const [dryCapability, setDryCapability] = useState("");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["tier-settings"],
@@ -175,10 +177,19 @@ export default function TierBoard() {
     });
   };
 
+  const dryChain = data?.tiers.find((tier) => tier.tier === dryTier)?.effective ?? [];
+  const dryCandidates = dryCapability
+    ? dryChain.filter((modelId) =>
+        modelById.get(modelId)?.capabilities.includes(dryCapability),
+      )
+    : dryChain;
+
   return (
     <section aria-label="tier routing">
-      <div className="mb-3 font-mono text-[9px] uppercase tracking-[1.6px] text-b-text-faint">
-        MODEL TIERS · ROUTING ORDER · GET/PUT /api/settings/tiers
+      <div className="mb-8 max-w-3xl">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-el-accent-strong">Routing precedence</div>
+        <h1 className="font-display text-[36px] font-medium leading-tight text-el-ink">Model tiers</h1>
+        <p className="mt-3 text-[14px] leading-6 text-el-muted">Reorder fallback chains, annotate model capabilities, and explain a sample route without invoking a provider.</p>
       </div>
 
       {error && (
@@ -198,6 +209,34 @@ export default function TierBoard() {
       {saveMutation.isError && (
         <div role="alert" className="mb-3 font-mono text-[10px] text-b-red">
           save failed: {saveMutation.error.message}
+        </div>
+      )}
+
+      {data && (
+        <div className="mb-7 border-y border-el-divider py-5" data-testid="routing-dry-run">
+          <div className="mb-3 text-[12px] font-semibold text-el-ink">Dry-run route explanation</div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="text-[11px] font-semibold text-el-muted">
+              Tier
+              <select aria-label="Dry run tier" value={dryTier} onChange={(event) => setDryTier(Number(event.target.value))} className="mt-1 block h-10 min-w-28 border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink">
+                {data.tiers.map((tier) => <option key={tier.tier} value={tier.tier}>Tier {tier.tier}</option>)}
+              </select>
+            </label>
+            <label className="text-[11px] font-semibold text-el-muted">
+              Required capability
+              <select aria-label="Dry run capability" value={dryCapability} onChange={(event) => setDryCapability(event.target.value)} className="mt-1 block h-10 min-w-48 border border-el-divider bg-el-raised px-3 text-[13px] text-el-ink">
+                <option value="">Any capability</option>
+                {data.known_capabilities.map((capability) => <option key={capability} value={capability}>{capability}</option>)}
+              </select>
+            </label>
+            <div className="min-w-0 flex-1 border-l-2 border-el-accent px-4 py-2 text-[12px] leading-5 text-el-secondary">
+              {dryCandidates.length > 0 ? (
+                <><strong className="text-el-ink">Routes first to {dryCandidates[0]}</strong><br />Candidates: {dryCandidates.join(" → ")}</>
+              ) : (
+                <strong className="text-el-danger">No tier {dryTier} candidate advertises {dryCapability}.</strong>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

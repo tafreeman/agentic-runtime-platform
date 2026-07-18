@@ -1,10 +1,91 @@
 {
+  "$defs": {
+    "ChatImagePart": {
+      "description": "A request-local raster image sent to a vision-capable model.",
+      "properties": {
+        "detail": {
+          "default": "auto",
+          "enum": [
+            "auto",
+            "low",
+            "high"
+          ],
+          "title": "Detail",
+          "type": "string"
+        },
+        "type": {
+          "const": "image_url",
+          "default": "image_url",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 7100000,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "ChatImagePart",
+      "type": "object"
+    },
+    "ChatTextPart": {
+      "description": "Text content inside a multimodal conversation turn.",
+      "properties": {
+        "text": {
+          "maxLength": 100000,
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "ChatTextPart",
+      "type": "object"
+    }
+  },
   "description": "One conversation turn submitted to the chat playground.\n\n``content`` is capped well above any real chat turn so a single request\ncannot buffer unbounded memory through the sanitization middleware.",
   "properties": {
     "content": {
-      "maxLength": 100000,
-      "title": "Content",
-      "type": "string"
+      "anyOf": [
+        {
+          "maxLength": 100000,
+          "type": "string"
+        },
+        {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "image_url": "#/$defs/ChatImagePart",
+                "text": "#/$defs/ChatTextPart"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/ChatTextPart"
+              },
+              {
+                "$ref": "#/$defs/ChatImagePart"
+              }
+            ]
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "type": "array"
+        }
+      ],
+      "description": "Plain text or provider-neutral text/image content blocks",
+      "title": "Content"
     },
     "role": {
       "enum": [

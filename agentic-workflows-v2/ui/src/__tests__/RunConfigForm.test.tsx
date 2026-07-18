@@ -9,6 +9,7 @@ const clientMocks = vi.hoisted(() => ({
   listDatasetSamples: vi.fn(),
   getDatasetSampleDetail: vi.fn(),
   probeModels: vi.fn(),
+  listModelPacks: vi.fn(),
 }));
 
 vi.mock("../api/client", () => clientMocks);
@@ -101,6 +102,11 @@ describe("RunConfigForm", () => {
       ],
       no_llm_mode: false,
     });
+    clientMocks.listModelPacks.mockResolvedValue({
+      packs: [],
+      active: null,
+      workflow_bindings: {},
+    });
     clientMocks.listDatasetSamples.mockResolvedValue({
       dataset_source: "local",
       dataset_id: "local-smoke",
@@ -126,6 +132,45 @@ describe("RunConfigForm", () => {
         },
       ],
     });
+  });
+
+  it("emits the exact immutable model-pack version selected for the run", async () => {
+    clientMocks.listModelPacks.mockResolvedValue({
+      packs: [
+        {
+          id: "review-stable",
+          name: "Review stable",
+          description: "Pinned review route",
+          version: 3,
+          created_at: "2026-07-14T00:00:00Z",
+          updated_at: "2026-07-14T00:00:00Z",
+          archived: false,
+          tier_chains: { "1": ["openai:gpt-4o-mini"] },
+          allowed_providers: ["openai"],
+          capability_requirements: {},
+          model_capabilities: {},
+          judge_model: null,
+          source: "explicit",
+        },
+      ],
+      active: { id: "review-stable", version: 3 },
+      workflow_bindings: {},
+    });
+    const onChange = vi.fn();
+    renderForm(<RunConfigForm inputs={[]} workflowName="test" onChange={onChange} />);
+
+    fireEvent.click(screen.getByTestId("advanced-toggle"));
+    const select = await screen.findByLabelText("Model pack");
+    await waitFor(() =>
+      expect(screen.getByRole("option", { name: /review stable.*global/i })).toBeInTheDocument(),
+    );
+    fireEvent.change(select, { target: { value: "review-stable@3" } });
+
+    await waitFor(() =>
+      expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject({
+        modelPack: { id: "review-stable", version: 3 },
+      }),
+    );
   });
 
   it("renders the correct number of input fields from schema", () => {

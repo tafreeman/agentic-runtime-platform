@@ -31,8 +31,10 @@ import agentic_v2.langchain.models as lc_models
 from agentic_v2.contracts.chat import (
     ChatDoneEvent,
     ChatErrorEvent,
+    ChatMediaEvent,
     ChatMessage,
     ChatRequest,
+    ChatRouteEvent,
     ChatTokenEvent,
     validate_chat_stream_event,
 )
@@ -53,6 +55,14 @@ def _chat_payload(**overrides: Any) -> dict[str, Any]:
         "messages": [{"role": "user", "content": "ping"}],
     }
     return {**payload, **overrides}
+
+
+def _tier_chat_payload(tier: int = 2, **overrides: Any) -> dict[str, Any]:
+    """Return the tier-routed overload of the chat request body."""
+    payload = _chat_payload(**overrides)
+    payload.pop("model", None)
+    payload["tier"] = tier
+    return payload
 
 
 def _parse_sse_events(lines: Iterable[str]) -> list[dict[str, Any]]:
@@ -202,6 +212,108 @@ class TestChatModelBypass:
             "pong",
         ]
 
+    def test_multimodal_message_converts_to_text_and_image_blocks(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fake_model = _FakeStreamingModel([_FakeChunk("described")])
+        _install_fake_model(monkeypatch, fake_model)
+        image = "data:image/png;base64,aGVsbG8="
+
+        status, _headers, events = _post_chat_events(
+            client,
+            _chat_payload(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is shown?"},
+                            {"type": "image_url", "url": image, "detail": "low"},
+                        ],
+                    }
+                ]
+            ),
+        )
+
+        assert status == 200
+        assert [event["type"] for event in events] == ["token", "done"]
+        assert fake_model.seen_messages is not None
+        assert fake_model.seen_messages[0].content == [
+            {"type": "text", "text": "What is shown?"},
+            {"type": "image_url", "image_url": {"url": image, "detail": "low"}},
+        ]
+
+
+class TestChatTierRouting:
+    """Tier overload resolves the existing candidate chain server-side."""
+
+    def test_tier_selects_model_and_emits_route_before_tokens(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        selected = "lmstudio:qwen2.5-0.5b-instruct"
+        fake_model = _FakeStreamingModel([_FakeChunk("routed")])
+        calls = _install_fake_model(monkeypatch, fake_model)
+        monkeypatch.setattr(
+            lc_models,
+            "get_model_candidates_for_tier",
+            lambda tier: [selected] if tier == 2 else [],
+        )
+
+        status, _headers, events = _post_chat_events(
+            client, _tier_chat_payload(tier=2, temperature=0.4)
+        )
+
+        assert status == 200
+        assert calls == [(selected, 0.4)]
+        assert [event["type"] for event in events] == ["route", "token", "done"]
+        assert events[0] == {
+            "type": "route",
+            "requested_tier": 2,
+            "model": selected,
+        }
+        assert events[-1]["model"] == selected
+
+    def test_tier_falls_through_constructor_failures(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        first = "openai:unavailable"
+        second = "lmstudio:qwen2.5-0.5b-instruct"
+        fake_model = _FakeStreamingModel([_FakeChunk("fallback")])
+        calls: list[str] = []
+
+        def _build(model_id: str, temperature: float = 0.0):
+            calls.append(model_id)
+            if model_id == first:
+                raise ValueError("provider unavailable")
+            return fake_model
+
+        monkeypatch.setattr(lc_models, "get_chat_model", _build)
+        monkeypatch.setattr(
+            lc_models,
+            "get_model_candidates_for_tier",
+            lambda _tier: [first, second],
+        )
+
+        status, _headers, events = _post_chat_events(client, _tier_chat_payload())
+
+        assert status == 200
+        assert calls == [first, second]
+        assert events[0]["type"] == "route"
+        assert events[0]["model"] == second
+        assert events[-1] == {"type": "done", "model": second}
+
+    def test_tier_with_no_candidates_returns_safe_stream_error(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            lc_models, "get_model_candidates_for_tier", lambda _tier: []
+        )
+
+        status, _headers, events = _post_chat_events(client, _tier_chat_payload())
+
+        assert status == 200
+        assert [event["type"] for event in events] == ["error"]
+        assert "No available model for tier 2" in events[0]["message"]
+
 
 class TestChatChunkExtraction:
     """Chunk content may be a str or a list of content blocks."""
@@ -227,6 +339,40 @@ class TestChatChunkExtraction:
         assert status == 200
         assert [e["type"] for e in events] == ["token", "token", "done"]
         assert [e["delta"] for e in events[:2]] == ["alpha beta", "gamma"]
+
+    def test_safe_image_output_is_a_typed_media_event(
+        self, client: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        image = "data:image/webp;base64,aGVsbG8="
+        fake_model = _FakeStreamingModel(
+            [
+                _FakeChunk(
+                    [
+                        {"type": "text", "text": "rendered"},
+                        {
+                            "type": "image",
+                            "source": {
+                                "media_type": "image/webp",
+                                "data": "aGVsbG8=",
+                            },
+                            "alt": "Generated chart",
+                        },
+                    ]
+                )
+            ]
+        )
+        _install_fake_model(monkeypatch, fake_model)
+
+        status, _headers, events = _post_chat_events(client, _chat_payload())
+
+        assert status == 200
+        assert [event["type"] for event in events] == ["token", "media", "done"]
+        assert events[1] == {
+            "type": "media",
+            "mime_type": "image/webp",
+            "url": image,
+            "alt": "Generated chart",
+        }
 
 
 class TestChatStreamErrors:
@@ -341,10 +487,44 @@ class TestChatRequestValidation:
         response = client.post("/api/chat", json=_chat_payload(model="x" * 201))
         assert response.status_code == 422
 
+    def test_model_and_tier_together_are_422(self, client: TestClient) -> None:
+        response = client.post("/api/chat", json=_chat_payload(tier=2))
+        assert response.status_code == 422
+
+    def test_model_and_tier_both_missing_are_422(self, client: TestClient) -> None:
+        payload = _chat_payload()
+        payload.pop("model")
+        response = client.post("/api/chat", json=payload)
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("tier", [0, 6, True, "two"])
+    def test_invalid_tier_is_422(self, client: TestClient, tier: Any) -> None:
+        response = client.post("/api/chat", json=_tier_chat_payload(tier=tier))
+        assert response.status_code == 422
+
     def test_unknown_role_is_422(self, client: TestClient) -> None:
         response = client.post(
             "/api/chat",
             json=_chat_payload(messages=[{"role": "wizard", "content": "hi"}]),
+        )
+        assert response.status_code == 422
+
+    def test_active_or_unsupported_image_data_is_422(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/chat",
+            json=_chat_payload(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "url": "data:image/svg+xml;base64,PHN2Zz4=",
+                            }
+                        ],
+                    }
+                ]
+            ),
         )
         assert response.status_code == 422
 
@@ -368,16 +548,29 @@ class TestChatContracts:
     """ChatStreamEvent union and ChatRequest contract unit tests."""
 
     def test_union_round_trips_each_variant(self) -> None:
+        route = validate_chat_stream_event(
+            {"type": "route", "requested_tier": 2, "model": FULL_MODEL_ID}
+        )
         token = validate_chat_stream_event({"type": "token", "delta": "hi"})
         done = validate_chat_stream_event({"type": "done", "model": FULL_MODEL_ID})
         error = validate_chat_stream_event(
             {"type": "error", "message": "boom", "category": "auth_error"}
         )
+        media = validate_chat_stream_event(
+            {
+                "type": "media",
+                "mime_type": "image/png",
+                "url": "data:image/png;base64,aGVsbG8=",
+                "alt": "result",
+            }
+        )
 
+        assert isinstance(route, ChatRouteEvent)
         assert isinstance(token, ChatTokenEvent)
         assert isinstance(done, ChatDoneEvent)
         assert isinstance(error, ChatErrorEvent)
-        for event in (token, done, error):
+        assert isinstance(media, ChatMediaEvent)
+        for event in (route, token, media, done, error):
             round_tripped = validate_chat_stream_event(
                 json.loads(event.model_dump_json())
             )
@@ -388,13 +581,19 @@ class TestChatContracts:
             validate_chat_stream_event({"type": "bogus", "delta": "hi"})
 
     def test_chat_request_defaults_and_bounds(self) -> None:
-        request = ChatRequest(
+        request = ChatRequest.for_model(
             model=FULL_MODEL_ID,
+            messages=[ChatMessage(role="user", content="ping")],
+        )
+        routed = ChatRequest.for_tier(
+            tier=3,
             messages=[ChatMessage(role="user", content="ping")],
         )
 
         assert request.temperature == 0.2
         assert request.messages[0].role == "user"
+        assert routed.model is None
+        assert routed.tier == 3
         with pytest.raises(ValidationError):
             ChatRequest.model_validate(_chat_payload(temperature=-0.1))
         with pytest.raises(ValidationError):

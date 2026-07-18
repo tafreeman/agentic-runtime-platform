@@ -18,8 +18,11 @@ import pytest
 
 from agentic_v2.models import local_discovery
 from agentic_v2.models.local_discovery import (
+    LmStudioLoadError,
+    LmStudioUnavailableError,
     discover_lmstudio_models,
     discover_onnx_models,
+    load_lmstudio_model,
     parse_onnx_roots,
     resolve_lmstudio_host,
 )
@@ -27,7 +30,13 @@ from agentic_v2.models.local_discovery import (
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    for var in ("LMSTUDIO_HOST", "LM_STUDIO_HOST", "ONNX_MODEL_DIR", "AIGALLERY_CACHE"):
+    for var in (
+        "LMSTUDIO_HOST",
+        "LM_STUDIO_HOST",
+        "LM_API_TOKEN",
+        "ONNX_MODEL_DIR",
+        "AIGALLERY_CACHE",
+    ):
         monkeypatch.delenv(var, raising=False)
     # resolve_lmstudio_host is lru_cached; reset between tests so env changes
     # (and the :1234/:12340 probe order) are re-evaluated per test.
@@ -38,6 +47,7 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 # LM Studio — per-URL HTTP router
 # ---------------------------------------------------------------------------
 
+_V1 = "/api/v1/models"
 _NATIVE = "/api/v0/models"
 _OPENAI = "/v1/models"
 
@@ -51,6 +61,7 @@ class _Resp:
     def __init__(self, payload: Any, status: int = 200) -> None:
         self._payload = payload
         self._status = status
+        self.status_code = status
 
     def raise_for_status(self) -> None:
         if self._status >= 400:
@@ -67,7 +78,7 @@ def _route(monkeypatch: pytest.MonkeyPatch, routes: dict[str, _Resp]) -> list[st
     """
     calls: list[str] = []
 
-    def _fake_get(url: str, timeout: Any = None):
+    def _fake_get(url: str, headers: Any = None, timeout: Any = None):
         calls.append(url)
         resp = routes.get(url)
         if resp is None:
@@ -76,6 +87,75 @@ def _route(monkeypatch: pytest.MonkeyPatch, routes: dict[str, _Resp]) -> list[st
 
     monkeypatch.setattr(local_discovery.httpx, "get", _fake_get)
     return calls
+
+
+class TestDiscoverLmStudioV1:
+    def test_v1_lists_library_instances_and_capabilities(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:1234")
+        calls = _route(
+            monkeypatch,
+            {
+                f"http://127.0.0.1:1234{_V1}": _Resp(
+                    {
+                        "models": [
+                            {
+                                "key": "google/gemma-3-12b",
+                                "type": "llm",
+                                "loaded_instances": [{"id": "instance-1"}],
+                                "capabilities": {
+                                    "vision": True,
+                                    "trained_for_tool_use": True,
+                                    "reasoning": {"supported": True},
+                                },
+                            },
+                            {
+                                "key": "qwen/qwen3-8b",
+                                "type": "llm",
+                                "loaded_instances": [],
+                                "capabilities": {},
+                            },
+                            {"key": "tts", "type": "llm"},
+                            {"key": "nomic-embed-text", "type": "embedding"},
+                        ]
+                    }
+                )
+            },
+        )
+
+        result = discover_lmstudio_models()
+        by_id = {info.id: info for info in result}
+
+        assert [info.id for info in result] == [
+            "lmstudio:google/gemma-3-12b",
+            "lmstudio:qwen/qwen3-8b",
+        ]
+        assert by_id["lmstudio:google/gemma-3-12b"].running is True
+        assert by_id["lmstudio:google/gemma-3-12b"].capabilities == (
+            "vision",
+            "tools",
+            "reasoning",
+        )
+        assert by_id["lmstudio:qwen/qwen3-8b"].running is False
+        assert calls == [f"http://127.0.0.1:1234{_V1}"]
+
+    def test_v1_sends_optional_bearer_token(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:1234")
+        monkeypatch.setenv("LM_API_TOKEN", "lm-test-token")
+        seen: dict[str, Any] = {}
+
+        def _capture(url: str, headers: Any = None, timeout: Any = None) -> _Resp:
+            seen.update(url=url, headers=headers or {})
+            return _Resp({"models": []})
+
+        monkeypatch.setattr(local_discovery.httpx, "get", _capture)
+
+        assert discover_lmstudio_models() == []
+        assert seen["url"] == f"http://127.0.0.1:1234{_V1}"
+        assert seen["headers"]["Authorization"] == "Bearer lm-test-token"
 
 
 class TestDiscoverLmStudioNative:
@@ -95,6 +175,7 @@ class TestDiscoverLmStudioNative:
                                 "state": "loaded",
                             },
                             {"id": "qwen2-vl-7b", "type": "vlm", "state": "not-loaded"},
+                            {"id": "qwen3-tts", "type": "llm"},
                             {"id": "nomic-embed-text", "type": "embeddings"},
                         ]
                     }
@@ -161,8 +242,9 @@ class TestDiscoverLmStudioFallback:
             },
         )
         result = discover_lmstudio_models()
-        # Native tried first, then the shim; embedding name filtered out.
+        # Current v1 and legacy v0 are tried before the OpenAI shim.
         assert calls == [
+            f"http://127.0.0.1:1234{_V1}",
             f"http://127.0.0.1:1234{_NATIVE}",
             f"http://127.0.0.1:1234{_OPENAI}",
         ]
@@ -216,7 +298,10 @@ class TestDiscoverLmStudioPorts:
             {f"http://127.0.0.1:4321{_NATIVE}": _Resp({"data": [{"id": "m"}]})},
         )
         assert [info.id for info in discover_lmstudio_models()] == ["lmstudio:m"]
-        assert calls[0] == f"http://127.0.0.1:4321{_NATIVE}"
+        assert calls[:2] == [
+            f"http://127.0.0.1:4321{_V1}",
+            f"http://127.0.0.1:4321{_NATIVE}",
+        ]
 
 
 class TestResolveLmStudioHost:
@@ -240,7 +325,10 @@ class TestResolveLmStudioHost:
         second = resolve_lmstudio_host()
         assert first == second == "http://127.0.0.1:1234"
         # Second call hit the lru_cache — no additional network probe.
-        assert calls == [f"http://127.0.0.1:1234{_NATIVE}"]
+        assert calls == [
+            f"http://127.0.0.1:1234{_V1}",
+            f"http://127.0.0.1:1234{_NATIVE}",
+        ]
 
     def test_returns_first_reachable_default_port(
         self, monkeypatch: pytest.MonkeyPatch
@@ -257,6 +345,70 @@ class TestResolveLmStudioHost:
         _route(monkeypatch, {})
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
 
+
+class TestLoadLmStudioModel:
+    def test_posts_native_v1_load_with_optional_auth(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:12340")
+        monkeypatch.setenv("LM_API_TOKEN", "lm-test-token")
+        captured: dict[str, Any] = {}
+
+        def _fake_post(
+            url: str,
+            *,
+            headers: Any = None,
+            json: Any = None,
+            timeout: Any = None,
+        ) -> _Resp:
+            captured.update(url=url, headers=headers, json=json, timeout=timeout)
+            return _Resp(
+                {
+                    "type": "model_load_result",
+                    "instance_id": "gemma-instance",
+                    "load_time_seconds": 1.25,
+                    "status": "loaded",
+                }
+            )
+
+        monkeypatch.setattr(local_discovery.httpx, "post", _fake_post)
+
+        result = load_lmstudio_model("google/gemma-3-4b")
+
+        assert result["instance_id"] == "gemma-instance"
+        assert captured["url"] == "http://127.0.0.1:12340/api/v1/models/load"
+        assert captured["headers"] == {"Authorization": "Bearer lm-test-token"}
+        assert captured["json"] == {"model": "google/gemma-3-4b"}
+        assert captured["timeout"] == 300.0
+
+    def test_unreachable_server_raises_typed_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:12340")
+
+        def _unreachable(*args: Any, **kwargs: Any) -> None:
+            raise httpx.ConnectError("connection refused")
+
+        monkeypatch.setattr(local_discovery.httpx, "post", _unreachable)
+
+        with pytest.raises(LmStudioUnavailableError, match="unavailable"):
+            load_lmstudio_model("google/gemma-3-4b")
+
+    def test_invalid_success_payload_raises_typed_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:12340")
+        monkeypatch.setattr(
+            local_discovery.httpx,
+            "post",
+            lambda *args, **kwargs: _Resp({"status": "loading"}),
+        )
+
+        with pytest.raises(LmStudioLoadError, match="invalid"):
+            load_lmstudio_model("google/gemma-3-4b")
+
+
+class TestResolveLmStudioHostContinued:
     def test_failed_resolution_not_cached(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -264,8 +416,8 @@ class TestResolveLmStudioHost:
         discovered."""
         calls = _route(monkeypatch, {})
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
-        # Each of the 2 candidate hosts is probed on both native and OpenAI-shim paths.
-        assert len(calls) == 4  # 2 hosts × 2 paths (native + OpenAI-shim)
+        # Each candidate host is probed on v1, v0, and OpenAI-compatible paths.
+        assert len(calls) == 6  # 2 hosts × 3 paths
 
         # Server comes up on the legacy port — the next call must re-probe and find it.
         _route(
@@ -299,6 +451,30 @@ class TestResolveLmStudioHost:
 
         # ...and inference must follow it there, not the stale cached :12340.
         assert resolve_lmstudio_host() == "http://127.0.0.1:1234"
+
+
+class TestLmStudioModelBuilder:
+    def test_authenticated_server_uses_lm_api_token(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        langchain_openai = pytest.importorskip("langchain_openai")
+        captured: dict[str, Any] = {}
+        monkeypatch.setattr(
+            langchain_openai,
+            "ChatOpenAI",
+            lambda **kwargs: captured.update(kwargs) or object(),
+        )
+        monkeypatch.setenv("LMSTUDIO_HOST", "http://127.0.0.1:1234")
+        monkeypatch.setenv("LM_API_TOKEN", "lm-test-token")
+
+        from agentic_v2.langchain.model_builders import build_lmstudio_model
+
+        build_lmstudio_model("google/gemma-3-12b", 0.2)
+
+        assert captured["model"] == "google/gemma-3-12b"
+        assert captured["base_url"] == "http://127.0.0.1:1234/v1"
+        assert captured["api_key"] == "lm-test-token"
+        assert captured["temperature"] == 0.2
 
 
 # ---------------------------------------------------------------------------

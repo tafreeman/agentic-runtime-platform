@@ -15,9 +15,11 @@ npm run test:e2e:5x                  # 5× PR gate (matches CI)
 npm run test:e2e:ui                  # interactive debug mode
 ```
 
-`playwright.config.ts` spawns the backend (`uvicorn` on `:8010`) and the Vite
-dev server (`:5173`) automatically via its `webServer` block. Running
-dev servers on those ports are reused outside CI (`reuseExistingServer: !CI`).
+`playwright.config.ts` spawns an isolated no-LLM backend (`uvicorn` on `:8010`)
+and the Vite dev server (`:5173`) automatically via its `webServer` block. It
+does not reuse an already-running development server, because doing so can
+silently introduce provider credentials and non-deterministic live calls. Stop
+local services on those ports before running the suite.
 
 ## What's covered
 

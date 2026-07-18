@@ -1,0 +1,33 @@
+schema_version = 1
+
+[release]
+bundle_version = "0.4.0-rc.1"
+tag = "v0.4.0-rc.1"
+channel = "github-prerelease"
+python_requires = ">=3.11"
+
+# The GitHub release is a platform bundle. Component distributions keep their
+# own versions; this manifest is the authoritative mapping from bundle tag to
+# installable artifacts.
+[[components]]
+distribution = "agentic-tools"
+version = "0.1.0"
+path = "."
+wheel_glob = "dist/agentic_tools-*.whl"
+import_name = "tools"
+
+[[components]]
+distribution = "agentic-workflows-v2"
+version = "0.1.0"
+path = "agentic-workflows-v2"
+wheel_glob = "agentic-workflows-v2/dist/agentic_workflows_v2-*.whl"
+import_name = "agentic_v2"
+smoke_command = ["agentic", "version"]
+
+[[components]]
+distribution = "agentic-v2-eval"
+version = "0.3.0"
+path = "agentic-v2-eval"
+wheel_glob = "agentic-v2-eval/dist/agentic_v2_eval-*.whl"
+import_name = "agentic_v2_eval"
+smoke_command = ["agentic-v2-eval", "--version"]

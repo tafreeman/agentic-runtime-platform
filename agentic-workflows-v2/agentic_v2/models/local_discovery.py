@@ -4,14 +4,14 @@ Companion to :mod:`agentic_v2.models.ollama_discovery`. Both feed
 ``enumerate_known_models`` so the model router lists what is actually runnable
 right now, not just the static tier chains.
 
-- **LM Studio** — a local server exposing both LM Studio's *native* REST API
-  (``GET {host}/api/v0/models``) and an OpenAI-compatible shim
-  (``GET {host}/v1/models``). Discovery prefers the native endpoint because it
-  lists the **whole downloaded library** with a ``type`` (``llm`` / ``vlm`` /
-  ``embeddings``) and a ``state`` (``loaded`` / ``not-loaded``); the OpenAI shim
-  only reports models currently *loaded* into memory, so on its own it surfaces
-  one or two models even when the library is large. The native payload is parsed
-  when present and the OpenAI shim is the fallback for older servers.
+- **LM Studio** — a local server exposing the current native REST API
+  (``GET {host}/api/v1/models``), the legacy native API
+  (``GET {host}/api/v0/models``), and an OpenAI-compatible shim
+  (``GET {host}/v1/models``). Discovery prefers v1 because it lists the whole
+  downloaded library, loaded instances, and model capabilities. The v0 and
+  OpenAI-compatible endpoints remain ordered fallbacks for older servers.
+  ``LM_API_TOKEN`` is sent as a bearer token when LM Studio authentication is
+  enabled.
 
   The host is resolved by :func:`resolve_lmstudio_host`: ``LMSTUDIO_HOST`` wins
   when set, otherwise the LM Studio default port (``1234``) is probed first and
@@ -68,14 +68,16 @@ class LocalModelInfo:
 _HTTP_TIMEOUT_SECONDS = 4.0
 
 
-def _get_json(url: str) -> dict[str, Any] | None:
+def _get_json(
+    url: str, *, headers: dict[str, str] | None = None
+) -> dict[str, Any] | None:
     """GET ``url`` and return a parsed JSON object, or ``None`` on any failure.
 
     A ``None`` return means "host unreachable / not this provider"; an empty
     payload still parses to a dict, distinguishing "reachable but no models".
     """
     try:
-        response = httpx.get(url, timeout=_HTTP_TIMEOUT_SECONDS)
+        response = httpx.get(url, headers=headers, timeout=_HTTP_TIMEOUT_SECONDS)
         response.raise_for_status()
         data = response.json()
     except Exception as exc:
@@ -94,15 +96,28 @@ _LMSTUDIO_HOST_ENV = "LMSTUDIO_HOST"
 # either is discovered without setting LMSTUDIO_HOST. resolve_lmstudio_host()
 # (used by the backend) follows the same order, keeping discovered == runnable.
 _LMSTUDIO_DEFAULT_PORTS = (1234, 12340)
-_LMSTUDIO_NATIVE_PATH = "/api/v0/models"  # full library + type + state
+_LMSTUDIO_V1_PATH = "/api/v1/models"  # current: library + instances + capabilities
+_LMSTUDIO_V0_PATH = "/api/v0/models"  # legacy: library + type + state
 _LMSTUDIO_OPENAI_PATH = "/v1/models"  # fallback: loaded models only, no type
+_LMSTUDIO_LOAD_PATH = "/api/v1/models/load"
+_LMSTUDIO_LOAD_TIMEOUT_SECONDS = 300.0
 
 # Native-API model types usable as chat backends. "embeddings" (and any other
 # non-chat type) is excluded; "vlm" is chat-capable and gets a vision badge.
 _LMSTUDIO_CHAT_TYPES = frozenset({"llm", "vlm"})
 
-# OpenAI-shim fallback has no type field, so filter obvious non-chat ids by name.
+# LM Studio may classify support components such as a TTS tokenizer as ``llm``;
+# the OpenAI shim has no type at all. Filter obvious non-chat ids by name on
+# every endpoint so each surfaced row is usable by the chat backend.
 _NON_CHAT_MARKERS = ("embed", "tts", "whisper", "rerank")
+
+
+class LmStudioLoadError(RuntimeError):
+    """Raised when LM Studio rejects or returns an invalid model-load result."""
+
+
+class LmStudioUnavailableError(LmStudioLoadError):
+    """Raised when the configured LM Studio server cannot be reached."""
 
 
 def _is_chat_model_id(model_id: str) -> bool:
@@ -112,16 +127,23 @@ def _is_chat_model_id(model_id: str) -> bool:
 
 
 def _normalize_lmstudio_host(raw: str) -> str:
-    """Strip a trailing ``/`` and ``/v1`` so paths can be appended cleanly.
+    """Strip a trailing API suffix so discovery paths can be appended cleanly.
 
-    ``LMSTUDIO_HOST`` may be given with or without the ``/v1`` suffix the
-    backend appends; discovery hits ``/api/v0/...`` and ``/v1/...`` itself, so
-    it needs the bare host either way.
+    ``LMSTUDIO_HOST`` may be given with or without the ``/v1`` or ``/api/v1``
+    suffixes; discovery appends the versioned paths itself.
     """
     host = raw.rstrip("/")
-    if host.endswith("/v1"):
-        host = host[: -len("/v1")]
+    for suffix in ("/api/v1", "/v1"):
+        if host.endswith(suffix):
+            host = host[: -len(suffix)]
+            break
     return host
+
+
+def _lmstudio_headers() -> dict[str, str] | None:
+    """Return optional auth headers for an LM Studio server with auth enabled."""
+    token = get_first_secret("LM_API_TOKEN", default="") or ""
+    return {"Authorization": f"Bearer {token}"} if token else None
 
 
 def _lmstudio_candidate_hosts() -> list[str]:
@@ -132,7 +154,50 @@ def _lmstudio_candidate_hosts() -> list[str]:
     return [f"http://127.0.0.1:{port}" for port in _LMSTUDIO_DEFAULT_PORTS]
 
 
-def _parse_native_models(data: dict[str, Any]) -> list[LocalModelInfo]:
+def _parse_v1_models(data: dict[str, Any]) -> list[LocalModelInfo]:
+    """Map a current ``/api/v1/models`` payload to chat model records."""
+    discovered: list[LocalModelInfo] = []
+    seen: set[str] = set()
+    for entry in data.get("models", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        model_id = entry.get("key")
+        if not isinstance(model_id, str) or not model_id:
+            continue
+        if not _is_chat_model_id(model_id):
+            continue
+        model_type = entry.get("type")
+        if (
+            isinstance(model_type, str)
+            and model_type.lower() not in _LMSTUDIO_CHAT_TYPES
+        ):
+            continue
+        full_id = f"lmstudio:{model_id}"
+        if full_id in seen:
+            continue
+        seen.add(full_id)
+
+        capabilities: list[str] = []
+        raw_capabilities = entry.get("capabilities")
+        if isinstance(raw_capabilities, dict):
+            if raw_capabilities.get("vision") is True:
+                capabilities.append("vision")
+            if raw_capabilities.get("trained_for_tool_use") is True:
+                capabilities.append("tools")
+            if raw_capabilities.get("reasoning"):
+                capabilities.append("reasoning")
+        loaded_instances = entry.get("loaded_instances")
+        discovered.append(
+            LocalModelInfo(
+                id=full_id,
+                running=isinstance(loaded_instances, list) and bool(loaded_instances),
+                capabilities=tuple(capabilities),
+            )
+        )
+    return discovered
+
+
+def _parse_v0_models(data: dict[str, Any]) -> list[LocalModelInfo]:
     """Map an ``/api/v0/models`` payload to records (full library + type/state)."""
     discovered: list[LocalModelInfo] = []
     seen: set[str] = set()
@@ -141,6 +206,8 @@ def _parse_native_models(data: dict[str, Any]) -> list[LocalModelInfo]:
             continue
         model_id = entry.get("id")
         if not isinstance(model_id, str) or not model_id:
+            continue
+        if not _is_chat_model_id(model_id):
             continue
         model_type = entry.get("type")
         # Exclude known non-chat types; keep when the type is absent/unknown so
@@ -186,16 +253,20 @@ def _parse_openai_models(data: dict[str, Any]) -> list[LocalModelInfo]:
 
 
 def _fetch_lmstudio_models(host: str) -> list[LocalModelInfo] | None:
-    """Probe one host: native API first, OpenAI shim second.
+    """Probe one host: native v1, native v0, then OpenAI shim.
 
     Returns the chat models (possibly an empty list when the server is up but
     has no chat models) if the host responds, or ``None`` when the host is
     unreachable / not an LM Studio server.
     """
-    native = _get_json(f"{host}{_LMSTUDIO_NATIVE_PATH}")
-    if native is not None:
-        return _parse_native_models(native)
-    openai = _get_json(f"{host}{_LMSTUDIO_OPENAI_PATH}")
+    headers = _lmstudio_headers()
+    v1 = _get_json(f"{host}{_LMSTUDIO_V1_PATH}", headers=headers)
+    if v1 is not None:
+        return _parse_v1_models(v1)
+    v0 = _get_json(f"{host}{_LMSTUDIO_V0_PATH}", headers=headers)
+    if v0 is not None:
+        return _parse_v0_models(v0)
+    openai = _get_json(f"{host}{_LMSTUDIO_OPENAI_PATH}", headers=headers)
     if openai is not None:
         return _parse_openai_models(openai)
     return None
@@ -268,6 +339,57 @@ def discover_lmstudio_models() -> list[LocalModelInfo]:
             # First reachable host wins, even when it reports no chat models.
             return result
     return []
+
+
+def load_lmstudio_model(model_key: str) -> dict[str, Any]:
+    """Load one downloaded LM Studio model through the native v1 API.
+
+    ``model_key`` is the native library key (for example
+    ``google/gemma-3-4b``), not the ARP ``lmstudio:``-prefixed id. The request
+    uses the same host and optional bearer token as discovery. A long but
+    bounded timeout accommodates weight loading without allowing a request to
+    hang indefinitely.
+
+    Raises:
+        ValueError: If ``model_key`` is blank.
+        LmStudioUnavailableError: If the configured server cannot be reached.
+        LmStudioLoadError: If LM Studio rejects the request or returns an
+            unexpected response.
+    """
+    key = model_key.strip()
+    if not key:
+        raise ValueError("LM Studio model key must not be blank")
+
+    host = resolve_lmstudio_host()
+    try:
+        response = httpx.post(
+            f"{host}{_LMSTUDIO_LOAD_PATH}",
+            headers=_lmstudio_headers(),
+            json={"model": key},
+            timeout=_LMSTUDIO_LOAD_TIMEOUT_SECONDS,
+        )
+    except httpx.RequestError as exc:
+        raise LmStudioUnavailableError(
+            "The configured LM Studio server is unavailable"
+        ) from exc
+
+    try:
+        response.raise_for_status()
+    except Exception as exc:
+        status = getattr(response, "status_code", "unknown")
+        raise LmStudioLoadError(
+            f"LM Studio rejected the model load request (HTTP {status})"
+        ) from exc
+
+    try:
+        data = response.json()
+    except Exception as exc:
+        raise LmStudioLoadError(
+            "LM Studio returned a non-JSON model load response"
+        ) from exc
+    if not isinstance(data, dict) or data.get("status") != "loaded":
+        raise LmStudioLoadError("LM Studio returned an invalid model load response")
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -363,9 +485,12 @@ def discover_onnx_models() -> list[LocalModelInfo]:
 
 
 __all__ = [
+    "LmStudioLoadError",
+    "LmStudioUnavailableError",
     "LocalModelInfo",
     "discover_lmstudio_models",
     "discover_onnx_models",
+    "load_lmstudio_model",
     "onnx_roots",
     "parse_onnx_roots",
     "resolve_lmstudio_host",

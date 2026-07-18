@@ -21,10 +21,14 @@ import logging
 import os
 import re
 import tempfile
+from contextlib import contextmanager
+from contextvars import ContextVar
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Iterator, Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +115,19 @@ class ProviderConfig(BaseModel):
             )
         return value
 
+    @field_validator("base_url")
+    @classmethod
+    def _validate_base_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip().rstrip("/")
+        parsed = urlsplit(cleaned)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise ValueError("Provider base_url must be an absolute HTTP(S) URL.")
+        if parsed.username or parsed.password:
+            raise ValueError("Provider base_url must not contain credentials.")
+        return cleaned
+
     @field_validator("options")
     @classmethod
     def _reject_secret_options(cls, value: dict[str, Any]) -> dict[str, Any]:
@@ -127,6 +144,82 @@ class ProviderConfig(BaseModel):
         return value
 
 
+class ModelPackRef(BaseModel):
+    """Immutable reference to one model-pack version."""
+
+    id: str
+    version: int = Field(ge=1)
+
+    @field_validator("id")
+    @classmethod
+    def _validate_id(cls, value: str) -> str:
+        if not _PROVIDER_ID_PATTERN.fullmatch(value):
+            raise ValueError(
+                "Model pack id must be a lowercase slug "
+                "(letters, digits, '-', '_'; max 64 chars)."
+            )
+        return value
+
+
+class ModelPack(BaseModel):
+    """One immutable, versioned routing configuration.
+
+    Updating a logical pack appends another ``ModelPack`` record with the same
+    ``id`` and a higher ``version``. Historical records and run provenance
+    therefore never depend on mutable current settings.
+    """
+
+    id: str
+    name: str = Field(min_length=1, max_length=80)
+    description: str = Field(default="", max_length=500)
+    version: int = Field(default=1, ge=1)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    archived: bool = False
+    tier_chains: dict[int, list[str]] = Field(default_factory=dict)
+    allowed_providers: list[str] = Field(default_factory=list)
+    capability_requirements: dict[int, list[str]] = Field(default_factory=dict)
+    model_capabilities: dict[str, list[str]] = Field(default_factory=dict)
+    judge_model: str | None = Field(default=None, max_length=200)
+    source: Literal["effective", "defaults", "explicit", "duplicate", "imported"] = (
+        "explicit"
+    )
+
+    @field_validator("id")
+    @classmethod
+    def _validate_id(cls, value: str) -> str:
+        if not _PROVIDER_ID_PATTERN.fullmatch(value):
+            raise ValueError(
+                "Model pack id must be a lowercase slug "
+                "(letters, digits, '-', '_'; max 64 chars)."
+            )
+        return value
+
+    @field_validator("tier_chains", "capability_requirements")
+    @classmethod
+    def _validate_tier_map(cls, value: dict[int, list[str]]) -> dict[int, list[str]]:
+        for tier, entries in value.items():
+            if not 0 <= tier <= 5:
+                raise ValueError(f"Tier must be between 0 and 5, got {tier}.")
+            if any(
+                not isinstance(entry, str) or not entry.strip() for entry in entries
+            ):
+                raise ValueError(f"Tier {tier} contains an empty value.")
+            if len(entries) != len(set(entries)):
+                raise ValueError(f"Tier {tier} contains duplicate entries.")
+        return value
+
+    @field_validator("allowed_providers")
+    @classmethod
+    def _validate_allowed_providers(cls, value: list[str]) -> list[str]:
+        cleaned = [provider.strip() for provider in value]
+        if any(not provider for provider in cleaned):
+            raise ValueError("Allowed providers must not contain an empty value.")
+        if len(cleaned) != len(set(cleaned)):
+            raise ValueError("Allowed providers must be unique.")
+        return cleaned
+
+
 class UiSettings(BaseModel):
     """The full persisted UI settings document."""
 
@@ -134,6 +227,9 @@ class UiSettings(BaseModel):
     providers: list[ProviderConfig] = Field(default_factory=list)
     tier_overrides: dict[int, list[str]] = Field(default_factory=dict)
     model_capabilities: dict[str, list[str]] = Field(default_factory=dict)
+    model_packs: list[ModelPack] = Field(default_factory=list)
+    active_model_pack: ModelPackRef | None = None
+    workflow_model_packs: dict[str, ModelPackRef] = Field(default_factory=dict)
 
     @field_validator("providers")
     @classmethod
@@ -154,6 +250,20 @@ class UiSettings(BaseModel):
             if any(not isinstance(m, str) or not m.strip() for m in models):
                 raise ValueError(f"Tier {tier} override contains an empty model id.")
         return value
+
+    @model_validator(mode="after")
+    def _validate_model_pack_refs(self) -> "UiSettings":
+        keys = [(pack.id, pack.version) for pack in self.model_packs]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Duplicate model pack id/version record.")
+        known = set(keys)
+        refs = [self.active_model_pack, *self.workflow_model_packs.values()]
+        for ref in refs:
+            if ref is not None and (ref.id, ref.version) not in known:
+                raise ValueError(
+                    f"Unknown model pack reference: {ref.id!r} version {ref.version}."
+                )
+        return self
 
 
 def is_valid_api_key_env(value: str) -> bool:
@@ -239,10 +349,87 @@ def save_ui_settings(settings: UiSettings, path: Path | None = None) -> Path:
     return settings_path
 
 
+def get_model_pack(
+    ref: ModelPackRef,
+    settings: UiSettings | None = None,
+) -> ModelPack | None:
+    """Return the exact immutable pack version referenced by ``ref``."""
+    current = settings or load_ui_settings()
+    return next(
+        (
+            pack
+            for pack in current.model_packs
+            if pack.id == ref.id and pack.version == ref.version
+        ),
+        None,
+    )
+
+
+def latest_model_pack(
+    pack_id: str, settings: UiSettings | None = None
+) -> ModelPack | None:
+    """Return the latest version of ``pack_id``, including archived versions."""
+    current = settings or load_ui_settings()
+    versions = [pack for pack in current.model_packs if pack.id == pack_id]
+    return max(versions, key=lambda pack: pack.version, default=None)
+
+
+def resolve_model_pack(
+    *,
+    workflow_name: str,
+    requested: ModelPackRef | None = None,
+    settings: UiSettings | None = None,
+) -> tuple[ModelPack | None, Literal["run", "workflow", "global", "default"]]:
+    """Resolve a run's pack without changing deployment/env precedence.
+
+    The returned source is recorded in run provenance. Archived pack
+    versions remain readable for historical evidence but cannot be
+    selected for a new run.
+    """
+    current = settings or load_ui_settings()
+    candidates: tuple[
+        tuple[ModelPackRef | None, Literal["run", "workflow", "global"]], ...
+    ] = (
+        (requested, "run"),
+        (current.workflow_model_packs.get(workflow_name), "workflow"),
+        (current.active_model_pack, "global"),
+    )
+    for ref, source in candidates:
+        if ref is None:
+            continue
+        pack = get_model_pack(ref, current)
+        if pack is None:
+            raise ValueError(f"Unknown model pack {ref.id!r} version {ref.version}.")
+        if pack.archived:
+            raise ValueError(
+                f"Model pack {ref.id!r} version {ref.version} is archived."
+            )
+        return pack, source
+    return None, "default"
+
+
+_RUN_MODEL_PACK: ContextVar[ModelPack | None] = ContextVar(
+    "agentic_run_model_pack", default=None
+)
+
+
+@contextmanager
+def model_pack_routing(pack: ModelPack | None) -> Iterator[None]:
+    """Apply ``pack`` to one async execution context, never process-global state."""
+    token = _RUN_MODEL_PACK.set(pack)
+    try:
+        yield
+    finally:
+        _RUN_MODEL_PACK.reset(token)
+
+
 def tier_override_models(tier: int) -> list[str]:
     """Return the UI-configured model ranking for a tier (empty when unset).
 
     Used by the LangChain model dispatch layer between the env-var
     override and the probed tier default.
     """
+    pack = _RUN_MODEL_PACK.get()
+    if pack is not None and tier in pack.tier_chains:
+        return list(pack.tier_chains[tier])
     return list(load_ui_settings().tier_overrides.get(tier, []))

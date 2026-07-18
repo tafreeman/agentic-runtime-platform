@@ -89,6 +89,42 @@ Re-run the LLM provider availability check and return the current tier-to-model 
 
 ---
 
+#### `POST /api/chat`
+
+Stream inference over SSE. The request has two mutually exclusive overloads:
+
+```json
+{
+  "model": "lmstudio:qwen2.5-0.5b-instruct",
+  "messages": [{"role": "user", "content": "Reply with ok"}],
+  "temperature": 0.2
+}
+```
+
+```json
+{
+  "tier": 2,
+  "messages": [{"role": "user", "content": "Reply with ok"}],
+  "temperature": 0.2
+}
+```
+
+Exactly one of `model` or `tier` is required. Tiers `1`–`5` resolve through
+the configured model-router overrides, probed default, and ordered fallback
+chain. A tier request emits the selected model before completion output:
+
+```text
+data: {"type":"route","requested_tier":2,"model":"lmstudio:qwen2.5-0.5b-instruct"}
+data: {"type":"token","delta":"ok"}
+data: {"type":"done","model":"lmstudio:qwen2.5-0.5b-instruct"}
+```
+
+Provider failures remain terminal in-stream `error` events on an HTTP `200`
+response. Request validation failures return HTTP `422`; missing LangChain
+extras return `503`.
+
+---
+
 ### Workflows
 
 ---

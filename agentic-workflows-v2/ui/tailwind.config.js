@@ -8,6 +8,60 @@ export default {
   theme: {
     extend: {
       colors: {
+        background: c("el-canvas"),
+        foreground: c("el-ink"),
+        card: {
+          DEFAULT: c("el-surface"),
+          foreground: c("el-ink"),
+        },
+        popover: {
+          DEFAULT: c("el-surface-raised"),
+          foreground: c("el-ink"),
+        },
+        primary: {
+          DEFAULT: c("el-action"),
+          foreground: c("el-action-ink"),
+        },
+        secondary: {
+          DEFAULT: c("el-surface-subtle"),
+          foreground: c("el-ink-secondary"),
+        },
+        muted: {
+          DEFAULT: c("el-surface-subtle"),
+          foreground: c("el-ink-muted"),
+        },
+        accent: {
+          DEFAULT: c("el-accent-soft"),
+          foreground: c("el-ink"),
+        },
+        destructive: {
+          DEFAULT: c("el-danger"),
+          foreground: c("el-surface-raised"),
+        },
+        border: c("el-divider"),
+        input: c("el-divider"),
+        ring: c("el-focus"),
+        el: {
+          canvas: c("el-canvas"),
+          surface: c("el-surface"),
+          raised: c("el-surface-raised"),
+          subtle: c("el-surface-subtle"),
+          hover: c("el-surface-hover"),
+          ink: c("el-ink"),
+          secondary: c("el-ink-secondary"),
+          muted: c("el-ink-muted"),
+          faint: c("el-ink-faint"),
+          divider: c("el-divider"),
+          "divider-soft": c("el-divider-soft"),
+          action: c("el-action"),
+          accent: c("el-accent"),
+          "accent-strong": c("el-accent-strong"),
+          "accent-soft": c("el-accent-soft"),
+          success: c("el-success"),
+          warning: c("el-warning"),
+          danger: c("el-danger"),
+          info: c("el-info"),
+        },
         b: {
           bg0: c("b-bg0"),
           bg1: c("b-bg1"),
@@ -43,10 +97,15 @@ export default {
         },
       },
       fontFamily: {
+        sans: ["var(--el-font-sans)"],
+        display: ["var(--el-font-display)"],
         mono: ["var(--b-font-mono)"],
         heading: ["var(--b-font-heading)"],
       },
       borderRadius: {
+        sm: "var(--el-radius-sm)",
+        md: "var(--el-radius-md)",
+        lg: "var(--el-radius-lg)",
         "b-lg": "var(--b-rad-lg)",
         "b-sm": "var(--b-rad-sm)",
       },

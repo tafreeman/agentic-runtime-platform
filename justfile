@@ -43,6 +43,16 @@ docs: _require-venv
     & "{{venv_python}}" agentic-workflows-v2/scripts/check_docs_refs.py
     & "{{venv_python}}" scripts/generate_doc_stats.py --check
 
+# Build the exact release artifacts, validate metadata, then install all wheels
+# into an isolated environment and exercise public imports and CLI entry points.
+release-check: _require-venv
+    uv pip install --python "{{venv_python}}" build twine
+    & "{{venv_python}}" -m build --sdist --wheel .
+    & "{{venv_python}}" -m build --sdist --wheel agentic-workflows-v2
+    & "{{venv_python}}" -m build --sdist --wheel agentic-v2-eval
+    & "{{venv_python}}" -m twine check dist/* agentic-workflows-v2/dist/* agentic-v2-eval/dist/*
+    & "{{venv_python}}" scripts/verify_release_artifacts.py
+
 dev:
     & "./agentic-workflows-v2/scripts/start-dev.ps1" -BackendPort {{backend_port}} -FrontendPort {{frontend_port}} -ApiProxyTarget "http://127.0.0.1:{{backend_port}}"
 

@@ -676,6 +676,57 @@ describe("ChatPlaygroundPanel", () => {
     expect(loadVerifications()).toEqual({});
   });
 
+  it("attaches an image as a multimodal content block", async () => {
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+    const file = new File(["image-bytes"], "evidence.png", {
+      type: "image/png",
+    });
+
+    fireEvent.change(screen.getByLabelText("Attach images"), {
+      target: { files: [file] },
+    });
+    expect(await screen.findByAltText("evidence.png")).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "Describe this evidence" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    await waitFor(() => expect(mockSendChat).toHaveBeenCalledTimes(1));
+    const request = mockSendChat.mock.calls[0]?.[0] as ChatRequest;
+    expect(request.messages[0]?.content).toEqual([
+      { type: "text", text: "Describe this evidence" },
+      expect.objectContaining({
+        type: "image_url",
+        url: expect.stringMatching(/^data:image\/png;base64,/),
+      }),
+    ]);
+  });
+
+  it("renders typed image output from the stream", async () => {
+    mockSendChat.mockImplementation(
+      async (_request: ChatRequest, onEvent: ChatEventHandler) => {
+        onEvent({
+          type: "media",
+          mime_type: "image/png",
+          url: "data:image/png;base64,aGVsbG8=",
+          alt: "Generated evidence chart",
+        });
+        onEvent({ type: "done", model: "anthropic:claude-haiku-4-5" });
+      },
+    );
+    renderPanel(makeChatProbe());
+    await pickerWithDefault("anthropic:claude-haiku-4-5");
+    fireEvent.change(screen.getByTestId("chat-input"), {
+      target: { value: "Make a chart" },
+    });
+    fireEvent.click(screen.getByTestId("chat-send"));
+
+    expect(
+      await screen.findByAltText("Generated evidence chart"),
+    ).toBeInTheDocument();
+  });
+
   it("surfaces a page-level probe failure inside the playground", () => {
     renderPanel(undefined, false, {
       probeError: new Error("API 500: probe exploded"),

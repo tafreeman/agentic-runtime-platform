@@ -127,8 +127,8 @@ class TestOpenRouterModelBuilder:
 class TestMergeCloudModelsAvailability:
     """_merge_cloud_models derives ``available`` from the provider key env.
 
-    The openrouter probe returns a static fallback even without a key, so the
-    availability flag is what tells the console the key is missing. Keyed
+    The OpenRouter catalog is public even without a key, so the availability
+    flag is what tells the console inference credentials are missing. Keyed
     providers are unaffected in practice: a successful authenticated fetch
     implies the key env is set.
     """

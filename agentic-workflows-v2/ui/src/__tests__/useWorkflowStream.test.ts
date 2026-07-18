@@ -63,6 +63,24 @@ describe("useWorkflowStream", () => {
     expect(result.current.events).toHaveLength(1);
   });
 
+  it("deduplicates exact events replayed after a reconnect", () => {
+    const { result } = renderHook(() => useWorkflowStream("run-1"));
+    const replayed = {
+      type: "workflow_end",
+      run_id: "run-1",
+      status: "success",
+      timestamp: "2025-01-01T00:00:03Z",
+    };
+
+    act(() => {
+      MockWebSocket.instances[0]!.simulateMessage(replayed);
+      MockWebSocket.instances[0]!.simulateMessage(replayed);
+    });
+
+    expect(result.current.events).toHaveLength(1);
+    expect(result.current.workflowStatus).toBe("completed");
+  });
+
   it("tracks step states through start -> end", () => {
     const { result } = renderHook(() => useWorkflowStream("run-1"));
 

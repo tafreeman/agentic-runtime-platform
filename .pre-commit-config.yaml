@@ -50,6 +50,9 @@ repos:
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
+        # The hook updates baseline line metadata. Serial execution prevents
+        # Windows command batching from racing and repeatedly overwriting it.
+        require_serial: true
 
   # mypy: strict on the agentic-v2-eval PACKAGE SOURCE only (0 findings at
   # this rev, verified). Scoped to src/ — the eval tests were never written

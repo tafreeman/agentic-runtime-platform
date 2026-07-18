@@ -9,10 +9,14 @@ import pytest
 from pydantic import ValidationError
 
 from agentic_v2.ui_settings import (
+    ModelPack,
+    ModelPackRef,
     ProviderConfig,
     UiSettings,
     is_valid_api_key_env,
     load_ui_settings,
+    model_pack_routing,
+    resolve_model_pack,
     save_ui_settings,
     tier_override_models,
 )
@@ -148,7 +152,7 @@ class TestApiKeyEnvHardening:
     def test_loading_github_token_shape_is_nulled(self, tmp_path, monkeypatch):
         # A ghp_ token passes the env-var-name regex but is still a secret.
         path = _settings_path(tmp_path)
-        self._write_store(path, "ghp_" + "a1B2c3D4" * 3)
+        self._write_store(path, "ghp_" + "a1B2c3D4" * 3)  # pragma: allowlist secret
         monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
 
         settings = load_ui_settings()
@@ -158,7 +162,7 @@ class TestApiKeyEnvHardening:
     def test_loading_huggingface_token_shape_is_nulled(self, tmp_path, monkeypatch):
         # hf_ tokens are valid shell identifiers too (PR #199/#201 review).
         path = _settings_path(tmp_path)
-        self._write_store(path, "hf_" + "A1b2C3d4" * 5)
+        self._write_store(path, "hf_" + "A1b2C3d4" * 5)  # pragma: allowlist secret
         monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
 
         settings = load_ui_settings()
@@ -167,16 +171,17 @@ class TestApiKeyEnvHardening:
 
     def test_loading_valid_env_name_is_untouched(self, tmp_path, monkeypatch):
         path = _settings_path(tmp_path)
-        self._write_store(path, "OLLAMA_API_KEY")
+        self._write_store(path, "OLLAMA_API_KEY")  # pragma: allowlist secret
         monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(path))
 
         settings = load_ui_settings()
 
-        assert settings.providers[0].api_key_env == "OLLAMA_API_KEY"
+        expected_env = "OLLAMA_API_KEY"  # pragma: allowlist secret
+        assert settings.providers[0].api_key_env == expected_env
 
     def test_is_valid_api_key_env_predicate(self):
-        assert is_valid_api_key_env("OLLAMA_API_KEY")
-        assert is_valid_api_key_env("_PRIVATE_KEY_VAR")
+        assert is_valid_api_key_env("OLLAMA_API_KEY")  # pragma: allowlist secret
+        assert is_valid_api_key_env("_PRIVATE_KEY_VAR")  # pragma: allowlist secret
         assert is_valid_api_key_env("x")
         # Shape violations.
         assert not is_valid_api_key_env(
@@ -187,10 +192,16 @@ class TestApiKeyEnvHardening:
         assert not is_valid_api_key_env("")
         assert not is_valid_api_key_env("X" * 129)
         # Secret shapes that happen to be valid identifiers.
-        assert not is_valid_api_key_env("ghp_" + "a1B2c3D4" * 3)
-        assert not is_valid_api_key_env("github_pat_" + "A0" * 12)
-        assert not is_valid_api_key_env("hf_" + "A1b2C3d4" * 5)
-        assert not is_valid_api_key_env("deadbeef" * 4)
+        assert not is_valid_api_key_env(
+            "ghp_" + "a1B2c3D4" * 3
+        )  # pragma: allowlist secret
+        assert not is_valid_api_key_env(
+            "github_pat_" + "A0" * 12
+        )  # pragma: allowlist secret
+        assert not is_valid_api_key_env(
+            "hf_" + "A1b2C3d4" * 5
+        )  # pragma: allowlist secret
+        assert not is_valid_api_key_env("deadbeef" * 4)  # pragma: allowlist secret
 
 
 class TestTierOverrideAccessor:
@@ -202,3 +213,66 @@ class TestTierOverrideAccessor:
     def test_returns_empty_for_unset_tier(self, tmp_path, monkeypatch):
         monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
         assert tier_override_models(4) == []
+
+    def test_request_context_pack_overrides_persisted_tier_order(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.setenv("AGENTIC_UI_SETTINGS_PATH", str(_settings_path(tmp_path)))
+        save_ui_settings(UiSettings(tier_overrides={2: ["ollama:default"]}))
+        pack = ModelPack(
+            id="run-pack",
+            name="Run pack",
+            tier_chains={2: ["openai:gpt-4o", "anthropic:sonnet"]},
+        )
+
+        with model_pack_routing(pack):
+            assert tier_override_models(2) == [
+                "openai:gpt-4o",
+                "anthropic:sonnet",
+            ]
+        assert tier_override_models(2) == ["ollama:default"]
+
+
+class TestModelPackResolution:
+    def test_precedence_is_run_then_workflow_then_global(self):
+        run = ModelPack(id="run", name="Run", tier_chains={1: ["openai:a"]})
+        workflow = ModelPack(
+            id="workflow", name="Workflow", tier_chains={1: ["openai:b"]}
+        )
+        global_pack = ModelPack(
+            id="global", name="Global", tier_chains={1: ["openai:c"]}
+        )
+        settings = UiSettings(
+            model_packs=[run, workflow, global_pack],
+            active_model_pack=ModelPackRef(id="global", version=1),
+            workflow_model_packs={"review": ModelPackRef(id="workflow", version=1)},
+        )
+
+        assert (
+            resolve_model_pack(
+                workflow_name="review",
+                requested=ModelPackRef(id="run", version=1),
+                settings=settings,
+            )[1]
+            == "run"
+        )
+        assert (
+            resolve_model_pack(workflow_name="review", settings=settings)[0] == workflow
+        )
+        assert (
+            resolve_model_pack(workflow_name="other", settings=settings)[0]
+            == global_pack
+        )
+
+    def test_archived_requested_pack_is_rejected(self):
+        archived = ModelPack(
+            id="old", name="Old", tier_chains={1: ["openai:a"]}, archived=True
+        )
+        settings = UiSettings(model_packs=[archived])
+
+        with pytest.raises(ValueError, match="archived"):
+            resolve_model_pack(
+                workflow_name="review",
+                requested=ModelPackRef(id="old", version=1),
+                settings=settings,
+            )

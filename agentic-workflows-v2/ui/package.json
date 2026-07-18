@@ -17,6 +17,7 @@
     "generate:types:check": "node scripts/generate-ts-types.mjs && git diff --exit-code -- src/api/events.generated.ts"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.2.9",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.220.0",
     "@opentelemetry/instrumentation": "^0.220.0",
@@ -26,10 +27,17 @@
     "@opentelemetry/semantic-conventions": "^1.43.0",
     "@tanstack/react-query": "^5.101.2",
     "@xyflow/react": "^12.11.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "lucide-react": "^1.24.0",
+    "radix-ui": "^1.6.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1"
+    "react-resizable-panels": "^4.12.2",
+    "react-router-dom": "^7.18.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

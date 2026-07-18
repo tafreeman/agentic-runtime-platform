@@ -4,7 +4,10 @@ import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { useWorkflowStream } from "../hooks/useWorkflowStream";
 import { useRuns } from "../hooks/useRuns";
 import { useWorkflowDAG } from "../hooks/useWorkflows";
-import type { StepState } from "../hooks/useWorkflowStream";
+import type {
+  StepState,
+  WorkflowStreamState,
+} from "../hooks/useWorkflowStream";
 import WorkflowDAG from "../components/dag/WorkflowDAG";
 import StepLogPanel from "../components/live/StepLogPanel";
 import LiveStepDetails from "../components/live/LiveStepDetails";
@@ -52,6 +55,19 @@ function formatElapsed(ms: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function terminalRecordStatus(
+  status: string | null | undefined,
+): WorkflowStreamState["workflowStatus"] | null {
+  const normalized = status?.trim().toLowerCase();
+  if (normalized === "success" || normalized === "completed" || normalized === "ok") {
+    return "completed";
+  }
+  if (normalized === "failed" || normalized === "error") {
+    return "failed";
+  }
+  return null;
 }
 
 export default function LivePage() {
@@ -125,7 +141,16 @@ function LatestRunGate() {
 function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
   const navigate = useNavigate();
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
-  const { stepStates, events, workflowStatus, evaluation, error } = useWorkflowStream(
+  const [recordStatus, setRecordStatus] = useState<
+    WorkflowStreamState["workflowStatus"] | null
+  >(null);
+  const {
+    stepStates,
+    events,
+    workflowStatus: streamWorkflowStatus,
+    evaluation,
+    error,
+  } = useWorkflowStream(
     runId ?? null
   );
 
@@ -214,10 +239,38 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
     setSelectedStep((prev) => (prev === runningStep ? prev : runningStep));
   }, [runningStep]);
 
+  const streamIsActive =
+    streamWorkflowStatus === "connecting" ||
+    streamWorkflowStatus === "running" ||
+    streamWorkflowStatus === "evaluating";
+  const {
+    data: permanentRuns,
+    refetch: refetchPermanentRuns,
+  } = useRuns(wfName, { live: streamIsActive && recordStatus === null });
+  const permanentRun = useMemo(
+    () => (permanentRuns ?? []).find((run) => run.run_id === runId),
+    [permanentRuns, runId],
+  );
+  const currentRecordStatus = terminalRecordStatus(permanentRun?.status);
+  const workflowStatus = currentRecordStatus ?? recordStatus ?? streamWorkflowStatus;
   const isActive =
     workflowStatus === "connecting" ||
     workflowStatus === "running" ||
     workflowStatus === "evaluating";
+
+  useEffect(() => {
+    setRecordStatus(null);
+  }, [runId]);
+
+  useEffect(() => {
+    if (currentRecordStatus === null) return;
+    setRecordStatus(currentRecordStatus);
+  }, [currentRecordStatus]);
+
+  useEffect(() => {
+    if (isActive) return;
+    void refetchPermanentRuns?.();
+  }, [isActive, refetchPermanentRuns, workflowStatus]);
 
   // Wall-clock elapsed from the first step start; ticks while the run is live,
   // freezes once a terminal status arrives.
@@ -343,6 +396,14 @@ function LiveRunView({ runId }: Readonly<{ runId: string | undefined }>) {
                   <span className="font-mono text-[10px] text-b-text-dim">
                     {completedCount}/{totalSteps} steps
                   </span>
+                )}
+                {permanentRun && (
+                  <Link
+                    to={`/runs/${encodeURIComponent(permanentRun.filename)}`}
+                    className="ml-auto font-mono text-[10px] font-semibold text-b-clay hover:underline"
+                  >
+                    Open run record →
+                  </Link>
                 )}
               </div>
 

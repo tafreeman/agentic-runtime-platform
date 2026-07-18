@@ -496,8 +496,8 @@ output/
 tmp/
 secrets.txt
 
-# Cleanup: removed AI scaffolding and generated artifacts
-AGENTS.md
+# Generated agent artifacts remain local; the repository-level contributor
+# guide (AGENTS.md) is intentionally tracked.
 .github/agents/
 
 # Generated model-probe discovery output (machine-specific paths; regenerated

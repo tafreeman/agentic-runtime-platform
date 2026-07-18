@@ -55,6 +55,10 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<{ close: () => void } | null>(null);
+  // Reconnects replay the server buffer from the beginning. Ignore exact wire
+  // duplicates so terminal events and log rows remain singular while step
+  // state is still safely rebuilt from any events the client missed.
+  const seenEventsRef = useRef<Set<string>>(new Set());
   // Mirror the latest status so the (long-lived) reconnect callback can read it
   // without capturing a stale closure value.
   const workflowStatusRef = useRef(workflowStatus);
@@ -63,6 +67,9 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
   }, [workflowStatus]);
 
   const handleEvent = useCallback((event: ExecutionEvent) => {
+    const eventIdentity = JSON.stringify(event);
+    if (seenEventsRef.current.has(eventIdentity)) return;
+    seenEventsRef.current.add(eventIdentity);
     setEvents((prev) => [...prev, event]);
 
     switch (event.type) {
@@ -164,6 +171,7 @@ export function useWorkflowStream(runId: string | null): WorkflowStreamState {
 
     setStepStates(new Map());
     setEvents([]);
+    seenEventsRef.current = new Set();
     setEvaluation(null);
     setWorkflowStatus("connecting");
     setError(null);

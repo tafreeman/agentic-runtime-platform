@@ -30,12 +30,13 @@ functions, merged into `enumerate_known_models()` exactly like the Ollama source
 Both return `LocalModelInfo` records (id + optional `running` / `capabilities`)
 so the console can render the same badges it draws for Ollama:
 
-- **`discover_lmstudio_models()`** — prefers LM Studio's **native** REST API
-  `GET {host}/api/v0/models`, which lists the *whole downloaded library* with a
-  `type` (`llm` / `vlm` / `embeddings`) and a `state` (`loaded` / `not-loaded`);
-  the OpenAI-compatible `GET {host}/v1/models` is the fallback for older servers
-  but reports only *loaded* models. Non-chat `type`s are filtered (`vlm` is kept
-  and tagged `vision`); `state == loaded` sets `running`. The host comes from
+- **`discover_lmstudio_models()`** — prefers LM Studio's current **native** REST
+  API `GET {host}/api/v1/models`, which lists the whole downloaded library,
+  loaded instances, and capabilities. Legacy native `GET {host}/api/v0/models`
+  and OpenAI-compatible `GET {host}/v1/models` are ordered fallbacks. Non-chat
+  types are filtered; loaded instances set `running`, and v1 vision, tool-use,
+  and reasoning metadata become capability badges. `LM_API_TOKEN` is sent as a
+  bearer token when configured. The host comes from
   `resolve_lmstudio_host()`: `LMSTUDIO_HOST` wins, else `:1234` (LM Studio
   default) is probed then `:12340` (legacy ARP port), first reachable winning.
   Returns `lmstudio:<id>`.
@@ -73,6 +74,13 @@ intended behavior and extends it: native-API preference with `/v1` fallback,
 the `:1234`→`:12340` probe shared with the backend, the `~/.cache/aigallery`
 default, multi-root scanning, an `expanduser()` fix in `OnnxBackend`, and richer
 `LocalModelInfo` records (running / vision).
+
+### Amendment (2026-07-14)
+
+LM Studio's current native API is now `/api/v1/models`. Discovery probes it
+first and retains `/api/v0/models` plus `/v1/models` as compatibility fallbacks.
+The same `LM_API_TOKEN` used by authenticated LM Studio servers is applied to
+both discovery and inference, preserving the discovered-is-runnable invariant.
 
 ## Consequences
 

@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * Settings surface — "providers & tiers" (/settings → SettingsPage).
+ * Settings compatibility route — /settings redirects into the consolidated
+ * Model Router at /models?tab=providers. Provider and tier controls remain
+ * first-class tab panels instead of a second settings shell.
  *
- * SettingsPage stacks two panels. ProviderPanel
+ * The Model Router hosts ProviderPanel
  * (GET/PUT /api/settings/providers) lists the configured provider endpoints as
  * cards — each with an on/off switch (role=switch) — above an always-present
  * "add provider" type picker built from a static preset list. TierBoard
@@ -13,11 +15,9 @@ import { expect, test } from '@playwright/test';
  * for their shape. It never saves, toggles, reranks, or edits capabilities — no
  * mutation of persisted settings.
  *
- * Neither panel exposes `data-testid`s, so the anchors here are the section
- * landmarks (`<section aria-label>` → role=region), the h1, the static section
- * headers, and the stable aria-labels the controls attach. Nav links carry a
- * zero-padded ordinal prefix ("08 providers & tiers"), so the sidebar link is
- * matched by regex scoped to the navigation landmark.
+ * Neither panel exposes `data-testid`s, so the anchors here are the tablist,
+ * section landmarks (`<section aria-label>` → role=region), headings, and the
+ * stable aria-labels the controls attach.
  *
  * Robust to an empty OR populated surface: the DOM assertions are grounded in
  * the live API payload and branch on it — the no-LLM baseline ships zero user
@@ -32,24 +32,20 @@ test.describe('settings', () => {
   test('renders the provider-endpoint and tier controls', async ({ page }) => {
     await page.goto('/settings');
 
-    // Page mounted on the settings route: the h1 and its mono subtitle strip.
-    await expect(page.getByRole('heading', { level: 1, name: /^settings$/i })).toBeVisible();
-    await expect(page.getByText(/capability tags/i)).toBeVisible();
+    // Legacy deep links land on the canonical Model Router provider tab.
+    await expect(page).toHaveURL(/\/models\?tab=providers$/);
+    await expect(page.getByRole('heading', { level: 1, name: /^providers$/i })).toBeVisible();
 
-    // The sidebar marks settings active. The link's accessible name carries the
-    // "08" ordinal prefix, so match by regex within the nav landmark.
-    const settingsLink = page
+    // The sidebar marks the consolidated Model Router surface active.
+    const modelRouterLink = page
       .getByRole('navigation')
-      .getByRole('link', { name: /providers & tiers/ });
-    await expect(settingsLink).toHaveAttribute('aria-current', 'page');
+      .getByRole('link', { name: /model router/ });
+    await expect(modelRouterLink).toHaveAttribute('aria-current', 'page');
 
     // ── Provider endpoints panel ── (static chrome, independent of the fetch)
     const providerRegion = page.getByRole('region', { name: 'provider endpoints' });
     await expect(providerRegion).toBeVisible();
-    // Header text — scoped .first() because the empty-state strip ("no provider
-    // endpoints configured") also matches this case-insensitive pattern; the
-    // panel header renders first in DOM order.
-    await expect(providerRegion.getByText(/PROVIDER ENDPOINTS/i).first()).toBeVisible();
+    await expect(providerRegion.getByText(/endpoint registry/i)).toBeVisible();
     // The add-provider type picker is built from a fixed preset list, so these
     // buttons render regardless of how many providers are configured.
     await expect(
@@ -59,10 +55,14 @@ test.describe('settings', () => {
       providerRegion.getByRole('button', { name: 'Add Custom endpoint provider' }),
     ).toBeVisible();
 
-    // ── Tier routing panel ── (header renders unconditionally)
+    // ── Tier routing panel ── switch tabs, preserving URL-addressable state.
+    await page.getByRole('tab', { name: 'Tiers' }).click();
+    await expect(page).toHaveURL(/\/models\?tab=tiers$/);
     const tierRegion = page.getByRole('region', { name: 'tier routing' });
     await expect(tierRegion).toBeVisible();
-    await expect(tierRegion.getByText(/MODEL TIERS/i)).toBeVisible();
+    await expect(
+      tierRegion.getByRole('heading', { level: 1, name: /^model tiers$/i }),
+    ).toBeVisible();
   });
 
   test('settings endpoints expose the provider and tier shapes the page renders', async ({
@@ -71,9 +71,10 @@ test.describe('settings', () => {
   }) => {
     await page.goto('/settings');
 
-    // Header renders immediately (independent of the data fetch).
+    // Compatibility redirect and provider header render independently of data.
+    await expect(page).toHaveURL(/\/models\?tab=providers$/);
     await expect(
-      page.getByRole('heading', { level: 1, name: /^settings$/i }),
+      page.getByRole('heading', { level: 1, name: /^providers$/i }),
     ).toBeVisible();
 
     // ── Providers ── the list the panel maps into cards, the closed
@@ -146,6 +147,7 @@ test.describe('settings', () => {
       effectiveRows += tier.effective.length;
     }
 
+    await page.getByRole('tab', { name: 'Tiers' }).click();
     const tierRegion = page.getByRole('region', { name: 'tier routing' });
     if (tiers.tiers.length > 0) {
       // Populated: one card per tier, each showing a "T<n>" label. Count tracks
@@ -165,7 +167,9 @@ test.describe('settings', () => {
       ).toHaveCount(effectiveRows, { timeout: 15_000 });
     } else {
       // No tiers configured — only the panel header renders.
-      await expect(tierRegion.getByText(/MODEL TIERS/i)).toBeVisible();
+      await expect(
+        tierRegion.getByRole('heading', { level: 1, name: /^model tiers$/i }),
+      ).toBeVisible();
     }
   });
 });

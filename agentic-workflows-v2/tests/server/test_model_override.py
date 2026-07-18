@@ -156,6 +156,70 @@ async def test_run_with_model_override_on_native_adapter_rejected(
     assert background_tasks.tasks == []
 
 
+async def test_run_with_explicit_model_pack_on_native_adapter_rejected(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An explicitly requested pack + non-langchain adapter is a 422."""
+    _patch_run_route_happy_path(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        workflows,
+        "resolve_model_pack",
+        lambda **_kwargs: (SimpleNamespace(id="pack-a", version=1), "run"),
+    )
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await workflows.run_workflow(
+            WorkflowRunRequest(
+                workflow="wf",
+                input_data={},
+                adapter="native",
+            ),
+            background_tasks,
+            _request(),
+            tenant,
+        )
+
+    assert exc_info.value.status_code == 422
+    assert exc_info.value.detail == "model_pack requires the langchain adapter"
+    assert background_tasks.tasks == []
+
+
+async def test_run_ambient_model_pack_ignored_on_native_adapter(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A workflow/global active pack must not fail native runs.
+
+    Regression: a developer machine with an active pack in
+    ``.agentic_ui_settings.json`` turned every native-adapter run into a
+    422 even though the request never asked for a pack. Ambient packs are
+    ignored for non-langchain adapters instead.
+    """
+    _patch_run_route_happy_path(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        workflows,
+        "resolve_model_pack",
+        lambda **_kwargs: (SimpleNamespace(id="pack-a", version=1), "global"),
+    )
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    response = await workflows.run_workflow(
+        WorkflowRunRequest(
+            workflow="wf",
+            input_data={},
+            adapter="native",
+        ),
+        background_tasks,
+        _request(),
+        tenant,
+    )
+
+    assert response.status == StepStatus.PENDING
+    assert background_tasks.tasks[0].kwargs["model_pack"] is None
+
+
 async def test_run_whitespace_override_on_native_adapter_not_rejected(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -381,9 +445,7 @@ async def test_save_workflow_editor_invalidates_compiled_graph(
         invalidated.append(name)
         return 1
 
-    monkeypatch.setattr(
-        workflows, "invalidate_compiled_workflow", _capture_invalidate
-    )
+    monkeypatch.setattr(workflows, "invalidate_compiled_workflow", _capture_invalidate)
     monkeypatch.setattr(
         workflows,
         "save_workflow_document",

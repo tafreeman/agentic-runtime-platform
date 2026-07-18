@@ -43,7 +43,7 @@ describe("ConsoleHeader", () => {
       "href",
       "/"
     );
-    expect(screen.getByText("/ agentic-runtime")).toBeInTheDocument();
+    expect(screen.getByText("/ agentic runtime")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /search runs, workflows, actions/i })
     ).toBeInTheDocument();

@@ -63,11 +63,17 @@ and building it against OpenRouter gives it real breadth from day one.
   unknown prefix, missing key) surface as `error` events with `category`
   from the existing `core.errors.classify_error()` and a scrubbed
   `message` (Bearer/API-key patterns redacted, length-capped).
-- **Bypasses `SmartModelRouter`/tier selection by design.** The handler
-  builds the exact picked model via `get_chat_model(full_id)` and calls
-  it directly. Router/tier behavior is already covered ground (ADR-002,
-  ADR-040); this endpoint answers "does this one id work," not "what
-  would the router pick."
+- **Direct-model requests bypass tier selection by design.** The original
+  handler builds the exact picked model via `get_chat_model(full_id)` and
+  calls it directly, preserving the Playground's "does this one id work?"
+  behavior.
+- **2026-07-14 amendment — tier overload.** `ChatRequest` now exposes two
+  strict constructors: `{model, messages, temperature?}` and
+  `{tier, messages, temperature?}`. The tier form resolves the existing
+  ordered candidate chain and emits `route {requested_tier, model}` before
+  output tokens. Both/neither selectors are invalid. Direct-model behavior is
+  unchanged, while HTTP clients can delegate provider/model selection without
+  duplicating router policy.
 - **OpenRouter joins as a first-class provider.**
   `PROVIDER_ENV_KEYS["openrouter"] = ["OPENROUTER_API_KEY"]`;
   `build_openrouter_model` is a `ChatOpenAI` base-URL swap
@@ -81,16 +87,13 @@ and building it against OpenRouter gives it real breadth from day one.
   probe-visible via discovery, while chain membership stays curated per
   ADR-040.
 - **Discovery deviations, scoped to OpenRouter only.** ADR-039's
-  providers stay uncached and unfiltered by design; OpenRouter departs
-  because its catalog (~300-400 models, near-static) doesn't fit that
-  model: (a) a 300s TTL in-process cache around the live `GET /models`
-  call; (b) a curated filter (free-tier ids plus a capped
-  flagship-family allowlist, filled round-robin across families so one
-  prolific publisher cannot consume every slot) instead of the full
-  catalog in the probe;
-  (c) a curated static fallback list when the key is absent or the fetch
-  fails, so the picker still offers OpenRouter models with no key
-  configured. (c) forced an honesty fix: `_merge_cloud_models`
+  providers stay uncached by design; OpenRouter uses a 300s TTL around
+  `GET /models` because its catalog is large and near-static. The public
+  endpoint is queried with `output_modalities=all`, with optional bearer
+  auth when `OPENROUTER_API_KEY` exists, and every text-output chat model
+  is retained. A small static list is used only when the live request
+  fails or returns no compatible models. This required an honesty fix:
+  `_merge_cloud_models`
   (`langchain/models.py`) now derives `available` from
   `is_provider_available(provider)` per model instead of hard-coding
   `True` — unchanged in practice for the four ADR-039 providers, but now
@@ -118,9 +121,8 @@ and building it against OpenRouter gives it real breadth from day one.
   contract addition has paid.
 - SSE frames are uncompressed JSON-per-token; fine at chat scale, not a
   transport to reuse for a bulk/batch streaming need.
-- The curated OpenRouter allowlist is maintained, not derived — it
-  needs occasional refresh as flagship families rotate, the same burden
-  ADR-040 already accepted for tier chains.
+- The full OpenRouter chat catalog can be large; the provider-card summary,
+  collapsed detail groups, and catalog search keep it navigable.
 - Always-200-with-in-stream-errors means HTTP-status-based monitoring
   will not see chat provider failures — legible only to a consumer
   reading the event stream, the usual tradeoff of an in-band error
@@ -142,10 +144,10 @@ and building it against OpenRouter gives it real breadth from day one.
   unvetted rotating catalog doesn't belong in reviewed chain
   membership — the exact drift ADR-040 exists to stop. `tier_overrides`
   remains the sanctioned way to promote a specific id.
-- **Dump OpenRouter's full catalog into the probe.** Rejected:
-  ~300-400 mostly-irrelevant ids would swamp the picker for one
-  provider; the curated filter plus static fallback keeps it usable
-  without a key.
+- **Dump OpenRouter's full catalog into the probe.** Initially rejected, then
+  superseded on 2026-07-14: the UI now provides provider summary cards,
+  collapsed details, and search, so the full compatible catalog is both useful
+  and navigable.
 - **New top-level `/chat` route.** Rejected in favor of a
   `ModelFinderPage` tab: the nav/routing surface (`App.tsx`, `Sidebar`,
   `useGoNav`) is a larger diff for a feature that is conceptually "do

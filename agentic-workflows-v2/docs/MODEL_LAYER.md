@@ -13,9 +13,10 @@
 - The probe is **credential‑presence + a curated static catalog + live
   discovery**. `is_provider_available()` still only checks env keys, but every
   rescan *also* calls the list‑models APIs of whatever it can reach: Ollama
-  `/api/tags` (ADR‑037), LM Studio `/api/v0/models` + an ONNX folder walk
+  `/api/tags` (ADR‑037), LM Studio `/api/v1/models` + an ONNX folder walk
   (ADR‑038), and the keyed cloud providers — OpenAI, Anthropic, Gemini, GitHub
-  Models, NVIDIA NIM (ADR‑039) and OpenRouter (curated + TTL‑cached, ADR‑050).
+  Models, NVIDIA NIM (ADR‑039) and OpenRouter (full catalog + TTL cache,
+  ADR‑050).
   Discovered ids absent from the static tier chains merge into the catalog at
   **tier 0** (`_merge_ollama_models` / `_merge_local_models` /
   `_merge_cloud_models`).
@@ -70,8 +71,8 @@ flowchart TD
   PROBE -->|update defaults| TIERS
   subgraph DISC["Live discovery - IMPLEMENTED (ADR-037/038/039/050)"]
     OD["models/ollama_discovery.py<br/>local /api/tags + /api/ps<br/>cloud: Bearer OLLAMA_API_KEY"]
-    LD["models/local_discovery.py<br/>LM Studio /api/v0/models + ONNX folder walk"]
-    CD["models/cloud_discovery.py<br/>OpenAI / Anthropic / Gemini / GitHub / NVIDIA / OpenRouter<br/>keyed-only, 8s bound, OpenRouter curated + TTL cache"]
+    LD["models/local_discovery.py<br/>LM Studio /api/v1/models + ONNX folder walk"]
+    CD["models/cloud_discovery.py<br/>OpenAI / Anthropic / Gemini / GitHub / NVIDIA / OpenRouter<br/>8s bound, OpenRouter full catalog + TTL cache"]
   end
   OD -.->|merge tier-0 entries| PROBE
   LD -.->|merge tier-0 entries| PROBE
@@ -132,7 +133,7 @@ sequenceDiagram
   M->>M: resolve tier defaults from chains, skipping quarantined ids
   R->>M: enumerate_known_models(cloud_listing)
   M->>D: _merge_ollama_models() + _merge_local_models()
-  D->>P: Ollama /api/tags + /api/ps, LM Studio /api/v0/models, ONNX dir walk
+  D->>P: Ollama /api/tags + /api/ps, LM Studio /api/v1/models, ONNX dir walk
   M->>M: _merge_cloud_models(cloud_listing) - tier-0 merge, skipped when AGENTIC_NO_LLM=1
   M-->>R: models[] = static chains + live-discovered (tier 0)
   R->>R: add no_llm_mode = is_agentic_no_llm_enabled()
@@ -218,7 +219,7 @@ set, or when the provider needs **no** key (local providers always pass).
               // live-discovered cloud models are plain tier-0 ids (ADR-039)
               { "id": "openai:gpt-4.1", "provider": "openai",
                 "tier": 0, "available": true },
-              // keyless OpenRouter static-fallback entries stay honest (ADR-050)
+              // public OpenRouter entries stay unavailable until a key is set
               { "id": "openrouter:openai/gpt-4o-mini", "provider": "openrouter",
                 "tier": 0, "available": false }, ... ],
   "no_llm_mode": false
@@ -303,13 +304,12 @@ rate limits but does **not** expose the catalog without one of these.
 `agentic_v2/models/local_discovery.py` extends the same merge to the other two
 local providers; both are best‑effort and surface as `tier 0` router entries:
 
-- **LM Studio (`lmstudio:`):** `GET {host}/api/v0/models` — LM Studio's
-  *native* REST API, preferred because it lists the **whole downloaded
-  library** with a `type` (`llm`/`vlm`/`embeddings`) and a `state`
-  (`loaded`/`not-loaded`); the OpenAI‑compatible `GET {host}/v1/models` shim
-  (currently *loaded* models only) is the fallback for older servers. Host
-  from `LMSTUDIO_HOST`; with it unset, ports `1234` then `12340` are tried and
-  the first reachable wins. Lights up once LM Studio's server is running.
+- **LM Studio (`lmstudio:`):** `GET {host}/api/v1/models` — LM Studio's
+  current native API, which lists the whole downloaded library, loaded
+  instances, and capabilities. Legacy `/api/v0/models` and OpenAI-compatible
+  `/v1/models` are ordered fallbacks. `LM_API_TOKEN` is sent for both discovery
+  and inference when configured. Host comes from `LMSTUDIO_HOST`; with it
+  unset, ports `1234` then `12340` are tried and the first reachable wins.
 - **ONNX (`onnx:`):** bounded‑depth walk for **genai_config.json** marker files
   under the ONNX root (`ONNX_MODEL_DIR` / `AIGALLERY_CACHE`, default
   `~/.cache/aigallery`).
@@ -363,26 +363,24 @@ ADR‑040 quarantine pass) and `_merge_cloud_models()` via their `cloud_listing`
 parameter. Standalone callers (e.g. the server‑startup probe) pass nothing and
 fetch their own.
 
-### OpenRouter — curated + TTL‑cached (ADR‑050, PR #188)
+### OpenRouter — full catalog + TTL cache (ADR‑050, PR #188)
 
 OpenRouter is a single‑key aggregator fronting 300–400 models, so its discovery
 deliberately deviates from ADR‑039's list‑everything/no‑cache baseline:
 
-- **Endpoint:** `GET {base}/models` via `resolve_openrouter_base_url()`
-  (`OPENROUTER_BASE_URL` for gateways, else `https://openrouter.ai/api/v1`),
-  Bearer `OPENROUTER_API_KEY`.
-- **Curation:** the raw catalog is filtered to text‑output chat models, then
-  capped at ≤ 25 `:free` ids (alphabetical) plus ≤ 15 flagship‑family ids
-  filled **round‑robin across families** (`openai/gpt-5`, `anthropic/claude`,
-  `google/gemini-2`, `meta-llama/llama-4`, …) so one prolific publisher cannot
-  starve the rest. Deterministic for a given catalog.
-- **TTL cache:** the curated **live** result is cached for 300 s (lock‑guarded;
+- **Endpoint:** `GET {base}/models?output_modalities=all` via
+  `resolve_openrouter_base_url()` (`OPENROUTER_BASE_URL` for gateways, else
+  `https://openrouter.ai/api/v1`), with optional bearer `OPENROUTER_API_KEY`.
+- **Catalog:** every text-output chat model is retained; image/audio-only and
+  obvious embedding/reranking ids are excluded because the playground consumes
+  a text stream. Multimodal models that can output text remain visible.
+- **TTL cache:** the full compatible **live** result is cached for 300 s
+  (lock‑guarded;
   the static fallback is never cached). A failed re‑fetch serves the last live
   result before degrading to the static list.
-- **Keyless fallback:** with no `OPENROUTER_API_KEY`, a small static list of
-  free‑tier + flagship ids is returned — still with no network call — so the
-  console can advertise the aggregator; the merge layer marks those entries
-  `available: false` (availability always derives from the key env).
+- **Keyless discovery:** the public catalog is queried without a key. The merge
+  layer still marks entries `available: false` until a key is configured for
+  inference. A small static list is used only if the catalog request fails.
 - **Ids:** `publisher/model[:free]`, so a full id has **two** colons
   (`openrouter:meta-llama/llama-3.1-8b-instruct:free`) — safe under
   `provider_prefix()`'s first‑colon split. The LangChain builder is a

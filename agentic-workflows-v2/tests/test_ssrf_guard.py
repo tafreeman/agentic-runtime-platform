@@ -77,7 +77,7 @@ def test_block_private_ips_default_is_true(monkeypatch):
 
     settings_mod.get_settings.cache_clear()
     try:
-        s = settings_mod.Settings()
+        s = settings_mod.Settings(_env_file=None)
         assert s.agentic_block_private_ips is True
     finally:
         settings_mod.get_settings.cache_clear()
@@ -1176,7 +1176,7 @@ class TestDnsRebinding:
 
         from agentic_v2.tools.builtin.http_ops import HttpTool
 
-        monkeypatch.delenv("AGENTIC_BLOCK_PRIVATE_IPS", raising=False)
+        monkeypatch.setenv("AGENTIC_BLOCK_PRIVATE_IPS", "1")
         import agentic_v2.settings as settings_mod
 
         settings_mod.get_settings.cache_clear()

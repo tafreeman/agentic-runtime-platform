@@ -135,7 +135,7 @@ describe("SettingsPage", () => {
 
   it("masks an api_key_env value that looks like a raw key and warns", async () => {
     const rawKey =
-      "sk-ant-api03-0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+      "sk-ant-api03-0123456789abcdefghijklmnopqrstuvwxyz0123456789"; // pragma: allowlist secret
     mockGetProviderSettings.mockResolvedValue(
       makeProviderResponse({
         providers: [makeProvider({ api_key_env: rawKey })],
@@ -313,6 +313,7 @@ describe("SettingsPage", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Delete provider anthropic-main" }),
     );
+    fireEvent.click(screen.getByRole("button", { name: "Remove provider" }));
 
     await waitFor(() => expect(mockPutProviderSettings).toHaveBeenCalledTimes(1));
     expect(mockPutProviderSettings).toHaveBeenCalledWith([]);

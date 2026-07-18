@@ -1,106 +1,175 @@
 /*
- * Console UI — Design Tokens (Console design system)
- * IBM Carbon g100 dark canvas (#161616) with an "event horizon" cyan accent
- * (#33b1ff), square corners, IBM Plex. Dark is the brand default; paper
- * remains as a secondary editorial (light) surface.
- * Apply theme by setting data-theme on <html>.
+ * Evidence Ledger design tokens.
+ *
+ * Canonical values are RGB triplets so Tailwind opacity modifiers continue to
+ * work. The legacy `b-*` variables are temporary strangler-fig aliases: a
+ * route becomes Evidence Ledger immediately while its JSX migrates away from
+ * Direction B utilities. New code must use `el-*` or shadcn semantic tokens.
  */
 
 :root,
-[data-theme="dark"] {
-  --b-bg0: 22 22 22;         /* #161616  Carbon canvas (gray-100)  */
-  --b-bg1: 38 38 38;         /* #262626  layer-01 (gray-90)        */
-  --b-bg2: 51 51 51;         /* #333333  layer hover               */
-  --b-bg3: 57 57 57;         /* #393939  layer-02 (gray-80)        */
-  --b-line: 57 57 57;        /* #393939  border-subtle-00          */
-  --b-line-soft: 38 38 38;   /* #262626                            */
-  --b-text: 244 244 244;     /* #f4f4f4  text-primary (gray-10)    */
-  --b-text-mid: 198 198 198; /* #c6c6c6  text-helper (gray-30)     */
-  /* --b-text-dim: 4.6:1 on --b-bg1 (dark) — passes AA 4.5:1 */
-  --b-text-dim: 141 141 141; /* #8d8d8d  gray-50                   */
-  /* --b-text-faint: below AA 4.5:1; decorative use only */
-  --b-text-faint: 111 111 111; /* #6f6f6f gray-60                  */
-  --b-clay: 51 177 255;      /* #33b1ff  horizon cyan — interactive accent */
-  --b-clay-soft: rgba(51, 177, 255, 0.16);
-  --b-teal: 61 219 217;      /* #3ddbd9  teal — deterministic core / tier  */
-  --b-green: 66 190 101;     /* #42be65  support-success (green-40) */
-  --b-amber: 241 194 27;     /* #f1c21b  support-warning (yellow-30)*/
-  --b-blue: 69 137 255;      /* #4589ff  support-info (blue-50)     */
-  --b-red: 250 77 86;        /* #fa4d56  support-error (red-50)     */
-  --b-purple: 190 149 255;   /* #be95ff  purple-40                 */
-  --b-btn-primary-ink: #000000; /* text on horizon-cyan fills      */
-  --b-scroll-thumb: #393939;
-  --b-ink: #000000;
-  --b-glow: rgba(51, 177, 255, 0); /* Console has no glow */
-  --b-rad-lg: 0px;           /* square corners everywhere */
-  --b-rad-sm: 0px;
-  --b-bw: 1px;
-  --b-font-heading: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
-}
-
 [data-theme="paper"] {
-  --b-bg0: 244 244 244;      /* #f4f4f4  gray-10 */
-  --b-bg1: 255 255 255;      /* #ffffff          */
-  --b-bg2: 224 224 224;      /* #e0e0e0  gray-20 */
-  --b-bg3: 198 198 198;      /* #c6c6c6  gray-30 */
-  --b-line: 22 22 22;        /* #161616          */
-  --b-line-soft: 198 198 198;/* #c6c6c6          */
-  --b-text: 22 22 22;        /* #161616          */
-  --b-text-mid: 57 57 57;    /* #393939          */
-  /* --b-text-dim: passes AA 4.5:1 on paper */
-  --b-text-dim: 82 82 82;    /* #525252  gray-70 */
-  /* --b-text-faint: decorative use only */
-  --b-text-faint: 111 111 111; /* #6f6f6f        */
-  --b-clay: 17 146 232;      /* #1192e8  horizon-50 (contrast on light) */
-  --b-clay-soft: rgba(17, 146, 232, 0.12);
-  --b-teal: 8 189 186;       /* #08bdba  teal-40 */
-  --b-green: 36 161 72;      /* #24a148  green-50 */
-  --b-amber: 141 98 8;       /* #8d6208  yellow, darkened for light */
-  --b-blue: 15 98 254;       /* #0f62fe  blue-60 */
-  --b-red: 218 30 40;        /* #da1e28  red-60 */
-  --b-purple: 138 63 252;    /* #8a3ffc  purple-60 */
-  --b-btn-primary-ink: #ffffff;
-  --b-scroll-thumb: #c6c6c6;
-  --b-ink: #ffffff;
-  --b-glow: rgba(17, 146, 232, 0);
-  --b-rad-lg: 0px;
-  --b-rad-sm: 0px;
+  color-scheme: light;
+
+  --el-canvas: 242 239 232;          /* #f2efe8 */
+  --el-surface: 248 245 239;         /* #f8f5ef */
+  --el-surface-raised: 255 253 250;  /* #fffdfa */
+  --el-surface-subtle: 237 233 224;  /* #ede9e0 */
+  --el-surface-hover: 232 227 217;   /* #e8e3d9 */
+  --el-ink: 27 27 24;                /* #1b1b18 */
+  --el-ink-secondary: 81 77 70;      /* #514d46 */
+  --el-ink-muted: 115 110 100;       /* #736e64 */
+  --el-ink-faint: 145 139 128;       /* #918b80 */
+  --el-divider: 189 183 170;         /* #bdb7aa */
+  --el-divider-soft: 211 206 196;    /* #d3cec4 */
+  --el-divider-faint: 226 221 212;   /* #e2ddd4 */
+  --el-action: 28 29 25;             /* #1c1d19 */
+  --el-action-ink: 248 245 239;
+  --el-accent: 239 90 54;            /* #ef5a36 */
+  --el-accent-strong: 184 58 32;     /* #b83a20 */
+  --el-accent-soft: 246 221 212;     /* #f6ddd4 */
+  --el-focus: 158 50 28;             /* #9e321c */
+  --el-success: 35 108 75;           /* #236c4b */
+  --el-success-soft: 220 232 223;
+  --el-warning: 122 83 23;           /* #7a5317 */
+  --el-warning-soft: 240 223 189;
+  --el-danger: 163 50 40;            /* #a33228 */
+  --el-danger-soft: 241 217 213;
+  --el-info: 47 103 136;             /* #2f6788 */
+  --el-info-soft: 217 229 237;
+  --el-neutral: 115 110 100;
+
+  --el-chart-1: var(--el-ink);
+  --el-chart-2: var(--el-accent);
+  --el-chart-3: 124 133 120;
+  --el-chart-4: var(--el-info);
+  --el-chart-5: var(--el-warning);
+  --el-graph-canvas: 237 233 224;
+  --el-graph-grid: 199 193 181;
+  --el-graph-edge: 115 110 100;
+  --el-graph-edge-active: var(--el-accent);
+
+  --el-font-sans: "Geist Variable", "Inter", system-ui, -apple-system, sans-serif;
+  --el-font-display: Georgia, "Times New Roman", serif;
+  --el-font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --el-radius-sm: 2px;
+  --el-radius-md: 4px;
+  --el-radius-lg: 8px;
+  --el-shadow-raised: 0 16px 40px rgb(27 27 24 / 0.12);
+  --el-motion-fast: 120ms;
+  --el-motion-standard: 180ms;
+  --el-motion-slow: 240ms;
+  --el-nav-width: 216px;
+  --el-header-height: 56px;
+  --el-page-gutter: 40px;
+  --el-scroll-thumb: #bdb7aa;
+
+  /* Raw CSS aliases used by owned shadcn sources and Sonner. */
+  --background: rgb(var(--el-canvas));
+  --foreground: rgb(var(--el-ink));
+  --card: rgb(var(--el-surface));
+  --card-foreground: rgb(var(--el-ink));
+  --popover: rgb(var(--el-surface-raised));
+  --popover-foreground: rgb(var(--el-ink));
+  --primary: rgb(var(--el-action));
+  --primary-foreground: rgb(var(--el-action-ink));
+  --secondary: rgb(var(--el-surface-subtle));
+  --secondary-foreground: rgb(var(--el-ink-secondary));
+  --muted: rgb(var(--el-surface-subtle));
+  --muted-foreground: rgb(var(--el-ink-muted));
+  --accent: rgb(var(--el-accent-soft));
+  --accent-foreground: rgb(var(--el-ink));
+  --destructive: rgb(var(--el-danger));
+  --border: rgb(var(--el-divider));
+  --input: rgb(var(--el-divider));
+  --ring: rgb(var(--el-focus));
+  --radius: var(--el-radius-md);
+}
+
+/* Secondary preference only. The warm-paper theme above is always default. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --el-canvas: 35 33 29;
+  --el-surface: 43 40 35;
+  --el-surface-raised: 52 48 42;
+  --el-surface-subtle: 58 54 47;
+  --el-surface-hover: 67 62 54;
+  --el-ink: 244 239 230;
+  --el-ink-secondary: 214 205 192;
+  --el-ink-muted: 177 168 155;
+  --el-ink-faint: 145 137 126;
+  --el-divider: 112 104 92;
+  --el-divider-soft: 83 77 68;
+  --el-divider-faint: 68 63 55;
+  --el-action: 244 239 230;
+  --el-action-ink: 35 33 29;
+  --el-accent: 242 112 76;
+  --el-accent-strong: 255 153 122;
+  --el-accent-soft: 91 49 38;
+  --el-focus: 255 153 122;
+  --el-success: 104 190 145;
+  --el-success-soft: 42 75 58;
+  --el-warning: 224 179 105;
+  --el-warning-soft: 84 67 37;
+  --el-danger: 235 126 113;
+  --el-danger-soft: 86 46 42;
+  --el-info: 124 181 216;
+  --el-info-soft: 42 65 79;
+  --el-neutral: 177 168 155;
+  --el-graph-canvas: 43 40 35;
+  --el-graph-grid: 83 77 68;
+  --el-graph-edge: 177 168 155;
+  --el-scroll-thumb: #70685c;
+}
+
+:root,
+[data-theme="paper"],
+[data-theme="dark"] {
+  /* Direction B compatibility aliases for the route-by-route migration. */
+  --b-bg0: var(--el-canvas);
+  --b-bg1: var(--el-surface);
+  --b-bg2: var(--el-surface-subtle);
+  --b-bg3: var(--el-surface-hover);
+  --b-line: var(--el-divider);
+  --b-line-soft: var(--el-divider-soft);
+  --b-text: var(--el-ink);
+  --b-text-mid: var(--el-ink-secondary);
+  --b-text-dim: var(--el-ink-muted);
+  --b-text-faint: var(--el-ink-faint);
+  --b-clay: var(--el-accent);
+  --b-clay-soft: rgb(var(--el-accent-soft));
+  --b-teal: var(--el-success);
+  --b-green: var(--el-success);
+  --b-amber: var(--el-warning);
+  --b-blue: var(--el-info);
+  --b-red: var(--el-danger);
+  --b-purple: 105 83 133;
+  --b-btn-primary-ink: rgb(var(--el-action-ink));
+  --b-scroll-thumb: var(--el-scroll-thumb);
+  --b-ink: rgb(var(--el-ink));
+  --b-glow: transparent;
+  --b-rad-lg: var(--el-radius-lg);
+  --b-rad-sm: var(--el-radius-md);
   --b-bw: 1px;
-  --b-font-heading: "IBM Plex Sans", -apple-system, system-ui, sans-serif;
+  --b-font-heading: var(--el-font-display);
+  --b-font-mono: var(--el-font-mono);
 }
 
-:root {
-  --b-font-mono: "IBM Plex Mono", "Menlo", "DejaVu Sans Mono", Courier, monospace;
-}
-
-/* Scrollbar (all themes) */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--b-scroll-thumb) transparent;
+  scrollbar-color: var(--el-scroll-thumb) transparent;
 }
 
-/* Shared animations */
 @keyframes b-dash-flow {
-  to {
-    stroke-dashoffset: -20;
-  }
+  to { stroke-dashoffset: -20; }
 }
+
 @keyframes b-pulse-slow {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
+
 @keyframes b-blink {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }

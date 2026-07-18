@@ -79,7 +79,7 @@ For each provider where a relevant env var is set, the script issues a single li
 | GitHub | `GET https://api.github.com/rate_limit` | Core remaining/limit/reset |
 | OpenAI | `GET {base}/v1/models` | `x-ratelimit-*` headers |
 | Anthropic | `GET https://api.anthropic.com/v1/models` | Model count |
-| LM Studio | `GET {LMSTUDIO_HOST}/v1/models` | Available models |
+| LM Studio | `GET {LMSTUDIO_HOST}/api/v1/models` | Downloaded models, loaded instances, and capabilities |
 | Ollama | `GET {OLLAMA_HOST}/api/models` | Installed models |
 | Local OpenAI | `GET {LOCAL_AI_API_BASE_URL}/v1/models` | Available models |
 

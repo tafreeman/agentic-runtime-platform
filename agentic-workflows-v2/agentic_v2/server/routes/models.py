@@ -9,13 +9,48 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field, field_validator
+
+from ...models.local_discovery import (
+    LmStudioLoadError,
+    LmStudioUnavailableError,
+    discover_lmstudio_models,
+    load_lmstudio_model,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["models"])
+
+
+class LmStudioLoadRequest(BaseModel):
+    """Request to load one model already present in LM Studio's library."""
+
+    model: str = Field(min_length=1, max_length=512)
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, value: str) -> str:
+        """Trim the id and reject control characters before forwarding JSON."""
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("model must not be blank")
+        if any(ord(character) < 32 for character in normalized):
+            raise ValueError("model must not contain control characters")
+        return normalized
+
+
+class LmStudioLoadResponse(BaseModel):
+    """Stable ARP response for a native LM Studio model-load operation."""
+
+    model: str
+    status: Literal["loaded", "already_loaded"]
+    instance_id: str | None = None
+    load_time_seconds: float | None = None
+    running: bool = True
 
 
 @router.get(
@@ -70,3 +105,54 @@ async def probe_models() -> dict[str, Any]:
     except Exception as exc:
         logger.exception("Model probe failed: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post(
+    "/models/lmstudio/load",
+    response_model=LmStudioLoadResponse,
+    responses={
+        404: {"description": "Model is not in the downloaded LM Studio library"},
+        502: {"description": "LM Studio rejected the load request"},
+        503: {"description": "LM Studio is unavailable"},
+    },
+)
+async def load_lmstudio(request: LmStudioLoadRequest) -> LmStudioLoadResponse:
+    """Load one discovered LM Studio chat model into memory.
+
+    The discovery guard prevents this route from becoming an arbitrary model
+    loader: only chat-capable models returned by the configured LM Studio
+    library can be loaded. Already-loaded models are an idempotent success.
+    """
+    key = request.model.removeprefix("lmstudio:")
+    full_id = f"lmstudio:{key}"
+    discovered = await asyncio.to_thread(discover_lmstudio_models)
+    info = next((item for item in discovered if item.id == full_id), None)
+    if info is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"{full_id} was not found in the configured LM Studio chat library"
+            ),
+        )
+    if info.running:
+        return LmStudioLoadResponse(model=full_id, status="already_loaded")
+
+    try:
+        result = await asyncio.to_thread(load_lmstudio_model, key)
+    except LmStudioUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except LmStudioLoadError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    instance_id = result.get("instance_id")
+    load_time_seconds = result.get("load_time_seconds")
+    return LmStudioLoadResponse(
+        model=full_id,
+        status="loaded",
+        instance_id=instance_id if isinstance(instance_id, str) else None,
+        load_time_seconds=(
+            float(load_time_seconds)
+            if isinstance(load_time_seconds, (int, float))
+            else None
+        ),
+    )

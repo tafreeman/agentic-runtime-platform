@@ -1,0 +1,38 @@
+{
+  "description": "A safe image emitted by a multimodal model response.",
+  "properties": {
+    "alt": {
+      "default": "Model-generated image",
+      "maxLength": 300,
+      "title": "Alt",
+      "type": "string"
+    },
+    "mime_type": {
+      "enum": [
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/gif"
+      ],
+      "title": "Mime Type",
+      "type": "string"
+    },
+    "type": {
+      "const": "media",
+      "default": "media",
+      "title": "Type",
+      "type": "string"
+    },
+    "url": {
+      "maxLength": 7100000,
+      "title": "Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "mime_type",
+    "url"
+  ],
+  "title": "ChatMediaEvent",
+  "type": "object"
+}

@@ -128,8 +128,10 @@ def check_anthropic(key: str) -> dict[str, Any]:
 
 
 def check_lmstudio(host: str) -> dict[str, Any]:
-    url = f"{host.rstrip('/')}/v1/models"
-    r = requests.get(url, timeout=6)
+    url = f"{host.rstrip('/')}/api/v1/models"
+    token = os.getenv("LM_API_TOKEN", "")
+    headers = {"Authorization": f"Bearer {token}"} if token else None
+    r = requests.get(url, headers=headers, timeout=6)
     return {
         "status_code": r.status_code,
         "ok": r.ok,
@@ -138,7 +140,7 @@ def check_lmstudio(host: str) -> dict[str, Any]:
 
 
 def check_ollama(host: str) -> dict[str, Any]:
-    url = f"{host.rstrip('/')}/api/models"
+    url = f"{host.rstrip('/')}/api/tags"
     r = requests.get(url, timeout=6)
     return {
         "status_code": r.status_code,

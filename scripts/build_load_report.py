@@ -309,6 +309,22 @@ flowchart TD
 ```"""
 
 
+def _evidence_timestamp(probe: dict[str, Any] | None) -> str | None:
+    """Return a stable UTC timestamp derived from committed probe evidence."""
+    if not probe:
+        return None
+    raw = probe.get("generated_at")
+    if not isinstance(raw, str):
+        return None
+    try:
+        captured = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if captured.tzinfo is None:
+        return None
+    return captured.astimezone(UTC).strftime("%Y-%m-%d %H:%M UTC")
+
+
 def build_report(results_dir: str) -> str:
     """Assemble the full markdown page from the result JSON files."""
     scale_files = _find_scale_files(results_dir)
@@ -322,7 +338,8 @@ def build_report(results_dir: str) -> str:
     cas_run = _load_json(os.path.join(results_dir, "redis_cas_run.json"))
 
     top_replicas = max(runs) if runs else None
-    generated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    captured = _evidence_timestamp(probe)
+    captured_note = f" Evidence captured **{captured}**." if captured else ""
 
     parts: list[str] = []
     parts.append("# Load proof: Redis-CAS + horizontal scale\n")
@@ -331,7 +348,7 @@ def build_report(results_dir: str) -> str:
         "    Every number on this page is derived by "
         "`scripts/build_load_report.py` from the committed k6 JSON in "
         "`load/results/`. Re-run `bash load/run_load.sh` then the generator to "
-        f"refresh it. Generated **{generated}**.\n"
+        f"refresh it.{captured_note}\n"
     )
     parts.append(
         "This page turns ARP's Redis-CAS circuit-breaker and horizontal-scale "

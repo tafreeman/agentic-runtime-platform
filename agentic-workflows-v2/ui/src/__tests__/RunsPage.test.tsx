@@ -151,7 +151,7 @@ describe("RunsPage", () => {
 
   it("truncates long run ids inside the run cell instead of overflowing the grid", () => {
     const longId =
-      "review_flow-2026-07-13T045959-really-long-identifier-abcdef1234567890";
+      "review_flow-2026-07-13T045959-really-long-identifier-abcdef1234567890"; // pragma: allowlist secret
     mockUseRuns.mockReturnValue({
       data: [
         makeRun({

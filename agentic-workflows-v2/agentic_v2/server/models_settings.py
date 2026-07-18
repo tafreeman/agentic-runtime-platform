@@ -12,11 +12,12 @@ Covers:
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..ui_settings import ProviderConfig
+from ..ui_settings import ModelPack, ModelPackRef, ProviderConfig
 from .models import EvaluationCriterionDetail
 
 # ---------------------------------------------------------------------------
@@ -115,6 +116,18 @@ class ProviderSettingsUpdateRequest(BaseModel):
     providers: list[ProviderConfig] = []
 
 
+class ProviderProbeResponse(BaseModel):
+    """Classified result of a focused provider connection probe."""
+
+    provider_id: str
+    status: str
+    checked_at: datetime
+    latency_ms: float
+    discovered_model_count: int = 0
+    error_category: str | None = None
+    detail: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Tier settings (reranking + capabilities)
 # ---------------------------------------------------------------------------
@@ -180,6 +193,96 @@ class TierSettingsUpdateRequest(BaseModel):
 
     tier_overrides: dict[int, list[str]] = Field(default_factory=dict)
     model_capabilities: dict[str, list[str]] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Versioned model packs
+# ---------------------------------------------------------------------------
+
+
+class ModelPackCreateRequest(BaseModel):
+    """Create the first immutable version of a named routing pack."""
+
+    id: str
+    name: str
+    description: str = ""
+    source: str = "explicit"
+    tier_chains: dict[int, list[str]] = Field(default_factory=dict)
+    allowed_providers: list[str] = Field(default_factory=list)
+    capability_requirements: dict[int, list[str]] = Field(default_factory=dict)
+    model_capabilities: dict[str, list[str]] = Field(default_factory=dict)
+    judge_model: str | None = None
+
+
+class ModelPackUpdateRequest(BaseModel):
+    """Append a version to an existing pack; omitted fields inherit latest."""
+
+    name: str | None = None
+    description: str | None = None
+    tier_chains: dict[int, list[str]] | None = None
+    allowed_providers: list[str] | None = None
+    capability_requirements: dict[int, list[str]] | None = None
+    model_capabilities: dict[str, list[str]] | None = None
+    judge_model: str | None = None
+
+
+class ModelPackDuplicateRequest(BaseModel):
+    """Duplicate an exact pack version under a new stable ID."""
+
+    source: ModelPackRef
+    new_id: str
+    name: str
+    description: str | None = None
+
+
+class ModelPackImportRequest(BaseModel):
+    """Versioned import envelope for one routing pack."""
+
+    schema_version: int = Field(default=1, ge=1, le=1)
+    pack: ModelPackCreateRequest
+
+
+class ModelPackExportResponse(BaseModel):
+    """Portable, versioned export envelope."""
+
+    schema_version: int = 1
+    pack: ModelPack
+
+
+class ModelPackListResponse(BaseModel):
+    """All immutable versions plus current activation/binding state."""
+
+    packs: list[ModelPack] = []
+    active: ModelPackRef | None = None
+    workflow_bindings: dict[str, ModelPackRef] = {}
+
+
+class ModelPackIssue(BaseModel):
+    """One actionable dry-run validation issue."""
+
+    severity: str
+    code: str
+    message: str
+    tier: int | None = None
+    model: str | None = None
+
+
+class ModelPackValidationResponse(BaseModel):
+    """Server-authoritative model-pack validation/dry-run result."""
+
+    ref: ModelPackRef
+    valid: bool
+    issues: list[ModelPackIssue] = []
+    candidate_chains: dict[int, list[str]] = {}
+
+
+class ModelPackDependenciesResponse(BaseModel):
+    """References that must be understood before archiving a pack."""
+
+    ref: ModelPackRef
+    globally_active: bool = False
+    workflows: list[str] = []
+    recent_run_ids: list[str] = []
 
 
 # ---------------------------------------------------------------------------
