@@ -659,6 +659,11 @@ export function activateModelPack(ref: ModelPackRef): Promise<ModelPackListRespo
   );
 }
 
+/** Clear the global model-pack activation and restore default routing. */
+export function deactivateModelPack(): Promise<ModelPackListResponse> {
+  return fetchJSON(`${BASE}/settings/model-packs/active`, { method: "DELETE" });
+}
+
 /** Bind one exact pack version to a workflow. */
 export function bindModelPack(
   ref: ModelPackRef,

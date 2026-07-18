@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   CheckCircle2,
+  CircleOff,
   Copy,
   Download,
   GitBranch,
@@ -17,6 +18,7 @@ import {
   bindModelPack,
   clearModelPackBinding,
   createModelPack,
+  deactivateModelPack,
   duplicateModelPack,
   exportModelPack,
   getModelPackDependencies,
@@ -124,6 +126,9 @@ export default function ModelPacksPanel() {
     () => packs.find((pack) => refKey(pack) === selectedKey) ?? null,
     [packs, selectedKey],
   );
+  const activeRef = packsQuery.data?.active ?? null;
+  const selectedIsActive =
+    selected !== null && activeRef !== null && refKey(activeRef) === refKey(selected);
 
   useEffect(() => {
     if (packs.length === 0) return;
@@ -154,6 +159,7 @@ export default function ModelPacksPanel() {
       setSelectedKey(refKey(pack));
       setEditor(editorFor(pack));
     },
+    onError: (error) => toast.error(error.message),
   });
 
   const versionMutation = useMutation({
@@ -198,7 +204,10 @@ export default function ModelPacksPanel() {
   };
 
   const actionMutation = useMutation({
-    mutationFn: async (action: "validate" | "activate" | "archive" | "export") => {
+    mutationFn: async (
+      action: "validate" | "activate" | "deactivate" | "archive" | "export",
+    ) => {
+      if (action === "deactivate") return deactivateModelPack();
       if (!selected) throw new Error("Select a model pack.");
       const ref = { id: selected.id, version: selected.version };
       if (action === "validate") return validateModelPack(ref);
@@ -224,7 +233,13 @@ export default function ModelPacksPanel() {
           result,
         );
       } else {
-        toast.success(action === "activate" ? "Global pack activated" : "Pack archived");
+        const message =
+          action === "activate"
+            ? "Global pack activated"
+            : action === "deactivate"
+              ? "Global activation cleared"
+              : "Pack archived";
+        toast.success(message);
         setArchiveConfirm(false);
         await refresh();
       }
@@ -465,6 +480,9 @@ export default function ModelPacksPanel() {
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("activate")} disabled={selected.archived}>
                     <CheckCircle2 aria-hidden="true" /> Activate
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => actionMutation.mutate("deactivate")} disabled={!selectedIsActive}>
+                    <CircleOff aria-hidden="true" /> Deactivate
                   </Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => duplicateMutation.mutate()}>
                     <Copy aria-hidden="true" /> Duplicate
