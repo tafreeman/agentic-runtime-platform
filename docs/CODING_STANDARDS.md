@@ -23,7 +23,7 @@ These are the standards the Agentic Runtime Platform actually enforces. The auth
 ## Design rules
 
 - **Immutable patterns** — return new objects; never mutate inputs.
-- **Files under 800 lines** — split before a module grows past this.
+- **Files under 800 lines** — split before a module grows past this. Existing files above the guide are tracked in the exception register ([ADR-055](adr/ADR-055-file-size-exception-register.md)); a file may exceed the guide only while it is listed there.
 - **Reuse existing infrastructure** instead of re-implementing it: `SmartModelRouter` for tier/model selection, `ExecutionContext` for run state and checkpoints, `ConversationMemory` for history, the MCP client stack for tool calls, and the shared error classification helpers.
 - **Additive-only contracts** — Pydantic v2 models in `contracts/` never remove or rename existing fields; any wire-format change must regenerate the committed schemas and TypeScript types (the `wire-format-drift` CI job enforces this — see [ADR-014](adr/ADR-014-pydantic-wire-format.md)).
 - Smallest coherent change; one concern per PR. Match the surrounding code — do not refactor unrelated subsystems.
