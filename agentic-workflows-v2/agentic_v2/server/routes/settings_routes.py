@@ -43,7 +43,6 @@ from ..models_settings import (
     ModelPackDuplicateRequest,
     ModelPackExportResponse,
     ModelPackImportRequest,
-    ModelPackIssue,
     ModelPackListResponse,
     ModelPackUpdateRequest,
     ModelPackValidationResponse,
@@ -55,6 +54,7 @@ from ..models_settings import (
     TierSettingsResponse,
     TierSettingsUpdateRequest,
 )
+from ..pack_validation import validate_pack_issues
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["settings"])
@@ -396,146 +396,14 @@ def _derived_tier_chains(source: str, settings: UiSettings) -> dict[int, list[st
     }
 
 
-def _capability_issues(pack: ModelPack, settings: UiSettings) -> list[ModelPackIssue]:
-    """Cross-check tier capability requirements against the tier's chain.
-
-    Each chain model's effective capabilities follow the existing precedence:
-    pack-level override, then the global settings override, then the registry
-    default (``[model.capability]``). A model absent from all three sources
-    satisfies nothing. A tier where no candidate satisfies every required tag
-    is an error (activation blocks); candidates that satisfy only part of the
-    requirements get a warning, since fallback routing may still pick them.
-    """
-    from ...models.model_registry import load_registry
-
-    known_capabilities = set(KNOWN_MODEL_CAPABILITIES)
-    registry_capabilities = {
-        model.id: [model.capability] for model in load_registry().models
-    }
-    issues: list[ModelPackIssue] = []
-    for tier, requirements in sorted(pack.capability_requirements.items()):
-        chain = pack.tier_chains.get(tier, [])
-        # Unknown tags already raise ``unknown_capability``; only known tags
-        # participate here so one mistake does not double-report.
-        required = set(requirements) & known_capabilities
-        if not chain or not required:
-            continue
-        satisfying: list[str] = []
-        for model in chain:
-            capabilities = pack.model_capabilities.get(model)
-            if capabilities is None:
-                capabilities = settings.model_capabilities.get(model)
-            if capabilities is None:
-                capabilities = registry_capabilities.get(model, [])
-            if required <= set(capabilities):
-                satisfying.append(model)
-        if not satisfying:
-            issues.append(
-                ModelPackIssue(
-                    severity="error",
-                    code="capability_unsatisfied",
-                    tier=tier,
-                    message=(
-                        f"Tier {tier} requires capabilities {sorted(required)} "
-                        "but no model in its chain provides all of them."
-                    ),
-                )
-            )
-        elif len(satisfying) < len(chain):
-            for model in chain:
-                if model not in satisfying:
-                    issues.append(
-                        ModelPackIssue(
-                            severity="warning",
-                            code="capability_partial",
-                            tier=tier,
-                            model=model,
-                            message=(
-                                f"Model {model!r} does not provide all of tier "
-                                f"{tier}'s required capabilities; fallback "
-                                "routing may still select it."
-                            ),
-                        )
-                    )
-    return issues
-
-
 def _validate_pack(
     pack: ModelPack, settings: UiSettings
 ) -> ModelPackValidationResponse:
-    issues: list[ModelPackIssue] = []
-    if not pack.tier_chains:
-        issues.append(
-            ModelPackIssue(
-                severity="error",
-                code="empty_pack",
-                message="Add at least one tier chain before using this pack.",
-            )
-        )
-
     available = set(_env_configured_providers())
     available.update(
         provider.type for provider in settings.providers if provider.enabled
     )
-    known_capabilities = set(KNOWN_MODEL_CAPABILITIES)
-    for tier, requirements in pack.capability_requirements.items():
-        unknown = sorted(set(requirements) - known_capabilities)
-        if unknown:
-            issues.append(
-                ModelPackIssue(
-                    severity="error",
-                    code="unknown_capability",
-                    tier=tier,
-                    message=f"Tier {tier} has unknown capabilities: {unknown}.",
-                )
-            )
-
-    for tier, chain in pack.tier_chains.items():
-        if not chain:
-            issues.append(
-                ModelPackIssue(
-                    severity="error",
-                    code="empty_tier",
-                    tier=tier,
-                    message=f"Tier {tier} has no routing candidates.",
-                )
-            )
-        for model in chain:
-            provider = model.split(":", 1)[0] if ":" in model else ""
-            if not provider:
-                issues.append(
-                    ModelPackIssue(
-                        severity="error",
-                        code="unprefixed_model",
-                        tier=tier,
-                        model=model,
-                        message="Model IDs in packs must include a provider prefix.",
-                    )
-                )
-                continue
-            if pack.allowed_providers and provider not in pack.allowed_providers:
-                issues.append(
-                    ModelPackIssue(
-                        severity="error",
-                        code="provider_not_allowed",
-                        tier=tier,
-                        model=model,
-                        message=f"Provider {provider!r} is outside this pack's allowed set.",
-                    )
-                )
-            if provider not in available:
-                issues.append(
-                    ModelPackIssue(
-                        severity="warning",
-                        code="provider_unavailable",
-                        tier=tier,
-                        model=model,
-                        message=f"Provider {provider!r} is not currently available.",
-                    )
-                )
-
-    issues.extend(_capability_issues(pack, settings))
-
+    issues = validate_pack_issues(pack, settings, available_providers=available)
     return ModelPackValidationResponse(
         ref=_pack_ref(pack),
         valid=not any(issue.severity == "error" for issue in issues),
@@ -731,6 +599,11 @@ async def bind_model_pack(
     pack = _require_pack(ref, settings)
     if pack.archived:
         raise HTTPException(status_code=409, detail="Archived packs cannot be bound")
+    if not _validate_pack(pack, settings).valid:
+        raise HTTPException(
+            status_code=409,
+            detail="Only a valid pack can be bound to a workflow",
+        )
     from ...langchain.config import list_workflows
 
     if workflow_name not in list_workflows():

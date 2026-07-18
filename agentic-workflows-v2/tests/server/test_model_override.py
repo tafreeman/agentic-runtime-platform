@@ -31,6 +31,7 @@ from agentic_v2.core.tenant import TenantContext
 from agentic_v2.server import execution
 from agentic_v2.server.models import WorkflowEditorRequest, WorkflowRunRequest
 from agentic_v2.server.routes import workflows
+from agentic_v2.ui_settings import ModelPack
 
 OVERRIDE_ID = "ollama:qwen3-coder:30b"
 
@@ -218,6 +219,113 @@ async def test_run_ambient_model_pack_ignored_on_native_adapter(
 
     assert response.status == StepStatus.PENDING
     assert background_tasks.tasks[0].kwargs["model_pack"] is None
+
+
+async def test_run_with_invalid_explicit_pack_rejected(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An explicitly requested pack that fails validation is a 422.
+
+    Regression: only global activation ran ``_validate_pack``, so an
+    invalid pack (here: no tier chains at all) could be requested per-run
+    and execute while the run record claimed the pack governed the run.
+    """
+    _patch_run_route_happy_path(monkeypatch, tmp_path)
+    empty_pack = ModelPack(id="empty-pack", name="Empty pack")
+    monkeypatch.setattr(
+        workflows,
+        "resolve_model_pack",
+        lambda **_kwargs: (empty_pack, "run"),
+    )
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await workflows.run_workflow(
+            WorkflowRunRequest(
+                workflow="wf",
+                input_data={},
+                adapter="langchain",
+            ),
+            background_tasks,
+            _request(),
+            tenant,
+        )
+
+    assert exc_info.value.status_code == 422
+    assert "failed validation" in exc_info.value.detail
+    assert background_tasks.tasks == []
+
+
+async def test_run_with_invalid_ambient_pack_dropped(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An invalid workflow/global pack must not fail langchain runs.
+
+    Bindings that predate submit-time validation (or drifted invalid via
+    capability overrides) are dropped for the run — the same rule the
+    adapter guard uses for ambient packs — so the run record shows default
+    routing instead of claiming an unenforced pack governed the run.
+    """
+    _patch_run_route_happy_path(monkeypatch, tmp_path)
+    empty_pack = ModelPack(id="empty-pack", name="Empty pack")
+    monkeypatch.setattr(
+        workflows,
+        "resolve_model_pack",
+        lambda **_kwargs: (empty_pack, "global"),
+    )
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    response = await workflows.run_workflow(
+        WorkflowRunRequest(
+            workflow="wf",
+            input_data={},
+            adapter="langchain",
+        ),
+        background_tasks,
+        _request(),
+        tenant,
+    )
+
+    assert response.status == StepStatus.PENDING
+    assert background_tasks.tasks[0].kwargs["model_pack"] is None
+    assert background_tasks.tasks[0].kwargs["model_pack_source"] == "default"
+
+
+async def test_run_with_valid_explicit_pack_accepted(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A valid explicitly requested pack still threads through unchanged."""
+    _patch_run_route_happy_path(monkeypatch, tmp_path)
+    pack = ModelPack(
+        id="good-pack",
+        name="Good pack",
+        tier_chains={2: ["openai:gpt-4o-mini"]},
+        allowed_providers=["openai"],
+    )
+    monkeypatch.setattr(
+        workflows,
+        "resolve_model_pack",
+        lambda **_kwargs: (pack, "run"),
+    )
+    background_tasks = BackgroundTasks()
+    tenant = TenantContext(tenant_id="tenant-a", source="default")
+
+    response = await workflows.run_workflow(
+        WorkflowRunRequest(
+            workflow="wf",
+            input_data={},
+            adapter="langchain",
+        ),
+        background_tasks,
+        _request(),
+        tenant,
+    )
+
+    assert response.status == StepStatus.PENDING
+    assert background_tasks.tasks[0].kwargs["model_pack"] is pack
+    assert background_tasks.tasks[0].kwargs["model_pack_source"] == "run"
 
 
 async def test_run_whitespace_override_on_native_adapter_not_rejected(

@@ -45,7 +45,7 @@ from ...langchain.dependencies import (
     is_missing_langchain_dependency_error,
     to_missing_langchain_dependency_error,
 )
-from ...ui_settings import resolve_model_pack
+from ...ui_settings import load_ui_settings, resolve_model_pack
 from ...workflows.run_logger import RunLogger
 from ..audit_log import audit_request_event
 from ..execution import _run_and_evaluate, invalidate_compiled_workflow
@@ -57,6 +57,7 @@ from ..models import (
     WorkflowRunResponse,
     WorkflowValidationResponse,
 )
+from ..pack_validation import pack_error_issues
 from ..result_normalization import _resolve_evaluation_inputs
 
 logger = logging.getLogger(__name__)
@@ -414,9 +415,11 @@ async def run_workflow(
         run_id = request.run_id or f"{workflow_def.name}-{uuid.uuid4().hex[:8]}"
         workflow_inputs = dict(request.input_data)
         try:
+            ui_settings = load_ui_settings()
             model_pack, model_pack_source = resolve_model_pack(
                 workflow_name=workflow_def.name,
                 requested=request.model_pack,
+                settings=ui_settings,
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -431,6 +434,29 @@ async def run_workflow(
             # machine-local settings state.
             model_pack = None
             model_pack_source = "default"
+        if model_pack is not None:
+            pack_errors = pack_error_issues(model_pack, ui_settings)
+            if pack_errors:
+                detail = (
+                    f"model_pack {model_pack.id!r} version {model_pack.version} "
+                    "failed validation: "
+                    + "; ".join(issue.message for issue in pack_errors)
+                )
+                if model_pack_source == "run":
+                    raise HTTPException(status_code=422, detail=detail)
+                # Ambient packs that predate submit-time validation (or
+                # drifted invalid via capability overrides) are dropped for
+                # this run rather than failing on machine-local settings
+                # state — same rule as the adapter guard above. The run
+                # record then truthfully shows default routing instead of
+                # claiming an unenforced pack governed the run.
+                logger.warning(
+                    "Ignoring invalid ambient model pack for run %s: %s",
+                    run_id,
+                    detail,
+                )
+                model_pack = None
+                model_pack_source = "default"
         evaluation = request.evaluation
         dataset_sample: dict[str, Any] | None = None
         dataset_meta: dict[str, Any] | None = None

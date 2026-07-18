@@ -572,3 +572,49 @@ class TestModelPacks:
 
         assert response.status_code == 200
         assert response.json()["active"] is None
+
+    def test_bind_rejects_invalid_pack(self, client, monkeypatch):
+        """Binding gates on validity like activation does.
+
+        Regression: only global activation ran ``_validate_pack``; an
+        invalid pack (here: no tier chains) could be workflow-bound and
+        later route runs while the record claimed it governed them.
+        """
+        monkeypatch.setattr(
+            "agentic_v2.langchain.config.list_workflows", lambda: ["wf"]
+        )
+        created = client.post(
+            "/api/settings/model-packs",
+            json={"id": "empty-pack", "name": "Empty pack", "source": "explicit"},
+        )
+        assert created.status_code == 201
+
+        bound = client.put("/api/settings/model-packs/empty-pack/bindings/wf?version=1")
+
+        assert bound.status_code == 409
+        assert "valid pack" in bound.json()["detail"]
+        listed = client.get("/api/settings/model-packs")
+        assert listed.json()["workflow_bindings"] == {}
+
+    def test_bind_accepts_valid_pack(self, client, monkeypatch):
+        monkeypatch.setattr(
+            "agentic_v2.langchain.config.list_workflows", lambda: ["wf"]
+        )
+        created = client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "good-pack",
+                "name": "Good pack",
+                "source": "explicit",
+                "tier_chains": {"2": ["openai:gpt-4o-mini"]},
+            },
+        )
+        assert created.status_code == 201
+
+        bound = client.put("/api/settings/model-packs/good-pack/bindings/wf?version=1")
+
+        assert bound.status_code == 200
+        assert bound.json()["workflow_bindings"]["wf"] == {
+            "id": "good-pack",
+            "version": 1,
+        }
