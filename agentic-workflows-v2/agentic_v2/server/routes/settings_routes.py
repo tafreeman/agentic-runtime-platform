@@ -23,6 +23,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import ValidationError
 
+from ...security.url_guard import validate_url_async
 from ...ui_settings import (
     KNOWN_MODEL_CAPABILITIES,
     ModelPack,
@@ -209,6 +210,22 @@ async def probe_provider(provider_id: str) -> ProviderProbeResponse:
                 detail=str(exc.detail),
             )
 
+    # Shared SSRF guard (same policy module as the HTTP tools). Private/LAN
+    # endpoints are a legitimate feature here (local Ollama, LM Studio), so
+    # the private-IP block is opted out — but cloud metadata endpoints stay
+    # always-blocked. Checked before the credential header is built so a
+    # blocked URL never sees the bearer token and never leaves the process.
+    guard_error = await validate_url_async(endpoint, block_private=False)
+    if guard_error is not None:
+        return ProviderProbeResponse(
+            provider_id=provider.id,
+            status="error",
+            checked_at=checked_at,
+            latency_ms=round((time.perf_counter() - started) * 1000, 2),
+            error_category="connection",
+            detail=guard_error,
+        )
+
     headers: dict[str, str] = {}
     if provider.api_key_env:
         credential = os.environ.get(provider.api_key_env)
@@ -379,6 +396,70 @@ def _derived_tier_chains(source: str, settings: UiSettings) -> dict[int, list[st
     }
 
 
+def _capability_issues(pack: ModelPack, settings: UiSettings) -> list[ModelPackIssue]:
+    """Cross-check tier capability requirements against the tier's chain.
+
+    Each chain model's effective capabilities follow the existing precedence:
+    pack-level override, then the global settings override, then the registry
+    default (``[model.capability]``). A model absent from all three sources
+    satisfies nothing. A tier where no candidate satisfies every required tag
+    is an error (activation blocks); candidates that satisfy only part of the
+    requirements get a warning, since fallback routing may still pick them.
+    """
+    from ...models.model_registry import load_registry
+
+    known_capabilities = set(KNOWN_MODEL_CAPABILITIES)
+    registry_capabilities = {
+        model.id: [model.capability] for model in load_registry().models
+    }
+    issues: list[ModelPackIssue] = []
+    for tier, requirements in sorted(pack.capability_requirements.items()):
+        chain = pack.tier_chains.get(tier, [])
+        # Unknown tags already raise ``unknown_capability``; only known tags
+        # participate here so one mistake does not double-report.
+        required = set(requirements) & known_capabilities
+        if not chain or not required:
+            continue
+        satisfying: list[str] = []
+        for model in chain:
+            capabilities = pack.model_capabilities.get(model)
+            if capabilities is None:
+                capabilities = settings.model_capabilities.get(model)
+            if capabilities is None:
+                capabilities = registry_capabilities.get(model, [])
+            if required <= set(capabilities):
+                satisfying.append(model)
+        if not satisfying:
+            issues.append(
+                ModelPackIssue(
+                    severity="error",
+                    code="capability_unsatisfied",
+                    tier=tier,
+                    message=(
+                        f"Tier {tier} requires capabilities {sorted(required)} "
+                        "but no model in its chain provides all of them."
+                    ),
+                )
+            )
+        elif len(satisfying) < len(chain):
+            for model in chain:
+                if model not in satisfying:
+                    issues.append(
+                        ModelPackIssue(
+                            severity="warning",
+                            code="capability_partial",
+                            tier=tier,
+                            model=model,
+                            message=(
+                                f"Model {model!r} does not provide all of tier "
+                                f"{tier}'s required capabilities; fallback "
+                                "routing may still select it."
+                            ),
+                        )
+                    )
+    return issues
+
+
 def _validate_pack(
     pack: ModelPack, settings: UiSettings
 ) -> ModelPackValidationResponse:
@@ -452,6 +533,8 @@ def _validate_pack(
                         message=f"Provider {provider!r} is not currently available.",
                     )
                 )
+
+    issues.extend(_capability_issues(pack, settings))
 
     return ModelPackValidationResponse(
         ref=_pack_ref(pack),
@@ -610,6 +693,27 @@ async def activate_model_pack(
         )
     updated = UiSettings.model_validate(
         {**settings.model_dump(), "active_model_pack": ref.model_dump()}
+    )
+    _save_or_503(updated)
+    return _pack_list_response(updated)
+
+
+@router.delete(
+    "/settings/model-packs/active",
+    response_model=ModelPackListResponse,
+)
+async def deactivate_model_pack() -> ModelPackListResponse:
+    """Clear the global model-pack activation, restoring default routing.
+
+    Counterpart to ``activate_model_pack``: ``active_model_pack=None`` is the
+    supported default state, and clearing it is what the archive guard asks
+    for ("Remove global activation ... before archiving."). Idempotent —
+    succeeds with no change when nothing is active. Workflow bindings are
+    untouched; clear those via the bindings routes.
+    """
+    settings = load_ui_settings()
+    updated = UiSettings.model_validate(
+        {**settings.model_dump(), "active_model_pack": None}
     )
     _save_or_503(updated)
     return _pack_list_response(updated)

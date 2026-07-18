@@ -177,6 +177,83 @@ class TestProviderSettings:
             "authorization": "Bearer test-credential",
         }
 
+    def test_probe_blocks_cloud_metadata_endpoints(self, client, monkeypatch):
+        """The probe applies the shared SSRF guard before any request is sent."""
+        import agentic_v2.server.routes.settings_routes as settings_routes
+
+        client.put(
+            "/api/settings/providers",
+            json={
+                "providers": [
+                    {
+                        "id": "aws-md",
+                        "type": "custom",
+                        "base_url": "http://169.254.169.254/latest",
+                    },
+                    {
+                        "id": "gcp-md",
+                        "type": "custom",
+                        "base_url": "http://metadata.google.internal/computeMetadata",
+                    },
+                ]
+            },
+        )
+
+        def forbid_client(**kwargs):
+            raise AssertionError("blocked URLs must never reach the network")
+
+        monkeypatch.setattr(settings_routes.httpx, "AsyncClient", forbid_client)
+
+        for provider_id in ("aws-md", "gcp-md"):
+            response = client.post(f"/api/settings/providers/{provider_id}/probe")
+            assert response.status_code == 200
+            payload = response.json()
+            assert payload["status"] == "error"
+            assert "blocked" in payload["detail"]
+
+    def test_probe_still_allows_localhost_and_lan_endpoints(self, client, monkeypatch):
+        """Private/LAN base URLs stay probe-able (local Ollama, LM Studio)."""
+        import agentic_v2.server.routes.settings_routes as settings_routes
+
+        client.put(
+            "/api/settings/providers",
+            json={
+                "providers": [
+                    {
+                        "id": "local-ollama",
+                        "type": "ollama",
+                        "base_url": "http://localhost:11434",
+                    },
+                    {
+                        "id": "lan-box",
+                        "type": "custom",
+                        "base_url": "http://10.0.0.5:1234/v1",
+                    },
+                ]
+            },
+        )
+        seen: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.append(str(request.url))
+            return httpx.Response(200, json={"models": [{"name": "m"}]})
+
+        real_client = httpx.AsyncClient
+
+        def mock_client(**kwargs):
+            return real_client(transport=httpx.MockTransport(handler), **kwargs)
+
+        monkeypatch.setattr(settings_routes.httpx, "AsyncClient", mock_client)
+
+        for provider_id in ("local-ollama", "lan-box"):
+            response = client.post(f"/api/settings/providers/{provider_id}/probe")
+            assert response.status_code == 200
+            assert response.json()["status"] == "available"
+        assert seen == [
+            "http://localhost:11434/api/tags",
+            "http://10.0.0.5:1234/v1/models",
+        ]
+
     def test_get_nulls_raw_key_persisted_by_older_versions(self, client, tmp_path):
         # Legacy store written before write-side hardening: the raw key must
         # be cleared on read, never echoed back through the API.
@@ -368,3 +445,130 @@ class TestModelPacks:
         ).json()
         assert dependencies["globally_active"] is True
         assert dependencies["workflows"] == []
+
+    def test_validate_flags_unsatisfiable_capability_requirements(self, client):
+        """A tier requiring a capability no chain model provides must not activate."""
+        created = client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "vision-pack",
+                "name": "Vision pack",
+                "tier_chains": {"2": ["ollama:text-only"]},
+                "capability_requirements": {"2": ["vision"]},
+                "model_capabilities": {"ollama:text-only": ["fast"]},
+            },
+        )
+        assert created.status_code == 201
+
+        validation = client.post(
+            "/api/settings/model-packs/vision-pack/validate?version=1"
+        )
+        assert validation.status_code == 200
+        payload = validation.json()
+        assert payload["valid"] is False
+        assert any(
+            issue["code"] == "capability_unsatisfied" and issue["tier"] == 2
+            for issue in payload["issues"]
+        )
+
+        activation = client.post(
+            "/api/settings/model-packs/vision-pack/activate?version=1"
+        )
+        assert activation.status_code == 409
+
+    def test_validate_counts_unknown_models_as_not_satisfying(self, client):
+        """A model absent from pack, settings, and registry satisfies nothing."""
+        client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "mystery-pack",
+                "name": "Mystery pack",
+                "tier_chains": {"1": ["ollama:mystery-model"]},
+                "capability_requirements": {"1": ["vision"]},
+            },
+        )
+
+        validation = client.post(
+            "/api/settings/model-packs/mystery-pack/validate?version=1"
+        )
+
+        payload = validation.json()
+        assert payload["valid"] is False
+        assert any(
+            issue["code"] == "capability_unsatisfied" for issue in payload["issues"]
+        )
+
+    def test_validate_warns_on_partially_satisfying_chain(self, client):
+        """One satisfying candidate keeps the pack valid; the rest get warnings."""
+        client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "mixed-pack",
+                "name": "Mixed pack",
+                "tier_chains": {"2": ["ollama:llava", "ollama:text-only"]},
+                "capability_requirements": {"2": ["vision"]},
+                "model_capabilities": {
+                    "ollama:llava": ["vision", "local"],
+                    "ollama:text-only": ["fast"],
+                },
+            },
+        )
+
+        validation = client.post(
+            "/api/settings/model-packs/mixed-pack/validate?version=1"
+        )
+
+        payload = validation.json()
+        assert payload["valid"] is True
+        partial = [i for i in payload["issues"] if i["code"] == "capability_partial"]
+        assert [issue["model"] for issue in partial] == ["ollama:text-only"]
+
+        activation = client.post(
+            "/api/settings/model-packs/mixed-pack/activate?version=1"
+        )
+        assert activation.status_code == 200
+
+    def test_validate_uses_global_capability_overrides_as_fallback(self, client):
+        """Global settings capabilities apply when the pack has no override."""
+        client.put(
+            "/api/settings/tiers",
+            json={"model_capabilities": {"ollama:llava": ["vision"]}},
+        )
+        client.post(
+            "/api/settings/model-packs",
+            json={
+                "id": "global-caps",
+                "name": "Global caps",
+                "tier_chains": {"2": ["ollama:llava"]},
+                "capability_requirements": {"2": ["vision"]},
+            },
+        )
+
+        validation = client.post(
+            "/api/settings/model-packs/global-caps/validate?version=1"
+        )
+
+        assert validation.json()["valid"] is True
+
+    def test_deactivate_clears_global_activation_and_unblocks_archive(self, client):
+        """DELETE /model-packs/active restores default routing and frees archive."""
+        client.post(
+            "/api/settings/model-packs",
+            json={"id": "temp-pack", "name": "Temp pack", "source": "defaults"},
+        )
+        client.post("/api/settings/model-packs/temp-pack/activate?version=1")
+
+        response = client.delete("/api/settings/model-packs/active")
+
+        assert response.status_code == 200
+        assert response.json()["active"] is None
+
+        archived = client.post("/api/settings/model-packs/temp-pack/archive?version=1")
+        assert archived.status_code == 200
+        assert archived.json()["archived"] is True
+
+    def test_deactivate_is_idempotent_when_nothing_is_active(self, client):
+        response = client.delete("/api/settings/model-packs/active")
+
+        assert response.status_code == 200
+        assert response.json()["active"] is None
