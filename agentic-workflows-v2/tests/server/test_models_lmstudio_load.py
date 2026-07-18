@@ -7,11 +7,16 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from agentic_v2.models.local_discovery import (
+    LmStudioCatalog,
     LmStudioLoadError,
     LmStudioUnavailableError,
     LocalModelInfo,
 )
 from agentic_v2.server.routes import models as model_routes
+
+
+def _catalog(*models: LocalModelInfo, api: str = "v1") -> LmStudioCatalog:
+    return LmStudioCatalog(models=models, api=api)
 
 
 @pytest.mark.asyncio
@@ -20,8 +25,8 @@ async def test_load_lmstudio_loads_one_discovered_model(
 ) -> None:
     monkeypatch.setattr(
         model_routes,
-        "discover_lmstudio_models",
-        lambda: [LocalModelInfo(id="lmstudio:google/gemma-3-4b")],
+        "discover_lmstudio_catalog",
+        lambda: _catalog(LocalModelInfo(id="lmstudio:google/gemma-3-4b")),
     )
     captured: list[str] = []
 
@@ -53,8 +58,8 @@ async def test_load_lmstudio_is_idempotent_for_running_model(
 ) -> None:
     monkeypatch.setattr(
         model_routes,
-        "discover_lmstudio_models",
-        lambda: [LocalModelInfo(id="lmstudio:google/gemma-3-4b", running=True)],
+        "discover_lmstudio_catalog",
+        lambda: _catalog(LocalModelInfo(id="lmstudio:google/gemma-3-4b", running=True)),
     )
     monkeypatch.setattr(
         model_routes,
@@ -74,7 +79,7 @@ async def test_load_lmstudio_is_idempotent_for_running_model(
 async def test_load_lmstudio_rejects_models_outside_discovered_chat_library(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(model_routes, "discover_lmstudio_models", lambda: [])
+    monkeypatch.setattr(model_routes, "discover_lmstudio_catalog", lambda: _catalog())
 
     with pytest.raises(HTTPException) as exc_info:
         await model_routes.load_lmstudio(
@@ -82,6 +87,70 @@ async def test_load_lmstudio_rejects_models_outside_discovered_chat_library(
         )
 
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_load_lmstudio_rejects_load_on_pre_v1_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A v0-discovered unloaded model is a 409, not a doomed v1 POST.
+
+    Regression: discovery falling back to ``/api/v0/models`` still let the
+    route POST ``/api/v1/models/load``, which 404s on a v0-only server and
+    surfaced as an opaque 502.
+    """
+    monkeypatch.setattr(
+        model_routes,
+        "discover_lmstudio_catalog",
+        lambda: _catalog(
+            LocalModelInfo(id="lmstudio:google/gemma-3-4b", running=False),
+            api="v0",
+        ),
+    )
+    monkeypatch.setattr(
+        model_routes,
+        "load_lmstudio_model",
+        lambda _model: pytest.fail("pre-v1 servers must never receive a v1 load"),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await model_routes.load_lmstudio(
+            model_routes.LmStudioLoadRequest(model="google/gemma-3-4b")
+        )
+
+    assert exc_info.value.status_code == 409
+    assert "native v1 load API" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_load_lmstudio_shim_models_report_already_loaded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """OpenAI-shim discovery only lists loaded models, so load is a no-op.
+
+    Regression: shim results were marked ``running=False``, so the UI
+    offered a load action whose v1 POST could only fail on a shim-only
+    server.
+    """
+    monkeypatch.setattr(
+        model_routes,
+        "discover_lmstudio_catalog",
+        lambda: _catalog(
+            LocalModelInfo(id="lmstudio:gemma-3-12b", running=True),
+            api="openai",
+        ),
+    )
+    monkeypatch.setattr(
+        model_routes,
+        "load_lmstudio_model",
+        lambda _model: pytest.fail("shim-listed models are already loaded"),
+    )
+
+    result = await model_routes.load_lmstudio(
+        model_routes.LmStudioLoadRequest(model="gemma-3-12b")
+    )
+
+    assert result.status == "already_loaded"
 
 
 @pytest.mark.asyncio
@@ -99,8 +168,8 @@ async def test_load_lmstudio_maps_upstream_errors(
 ) -> None:
     monkeypatch.setattr(
         model_routes,
-        "discover_lmstudio_models",
-        lambda: [LocalModelInfo(id="lmstudio:google/gemma-3-4b")],
+        "discover_lmstudio_catalog",
+        lambda: _catalog(LocalModelInfo(id="lmstudio:google/gemma-3-4b")),
     )
 
     def _raise(_model: str) -> None:

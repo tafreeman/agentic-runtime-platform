@@ -61,6 +61,26 @@ class LocalModelInfo:
     capabilities: tuple[str, ...] = field(default=())
 
 
+@dataclass(frozen=True)
+class LmStudioCatalog:
+    """One host's LM Studio discovery result plus which API produced it.
+
+    ``api`` is ``"v1"`` (current native), ``"v0"`` (legacy native),
+    ``"openai"`` (compatibility shim), or ``""`` when no host responded.
+    Only the native v1 API exposes the remote model-load endpoint, so
+    callers offering a load action must check :attr:`supports_load` —
+    POSTing ``/api/v1/models/load`` at a v0-only server just 404s.
+    """
+
+    models: tuple[LocalModelInfo, ...] = ()
+    api: str = ""
+
+    @property
+    def supports_load(self) -> bool:
+        """Whether the discovered server exposes ``/api/v1/models/load``."""
+        return self.api == "v1"
+
+
 # ---------------------------------------------------------------------------
 # Shared HTTP helper
 # ---------------------------------------------------------------------------
@@ -233,7 +253,12 @@ def _parse_v0_models(data: dict[str, Any]) -> list[LocalModelInfo]:
 
 
 def _parse_openai_models(data: dict[str, Any]) -> list[LocalModelInfo]:
-    """Map a ``/v1/models`` payload to records (loaded only, name-filtered)."""
+    """Map a ``/v1/models`` payload to records (loaded only, name-filtered).
+
+    The OpenAI shim lists only models that are already loaded, so every
+    record is ``running=True`` — there is nothing on the shim a load action
+    could apply to.
+    """
     discovered: list[LocalModelInfo] = []
     seen: set[str] = set()
     for entry in data.get("data", []) or []:
@@ -248,27 +273,27 @@ def _parse_openai_models(data: dict[str, Any]) -> list[LocalModelInfo]:
         if full_id in seen:
             continue
         seen.add(full_id)
-        discovered.append(LocalModelInfo(id=full_id))
+        discovered.append(LocalModelInfo(id=full_id, running=True))
     return discovered
 
 
-def _fetch_lmstudio_models(host: str) -> list[LocalModelInfo] | None:
+def _fetch_lmstudio_models(host: str) -> LmStudioCatalog | None:
     """Probe one host: native v1, native v0, then OpenAI shim.
 
-    Returns the chat models (possibly an empty list when the server is up but
-    has no chat models) if the host responds, or ``None`` when the host is
-    unreachable / not an LM Studio server.
+    Returns a catalog recording which API answered (its ``models`` may be
+    empty when the server is up but has no chat models), or ``None`` when
+    the host is unreachable / not an LM Studio server.
     """
     headers = _lmstudio_headers()
     v1 = _get_json(f"{host}{_LMSTUDIO_V1_PATH}", headers=headers)
     if v1 is not None:
-        return _parse_v1_models(v1)
+        return LmStudioCatalog(models=tuple(_parse_v1_models(v1)), api="v1")
     v0 = _get_json(f"{host}{_LMSTUDIO_V0_PATH}", headers=headers)
     if v0 is not None:
-        return _parse_v0_models(v0)
+        return LmStudioCatalog(models=tuple(_parse_v0_models(v0)), api="v0")
     openai = _get_json(f"{host}{_LMSTUDIO_OPENAI_PATH}", headers=headers)
     if openai is not None:
-        return _parse_openai_models(openai)
+        return LmStudioCatalog(models=tuple(_parse_openai_models(openai)), api="openai")
     return None
 
 
@@ -321,11 +346,12 @@ def resolve_lmstudio_host() -> str:
 resolve_lmstudio_host.cache_clear = _probe_lmstudio_host.cache_clear  # type: ignore[attr-defined]
 
 
-def discover_lmstudio_models() -> list[LocalModelInfo]:
+def discover_lmstudio_catalog() -> LmStudioCatalog:
     """Discover models served by a local LM Studio server (best-effort).
 
-    Returns records from the first reachable host (native API preferred), or
-    ``[]`` if none responds. Never raises.
+    Returns the first reachable host's catalog (native API preferred), which
+    records which API variant answered, or an empty catalog if none responds.
+    Never raises.
 
     A rescan is the source of truth for "what's up now", so it evicts the cached
     host resolution: a subsequent inference re-resolves (in the same candidate
@@ -338,7 +364,16 @@ def discover_lmstudio_models() -> list[LocalModelInfo]:
         if result is not None:
             # First reachable host wins, even when it reports no chat models.
             return result
-    return []
+    return LmStudioCatalog()
+
+
+def discover_lmstudio_models() -> list[LocalModelInfo]:
+    """Discover LM Studio chat models; see :func:`discover_lmstudio_catalog`.
+
+    Kept for callers that only need the model records and not the API
+    variant (e.g. the router's model enumeration).
+    """
+    return list(discover_lmstudio_catalog().models)
 
 
 def load_lmstudio_model(model_key: str) -> dict[str, Any]:
@@ -485,9 +520,11 @@ def discover_onnx_models() -> list[LocalModelInfo]:
 
 
 __all__ = [
+    "LmStudioCatalog",
     "LmStudioLoadError",
     "LmStudioUnavailableError",
     "LocalModelInfo",
+    "discover_lmstudio_catalog",
     "discover_lmstudio_models",
     "discover_onnx_models",
     "load_lmstudio_model",
