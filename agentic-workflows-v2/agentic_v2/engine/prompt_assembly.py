@@ -115,7 +115,11 @@ def load_agent_system_prompt(
                 role,
                 record.qualified_version,
             )
-            return record.content
+            # The registry lives outside the strict-mypy surface, so its
+            # attributes arrive as Any under --follow-imports=skip; pin the
+            # declared return type at the boundary.
+            content: str = record.content
+            return content
         role_path = _PROMPTS_DIR / f"{role}.md"
         if role_path.exists():
             return role_path.read_text(encoding="utf-8")
