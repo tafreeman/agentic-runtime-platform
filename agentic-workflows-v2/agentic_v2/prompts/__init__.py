@@ -2,18 +2,34 @@
 
 This module provides system prompts for various agent roles. Prompts are
 stored as markdown files and loaded dynamically.
+
+:func:`load_prompt` is now backed by the versioning registry in
+:mod:`agentic_v2.prompts.registry` (see
+``docs/adr/ADR-056-prompt-versioning-registry.md``): it resolves through
+the shared :func:`default_registry` first, so callers see the same
+LF-normalized, fingerprinted content as the engine's persona lookup
+(:func:`agentic_v2.engine.prompt_assembly.load_agent_system_prompt`), and
+falls back to a direct file read for any name the default registry does
+not carry.
 """
 
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
+
+from .registry import (
+    PROMPT_VERSIONS,
+    PromptRecord,
+    PromptRegistry,
+    compute_content_hash,
+    default_registry,
+    normalize_prompt_text,
+)
 
 # Directory containing prompt templates
 PROMPTS_DIR = Path(__file__).parent
 
 
-@lru_cache(maxsize=32)
 def load_prompt(name: str) -> str:
     """Load a prompt template by name.
 
@@ -27,12 +43,15 @@ def load_prompt(name: str) -> str:
     Raises:
         FileNotFoundError: If prompt file doesn't exist.
     """
-    if not name.endswith(".md"):
-        name = f"{name}.md"
+    stem = name[: -len(".md")] if name.endswith(".md") else name
 
-    prompt_path = PROMPTS_DIR / name
+    record = default_registry().get_or_none(stem)
+    if record is not None:
+        return record.content
+
+    prompt_path = PROMPTS_DIR / f"{stem}.md"
     if not prompt_path.exists():
-        raise FileNotFoundError(f"Prompt not found: {name}")
+        raise FileNotFoundError(f"Prompt not found: {stem}.md")
 
     return prompt_path.read_text(encoding="utf-8")
 
@@ -82,4 +101,11 @@ __all__ = [
     "REVIEWER",
     "TESTER",
     "VALIDATOR",
+    # Re-exported from .registry (ADR-056)
+    "PROMPT_VERSIONS",
+    "PromptRecord",
+    "PromptRegistry",
+    "compute_content_hash",
+    "default_registry",
+    "normalize_prompt_text",
 ]

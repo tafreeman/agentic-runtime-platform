@@ -272,7 +272,7 @@ Where `filename` is the run's log file name (e.g., `run_20260501_143022_abc123.j
       "score": 75.0,
       "model": "gh:openai/gpt-4o",
       "model_version": "gpt-4o-2024-11-20",
-      "prompt_version": "judge-v1",
+      "prompt_version": "judge-v1@1a2b3c4d",
       "temperature": 0.1,
       "pairwise_consistent": null,
       "inconsistency_reasons": []

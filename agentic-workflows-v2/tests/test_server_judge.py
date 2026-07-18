@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
+from agentic_v2.prompts.registry import compute_content_hash
 from agentic_v2.scoring.judge import (
+    _DEFAULT_JUDGE_PROMPT_VERSION,
+    JUDGE_PROMPT_TEMPLATE,
     JudgeCriterionDefinition,
     JudgeCriterionScore,
     JudgeEvaluationResult,
@@ -154,6 +159,69 @@ def test_judge_logs_model_version():
     assert payload["model_version"] == "gpt-4o-2026-02-01"
     assert payload["prompt_version"] == "judge-v1.2"
     assert payload["temperature"] == 0.1
+
+
+# ---------------------------------------------------------------------------
+# LLMJudge.prompt_version default -- registry fingerprint (ADR-056)
+# ---------------------------------------------------------------------------
+
+
+def test_default_prompt_version_matches_qualified_fingerprint_shape():
+    """Default (unset) prompt_version is 'judge-v1@<8-hex>', not the bare
+    'judge-v1' literal."""
+    judge = LLMJudge()
+    assert re.fullmatch(r"judge-v1@[0-9a-f]{8}", judge.prompt_version)
+
+
+def test_default_prompt_version_equals_registry_qualified_version():
+    """Default prompt_version equals the judge prompt registry's
+    qualified_version exactly (not just its shape)."""
+    judge = LLMJudge()
+    assert judge.prompt_version == _DEFAULT_JUDGE_PROMPT_VERSION
+
+
+def test_default_prompt_version_flows_into_payload():
+    """The registry-fingerprinted default prompt_version reaches
+    to_payload()['prompt_version'] end-to-end through evaluate()."""
+
+    def _provider(*, prompt: str, model: str, temperature: float):
+        return {
+            "criteria": [
+                {"name": "correctness", "score": 4, "evidence": "ok"},
+                {"name": "completeness", "score": 4, "evidence": "ok"},
+            ]
+        }
+
+    judge = LLMJudge(response_provider=_provider)
+    result = judge.evaluate(
+        candidate_output="candidate",
+        expected_output="expected",
+        criteria=_criteria(),
+    )
+    payload = result.to_payload()
+    assert payload["prompt_version"] == _DEFAULT_JUDGE_PROMPT_VERSION
+    assert re.fullmatch(r"judge-v1@[0-9a-f]{8}", payload["prompt_version"])
+
+
+def test_explicit_prompt_version_override_still_verbatim():
+    """An explicitly-passed prompt_version is emitted verbatim, unchanged
+    by the registry default (back-compat with pre-ADR-056 callers)."""
+    judge = LLMJudge(
+        prompt_version="judge-v1",
+        response_provider=lambda **_: {
+            "criteria": [{"name": "correctness", "score": 5, "evidence": "e"}]
+        },
+    )
+    assert judge.prompt_version == "judge-v1"
+
+
+def test_judge_prompt_template_self_consistency():
+    """The registry-recorded hash matches an independent recomputation
+    over JUDGE_PROMPT_TEMPLATE -- proves the registered content is the
+    literal template, not a stale or transformed copy."""
+    declared, short_hash = _DEFAULT_JUDGE_PROMPT_VERSION.split("@")
+    assert declared == "judge-v1"
+    assert short_hash == compute_content_hash(JUDGE_PROMPT_TEMPLATE)[:8]
 
 
 # ---------------------------------------------------------------------------
