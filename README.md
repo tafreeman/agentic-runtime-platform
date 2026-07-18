@@ -17,9 +17,7 @@
 
 ---
 
-Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent occupies a specific role (planner, coder, reviewer) and operates at a defined capability tier. Workflows are authored as declarative YAML files and compiled into executable DAGs with automatic parallel scheduling, conditional branching, iterative loops, and failure cascade propagation. The LLM/deterministic boundary is enforced operationally: high-impact tool calls pass through a fail-closed human-approval gate, outbound HTTP is screened by a default-on SSRF guard, and execution is observable via opt-in OpenTelemetry tracing.
-
-## What's in the Box
+Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent occupies a specific role (planner, coder, reviewer) and operates at a defined capability tier. Workflows are authored as YAML files and compiled into DAGs with automatic parallel scheduling, conditional branching, iterative loops, and failure cascade propagation.   
 
 | Component | What it does |
 |-----------|-------------|
