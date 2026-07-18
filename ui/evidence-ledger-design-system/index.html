@@ -1,0 +1,4581 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-design-system/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Evidence Ledger Design System - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/tokens.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/console.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/landing.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Evidence Ledger Design System - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/evidence-ledger-design-system.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-design-system/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="Evidence Ledger Design System - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/evidence-ledger-design-system.png" />
+</head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#evidence-ledger-design-system" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Evidence Ledger Design System
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Design principles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Design principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-evidence-before-decoration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Evidence before decoration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-air-is-structural" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Air is structural
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-one-dominant-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 One dominant surface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-quiet-chrome-decisive-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Quiet chrome, decisive action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-progressive-disclosure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Progressive disclosure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#26-provenance-is-part-of-the-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.6 Provenance is part of the interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#27-accessibility-is-composition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.7 Accessibility is composition
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-visual-thesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Visual thesis
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-color-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Color system
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Color system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-canonical-light-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Canonical light palette
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-color-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Color rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-dark-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Dark mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-shadcnui-token-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. shadcn/ui token mapping
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-typography" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Typography
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Typography">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Families
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-type-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Type scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-typography-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Typography rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-spacing-and-geometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Spacing and geometry
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Spacing and geometry">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-base-scale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Base scale
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-composition-spacing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Composition spacing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Radius
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-borders-and-shadows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Borders and shadows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-application-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Application shell
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Application shell">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-global-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Global navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-page-header" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Page header
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-workspace-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Workspace model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-core-interaction-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Core interaction patterns
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Core interaction patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-master-detail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Master-detail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-progressive-disclosure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Progressive disclosure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Filters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94-destructive-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 Destructive actions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#95-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.5 Feedback
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-shadcn-component-standards" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. shadcn component standards
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. shadcn component standards">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-button" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Button
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-input-select-textarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Input, Select, Textarea
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-tabs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Tabs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#104-table-and-ledger-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.4 Table and ledger rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#105-badge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.5 Badge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#106-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.6 Card
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#107-sheet-drawer-dialog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.7 Sheet, Drawer, Dialog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#108-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.8 Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#109-toast" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.9 Toast
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-arp-specific-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. ARP-specific components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. ARP-specific components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-evidence-scoreline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Evidence scoreline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-provenance-strip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Provenance strip
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-status-marker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 Status marker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-inspector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Inspector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-dag-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 DAG canvas
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#116-event-trace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.6 Event trace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#117-code-yaml-and-json-viewer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.7 Code, YAML, and JSON viewer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#118-model-routing-chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.8 Model routing chain
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-data-visualization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Data visualization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-motion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Motion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-responsive-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. Responsive system
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. Responsive system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#desktop-1280-px" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop — ≥1280 px
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laptoptablet-7681279-px" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Laptop/tablet — 768–1279 px
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mobile-768-px" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile — &lt;768 px
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-content-and-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Content and naming
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16-accessibility-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. Accessibility requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-page-composition-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. Page composition templates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="17. Page composition templates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ledger-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ledger page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#canvas-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Canvas page
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-page" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration page
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18-anti-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. Anti-patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#19-implementation-governance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        19. Implementation governance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#20-visual-acceptance-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        20. Visual acceptance checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/ui/evidence-ledger-design-system.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/ui/evidence-ledger-design-system.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="evidence-ledger-design-system">Evidence Ledger Design System<a class="headerlink" href="#evidence-ledger-design-system" title="Permanent link">&para;</a></h1>
+<p><strong>Product:</strong> Agentic Runtime Platform (ARP)<br />
+<strong>Status:</strong> Canonical UI direction for the full rewrite<br />
+<strong>Component foundation:</strong> React, TypeScript, Vite, shadcn/ui<br />
+<strong>Reference prototype:</strong> <code>/prototypes</code>, concept <code>02 Evidence ledger</code></p>
+<h2 id="1-purpose">1. Purpose<a class="headerlink" href="#1-purpose" title="Permanent link">&para;</a></h2>
+<p>Evidence Ledger is ARP's production design system. It translates the prototype's airy editorial character into a complete operational interface for workflows, runs, live execution, datasets, evaluations, providers, models, and routing configuration.</p>
+<p>This document is the visual and interaction authority for the rewrite. Page specifications may determine what information appears, but they must not override this system's composition, density, color, typography, accessibility, or component rules.</p>
+<p>The system must feel:</p>
+<ul>
+<li>light, calm, and spacious;</li>
+<li>rigorous without feeling institutional;</li>
+<li>editorial without becoming a marketing site;</li>
+<li>technical without turning every label into monospace console text;</li>
+<li>information-rich without exposing every control simultaneously;</li>
+<li>precise without surrounding every region with a box.</li>
+</ul>
+<p>It must never feel:</p>
+<ul>
+<li>dark by default;</li>
+<li>cramped or dashboard-like;</li>
+<li>like unmodified shadcn/ui;</li>
+<li>like a terminal emulator;</li>
+<li>like a mosaic of interchangeable statistic cards;</li>
+<li>decorative at the expense of operating clarity.</li>
+</ul>
+<h2 id="2-design-principles">2. Design principles<a class="headerlink" href="#2-design-principles" title="Permanent link">&para;</a></h2>
+<h3 id="21-evidence-before-decoration">2.1 Evidence before decoration<a class="headerlink" href="#21-evidence-before-decoration" title="Permanent link">&para;</a></h3>
+<p>Every visible element must help the user orient, inspect, compare, decide, configure, or act. Remove decorative panels, redundant labels, and charts without a decision-making purpose.</p>
+<h3 id="22-air-is-structural">2.2 Air is structural<a class="headerlink" href="#22-air-is-structural" title="Permanent link">&para;</a></h3>
+<p>Whitespace separates levels of meaning. Use it before background fills, borders, shadows, or extra containers. Empty space is not unfinished space.</p>
+<h3 id="23-one-dominant-surface">2.3 One dominant surface<a class="headerlink" href="#23-one-dominant-surface" title="Permanent link">&para;</a></h3>
+<p>Each viewport should have one visually dominant working surface: a ledger, graph, trace, editor, or configuration workspace. Secondary context belongs in a narrow inspector, drawer, or progressively disclosed section.</p>
+<h3 id="24-quiet-chrome-decisive-action">2.4 Quiet chrome, decisive action<a class="headerlink" href="#24-quiet-chrome-decisive-action" title="Permanent link">&para;</a></h3>
+<p>Navigation and controls should recede until needed. Each page has one obvious primary action. Destructive, secondary, and overflow actions must not compete with it.</p>
+<h3 id="25-progressive-disclosure">2.5 Progressive disclosure<a class="headerlink" href="#25-progressive-disclosure" title="Permanent link">&para;</a></h3>
+<p>Show common fields and current state first. Put expert settings, raw contracts, YAML, logs, provider options, and provenance detail behind labeled tabs, inspectors, accordions, or advanced sections.</p>
+<h3 id="26-provenance-is-part-of-the-interface">2.6 Provenance is part of the interface<a class="headerlink" href="#26-provenance-is-part-of-the-interface" title="Permanent link">&para;</a></h3>
+<p>Scores, model choices, routing results, dataset samples, and configuration must show their source, version, freshness, or resolution path when those facts affect trust.</p>
+<h3 id="27-accessibility-is-composition">2.7 Accessibility is composition<a class="headerlink" href="#27-accessibility-is-composition" title="Permanent link">&para;</a></h3>
+<p>Keyboard order, focus, semantic structure, contrast, motion reduction, screen-reader announcements, and spatial alternatives are part of the base design—not a cleanup phase.</p>
+<h2 id="3-visual-thesis">3. Visual thesis<a class="headerlink" href="#3-visual-thesis" title="Permanent link">&para;</a></h2>
+<p>ARP is an engineering evidence desk made from warm paper, crisp ink, hairline rules, restrained safety orange, editorial headings, calm quantitative typography, and generous negative space.</p>
+<p>The prototype's defining visual rhythm must survive production:</p>
+<ul>
+<li>broad breathing room around page headings and major evidence bands;</li>
+<li>warm off-white canvas instead of white or charcoal application chrome;</li>
+<li>long horizontal rules and aligned columns instead of nested cards;</li>
+<li>comfortable table rows with strong typographic hierarchy;</li>
+<li>one small orange signal rather than several competing accent colors;</li>
+<li>sparse shadows and low radii;</li>
+<li>large score numerals used only when the score is the page's main evidence;</li>
+<li>short utility copy and meaningful labels;</li>
+<li>visible controls limited to those needed for the current task.</li>
+</ul>
+<h2 id="4-color-system">4. Color system<a class="headerlink" href="#4-color-system" title="Permanent link">&para;</a></h2>
+<h3 id="41-canonical-light-palette">4.1 Canonical light palette<a class="headerlink" href="#41-canonical-light-palette" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th style="text-align: right;">Value</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--el-canvas</code></td>
+<td style="text-align: right;"><code>#F2EFE8</code></td>
+<td>Application background; warm paper</td>
+</tr>
+<tr>
+<td><code>--el-surface</code></td>
+<td style="text-align: right;"><code>#F8F5EF</code></td>
+<td>Primary work surfaces and inspectors</td>
+</tr>
+<tr>
+<td><code>--el-surface-raised</code></td>
+<td style="text-align: right;"><code>#FFFDFA</code></td>
+<td>Menus, dialogs, sheets, popovers</td>
+</tr>
+<tr>
+<td><code>--el-surface-subtle</code></td>
+<td style="text-align: right;"><code>#EDE9E0</code></td>
+<td>Selected rows, quiet grouped regions</td>
+</tr>
+<tr>
+<td><code>--el-surface-hover</code></td>
+<td style="text-align: right;"><code>#E8E3D9</code></td>
+<td>Row/control hover</td>
+</tr>
+<tr>
+<td><code>--el-ink</code></td>
+<td style="text-align: right;"><code>#1B1B18</code></td>
+<td>Primary text and high-emphasis icons</td>
+</tr>
+<tr>
+<td><code>--el-ink-secondary</code></td>
+<td style="text-align: right;"><code>#514D46</code></td>
+<td>Secondary labels and values</td>
+</tr>
+<tr>
+<td><code>--el-ink-muted</code></td>
+<td style="text-align: right;"><code>#736E64</code></td>
+<td>Helper text and inactive navigation</td>
+</tr>
+<tr>
+<td><code>--el-ink-faint</code></td>
+<td style="text-align: right;"><code>#918B80</code></td>
+<td>Decorative metadata only; not body copy</td>
+</tr>
+<tr>
+<td><code>--el-divider</code></td>
+<td style="text-align: right;"><code>#BDB7AA</code></td>
+<td>Strong section rules and table boundaries</td>
+</tr>
+<tr>
+<td><code>--el-divider-soft</code></td>
+<td style="text-align: right;"><code>#D3CEC4</code></td>
+<td>Row rules and subtle separation</td>
+</tr>
+<tr>
+<td><code>--el-divider-faint</code></td>
+<td style="text-align: right;"><code>#E2DDD4</code></td>
+<td>Internal separators</td>
+</tr>
+<tr>
+<td><code>--el-action</code></td>
+<td style="text-align: right;"><code>#1C1D19</code></td>
+<td>Primary button background</td>
+</tr>
+<tr>
+<td><code>--el-action-ink</code></td>
+<td style="text-align: right;"><code>#F8F5EF</code></td>
+<td>Text/icon on primary action</td>
+</tr>
+<tr>
+<td><code>--el-accent</code></td>
+<td style="text-align: right;"><code>#EF5A36</code></td>
+<td>Selected tab rail, key chart mark, emphasis</td>
+</tr>
+<tr>
+<td><code>--el-accent-strong</code></td>
+<td style="text-align: right;"><code>#B83A20</code></td>
+<td>Accessible accent text and focus details</td>
+</tr>
+<tr>
+<td><code>--el-accent-soft</code></td>
+<td style="text-align: right;"><code>#F6DDD4</code></td>
+<td>Selected/attention tint</td>
+</tr>
+<tr>
+<td><code>--el-focus</code></td>
+<td style="text-align: right;"><code>#9E321C</code></td>
+<td>Keyboard focus ring</td>
+</tr>
+<tr>
+<td><code>--el-success</code></td>
+<td style="text-align: right;"><code>#236C4B</code></td>
+<td>Passing/healthy text and icons</td>
+</tr>
+<tr>
+<td><code>--el-success-soft</code></td>
+<td style="text-align: right;"><code>#DCE8DF</code></td>
+<td>Passing/healthy background</td>
+</tr>
+<tr>
+<td><code>--el-warning</code></td>
+<td style="text-align: right;"><code>#7A5317</code></td>
+<td>Warning/review text and icons</td>
+</tr>
+<tr>
+<td><code>--el-warning-soft</code></td>
+<td style="text-align: right;"><code>#F0DFBD</code></td>
+<td>Warning/review background</td>
+</tr>
+<tr>
+<td><code>--el-danger</code></td>
+<td style="text-align: right;"><code>#A33228</code></td>
+<td>Failure/destructive text and icons</td>
+</tr>
+<tr>
+<td><code>--el-danger-soft</code></td>
+<td style="text-align: right;"><code>#F1D9D5</code></td>
+<td>Failure/destructive background</td>
+</tr>
+<tr>
+<td><code>--el-info</code></td>
+<td style="text-align: right;"><code>#2F6788</code></td>
+<td>Informational and running states</td>
+</tr>
+<tr>
+<td><code>--el-info-soft</code></td>
+<td style="text-align: right;"><code>#D9E5ED</code></td>
+<td>Informational background</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42-color-rules">4.2 Color rules<a class="headerlink" href="#42-color-rules" title="Permanent link">&para;</a></h3>
+<ul>
+<li>The canvas is warm paper, not pure white.</li>
+<li>Pure black is reserved for rare high-contrast needs; primary ink uses <code>--el-ink</code>.</li>
+<li>Orange is never a page background or large decorative wash.</li>
+<li>Use <code>--el-accent</code> for non-text emphasis, large text, or marks. Use <code>--el-accent-strong</code> for normal-size accent text.</li>
+<li>Status colors supplement a text label or icon; color never carries status alone.</li>
+<li>Charts begin with ink, soft neutral, and orange. Add semantic colors only when the series encodes a semantic status.</li>
+<li>Avoid gradients in routine product UI.</li>
+<li>Avoid translucent glass effects, neon glow, and dark panels.</li>
+</ul>
+<h3 id="43-dark-mode">4.3 Dark mode<a class="headerlink" href="#43-dark-mode" title="Permanent link">&para;</a></h3>
+<p>Dark mode is optional and secondary. The rewrite is complete when the light system is complete and accessible. If dark mode is retained:</p>
+<ul>
+<li>it must use a warm charcoal, not blue-black;</li>
+<li>it must preserve the same low-chrome hierarchy;</li>
+<li>it must not become the default theme;</li>
+<li>it must have independently verified contrast;</li>
+<li>it must not delay required light-mode work.</li>
+</ul>
+<h2 id="5-shadcnui-token-mapping">5. shadcn/ui token mapping<a class="headerlink" href="#5-shadcnui-token-mapping" title="Permanent link">&para;</a></h2>
+<p>Map shadcn semantic variables to Evidence Ledger tokens. Exact syntax may change with the installed shadcn version, but the semantic result is required.</p>
+<div class="language-css highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nv">--background</span><span class="p">:</span><span class="w"> </span><span class="mi">43</span><span class="w"> </span><span class="mi">28</span><span class="kt">%</span><span class="w"> </span><span class="mi">93</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nv">--foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="mi">5</span><span class="kt">%</span><span class="w"> </span><span class="mi">10</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nv">--card</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="mi">33</span><span class="kt">%</span><span class="w"> </span><span class="mi">98</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nv">--card-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="mi">5</span><span class="kt">%</span><span class="w"> </span><span class="mi">10</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nv">--popover</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="mi">100</span><span class="kt">%</span><span class="w"> </span><span class="mi">99</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nv">--popover-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="mi">5</span><span class="kt">%</span><span class="w"> </span><span class="mi">10</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nv">--primary</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span><span class="w"> </span><span class="mi">7</span><span class="kt">%</span><span class="w"> </span><span class="mi">11</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nv">--primary-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="mi">33</span><span class="kt">%</span><span class="w"> </span><span class="mi">95</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nv">--secondary</span><span class="p">:</span><span class="w"> </span><span class="mi">41</span><span class="w"> </span><span class="mi">25</span><span class="kt">%</span><span class="w"> </span><span class="mi">90</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nv">--secondary-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">38</span><span class="w"> </span><span class="mi">7</span><span class="kt">%</span><span class="w"> </span><span class="mi">30</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nv">--muted</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="mi">18</span><span class="kt">%</span><span class="w"> </span><span class="mi">89</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="nv">--muted-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">38</span><span class="w"> </span><span class="mi">6</span><span class="kt">%</span><span class="w"> </span><span class="mi">42</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nv">--accent</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="mi">85</span><span class="kt">%</span><span class="w"> </span><span class="mi">57</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span><span class="nv">--accent-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="mi">5</span><span class="kt">%</span><span class="w"> </span><span class="mi">10</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span><span class="nv">--destructive</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="mi">61</span><span class="kt">%</span><span class="w"> </span><span class="mi">40</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span><span class="nv">--destructive-foreground</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span><span class="w"> </span><span class="mi">33</span><span class="kt">%</span><span class="w"> </span><span class="mi">98</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="nv">--border</span><span class="p">:</span><span class="w"> </span><span class="mi">39</span><span class="w"> </span><span class="mi">12</span><span class="kt">%</span><span class="w"> </span><span class="mi">76</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span><span class="nv">--input</span><span class="p">:</span><span class="w"> </span><span class="mi">39</span><span class="w"> </span><span class="mi">12</span><span class="kt">%</span><span class="w"> </span><span class="mi">76</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="nv">--ring</span><span class="p">:</span><span class="w"> </span><span class="mi">11</span><span class="w"> </span><span class="mi">70</span><span class="kt">%</span><span class="w"> </span><span class="mi">36</span><span class="kt">%</span><span class="p">;</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="nv">--radius</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="kt">rem</span><span class="p">;</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Do not rely on this sample as the contrast test. Validate the compiled values in the browser.</p>
+<p>shadcn components are owned source. Restyle their anatomy and spacing. Do not ship default examples, default oversized radii, pill-heavy variants, or nested <code>Card</code> compositions.</p>
+<h2 id="6-typography">6. Typography<a class="headerlink" href="#6-typography" title="Permanent link">&para;</a></h2>
+<h3 id="61-families">6.1 Families<a class="headerlink" href="#61-families" title="Permanent link">&para;</a></h3>
+<p>Use at most two primary families:</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Preferred</th>
+<th>Fallback</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UI/body</td>
+<td><code>Inter</code>, <code>Source Sans 3</code>, or a comparable legible sans</td>
+<td><code>system-ui</code>, <code>sans-serif</code></td>
+</tr>
+<tr>
+<td>Editorial display</td>
+<td><code>Source Serif 4</code>, <code>Literata</code>, or a comparable restrained serif</td>
+<td><code>Georgia</code>, <code>serif</code></td>
+</tr>
+</tbody>
+</table>
+<p>Monospace is a utility face, not a third brand face. Use <code>ui-monospace</code> only for IDs, code, YAML, JSON, CLI commands, event logs, timestamps when alignment matters, and technical provenance.</p>
+<h3 id="62-type-scale">6.2 Type scale<a class="headerlink" href="#62-type-scale" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Size / line</th>
+<th style="text-align: right;">Weight</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>display-score</code></td>
+<td><code>56 / 56</code></td>
+<td style="text-align: right;">500</td>
+<td>One dominant score only</td>
+</tr>
+<tr>
+<td><code>page-title</code></td>
+<td><code>40 / 44</code></td>
+<td style="text-align: right;">500</td>
+<td>Main page title on spacious pages</td>
+</tr>
+<tr>
+<td><code>page-title-compact</code></td>
+<td><code>30 / 34</code></td>
+<td style="text-align: right;">550</td>
+<td>Canvas/editor/live pages</td>
+</tr>
+<tr>
+<td><code>section-title</code></td>
+<td><code>20 / 26</code></td>
+<td style="text-align: right;">600</td>
+<td>Major working sections</td>
+</tr>
+<tr>
+<td><code>subsection-title</code></td>
+<td><code>15 / 21</code></td>
+<td style="text-align: right;">600</td>
+<td>Inspectors and grouped content</td>
+</tr>
+<tr>
+<td><code>body</code></td>
+<td><code>14 / 22</code></td>
+<td style="text-align: right;">400</td>
+<td>Default copy and values</td>
+</tr>
+<tr>
+<td><code>body-small</code></td>
+<td><code>12 / 18</code></td>
+<td style="text-align: right;">400</td>
+<td>Secondary utility copy</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td><code>11 / 15</code></td>
+<td style="text-align: right;">600</td>
+<td>Form/table labels</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>10 / 15</code></td>
+<td style="text-align: right;">500</td>
+<td>IDs, timestamps, provenance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-typography-rules">6.3 Typography rules<a class="headerlink" href="#63-typography-rules" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Page titles may use the editorial serif. Working section titles usually use the sans.</li>
+<li>Do not use the serif for buttons, tabs, filters, forms, navigation, or dense tables.</li>
+<li>Do not set all labels in uppercase. Reserve uppercase with tracking for small overlines and table headers.</li>
+<li>Use sentence case for controls and navigation.</li>
+<li>Keep explanatory lines below roughly 70 characters where practical.</li>
+<li>Use tabular numerals for scores, duration, latency, tokens, cost, percentages, and counts.</li>
+<li>Never reduce essential interface text below 11 px.</li>
+</ul>
+<h2 id="7-spacing-and-geometry">7. Spacing and geometry<a class="headerlink" href="#7-spacing-and-geometry" title="Permanent link">&para;</a></h2>
+<h3 id="71-base-scale">7.1 Base scale<a class="headerlink" href="#71-base-scale" title="Permanent link">&para;</a></h3>
+<p>Use a 4 px base:</p>
+<p><code>4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80</code></p>
+<h3 id="72-composition-spacing">7.2 Composition spacing<a class="headerlink" href="#72-composition-spacing" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Context</th>
+<th style="text-align: right;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Desktop page gutter</td>
+<td style="text-align: right;"><code>40 px</code></td>
+</tr>
+<tr>
+<td>Laptop page gutter</td>
+<td style="text-align: right;"><code>24–32 px</code></td>
+</tr>
+<tr>
+<td>Mobile page gutter</td>
+<td style="text-align: right;"><code>16–20 px</code></td>
+</tr>
+<tr>
+<td>Major section gap</td>
+<td style="text-align: right;"><code>32–48 px</code></td>
+</tr>
+<tr>
+<td>Related group gap</td>
+<td style="text-align: right;"><code>16–24 px</code></td>
+</tr>
+<tr>
+<td>Field group gap</td>
+<td style="text-align: right;"><code>16 px</code></td>
+</tr>
+<tr>
+<td>Label-to-control gap</td>
+<td style="text-align: right;"><code>8 px</code></td>
+</tr>
+<tr>
+<td>Interactive row vertical padding</td>
+<td style="text-align: right;"><code>14–18 px</code></td>
+</tr>
+<tr>
+<td>Inspector padding</td>
+<td style="text-align: right;"><code>24 px</code></td>
+</tr>
+<tr>
+<td>Dialog/sheet padding</td>
+<td style="text-align: right;"><code>24–32 px</code></td>
+</tr>
+</tbody>
+</table>
+<p>Whitespace is allowed to grow with viewport width, but content width must remain usable. Standard content pages use a maximum readable width of approximately <code>1180–1280 px</code>. Canvas pages may use the full viewport.</p>
+<h3 id="73-radius">7.3 Radius<a class="headerlink" href="#73-radius" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th style="text-align: right;">Value</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>radius-none</code></td>
+<td style="text-align: right;"><code>0</code></td>
+<td>Tables and full-width ledger bands</td>
+</tr>
+<tr>
+<td><code>radius-sm</code></td>
+<td style="text-align: right;"><code>2 px</code></td>
+<td>Small controls and tags</td>
+</tr>
+<tr>
+<td><code>radius-md</code></td>
+<td style="text-align: right;"><code>4 px</code></td>
+<td>Inputs, buttons, menus</td>
+</tr>
+<tr>
+<td><code>radius-lg</code></td>
+<td style="text-align: right;"><code>8 px</code></td>
+<td>Dialogs, sheets, discrete interactive objects</td>
+</tr>
+</tbody>
+</table>
+<p>Avoid fully rounded pills except compact status indicators where shape improves recognition.</p>
+<h3 id="74-borders-and-shadows">7.4 Borders and shadows<a class="headerlink" href="#74-borders-and-shadows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Default dividers are 1 px hairlines.</li>
+<li>Prefer one divider between regions over borders around both regions.</li>
+<li>Raised menus/dialogs may use <code>0 16px 40px rgba(27, 27, 24, 0.12)</code>.</li>
+<li>Cards and table rows should not use drop shadows.</li>
+<li>Selected rows use a subtle surface tint and 2 px orange left rail or bottom tab rail.</li>
+<li>Focus uses a visible 2 px ring with 2 px offset.</li>
+</ul>
+<h2 id="8-application-shell">8. Application shell<a class="headerlink" href="#8-application-shell" title="Permanent link">&para;</a></h2>
+<h3 id="81-global-navigation">8.1 Global navigation<a class="headerlink" href="#81-global-navigation" title="Permanent link">&para;</a></h3>
+<p>Organize the product into:</p>
+<ul>
+<li><strong>Observe:</strong> Overview, Runs, Live execution;</li>
+<li><strong>Build:</strong> Workflows, Datasets;</li>
+<li><strong>Evaluate:</strong> Evaluations;</li>
+<li><strong>Configure:</strong> Model Router.</li>
+</ul>
+<p>The shell should be quiet, light, and persistent without framing the application in dark chrome.</p>
+<p>Desktop shell targets:</p>
+<ul>
+<li>header height: <code>56–64 px</code>;</li>
+<li>expanded navigation width: no more than <code>220 px</code> when a side rail is used;</li>
+<li>icon-only navigation width: <code>52–64 px</code>;</li>
+<li>active state: ink or orange rule, not a large colored capsule.</li>
+</ul>
+<p>Mobile uses a compact header and a Sheet/Drawer navigation. Do not compress the full desktop navigation into unreadable icons.</p>
+<h3 id="82-page-header">8.2 Page header<a class="headerlink" href="#82-page-header" title="Permanent link">&para;</a></h3>
+<p>A page header contains:</p>
+<ol>
+<li>optional overline or breadcrumb;</li>
+<li>page title;</li>
+<li>one short scope/freshness sentence where needed;</li>
+<li>one primary action;</li>
+<li>secondary actions in a menu or quiet button group.</li>
+</ol>
+<p>Standard pages use <code>72–112 px</code> depending on whether the editorial title treatment is appropriate. Live execution and editor pages use a compact header no taller than <code>64 px</code>.</p>
+<h3 id="83-workspace-model">8.3 Workspace model<a class="headerlink" href="#83-workspace-model" title="Permanent link">&para;</a></h3>
+<p>Use:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>global navigation
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>└── page header
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    └── contextual tabs/filters
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        └── primary workspace
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>            ├── dominant surface
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>            └── optional inspector
+</span></code></pre></div>
+<p>Avoid placing a card around every level of this hierarchy.</p>
+<h2 id="9-core-interaction-patterns">9. Core interaction patterns<a class="headerlink" href="#9-core-interaction-patterns" title="Permanent link">&para;</a></h2>
+<h3 id="91-master-detail">9.1 Master-detail<a class="headerlink" href="#91-master-detail" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Selection occurs in a table, ledger, graph, or list.</li>
+<li>The selected item remains visible.</li>
+<li>Desktop detail opens in a <code>320–420 px</code> inspector where practical.</li>
+<li>The inspector may be resizable on data-heavy pages.</li>
+<li>Tablet/mobile detail opens in a Sheet or Drawer.</li>
+<li>Escape closes the inspector and returns focus to the selected trigger.</li>
+<li>URLs should encode selection when shareability or browser history matters.</li>
+</ul>
+<h3 id="92-progressive-disclosure">9.2 Progressive disclosure<a class="headerlink" href="#92-progressive-disclosure" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Common settings remain visible.</li>
+<li>Advanced settings use Collapsible, Accordion, tabs, or a dedicated editor route.</li>
+<li>Do not place more than one nested disclosure inside another.</li>
+<li>Preserve user-entered state when opening or closing advanced sections.</li>
+<li>Labels such as “Advanced” must summarize what is inside.</li>
+</ul>
+<h3 id="93-filters">9.3 Filters<a class="headerlink" href="#93-filters" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Filters live immediately above or beside the affected data.</li>
+<li>The highest-use two or three filters remain visible.</li>
+<li>Remaining filters open in a Popover/Sheet.</li>
+<li>Active filters are summarized textually and can be cleared individually.</li>
+<li>Shareable filters belong in the URL.</li>
+<li>Do not create a row of colored pills for every possible filter.</li>
+</ul>
+<h3 id="94-destructive-actions">9.4 Destructive actions<a class="headerlink" href="#94-destructive-actions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use Alert Dialog for destructive or provenance-affecting changes.</li>
+<li>State the object, consequence, and recovery path.</li>
+<li>Never place destructive action beside the primary action without separation.</li>
+<li>Require stronger confirmation only when recovery is impossible.</li>
+</ul>
+<h3 id="95-feedback">9.5 Feedback<a class="headerlink" href="#95-feedback" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Inline validation appears near the affected control.</li>
+<li>Toasts confirm completed background mutations or recoverable failures.</li>
+<li>Persistent errors stay in the relevant surface.</li>
+<li>Loading states preserve layout.</li>
+<li>Stale data remains visible with a freshness/error notice when safe.</li>
+<li>Never replace an entire populated page with a spinner during background refresh.</li>
+</ul>
+<h2 id="10-shadcn-component-standards">10. shadcn component standards<a class="headerlink" href="#10-shadcn-component-standards" title="Permanent link">&para;</a></h2>
+<h3 id="101-button">10.1 Button<a class="headerlink" href="#101-button" title="Permanent link">&para;</a></h3>
+<p>Variants:</p>
+<ul>
+<li><code>primary</code>: near-black fill, warm-paper text;</li>
+<li><code>secondary</code>: transparent or surface fill with divider border;</li>
+<li><code>ghost</code>: no border until hover/focus;</li>
+<li><code>destructive</code>: danger text or danger fill only after confirmation context;</li>
+<li><code>link</code>: textual navigation, underline on hover/focus.</li>
+</ul>
+<p>Default height is <code>40 px</code>; compact canvas controls may use <code>32–36 px</code>. Icon-only buttons require accessible labels and at least a <code>36×36 px</code> target.</p>
+<p>One filled primary button per local action group.</p>
+<h3 id="102-input-select-textarea">10.2 Input, Select, Textarea<a class="headerlink" href="#102-input-select-textarea" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Minimum control height: <code>40 px</code>.</li>
+<li>Background: surface or raised surface, never dark.</li>
+<li>Border: divider; focus ring: <code>--el-focus</code>.</li>
+<li>Labels sit above controls with 8 px gap.</li>
+<li>Helper and error text reserve enough space to avoid layout jumps where validation is expected.</li>
+<li>Placeholder text is not a label.</li>
+<li>Dense technical editors may use monospace but retain 14 px minimum text.</li>
+</ul>
+<h3 id="103-tabs">10.3 Tabs<a class="headerlink" href="#103-tabs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tabs use a quiet text label with a 2 px bottom rule.</li>
+<li>Active state uses ink plus orange rule.</li>
+<li>Avoid filled rounded tab pills.</li>
+<li>Counts are muted text, not badges unless the count is a status.</li>
+<li>Tabs must remain URL-addressable when they represent distinct product subviews.</li>
+</ul>
+<h3 id="104-table-and-ledger-rows">10.4 Table and ledger rows<a class="headerlink" href="#104-table-and-ledger-rows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Tables are the default for repeated operational records.</li>
+<li>Headers use small tracked labels and remain sticky when the body scrolls.</li>
+<li>Standard rows are <code>56–68 px</code> high.</li>
+<li>Use hairline row dividers and no outer card when the page boundary is clear.</li>
+<li>Primary identity is stronger than secondary metadata.</li>
+<li>Numeric columns align right with tabular numerals.</li>
+<li>Status uses text plus icon/marker.</li>
+<li>Row hover is a subtle warm neutral.</li>
+<li>Row selection adds a tint and orange rail.</li>
+<li>Row actions remain quiet and may appear on hover/focus, but must be keyboard reachable.</li>
+<li>Responsive tables preserve identity, state, and the primary metric first.</li>
+</ul>
+<h3 id="105-badge">10.5 Badge<a class="headerlink" href="#105-badge" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use Badge only for compact categorical state: passed, failed, running, disabled, draft, overridden.</li>
+<li>Use sentence case or short lowercase labels, consistently.</li>
+<li>Avoid more than two badges in a single row's default view.</li>
+<li>Capabilities and tags should move to the inspector when they would create a badge cloud.</li>
+</ul>
+<h3 id="106-card">10.6 Card<a class="headerlink" href="#106-card" title="Permanent link">&para;</a></h3>
+<p>Card is not the default page primitive.</p>
+<p>Use it only for:</p>
+<ul>
+<li>a discrete selectable object;</li>
+<li>an object that can be moved, opened, or acted upon independently;</li>
+<li>a compact empty/getting-started state;</li>
+<li>a dialog-like raised object.</li>
+</ul>
+<p>Do not use Card for ordinary sections, KPI mosaics, tables, filter bars, or page headers.</p>
+<h3 id="107-sheet-drawer-dialog">10.7 Sheet, Drawer, Dialog<a class="headerlink" href="#107-sheet-drawer-dialog" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Sheet is the desktop/narrow-screen inspector and secondary configuration surface.</li>
+<li>Drawer is preferred for mobile actions that benefit from touch ergonomics.</li>
+<li>Dialog is reserved for short focused tasks.</li>
+<li>Long forms and model-pack editing use a route or full workspace, not a modal.</li>
+<li>Dialogs must restore focus and support Escape unless an irreversible operation is actively executing.</li>
+</ul>
+<h3 id="108-command">10.8 Command<a class="headerlink" href="#108-command" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use the shadcn Command foundation for the global command palette.</li>
+<li>Group results by product area.</li>
+<li>Show shortcut hints and CLI twins where real.</li>
+<li>Do not expose actions the current user cannot perform.</li>
+<li>Search labels, IDs, and common aliases without sending secrets or full datasets to external services.</li>
+</ul>
+<h3 id="109-toast">10.9 Toast<a class="headerlink" href="#109-toast" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use short outcome-oriented copy.</li>
+<li>Success toasts disappear automatically.</li>
+<li>Failure toasts remain long enough to read and link to details when needed.</li>
+<li>Do not use toasts for validation the user must fix in a form.</li>
+<li>Do not stack repeated stream/polling errors.</li>
+</ul>
+<h2 id="11-arp-specific-components">11. ARP-specific components<a class="headerlink" href="#11-arp-specific-components" title="Permanent link">&para;</a></h2>
+<h3 id="111-evidence-scoreline">11.1 Evidence scoreline<a class="headerlink" href="#111-evidence-scoreline" title="Permanent link">&para;</a></h3>
+<p>A scoreline replaces KPI card grids. It may combine:</p>
+<ul>
+<li>one dominant metric;</li>
+<li>a compact time series or distribution;</li>
+<li>one evidence-backed change note;</li>
+<li>provenance/freshness metadata.</li>
+</ul>
+<p>Use top and bottom rules, aligned columns, and whitespace rather than a boxed card. Limit to three conceptual regions and five primary metrics.</p>
+<h3 id="112-provenance-strip">11.2 Provenance strip<a class="headerlink" href="#112-provenance-strip" title="Permanent link">&para;</a></h3>
+<p>Display the values that determine trust:</p>
+<ul>
+<li>source/revision;</li>
+<li>timestamp/freshness;</li>
+<li>workflow and run identity;</li>
+<li>dataset/sample;</li>
+<li>model/provider resolution;</li>
+<li>routing pack/version;</li>
+<li>rubric/judge/calibration version.</li>
+</ul>
+<p>The default strip shows only the most material three to five values. Full provenance opens in the inspector.</p>
+<h3 id="113-status-marker">11.3 Status marker<a class="headerlink" href="#113-status-marker" title="Permanent link">&para;</a></h3>
+<p>Status anatomy:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>[shape/icon] label [optional short qualifier]
+</span></code></pre></div>
+<p>Use stable mappings:</p>
+<ul>
+<li>success/passed: check or filled circle + success color;</li>
+<li>running: pulse only when motion is allowed + info color;</li>
+<li>warning/review: triangle or half-filled marker + warning color;</li>
+<li>failed/error: x or diamond + danger color;</li>
+<li>neutral/pending: outline circle + muted ink.</li>
+</ul>
+<h3 id="114-inspector">11.4 Inspector<a class="headerlink" href="#114-inspector" title="Permanent link">&para;</a></h3>
+<p>Inspector order:</p>
+<ol>
+<li>object type/overline;</li>
+<li>object identity and state;</li>
+<li>primary action if appropriate;</li>
+<li>contextual tabs;</li>
+<li>common details/configuration;</li>
+<li>advanced/provenance/raw data.</li>
+</ol>
+<p>Use 24 px padding and 24–32 px between major inspector groups. Do not turn the inspector into a stack of cards.</p>
+<h3 id="115-dag-canvas">11.5 DAG canvas<a class="headerlink" href="#115-dag-canvas" title="Permanent link">&para;</a></h3>
+<p>The graph canvas is a specialized full workspace but still uses Evidence Ledger:</p>
+<ul>
+<li>warm neutral canvas with a very subtle dot grid;</li>
+<li>light nodes with hairline borders;</li>
+<li>ink labels and muted metadata;</li>
+<li>orange selection outline;</li>
+<li>semantic status edge/node marks;</li>
+<li>quiet icon tool rail;</li>
+<li>right inspector for configuration/detail;</li>
+<li>list/table equivalent for accessibility;</li>
+<li>minimap only when the graph exceeds the viewport.</li>
+</ul>
+<p>Do not import the prototype Flow Canvas's dark/violet visual language.</p>
+<h3 id="116-event-trace">11.6 Event trace<a class="headerlink" href="#116-event-trace" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use a vertical timeline or ledger list.</li>
+<li>Timestamp and event type align consistently.</li>
+<li>Routine events are quiet; failures and approvals receive semantic emphasis.</li>
+<li>Long payloads collapse with explicit Show details.</li>
+<li>Event history must be bounded or virtualized.</li>
+<li>Auto-follow is an explicit state and pauses when the user scrolls away.</li>
+</ul>
+<h3 id="117-code-yaml-and-json-viewer">11.7 Code, YAML, and JSON viewer<a class="headerlink" href="#117-code-yaml-and-json-viewer" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use a pale neutral code surface, not a dark editor by default.</li>
+<li>Provide copy, wrap, expand, and search where useful.</li>
+<li>Preserve whitespace and accessible text selection.</li>
+<li>Collapse deeply nested data.</li>
+<li>Never render untrusted HTML.</li>
+<li>Large values must be bounded or virtualized.</li>
+</ul>
+<h3 id="118-model-routing-chain">11.8 Model routing chain<a class="headerlink" href="#118-model-routing-chain" title="Permanent link">&para;</a></h3>
+<p>Represent a tier as an ordered ledger, not a badge pile:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>01  provider:model        available    tools, vision       routes here
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>02  provider:model        degraded     tools               fallback
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>03  provider:model        disabled     —                   unavailable
+</span></code></pre></div>
+<p>Show default, override, environment pin, effective route, and actual run resolution as distinct concepts. Reordering must work with keyboard and pointer.</p>
+<h2 id="12-data-visualization">12. Data visualization<a class="headerlink" href="#12-data-visualization" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Every chart needs a question it answers.</li>
+<li>Use direct labels when space allows.</li>
+<li>Start axes at zero when magnitude comparison requires it.</li>
+<li>Show sample size and time range.</li>
+<li>Do not imply continuity for sparse data.</li>
+<li>Show uncertainty when making comparison or trend claims.</li>
+<li>Use orange for the selected/current series, ink for the baseline, and neutral tones for context.</li>
+<li>Avoid rainbow palettes, 3D effects, radial gauges, and decorative area gradients.</li>
+<li>Provide a table or textual summary for essential chart information.</li>
+</ul>
+<h2 id="13-motion">13. Motion<a class="headerlink" href="#13-motion" title="Permanent link">&para;</a></h2>
+<p>Motion is restrained and functional.</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th style="text-align: right;">Duration</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>motion-fast</code></td>
+<td style="text-align: right;"><code>120 ms</code></td>
+<td>hover, focus, button feedback</td>
+</tr>
+<tr>
+<td><code>motion-standard</code></td>
+<td style="text-align: right;"><code>180 ms</code></td>
+<td>inspector/tab/content transition</td>
+</tr>
+<tr>
+<td><code>motion-slow</code></td>
+<td style="text-align: right;"><code>240 ms</code></td>
+<td>drawer/sheet entry, graph layout settle</td>
+</tr>
+</tbody>
+</table>
+<p>Use ease-out for entry and ease-in for exit. Avoid spring/bounce motion in operational flows.</p>
+<p>Permitted motion:</p>
+<ul>
+<li>inspector/sheet entrance;</li>
+<li>active tab/selection rail movement;</li>
+<li>row hover/focus;</li>
+<li>graph edge activity for a running step;</li>
+<li>chart entry when it clarifies a newly loaded result;</li>
+<li>skeleton shimmer or pulse at low intensity.</li>
+</ul>
+<p>Prohibited motion:</p>
+<ul>
+<li>infinite decorative animation;</li>
+<li>whole-page stagger on every navigation;</li>
+<li>looping gradients;</li>
+<li>animated metrics that delay reading;</li>
+<li>selection motion that moves surrounding content;</li>
+<li>pulsing more than one or two active indicators in a viewport.</li>
+</ul>
+<p>Under <code>prefers-reduced-motion: reduce</code>, remove transforms, animated graph edges, and loops; preserve immediate state changes.</p>
+<h2 id="14-responsive-system">14. Responsive system<a class="headerlink" href="#14-responsive-system" title="Permanent link">&para;</a></h2>
+<h3 id="desktop-1280-px">Desktop — <code>≥1280 px</code><a class="headerlink" href="#desktop-1280-px" title="Permanent link">&para;</a></h3>
+<ul>
+<li>full navigation and optional inspector;</li>
+<li>wide ledger tables;</li>
+<li>graph plus inspector;</li>
+<li>page gutter 32–40 px.</li>
+</ul>
+<h3 id="laptoptablet-7681279-px">Laptop/tablet — <code>768–1279 px</code><a class="headerlink" href="#laptoptablet-7681279-px" title="Permanent link">&para;</a></h3>
+<ul>
+<li>collapsed or compact navigation;</li>
+<li>inspector may overlay as Sheet;</li>
+<li>remove secondary table columns before reducing typography;</li>
+<li>page gutter 24 px.</li>
+</ul>
+<h3 id="mobile-768-px">Mobile — <code>&lt;768 px</code><a class="headerlink" href="#mobile-768-px" title="Permanent link">&para;</a></h3>
+<ul>
+<li>compact header plus Drawer/Sheet navigation;</li>
+<li>page gutter 16–20 px;</li>
+<li>one primary column;</li>
+<li>inspector/detail becomes full-height Sheet or route;</li>
+<li>tables become prioritized rows with a detail disclosure;</li>
+<li>primary action remains reachable without permanent bottom-bar clutter;</li>
+<li>graph gets a list alternative and may open as a dedicated landscape/full-screen surface;</li>
+<li>forms use full-width controls and touch targets of at least 44 px where practical.</li>
+</ul>
+<p>Validate at <code>1440×900</code>, <code>1280×720</code>, <code>1024×768</code>, and <code>390×844</code>.</p>
+<h2 id="15-content-and-naming">15. Content and naming<a class="headerlink" href="#15-content-and-naming" title="Permanent link">&para;</a></h2>
+<p>Use product language, not design commentary.</p>
+<p>Good:</p>
+<ul>
+<li>Recent runs</li>
+<li>Provider health</li>
+<li>Routing order</li>
+<li>Selected rubric</li>
+<li>Last evaluation</li>
+<li>Resolved model</li>
+<li>Source revision</li>
+<li>Judge skipped</li>
+</ul>
+<p>Avoid:</p>
+<ul>
+<li>Supercharge your agents</li>
+<li>Intelligent insights</li>
+<li>Next-generation orchestration</li>
+<li>Seamless AI workflows</li>
+<li>Mission control</li>
+<li>Command center</li>
+</ul>
+<p>Rules:</p>
+<ul>
+<li>Buttons use verb + object where space allows: <code>Start run</code>, <code>Save provider</code>, <code>Compare runs</code>.</li>
+<li>Empty states say what is absent and the safest next action.</li>
+<li>Errors state what failed, whether existing data is still valid, and how to retry.</li>
+<li>Do not expose raw endpoint names in visible headings unless the page is specifically API documentation.</li>
+<li>Do not repeat the page title in every section.</li>
+</ul>
+<h2 id="16-accessibility-requirements">16. Accessibility requirements<a class="headerlink" href="#16-accessibility-requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li>WCAG 2.2 AA contrast for essential text, controls, focus, and status.</li>
+<li>Logical landmark and heading hierarchy.</li>
+<li>Skip-to-content and route-change focus management.</li>
+<li>Visible 2 px focus indicator.</li>
+<li>Full keyboard operation for navigation, tables, inspectors, menus, dialogs, model chains, and graph alternatives.</li>
+<li>Focus restoration after Sheet/Dialog/Popover closes.</li>
+<li>Status is never color-only.</li>
+<li>Form errors connect with <code>aria-describedby</code> and invalid state.</li>
+<li>Streaming updates use restrained live regions; do not announce every token/event.</li>
+<li>Essential charts have textual/table equivalents.</li>
+<li>DAGs have an accessible node/edge list and configuration path.</li>
+<li>Hit areas are at least 36 px desktop and preferably 44 px touch.</li>
+<li>Reduced motion is honored.</li>
+<li>Zoom to 200% must not hide essential actions or require two-dimensional scrolling outside specialized canvases/tables.</li>
+</ul>
+<h2 id="17-page-composition-templates">17. Page composition templates<a class="headerlink" href="#17-page-composition-templates" title="Permanent link">&para;</a></h2>
+<h3 id="ledger-page">Ledger page<a class="headerlink" href="#ledger-page" title="Permanent link">&para;</a></h3>
+<p>Used by Runs, Workflows, Datasets, Evaluations, Models, Providers, and Packs.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>page heading                                      primary action
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>short scope/freshness line
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>optional scoreline or summary band
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>tabs / primary filters                            search / more filters
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>──────────────────────────────────────────────────────────────────────
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>ledger table or list
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>ledger table or list                              optional inspector
+</span></code></pre></div>
+<h3 id="canvas-page">Canvas page<a class="headerlink" href="#canvas-page" title="Permanent link">&para;</a></h3>
+<p>Used by Workflow Builder, Live Execution, and graph-forward detail.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>compact breadcrumb/title        status                  actions
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>──────────────────────────────────────────────────────────────────────
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>tools  canvas / trace / graph                       inspector
+</span></code></pre></div>
+<h3 id="configuration-page">Configuration page<a class="headerlink" href="#configuration-page" title="Permanent link">&para;</a></h3>
+<p>Used by Workflow Run Configuration, Provider editing, Tier editing, and Model Packs.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>identity / context                                  save or run
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>──────────────────────────────────────────────────────────────────────
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>primary configuration or preview                   inspector/form
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>secondary evidence/history                         advanced disclosure
+</span></code></pre></div>
+<h2 id="18-anti-patterns">18. Anti-patterns<a class="headerlink" href="#18-anti-patterns" title="Permanent link">&para;</a></h2>
+<p>Reject a design when it includes:</p>
+<ul>
+<li>dark application chrome as the default;</li>
+<li>four or more KPI cards across the first viewport;</li>
+<li>a card wrapped around a table wrapped around another card;</li>
+<li>more than one filled primary button in one action group;</li>
+<li>a toolbar containing every possible filter and action;</li>
+<li>rows below 48 px in the default density;</li>
+<li>badge clouds for models, tools, providers, or capabilities;</li>
+<li>rounded pill tabs;</li>
+<li>gradients behind normal product UI;</li>
+<li>shadows on every container;</li>
+<li>tiny gray text as the primary way to create hierarchy;</li>
+<li>monospace body copy;</li>
+<li>placeholder-only form labels;</li>
+<li>raw JSON as the default user experience;</li>
+<li>controls without real backend behavior;</li>
+<li>fake scores, costs, latency, health, or progress;</li>
+<li>animation that competes with reading;</li>
+<li>the dark Control Room or dark Flow Canvas prototype aesthetics applied to production.</li>
+</ul>
+<h2 id="19-implementation-governance">19. Implementation governance<a class="headerlink" href="#19-implementation-governance" title="Permanent link">&para;</a></h2>
+<ul>
+<li>No page-local hard-coded colors when a semantic token exists.</li>
+<li>No one-off spacing outside the scale without a documented canvas/data reason.</li>
+<li>No new component variant without at least two legitimate consumers or a specialized product requirement.</li>
+<li>Build shadcn components into a shared UI layer and ARP-specific patterns into a feature-aware design-system layer.</li>
+<li>Specialized components may bypass shadcn when shadcn is not the right abstraction; document why.</li>
+<li>Add Storybook or a development-only design-system route only if it is maintained and excluded from the production navigation.</li>
+<li>Keep real application pages backed by typed fixtures in component/visual tests, never embedded mock production data.</li>
+<li>Update this file when a token or canonical pattern changes.</li>
+</ul>
+<h2 id="20-visual-acceptance-checklist">20. Visual acceptance checklist<a class="headerlink" href="#20-visual-acceptance-checklist" title="Permanent link">&para;</a></h2>
+<p>Every migrated route must pass all applicable checks:</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Light warm-paper canvas is the default.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> The page is recognizably Evidence Ledger without relying on the orange accent.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> The first viewport has one dominant working surface.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Whitespace, typography, and alignment create hierarchy before boxes or shadows.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No area feels like a generic shadcn demo.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No unnecessary card grid is present.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Only task-relevant controls are visible; advanced controls are disclosed intentionally.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Page gutters, section spacing, and row heights meet the comfortable baseline.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Orange is restrained and meaningful.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All states work without color alone.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Keyboard focus is visible and ordered.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Loading, empty, stale, partial, offline, and error states preserve composition.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> The page works at 1440×900, 1280×720, 1024×768, and 390×844.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Reduced-motion mode remains understandable.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Essential actions and evidence remain visible at 200% zoom.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Browser screenshots were inspected, not merely generated.</li>
+</ul>
+<p>The system fails review if it is functional but cluttered, airy but information-poor, visually polished but dark, or consistent only on the Evaluations page.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

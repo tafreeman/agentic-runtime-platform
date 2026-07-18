@@ -321,6 +321,10 @@
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>
+         <loc>https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-054-evidence-ledger-ui-and-model-packs/</loc>
+         <lastmod>2026-07-18</lastmod>
+    </url>
+    <url>
          <loc>https://tafreeman.github.io/agentic-runtime-platform/adr/ADR-055-file-size-exception-register/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
@@ -442,6 +446,18 @@
     </url>
     <url>
          <loc>https://tafreeman.github.io/agentic-runtime-platform/ui/api-integration/</loc>
+         <lastmod>2026-07-18</lastmod>
+    </url>
+    <url>
+         <loc>https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-design-system/</loc>
+         <lastmod>2026-07-18</lastmod>
+    </url>
+    <url>
+         <loc>https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-full-rewrite-goal-prompt/</loc>
+         <lastmod>2026-07-18</lastmod>
+    </url>
+    <url>
+         <loc>https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-migration/</loc>
          <lastmod>2026-07-18</lastmod>
     </url>
     <url>

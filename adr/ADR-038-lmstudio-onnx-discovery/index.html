@@ -2757,6 +2757,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#amendment-2026-07-14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amendment (2026-07-14)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2832,12 +2843,13 @@ functions, merged into <code>enumerate_known_models()</code> exactly like the Ol
 Both return <code>LocalModelInfo</code> records (id + optional <code>running</code> / <code>capabilities</code>)
 so the console can render the same badges it draws for Ollama:</p>
 <ul>
-<li><strong><code>discover_lmstudio_models()</code></strong> — prefers LM Studio's <strong>native</strong> REST API
-  <code>GET {host}/api/v0/models</code>, which lists the <em>whole downloaded library</em> with a
-  <code>type</code> (<code>llm</code> / <code>vlm</code> / <code>embeddings</code>) and a <code>state</code> (<code>loaded</code> / <code>not-loaded</code>);
-  the OpenAI-compatible <code>GET {host}/v1/models</code> is the fallback for older servers
-  but reports only <em>loaded</em> models. Non-chat <code>type</code>s are filtered (<code>vlm</code> is kept
-  and tagged <code>vision</code>); <code>state == loaded</code> sets <code>running</code>. The host comes from
+<li><strong><code>discover_lmstudio_models()</code></strong> — prefers LM Studio's current <strong>native</strong> REST
+  API <code>GET {host}/api/v1/models</code>, which lists the whole downloaded library,
+  loaded instances, and capabilities. Legacy native <code>GET {host}/api/v0/models</code>
+  and OpenAI-compatible <code>GET {host}/v1/models</code> are ordered fallbacks. Non-chat
+  types are filtered; loaded instances set <code>running</code>, and v1 vision, tool-use,
+  and reasoning metadata become capability badges. <code>LM_API_TOKEN</code> is sent as a
+  bearer token when configured. The host comes from
   <code>resolve_lmstudio_host()</code>: <code>LMSTUDIO_HOST</code> wins, else <code>:1234</code> (LM Studio
   default) is probed then <code>:12340</code> (legacy ARP port), first reachable winning.
   Returns <code>lmstudio:&lt;id&gt;</code>.</li>
@@ -2871,6 +2883,11 @@ intended behavior and extends it: native-API preference with <code>/v1</code> fa
 the <code>:1234</code>→<code>:12340</code> probe shared with the backend, the <code>~/.cache/aigallery</code>
 default, multi-root scanning, an <code>expanduser()</code> fix in <code>OnnxBackend</code>, and richer
 <code>LocalModelInfo</code> records (running / vision).</p>
+<h3 id="amendment-2026-07-14">Amendment (2026-07-14)<a class="headerlink" href="#amendment-2026-07-14" title="Permanent link">&para;</a></h3>
+<p>LM Studio's current native API is now <code>/api/v1/models</code>. Discovery probes it
+first and retains <code>/api/v0/models</code> plus <code>/v1/models</code> as compatibility fallbacks.
+The same <code>LM_API_TOKEN</code> used by authenticated LM Studio servers is applied to
+both discovery and inference, preserving the discovered-is-runnable invariant.</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
 <li>The model router now lists <strong>all three</strong> local providers (Ollama, LM Studio,
@@ -2909,7 +2926,7 @@ default, multi-root scanning, an <code>expanduser()</code> fix in <code>OnnxBack
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 24, 2026 03:25:47 UTC">June 24, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
   </span>
 
     

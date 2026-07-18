@@ -2860,11 +2860,17 @@ and building it against OpenRouter gives it real breadth from day one.</p>
   unknown prefix, missing key) surface as <code>error</code> events with <code>category</code>
   from the existing <code>core.errors.classify_error()</code> and a scrubbed
   <code>message</code> (Bearer/API-key patterns redacted, length-capped).</li>
-<li><strong>Bypasses <code>SmartModelRouter</code>/tier selection by design.</strong> The handler
-  builds the exact picked model via <code>get_chat_model(full_id)</code> and calls
-  it directly. Router/tier behavior is already covered ground (ADR-002,
-  ADR-040); this endpoint answers "does this one id work," not "what
-  would the router pick."</li>
+<li><strong>Direct-model requests bypass tier selection by design.</strong> The original
+  handler builds the exact picked model via <code>get_chat_model(full_id)</code> and
+  calls it directly, preserving the Playground's "does this one id work?"
+  behavior.</li>
+<li><strong>2026-07-14 amendment — tier overload.</strong> <code>ChatRequest</code> now exposes two
+  strict constructors: <code>{model, messages, temperature?}</code> and
+  <code>{tier, messages, temperature?}</code>. The tier form resolves the existing
+  ordered candidate chain and emits <code>route {requested_tier, model}</code> before
+  output tokens. Both/neither selectors are invalid. Direct-model behavior is
+  unchanged, while HTTP clients can delegate provider/model selection without
+  duplicating router policy.</li>
 <li><strong>OpenRouter joins as a first-class provider.</strong>
   <code>PROVIDER_ENV_KEYS["openrouter"] = ["OPENROUTER_API_KEY"]</code>;
   <code>build_openrouter_model</code> is a <code>ChatOpenAI</code> base-URL swap
@@ -2878,16 +2884,13 @@ and building it against OpenRouter gives it real breadth from day one.</p>
   probe-visible via discovery, while chain membership stays curated per
   ADR-040.</li>
 <li><strong>Discovery deviations, scoped to OpenRouter only.</strong> ADR-039's
-  providers stay uncached and unfiltered by design; OpenRouter departs
-  because its catalog (~300-400 models, near-static) doesn't fit that
-  model: (a) a 300s TTL in-process cache around the live <code>GET /models</code>
-  call; (b) a curated filter (free-tier ids plus a capped
-  flagship-family allowlist, filled round-robin across families so one
-  prolific publisher cannot consume every slot) instead of the full
-  catalog in the probe;
-  (c) a curated static fallback list when the key is absent or the fetch
-  fails, so the picker still offers OpenRouter models with no key
-  configured. (c) forced an honesty fix: <code>_merge_cloud_models</code>
+  providers stay uncached by design; OpenRouter uses a 300s TTL around
+  <code>GET /models</code> because its catalog is large and near-static. The public
+  endpoint is queried with <code>output_modalities=all</code>, with optional bearer
+  auth when <code>OPENROUTER_API_KEY</code> exists, and every text-output chat model
+  is retained. A small static list is used only when the live request
+  fails or returns no compatible models. This required an honesty fix:
+  <code>_merge_cloud_models</code>
   (<code>langchain/models.py</code>) now derives <code>available</code> from
   <code>is_provider_available(provider)</code> per model instead of hard-coding
   <code>True</code> — unchanged in practice for the four ADR-039 providers, but now
@@ -2915,9 +2918,8 @@ and building it against OpenRouter gives it real breadth from day one.</p>
   contract addition has paid.</li>
 <li>SSE frames are uncompressed JSON-per-token; fine at chat scale, not a
   transport to reuse for a bulk/batch streaming need.</li>
-<li>The curated OpenRouter allowlist is maintained, not derived — it
-  needs occasional refresh as flagship families rotate, the same burden
-  ADR-040 already accepted for tier chains.</li>
+<li>The full OpenRouter chat catalog can be large; the provider-card summary,
+  collapsed detail groups, and catalog search keep it navigable.</li>
 <li>Always-200-with-in-stream-errors means HTTP-status-based monitoring
   will not see chat provider failures — legible only to a consumer
   reading the event stream, the usual tradeoff of an in-band error
@@ -2939,10 +2941,10 @@ and building it against OpenRouter gives it real breadth from day one.</p>
   unvetted rotating catalog doesn't belong in reviewed chain
   membership — the exact drift ADR-040 exists to stop. <code>tier_overrides</code>
   remains the sanctioned way to promote a specific id.</li>
-<li><strong>Dump OpenRouter's full catalog into the probe.</strong> Rejected:
-  ~300-400 mostly-irrelevant ids would swamp the picker for one
-  provider; the curated filter plus static fallback keeps it usable
-  without a key.</li>
+<li><strong>Dump OpenRouter's full catalog into the probe.</strong> Initially rejected, then
+  superseded on 2026-07-14: the UI now provides provider summary cards,
+  collapsed details, and search, so the full compatible catalog is both useful
+  and navigable.</li>
 <li><strong>New top-level <code>/chat</code> route.</strong> Rejected in favor of a
   <code>ModelFinderPage</code> tab: the nav/routing surface (<code>App.tsx</code>, <code>Sidebar</code>,
   <code>useGoNav</code>) is a larger diff for a feature that is conceptually "do
@@ -2970,7 +2972,7 @@ and building it against OpenRouter gives it real breadth from day one.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 12, 2026 14:53:09 UTC">July 12, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
   </span>
 
     

@@ -1,0 +1,4165 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+      
+      
+      
+        <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-full-rewrite-goal-prompt/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ARP Evidence Ledger UI Full-Rewrite Goal Prompt - Agentic Runtime Platform</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,300i,400,400i,700,700i%7CIBM+Plex+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"IBM Plex Sans";--md-code-font:"IBM Plex Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/tokens.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/console.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/landing.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ARP Evidence Ledger UI Full-Rewrite Goal Prompt - Agentic Runtime Platform" />
+<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/evidence-ledger-full-rewrite-goal-prompt.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/ui/evidence-ledger-full-rewrite-goal-prompt/" />
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:title" content="ARP Evidence Ledger UI Full-Rewrite Goal Prompt - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ui/evidence-ledger-full-rewrite-goal-prompt.png" />
+</head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#arp-evidence-ledger-ui-full-rewrite-goal-prompt" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Agentic Runtime Platform" class="md-header__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Agentic Runtime Platform
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ARP Evidence Ledger UI Full-Rewrite Goal Prompt
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ARCHITECTURE/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deep-dive-server/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Deep dives
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  API reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../WORKFLOW_AUTHORING/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Workflows
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture-eval/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Evaluation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../tools/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Tools
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../operations/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project-overview/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Project
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Agentic Runtime Platform" class="md-nav__button md-logo" aria-label="Agentic Runtime Platform" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Agentic Runtime Platform
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tafreeman/agentic-runtime-platform" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tafreeman/agentic-runtime-platform
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../NO_LLM_MODE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    No-LLM dev mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runtime engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integration-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../rag/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep dives
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deep dives
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server & API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deep-dive-agentic-v2-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-contracts-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../data-models-runtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../component-inventory-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI components
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI pages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI API integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../workflows/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Workflows
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW_AUTHORING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authoring guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PATTERN_CATALOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern catalog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Evaluation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/rubrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rubrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/judge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM-as-Judge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/gating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Production gating
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/runners/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runners
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../evaluation/datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../tools/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools & providers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/llm-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/local-models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local ONNX models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/windows-ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Windows AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/model-probing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model probing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/provider-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provider limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tools/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../operations/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/security-hardening/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../operations/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GLOSSARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../KNOWN_LIMITATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known limitations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../AI_RISK_MANAGEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI risk management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MIGRATIONS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Project
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/ADR-INDEX/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEMO/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#begin-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BEGIN PROMPT
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BEGIN PROMPT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-the-goal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start the goal
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-required-outcome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Required outcome
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-authority-and-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Authority and boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-evidence-first-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Evidence-first discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-frontend-architecture-decision-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Frontend architecture decision gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-evidence-ledger-design-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Evidence Ledger design system
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Evidence Ledger design system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-visual-thesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Visual thesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-interaction-thesis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Interaction thesis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-core-tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Core tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-typography" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Typography
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-layout-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Layout system
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-airiness-density-and-space-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Airiness, density, and space rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-utility-copy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Utility copy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-global-application-behaviors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Global application behaviors
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-page-by-page-capability-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Page-by-page capability plan
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Page-by-page capability plan">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Overview — /
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-runs-index-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Runs index — /runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-run-detail-runsfilename" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Run detail — /runs/:filename
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-live-execution-liverunid-and-livelatest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Live execution — /live/:runId and /live/latest
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-workflows-index-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Workflows index — /workflows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76-workflow-detail-and-run-configuration-workflowsname" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Workflow detail and run configuration — /workflows/:name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#77-workflow-builder-workflowsnameedit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.7 Workflow builder — /workflows/:name/edit
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#78-datasets-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.8 Datasets — /datasets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#79-evaluations-evaluations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.9 Evaluations — /evaluations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#710-model-router-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.10 Model Router — /models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#711-settings-compatibility-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.11 Settings compatibility — /settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#712-prototypes-and-migration-cleanup-prototypes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.12 Prototypes and migration cleanup — /prototypes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#713-not-found-errors-and-empty-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.13 Not found, errors, and empty states
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-product-wide-engineering-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Product-wide engineering requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Product-wide engineering requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#accessibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accessibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-and-privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security and privacy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-implementation-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Implementation sequence
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Implementation sequence">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-0-audit-and-decision-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 0 — audit and decision artifacts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-system-foundation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 1 — system foundation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-observe" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 2 — Observe
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 3 — Build
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-evaluate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 4 — Evaluate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-5-configure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 5 — Configure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-6-cleanup-and-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 6 — cleanup and hardening
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-testing-and-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Testing and verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Definition of done
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#end-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        END PROMPT
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/edit/main/docs/ui/evidence-ledger-full-rewrite-goal-prompt.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/ui/evidence-ledger-full-rewrite-goal-prompt.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="arp-evidence-ledger-ui-full-rewrite-goal-prompt">ARP Evidence Ledger UI Full-Rewrite Goal Prompt<a class="headerlink" href="#arp-evidence-ledger-ui-full-rewrite-goal-prompt" title="Permanent link">&para;</a></h1>
+<p>Copy everything below the <code>BEGIN PROMPT</code> marker into a fresh GPT/Codex task.</p>
+<hr />
+<h2 id="begin-prompt">BEGIN PROMPT<a class="headerlink" href="#begin-prompt" title="Permanent link">&para;</a></h2>
+<p>You are the principal product designer and staff frontend/platform engineer responsible for a complete, production-quality rewrite of the Agentic Runtime Platform (ARP) web UI.</p>
+<p>Work in:</p>
+<p><code>C:\Users\tandf\source\agentic-runtime-platform</code></p>
+<p>This is an implementation goal, not a design critique or a mockup-only exercise. Continue until the rewritten UI, required supporting contracts, tests, documentation, and verification evidence are complete. Do not stop after producing a plan.</p>
+<h3 id="start-the-goal">Start the goal<a class="headerlink" href="#start-the-goal" title="Permanent link">&para;</a></h3>
+<p>At the start of the task, call the goal-creation mechanism with this objective and no artificial token budget:</p>
+<blockquote>
+<p>Rewrite the complete ARP web UI around the Evidence Ledger design system, preserving proven runtime behavior, refining every current page, adding the explicitly scoped model-routing and usability capabilities, and verifying the result end to end.</p>
+</blockquote>
+<p>Then maintain a concrete working plan with exactly one step in progress at a time. Give the user concise progress updates at meaningful milestones and at least once every 60 seconds during long-running work.</p>
+<h2 id="1-required-outcome">1. Required outcome<a class="headerlink" href="#1-required-outcome" title="Permanent link">&para;</a></h2>
+<p>Replace the current terminal/Carbon-style UI with one coherent Evidence Ledger application system based on the implemented prototype at:</p>
+<ul>
+<li><code>agentic-workflows-v2/ui/src/pages/PrototypeLabPage.tsx</code></li>
+<li><code>agentic-workflows-v2/ui/src/styles/prototype-lab.css</code></li>
+<li>route: <code>/prototypes</code>, concept <code>02 Evidence ledger</code></li>
+</ul>
+<p>The prototype is visual direction, not production architecture and not a source of real data. Do not copy its mock records, fixed measurements, or nonfunctional controls into production.</p>
+<p>The finished product must:</p>
+<ol>
+<li>Preserve all working user-visible capabilities that exist in the current UI unless this prompt explicitly consolidates or removes them.</li>
+<li>Make evaluation evidence, run provenance, workflow configuration, and model routing easier to understand and operate.</li>
+<li>Preserve the Evidence Ledger prototype's airy, editorial aesthetic while presenting operational data efficiently; density must come from hierarchy and progressive disclosure, not cramped spacing.</li>
+<li>Connect the Model Router to run launch and workflow authoring through reusable named model packs.</li>
+<li>Remain usable with keyboard, screen reader, reduced motion, narrow laptop, tablet, and mobile layouts.</li>
+<li>Use real backend data and explicit empty/loading/error/partial-data states. Never ship decorative fake metrics or controls with no behavior.</li>
+<li>Leave the repository in a buildable, tested, documented state.</li>
+<li>Use shadcn/ui as the owned component foundation, customized to the Evidence Ledger system rather than retaining shadcn's default visual appearance.</li>
+</ol>
+<h2 id="2-authority-and-boundaries">2. Authority and boundaries<a class="headerlink" href="#2-authority-and-boundaries" title="Permanent link">&para;</a></h2>
+<p>Retain React and Vite, and adopt shadcn/ui as the component foundation. You may change the routing approach, state/query libraries, styling organization, visualization libraries, and UI folder organization if the change is justified by evidence and completed end to end. Keep React Flow unless a replacement materially improves ARP's DAG editing and is migrated completely.</p>
+<p>You may make focused backend changes when a required UI capability needs a new or corrected API, persistence contract, event, pagination contract, or provenance field. Keep those changes within ARP package boundaries and update tests, generated types, ADRs, and documentation.</p>
+<p>Do not:</p>
+<ul>
+<li>rewrite the Python execution engine merely to simplify frontend code;</li>
+<li>change public runtime semantics without an explicit compatibility analysis;</li>
+<li>introduce cross-package imports without reviewing <code>docs/ARCHITECTURE.md</code> and relevant ADRs;</li>
+<li>store provider secrets, raw API keys, or tokens in the browser, UI settings JSON, logs, screenshots, fixtures, or git;</li>
+<li>replace stable API behavior with client-only approximations;</li>
+<li>silently discard keyboard navigation, CLI parity, focus management, deep links, WebSocket reconnection, or reduced-motion support;</li>
+<li>commit, push, open a PR, or modify unrelated user files unless separately instructed;</li>
+<li>overwrite the existing untracked user files <code>.agentic_model_rankings.json</code> or <code>ai-firstify-assessment-report.md</code>;</li>
+<li>treat stale documentation as more authoritative than current code, tests, generated schemas, and runtime behavior.</li>
+</ul>
+<h2 id="3-evidence-first-discovery">3. Evidence-first discovery<a class="headerlink" href="#3-evidence-first-discovery" title="Permanent link">&para;</a></h2>
+<p>Before changing code, inspect and reconcile:</p>
+<ul>
+<li>root <code>AGENTS.md</code> and repository instructions;</li>
+<li><code>agentic-workflows-v2/ui/src/App.tsx</code>;</li>
+<li>every file under <code>agentic-workflows-v2/ui/src/pages/</code>;</li>
+<li>shared components under <code>ui/src/components/</code>;</li>
+<li>hooks under <code>ui/src/hooks/</code>;</li>
+<li><code>ui/src/api/client.ts</code>, <code>ui/src/api/types.ts</code>, and generated API types;</li>
+<li>UI unit and Playwright tests;</li>
+<li>current server routes and the live OpenAPI document;</li>
+<li><code>docs/architecture-ui.md</code>, <code>docs/component-inventory-ui.md</code>, <code>docs/ui/</code>, and relevant ADRs, especially ADR-012, ADR-014, ADR-043, and any superseding ADRs;</li>
+<li>current git status and all user changes.</li>
+</ul>
+<p>Create and maintain a route/capability matrix with these columns:</p>
+<p>| Route/surface | Current behavior confirmed in code | Preserve | Refine | New contract needed | Explicitly excluded | Verification |</p>
+<p>Do not implement from the inventory below blindly. Verify it against the current branch because the repository may have changed.</p>
+<h2 id="4-frontend-architecture-decision-gate">4. Frontend architecture decision gate<a class="headerlink" href="#4-frontend-architecture-decision-gate" title="Permanent link">&para;</a></h2>
+<p>The target foundation is React, Vite, TypeScript, and shadcn/ui. The current UI also uses React Router, TanStack Query, Tailwind, React Flow, Vitest, and Playwright. Preserve the working libraries unless replacement has a demonstrated product or engineering benefit.</p>
+<p>Install shadcn/ui through its official project-compatible setup and commit the selected component source into the repository. Treat those components as owned code. Configure aliases and CSS variables consistently with the project. Add only components that are actually used.</p>
+<p>Likely shadcn primitives include Button, Input, Textarea, Select, Checkbox, Switch, Tabs, Table, Badge, Tooltip, Popover, Dropdown Menu, Command, Dialog, Alert Dialog, Sheet, Drawer, Scroll Area, Separator, Skeleton, Collapsible, Accordion, Form, and an accessible toast system. This is not a mandatory component checklist; omit anything without a real use.</p>
+<p>Do not ship the default shadcn visual language unchanged. Restyle its tokens, radius, density, typography, focus, borders, tables, dialogs, and states to match Evidence Ledger. Give shadcn components more breathing room than their compact defaults. Avoid pill-heavy layouts, excessive rounded cards, crowded toolbars, dark control-room styling, and generic dashboard examples.</p>
+<p>Before replacing any major current library, write a short decision record comparing it with the proposed replacement against:</p>
+<ul>
+<li>real-time WebSocket state and reconnection;</li>
+<li>complex DAG editing and canvas performance;</li>
+<li>accessible data tables, inspectors, drawers, and forms;</li>
+<li>type sharing with FastAPI/OpenAPI;</li>
+<li>unit, component, and browser testing;</li>
+<li>incremental migration risk;</li>
+<li>bundle size and route-level code splitting;</li>
+<li>long-term maintenance and ecosystem maturity;</li>
+<li>Windows developer experience and existing build commands;</li>
+<li>ability to preserve deep links and current API contracts.</li>
+</ul>
+<p>For shadcn/ui and any major new dependency, verify current official documentation and compatible versions from primary sources. Record material architectural changes in an ADR, provide a migration map, and remove abandoned libraries cleanly. Do not run two competing component systems indefinitely. Novelty is not a benefit.</p>
+<h2 id="5-evidence-ledger-design-system">5. Evidence Ledger design system<a class="headerlink" href="#5-evidence-ledger-design-system" title="Permanent link">&para;</a></h2>
+<p>The canonical design-system specification is:</p>
+<p><code>docs/ui/evidence-ledger-design-system.md</code></p>
+<p>Read it completely before implementing UI changes. Its tokens, composition rules, shadcn standards, ARP-specific patterns, responsive behavior, accessibility requirements, anti-patterns, and visual acceptance checklist are authoritative. If this prompt's summary conflicts with that file, the standalone design-system file wins.</p>
+<h3 id="51-visual-thesis">5.1 Visual thesis<a class="headerlink" href="#51-visual-thesis" title="Permanent link">&para;</a></h3>
+<p>ARP should feel like an engineering evidence desk: editorial clarity, warm paper-like surfaces, crisp ink, restrained safety orange, calm quantitative typography, generous negative space, and precise hairline dividers. The airiness of the Evidence Ledger prototype is a core product quality, not optional polish. It should communicate rigor without looking bureaucratic, cluttered, cramped, dark, or like a generic SaaS dashboard.</p>
+<p>Preserve the prototype's visual rhythm:</p>
+<ul>
+<li>broad breathing room around page titles and major evidence bands;</li>
+<li>generous row padding and clearly separated information groups;</li>
+<li>large, calm, light surfaces with minimal ornamental chrome;</li>
+<li>thin rules instead of boxed containers wherever structure remains clear;</li>
+<li>short line lengths for explanatory copy;</li>
+<li>only a small number of decisive controls in the primary view;</li>
+<li>orange used sparingly for action, selection, or the most important comparison;</li>
+<li>typography and whitespace carrying hierarchy before backgrounds, borders, or shadows.</li>
+</ul>
+<h3 id="52-interaction-thesis">5.2 Interaction thesis<a class="headerlink" href="#52-interaction-thesis" title="Permanent link">&para;</a></h3>
+<p>Use three consistent interaction patterns:</p>
+<ol>
+<li>Master-detail selection: rows remain visible while a right inspector reveals evidence or configuration.</li>
+<li>Progressive disclosure: common actions remain in the primary workspace; advanced runtime, evaluation, and routing controls live in drawers or expandable sections.</li>
+<li>Stable context transitions: shared-layout or short fade/slide transitions clarify selection and navigation without delaying work.</li>
+</ol>
+<p>Respect <code>prefers-reduced-motion</code>. Motion must explain state or hierarchy, never decorate routine operations.</p>
+<h3 id="53-core-tokens">5.3 Core tokens<a class="headerlink" href="#53-core-tokens" title="Permanent link">&para;</a></h3>
+<p>Create semantic tokens rather than page-local color values. At minimum define:</p>
+<ul>
+<li>canvas, primary surface, raised surface, hover surface;</li>
+<li>primary ink, secondary ink, muted ink, disabled ink;</li>
+<li>primary divider, soft divider, strong divider;</li>
+<li>action/accent orange, action hover, action soft background;</li>
+<li>success, warning, danger, information, running, and neutral states;</li>
+<li>focus ring, selection rail, chart series, graph node/edge states;</li>
+<li>typography, spacing, radius, shadow, z-index, density, and motion scales.</li>
+</ul>
+<p>Evidence Ledger is unequivocally light-first. Warm paper, off-white, and pale neutral surfaces define the product. Dark mode is optional and must not delay or compromise the light system; if retained, it is a secondary preference rather than the brand default. Never use dark panels as the normal page structure. Any supported theme must meet WCAG 2.2 AA contrast for essential text and controls.</p>
+<h3 id="54-typography">5.4 Typography<a class="headerlink" href="#54-typography" title="Permanent link">&para;</a></h3>
+<p>Use no more than two type families:</p>
+<ul>
+<li>a highly legible UI sans for navigation, controls, tables, and body text;</li>
+<li>an editorial display face or system serif only for major page titles and high-level evidence scores.</li>
+</ul>
+<p>Use tabular numerals for scores, durations, tokens, costs, and counts. Use monospace only for identifiers, code, YAML, CLI commands, events, and technical provenance—not for all interface copy.</p>
+<h3 id="55-layout-system">5.5 Layout system<a class="headerlink" href="#55-layout-system" title="Permanent link">&para;</a></h3>
+<p>Use a consistent, spacious application frame:</p>
+<ul>
+<li>global product navigation;</li>
+<li>primary work surface;</li>
+<li>optional secondary inspector;</li>
+<li>one clear primary action per page;</li>
+<li>contextual filters attached to the data they affect;</li>
+<li>intentional negative space between primary sections so the interface never reads as one continuous control panel.</li>
+</ul>
+<p>Organize navigation into four product areas:</p>
+<ul>
+<li><strong>Observe:</strong> Overview, Runs, Live execution.</li>
+<li><strong>Build:</strong> Workflows, Datasets.</li>
+<li><strong>Evaluate:</strong> Evaluations.</li>
+<li><strong>Configure:</strong> Model Router.</li>
+</ul>
+<p>Do not devote persistent navigation space to a page with no unique purpose. Provider and tier settings belong inside Model Router. Retire the current standalone Settings navigation item; preserve <code>/settings</code> as a redirect to the relevant Model Router subview unless genuinely independent settings are implemented.</p>
+<h3 id="56-airiness-density-and-space-rules">5.6 Airiness, density, and space rules<a class="headerlink" href="#56-airiness-density-and-space-rules" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Design desktop-first at 1440×900, validate at 1280×720 and 1024×768, and provide intentional behavior at 390×844.</li>
+<li>Persistent global chrome should normally consume no more than 56 px vertically and 220 px horizontally when expanded.</li>
+<li>Standard page heading/action bands should normally fit within 72 px.</li>
+<li>The first viewport must contain the primary working surface, not an oversized hero, while retaining enough whitespace that the surface does not feel compressed.</li>
+<li>Prefer tables, split panes, scorelines, timelines, and plain sections over card mosaics.</li>
+<li>Use cards only when the boundary is interactive or groups one discrete object.</li>
+<li>Default to comfortable density. A compact density may be offered for expert users, but it must not define the visual baseline.</li>
+<li>Use approximately 24–40 px page gutters on desktop, 24–32 px between major sections, 14–20 px inside interactive rows, and at least 8 px between label/value groups unless a specialized canvas requires otherwise.</li>
+<li>Do not fill empty space merely because it exists. Remove low-value controls or move them into an inspector, menu, or advanced section.</li>
+<li>Prefer one visually dominant table, graph, or evidence band per viewport over several equally weighted panels.</li>
+<li>Hide secondary columns responsively before shrinking essential text below readable sizes.</li>
+<li>On mobile, convert inspectors to full-height sheets and data tables to prioritized rows/details; do not force an unusable desktop canvas into 390 px.</li>
+</ul>
+<h3 id="57-utility-copy">5.7 Utility copy<a class="headerlink" href="#57-utility-copy" title="Permanent link">&para;</a></h3>
+<p>Use operational labels such as “Recent runs,” “Provider health,” “Selected rubric,” “Routing order,” and “Last evaluation.” Do not add marketing headlines or abstract metaphors to working pages.</p>
+<h2 id="6-global-application-behaviors">6. Global application behaviors<a class="headerlink" href="#6-global-application-behaviors" title="Permanent link">&para;</a></h2>
+<p>Preserve and refine:</p>
+<ul>
+<li>skip-to-content and route-change focus management;</li>
+<li>keyboard navigation and discoverable shortcuts;</li>
+<li>global command palette;</li>
+<li>CLI parity/command preview where the action has a real CLI twin;</li>
+<li>backend health and no-LLM-mode visibility;</li>
+<li>WebSocket reconnect status;</li>
+<li>theme preference;</li>
+<li>responsive navigation;</li>
+<li>consistent loading, empty, stale, partial, offline, permission, and error states;</li>
+<li>copyable run/model/workflow identifiers;</li>
+<li>stable deep-link URLs;</li>
+<li>error boundaries and not-found recovery;</li>
+<li>query caching and targeted invalidation;</li>
+<li>safe optimistic UI only where rollback is deterministic.</li>
+</ul>
+<p>Add a unified toast/notification policy for successful mutations and recoverable errors. Destructive actions require clear confirmation and consequences. Never use browser <code>alert</code>/<code>confirm</code> as the final production interaction.</p>
+<h2 id="7-page-by-page-capability-plan">7. Page-by-page capability plan<a class="headerlink" href="#7-page-by-page-capability-plan" title="Permanent link">&para;</a></h2>
+<h3 id="71-overview">7.1 Overview — <code>/</code><a class="headerlink" href="#71-overview" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve" title="Permanent link">&para;</a></h4>
+<ul>
+<li>total runs, success rate, 30-day tokens, and active-run counts from real APIs;</li>
+<li>recent runs with workflow, status, score/grade, and deep links;</li>
+<li>configured/probed model summary;</li>
+<li>workflow quick access;</li>
+<li>run filtering and new-run navigation;</li>
+<li>backend status, cold-start skeletons, retryable partial errors, and first-run guidance.</li>
+</ul>
+<h4 id="rewrite-and-refinement">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use a compact Evidence Ledger scoreline instead of three equal statistic cards.</li>
+<li>Show run health, evaluation readiness, latency, token/cost trend when backed by data, and active failures requiring attention.</li>
+<li>Provide a dense recent-runs table as the main surface and a narrow “attention” rail for failed/stalled runs, unavailable providers, or failed evaluations.</li>
+<li>Link every aggregate to its filtered source view.</li>
+<li>Show freshness/source metadata for metrics.</li>
+<li>Keep “Start run” as the single primary action.</li>
+</ul>
+<h4 id="space-budget">Space budget<a class="headerlink" href="#space-budget" title="Permanent link">&para;</a></h4>
+<ul>
+<li>heading/actions: ≤72 px;</li>
+<li>scoreline/trend band: approximately 150–180 px;</li>
+<li>remaining first viewport: recent runs plus attention rail;</li>
+<li>no more than five primary metrics above the fold.</li>
+</ul>
+<h4 id="exclude">Exclude<a class="headerlink" href="#exclude" title="Permanent link">&para;</a></h4>
+<ul>
+<li>fake executive summaries;</li>
+<li>decorative charts without decision value;</li>
+<li>a card per workflow or model above the fold;</li>
+<li>billing analytics unless the backend has trustworthy cost data.</li>
+</ul>
+<h3 id="72-runs-index-runs">7.2 Runs index — <code>/runs</code><a class="headerlink" href="#72-runs-index-runs" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_1">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>total/passing/failed/average-duration summary;</li>
+<li>current 50-row window disclosure;</li>
+<li>status, workflow, and text filters;</li>
+<li>optional live-tail polling;</li>
+<li>searchable workflow/run IDs;</li>
+<li>keyboard <code>j</code>/<code>k</code>, Enter-to-inspect, Escape-to-close;</li>
+<li>master-detail inspector;</li>
+<li>copyable identifiers, workflow/run deep links, step counts, score/grade, duration, and relative time;</li>
+<li>stale-data display with retry;</li>
+<li>trigger-run action and CLI parity.</li>
+</ul>
+<h4 id="rewrite-and-refinement_1">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use a real data table with sortable columns and a sticky header.</li>
+<li>Add server-backed pagination/cursor loading before claiming access to more than the current API limit.</li>
+<li>Add filters for date/time, evaluation state/grade, model/provider, dataset, execution profile, and routing pack only when backend fields exist.</li>
+<li>Encode filter/sort state in the URL for sharing and return navigation.</li>
+<li>Make selected-run inspector width resizable on desktop and a sheet on narrow screens.</li>
+<li>Allow export of the current filtered view only through a bounded, escaped CSV/JSON contract.</li>
+<li>Clearly distinguish running, queued, cancelled, failed, partial, and completed states.</li>
+</ul>
+<h4 id="space-budget_1">Space budget<a class="headerlink" href="#space-budget_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>summary and filters together: ≤170 px;</li>
+<li>table owns the rest of the viewport;</li>
+<li>when inspector opens, retain at least run ID, workflow, status, and duration columns.</li>
+</ul>
+<h4 id="exclude_1">Exclude<a class="headerlink" href="#exclude_1" title="Permanent link">&para;</a></h4>
+<ul>
+<li>infinite polling while the tab is hidden;</li>
+<li>fabricated span/route columns;</li>
+<li>client-only pagination over an undisclosed 50-row subset;</li>
+<li>bulk destructive run deletion unless retention APIs and authorization exist.</li>
+</ul>
+<h3 id="73-run-detail-runsfilename">7.3 Run detail — <code>/runs/:filename</code><a class="headerlink" href="#73-run-detail-runsfilename" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_2">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li>full run metadata and status;</li>
+<li>workflow DAG with step status, edge traversal counts, and kickback edges;</li>
+<li>step selection and input/output details;</li>
+<li>Spans and YAML/source views;</li>
+<li>evaluation summary and detailed rubric accordion;</li>
+<li>objective, judge, and advisory layers;</li>
+<li>judge-skipped reason, expected-text warning, hard gates, floor violations, and gate failures;</li>
+<li>captured-input replay with required-input safety check;</li>
+<li>CLI parity and back navigation.</li>
+</ul>
+<h4 id="rewrite-and-refinement_2">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Make the evidence record the primary structure: Overview, Trace, Inputs/Outputs, Evaluation, Provenance.</li>
+<li>Show immutable run identity, timestamps, workflow revision, model/provider actually used, routing pack/version, fallback path, dataset/sample, rubric/version, execution profile, token/cost/latency totals, and environment fingerprint when available.</li>
+<li>Show requested model/tier separately from resolved model and fallback reason.</li>
+<li>Make step selection synchronize between DAG, trace timeline, and inspector.</li>
+<li>Add downloadable evidence only for real server artifacts.</li>
+<li>When evaluation reasoning/evidence is not present in the typed backend contract, add the contract and tests or show it as unavailable; never invent it.</li>
+</ul>
+<h4 id="space-budget_2">Space budget<a class="headerlink" href="#space-budget_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li>compact identity header: ≤92 px;</li>
+<li>primary tab row: ≤42 px;</li>
+<li>DAG/trace plus inspector fills remaining viewport;</li>
+<li>large JSON/YAML/output content gets dedicated scroll regions, not expanding the entire page.</li>
+</ul>
+<h4 id="exclude_2">Exclude<a class="headerlink" href="#exclude_2" title="Permanent link">&para;</a></h4>
+<ul>
+<li>editing a completed run;</li>
+<li>mutating recorded provenance;</li>
+<li>replaying when required captured inputs are missing;</li>
+<li>presenting re-evaluation as original-run evidence without a new evaluation timestamp/version.</li>
+</ul>
+<h3 id="74-live-execution-liverunid-and-livelatest">7.4 Live execution — <code>/live/:runId</code> and <code>/live/latest</code><a class="headerlink" href="#74-live-execution-liverunid-and-livelatest" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_3">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li>WebSocket event stream with bounded exponential reconnect;</li>
+<li>workflow inference and DAG load;</li>
+<li>real-time step states, edge counts, kickback edges, and active-step auto-selection;</li>
+<li>elapsed time, completed-step progress, current model/tier, tokens, event log, streaming output, and final evaluation;</li>
+<li>latest-active-run resolution and empty state;</li>
+<li>scorecard expansion when evaluation completes;</li>
+<li>error and connection-state visibility.</li>
+</ul>
+<h4 id="rewrite-and-refinement_3">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use the Flow Canvas interaction model inside Evidence Ledger styling: graph center, live trace/timeline, contextual inspector.</li>
+<li>Keep the active step and latest material event visible without auto-scrolling away from a user-selected historical step.</li>
+<li>Separate transport state from workflow state.</li>
+<li>Add explicit “follow live” control, pause log auto-scroll, event-level filtering, and copy/download for bounded logs.</li>
+<li>Add cancel-run only if a safe server cancellation contract, authorization, event, and tests are implemented.</li>
+<li>Preserve the completed state at the same deep link and offer links to the permanent run/evaluation record.</li>
+</ul>
+<h4 id="space-budget_3">Space budget<a class="headerlink" href="#space-budget_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li>status/header: ≤76 px;</li>
+<li>DAG receives at least 55% desktop width;</li>
+<li>inspector receives 300–420 px;</li>
+<li>logs are a collapsible bottom drawer or inspector tab rather than a permanently competing column.</li>
+</ul>
+<h4 id="exclude_3">Exclude<a class="headerlink" href="#exclude_3" title="Permanent link">&para;</a></h4>
+<ul>
+<li>fake pause/resume controls;</li>
+<li>unbounded in-memory event rendering;</li>
+<li>animations on every event;</li>
+<li>automatic selection changes after the user intentionally pins a step.</li>
+</ul>
+<h3 id="75-workflows-index-workflows">7.5 Workflows index — <code>/workflows</code><a class="headerlink" href="#75-workflows-index-workflows" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_4">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li>registered workflow count;</li>
+<li>search by workflow name;</li>
+<li>latest run status;</li>
+<li>workflow deep links;</li>
+<li>loading, error, no-workflows, and no-match states;</li>
+<li><code>/</code> shortcut.</li>
+</ul>
+<h4 id="rewrite-and-refinement_4">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use a ledger list/table, not one card per workflow.</li>
+<li>Add description, tags, step count, last run/time, last evaluation grade, default routing pack, and validation state when backed by APIs.</li>
+<li>Add sorting and URL-backed filtering.</li>
+<li>Provide “Create workflow” only when the builder has a safe creation contract; otherwise explain the repository-owned definition workflow.</li>
+<li>Make duplicate/import actions explicit and validated if implemented.</li>
+</ul>
+<h4 id="space-budget_4">Space budget<a class="headerlink" href="#space-budget_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li>header + search/filter: ≤130 px;</li>
+<li>ledger list fills remaining space;</li>
+<li>rows should remain scannable at approximately 52–68 px.</li>
+</ul>
+<h4 id="exclude_4">Exclude<a class="headerlink" href="#exclude_4" title="Permanent link">&para;</a></h4>
+<ul>
+<li>large DAG thumbnail on every row;</li>
+<li>editing YAML directly from the index;</li>
+<li>tags or descriptions synthesized only in the client.</li>
+</ul>
+<h3 id="76-workflow-detail-and-run-configuration-workflowsname">7.6 Workflow detail and run configuration — <code>/workflows/:name</code><a class="headerlink" href="#76-workflow-detail-and-run-configuration-workflowsname" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_5">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li>workflow DAG, description, node/edge count, and tiers;</li>
+<li>workflow input form generated from schema;</li>
+<li>string, number, enum, object/array, image, audio, and file inputs;</li>
+<li>required/default handling and media data-URL safety behavior;</li>
+<li>execution runtime profile;</li>
+<li>optional rubric and evaluation controls;</li>
+<li>repository/local dataset selection, evaluation set, sample indices, runs per record, sample preview, and batch execution progress;</li>
+<li>direct model override;</li>
+<li>deterministic demo run when supported;</li>
+<li>run history, edit link, run submission, and navigation to live execution;</li>
+<li>dataset deep-link preconfiguration.</li>
+</ul>
+<h4 id="rewrite-and-refinement_5">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Treat DAG as context and run configuration as the primary task.</li>
+<li>Group configuration into Inputs, Routing, Runtime, and Evaluation with progressive disclosure.</li>
+<li>Add model-pack selection with clear precedence: explicit per-run model override &gt; selected run pack &gt; workflow-bound pack &gt; global active pack &gt; existing deployment/env/default routing.</li>
+<li>Preview the resolved routing plan before launch: requested tier, candidate chain, disabled/unavailable providers, fallback policy, and source of each setting.</li>
+<li>Preserve a direct model override as an advanced escape hatch.</li>
+<li>Show an accurate batch job count and estimated request volume before submission.</li>
+<li>Require confirmation for unusually large batch sizes using a server-enforced maximum.</li>
+<li>Keep recent run history visible but secondary.</li>
+</ul>
+<h4 id="space-budget_5">Space budget<a class="headerlink" href="#space-budget_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li>desktop: DAG/context 55–65%, configuration inspector 340–420 px;</li>
+<li>mobile: configuration first, DAG in a separate tab;</li>
+<li>common required inputs and Run action visible without expanding Advanced.</li>
+</ul>
+<h4 id="exclude_5">Exclude<a class="headerlink" href="#exclude_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li>silently applying a model pack;</li>
+<li>storing raw media in local storage;</li>
+<li>unlimited batch fan-out;</li>
+<li>cost estimates unless provider pricing and token assumptions are versioned and trustworthy.</li>
+</ul>
+<h3 id="77-workflow-builder-workflowsnameedit">7.7 Workflow builder — <code>/workflows/:name/edit</code><a class="headerlink" href="#77-workflow-builder-workflowsnameedit" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_6">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_6" title="Permanent link">&para;</a></h4>
+<ul>
+<li>feature-gated access;</li>
+<li>visual and YAML modes;</li>
+<li>dirty-state tracking and unsaved-change protection;</li>
+<li>validate and save actions with validation issue reporting;</li>
+<li>DAG editing and local draft derivation;</li>
+<li>add/delete step;</li>
+<li>add/remove dependencies;</li>
+<li>select/configure nodes and edges;</li>
+<li>edge mappings and target <code>when</code> condition;</li>
+<li>per-step agent, model override, persona, sampling parameters, tools, observers, dependencies, condition, and prompt file;</li>
+<li>catalogs for personas, tools, observers, and probed models;</li>
+<li>model tier/capability context;</li>
+<li>run-after-save/detail navigation;</li>
+<li>correct query invalidation after save.</li>
+</ul>
+<h4 id="rewrite-and-refinement_6">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_6" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Adopt Flow Canvas spatial ergonomics within the Evidence Ledger system.</li>
+<li>Provide pan/zoom, fit view, minimap, keyboard traversal, accessible selection, multi-select, duplicate, copy/paste, and undo/redo.</li>
+<li>Keep node configuration in a consistent right inspector with compact summaries and advanced sections.</li>
+<li>Add workflow-level and node-level model-pack binding; node direct model override remains highest precedence.</li>
+<li>Show routing provenance and validation inline on affected nodes.</li>
+<li>Validate continuously with debouncing, but keep explicit Save and server validation as authority.</li>
+<li>Keep YAML and visual modes round-trip safe; add structural diff before overwriting changes made in the other mode.</li>
+<li>Make auto-layout an explicit reversible action.</li>
+<li>Preserve edge labels/mappings and make connection creation keyboard accessible.</li>
+<li>Add a read-only mode with a clear reason when editing is unavailable.</li>
+</ul>
+<h4 id="space-budget_6">Space budget<a class="headerlink" href="#space-budget_6" title="Permanent link">&para;</a></h4>
+<ul>
+<li>canvas gets the largest region;</li>
+<li>tool rail ≤56 px;</li>
+<li>inspector 320–400 px;</li>
+<li>top controls ≤58 px;</li>
+<li>validation appears inline and in a compact problems drawer, not as a permanent third column.</li>
+</ul>
+<h4 id="exclude_6">Exclude<a class="headerlink" href="#exclude_6" title="Permanent link">&para;</a></h4>
+<ul>
+<li>collaborative multiplayer editing;</li>
+<li>arbitrary Python execution in the browser;</li>
+<li>a full IDE/file explorer;</li>
+<li>autosaving directly to repository definitions without explicit save semantics;</li>
+<li>visual-only features that cannot round-trip to the workflow document.</li>
+</ul>
+<h3 id="78-datasets-datasets">7.8 Datasets — <code>/datasets</code><a class="headerlink" href="#78-datasets-datasets" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_7">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_7" title="Permanent link">&para;</a></h4>
+<ul>
+<li>repository and local dataset groups;</li>
+<li>dataset selection;</li>
+<li>paged/sample-index browsing;</li>
+<li>sample selection and detailed field rendering;</li>
+<li>metadata expansion;</li>
+<li>workflow compatibility/adapted-input preview;</li>
+<li>workflow selection and deep link to a run preconfigured with the sample;</li>
+<li>loading, error, empty, and no-selection states.</li>
+</ul>
+<h4 id="rewrite-and-refinement_7">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_7" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Use a three-level evidence workspace: source/dataset list, sample table, sample detail inspector.</li>
+<li>Add search/filter by source, task, schema, size, and compatibility when metadata exists.</li>
+<li>Surface source provenance, revision/hash, split, license, sample count, schema, cache state, and last refresh.</li>
+<li>Integrate dynamic dataset providers already supported by the backend and clearly distinguish remote metadata from locally cached data.</li>
+<li>Add explicit register/import/refresh actions only through validated backend contracts.</li>
+<li>Add schema and adapter validation before launching a workflow.</li>
+<li>Preserve sample-to-run flow and make selected dataset/sample state URL-addressable.</li>
+</ul>
+<h4 id="space-budget_7">Space budget<a class="headerlink" href="#space-budget_7" title="Permanent link">&para;</a></h4>
+<ul>
+<li>source/dataset rail: 220–280 px;</li>
+<li>sample table: main region;</li>
+<li>detail inspector: 320–420 px or mobile sheet;</li>
+<li>metadata defaults collapsed unless it affects validity or licensing.</li>
+</ul>
+<h4 id="exclude_7">Exclude<a class="headerlink" href="#exclude_7" title="Permanent link">&para;</a></h4>
+<ul>
+<li>a general-purpose dataframe editor;</li>
+<li>silently downloading very large datasets;</li>
+<li>claiming benchmark validity from dataset presence alone;</li>
+<li>displaying remote samples as cached when they are not.</li>
+</ul>
+<h3 id="79-evaluations-evaluations">7.9 Evaluations — <code>/evaluations</code><a class="headerlink" href="#79-evaluations-evaluations" title="Permanent link">&para;</a></h3>
+<h4 id="current-behavior-to-preserve_8">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_8" title="Permanent link">&para;</a></h4>
+<ul>
+<li>evaluated-run scorecard;</li>
+<li>grade distribution and score histogram;</li>
+<li>per-workflow pass rate;</li>
+<li>recent evaluation list;</li>
+<li>expandable run rubric details;</li>
+<li>evaluate/re-evaluate a previous captured run;</li>
+<li>two-run head-to-head comparison under one rubric;</li>
+<li>candidate scores, winner/tie, weighted delta, and per-criterion deltas;</li>
+<li>judge-skipped, hard-gate, floor, and error states;</li>
+<li>run detail links and query invalidation after mutation.</li>
+</ul>
+<h4 id="rewrite-and-refinement_8">Rewrite and refinement<a class="headerlink" href="#rewrite-and-refinement_8" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Make Evidence Ledger’s evaluation workspace the canonical design reference.</li>
+<li>Organize into Runs, Comparisons, Benchmarks, and Rubrics without creating separate top-level navigation for each.</li>
+<li>Add URL-backed filters for workflow, dataset, rubric/version, model/provider, judge model, grade, pass/fail, hard-gate state, and date where data exists.</li>
+<li>Show score provenance: rubric/version, objective layer, judge identity/resolved model, judge skipped/fallback, advisory layer, calibration artifact/version, timestamp, and source run revision.</li>
+<li>Add trend and regression views only using statistically honest sample counts and uncertainty.</li>
+<li>Add comparison history only if comparisons are persisted; otherwise label current comparison as ephemeral.</li>
+<li>Make evaluation setup controls functional. Remove presentational-only option pills.</li>
+<li>Add benchmark coverage/status and dataset-to-workflow adapter validity, not a vanity leaderboard.</li>
+<li>Add export for a self-contained evaluation evidence bundle when supported.</li>
+</ul>
+<h4 id="space-budget_8">Space budget<a class="headerlink" href="#space-budget_8" title="Permanent link">&para;</a></h4>
+<ul>
+<li>heading/tabs/filters: ≤150 px;</li>
+<li>compact scoreline: ≤160 px;</li>
+<li>evaluation ledger/table is the dominant surface;</li>
+<li>detailed reasoning and evidence open in an inspector or dedicated deep link.</li>
+</ul>
+<h4 id="exclude_8">Exclude<a class="headerlink" href="#exclude_8" title="Permanent link">&para;</a></h4>
+<ul>
+<li>hiding judge-skipped or missing-golden-text states;</li>
+<li>presenting incomparable rubrics as one ranking;</li>
+<li>confidence claims without statistical support;</li>
+<li>fake persisted comparison history;</li>
+<li>hard-gate activation that contradicts current ADRs or lacks identity/calibration binding.</li>
+</ul>
+<h3 id="710-model-router-models">7.10 Model Router — <code>/models</code><a class="headerlink" href="#710-model-router-models" title="Permanent link">&para;</a></h3>
+<p>Consolidate current Model Finder plus provider/tier Settings into one coherent route with URL-addressable subviews:</p>
+<ol>
+<li>Models</li>
+<li>Providers</li>
+<li>Tiers</li>
+<li>Packs</li>
+<li>Playground</li>
+<li>Hardware</li>
+</ol>
+<p>Do not render all six as one long page.</p>
+<h4 id="current-behavior-to-preserve_9">Current behavior to preserve<a class="headerlink" href="#current-behavior-to-preserve_9" title="Permanent link">&para;</a></h4>
+<ul>
+<li>live provider rescan/probe;</li>
+<li>available/unavailable provider state and no-LLM mode;</li>
+<li>full probed model catalog grouped by provider;</li>
+<li>model substring search, tier/capability/cloud/running/verification indicators, and deep links to chat;</li>
+<li>direct chat playground with model selection and stream/error behavior;</li>
+<li>local hardware profile discovery and editable override;</li>
+<li>recommendation category and sorting;</li>
+<li>RAM/CPU/accelerator/throughput profile;</li>
+<li>hardware fit bands and model external links;</li>
+<li>provider endpoint listing;</li>
+<li>provider creation for OpenAI, Anthropic, GitHub Models, Ollama, Foundry Local, and custom endpoints;</li>
+<li>provider enable/disable and deletion;</li>
+<li>base URL, credential environment-variable name, default model, label, and safe validation;</li>
+<li>environment-configured provider disclosure;</li>
+<li>tier chains, effective/default/override order, reranking, reset-to-default, and route-winner indicator;</li>
+<li>per-model capability overrides and clear/reset behavior;</li>
+<li>mutation errors and cache updates.</li>
+</ul>
+<h4 id="providers-refinement">Providers refinement<a class="headerlink" href="#providers-refinement" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Add editing for existing providers, not only create/delete.</li>
+<li>Add explicit connection test/probe with timestamp, status, latency, discovered model count, and actionable error category.</li>
+<li>Explain precedence and the effect of disabling a provider before saving.</li>
+<li>Prevent disabling/deleting the final viable provider used by an active/default pack without a clear warning and dependency list.</li>
+<li>Keep credentials deployment-owned: accept only environment-variable names or a separately approved secret-manager reference. Never accept or echo raw keys.</li>
+<li>Allow provider-specific safe options through typed schemas; do not expose an unvalidated arbitrary JSON bag by default.</li>
+</ul>
+<h4 id="tiers-refinement">Tiers refinement<a class="headerlink" href="#tiers-refinement" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Support mouse and keyboard reordering.</li>
+<li>Show default, UI override, environment pin, effective chain, unavailable entries, and actual routing winner distinctly.</li>
+<li>Validate duplicate entries, empty required tiers, disabled providers, missing capabilities, and unsupported models.</li>
+<li>Show fallback and cross-tier policy only if the backend contract exposes it.</li>
+<li>Provide a dry-run route explanation for a sample requirement without invoking a model.</li>
+</ul>
+<h4 id="new-named-model-packs">New named model packs<a class="headerlink" href="#new-named-model-packs" title="Permanent link">&para;</a></h4>
+<p>Implement reusable, named, versioned routing packs. A pack is a deliberate configuration bundle, not a copy of mutable global state.</p>
+<p>A pack must include, as applicable:</p>
+<ul>
+<li>stable ID, display name, description, version, timestamps, and active/archive state;</li>
+<li>per-tier ordered model chains;</li>
+<li>allowed/enabled provider set;</li>
+<li>capability requirements and model capability overrides or references;</li>
+<li>fallback and cross-tier policy where supported;</li>
+<li>optional max-cost/max-latency policy only when enforceable;</li>
+<li>default evaluation judge model/policy where supported;</li>
+<li>provenance showing whether each value is inherited or explicit.</li>
+</ul>
+<p>Required pack operations:</p>
+<ul>
+<li>create from effective routing;</li>
+<li>create from defaults;</li>
+<li>edit as a new version rather than silently changing historical run meaning;</li>
+<li>duplicate;</li>
+<li>validate/dry run;</li>
+<li>activate as global default;</li>
+<li>bind to a workflow;</li>
+<li>select for one run;</li>
+<li>archive;</li>
+<li>export/import through a versioned, validated schema;</li>
+<li>show dependent workflows and recent runs before archive/delete.</li>
+</ul>
+<p>Runtime integration requirements:</p>
+<ul>
+<li>run launch accepts an optional pack ID/version;</li>
+<li>workflow definition or UI-managed binding can name a default pack;</li>
+<li>node-level direct model override remains the highest-precedence escape hatch;</li>
+<li>every run records selected pack ID/version, requested route, resolved provider/model, fallbacks, and relevant policy snapshot;</li>
+<li>historical run detail resolves from recorded data, not the pack’s current mutable state;</li>
+<li>environment/deployment pins retain their documented precedence unless an ADR intentionally changes it.</li>
+</ul>
+<p>Add backend models, persistence, APIs, generated types, migrations/version handling, and tests as needed. Keep pack storage instance-scoped unless a broader deployment store is explicitly designed. Do not overload the existing provider/tier update payload with an unversioned ad hoc field.</p>
+<h4 id="space-budget_9">Space budget<a class="headerlink" href="#space-budget_9" title="Permanent link">&para;</a></h4>
+<ul>
+<li>subview tabs and status summary: ≤100 px;</li>
+<li>each subview has one dominant table/workspace;</li>
+<li>provider/model inspectors use 320–420 px;</li>
+<li>pack editor uses a focused route or full-width workspace, not a cramped modal;</li>
+<li>show at most the essential status columns by default; capabilities and raw metadata belong in inspectors.</li>
+</ul>
+<h4 id="exclude_9">Exclude<a class="headerlink" href="#exclude_9" title="Permanent link">&para;</a></h4>
+<ul>
+<li>secret storage in frontend or UI settings;</li>
+<li>provider account/billing management;</li>
+<li>automatic provider signup;</li>
+<li>claiming hardware fit equals model quality;</li>
+<li>unversioned pack mutation that changes historical provenance;</li>
+<li>arbitrary pricing estimates without a maintained source/version.</li>
+</ul>
+<h3 id="711-settings-compatibility-settings">7.11 Settings compatibility — <code>/settings</code><a class="headerlink" href="#711-settings-compatibility-settings" title="Permanent link">&para;</a></h3>
+<p>The current Settings page only contains provider endpoints and tier routing. Move those functions into Model Router and redirect:</p>
+<ul>
+<li><code>/settings</code> → <code>/models?tab=providers</code></li>
+</ul>
+<p>Do not create a mostly empty replacement page. Independent preferences such as theme, density, keyboard-shortcut help, or telemetry may live in a compact application menu until enough real settings justify a route.</p>
+<h3 id="712-prototypes-and-migration-cleanup-prototypes">7.12 Prototypes and migration cleanup — <code>/prototypes</code><a class="headerlink" href="#712-prototypes-and-migration-cleanup-prototypes" title="Permanent link">&para;</a></h3>
+<p>Use the prototypes during implementation and visual comparison. Once the production Evidence Ledger system is complete:</p>
+<ul>
+<li>remove the prototype route and mock-only production imports, or move the lab to a clearly development-only Storybook/design-lab boundary;</li>
+<li>do not ship mock metrics in the normal production bundle;</li>
+<li>retain approved screenshots/design documentation as evidence if useful.</li>
+</ul>
+<h3 id="713-not-found-errors-and-empty-states">7.13 Not found, errors, and empty states<a class="headerlink" href="#713-not-found-errors-and-empty-states" title="Permanent link">&para;</a></h3>
+<p>Create one consistent family for:</p>
+<ul>
+<li>unknown route;</li>
+<li>unknown workflow/run/dataset/model pack;</li>
+<li>backend unavailable;</li>
+<li>unauthorized/forbidden if authentication is enabled;</li>
+<li>invalid deep-link parameters;</li>
+<li>no data yet;</li>
+<li>no filter matches;</li>
+<li>stale cached data with refresh failure;</li>
+<li>feature disabled/read-only.</li>
+</ul>
+<p>Every state must explain what happened and offer the safest next action.</p>
+<h2 id="8-product-wide-engineering-requirements">8. Product-wide engineering requirements<a class="headerlink" href="#8-product-wide-engineering-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Prefer route-level code splitting.</li>
+<li>Break current very large page components into cohesive feature modules without producing a meaningless one-file-per-div component tree.</li>
+<li>Keep server state in a query/cache layer; do not duplicate it into global client state.</li>
+<li>Keep transient UI state local or URL-backed when shareable.</li>
+<li>Generate or validate TypeScript types from server contracts per ADR-014.</li>
+<li>Preserve abort/cancellation behavior for fetches and streams.</li>
+<li>Bound event lists, logs, JSON rendering, and large tables through virtualization or pagination where needed.</li>
+</ul>
+<h3 id="accessibility">Accessibility<a class="headerlink" href="#accessibility" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Meet WCAG 2.2 AA for critical flows.</li>
+<li>Use semantic landmarks, headings, tables, forms, dialogs/sheets, and live regions.</li>
+<li>Provide visible focus, complete keyboard operation, logical tab order, and escape behavior.</li>
+<li>Do not encode status by color alone.</li>
+<li>Announce mutation, connection, validation, and streaming status changes appropriately without excessive screen-reader noise.</li>
+<li>Provide graph/list equivalence for users who cannot operate a spatial DAG.</li>
+</ul>
+<h3 id="security-and-privacy">Security and privacy<a class="headerlink" href="#security-and-privacy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Never render or log secret values.</li>
+<li>Sanitize/escape user and model content; do not use unsafe HTML insertion.</li>
+<li>Treat model output, YAML, JSON, dataset values, and event payloads as untrusted.</li>
+<li>Bound file/media size and validate MIME/type server-side.</li>
+<li>Preserve human approval boundaries for high-impact tools; the UI must not imply that a pending approval is a normal running step.</li>
+<li>Require server authorization for mutations; hiding a button is not access control.</li>
+</ul>
+<h3 id="performance">Performance<a class="headerlink" href="#performance" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Establish baseline and final production bundle sizes.</li>
+<li>Code-split heavy graph/editor/JSON views.</li>
+<li>Avoid refetch storms and unconditional background polling.</li>
+<li>Pause live-tail polling when not visible.</li>
+<li>Keep primary interactions responsive with realistic row/event volumes.</li>
+</ul>
+<h2 id="9-implementation-sequence">9. Implementation sequence<a class="headerlink" href="#9-implementation-sequence" title="Permanent link">&para;</a></h2>
+<p>Use vertical slices and keep the application runnable after each phase.</p>
+<h3 id="phase-0-audit-and-decision-artifacts">Phase 0 — audit and decision artifacts<a class="headerlink" href="#phase-0-audit-and-decision-artifacts" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Capture current git status and preserve user work.</li>
+<li>Run the existing targeted UI tests and production build to establish a baseline.</li>
+<li>Complete the route/capability matrix.</li>
+<li>Confirm the React/Vite/shadcn architecture and decide whether any supporting library warrants replacement.</li>
+<li>Write/update architecture and design-system documents.</li>
+<li>Identify backend contract gaps and classify them as required, optional, or excluded.</li>
+</ol>
+<h3 id="phase-1-system-foundation">Phase 1 — system foundation<a class="headerlink" href="#phase-1-system-foundation" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Configure shadcn/ui and map its semantic CSS variables to the Evidence Ledger tokens.</li>
+<li>Implement or restyle the selected shadcn primitives and remove superseded generic primitives as routes migrate.</li>
+<li>Implement the global shell, navigation, responsive behavior, focus management, command palette integration, theme, and notification policy.</li>
+<li>Implement shared table, filter, scoreline, inspector/sheet, tabs, form, error, empty, loading, and provenance components using the owned shadcn foundation where appropriate.</li>
+<li>Add visual test fixtures based on typed data builders, not inline page mocks.</li>
+</ol>
+<h3 id="phase-2-observe">Phase 2 — Observe<a class="headerlink" href="#phase-2-observe" title="Permanent link">&para;</a></h3>
+<p>Migrate Overview, Runs, Run Detail, and Live Execution. Preserve streaming and replay behavior before visual polish. Add pagination/provenance contracts only with backend tests.</p>
+<h3 id="phase-3-build">Phase 3 — Build<a class="headerlink" href="#phase-3-build" title="Permanent link">&para;</a></h3>
+<p>Migrate Workflows, Workflow Detail/Run Configuration, Workflow Builder, and Datasets. Maintain visual/YAML round-trip and dataset-to-run deep links.</p>
+<h3 id="phase-4-evaluate">Phase 4 — Evaluate<a class="headerlink" href="#phase-4-evaluate" title="Permanent link">&para;</a></h3>
+<p>Migrate Evaluations, comparison, rubric detail, benchmark views, and evidence provenance. Resolve existing presentational-only controls by implementing or removing them.</p>
+<h3 id="phase-5-configure">Phase 5 — Configure<a class="headerlink" href="#phase-5-configure" title="Permanent link">&para;</a></h3>
+<p>Consolidate Model Finder and Settings into Model Router. Preserve providers, tiers, hardware fit, probe, and playground. Implement model-pack contracts and integrations through workflow/run provenance.</p>
+<h3 id="phase-6-cleanup-and-hardening">Phase 6 — cleanup and hardening<a class="headerlink" href="#phase-6-cleanup-and-hardening" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Remove superseded components/styles/routes and dead dependencies.</li>
+<li>Remove or development-gate prototypes.</li>
+<li>Update docs, ADRs, screenshots, changelog, and test coverage.</li>
+<li>Run the full verification matrix.</li>
+<li>Perform a final capability-matrix audit proving no current behavior was silently lost.</li>
+</ol>
+<p>If the scope is too large for one uninterrupted implementation window, persist the matrix, design specification, ADRs, and next executable phase to disk before context compaction. Continue the goal in subsequent turns; do not mark it complete because a phase ended.</p>
+<h2 id="10-testing-and-verification">10. Testing and verification<a class="headerlink" href="#10-testing-and-verification" title="Permanent link">&para;</a></h2>
+<p>For every migrated route, add or update:</p>
+<ul>
+<li>unit tests for transformations and validation;</li>
+<li>component tests for loading, populated, empty, partial, and error states;</li>
+<li>mutation success/error/rollback tests;</li>
+<li>keyboard and focus behavior tests;</li>
+<li>responsive browser tests for essential flows;</li>
+<li>contract tests for new API fields;</li>
+<li>WebSocket tests for connect, reconnect, duplicate/out-of-order events, bounded event history, completion, and failure;</li>
+<li>accessibility assertions feasible with the selected stack;</li>
+<li>visual screenshots at 1440×900, 1280×720, 1024×768, and 390×844 for critical pages.</li>
+</ul>
+<p>At minimum verify:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">run</span> <span class="n">build</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">test</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">run</span> <span class="n">test</span><span class="p">:</span><span class="n">e2e</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">-m</span> <span class="n">pytest</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">tests</span> <span class="n">-q</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">scripts</span><span class="p">/</span><span class="n">check_docs_refs</span><span class="p">.</span><span class="n">py</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">scripts</span><span class="p">/</span><span class="n">generate_doc_stats</span><span class="p">.</span><span class="n">py</span> <span class="p">-</span><span class="n">-check</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">pre-commit</span> <span class="n">run</span> <span class="p">-</span><span class="n">-all-files</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">git</span> <span class="nb">diff </span><span class="p">-</span><span class="n">-check</span>
+</span></code></pre></div>
+<p>Use narrower commands during iteration. If any full gate is unavailable or fails for a pre-existing reason, record the exact command, exact failure, evidence that it is pre-existing, and the narrower verification that covers your change. Never report a gate as passing when it did not run.</p>
+<p>Required browser journeys:</p>
+<ol>
+<li>Start from Overview, filter a run, inspect it, open full run detail, and replay safely.</li>
+<li>Launch a workflow with normal inputs, watch live execution, and reach permanent run detail.</li>
+<li>Launch a dataset-backed evaluated batch with a bounded sample selection.</li>
+<li>Edit a workflow visually, validate, inspect the YAML diff, save, reload, and confirm round-trip fidelity.</li>
+<li>Add a safe custom provider using an environment-variable name, test it, disable/re-enable it, and inspect consequences.</li>
+<li>Reorder a tier with keyboard, reset it, and confirm effective routing provenance.</li>
+<li>Create/version/validate a model pack, bind it to a workflow, launch a run with it, and verify recorded resolved model/provider/pack provenance.</li>
+<li>Evaluate a previous run, inspect rubric layers and gate failures, then compare two runs.</li>
+<li>Browse a dataset sample, validate workflow compatibility, and deep-link to a preconfigured run.</li>
+<li>Complete essential navigation and actions at 390 px using keyboard-equivalent controls and a screen-reader-friendly DOM.</li>
+</ol>
+<h2 id="11-definition-of-done">11. Definition of done<a class="headerlink" href="#11-definition-of-done" title="Permanent link">&para;</a></h2>
+<p>Do not mark the goal complete until all of the following are true:</p>
+<ul>
+<li>all production routes use the Evidence Ledger system;</li>
+<li>all production interaction primitives use the customized shadcn/ui foundation or have a documented reason for a specialized component;</li>
+<li>every current capability has been preserved, intentionally refined, consolidated, or explicitly removed with rationale;</li>
+<li>provider creation/editing/toggle/probe and tier configuration work from Model Router;</li>
+<li>named versioned model packs can be created, validated, selected for runs, bound to workflows, and traced in run provenance;</li>
+<li>no fake data or inert production controls remain;</li>
+<li>loading/error/empty/partial/offline states are implemented consistently;</li>
+<li>required deep links, keyboard flows, WebSocket behavior, and CLI parity work;</li>
+<li>desktop and mobile layouts are visually verified;</li>
+<li>the final visual audit confirms warm-paper surfaces, editorial typography, generous whitespace, hairline structure, restrained orange, and a calm uncluttered rhythm across every route—not only Evaluations;</li>
+<li>production build, relevant tests, docs checks, and diff checks pass or have precisely documented pre-existing blockers;</li>
+<li>framework and backend contract changes have ADRs and generated types where required;</li>
+<li>superseded UI code and dependencies are removed;</li>
+<li><code>CHANGELOG.md</code> and UI documentation describe the user-visible change;</li>
+<li>a final report lists files changed, capabilities delivered, exclusions/deferred items, verification commands/results, screenshots, and remaining risks;</li>
+<li>the goal mechanism is marked complete only after the objective is actually achieved.</li>
+</ul>
+<p>When product intent and current implementation conflict, preserve runtime correctness and evidence integrity, document the conflict, choose the smallest coherent product behavior, and continue. Ask the user only when a decision would materially change authorization, security boundaries, public runtime semantics, or the core information architecture defined here.</p>
+<h2 id="end-prompt">END PROMPT<a class="headerlink" href="#end-prompt" title="Permanent link">&para;</a></h2>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/tafreeman/agentic-runtime-platform" target="_blank" rel="noopener" title="GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "navigation.instant", "navigation.tracking", "navigation.indexes", "navigation.footer", "toc.follow", "search.highlight", "search.suggest", "search.share", "content.code.copy", "content.code.annotate", "content.tooltips", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": {"Architecture": "architecture", "Evaluation": "evaluation", "Tooling": "tooling", "Workflow": "workflow"}, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

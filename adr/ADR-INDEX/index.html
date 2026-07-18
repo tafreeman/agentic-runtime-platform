@@ -3127,7 +3127,7 @@ only five:</p>
 </tr>
 <tr>
 <td><strong>038</strong></td>
-<td>Live discovery for LM Studio (native <code>/api/v0/models</code>, multi-port) and ONNX (multi-root <code>genai_config.json</code>) local models</td>
+<td>Live discovery for LM Studio (native <code>/api/v1/models</code>, legacy fallbacks, multi-port) and ONNX (multi-root <code>genai_config.json</code>) local models</td>
 <td>Accepted</td>
 <td><a href="../ADR-038-lmstudio-onnx-discovery/">ADR-038</a></td>
 </tr>
@@ -3193,7 +3193,7 @@ only five:</p>
 </tr>
 <tr>
 <td><strong>050</strong></td>
-<td>SSE chat playground endpoint (<code>POST /api/chat</code>, discriminated-union <code>ChatStreamEvent</code>) and OpenRouter as a first-class provider — joins the ADR-014 drift pipeline; rides <code>StreamingResponse</code> not <code>/ws</code>; always HTTP 200 with in-stream classified errors; bypasses <code>SmartModelRouter</code>/tier selection by design; OpenRouter gets cached (300s TTL) + curated discovery with no <code>model_registry.yaml</code> tier-chain entry (mirrors the NVIDIA precedent)</td>
+<td>SSE chat playground endpoint (<code>POST /api/chat</code>, discriminated-union <code>ChatStreamEvent</code>) and OpenRouter as a first-class provider — joins the ADR-014 drift pipeline; rides <code>StreamingResponse</code> not <code>/ws</code>; always HTTP 200 with in-stream classified errors; bypasses <code>SmartModelRouter</code>/tier selection by design; OpenRouter gets cached (300s TTL) full-catalog discovery with no <code>model_registry.yaml</code> tier-chain entry</td>
 <td>Accepted</td>
 <td><a href="../ADR-050-chat-playground-sse-and-openrouter-provider/">ADR-050</a></td>
 </tr>
@@ -3208,6 +3208,12 @@ only five:</p>
 <td>Optional typed step artifact contracts shared by both engines; <code>code_artifact</code> validates file maps/sentinel payloads, promotes only independently valid legacy aliases, and makes fullstack backend handoffs fail closed without changing <code>coalesce()</code></td>
 <td>Accepted</td>
 <td><a href="../ADR-052-typed-step-artifact-contracts/">ADR-052</a></td>
+</tr>
+<tr>
+<td><strong>054</strong></td>
+<td>Evidence Ledger UI and immutable versioned model packs — warm-paper owned shadcn foundation, route splitting, Model Router consolidation, context-local pack routing, and recorded pack/model/provider provenance</td>
+<td>Accepted</td>
+<td><a href="../ADR-054-evidence-ledger-ui-and-model-packs/">ADR-054</a></td>
 </tr>
 <tr>
 <td><strong>055</strong></td>
@@ -3473,9 +3479,9 @@ not a statement about implementation state.</p>
 <tr>
 <td>038</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (<code>models/local_discovery.py</code> LM Studio <code>/v1/models</code> + ONNX <code>genai_config.json</code>; merged into <code>enumerate_known_models</code>)</td>
+<td style="text-align: center;">100% (<code>models/local_discovery.py</code> LM Studio <code>/api/v1/models</code> + compatibility fallbacks and ONNX <code>genai_config.json</code>; merged into <code>enumerate_known_models</code>)</td>
 <td style="text-align: center;">test_local_discovery.py, test_langchain_models_unit.py</td>
-<td>2026-06-21</td>
+<td>2026-07-14</td>
 </tr>
 <tr>
 <td>042</td>
@@ -3529,7 +3535,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 03:45:30 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
   </span>
 
     

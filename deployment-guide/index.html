@@ -3656,14 +3656,18 @@
 <h2 id="docker-builds">Docker builds<a class="headerlink" href="#docker-builds" title="Permanent link">&para;</a></h2>
 <h3 id="backend-image">Backend image<a class="headerlink" href="#backend-image" title="Permanent link">&para;</a></h3>
 <p>Build:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>prompts-backend:latest<span class="w"> </span>-f<span class="w"> </span>Dockerfile<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>build<span class="w"> </span>--target<span class="w"> </span>production<span class="w"> </span>-t<span class="w"> </span>prompts-backend:latest<span class="w"> </span>-f<span class="w"> </span>Dockerfile<span class="w"> </span>.
 </span></code></pre></div>
-<p>The <code>Dockerfile</code> installs the repo-root <code>agentic-tools</code> package plus <code>agentic-workflows-v2</code> with <code>[server,tracing]</code> extras (the dev target adds <code>[dev]</code>), pinned to <code>ci-constraints.txt</code>, and starts <code>uvicorn agentic_v2.server.app:app</code> on port 8010.</p>
+<p>The <code>production</code> target installs the repo-root <code>agentic-tools</code> package plus
+<code>agentic-workflows-v2</code> with <code>[server,tracing,langchain]</code> extras, pinned to
+<code>ci-constraints.txt</code>, and starts the FastAPI application factory on port 8010.</p>
 <h3 id="frontend-image">Frontend image<a class="headerlink" href="#frontend-image" title="Permanent link">&para;</a></h3>
 <p>Build:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>prompts-ui:latest<span class="w"> </span>-f<span class="w"> </span>Dockerfile.ui<span class="w"> </span>.
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>build<span class="w"> </span>--target<span class="w"> </span>frontend<span class="w"> </span>-t<span class="w"> </span>prompts-ui:latest<span class="w"> </span>-f<span class="w"> </span>Dockerfile.ui<span class="w"> </span>.
 </span></code></pre></div>
-<p>The <code>Dockerfile.ui</code> runs <code>npm ci &amp;&amp; npm run build</code> and serves the resulting <code>dist/</code> directory via nginx.</p>
+<p>The <code>frontend</code> target runs <code>npm ci &amp;&amp; npm run build</code> and serves the resulting
+SPA from a non-root nginx container on port 8080. Production ingress must route
+same-origin <code>/api</code> and <code>/ws</code> traffic to the backend.</p>
 <h3 id="full-stack-with-docker-compose">Full stack with Docker Compose<a class="headerlink" href="#full-stack-with-docker-compose" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up
 </span></code></pre></div>
@@ -3971,7 +3975,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
   </span>
 
     
