@@ -1,4 +1,4 @@
-# ADR-053: File-Size Exception Register
+# ADR-055: File-Size Exception Register
 
 **Status:** Accepted
 **Date:** 2026-07-17
@@ -21,9 +21,12 @@ deferred."
 
 The obvious fix — split the other twelve files to bring the codebase back
 under the rule — was already tried. A 2026-07-01 mechanical-split attempt
-(tracked internally as ARP-7, part of that day's remediation wave) split
-files purely to satisfy the line-count cap and caused regressions; it was
-reverted rather than merged. Splitting a module along a line-count boundary
+(tracked as ARP-7, part of that day's remediation wave) split files purely
+to satisfy the line-count cap and caused regressions; it was reverted rather
+than merged. PR #145's merged summary is the durable record: "Deferred:
+ARP-7 (800-line file caps) — an attempted split introduced behavior
+regressions and was reverted; flagged for a careful test-guarded pass."
+Splitting a module along a line-count boundary
 instead of a cohesion boundary produces exactly this outcome: the cut doesn't
 track a real seam in responsibility, so it either fractures state that needs
 to stay together or scatters one concern across files that now have to be
