@@ -168,7 +168,11 @@ flowchart LR
   <div class="stat-label">Lines of Python</div>
 </div>
 <div class="stat-item">
+<<<<<<< HEAD
   <div class="stat-value">3,883</div>
+=======
+  <div class="stat-value">3,898</div>
+>>>>>>> 336d236 (feat(prompts): content-fingerprinted prompt-versioning registry (ADR-056))
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">

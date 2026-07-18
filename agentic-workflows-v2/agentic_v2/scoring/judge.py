@@ -18,6 +18,12 @@ anchored 1--5 rubric criteria using an LLM backend.  Key design features:
 
 The judge is invoked synchronously via :func:`_run_coro_sync`, which
 handles both active-event-loop and bare contexts.
+
+The prompt template is registered with the prompt-versioning registry
+(ADR-056, :mod:`agentic_v2.prompts.registry`) at import time, so the
+default ``prompt_version`` reported in :class:`JudgeEvaluationResult` is a
+content fingerprint (``"judge-v1@<8-hex>"``) rather than a hand-maintained
+tag that never changes.
 """
 
 from __future__ import annotations
@@ -34,8 +40,40 @@ from typing import Any, Protocol
 
 from ..evaluation.normalization import normalize_score
 from ..models.client import LLMClientWrapper, get_client
+from ..prompts.registry import PromptRegistry
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Judge prompt template (ADR-056)
+# ---------------------------------------------------------------------------
+#
+# Static scaffold of the judge prompt, extracted from _build_prompt so its
+# content can be fingerprinted by the prompt-versioning registry. The
+# dynamic per-call pieces (rubric text, mode, candidate/expected output,
+# swapped-order note, reference block) are filled in via .format(); the
+# literal JSON-schema braces are escaped ({{ }}) so .format() leaves them
+# alone. `_build_prompt` composes IDENTICAL output to the pre-extraction
+# f-string version.
+JUDGE_PROMPT_TEMPLATE = (
+    "You are a strict rubric judge. Return ONLY valid JSON.\n"
+    'Schema: {{"criteria":[{{"name":"...","score":1-5,"evidence":"..."}}]}}\n'
+    "mode: {mode}\n"
+    "rubric:\n{rubric}\n"
+    "\nEXPECTED OUTPUT:\n{expected_output}\n"
+    "\nCANDIDATE OUTPUT{swapped_note}:\n{candidate_output}\n"
+    "{reference_block}\n"
+    "Score each criterion on anchored 1..5 scale."
+)
+
+# Dedicated registry (not the shared `default_registry()` of role personas --
+# the judge prompt is inline Python, not a `prompts/*.md` file, and keeping it
+# out of that registry keeps the role-name set exactly the 7 personas).
+_JUDGE_PROMPT_REGISTRY = PromptRegistry()
+_JUDGE_PROMPT_RECORD = _JUDGE_PROMPT_REGISTRY.register_inline(
+    "judge", JUDGE_PROMPT_TEMPLATE, declared_version="judge-v1"
+)
+_DEFAULT_JUDGE_PROMPT_VERSION = _JUDGE_PROMPT_RECORD.qualified_version
 
 
 @dataclass(frozen=True)
@@ -393,7 +431,10 @@ class LLMJudge:
     Attributes:
         model: LLM model identifier (e.g., ``"gh:openai/gpt-4o"``).
         model_version: Specific model version string.
-        prompt_version: Version tag of the judge prompt template.
+        prompt_version: Fingerprinted version tag of the judge prompt
+            template (ADR-056): defaults to the registry's
+            ``qualified_version`` for :data:`JUDGE_PROMPT_TEMPLATE`
+            (``"judge-v1@<8-hex>"``) when not explicitly overridden.
         temperature: Sampling temperature, clamped to [0.0, 0.1].
         max_tokens: Maximum tokens for the judge response.
     """
@@ -403,7 +444,7 @@ class LLMJudge:
         *,
         model: str | None = None,
         model_version: str | None = None,
-        prompt_version: str = "judge-v1",
+        prompt_version: str | None = None,
         temperature: float = 0.1,
         max_tokens: int = 1200,
         client: LLMClientWrapper | None = None,
@@ -417,7 +458,11 @@ class LLMJudge:
             model = resolved if isinstance(resolved, str) else "gh:openai/gpt-4o"
         self.model = model
         self.model_version = model_version or model
-        self.prompt_version = prompt_version
+        self.prompt_version = (
+            prompt_version
+            if prompt_version is not None
+            else _DEFAULT_JUDGE_PROMPT_VERSION
+        )
         self.temperature = min(max(float(temperature), 0.0), 0.1)
         self.max_tokens = max_tokens
         self._client = client
@@ -556,15 +601,13 @@ class LLMJudge:
             if pairwise_reference_output is not None
             else ""
         )
-        return (
-            "You are a strict rubric judge. Return ONLY valid JSON.\n"
-            'Schema: {"criteria":[{"name":"...","score":1-5,"evidence":"..."}]}\n'
-            f"mode: {mode}\n"
-            f"rubric:\n{chr(10).join(rubric_lines)}\n"
-            f"\nEXPECTED OUTPUT:\n{expected_output}\n"
-            f"\nCANDIDATE OUTPUT{swapped_note}:\n{candidate_output}\n"
-            f"{reference_block}\n"
-            "Score each criterion on anchored 1..5 scale."
+        return JUDGE_PROMPT_TEMPLATE.format(
+            mode=mode,
+            rubric="\n".join(rubric_lines),
+            expected_output=expected_output,
+            swapped_note=swapped_note,
+            candidate_output=candidate_output,
+            reference_block=reference_block,
         )
 
     def _invoke_prompt(self, prompt: str) -> dict[str, Any]:

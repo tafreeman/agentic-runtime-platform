@@ -23,6 +23,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ..prompts.registry import default_registry
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -78,9 +80,12 @@ def load_agent_system_prompt(
 
     Resolution order:
 
-    1. Explicit ``prompt_file_override`` from the YAML step definition.
+    1. Explicit ``prompt_file_override`` from the YAML step definition
+       (always a direct file read -- overrides bypass the registry).
     2. ``prompts/<role>.md`` where ``<role>`` is the suffix after the tier
-       prefix (e.g. ``tier2_coder`` → ``coder.md``).
+       prefix (e.g. ``tier2_coder`` → ``coder.md``), resolved via the
+       shared :func:`default_registry` (ADR-056) when the role is
+       registered, falling back to a direct file read otherwise.
     3. ``prompts/default.md`` fallback.
 
     Note: Output format instructions are injected separately by the step
@@ -103,6 +108,14 @@ def load_agent_system_prompt(
     # 2. Role-based lookup
     if "_" in agent_name:
         role = agent_name.split("_", 1)[1]  # "tier2_coder" → "coder"
+        record = default_registry().get_or_none(role)
+        if record is not None:
+            logger.debug(
+                "Resolved persona prompt for role '%s' from registry (%s).",
+                role,
+                record.qualified_version,
+            )
+            return record.content
         role_path = _PROMPTS_DIR / f"{role}.md"
         if role_path.exists():
             return role_path.read_text(encoding="utf-8")
