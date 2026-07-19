@@ -7,9 +7,7 @@ tags:
 
 # Getting started
 
-Agentic Runtime Platform is a monorepo. Three different audiences typically pick three
-different entry points; this page lays out which path suits which goal so you
-do not have to read the full architecture before your first run.
+Three entry points, by audience:
 
 ## Pick your path
 
@@ -50,9 +48,9 @@ into a longer-lived environment — staging, demo, or a customer trial.
 - **Continue with:** [Installation](installation.md), then the
   [Architecture overview](../ARCHITECTURE.md)
 
-## What you'll have when you're done
+## What you get
 
-Whichever path you take, the install gives you the same surface area:
+Same surface area regardless of path:
 
 | Artifact | Where it lives | Why it matters |
 |----------|----------------|-----------------|
@@ -72,9 +70,8 @@ Whichever path you take, the install gives you the same surface area:
   `git-revision-date-localized` plugin embeds last-modified dates into the
   documentation site, and CI runs with `fetch-depth: 0` for that reason.
 
-You do not need Docker, a Postgres instance, or any cloud account to run the
-deterministic test workflow. Provider credentials become relevant only when
-you are ready to leave No-LLM mode.
+No Docker, Postgres, or cloud account needed to run the deterministic test
+workflow. Provider credentials matter only once you leave No-LLM mode.
 
 ## Common starting commands
 

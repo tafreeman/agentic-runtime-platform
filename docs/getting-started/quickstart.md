@@ -7,16 +7,8 @@ tags:
 
 # Quick start
 
-This page expands the 60-second flow on the landing page into a narrated
-walkthrough. Each step explains what is happening under the hood and what
-you should see when it works.
-
-By the end you will have:
-
-- The runtime installed in editable mode
-- `AGENTIC_NO_LLM=1` enabled (no provider keys needed)
-- A `test_deterministic` workflow run with a structured result
-- An understanding of how to read the run output
+Narrated version of the 60-second flow on the landing page — what each
+step does under the hood, and what you should see when it works.
 
 ## Step 1 — Clone and install
 
@@ -154,16 +146,5 @@ rerun.
 
 [Full workflow reference →](../workflows/index.md)
 
-## Where this leaves you
-
-You have:
-
-- A working editable install with the dev toolchain
-- Confirmation that the DAG executor and contracts are healthy
-- An end-to-end run with a structured result
-- A starting point for switching to a real provider when you are ready
-
-Next up: write your own workflow with the
-[First workflow](first-workflow.md) walkthrough, or read the
-[Architecture overview](../ARCHITECTURE.md) to see how the pieces fit
-together.
+Next: write your own workflow with the [First workflow](first-workflow.md)
+walkthrough, or read the [Architecture overview](../ARCHITECTURE.md).

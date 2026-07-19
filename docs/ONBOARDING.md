@@ -4,14 +4,12 @@
 > **Outcome:** By the end you will have run a workflow, opened the dashboard, scored a result, and know where to find things next time.
 > **Last verified:** 2026-07-05
 
-Welcome to `tafreeman/agentic-runtime-platform` -- a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities.
+`tafreeman/agentic-runtime-platform` is a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities. It serves two purposes:
 
-This repository serves a dual mission:
+1. **Working platform** -- an agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.
+2. **Reference implementation** -- practices for regulated and enterprise environments, applied rather than just documented.
 
-1. **Working platform** -- a production-grade agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.
-2. **Reference implementation** -- a living reference for enterprise team onboarding, demonstrating production-grade practices for regulated and enterprise environments.
-
-This guide has five independent sections. The first (**Quick Start**) gets a workflow running in **about 5 minutes**. Working through all five sections takes roughly **an hour**. Stop wherever you have what you need.
+Six independent sections. **Quick Start** gets a workflow running in about 5 minutes; all six take roughly an hour. Stop wherever you have what you need.
 
 If you prefer a prebuilt environment, open the repository in the provided devcontainer. Otherwise, use the root `justfile` commands described below for the same bootstrap and test flow.
 
@@ -107,7 +105,7 @@ Expected output: two steps execute, placeholder text is returned, exit code 0. N
 
 ## Exploring the CLI
 
-You can also explore agents, tools, and adapters:
+Explore agents, tools, and adapters:
 
 ```bash
 agentic list agents
@@ -119,7 +117,7 @@ agentic list adapters
 
 ## Your first LLM workflow run (10 minutes)
 
-Now let's run a real LLM-powered workflow like `code_review`.
+Run a real LLM-powered workflow like `code_review`.
 
 ### 1. Create an input file
 
@@ -255,7 +253,7 @@ agentic run code_review --input input.json --adapter langchain   # default
 
 ### The execution pipeline
 
-Here is the flow from YAML to output:
+Flow from YAML to output:
 
 ```
 Workflow YAML  -->  WorkflowConfig (Pydantic model)

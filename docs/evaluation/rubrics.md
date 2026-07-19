@@ -356,7 +356,7 @@ score = evaluator.score_pattern(
     model_output="Thought: I need to search...\nAction: search('capital of France')\nObservation: Paris\nFinal Answer: Paris",
     pattern="react",
     model="gh:openai/gpt-4o",
-    runs=20,       # 20 runs for robust median aggregation
+    runs=20,       # 20 runs for median aggregation
     temperature=0.1,
 )
 

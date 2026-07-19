@@ -236,7 +236,7 @@ err = get_model_error("local:mistral")
 
 ## Model discovery
 
-`discover_all_models()` performs a comprehensive scan across all configured providers and returns
+`discover_all_models()` scans all configured providers and returns
 an inventory of available models grouped by provider.
 
 ```python

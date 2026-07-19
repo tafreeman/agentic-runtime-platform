@@ -7,9 +7,8 @@ tags:
 
 # Installation
 
-The runtime is a Python package, the dashboard is a Vite-built React 19 app,
-and providers are optional extras. This page covers each layer in turn so
-you can install only the pieces you actually need.
+The runtime is a Python package, the dashboard a Vite-built React 19 app;
+providers are optional extras.
 
 ## Python runtime
 
@@ -173,7 +172,7 @@ wire-format drift check — so a passing local hook run is necessary, not
 sufficient. See `.claude/rules/ci.md` and `CONTRIBUTING.md` for the full
 gate list.
 
-## What's next
+## Next steps
 
 - New to the project? [Quick start](quickstart.md) walks the first run
   end-to-end.

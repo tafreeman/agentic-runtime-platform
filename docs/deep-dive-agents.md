@@ -10,7 +10,7 @@
 
 ## Overview
 
-The `agents/` package defines the agent abstraction layer for the `agentic-workflows-v2` runtime. It provides `BaseAgent` (a typed lifecycle-driven abstract class), concrete specialized agents (Coder, Reviewer, Architect, TestAgent, Orchestrator), supporting utilities (conversation memory, capability matching, robust JSON extraction), and backend implementations (Anthropic Messages API, `claude-agent-sdk`).
+The `agents/` package defines the agent abstraction layer for the `agentic-workflows-v2` runtime. It provides `BaseAgent` (a typed lifecycle-driven abstract class), concrete specialized agents (Coder, Reviewer, Architect, TestAgent, Orchestrator), supporting utilities (conversation memory, capability matching, JSON extraction), and backend implementations (Anthropic Messages API, `claude-agent-sdk`).
 
 **Responsibilities:**
 
@@ -18,7 +18,7 @@ The `agents/` package defines the agent abstraction layer for the `agentic-workf
 - Agent configuration, state, and event enums (`config.py`)
 - Conversation memory with auto-summarization (`memory.py`)
 - Capability-based agent-to-task matching (`capabilities.py`)
-- Robust structured-output parsing (`json_extraction.py`)
+- Structured-output parsing (`json_extraction.py`)
 - Concrete specialists (Coder, Reviewer, Architect, TestAgent)
 - Meta-agent for task decomposition and delegation (`orchestrator.py`)
 - Backend implementations (`implementations/`)
@@ -437,7 +437,7 @@ The `agent:` field is resolved by `resolve_agent()` in `engine/agent_resolver.py
 - **Suggested tests:** window overflow triggers summarize; system message never evicted; token-count accuracy.
 
 ### `json_extraction.py`
-- **Purpose:** Robust JSON extraction from LLM freeform responses. Strategies in order: fenced ` ```json ` block, fenced ` ``` ` (any), balanced-brace scan (handles strings with escapes).
+- **Purpose:** JSON extraction from LLM freeform responses. Strategies in order: fenced ` ```json ` block, fenced ` ``` ` (any), balanced-brace scan (handles strings with escapes).
 - **Key exports:** `extract_json(text)` — overloaded to return a plain dict or validate against a supplied Pydantic model.
 - **Implementation:** balanced-brace scan tracks string state (`"`, `\"`) to avoid false matches.
 - **Suggested tests:** malformed responses, nested braces in strings, truncated JSON, multiple JSON blocks.
@@ -548,7 +548,7 @@ Before shipping agent changes:
 
 1. `pip install -e ".[dev,claude]"` from `agentic-workflows-v2/`.
 2. `python -m pytest tests/ -k agent -q` — agent suites green.
-3. `python -m pytest tests/ -k json_extraction -q` — structured-output robustness.
+3. `python -m pytest tests/ -k json_extraction -q` — structured-output parsing.
 4. `python -m pytest tests/ -k memory -q` — window overflow + summarization.
 5. `curl http://127.0.0.1:8010/api/agents` — all agents discoverable.
 6. Run a minimal workflow using each concrete agent via `POST /api/run`.

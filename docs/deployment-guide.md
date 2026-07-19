@@ -62,7 +62,7 @@ Pre-commit hooks run automatically before every local commit. CI does not run pr
 |---|---|---|
 | `black` | Black | Python code formatting (line-length 88) |
 | `isort` | isort (profile=black) | Python import sorting |
-| `ruff` | Ruff | Comprehensive linting (replaces Flake8/pylint/pycodestyle) |
+| `ruff` | Ruff | Linting (replaces Flake8/pylint/pycodestyle) |
 | `docformatter` | docformatter | Docstring formatting |
 | `mypy` | mypy | Static type checking |
 | `pydocstyle` | pydocstyle | Docstring style enforcement |
