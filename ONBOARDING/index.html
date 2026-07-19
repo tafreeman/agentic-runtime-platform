@@ -3806,13 +3806,12 @@
 <strong>Outcome:</strong> By the end you will have run a workflow, opened the dashboard, scored a result, and know where to find things next time.
 <strong>Last verified:</strong> 2026-07-05</p>
 </blockquote>
-<p>Welcome to <code>tafreeman/agentic-runtime-platform</code> -- a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities.</p>
-<p>This repository serves a dual mission:</p>
+<p><code>tafreeman/agentic-runtime-platform</code> is a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities. It serves two purposes:</p>
 <ol>
-<li><strong>Working platform</strong> -- a production-grade agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.</li>
-<li><strong>Reference implementation</strong> -- a living reference for enterprise team onboarding, demonstrating production-grade practices for regulated and enterprise environments.</li>
+<li><strong>Working platform</strong> -- an agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.</li>
+<li><strong>Reference implementation</strong> -- practices for regulated and enterprise environments, applied rather than just documented.</li>
 </ol>
-<p>This guide has five independent sections. The first (<strong>Quick Start</strong>) gets a workflow running in <strong>about 5 minutes</strong>. Working through all five sections takes roughly <strong>an hour</strong>. Stop wherever you have what you need.</p>
+<p>Six independent sections. <strong>Quick Start</strong> gets a workflow running in about 5 minutes; all six take roughly an hour. Stop wherever you have what you need.</p>
 <p>If you prefer a prebuilt environment, open the repository in the provided devcontainer. Otherwise, use the root <code>justfile</code> commands described below for the same bootstrap and test flow.</p>
 <hr />
 <h2 id="quick-start-5-minutes">Quick start (5 minutes)<a class="headerlink" href="#quick-start-5-minutes" title="Permanent link">&para;</a></h2>
@@ -3910,14 +3909,14 @@
 </ul>
 <hr />
 <h2 id="exploring-the-cli">Exploring the CLI<a class="headerlink" href="#exploring-the-cli" title="Permanent link">&para;</a></h2>
-<p>You can also explore agents, tools, and adapters:</p>
+<p>Explore agents, tools, and adapters:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>list<span class="w"> </span>agents
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>tools
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>agentic<span class="w"> </span>list<span class="w"> </span>adapters
 </span></code></pre></div>
 <hr />
 <h2 id="your-first-llm-workflow-run-10-minutes">Your first LLM workflow run (10 minutes)<a class="headerlink" href="#your-first-llm-workflow-run-10-minutes" title="Permanent link">&para;</a></h2>
-<p>Now let's run a real LLM-powered workflow like <code>code_review</code>.</p>
+<p>Run a real LLM-powered workflow like <code>code_review</code>.</p>
 <h3 id="1-create-an-input-file">1. Create an input file<a class="headerlink" href="#1-create-an-input-file" title="Permanent link">&para;</a></h3>
 <p>Create a file called <code>test_input.json</code>:</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
@@ -4019,7 +4018,7 @@
 </span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>input.json<span class="w"> </span>--adapter<span class="w"> </span>langchain<span class="w">   </span><span class="c1"># default</span>
 </span></code></pre></div>
 <h3 id="the-execution-pipeline">The execution pipeline<a class="headerlink" href="#the-execution-pipeline" title="Permanent link">&para;</a></h3>
-<p>Here is the flow from YAML to output:</p>
+<p>Flow from YAML to output:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Workflow YAML  --&gt;  WorkflowConfig (Pydantic model)
 </span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>                         |
 </span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>                    AdapterRegistry
@@ -4408,7 +4407,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 00:54:21 UTC">July 19, 2026</span>
   </span>
 
     
