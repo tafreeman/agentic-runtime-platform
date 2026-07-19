@@ -151,3 +151,86 @@ async def test_loop_until_still_terminates_at_loop_max_without_convergence() -> 
     assert len(seen) == 3
     steps_view = ctx.get_sync("steps")
     assert steps_view["refine_loop"]["outputs"]["review_status"] == "NEEDS_FIXES"
+
+
+# loop_max expression mirroring iterative_review.yaml's ``loop_max:
+# ${inputs.max_review_rounds}``. The loader stores this in
+# metadata["loop_max_expr"] and sets loop_max to the sentinel 0; only the
+# native engine's runtime resolution turns it back into a real bound.
+_LOOP_MAX_EXPR = "${inputs.max_review_rounds}"
+
+
+def _always_needs_fixes(seen: list[str]) -> Any:
+    """A reviewer step func that records each call and never approves."""
+
+    async def _reviewer(ctx: ExecutionContext) -> dict[str, Any]:
+        seen.append(str(ctx.get_sync("code") or ""))
+        return {"reworked_code": "unchanged", "review_status": "NEEDS_FIXES"}
+
+    return _reviewer
+
+
+def _expr_loop_step(func: Any) -> StepDefinition:
+    """A ``loop_until`` step bounded by ``${inputs.max_review_rounds}``.
+
+    Mirrors how the loader builds ``review_rework_loop`` for the native engine:
+    ``loop_max`` is the sentinel ``0`` and the real bound lives in
+    ``metadata["loop_max_expr"]``.
+    """
+    return StepDefinition(
+        name="refine_loop",
+        func=func,
+        loop_until=_APPROVED_WHEN,
+        loop_max=0,
+        metadata={"loop_max_expr": _LOOP_MAX_EXPR},
+        input_mapping={
+            "code": (
+                "${coalesce("
+                "steps.refine_loop.outputs.reworked_code, "
+                "steps.implement.outputs.code"
+                ")}"
+            ),
+        },
+        tier=ModelTier.TIER_2,
+    )
+
+
+async def test_native_loop_max_expression_bounds_iteration() -> None:
+    """The native engine resolves ``loop_max_expr`` from the workflow inputs.
+
+    Regression for the native-adapter defect: ``iterative_review.yaml`` sets
+    ``loop_max: ${inputs.max_review_rounds}``, which the loader stores as the
+    sentinel ``loop_max=0`` plus ``metadata["loop_max_expr"]``. Before the fix
+    the native ``_should_loop_again`` compared against the literal ``0`` (``1 <
+    0`` is False), so the review/rework loop ran exactly once regardless of
+    ``max_review_rounds``. With expression resolution wired, a never-approving
+    reviewer runs the full ``max_review_rounds`` rounds.
+    """
+    seen: list[str] = []
+    ctx = ExecutionContext()
+    ctx.set_sync("inputs", {"max_review_rounds": 3})
+    _seed_implement_view(ctx, "base")
+
+    step = _expr_loop_step(_always_needs_fixes(seen))
+    result = await StepExecutor().execute(step, ctx)
+
+    # Ran the full resolved bound (3), not the pre-fix single iteration.
+    assert len(seen) == 3, seen
+    assert len(seen) != 1
+    assert result.metadata.get("loop_iteration") == 3
+    steps_view = ctx.get_sync("steps")
+    assert steps_view["refine_loop"]["outputs"]["review_status"] == "NEEDS_FIXES"
+
+
+async def test_resolve_loop_max_falls_back_when_expression_unresolvable() -> None:
+    """A sentinel-0 step whose expression cannot resolve to an int uses the
+    parsed default (3), never the sentinel 0."""
+    ctx = ExecutionContext()  # no "inputs" seeded → ${inputs.*} resolves to None
+    step = StepDefinition(
+        name="refine_loop",
+        loop_until=_APPROVED_WHEN,
+        loop_max=0,
+        metadata={"loop_max_expr": _LOOP_MAX_EXPR},
+    )
+
+    assert StepExecutor._resolve_loop_max(step, ctx) == 3

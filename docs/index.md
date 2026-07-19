@@ -168,7 +168,7 @@ flowchart LR
   <div class="stat-label">Lines of Python</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">3,955</div>
+  <div class="stat-value">3,957</div>
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">
@@ -240,7 +240,7 @@ The engine ships with six production workflow definitions:
 | `fullstack_generation` | Parallel sub-steps | API design → frontend + backend in parallel → integration |
 | `iterative_review` | Multi-loop with bounded iteration | Review → feedback → revise until quality gates pass |
 | `conditional_branching` | Conditional DAG | Steps execute or skip based on runtime conditions |
-| `test_deterministic` | Tier-0 only | Deterministic step for testing without LLM calls |
+| `consensus_review` | Ensemble with majority vote | Three independent reviewers vote; summarize only on agreement |
 
 [Workflow reference](workflows/index.md){ .link-forward }
 

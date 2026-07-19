@@ -693,6 +693,42 @@ class StepExecutor:
         return True
 
     @staticmethod
+    def _resolve_loop_max(step_def: StepDefinition, ctx: ExecutionContext) -> int:
+        """Resolve the loop-iteration budget, deferring to a runtime expression.
+
+        The loader converts an expression-valued ``loop_max`` (e.g.
+        ``${inputs.max_review_rounds}`` in ``iterative_review.yaml``) to the
+        sentinel ``0`` and stores the real expression in
+        ``metadata["loop_max_expr"]``.  Resolve it here so the native engine
+        bounds iteration the same way the LangGraph path does (see
+        ``langchain.graph_wiring.resolve_loop_max``), falling back to the
+        parsed default when the expression is absent, fails to resolve, or does
+        not yield an int.
+        """
+        loop_max_expr = step_def.metadata.get("loop_max_expr")
+        if isinstance(loop_max_expr, str) and loop_max_expr:
+            from .expressions import ExpressionEvaluator
+
+            evaluator = ExpressionEvaluator(ctx, {})
+            match = evaluator.VARIABLE_PATTERN.fullmatch(loop_max_expr.strip())
+            resolved: Any = (
+                evaluator.resolve_variable(match.group(1).strip())
+                if match
+                else loop_max_expr
+            )
+            try:
+                return max(1, int(resolved))
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Step %s loop_max expression %r did not resolve to an "
+                    "integer; using parsed fallback %s.",
+                    step_def.name,
+                    loop_max_expr,
+                    step_def.loop_max,
+                )
+        return max(1, step_def.loop_max or 3)
+
+    @staticmethod
     def _should_loop_again(
         step_def: StepDefinition,
         ctx: ExecutionContext,
@@ -707,7 +743,7 @@ class StepExecutor:
             return False
 
         loop_iteration = result.metadata.get("loop_iteration", 1)
-        if loop_iteration < step_def.loop_max:
+        if loop_iteration < StepExecutor._resolve_loop_max(step_def, ctx):
             from .expressions import ExpressionEvaluator
 
             satisfied = ExpressionEvaluator(ctx, {}).evaluate(step_def.loop_until)
