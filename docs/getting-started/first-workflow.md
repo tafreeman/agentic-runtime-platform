@@ -8,17 +8,9 @@ tags:
 
 # Your first workflow
 
-This page walks through writing a custom workflow from an empty file to a
-successful run. The result is a small two-step DAG — `summarize` then
-`review` — that demonstrates every piece of the YAML grammar you'll need
-for real work.
-
-By the end you will have:
-
-- A workflow definition under `agentic-workflows-v2/agentic_v2/workflows/definitions/`
-- A passing `agentic validate` run
-- A successful `agentic run` against the deterministic backend
-- A clear picture of how steps, agents, contracts, and tools fit together
+Writes a custom workflow from an empty file to a successful run. The
+result is a small two-step DAG — `summarize` then `review` — that covers
+every piece of the YAML grammar you'll need for real work.
 
 ## Anatomy of a workflow
 

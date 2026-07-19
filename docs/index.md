@@ -1,6 +1,6 @@
 ---
 title: Agentic Runtime Platform
-description: Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.
+description: Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.
 hide:
   - toc
 ---
@@ -64,7 +64,7 @@ echo '{"task":"hello"}' > /tmp/test-input.json
 agentic run test_deterministic --input /tmp/test-input.json
 ```
 
-In under a minute the DAG executor emits a structured run record — step timings, tool calls, and a final scored artifact. No provider credentials required.
+In under a minute the DAG executor emits a structured run record — step timings, tool calls, and a final scored artifact.
 
 [Full walkthrough](getting-started/quickstart.md){ .link-forward }
 
@@ -94,7 +94,7 @@ flowchart LR
 
 <p class="section-kicker">capabilities</p>
 
-## Built for production from the first commit
+## Capabilities
 
 <div class="feature-grid" markdown>
 
@@ -193,9 +193,9 @@ flowchart LR
 
 <p class="section-kicker">engineering practice</p>
 
-## How it's built is the point
+## Engineering practice
 
-The platform is the demonstration; the practices are the argument. Everything below is committed, versioned, and CI-enforced — not described.
+Everything below is committed, versioned, and CI-enforced.
 
 <div class="feature-grid practice-grid" markdown>
 
@@ -248,7 +248,7 @@ The engine ships with six production workflow definitions:
 
 <p class="section-kicker">documentation</p>
 
-## Where to go next
+## Further reading
 
 <div class="doc-grid" markdown>
 
@@ -292,15 +292,4 @@ The engine ships with six production workflow definitions:
 - [Known limitations](KNOWN_LIMITATIONS.md) — honest accounting of caveats
 </div>
 
-</div>
-
-<div class="cta-card" markdown>
-### Evaluating this codebase? Start with the decision record.
-
-The fastest way to judge an engineering effort is the trail it leaves. The architecture overview maps the system as it stands; the ADR index shows how it got there — every trade-off dated, argued, and owned.
-
-<div class="hero-actions" markdown>
-[Read the ADR index](adr/ADR-INDEX.md){ .md-button .md-button--primary }
-[Open the architecture overview](ARCHITECTURE.md){ .md-button }
-</div>
 </div>
