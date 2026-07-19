@@ -2811,8 +2811,8 @@
 <strong>Date:</strong> 2026-07-17
 <strong>Related:</strong> <a href="../../CODING_STANDARDS/"><code>docs/CODING_STANDARDS.md</code></a> (Design
 rules: "Files under 800 lines"), <a href="../ADR-032-extract-scoring-package/">ADR-032</a>
-(documented-exception precedent for <code>evaluation_scoring.py</code>), the twelve files
-listed in the register below (all under <code>agentic-workflows-v2/agentic_v2/</code>)</p>
+(documented-exception precedent for <code>evaluation_scoring.py</code>), the thirteen
+files listed in the register below (all under <code>agentic-workflows-v2/agentic_v2/</code>)</p>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p><code>docs/CODING_STANDARDS.md</code> states the rule plainly: "Files under 800 lines —
 split before a module grows past this." That rule and the codebase have been
@@ -2913,6 +2913,12 @@ point here instead of listing files or counts inline.</p>
 <td>If the discovery-merge logic (<code>_merge_ollama_models</code>/<code>_merge_local_models</code>/<code>_merge_cloud_models</code>/<code>detect_registry_drift</code>) grows independently of the tier-fallback/registry-config logic it feeds, split live-discovery merging from static tier-chain configuration.</td>
 </tr>
 <tr>
+<td><code>agentic_v2/engine/step.py</code></td>
+<td>823 (2026-07-18)</td>
+<td>One native step-execution lifecycle: the <code>StepDefinition</code> contract with its builder API, the <code>RetryConfig</code> policy it embeds, and the <code>StepExecutor</code> state machine that runs a single step — attempt loop, timeout/cancel/exception handling, verification, and loop continuation (including expression-valued <code>loop_max</code> resolution added 2026-07-18 to mirror the LangGraph adapter, which pushed the file over the guide). These read and mutate the same per-attempt state; splitting the continuation check from the executor that owns the iteration state would scatter one loop's semantics across files read together anyway.</td>
+<td>If loop/refinement continuation semantics (expression resolution, iteration bookkeeping) grow independently testable from single-attempt execution (retry/timeout/verification), extract loop control into its own module; likewise if <code>StepDefinition</code>'s builder surface grows into a standalone DSL.</td>
+</tr>
+<tr>
 <td><code>agentic_v2/langchain/model_builders.py</code></td>
 <td>822</td>
 <td>One <code>build_*</code> factory function per supported provider (eleven: GitHub Models, OpenAI, NVIDIA, OpenRouter, Anthropic, Gemini, NotebookLM alias, Ollama, LM Studio, local API, local ONNX), each importing its provider-specific LangChain package lazily so installing one provider's dependency doesn't require installing all of them. The file is a single dispatch surface reached from one call site (<code>_build_model_by_prefix</code> in <code>models.py</code>).</td>
@@ -3007,7 +3013,7 @@ in what each file actually contains, not templated.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 03:45:30 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 02:16:48 UTC">July 19, 2026</span>
   </span>
 
     

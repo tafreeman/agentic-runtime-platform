@@ -2604,6 +2604,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 X-Tenant-ID is client-supplied and spoofable in the default configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3160,6 +3171,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 X-Tenant-ID is client-supplied and spoofable in the default configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3252,7 +3274,7 @@
 <blockquote>
 <p><strong>Audience:</strong> Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 <strong>Outcome:</strong> After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-<strong>Last verified:</strong> 2026-07-05</p>
+<strong>Last verified:</strong> 2026-07-18</p>
 </blockquote>
 <p>This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.</p>
 <p>Each item includes a <strong>Status</strong> (reflecting how we're treating it today) and an <strong>Upstream fix</strong> field pointing at the relevant ticket, workaround, or follow-up.</p>
@@ -3361,6 +3383,15 @@
 <li><strong>Status:</strong> Accepted. Application-layer guard + connection pinning shipped and tested (<code>tests/test_ssrf_guard.py</code>); network-layer egress control is an operator responsibility documented in <a href="../operations/security-hardening/">security-hardening.md §10</a>.</li>
 <li><strong>Upstream fix:</strong> None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.</li>
 </ul>
+<h3 id="45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration">4.5 <code>X-Tenant-ID</code> is client-supplied and spoofable in the default configuration<a class="headerlink" href="#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration" title="Permanent link">&para;</a></h3>
+<p>Tenant scoping (<a href="../adr/ADR-022-tenant-isolation/">ADR-022</a>) resolves a tenant from OIDC claims first, then falls back to the <code>X-Tenant-ID</code> request header when OIDC is inactive, then to the <code>default</code> tenant. In the shipped default configuration — OIDC disabled (<code>agentic_oidc_enabled</code> defaults to <code>False</code>) and no <code>AGENTIC_API_KEY</code> set (<code>server/auth.py</code>: "all requests pass through unchanged"; <code>server/lifespan.py</code> warns "all API routes are publicly accessible") — nothing authenticates the caller, so <code>X-Tenant-ID</code> is entirely client-supplied and any caller can select any tenant's scope by setting the header. Per ADR-022 this header is a <em>compatibility</em> mechanism, not a hard trust boundary.</p>
+<ul>
+<li><strong>Surface:</strong> <code>agentic_v2/core/tenant.py</code> (<code>get_tenant_context</code>), <code>agentic_v2/server/auth.py</code> (<code>APIKeyMiddleware</code>, reads <code>AGENTIC_API_KEY</code>), <code>agentic_v2/settings.py</code> (<code>agentic_oidc_enabled</code>).</li>
+<li><strong>Risk:</strong> With OIDC off and no API key, a caller can read or write another tenant's runs/datasets by choosing its <code>X-Tenant-ID</code>. Path-traversal checks still confine access to the <em>selected</em> tenant's directory, but nothing binds the request to the caller's <em>own</em> tenant.</li>
+<li><strong>Workaround:</strong> Enable OIDC (<code>AGENTIC_OIDC_ENABLED=1</code>) so tenant/org claims — not the header — drive scoping, and/or set <code>AGENTIC_API_KEY</code>; or place the server behind an authenticating gateway that strips or validates <code>X-Tenant-ID</code>.</li>
+<li><strong>Status:</strong> Accepted. <code>X-Tenant-ID</code> is a documented compatibility path for local/dev and API-key deployments (ADR-022), not a per-tenant security boundary in the unauthenticated default. <a href="../ROADMAP/">ROADMAP.md</a> E8-2 is worded to match.</li>
+<li><strong>Upstream fix:</strong> None at the header layer — tenant enforcement requires an authenticated identity (<a href="../adr/ADR-021-jwt-oidc-authentication/">ADR-021</a>) or a gateway.</li>
+</ul>
 <hr />
 <h2 id="5-documentation-and-process">5. Documentation and process<a class="headerlink" href="#5-documentation-and-process" title="Permanent link">&para;</a></h2>
 <h3 id="51-implementation-plans-for-epics-3-5-and-6-are-retrospective">5.1 Implementation plans for Epics 3, 5, and 6 are retrospective<a class="headerlink" href="#51-implementation-plans-for-epics-3-5-and-6-are-retrospective" title="Permanent link">&para;</a></h3>
@@ -3405,7 +3436,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 02:16:48 UTC">July 19, 2026</span>
   </span>
 
     
