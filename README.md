@@ -196,7 +196,7 @@ The engine ships with **6 production workflow definitions**:
 | `fullstack_generation` | Parallel sub-steps | API design → frontend + backend in parallel → integration |
 | `iterative_review` | Multi-loop with bounded iteration | Review → feedback → revise until quality gates pass |
 | `conditional_branching` | Conditional DAG | Steps execute or skip based on runtime conditions |
-| `test_deterministic` | Tier-0 only | Deterministic step for testing without LLM calls |
+| `consensus_review` | Ensemble with majority vote | Three independent reviewers vote; summarize only on agreement |
 
 ## Project Structure
 
@@ -332,6 +332,7 @@ ExecutionKit and Agentic Runtime Platform occupy different layers of the same st
 | Area | Artifact | Description |
 |------|----------|-------------|
 | Architecture decisions | [ADR Index](docs/adr/ADR-INDEX.md) | Full decision log with lineage chains and implementation tracking |
+| AI evidence | [AI_EVIDENCE_STANDARD.md](AI_EVIDENCE_STANDARD.md) | Dated, adversarially-verified self-audit scoring the repo against the AI Implementation Evidence Standard — open items and all |
 | Known debt | [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | Honest accounting with severity, workaround, and upstream-fix fields |
 | Security | [SECURITY.md](agentic-workflows-v2/SECURITY.md) | Coordinated disclosure policy and hardening guidance; includes rate-limit and per-IP 401 lockout configuration |
 | Supply chain | [Dependabot](.github/dependabot.yml) | Automated updates for pip, npm, and GitHub Actions |

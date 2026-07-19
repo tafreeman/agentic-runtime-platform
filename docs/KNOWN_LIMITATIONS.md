@@ -2,7 +2,7 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-05
+> **Last verified:** 2026-07-18
 
 This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.
 
@@ -130,6 +130,16 @@ The SSRF guard (`agentic_v2/security/url_guard.py`) validates a URL's resolved a
 - **Workaround:** For hostile-DNS threat models, add a **network-layer egress control** — an egress firewall, service-mesh authorization policy, or Kubernetes `NetworkPolicy` — restricting which addresses the server process may reach. Keep `AGENTIC_BLOCK_PRIVATE_IPS` on (the default).
 - **Status:** Accepted. Application-layer guard + connection pinning shipped and tested (`tests/test_ssrf_guard.py`); network-layer egress control is an operator responsibility documented in [security-hardening.md §10](operations/security-hardening.md).
 - **Upstream fix:** None planned at the application layer — this is an inherent limitation of resolving names in userspace. Operators must apply network controls for hostile-DNS threat models.
+
+### 4.5 `X-Tenant-ID` is client-supplied and spoofable in the default configuration
+
+Tenant scoping ([ADR-022](adr/ADR-022-tenant-isolation.md)) resolves a tenant from OIDC claims first, then falls back to the `X-Tenant-ID` request header when OIDC is inactive, then to the `default` tenant. In the shipped default configuration — OIDC disabled (`agentic_oidc_enabled` defaults to `False`) and no `AGENTIC_API_KEY` set (`server/auth.py`: "all requests pass through unchanged"; `server/lifespan.py` warns "all API routes are publicly accessible") — nothing authenticates the caller, so `X-Tenant-ID` is entirely client-supplied and any caller can select any tenant's scope by setting the header. Per ADR-022 this header is a *compatibility* mechanism, not a hard trust boundary.
+
+- **Surface:** `agentic_v2/core/tenant.py` (`get_tenant_context`), `agentic_v2/server/auth.py` (`APIKeyMiddleware`, reads `AGENTIC_API_KEY`), `agentic_v2/settings.py` (`agentic_oidc_enabled`).
+- **Risk:** With OIDC off and no API key, a caller can read or write another tenant's runs/datasets by choosing its `X-Tenant-ID`. Path-traversal checks still confine access to the *selected* tenant's directory, but nothing binds the request to the caller's *own* tenant.
+- **Workaround:** Enable OIDC (`AGENTIC_OIDC_ENABLED=1`) so tenant/org claims — not the header — drive scoping, and/or set `AGENTIC_API_KEY`; or place the server behind an authenticating gateway that strips or validates `X-Tenant-ID`.
+- **Status:** Accepted. `X-Tenant-ID` is a documented compatibility path for local/dev and API-key deployments (ADR-022), not a per-tenant security boundary in the unauthenticated default. [ROADMAP.md](ROADMAP.md) E8-2 is worded to match.
+- **Upstream fix:** None at the header layer — tenant enforcement requires an authenticated identity ([ADR-021](adr/ADR-021-jwt-oidc-authentication.md)) or a gateway.
 
 ---
 
