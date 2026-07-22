@@ -3297,7 +3297,7 @@
 <p>The <code>--cov-fail-under=80</code> gate measures the core runtime only. By design, <code>[tool.coverage.run] omit</code> in <code>agentic-workflows-v2/pyproject.toml</code> excludes optional provider and plugin surfaces from the gated number — notably the <strong>LangChain adapter</strong> (<code>agentic_v2/langchain/*</code>), the <strong>model backends/router</strong> (<code>agentic_v2/models/*</code>), MCP integrations, and CLI/prompt scaffolding.</p>
 <ul>
 <li><strong>Why:</strong> These surfaces require external services or extras installs and are exercised by their own targeted suites rather than the core unit run, so folding them into the gated percentage would make the number reflect provider availability rather than core-code health.</li>
-<li><strong>Surface:</strong> The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure.</li>
+<li><strong>Surface:</strong> The "coverage gate 80%+" badge therefore reflects core coverage, not whole-repo coverage. The LangChain adapter and model router are tested, but not inside the gated figure — explicitly, <code>agentic_v2/langchain/tools.py</code> (the LangChain adapter's own approval-gate re-implementation, see §4.3) and <code>agentic_v2/models/backends_base.py</code> / <code>backends_cloud.py</code> / <code>backends_local.py</code> (per-provider format translation) are listed individually by name in the coverage <code>omit</code> array (not merely swept in by a glob) and covered only by their own targeted suites, not the gated 80% figure.</li>
 <li><strong>Status:</strong> Intentional. Documented here so the badge is not read as a whole-repo claim.</li>
 <li><strong>Visibility:</strong> CI now publishes a separate ungated <code>whole-repo-coverage</code> artifact across the runtime, eval package, and shared tools using the same fast test selection without the core-only coverage omit list.</li>
 <li><strong>Upstream fix:</strong> Future sprint — decide whether any optional surface should move from visibility-only reporting into a blocking gate.</li>
@@ -3436,7 +3436,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 02:16:48 UTC">July 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 22, 2026 14:33:35 UTC">July 22, 2026</span>
   </span>
 
     
