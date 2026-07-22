@@ -1,6 +1,6 @@
 ---
 title: Agentic Runtime Platform
-description: Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.
+description: Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation, with a NIST AI RMF-mapped governance model.
 hide:
   - toc
 ---

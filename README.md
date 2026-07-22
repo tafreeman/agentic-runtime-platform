@@ -23,13 +23,14 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 |-----------|-------------|
 | **DAG Executor** | Kahn's algorithm scheduling with `asyncio` parallel dispatch — diamond dependencies, conditional execution, iterative refinement |
 | **Circuit-Breaker Model Router** | Bulkhead-isolated, health-weighted selection across 8+ providers with adaptive exponential cooldowns and HALF_OPEN single-probe circuit breakers — no single-provider lock-in |
-| **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, `build_app` build/test runners, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed |
+| **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, `build_app` build/test runners, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed. The shipped server does not register a provider by default, so gated calls stay denied until one is wired in — see [Known Limitations §4.3](docs/KNOWN_LIMITATIONS.md#43-human-approval-gates-are-programmatic-only-no-ui-pauseresume-yet) |
 | **Bias-Aware LLM-as-Judge** | Seeded criterion-shuffle positional-bias mitigation, swapped-order consistency checks, and MAE calibration against human-labeled fixtures |
 | **Non-Compensatory Gated Evaluation** | YAML-defined rubrics, DORA-inspired Elite/High/Medium/Low tiers, gated on a non-compensatory floor across all scoring dimensions |
 | **SSRF Guard (DNS-rebinding pinning)** | Default-on egress guard — resolves DNS, validates every returned address, and pins the connection to defeat rebinding, incl. cloud-metadata blocklisting |
 | **Self-Consistency Ensembling** | Majority-vote / self-consistency consensus across sampled completions for higher-stakes outputs |
 | **Structured Human-Escalation** | Dead-letter-style handoff path that routes unresolved or out-of-policy cases to a human reviewer instead of failing silently |
 | **React Dashboard** | Live DAG visualization with SSE/WebSocket streaming, OpenTelemetry-traced token usage tracking, historical runs |
+| **MCP Client** | [Model Context Protocol](agentic-workflows-v2/agentic_v2/integrations/mcp/README.md) client — stdio and WebSocket transports, capability discovery, and LLM-facing tool/prompt/resource adapters |
 | **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — the full test suite passes without API keys |
 
 **Engine defaults:** CLI, server, and dashboard requests use the LangGraph adapter (`adapter=langchain`) for named YAML workflows during the migration window. Use `--adapter native` or request `adapter: "native"` for the dependency-light native DAG/Pipeline path. Runtime-generated DAGs use the native engine by default. `AGENTIC_NO_LLM=1` changes provider calls to deterministic placeholders; it does not change engine selection.
@@ -161,6 +162,8 @@ graph TD
     end
 ```
 
+An [MCP client](agentic-workflows-v2/agentic_v2/integrations/mcp/README.md) — stdio and WebSocket transports, capability discovery, and LLM-facing tool/prompt/resource adapters — lives under `agentic-workflows-v2/agentic_v2/integrations/mcp/` for connecting to external Model Context Protocol servers.
+
 ## Key Design Decisions
 
 ### Why DAG over Pipeline?
@@ -211,7 +214,8 @@ agentic-runtime-platform/
 │   │   ├── langchain/             # LangGraph integration
 │   │   ├── server/                # FastAPI backend
 │   │   ├── rag/                   # Full RAG pipeline
-│   │   └── contracts/             # Pydantic I/O models
+│   │   ├── contracts/             # Pydantic I/O models
+│   │   └── integrations/mcp/      # MCP client (stdio + websocket transports, discovery, adapters)
 │   ├── ui/                        # React 19 dashboard
 │   └── tests/                     # Full runtime test suite (unit, integration, E2E)
 │

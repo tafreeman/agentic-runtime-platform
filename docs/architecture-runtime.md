@@ -403,7 +403,7 @@ Embedding (with hash-based cache)
 
 | Stage | Detail |
 |-------|--------|
-| **Document loading** | Plain text, Markdown, PDF, and HTML inputs |
+| **Document loading** | Plain text (`.txt`) and Markdown (`.md`, `.markdown`) inputs |
 | **Recursive chunking** | Splits documents by semantic boundaries (headings, paragraphs, sentences) before falling back to token-count limits |
 | **Content-hash deduplication** | Each chunk is hashed (SHA-256 of normalised content); duplicate chunks are skipped during embedding |
 | **Embedding** | Vectors are computed lazily and cached by content hash, avoiding re-embedding unchanged content across ingestion runs |
