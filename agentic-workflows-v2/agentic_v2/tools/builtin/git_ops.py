@@ -74,14 +74,15 @@ async def _run_git_command(
             cmd_list.extend(args)
 
         # Containment check: reject a cwd outside the configured sandbox
-        # root before any subprocess runs (ARP#2).
+        # root before any subprocess runs (ARP#2). The validated, resolved
+        # path is the one executed against, so the checked path and the
+        # subprocess cwd cannot diverge.
         try:
-            _validate_cwd(cwd)
+            cwd_path = _validate_cwd(cwd)
         except ValueError as e:
             return ToolResult(success=False, error=str(e))
 
         # Verify working directory exists
-        cwd_path = Path(cwd)
         if not cwd_path.exists():
             return ToolResult(
                 success=False, error=f"Working directory does not exist: {cwd}"

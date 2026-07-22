@@ -19,7 +19,7 @@ import subprocess
 from unittest.mock import AsyncMock, patch
 
 from agentic_v2.settings import get_settings
-from agentic_v2.tools.builtin.git_ops import GitStatusTool, GitTool
+from agentic_v2.tools.builtin.git_ops import GitDiffTool, GitStatusTool, GitTool
 
 # ---------------------------------------------------------------------------
 # Fail-closed: AGENTIC_FILE_BASE_DIR unset
@@ -107,3 +107,24 @@ async def test_git_tool_cwd_inside_base_dir_still_works(tmp_path):
 
     assert result.success is True
     assert "output" in result.data
+
+
+async def test_git_wrapper_tools_inside_base_dir_run_real_subprocess(tmp_path):
+    """GitStatusTool/GitDiffTool still reach a real git subprocess in-sandbox.
+
+    Guards the coverage the phase2d tests lost when the containment check
+    landed (they run without ``AGENTIC_FILE_BASE_DIR`` and now always hit the
+    fail-closed branch): the wrapper tools' argument branches (``short=True``,
+    ``cached=True``) must still execute an actual subprocess for a valid cwd.
+    """
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+
+    with patch.dict(os.environ, {"AGENTIC_FILE_BASE_DIR": str(tmp_path)}):
+        get_settings.cache_clear()
+        status_result = await GitStatusTool().execute(cwd=str(tmp_path), short=True)
+        diff_result = await GitDiffTool().execute(cwd=str(tmp_path), cached=True)
+
+    assert status_result.success is True
+    assert "output" in status_result.data
+    assert diff_result.success is True
+    assert "output" in diff_result.data
