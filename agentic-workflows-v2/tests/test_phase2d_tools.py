@@ -81,11 +81,16 @@ async def test_build_app_tool_exec_with_explicit_commands(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_git_tool_status():
-    """Test GitTool status command."""
+    """Test GitTool status command.
+
+    No AGENTIC_FILE_BASE_DIR is scoped here, so this fails closed (ARP#2
+    containment — see tests/tools/test_git_ops_containment.py for the
+    sandbox-scoped success/failure cases); it still must return a well-formed
+    ToolResult rather than raising.
+    """
     tool = GitTool()
     result = await tool.execute(command="status")
 
-    # Should succeed or fail gracefully if not a git repo
     assert isinstance(result.success, bool)
     if result.success:
         assert "output" in result.data
@@ -102,10 +107,24 @@ async def test_git_tool_invalid_command():
 
 
 @pytest.mark.asyncio
-async def test_git_tool_nonexistent_cwd():
-    """Test GitTool with non-existent working directory."""
+async def test_git_tool_nonexistent_cwd(tmp_path, monkeypatch):
+    """Test GitTool with a non-existent (but sandbox-contained) cwd.
+
+    ``cwd`` must live under ``AGENTIC_FILE_BASE_DIR`` (ARP#2 containment,
+    see tests/tools/test_git_ops_containment.py) — a path outside the base
+    is rejected before this "does not exist" check is ever reached, so this
+    test scopes the sandbox root to ``tmp_path`` and points at a missing
+    subdirectory of it.
+    """
+    import agentic_v2.settings as settings_mod
+
+    monkeypatch.setenv("AGENTIC_FILE_BASE_DIR", str(tmp_path))
+    settings_mod.get_settings.cache_clear()
+
     tool = GitTool()
-    result = await tool.execute(command="status", cwd="/nonexistent/path")
+    result = await tool.execute(
+        command="status", cwd=str(tmp_path / "nonexistent_subdir")
+    )
 
     assert not result.success
     assert "does not exist" in result.error.lower()
