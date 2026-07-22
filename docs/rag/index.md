@@ -190,7 +190,7 @@ Built-in loaders:
 
 | Loader | Handles |
 |---|---|
-| `MarkdownLoader` | `.md`, `.mdx` files |
+| `MarkdownLoader` | `.md`, `.markdown` files |
 | `TextLoader` | Plain `.txt` files |
 | `DirectoryLoader` | Recursively walks a directory, dispatching to per-extension loaders |
 
