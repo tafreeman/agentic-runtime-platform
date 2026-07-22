@@ -127,7 +127,7 @@ agentic_v2/rag/           # peer to agents/, workflows/, tools/
     config.py              # Pydantic settings with from_yaml() classmethod
     contracts.py           # all typed contracts (ChunkMetadata, RetrievalQuery, etc.)
     ingestion.py           # IngestionPipeline orchestrator
-    loaders.py             # document loaders (PDF, Markdown, HTML)
+    loaders.py             # document loaders (plain text, Markdown)
     chunking.py            # strategy pattern: RecursiveChunker, SemanticChunker
     embeddings.py          # EmbeddingProvider protocol + LiteLLM-backed factory
     vectorstore.py         # VectorStore protocol + factory (LanceDB primary)
