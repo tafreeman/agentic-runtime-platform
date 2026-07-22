@@ -6,8 +6,37 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+from ...settings import get_settings
+from ...utils.path_safety import ensure_within_base
 from ..base import BaseTool, ToolResult
 from ..subprocess_utils import minimal_subprocess_env
+
+
+def _validate_cwd(cwd: str) -> Path:
+    """Resolve and validate that *cwd* is within the configured base directory.
+
+    Mirrors ``file_ops._validate_path``: the sandbox root
+    (``AGENTIC_FILE_BASE_DIR``) is read at call time via ``get_settings()``
+    rather than captured at import, so a dynamic config change or
+    ``monkeypatch`` of the environment is honoured by every subsequent
+    validation.
+
+    When ``AGENTIC_FILE_BASE_DIR`` is not set or empty, this function raises a
+    ``ValueError`` so that every git tool fails closed. Operators must set the
+    environment variable to a directory that agents are permitted to run git
+    commands in.
+
+    Raises:
+        ValueError: If ``AGENTIC_FILE_BASE_DIR`` is unset/empty, or ``cwd``
+            escapes the configured base directory.
+    """
+    file_base_dir = get_settings().agentic_file_base_dir
+    if not file_base_dir:
+        raise ValueError(
+            "AGENTIC_FILE_BASE_DIR must be set to use git tools. "
+            "Set it to the directory agents are allowed to read and write."
+        )
+    return ensure_within_base(cwd, file_base_dir)
 
 
 async def _run_git_command(
@@ -44,8 +73,16 @@ async def _run_git_command(
         if args:
             cmd_list.extend(args)
 
+        # Containment check: reject a cwd outside the configured sandbox
+        # root before any subprocess runs (ARP#2). The validated, resolved
+        # path is the one executed against, so the checked path and the
+        # subprocess cwd cannot diverge.
+        try:
+            cwd_path = _validate_cwd(cwd)
+        except ValueError as e:
+            return ToolResult(success=False, error=str(e))
+
         # Verify working directory exists
-        cwd_path = Path(cwd)
         if not cwd_path.exists():
             return ToolResult(
                 success=False, error=f"Working directory does not exist: {cwd}"

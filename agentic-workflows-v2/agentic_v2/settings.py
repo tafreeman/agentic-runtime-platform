@@ -493,7 +493,11 @@ class Settings(BaseSettings):
 
     # --- Tool: file operations ---
     agentic_file_base_dir: str | None = Field(
-        default=None, description="Base directory for file operations (sandbox root)"
+        default=None,
+        description=(
+            "Base directory (sandbox root) for file operations and the git "
+            "tools' cwd"
+        ),
     )
 
     # --- Tool: HTTP operations ---
