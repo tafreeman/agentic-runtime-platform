@@ -121,3 +121,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Dependabot treats 3.11 -> 3.14 as a MINOR bump of the python image, so
+      # the wildcard major-only rule above does not stop it. An interpreter bump
+      # changes the ABI tag the image installs wheels for and has repeatedly
+      # broken the release image (PRs #106, #158, #222: pinned zstandard/cffi
+      # have no cp314 wheels, so pip source-builds and fails on slim). Bump the
+      # base image deliberately, together with requires-python and the CI matrix.
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor"]
