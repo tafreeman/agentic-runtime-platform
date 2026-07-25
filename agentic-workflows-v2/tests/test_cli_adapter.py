@@ -13,11 +13,19 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
-from agentic_v2.cli.main import app
+from agentic_v2.cli.helpers import _run_adapter
+from agentic_v2.cli.main import _LANGCHAIN_AVAILABLE, app
+from agentic_v2.core.errors import AdapterNotFoundError
+from agentic_v2.workflows.loader import WorkflowLoader
 
 runner = CliRunner()
+
+# A tier-0 workflow that runs without an LLM or any network access.
+DETERMINISTIC_WORKFLOW = "test_deterministic"
+DETERMINISTIC_INPUT = '{"input_text": "hello world"}'
 
 
 # ---------------------------------------------------------------------------
@@ -150,8 +158,14 @@ class TestCompareCommand:
 
     @patch("agentic_v2.cli.main.load_workflow_config")
     @patch("agentic_v2.cli.main._run_adapter")
-    def test_compare_handles_adapter_failure(self, mock_run_adapter, mock_load_config):
-        """Compare reports failure status when an adapter raises."""
+    def test_compare_exits_nonzero_when_an_adapter_fails(
+        self, mock_run_adapter, mock_load_config
+    ):
+        """A failed adapter row makes compare exit non-zero.
+
+        A comparison in which one side never ran is not a valid comparison,
+        so it must not be reportable as success to a script or CI job.
+        """
         mock_load_config.return_value = MagicMock(
             name="test_workflow", description="Test"
         )
@@ -173,11 +187,12 @@ class TestCompareCommand:
                     str(input_path),
                 ],
             )
-            assert result.exit_code == 0
-            # Should still complete and show results for both
-            assert (
-                "success" in result.stdout.lower() or "failed" in result.stdout.lower()
-            )
+            assert result.exit_code == 1
+            # Both adapters still ran and both rows are still shown — the
+            # table is printed in full before the non-zero exit.
+            assert mock_run_adapter.call_count == 2
+            assert "native" in result.stdout
+            assert "langchain" in result.stdout
 
     def test_compare_nonexistent_input_file(self):
         """Compare fails when input file does not exist."""
@@ -192,6 +207,105 @@ class TestCompareCommand:
         )
         assert result.exit_code == 1
         assert "not found" in result.stdout.lower() or "error" in result.stdout.lower()
+
+
+class TestCompareNativeAdapter:
+    """The native row of ``compare`` must reflect a real execution.
+
+    Regression cover for ARP-3: ``_run_adapter`` used to hand the workflow
+    *name* straight to ``NativeEngine.execute``, which only accepts a DAG or
+    Pipeline.  The resulting ``TypeError`` was swallowed into a
+    ``failed``/0-step row while ``compare`` still exited 0, so a comparison
+    where only one adapter actually ran looked like a clean cross-adapter
+    result.
+    """
+
+    def test_native_adapter_executes_the_workflow(self, monkeypatch):
+        """The native adapter reports the workflow's real status and steps."""
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        expected_steps = len(WorkflowLoader().load(DETERMINISTIC_WORKFLOW).dag.steps)
+
+        summary = _run_adapter(
+            "native",
+            DETERMINISTIC_WORKFLOW,
+            {"input_text": "hello world"},
+        )
+
+        assert summary["status"] == "success"
+        assert summary["step_count"] == expected_steps
+
+    def test_unregistered_adapter_raises_instead_of_reporting_failed(self):
+        """A typo'd adapter name surfaces the registry error, not a failed row.
+
+        Swallowing it into ``{"status": "failed"}`` would hide the
+        "Available: ..." hint behind a row that looks like a workflow
+        failure, so adapter lookup stays outside the execution try/except.
+        """
+        with pytest.raises(AdapterNotFoundError, match="no_such_adapter"):
+            _run_adapter(
+                "no_such_adapter",
+                DETERMINISTIC_WORKFLOW,
+                {"input_text": "hello world"},
+            )
+
+    @pytest.mark.skipif(
+        not _LANGCHAIN_AVAILABLE,
+        reason="compare resolves the workflow config through the langchain loader",
+    )
+    def test_compare_native_only_succeeds_end_to_end(self, monkeypatch, tmp_path):
+        """End-to-end: the native row succeeds and compare exits 0."""
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        input_path = tmp_path / "input.json"
+        input_path.write_text(DETERMINISTIC_INPUT)
+
+        result = runner.invoke(
+            app,
+            [
+                "compare",
+                DETERMINISTIC_WORKFLOW,
+                "--input",
+                str(input_path),
+                "--adapters",
+                "native",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "success" in result.stdout
+
+    @pytest.mark.skipif(
+        not _LANGCHAIN_AVAILABLE,
+        reason="compare resolves the workflow config through the langchain loader",
+    )
+    def test_compare_exits_nonzero_when_execution_blows_up(self, monkeypatch, tmp_path):
+        """End-to-end: an adapter that raises mid-run makes compare exit non-zero.
+
+        Exercises the real ``_run_adapter`` — its ``except`` branch turns the
+        error into a ``failed`` row, which ``compare`` must then treat as a
+        non-zero outcome rather than printing the table and exiting 0.
+        """
+        monkeypatch.setenv("AGENTIC_NO_LLM", "1")
+        input_path = tmp_path / "input.json"
+        input_path.write_text(DETERMINISTIC_INPUT)
+
+        with patch(
+            "agentic_v2.cli.helpers._run_via_adapter",
+            side_effect=RuntimeError("engine exploded"),
+        ):
+            result = runner.invoke(
+                app,
+                [
+                    "compare",
+                    DETERMINISTIC_WORKFLOW,
+                    "--input",
+                    str(input_path),
+                    "--adapters",
+                    "native",
+                ],
+            )
+
+        assert result.exit_code == 1
+        assert "native" in result.stdout
 
 
 # ---------------------------------------------------------------------------
