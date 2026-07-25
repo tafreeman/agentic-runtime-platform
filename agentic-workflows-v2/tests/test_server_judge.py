@@ -384,6 +384,25 @@ def test_validate_reports_missing_expected_criteria():
     assert any("missing criteria: completeness" in e for e in errors)
 
 
+def test_validate_matches_expected_criteria_ignoring_whitespace():
+    """Padding on either side of the name comparison is not a missing criterion.
+
+    The response name and the expected name are canonicalized by the same
+    rule, so a padded rubric entry or a padded judge echo still matches.
+    """
+    payload = {
+        "criteria": [
+            {"name": " correctness ", "score": 4, "evidence": "ok"},
+            {"name": "completeness", "score": 4, "evidence": "ok"},
+        ]
+    }
+    ok, errors = validate_judge_structured_output(
+        payload, expected_criteria={"correctness", "\tcompleteness\n"}
+    )
+    assert ok is True
+    assert errors == []
+
+
 def test_validate_without_expected_criteria_accepts_any_names():
     """When expected_criteria is None, any valid criterion name is accepted."""
     payload = {"criteria": [{"name": "arbitrary_name", "score": 3, "evidence": "fine"}]}
@@ -434,6 +453,20 @@ def test_swapped_consistency_ignores_criteria_only_in_one_payload():
     consistent, reasons = check_swapped_order_consistency(forward, swapped)
     assert consistent is True
     assert reasons == []
+
+
+def test_swapped_consistency_compares_across_whitespace_padding():
+    """The same criterion padded in one order only is still compared.
+
+    Whitespace differences between the two presentations must not let a
+    positionally-biased criterion escape the check by looking like two
+    unrelated names.
+    """
+    forward = {"criteria": [{"name": " c1 ", "score": 5}]}
+    swapped = {"criteria": [{"name": "c1", "score": 1}]}
+    consistent, reasons = check_swapped_order_consistency(forward, swapped)
+    assert consistent is False
+    assert reasons == ["c1"]
 
 
 # ---------------------------------------------------------------------------
@@ -520,24 +553,57 @@ def test_evaluate_normalizes_scores_correctly():
     assert result.normalized_score == pytest.approx(0.5)
 
 
-def test_evaluate_defaults_missing_criterion_from_response():
-    """Criterion not in judge response gets default raw_score=3.0."""
+@pytest.mark.parametrize(
+    "padded_name",
+    [" correctness ", "correctness  ", "\tcorrectness\n"],
+    ids=["both_sides", "trailing", "tab_and_newline"],
+)
+def test_evaluate_keeps_score_when_judge_pads_criterion_name(padded_name):
+    """A present criterion is scored even when the judge pads its name.
 
-    def _provider(*, prompt: str, model: str, temperature: float):
-        # Only return 'correctness', omit 'completeness'
+    Judges echo rubric names as free text and routinely add surrounding
+    whitespace. The padded name must still resolve to the score the judge
+    actually gave — not silently collapse to the missing-criterion
+    fallback (raw 3.0 / ``missing_from_response``), which would corrupt
+    every downstream eval and calibration number.
+    """
+
+    def _padding_provider(*, prompt: str, model: str, temperature: float):
         return {
             "criteria": [
-                {"name": "correctness", "score": 5, "evidence": "great"},
-                {
-                    "name": "completeness",
-                    "score": 3,
-                    "evidence": "missing_from_response",
-                },
+                {"name": padded_name, "score": 5, "evidence": "great"},
+                {"name": "novelty", "score": 1, "evidence": "derivative"},
             ]
         }
 
-    # Use a provider that returns only one criterion but we'll test the
-    # default path by having the judge ask for criteria it doesn't return
+    judge = LLMJudge(response_provider=_padding_provider)
+    result = judge.evaluate(
+        candidate_output="test",
+        criteria=[
+            JudgeCriterionDefinition(name="correctness"),
+            JudgeCriterionDefinition(name="novelty"),
+        ],
+    )
+
+    by_name = {c.name: c for c in result.criteria}
+    # The reported name is the rubric's, not the judge's padded echo.
+    assert set(by_name) == {"correctness", "novelty"}
+    assert by_name["correctness"].raw_score == 5.0
+    assert by_name["correctness"].normalized_score == pytest.approx(1.0)
+    assert by_name["correctness"].evidence == "great"
+    assert by_name["novelty"].raw_score == 1.0
+
+
+def test_evaluate_rejects_response_genuinely_missing_a_criterion():
+    """A criterion truly absent from the response fails validation loudly.
+
+    This is the real fate of a missing criterion on the production path:
+    ``validate_judge_structured_output`` rejects the payload before any
+    scoring happens, so ``evaluate()`` raises instead of inventing a
+    number. The ``missing_from_response`` fallback in ``evaluate()`` sits
+    behind that check as defence in depth.
+    """
+
     def _partial_provider(*, prompt: str, model: str, temperature: float):
         return {
             "criteria": [
@@ -546,32 +612,14 @@ def test_evaluate_defaults_missing_criterion_from_response():
         }
 
     judge = LLMJudge(response_provider=_partial_provider)
-    # This will fail validation because 'completeness' is missing
-    # The validate_judge_structured_output checks expected_criteria
-    # So let's test the fallback with a single criterion not in response
-    single_criteria = [
-        JudgeCriterionDefinition(name="correctness"),
-        JudgeCriterionDefinition(name="novelty"),
-    ]
-
-    # Need to bypass validation — provide a provider that returns both
-    # names but we can test the scores_by_name lookup
-    def _both_provider(*, prompt: str, model: str, temperature: float):
-        return {
-            "criteria": [
-                {"name": "correctness", "score": 5, "evidence": "great"},
-                {"name": "novelty", "score": 3, "evidence": "ok"},
-            ]
-        }
-
-    judge2 = LLMJudge(response_provider=_both_provider)
-    result = judge2.evaluate(
-        candidate_output="test",
-        criteria=single_criteria,
-    )
-    by_name = {c.name: c for c in result.criteria}
-    assert by_name["correctness"].raw_score == 5.0
-    assert by_name["novelty"].raw_score == 3.0
+    with pytest.raises(ValueError, match="missing criteria: novelty"):
+        judge.evaluate(
+            candidate_output="test",
+            criteria=[
+                JudgeCriterionDefinition(name="correctness"),
+                JudgeCriterionDefinition(name="novelty"),
+            ],
+        )
 
 
 def test_evaluate_raises_when_response_schema_invalid():
@@ -796,6 +844,40 @@ def test_calibration_outside_tolerance():
     )
     assert report["within_tolerance"] is False
     assert report["mae"] > 0.5
+
+
+def test_calibration_matches_human_scores_ignoring_whitespace():
+    """A padded human-score key still pairs with its rubric criterion.
+
+    An unmatched key contributes no delta, so a padded fixture label would
+    silently report MAE 0.0 — a calibration check that always passes.
+    """
+
+    def _provider(*, prompt: str, model: str, temperature: float):
+        return {
+            "criteria": [
+                {"name": "correctness", "score": 5.0, "evidence": "way off"},
+                {"name": "completeness", "score": 5.0, "evidence": "way off"},
+            ]
+        }
+
+    judge = LLMJudge(response_provider=_provider)
+    report = evaluate_calibration_set(
+        judge=judge,
+        fixtures=[
+            {
+                "candidate_output": "candidate",
+                "expected_output": "expected",
+                "criteria": _criteria(),
+                "human_scores": {" correctness ": 1.0, "completeness\n": 1.0},
+            }
+        ],
+        tolerance=0.5,
+    )
+    # The judge is far from the human labels, so the padded keys must
+    # produce a real, out-of-tolerance error rather than a vacuous 0.0.
+    assert report["mae"] > 0.5
+    assert report["within_tolerance"] is False
 
 
 def test_calibration_empty_fixtures():
