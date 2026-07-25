@@ -329,6 +329,9 @@ def compare(
     adapter, then prints a comparison table showing status, step count,
     and elapsed time.
 
+    Exits non-zero if any adapter failed — a run where one side never
+    executed is not a valid comparison.
+
     Examples:
         agentic compare code_review --input review_input.json
         agentic compare code_review -i input.json --adapters native,langchain
@@ -359,6 +362,8 @@ def compare(
         table.add_column("Steps", justify="right")
         table.add_column("Elapsed (s)", justify="right")
 
+        failed_adapters: list[str] = []
+
         for adapter_name in adapter_names:
             with Progress(
                 SpinnerColumn(),
@@ -368,6 +373,9 @@ def compare(
             ) as progress:
                 progress.add_task(f"Running {adapter_name}...", total=None)
                 summary = _run_adapter(adapter_name, workflow, input_data)
+
+            if summary["status"] == "failed":
+                failed_adapters.append(adapter_name)
 
             status_display = (
                 f"[green]{summary['status']}[/green]"
@@ -382,6 +390,15 @@ def compare(
             )
 
         console.print(table)
+
+        # The table is printed first so the user still sees every row, but a
+        # comparison in which an adapter never ran is not a valid comparison —
+        # exit non-zero so scripts and CI do not read it as agreement.
+        if failed_adapters:
+            console.print(
+                f"[red]Error:[/red] adapter(s) failed: {', '.join(failed_adapters)}"
+            )
+            raise typer.Exit(1)
 
     except typer.Exit:
         raise

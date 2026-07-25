@@ -210,12 +210,31 @@ def _run_via_adapter(
     return _normalize_result(workflow_name, result, wall_clock)
 
 
+def _summarize_for_compare(result: _NormalizedResult) -> dict[str, Any]:
+    """Reduce a normalised result to the summary row the compare table shows."""
+    return {
+        "status": result.status,
+        "step_count": len(result.steps),
+        "elapsed": round(result.elapsed_seconds, 2),
+    }
+
+
 def _run_adapter(
     adapter_name: str,
     workflow_name: str,
-    input_data: dict,
-) -> dict:
+    input_data: dict[str, Any],
+) -> dict[str, Any]:
     """Run a workflow through a specific adapter and return summary metrics.
+
+    Each adapter takes a different ``workflow`` argument: the LangChain
+    adapter resolves a workflow *name* itself, while the native engine
+    needs an already-loaded :class:`~agentic_v2.engine.dag.DAG` plus an
+    :class:`~agentic_v2.engine.context.ExecutionContext`.  Non-LangChain
+    adapters therefore go through :func:`_run_via_adapter`, which performs
+    that resolution; passing the bare name straight to the native engine
+    makes it raise ``TypeError`` and report a spurious ``failed`` row.
+    (The same name-based split exists in ``main.py::_execute_run``;
+    unifying the two loading paths is ADR-001 Phase 2 work.)
 
     Args:
         adapter_name: Registered adapter name (e.g. ``"native"``, ``"langchain"``).
@@ -223,29 +242,30 @@ def _run_adapter(
         input_data: Input variables for the workflow.
 
     Returns:
-        Dict with ``status``, ``step_count``, and ``elapsed`` keys.
+        Dict with ``status``, ``step_count``, and ``elapsed`` keys.  A
+        ``status`` of ``"failed"`` with zero steps is returned when the
+        adapter raises during execution, so callers must treat that row as
+        a failure.
+
+    Raises:
+        AdapterNotFoundError: If *adapter_name* is not registered.
     """
     from ..adapters import get_registry
 
-    registry = get_registry()
-    engine = registry.get_adapter(adapter_name)
+    # Resolved outside the try below: an unregistered adapter name is a
+    # user error (usually a typo) and should surface with the registry's
+    # "Available: ..." hint rather than be flattened into a failed row.
+    engine = get_registry().get_adapter(adapter_name)
 
     start = time.perf_counter()
     try:
-        result = asyncio.run(engine.execute(workflow_name, **input_data))
-        elapsed = time.perf_counter() - start
-        step_count = len(getattr(result, "steps", []))
-        overall_status = getattr(result, "overall_status", None)
-        status = (
-            _status_str(overall_status)
-            if overall_status is not None
-            else str(getattr(result, "status", "unknown"))
-        )
-        return {
-            "status": status,
-            "step_count": step_count,
-            "elapsed": round(elapsed, 2),
-        }
+        if adapter_name == "langchain":
+            raw_result = asyncio.run(engine.execute(workflow_name, **input_data))
+            wall_clock = time.perf_counter() - start
+            normalized = _normalize_result(workflow_name, raw_result, wall_clock)
+        else:
+            normalized = _run_via_adapter(adapter_name, workflow_name, input_data)
+        return _summarize_for_compare(normalized)
     except Exception as exc:
         elapsed = time.perf_counter() - start
         logger.debug("Adapter %s failed: %s", adapter_name, exc)
