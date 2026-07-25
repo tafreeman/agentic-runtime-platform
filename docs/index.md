@@ -168,7 +168,7 @@ flowchart LR
   <div class="stat-label">Lines of Python</div>
 </div>
 <div class="stat-item">
-  <div class="stat-value">3,966</div>
+  <div class="stat-value">3,970</div>
   <div class="stat-label">Backend tests</div>
 </div>
 <div class="stat-item">

@@ -212,6 +212,39 @@ def _extract_first_json_object(raw: str) -> dict[str, Any]:
     return json.loads(match.group(0))
 
 
+def _canonical_criterion_name(name: object) -> str:
+    """Return the canonical form of a criterion name, used for *matching only*.
+
+    Criterion names reach this module from two independent sources: the
+    rubric supplied by the caller, and the free-text names echoed back by
+    the judge model, which routinely pads what it echoes.  Every place
+    this module matches one criterion name against another routes *both*
+    sides through this function, so the two sides cannot disagree about
+    normalization.  They did once: the schema validator stripped the
+    response name while the score lookup did not, so a padded-but-scored
+    criterion was silently reported as the ``missing_from_response``
+    fallback.
+
+    Canonicalization is deliberately limited to surrounding whitespace.
+    Case is significant: a judge that answers ``Correctness`` for a
+    ``correctness`` rubric entry is not following the rubric, and the
+    loud ``missing criteria`` validation error is the right answer.
+
+    This is a matching key only.  The name reported in
+    :class:`JudgeCriterionScore` is the caller's rubric name verbatim,
+    because downstream consumers key their own tables by that exact
+    string.
+
+    Args:
+        name: A criterion name from a rubric definition or from an
+            as-yet-unvalidated judge response (hence ``object``).
+
+    Returns:
+        The name with surrounding whitespace removed.
+    """
+    return str(name).strip()
+
+
 def validate_judge_structured_output(
     payload: dict[str, Any],
     *,
@@ -223,6 +256,10 @@ def validate_judge_structured_output(
     ``name`` (non-empty string), ``score`` (numeric, 1--5), and ``evidence``
     (string).  Optionally verifies that all ``expected_criteria`` names
     are present.
+
+    Both the response names and ``expected_criteria`` are compared after
+    :func:`_canonical_criterion_name`, so surrounding whitespace on
+    either side never produces a spurious ``missing criteria`` error.
 
     Args:
         payload: Parsed JSON dict from the judge.
@@ -245,7 +282,8 @@ def validate_judge_structured_output(
             errors.extend(_validate_judge_criterion_item(idx, item, seen))
 
         if expected_criteria:
-            missing = sorted(expected_criteria - seen)
+            expected = {_canonical_criterion_name(name) for name in expected_criteria}
+            missing = sorted(expected - seen)
             if missing:
                 errors.append(f"missing criteria: {', '.join(missing)}")
 
@@ -262,7 +300,8 @@ def _validate_judge_criterion_item(
     Args:
         idx: Index of the entry within the ``criteria`` list (for messages).
         item: The raw criterion entry to validate.
-        seen: Mutable set of valid criterion names collected so far.
+        seen: Mutable set of canonical criterion names collected so far
+            (see :func:`_canonical_criterion_name`).
 
     Returns:
         A list of validation error messages (empty when the entry is valid).
@@ -279,7 +318,7 @@ def _validate_judge_criterion_item(
     if not isinstance(name, str) or not name.strip():
         errors.append(f"criteria[{idx}].name must be non-empty string")
     else:
-        seen.add(name.strip())
+        seen.add(_canonical_criterion_name(name))
 
     score = item.get("score")
     if not isinstance(score, (int, float)):
@@ -303,7 +342,10 @@ def check_swapped_order_consistency(
     """Detect positional bias by comparing forward and swapped-order judge scores.
 
     For each criterion present in both payloads, checks whether the
-    absolute score difference exceeds ``max_delta``.
+    absolute score difference exceeds ``max_delta``.  Both payloads are
+    keyed by :func:`_canonical_criterion_name`, so a criterion the model
+    pads in one presentation order but not the other is still compared
+    rather than silently dropped from the bias check.
 
     Args:
         forward_payload: Judge output from the original presentation order.
@@ -314,12 +356,12 @@ def check_swapped_order_consistency(
         A 2-tuple of ``(is_consistent, list_of_inconsistent_criterion_names)``.
     """
     forward = {
-        str(item.get("name")): float(item.get("score"))
+        _canonical_criterion_name(item.get("name")): float(item.get("score"))
         for item in forward_payload.get("criteria", [])
         if isinstance(item, dict) and item.get("name") is not None
     }
     swapped = {
-        str(item.get("name")): float(item.get("score"))
+        _canonical_criterion_name(item.get("name")): float(item.get("score"))
         for item in swapped_payload.get("criteria", [])
         if isinstance(item, dict) and item.get("name") is not None
     }
@@ -347,7 +389,9 @@ def evaluate_calibration_set(
         judge: The :class:`LLMJudge` instance to evaluate.
         fixtures: List of calibration fixture dicts, each containing
             ``candidate_output``, ``expected_output``, ``criteria``,
-            and ``human_scores`` (mapping criterion name to float).
+            and ``human_scores`` (mapping criterion name to float;
+            matched against rubric names via
+            :func:`_canonical_criterion_name`).
         tolerance: Maximum acceptable MAE.
 
     Returns:
@@ -364,11 +408,14 @@ def evaluate_calibration_set(
             expected_output=str(fixture.get("expected_output", "")),
             criteria=criteria,
         )
+        human_by_name = {
+            _canonical_criterion_name(name): value
+            for name, value in human_scores.items()
+        }
         for criterion in result.criteria:
-            if criterion.name in human_scores:
-                deltas.append(
-                    abs(criterion.raw_score - float(human_scores[criterion.name]))
-                )
+            key = _canonical_criterion_name(criterion.name)
+            if key in human_by_name:
+                deltas.append(abs(criterion.raw_score - float(human_by_name[key])))
 
     mae = (sum(deltas) / len(deltas)) if deltas else 0.0
     return {
@@ -540,17 +587,24 @@ class LLMJudge:
                 f"inconsistent_swapped_order:{criterion}" for criterion in inconsistent
             ]
 
+        # Keyed by canonical name, and read back below by canonical name:
+        # the judge echoes rubric names as free text and may pad them, so
+        # both sides of this lookup must agree on normalization.
         scores_by_name: dict[str, tuple[float, str]] = {}
         for item in forward_payload.get("criteria", []):
-            name = str(item["name"])
+            name = _canonical_criterion_name(item["name"])
             raw_score = float(item["score"])
             evidence = str(item.get("evidence", ""))
             scores_by_name[name] = (raw_score, evidence)
 
         criterion_scores: list[JudgeCriterionScore] = []
         for criterion in normalized_criteria:
+            # Defence in depth: schema validation above already rejects a
+            # response missing an expected criterion, so a real omission
+            # raises rather than reaching this fallback.
             raw_score, evidence = scores_by_name.get(
-                criterion.name, (3.0, "missing_from_response")
+                _canonical_criterion_name(criterion.name),
+                (3.0, "missing_from_response"),
             )
             normalized_score = normalize_score(raw_score, "likert_1_5")
             criterion_scores.append(
