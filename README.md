@@ -61,8 +61,8 @@ cp .env.example .env
 
 # Start the dashboard
 uvicorn agentic_v2.server.app:create_app --factory --reload --port 8010
-# In another terminal:
-cd ui && npm run dev
+# In another terminal, from the repo root:
+cd agentic-workflows-v2/ui && npm run dev
 ```
 
 See [the full onboarding guide](https://tafreeman.github.io/agentic-runtime-platform/ONBOARDING/) for detailed setup instructions.
