@@ -19,6 +19,16 @@
 # (a) have a reported CVSS v3 base score >= 7.0 (HIGH/CRITICAL), or
 # (b) have no reported score (treated as HIGH to be conservative).
 # The audit results JSON is retained as a build artifact for 30 days.
+#
+# The npm job is built the same way, for a related reason: `npm audit
+# --audit-level=high` owns the pass/fail decision itself and is all-or-nothing,
+# so the only ways past a HIGH it cannot fix are to raise the threshold (which
+# blinds the gate to every FUTURE high) or to change the dependency. It too now
+# emits JSON and defers the decision to a post-processor, which carries an
+# EXPIRING ALLOWLIST: a HIGH/CRITICAL advisory may be accepted only with a
+# written justification and a review_by date, and the job FAILS once that date
+# passes. Read the ALLOWLIST block in the npm-audit job before trusting a green
+# run — it is the only thing standing between a HIGH finding and a red build.
 
 name: Dependency Audit
 
@@ -218,10 +228,334 @@ jobs:
           cd agentic-workflows-v2/ui
           npm ci
 
-      - name: Audit npm dependencies (HIGH/CRITICAL only)
-        # --audit-level=high exits non-zero on HIGH or CRITICAL vulnerabilities.
-        # LOW and MODERATE findings are printed but do not fail the build,
-        # matching the same severity threshold applied by the python-audit job.
+      - name: Run npm audit (fail on HIGH/CRITICAL outside the allowlist)
+        # Same shape as the python-audit job above: run the tool with JSON
+        # output, defer the pass/fail decision to a post-processor, retain the
+        # JSON as an artifact.
+        #
+        # --json: machine-readable output for the allowlist-aware reader below.
+        #   npm audit exits non-zero whenever ANY vulnerability exists at or
+        #   above the audit level, regardless of severity, so `set +e` keeps
+        #   that from failing the step on its own. As in the python job the raw
+        #   exit code is advisory only — echoed for the log, never acted on.
+        #   A tool failure that leaves no parseable report behind is caught by
+        #   the schema check in the reader.
+        #
+        # python3 (not `python`) because the Ubuntu runner image ships python3
+        # as a base package; this job deliberately does NOT add an
+        # actions/setup-python step just to run a reader.
         run: |
           cd agentic-workflows-v2/ui
-          npm audit --audit-level=high
+          set +e
+          npm audit --json > npm-audit-results.json
+          AUDIT_EXIT=$?
+          set -e
+          echo "npm audit raw exit code: ${AUDIT_EXIT}"
+
+          python3 - <<'PYEOF'
+          import datetime
+          import json
+          import sys
+
+          # ------------------------------------------------------------------
+          # EXPIRING ALLOWLIST — read this before you trust a green npm audit.
+          #
+          # Each entry accepts exactly ONE advisory on ONE package, matched on
+          # (id, package) exactly, and MUST carry a written reason plus a
+          # review_by date. Once review_by has passed the job FAILS: an
+          # exception that never expires is how a real vulnerability hides.
+          # Adding an entry is a security decision, not a build fix — it goes
+          # in the PR description, not quietly into this list.
+          # ------------------------------------------------------------------
+          ALLOWLIST = [
+              {
+                  "id": "GHSA-qwww-vcr4-c8h2",
+                  "package": "react-router",
+                  "review_by": "2026-10-23",
+                  "reason": (
+                      "React Router: RSC Mode CSRF Bypass Allows Action "
+                      "Execution Before 400 Response. The installed "
+                      "react-router 7.18.1 (pulled in by react-router-dom "
+                      "7.18.1) is inside the affected range 7.12.0 - 8.2.0, "
+                      "but the bypass is reachable only through React "
+                      "Router's RSC (React Server Components) request "
+                      "handler. This UI does not have one: it is a "
+                      "client-only Vite SPA. src/main.tsx mounts "
+                      "<BrowserRouter>, and every react-router-dom import in "
+                      "src/ is a client primitive (Link, NavLink, Routes, "
+                      "Route, Navigate, useNavigate, useParams, "
+                      "useSearchParams, useLocation; MemoryRouter in tests). "
+                      "Nothing imports an RSC entry point, no route module "
+                      "exports an action, and there is no server-side "
+                      "rendering or route handler to execute one. "
+                      "Neither remediation npm offers is viable: "
+                      "react-router-dom has no 8.x line (it ends at 7.18.1), "
+                      "so the patched react-router (>8.2.0) is unreachable "
+                      "without dropping react-router-dom and repointing 25+ "
+                      "imports, and `npm audit fix --force` proposes a "
+                      "DOWNGRADE to react-router-dom 7.11.0 — below the "
+                      "affected range, but also a breaking change that "
+                      "trades a non-reachable advisory for real regressions."
+                  ),
+              },
+          ]
+
+          # Why 2026-10-23: roughly 90 days (one quarter) after the 2026-07-25
+          # decision. Long enough that the exception is not re-litigated every
+          # week, short enough that the reasoning above is still fresh and
+          # checkable when it comes due. When that date arrives this job goes
+          # RED until someone does one of:
+          #   1. Re-verify the premise — confirm the UI still has no RSC entry
+          #      point or route actions — and extend with a NEW date and an
+          #      updated reason. Bumping the date without redoing this check
+          #      defeats the entire mechanism.
+          #   2. Upgrade — check whether react-router-dom has shipped a 7.x
+          #      above the affected range (or a maintained successor) and bump
+          #      it, then DELETE this entry.
+          #   3. Migrate — drop react-router-dom for react-router >8.2.0
+          #      directly and repoint the imports, then DELETE this entry.
+
+          BLOCKING_SEVERITIES = {"high", "critical"}
+          REQUIRED_FIELDS = ("id", "package", "reason", "review_by")
+          REPORT = "npm-audit-results.json"
+
+          today = datetime.datetime.now(datetime.timezone.utc).date()
+
+          # Validate the allowlist before the report. A missing reason or a
+          # typo'd date must fail loudly here rather than degrade into a
+          # suppression nobody can evaluate or that never comes due.
+          allow_index = {}
+          for entry in ALLOWLIST:
+              missing = [f for f in REQUIRED_FIELDS if not entry.get(f)]
+              if missing:
+                  print(
+                      f"ERROR: allowlist entry {entry.get('id', '?')} is missing "
+                      f"required field(s): {', '.join(missing)}",
+                      file=sys.stderr,
+                  )
+                  sys.exit(1)
+              try:
+                  review_by = datetime.date.fromisoformat(entry["review_by"])
+              except ValueError as exc:
+                  print(
+                      f"ERROR: allowlist entry {entry['id']} has an unparseable "
+                      f"review_by ({entry['review_by']!r}): {exc}",
+                      file=sys.stderr,
+                  )
+                  sys.exit(1)
+              allow_index[(entry["id"], entry["package"])] = (entry, review_by)
+
+          try:
+              with open(REPORT) as fh:
+                  report = json.load(fh)
+          except (FileNotFoundError, json.JSONDecodeError) as exc:
+              print(f"ERROR: Could not read audit results: {exc}", file=sys.stderr)
+              sys.exit(1)
+
+          # npm audit --json emits {"error": {...}} instead of a report when the
+          # audit itself fails (unreachable registry, unresolvable tree), and a
+          # future npm could change the schema. Either way we would be parsing
+          # nothing and reporting a pass, so refuse to gate on a shape we do not
+          # recognise. auditReportVersion 2 is what npm 7+ produces.
+          if report.get("auditReportVersion") != 2:
+              print(
+                  "ERROR: unexpected npm audit report "
+                  f"(auditReportVersion={report.get('auditReportVersion')!r}). "
+                  f"Payload head: {json.dumps(report)[:300]}",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+
+          def advisory_id(via):
+              """GHSA id for an advisory object, falling back to npm's own id.
+
+              npm puts the advisory URL in `via.url`
+              (https://github.com/advisories/GHSA-xxxx-xxxx-xxxx); the GHSA id
+              is its last segment and is the stable identifier an allowlist
+              entry should name. `via.source` is npm's numeric advisory id and
+              is only used when a URL is absent.
+              """
+              url = via.get("url") or ""
+              if url.startswith("https://github.com/advisories/"):
+                  return url.rsplit("/", 1)[-1]
+              return f"npm-advisory-{via.get('source', 'unknown')}"
+
+
+          # Collect one record per distinct ADVISORY, not per vulnerable package.
+          # In the v2 report a package's `via` holds either advisory objects (the
+          # package the advisory is actually filed against) or plain strings (the
+          # name of another vulnerable package it depends on). Every string chain
+          # terminates at an advisory object elsewhere in the same report, so
+          # gating on the objects covers the whole tree exactly once — and means
+          # accepting an advisory does not also require allowlisting each of its
+          # dependents by name.
+          advisories = {}
+          for name, pkg in report.get("vulnerabilities", {}).items():
+              for via in pkg.get("via", []):
+                  if not isinstance(via, dict):
+                      continue
+                  record = {
+                      "id": advisory_id(via),
+                      "package": via.get("name", name),
+                      "severity": (via.get("severity") or "unknown").lower(),
+                      "title": via.get("title", ""),
+                      "range": via.get("range", pkg.get("range", "")),
+                      "url": via.get("url", ""),
+                      "dependents": pkg.get("effects", []),
+                  }
+                  advisories[(record["id"], record["package"])] = record
+
+          meta = report.get("metadata", {}).get("vulnerabilities", {})
+          reported_blocking = meta.get("high", 0) + meta.get("critical", 0)
+          parsed_blocking = [
+              a for a in advisories.values() if a["severity"] in BLOCKING_SEVERITIES
+          ]
+
+          # Cross-check npm's own tally against what we parsed. The counts are
+          # not comparable in magnitude (npm counts vulnerable PACKAGES, we count
+          # ADVISORIES, and one advisory can make several packages vulnerable),
+          # but "npm says there are HIGHs and we found none to evaluate" can only
+          # mean the parse is wrong. Failing here is what stops a schema drift
+          # from silently disarming this gate.
+          if reported_blocking and not parsed_blocking:
+              print(
+                  f"ERROR: npm reports {reported_blocking} HIGH/CRITICAL package(s) "
+                  "but no advisory objects could be parsed from the report — "
+                  "refusing to pass on an unreadable audit.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          accepted, expired, blocking, informational = [], [], [], []
+          matched = set()
+
+          for adv in sorted(advisories.values(), key=lambda a: (a["package"], a["id"])):
+              if adv["severity"] not in BLOCKING_SEVERITIES:
+                  informational.append(adv)
+                  continue
+              allowed = allow_index.get((adv["id"], adv["package"]))
+              if allowed is None:
+                  blocking.append(adv)
+                  continue
+              entry, review_by = allowed
+              matched.add((entry["id"], entry["package"]))
+              if review_by < today:
+                  expired.append((adv, entry, review_by))
+              else:
+                  accepted.append((adv, entry, review_by))
+
+          # An entry matching nothing is dead config. It is reported, not failed:
+          # it goes stale precisely when the advisory is fixed or the dependency
+          # is dropped, and redlining main on that good outcome teaches people to
+          # stop writing entries. It cannot hide anything either — matching is
+          # (id, package)-exact, so a stale entry can only ever suppress the one
+          # advisory it names — and its review_by still forces removal on time.
+          stale = [e for e in ALLOWLIST if (e["id"], e["package"]) not in matched]
+
+          bar = "=" * 60
+          counts = ", ".join(
+              f"{sev} {meta.get(sev, 0)}"
+              for sev in ("info", "low", "moderate", "high", "critical")
+          )
+          print(f"\nnpm audit: {meta.get('total', 0)} vulnerable package(s) — {counts}")
+
+          if informational:
+              print(f"\n{bar}")
+              print(
+                  f"INFO: {len(informational)} LOW/MODERATE advisory(ies) — not blocking"
+              )
+              print(bar)
+              for a in informational:
+                  print(f"  [{a['severity']}] {a['package']} {a['range']} — {a['id']}")
+                  if a["dependents"]:
+                      print(f"      dependents: {', '.join(a['dependents'])}")
+
+          if accepted:
+              print(f"\n{bar}")
+              print(f"ACCEPTED: {len(accepted)} allowlisted HIGH/CRITICAL — not blocking")
+              print(bar)
+              for a, entry, review_by in accepted:
+                  print(f"\n  Package   : {a['package']} {a['range']}")
+                  print(f"  Severity  : {a['severity']}")
+                  print(f"  ID        : {a['id']}")
+                  if a["title"]:
+                      print(f"  Title     : {a['title']}")
+                  print(
+                      f"  Review by : {entry['review_by']} "
+                      f"({(review_by - today).days} day(s) left — this job FAILS after)"
+                  )
+                  print(f"  Accepted  : {entry['reason']}")
+
+          if stale:
+              print(f"\n{bar}")
+              print(f"WARNING: {len(stale)} stale allowlist entry(ies) — matched nothing")
+              print(bar)
+              for entry in stale:
+                  print(f"  {entry['id']} ({entry['package']}) — delete it")
+
+          if expired:
+              print(f"\n{bar}")
+              print(f"FAIL: {len(expired)} allowlist entry(ies) past their review date")
+              print(bar)
+              for a, entry, review_by in expired:
+                  print(f"\n  Package   : {a['package']} {a['range']}")
+                  print(f"  ID        : {a['id']}")
+                  print(
+                      f"  Review by : {entry['review_by']} "
+                      f"(expired {(today - review_by).days} day(s) ago)"
+                  )
+                  print(f"  Accepted  : {entry['reason']}")
+              print(f"\n{bar}")
+              print(
+                  "Re-verify each advisory above and either remediate it or renew "
+                  "the entry with a new review_by AND an updated justification."
+              )
+
+          if blocking:
+              print(f"\n{bar}")
+              print(f"FAIL: {len(blocking)} HIGH/CRITICAL advisory(ies) not on the allowlist")
+              print(bar)
+              for a in blocking:
+                  print(f"\n  Package  : {a['package']} {a['range']}")
+                  print(f"  Severity : {a['severity']}")
+                  print(f"  ID       : {a['id']}")
+                  if a["title"]:
+                      print(f"  Title    : {a['title']}")
+                  if a["url"]:
+                      print(f"  Advisory : {a['url']}")
+                  if a["dependents"]:
+                      print(f"  Dependents: {', '.join(a['dependents'])}")
+              print(f"\n{bar}")
+              print(
+                  "Upgrade the packages above, or add an ALLOWLIST entry in "
+                  ".github/workflows/dependency-audit.yml with a justification and "
+                  "a review_by date."
+              )
+
+          if blocking or expired:
+              sys.exit(1)
+
+          print(
+              "\nAudit passed — 0 unaccepted HIGH/CRITICAL "
+              f"({len(accepted)} allowlisted, {len(informational)} LOW/MODERATE)."
+          )
+          PYEOF
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-audit-results
+          # Glob rather than a literal path, matching the python job: npm audit
+          # writes the report into agentic-workflows-v2/ui (the step cd's there),
+          # and the glob keeps the upload working if that location moves.
+          path: "**/npm-audit-results*.json"
+          retention-days: 30
+          # warn, not error — same reasoning as the python job: this step retains
+          # evidence, it does not gate. The reader above is the single
+          # authoritative gate and already fails the job when the report is
+          # missing or unparseable. The file is absent only when an earlier step
+          # already failed, and a second "no files found" error would bury that
+          # real root cause.
+          if-no-files-found: warn
