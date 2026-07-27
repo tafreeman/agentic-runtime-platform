@@ -51,7 +51,7 @@ with **no UI change**.
 `_merge_cloud_models()` is skipped entirely when `AGENTIC_NO_LLM` is set. That
 mode routes every tier to the deterministic placeholder, so a live cloud listing
 would be misleading; gating there also makes the unit suite (which runs with
-`AGENTIC_NO_LLM=1`) hermetic without per-test patching, and avoids needless
+`AGENTIC_NO_LLM=1`) network-free without per-test patching, and avoids needless
 network/cost on the no-key CI baseline. Local discovery (localhost, free) stays
 ungated; cloud discovery (internet, metered) does not.
 

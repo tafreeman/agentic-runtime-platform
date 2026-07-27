@@ -409,7 +409,7 @@ Do not use Card for ordinary sections, KPI mosaics, tables, filter bars, or page
 ### 10.7 Sheet, Drawer, Dialog
 
 - Sheet is the desktop/narrow-screen inspector and secondary configuration surface.
-- Drawer is preferred for mobile actions that benefit from touch ergonomics.
+- Drawer is preferred for mobile actions that are easier to reach with a thumb.
 - Dialog is reserved for short focused tasks.
 - Long forms and model-pack editing use a route or full workspace, not a modal.
 - Dialogs must restore focus and support Escape unless an irreversible operation is actively executing.

@@ -50,7 +50,7 @@ into a longer-lived environment — staging, demo, or a customer trial.
 
 ## What you get
 
-Same surface area regardless of path:
+You get the same things either way:
 
 | Artifact | Where it lives | Why it matters |
 |----------|----------------|-----------------|

@@ -17,7 +17,7 @@ Current pain points:
 - Retry/rework loops can accidentally overwrite or ambiguously reference artifacts.
 - Run observability is harder when artifacts are not tied to a stable run-scoped path.
 
-The platform already has robust expression resolution (`coalesce(...)`) and structured outputs, but it needs a consistent file artifact contract at workflow boundaries.
+The platform already has capable expression resolution (`coalesce(...)`) and structured outputs, but it needs a consistent file artifact contract at workflow boundaries.
 
 ---
 

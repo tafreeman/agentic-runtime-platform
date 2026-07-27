@@ -4,8 +4,8 @@
 
 ## Overview
 
-`LLMClient` is a static-method facade that routes text-generation requests to eight providers
-across nine routing backends (Azure has two: Azure OpenAI and Azure AI Foundry) based on a name
+`LLMClient` is a static-method facade that routes text-generation requests to multiple providers
+across several routing backends (Azure has two: Azure OpenAI and Azure AI Foundry) based on a name
 prefix in the model string. The facade is stateless — no instance is ever created. All
 provider-specific transport logic lives in `tools/llm/provider_adapters.py`. Note this count is
 specific to the `tools` package; the `agentic_v2` runtime selects providers separately via its

@@ -354,7 +354,7 @@ still bounding runaway workflows.
 
 !!! note "Reference"
     See [ADR-019](../adr/ADR-019-dag-executor-top-level-timeout.md) for the design rationale
-    and the follow-on task to expose `timeout` as a first-class `execution_profile` HTTP field.
+    and the follow-on task to expose `timeout` as a top-level `execution_profile` HTTP field.
 
 ---
 

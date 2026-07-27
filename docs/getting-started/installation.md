@@ -102,7 +102,7 @@ and `npm run dev -- --port 5174` on the frontend.
 
 ## Providers
 
-The runtime supports eight production providers and one offline placeholder
+The runtime supports multiple production providers and one offline placeholder
 backend. Configuration is a single environment variable per provider —
 no provider plugin to install separately, no SDK to pin.
 

@@ -13,7 +13,7 @@
 
 ## Executive Summary
 
-This platform is an enterprise multi-agent AI orchestration runtime designed for federal and DoD use cases. It exposes a FastAPI server with WebSocket/SSE streaming, routes requests across 8+ LLM providers (OpenAI, Anthropic, Gemini, Azure OpenAI, Azure Government, GitHub Models, Ollama, local ONNX), and coordinates multi-agent DAG workflows where agents invoke built-in tool modules. The threat surface is broad: user-supplied inputs traverse a sanitization pipeline, retrieved documents feed an RAG subsystem, agent tool calls can reach external systems, and outputs stream back through the same server. Overall security posture is **partially mitigated** — the inbound sanitization pipeline and tool-permission model are genuine controls; authentication hardening, output validation for general agent steps, rate limiting at the API layer, and formal adversarial testing are gaps that must be closed before a production federal deployment.
+This platform is an enterprise multi-agent AI orchestration runtime designed for federal and DoD use cases. It exposes a FastAPI server with WebSocket/SSE streaming, routes requests across multiple LLM providers (OpenAI, Anthropic, Gemini, Azure OpenAI, Azure Government, GitHub Models, Ollama, local ONNX), and coordinates multi-agent DAG workflows where agents invoke built-in tool modules. The threat surface is broad: user-supplied inputs traverse a sanitization pipeline, retrieved documents feed an RAG subsystem, agent tool calls can reach external systems, and outputs stream back through the same server. Overall security posture is **partially mitigated** — the inbound sanitization pipeline and tool-permission model are genuine controls; authentication hardening, output validation for general agent steps, rate limiting at the API layer, and formal adversarial testing are gaps that must be closed before a production federal deployment.
 
 *(Note: The previously identified gaps in authentication have been addressed in Epic 8 via OIDC authentication, alongside structural tenant isolation and append-only audit logging.)*
 
@@ -144,7 +144,7 @@ This platform is an enterprise multi-agent AI orchestration runtime designed for
 - `agentic-workflows-v2/agentic_v2/models/weight_integrity.py` — Hash manifest verification for local ONNX model files at load time, ensuring integrity.
 - Software Bill of Materials (SBOM) generation integrated into the release pipeline.
 - LangChain is an optional extra (`pip install -e ".[langchain]"`), minimizing the mandatory dependency surface for deployments that don't need it.
-- 8+ LLM providers are configured in `SmartModelRouter`; no single provider is a single point of failure.
+- Multiple LLM providers are configured in `SmartModelRouter`; no single provider is a single point of failure.
 
 **Residual risk and gaps.**
 - LangChain and its transitive dependencies (`langchain-core`, `langchain-community`, LangGraph) introduce a large additional surface not fully audited in this codebase.
@@ -327,7 +327,7 @@ System prompt text in `agentic_v2/prompts/*.md` (orchestrator.md, architect.md, 
 
 *Research quality gates:* The research pipeline enforces `coverage_score ≥ 0.80` and `source_quality_score ≥ 0.80` before research outputs are accepted. Evidence mapping tracks claim-to-source relationships.
 
-*Rubric definitions:* 8 YAML rubric definitions (`default`, `agent`, `code`, `coding_standards`, `pattern`, `prompt_pattern`, `prompt_standard`, `quality`) provide structured evaluation criteria, reducing reliance on open-ended LLM judgment.
+*Rubric definitions:* YAML rubric definitions (`default`, `agent`, `code`, `coding_standards`, `pattern`, `prompt_pattern`, `prompt_standard`, `quality`) provide structured evaluation criteria, reducing reliance on open-ended LLM judgment.
 
 *Multi-agent review:* The `code_review` workflow uses tiered agents (parser → linter → reviewer → summarizer) with structured handoffs, providing multiple perspectives before a final review is generated.
 
@@ -358,7 +358,7 @@ System prompt text in `agentic_v2/prompts/*.md` (orchestrator.md, architect.md, 
 
 *Dual token-bucket rate tracking* (`models/rate_limit_tracker.py`): Tracks requests-per-minute and tokens-per-minute per provider using token bucket algorithm. Parses provider-specific rate-limit response headers (OpenAI, Anthropic, Azure, Gemini) for precise cooldown duration rather than defaulting to flat 120-second backoff.
 
-*Provider fallback chain:* SmartModelRouter routes to alternative providers when the primary is rate-limited or in an OPEN circuit state. Eight providers are available; degraded operation (`ModelSelection.is_degraded`) is logged and metered.
+*Provider fallback chain:* SmartModelRouter routes to alternative providers when the primary is rate-limited or in an OPEN circuit state. Multiple providers are available; degraded operation (`ModelSelection.is_degraded`) is logged and metered.
 
 *Agent memory token budgets* (`agents/memory.py`): `SlidingWindowMemory` enforces `max_tokens` (default 8000) and `max_messages` limits per agent, triggering summarization before context is exceeded.
 

@@ -53,7 +53,7 @@ move, recorded here.
 Implementation notes:
 - The wrapper skips abstract intermediates (no own `execute`, or an abstract
   one) and never double-wraps (an `__approval_gated__` marker on the wrapped
-  callable), so `abc` integrity is preserved and re-runs are idempotent.
+  callable), so `abc` integrity is preserved and re-runs are safe to repeat.
 - Convenience tools must not reach real work by calling another `BaseTool`'s
   `execute` (that re-enters the gate). `HttpGetTool`/`HttpPostTool`,
   `GitStatusTool`/`GitDiffTool`, and `GrepTool` were fixed to call shared module

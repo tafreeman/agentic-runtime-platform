@@ -90,7 +90,7 @@ Additional supporting documents:
 
 ---
 
-## 3. The five load-bearing mechanisms
+## 3. The load-bearing mechanisms
 
 These are the places where a change ripples across the system. Understand these before proposing architectural work.
 
@@ -126,7 +126,7 @@ Maps a numeric capability tier (`ModelTier.TIER_0` through `TIER_5` in `models/r
 
 ### 3.5 RAG pipeline
 
-Fifteen modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/rag/): loader → recursive chunker → embedder (content-hash dedup) → cosine vectorstore + BM25 keyword index → RRF hybrid retriever → token-budget assembler. Full OTEL tracing. Memory backed by `MemoryStoreProtocol` (`InMemoryStore` or `RAGMemoryStore`).
+Modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/rag/): loader → recursive chunker → embedder (content-hash dedup) → cosine vectorstore + BM25 keyword index → RRF hybrid retriever → token-budget assembler. Full OTEL tracing. Memory backed by `MemoryStoreProtocol` (`InMemoryStore` or `RAGMemoryStore`).
 
 - **Blueprint:** [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md).
 
@@ -151,7 +151,7 @@ A CI drift check (`scripts/check-doc-drift.py`) fails any PR where a protocol de
 
 ## 4. The decision record
 
-Every architecturally significant decision is captured as an ADR. The record currently spans **38 decisions across 36 files** — from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
+Every architecturally significant decision is captured as an ADR. The record spans decisions from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
 
 The full, maintained index — with status, one-line summaries, and a suggested reading order — is [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md). This page deliberately does not duplicate that table.
 

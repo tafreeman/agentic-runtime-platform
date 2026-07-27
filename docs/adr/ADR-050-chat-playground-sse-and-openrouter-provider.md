@@ -74,7 +74,7 @@ and building it against OpenRouter gives it real breadth from day one.
   output tokens. Both/neither selectors are invalid. Direct-model behavior is
   unchanged, while HTTP clients can delegate provider/model selection without
   duplicating router policy.
-- **OpenRouter joins as a first-class provider.**
+- **OpenRouter joins as a supported provider.**
   `PROVIDER_ENV_KEYS["openrouter"] = ["OPENROUTER_API_KEY"]`;
   `build_openrouter_model` is a `ChatOpenAI` base-URL swap
   (`https://openrouter.ai/api/v1`, `X-Title` header, model id passed

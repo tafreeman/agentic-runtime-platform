@@ -34,7 +34,7 @@ This is a **tombstone**, not a gap: do not retroactively renumber 5/6 down to 4/
 
 ## 2. Shipped in May 2026 — Epic 8: Production Readiness Pack (by 2026-05-11)
 
-Epic 8 focused on closing the gaps to make the platform "enterprise-grade for regulated production environments."
+Epic 8 focused on closing the gaps for regulated production environments.
 - **E8-1**: Opt-in OIDC JWT authentication (`auth_oidc.py`), enabled by `AGENTIC_OIDC_ENABLED=1` (`agentic_oidc_enabled` defaults to `False`); the legacy `AGENTIC_API_KEY` remains the default auth path (ADR-021).
 - **E8-2**: Tenant-scoped isolation for runs and datasets (`tenant.py`); OIDC tenant/org claims are authoritative when OIDC is enabled, while `X-Tenant-ID` is a compatibility header — not a hard boundary — used when OIDC is inactive (ADR-022). See [Known Limitations §4.5](KNOWN_LIMITATIONS.md#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration).
 - **E8-3**: Append-only, tamper-evident audit logging for all workflow executions and config changes (`audit_log.py`).

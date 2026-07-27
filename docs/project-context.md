@@ -24,7 +24,7 @@
 | `runtime` | `agentic-workflows-v2/` | backend | FastAPI server + native DAG executor + LangGraph adapter + agent layer + RAG |
 | `ui` | `agentic-workflows-v2/ui/` | web | React 19 SPA — live DAG visualization, run history, WebSocket streaming |
 | `eval` | `agentic-v2-eval/` | data/library | Offline evaluation framework — rubrics, LLM-as-judge, batch runners, reporters |
-| `tools` | `tools/` (`agentic-tools`) | library | Shared LLM client (10+ providers), benchmarks, Windows AI bridge |
+| `tools` | `tools/` (`agentic-tools`) | library | Shared LLM client (multiple providers), benchmarks, Windows AI bridge |
 
 ---
 
@@ -70,7 +70,7 @@ agentic-workflows-v2/agentic_v2/
 | FastAPI app factory | `agentic_v2/server/app.py:create_app()` | Server startup |
 | uvicorn target | `agentic_v2.server.app:app` | Production/dev server |
 | CLI | `agentic_v2/cli/` (Typer, 7 commands) | `agentic run`, `agentic serve`, `agentic compare` |
-| Workflow YAML definitions | `agentic_v2/workflows/definitions/*.yaml` | 6 production workflows |
+| Workflow YAML definitions | `agentic_v2/workflows/definitions/*.yaml` | production workflows |
 | DAG executor | `agentic_v2/engine/dag_executor.py` | Native execution |
 | Adapter registry | `agentic_v2/adapters/registry.py` | Engine selection |
 | SmartModelRouter | `agentic_v2/models/smart_router.py` | Tier-based LLM dispatch |
@@ -91,7 +91,7 @@ agentic-workflows-v2/agentic_v2/
 
 ---
 
-## LLM Providers (8+)
+## LLM Providers
 
 OpenAI, Anthropic, Google Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models, Ollama, Local ONNX/Windows AI (Phi Silica)
 
@@ -102,7 +102,7 @@ OpenAI, Anthropic, Google Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models,
 | Aspect | Detail |
 |---|---|
 | Framework | pytest 7+ with `asyncio_mode = "auto"` |
-| Test count | 150+ test files across runtime + eval |
+| Test count | Test files span runtime + eval |
 | Coverage gate | 80% on `agentic_v2/` (runtime), 80% on `agentic_v2_eval/` |
 | No-credential baseline | `AGENTIC_NO_LLM=1` installs deterministic `PlaceholderChatModel` |
 | Markers | `@pytest.mark.integration`, `@pytest.mark.slow`, `@pytest.mark.e2e` |

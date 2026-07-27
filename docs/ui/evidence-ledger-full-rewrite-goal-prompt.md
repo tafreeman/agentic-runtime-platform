@@ -461,7 +461,7 @@ Add a unified toast/notification policy for successful mutations and recoverable
 
 #### Rewrite and refinement
 
-- Adopt Flow Canvas spatial ergonomics within the Evidence Ledger system.
+- Adopt Flow Canvas's spatial layout within the Evidence Ledger system.
 - Provide pan/zoom, fit view, minimap, keyboard traversal, accessible selection, multi-select, duplicate, copy/paste, and undo/redo.
 - Keep node configuration in a consistent right inspector with compact summaries and advanced sections.
 - Add workflow-level and node-level model-pack binding; node direct model override remains highest precedence.

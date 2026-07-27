@@ -30,7 +30,7 @@
 
 ## 3. Context & Problem Statement
 
-During Sprint 9 (Deep Research) implementation review, a four-agent specialist team independently analyzed the scoring system from orthogonal perspectives:
+During Sprint 9 (Deep Research) implementation review, a four-agent specialist team independently analyzed the scoring system from independent perspectives:
 
 - **Architect agent**: System design and contract safety
 - **Scoring theory agent**: Mathematical correctness of recency modeling

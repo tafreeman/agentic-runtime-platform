@@ -20,7 +20,7 @@ A standalone library, `agentic-evalkit`, has been built independently (see
 `agentic-evalkit` in the wider workspace) as a general-purpose evaluation
 framework: typed, frozen Pydantic contracts (`EvalSample`,
 `NormalizedExecutionResult`, `GradeResult`), a structural `ExecutionTarget`
-protocol with callable/subprocess/HTTP adapters, composable graders
+protocol with callable/subprocess/HTTP adapters, graders you can combine
 (`Rubric`/`RubricCriterion`, `CompositeGrader`/`WeightedGrader`, schema and
 judge graders), dataset presets, and multi-format reporting. It enforces its
 own architectural boundary with an AST-based contract test: evalkit code may
@@ -162,7 +162,7 @@ package index entry), so:
 - **`LLMClientProtocol` does not move.** `agentic_v2_eval.interfaces.LLMClientProtocol`
   is a small, ARP-consumed structural protocol (`generate_text(model_name,
   prompt, temperature, max_tokens, **kwargs) -> str`) that predates and is
-  orthogonal to evalkit's typed contracts (`EvalSample`,
+  independent of evalkit's typed contracts (`EvalSample`,
   `NormalizedExecutionResult`, etc.) — it is a synchronous, string-in/string-out
   LLM-call shape, not an evaluation contract. It is **not** an ARP-internal
   utility as might be assumed by analogy with the rest of this migration —

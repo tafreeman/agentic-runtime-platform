@@ -1,6 +1,6 @@
 ---
 title: Rubrics
-description: The eight YAML rubrics that drive Agentic Runtime Platform evaluation — criteria, weights, level descriptors, use cases, and loading API.
+description: The YAML rubrics that drive Agentic Runtime Platform evaluation — criteria, weights, level descriptors, use cases, and loading API.
 tags:
   - evaluation
 ---
@@ -9,7 +9,7 @@ tags:
 
 Every evaluation in Agentic Runtime Platform scores an artifact against a YAML rubric. The rubrics live at [`agentic-v2-eval/src/agentic_v2_eval/rubrics/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-v2-eval/src/agentic_v2_eval/rubrics) and ship as part of the package.
 
-There are eight rubrics in the canonical set. They split into two families:
+The rubrics in the canonical set split into two families:
 
 - **Scoring rubrics** — define named criteria with numeric weights. Used by the `Scorer` engine and the CLI `evaluate` subcommand.
 - **Judge rubrics** — define LLM prompt templates. Used by `QualityEvaluator`, `StandardEvaluator`, and `PatternEvaluator` at evaluation time.

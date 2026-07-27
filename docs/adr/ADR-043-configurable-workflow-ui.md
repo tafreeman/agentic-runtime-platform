@@ -30,7 +30,7 @@ UI-managed settings.
    aliasing (`num_predict` for Ollama, etc.), so unsupported params degrade
    silently instead of breaking a provider.
 
-2. **Personas are a first-class registry**
+2. **Personas are a dedicated registry**
    (`config/defaults/personas.yaml`), combining pre-canned BMAD-style
    personas (Winston the architect, Mary, James, Quinn) with the existing
    `prompts/*.md` role prompts. Resolution order: `step.persona` >

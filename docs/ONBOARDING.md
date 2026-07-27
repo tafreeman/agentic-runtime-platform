@@ -6,7 +6,7 @@
 
 `tafreeman/agentic-runtime-platform` is a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities. It serves two purposes:
 
-1. **Working platform** -- an agentic AI runtime with a dual execution engine, 7 agent personas, a full RAG pipeline, and an evaluation framework.
+1. **Working platform** -- an agentic AI runtime with a dual execution engine, several agent personas, a full RAG pipeline, and an evaluation framework.
 2. **Reference implementation** -- practices for regulated and enterprise environments, applied rather than just documented.
 
 Six independent sections. **Quick Start** gets a workflow running in about 5 minutes; all six take roughly an hour. Stop wherever you have what you need.
@@ -408,7 +408,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) in your browser. You should see:
 
-- **Workflow list** -- 8 YAML-defined workflows (6 production + 2 test)
+- **Workflow list** -- YAML-defined workflows (production + test)
 - **Workflow graph** -- React Flow DAG visualization of steps and dependencies
 - **Execution panel** -- run workflows and see real-time streaming results
 - **Evaluations page** -- view evaluation results and scoring
@@ -507,7 +507,7 @@ The eval framework uses these criteria to score workflow outputs on a 1-5 scale 
 | Step | A single unit of work with an agent, inputs, and outputs | See any workflow YAML |
 | Agent | An LLM-backed executor with a persona and optional tools | `agentic_v2/agents/base.py` |
 | Persona | Markdown file defining agent expertise, reasoning, and boundaries | `agentic_v2/prompts/*.md` |
-| Tier | LLM capability level (0=deterministic, 1=fast, 2=standard, 3=powerful) | `agentic_v2/models/smart_router.py` |
+| Tier | LLM capability level (0=deterministic, 1=fast, 2=standard, 3=highest capability) | `agentic_v2/models/smart_router.py` |
 | Adapter | Pluggable execution engine backend (native or langchain) | `agentic_v2/adapters/` |
 | Protocol | `@runtime_checkable` Python Protocol for structural typing | `agentic_v2/core/protocols.py` |
 | Contract | Pydantic model for step I/O (additive-only) | `agentic_v2/contracts/` |

@@ -58,7 +58,7 @@ scoped but not yet shipped include:
 | GitHub gold-standard | `princeton-nlp/SWE-bench_Verified` | **yes** |
 
 As soon as the registry accepts any Tier-B source that reuses an upstream
-identifier verbatim (which is the ergonomic default — rewriting every HF ID
+identifier verbatim (which is the convenient default — rewriting every HF ID
 into a slug is friction we do not want), identifiers contain forward slashes.
 
 ### Why path segments break under slashes

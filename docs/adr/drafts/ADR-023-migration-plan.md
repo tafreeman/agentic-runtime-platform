@@ -71,7 +71,7 @@
 ---
 
 ## Phase 3 — Make backends emit canonical OpenAI-shaped dicts (backend-layer normalization)
-**Goal:** Fix the lossy/raw backend outputs at the source so the inbound adapter is lossless. This is the highest-leverage correctness phase and touches only backend `complete_chat` return construction (not the wrapper hot path). (Resolves the cluster of CRITICAL/HIGH backend findings.)
+**Goal:** Fix the lossy/raw backend outputs at the source so the inbound adapter is lossless. This is the highest-impact correctness phase and touches only backend `complete_chat` return construction (not the wrapper hot path). (Resolves the cluster of CRITICAL/HIGH backend findings.)
 
 **File-level changes (all in `agentic_v2/models/backends_cloud.py` and `backends_local.py`):**
 - **Anthropic (`backends_cloud.py:314-322`)** — normalize each `tool_use` block to OpenAI shape before returning: `{"id", "type":"function", "function":{"name", "arguments": json.dumps(block["input"])}}`. Map `stop_reason` -> OpenAI finish_reason via `{end_turn:stop, max_tokens:length, tool_use:tool_calls, stop_sequence:stop}`. Pass `usage` through (EK already reads `input_tokens`/`output_tokens` + now cache keys). (Resolves CRITICAL "Anthropic raw tool_use" + HIGH "stop_reason".)

@@ -314,7 +314,7 @@ Per-tier fallback chains are built at import time from the curated model registr
 
 ### Provider backends
 
-The shared `LLMClient` in `agentic-tools` routes **eight providers across nine routing backends** (`tools/llm/provider_adapters.py`); local ONNX and Windows AI are distinct local backends:
+The shared `LLMClient` in `agentic-tools` routes **multiple providers across several routing backends** (`tools/llm/provider_adapters.py`); local ONNX and Windows AI are distinct local backends:
 
 | Provider | Config key | Notes |
 |----------|-----------|-------|
@@ -376,7 +376,7 @@ The tools layer enforces a **DENY-by-default** safety policy for high-risk opera
 
 ## 9. RAG pipeline
 
-**Source:** `agentic_v2/rag/` (15 modules)
+**Source:** `agentic_v2/rag/`
 
 The RAG pipeline provides document ingestion, indexing, and retrieval for context augmentation. It is used directly by the `RAGMemoryStore` and the `SupportsRAGMixin`.
 
@@ -514,7 +514,7 @@ Requests classified `BLOCKED` are rejected with `400 Bad Request` before any bus
 | Code-execution limits | Constrained `__import__`; `resource.setrlimit` memory and fork limits on POSIX |
 | Subprocess hygiene | `minimal_subprocess_env()` strips API keys from child process environments |
 | Private IP blocking | Outbound HTTP checks destinations against RFC 1918 ranges and loopback, and blocks matches |
-| Tool safety defaults | All 12 built-in tool modules default to DENY for high-risk operations; per-step YAML allowlisting required |
+| Tool safety defaults | All built-in tool modules default to DENY for high-risk operations; per-step YAML allowlisting required |
 | Secret provider abstraction | The `SecretProvider` abstraction centralises secret access; secrets are never passed directly in model configs or log output |
 
 ### 13.4 Governance module
@@ -728,7 +728,7 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 | 2 | Bridge `ExecutionContext` into `LangChainEngine` so both engines share state during adapter-routed execution | 4 | M | High |
 | 3 | Add cross-package integration tests covering the LLM client → engine → eval scoring path | 4 | M | High |
 | 4 | Add RAG prompt-injection hardening (delimiter framing in system prompts for retrieved docs) | 4 | M | High |
-| 5 | Promote the persistent `LanceDBVectorStore` path to a first-class documented production configuration | 4 | M | Medium |
+| 5 | Promote the persistent `LanceDBVectorStore` path to a documented production configuration | 4 | M | Medium |
 | 6 | Continue splitting `server/routes/workflows.py` into smaller route modules | 3 | S | Medium |
 | 7 | Add a standalone `quickstart.py` / CLI command running a simple workflow end-to-end | 3 | S | Medium |
 | 8 | Document "How to implement ExecutionEngine / VectorStoreProtocol" with test templates | 3 | S | Medium |

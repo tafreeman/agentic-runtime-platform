@@ -20,7 +20,7 @@ ARP coordinates specialized agents with `OrchestratorAgent`
 This is a fully deterministic, in-house orchestration loop: *we* decide the
 decomposition, *we* score and assign, *we* schedule the parallelism.
 
-The Claude Agent SDK (`claude-agent-sdk`) ships a first-class primitive for the
+The Claude Agent SDK (`claude-agent-sdk`) ships a dedicated primitive for the
 same problem — the **`Task` tool** — but with a different control locus. When a
 coordinator's `allowed_tools` includes `"Task"` and its `ClaudeAgentOptions.agents`
 maps subagent names to `AgentDefinition`s, **the model** decides which subagents

@@ -22,7 +22,7 @@ The `agentic-runtime-platform` monorepo is a multi-agent AI workflow platform bu
 
 The monorepo serves two purposes: a working production platform, and a reference implementation of engineering practices for regulated environments. Every architectural decision — dual execution engines, protocol-based abstractions, layered sanitization, rubric-driven evaluation — is documented. The evaluation framework (`agentic-v2-eval`) and shared tools library (`agentic-tools`) are independently installable packages, enabling teams to adopt the LLM client, benchmarking utilities, or evaluation pipeline independently of the full runtime.
 
-Security and observability are first-class concerns throughout. A sanitization middleware pipeline protects all inbound prompt content from secret leakage, PII exposure, and prompt injection — and is fail-closed, returning HTTP 400 on any unhandled exception rather than passing unvalidated content. An optional OpenTelemetry integration instruments the full execution pipeline — from HTTP request through agent steps, LLM calls, and RAG retrieval — for distributed tracing. CI enforces 80% test coverage on the runtime, 80% on the eval package, and 70% on shared tools, with bandit and pip-audit running in every pull request.
+Security and observability are core concerns throughout. A sanitization middleware pipeline protects all inbound prompt content from secret leakage, PII exposure, and prompt injection — and is fail-closed, returning HTTP 400 on any unhandled exception rather than passing unvalidated content. An optional OpenTelemetry integration instruments the full execution pipeline — from HTTP request through agent steps, LLM calls, and RAG retrieval — for distributed tracing. CI enforces 80% test coverage on the runtime, 80% on the eval package, and 70% on shared tools, with bandit and pip-audit running in every pull request.
 
 ---
 
@@ -65,7 +65,7 @@ The platform has shipped the following epics:
 | Distributed tracing | OpenTelemetry SDK + OTLP exporter |
 | Documentation | MkDocs Material + mermaid2 plugin |
 | Containerization | Docker (backend + frontend separate images) |
-| CI/CD | GitHub Actions (15 workflow files) |
+| CI/CD | GitHub Actions |
 
 ---
 

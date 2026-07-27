@@ -1,6 +1,6 @@
 # Agentic V2 Evaluation Framework
 
-A comprehensive evaluation framework for AI agent workflows, providing scoring, metrics, runners, and report generation.
+An evaluation framework for AI agent workflows, providing scoring, metrics, runners, and report generation.
 
 ## Features
 

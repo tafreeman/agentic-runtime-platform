@@ -65,7 +65,7 @@ This page is the navigation hub for all `tools/` documentation. If you are looki
 | `bakeoff_tasks.py` | Task definitions for bakeoff | [benchmarks.md](benchmarks.md) |
 | `bakeoff_reporting.py` | Output reports for bakeoff | [benchmarks.md](benchmarks.md) |
 | `langchain_adapter.py` | Minimal LangChain-compatible shim over `LLMClient` | [llm-client.md — LangChain adapter](llm-client.md#langchain-adapter) |
-| `provider_adapters.py` | Low-level provider call adapters (nine routing backends) | Internal |
+| `provider_adapters.py` | Low-level provider call adapters (multiple routing backends) | Internal |
 
 ### `tools/core/`
 

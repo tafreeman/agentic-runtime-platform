@@ -30,7 +30,7 @@
 
 ## 3. Context & Problem Statement
 
-The `tafreeman/agentic-runtime-platform` monorepo targets 80%+ Python test coverage and emphasizes TDD workflows. A comprehensive audit of all test files revealed two systemic problems operating in opposite directions: **test bloat** (redundant tests inflating counts without adding defect detection) and **coverage voids** (critical modules with zero or near-zero coverage).
+The `tafreeman/agentic-runtime-platform` monorepo targets 80%+ Python test coverage and emphasizes TDD workflows. A full audit of all test files revealed two systemic problems operating in opposite directions: **test bloat** (redundant tests inflating counts without adding defect detection) and **coverage voids** (critical modules with zero or near-zero coverage).
 
 ### 3.1 The Bloat Problem — Quantitative Evidence
 
@@ -210,7 +210,7 @@ Delete all existing tests and re-derive from scratch using strict RED-GREEN-REFA
 
 Use the existing `/test-coverage` command to periodically re-audit tests. No policy changes — rely on ongoing audits to flag issues.
 
-**Pros:** Low implementation cost. Leverages existing tooling.
+**Pros:** Low implementation cost. Uses existing tooling.
 **Cons:** Reactive, not preventive. Does not address the ~95 existing problematic tests. Does not establish criteria for what "good" looks like.
 
 ### Tradeoff Matrix
@@ -268,7 +268,7 @@ Tests that validate **contracts, schemas, or boundary conditions** without exerc
 
 **Characteristics:**
 
-- Validates Pydantic model serialization/deserialization with non-trivial schemas (nested objects, optional fields, validators)
+- Validates Pydantic model serialization/deserialization with complex schemas (nested objects, optional fields, validators)
 - Tests boundary values of numeric parameters
 - Validates that error messages contain expected context
 - Tests configuration loading from YAML/env with real file I/O

@@ -7,8 +7,8 @@ tags:
 
 # Workflow reference
 
-Eight workflow definitions ship with the runtime today — six production
-workflows plus two deterministic test fixtures. Each is a real, runnable
+Workflow definitions ship with the runtime today — production
+workflows plus deterministic test fixtures. Each is a real, runnable
 YAML file under
 [`agentic-workflows-v2/agentic_v2/workflows/definitions/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/workflows/definitions).
 They are deployed alongside the runtime and exercised by the test suite, so
