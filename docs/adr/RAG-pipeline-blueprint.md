@@ -1,16 +1,16 @@
-# Blueprint for a portfolio-grade RAG retrieval pipeline
+# Blueprint for the RAG retrieval pipeline
 
-**LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts form the strongest foundation for a RAG pipeline that will impress senior technical reviewers at top AI companies.** This architecture demonstrates async-first design, provider abstraction via LiteLLM, multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and production resilience patterns — the exact signals that distinguish senior engineering from tutorial-grade work. The research below covers every layer of implementation, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.
+**LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts are the selected foundation for this pipeline.** The design is async-first, abstracts providers via LiteLLM, uses multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and layers explicit resilience around every external call. The research below covers each implementation layer, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.
 
 ---
 
 ## LanceDB emerges as the clear vector store choice
 
-Among the five local vector stores evaluated — ChromaDB, FAISS, LanceDB, Qdrant (embedded mode), and Milvus Lite — **LanceDB** stands out for a portfolio project demanding engineering sophistication. The decisive advantages are its native Pydantic integration via `LanceModel` with `Vector(768)` type hints, native async/await support through `connect_async()`, and built-in hybrid search with integrated rerankers (linear combination, RRF, cross-encoder, ColBERT). The Lance columnar format provides **automatic data versioning** on every write — a feature that signals awareness of data engineering best practices that reviewers will notice.
+Among the five local vector stores evaluated — ChromaDB, FAISS, LanceDB, Qdrant (embedded mode), and Milvus Lite — **LanceDB** is the best fit for this codebase. The decisive advantages are its native Pydantic integration via `LanceModel` with `Vector(768)` type hints, native async/await support through `connect_async()`, and built-in hybrid search with integrated rerankers (linear combination, RRF, cross-encoder, ColBERT). The Lance columnar format also provides **automatic data versioning** on every write, which makes ingestion runs reproducible and rollback-able.
 
 LanceDB's SQL-like filter syntax (`.where("date > '2025-01-01' AND category = 'architecture'")`) is far more expressive than ChromaDB's dict-based operators, while its schema-driven embedding registry (`get_registry().get("openai").create()`) eliminates boilerplate. The Lance SDK hit v1.0.0 in December 2025, and LanceDB Cloud launched mid-2025, demonstrating active development velocity. Performance is strong for disk-based workloads using IVF-PQ indexing, with production deployments handling **700M+ vectors**.
 
-Qdrant in local mode is the strong runner-up, offering the best metadata filtering of any option (filterable HNSW with boolean `must/should/must_not` clauses), full Pydantic types throughout its API, and FastEmbed integration for ONNX-based local embeddings. Reddit selected Qdrant over alternatives in 2025 after extensive evaluation, which gives it real-world credibility. Choose Qdrant if the portfolio emphasizes infrastructure engineering; choose LanceDB if it emphasizes data engineering fluency and modern Python patterns.
+Qdrant in local mode is the strong runner-up, offering the best metadata filtering of any option (filterable HNSW with boolean `must/should/must_not` clauses), full Pydantic types throughout its API, and FastEmbed integration for ONNX-based local embeddings. Reddit selected Qdrant over alternatives in 2025 after extensive evaluation. Choose Qdrant if the deployment is infrastructure-centric and needs heavy metadata filtering; choose LanceDB — as this pipeline does — for tighter Pydantic integration and a simpler embedded story.
 
 Avoid ChromaDB (too prototype-oriented, sync-only in embedded mode, minimal type safety), FAISS (zero metadata awareness — it's a library, not a database), and Milvus Lite (FLAT-index only, sync-only, dict-based API).
 
@@ -28,7 +28,7 @@ Avoid ChromaDB (too prototype-oriented, sync-only in embedded mode, minimal type
 
 **Voyage 4** ($0.06/1M tokens) delivers the best price-to-performance ratio among API embedding models as of early 2026. Its MoE architecture tops the RTEB retrieval leaderboard, supports Matryoshka dimensionality (256–2048), handles **32K token** context windows, and offers 200M free tokens per model for prototyping. The Voyage 4 family's shared embedding space is a unique advantage: documents indexed with `voyage-4-large` can be queried with the cheaper `voyage-4-lite` without re-indexing.
 
-For a fallback, **OpenAI text-embedding-3-small** ($0.02/1M tokens) provides the widest ecosystem support and is instantly recognizable to any reviewer. For fully local/offline operation, **Nomic Embed Text v2 MoE** runs via Ollama with zero setup, is Apache 2.0 licensed, supports 100+ languages, and provides Matryoshka dimensionality at 768 dimensions. For code-heavy retrieval, **Voyage Code-3** outperforms OpenAI's best model by 13.8% across 238 code retrieval datasets.
+For a fallback, **OpenAI text-embedding-3-small** ($0.02/1M tokens) provides the widest ecosystem support. For fully local/offline operation, **Nomic Embed Text v2 MoE** runs via Ollama with zero setup, is Apache 2.0 licensed, supports 100+ languages, and provides Matryoshka dimensionality at 768 dimensions. For code-heavy retrieval, **Voyage Code-3** outperforms OpenAI's best model by 13.8% across 238 code retrieval datasets.
 
 The provider abstraction layer should use **LiteLLM**, which provides a unified `embedding()` function across 100+ providers with identical response formats. This enables single-config model switching and demonstrates production-level engineering:
 
@@ -71,9 +71,9 @@ Each chunk must carry structured metadata: `source_file`, `page_number`, `sectio
 
 ---
 
-## Engineering patterns that signal senior-level craft
+## Engineering patterns this pipeline commits to
 
-The gap between tutorial-grade and portfolio-grade RAG lies in five areas: typed contracts, async design, resilience, observability, and testing. Each deserves deliberate implementation.
+Five areas carry most of the operational risk in a RAG pipeline: typed contracts, async design, resilience, observability, and testing. Each deserves deliberate implementation.
 
 ### Typed contracts with Pydantic v2
 
@@ -85,7 +85,7 @@ RAG pipelines are heavily I/O-bound. The embedding service should use `asyncio.S
 
 ### Layered resilience: retry → circuit breaker → fallback → cache
 
-Use **tenacity** for retry with exponential backoff (1s, 2s, 4s, 8s, 16s) on transient errors only (`RateLimitError`, `APIError`) — never retry auth or validation errors. Layer a circuit breaker (via `circuitbreaker` or `pybreaker`) that opens after 5 consecutive failures and falls back to local sentence-transformers embedding. The final fallback layer checks an embedding cache. Each layer returns a typed `EmbeddingResult` with a `source` field ("api", "local_fallback", "cache") for observability. This layered approach — resilience as a strategy, not an afterthought — is a signature senior engineering pattern.
+Use **tenacity** for retry with exponential backoff (1s, 2s, 4s, 8s, 16s) on transient errors only (`RateLimitError`, `APIError`) — never retry auth or validation errors. Layer a circuit breaker (via `circuitbreaker` or `pybreaker`) that opens after 5 consecutive failures and falls back to local sentence-transformers embedding. The final fallback layer checks an embedding cache. Each layer returns a typed `EmbeddingResult` with a `source` field ("api", "local_fallback", "cache") for observability, so a degraded run is visible in telemetry rather than silently indistinguishable from a healthy one.
 
 ### OpenTelemetry-based observability
 
@@ -197,4 +197,4 @@ The `tools/rag_tool.py` bridge is deliberately thin — it wraps the `rag/` modu
 
 ## Conclusion
 
-The implementation path is clear: start with LanceDB + Voyage 4 embeddings behind a LiteLLM abstraction, wire hybrid search (dense + BM25 → RRF → cross-encoder reranking) as a LangGraph `ToolNode` with self-corrective document grading, and wrap everything in Pydantic v2 typed contracts with async-first execution. The three patterns that will most impress reviewers are the **discriminated union configuration model** (showing Pydantic v2 mastery), the **layered resilience strategy** (retry → circuit breaker → local fallback → cache), and the **integrated evaluation pipeline** with YAML-defined rubrics and NDCG regression gates in CI. Each of these signals that the builder understands not just how RAG works, but how production ML systems are engineered. The module structure keeps RAG as an independent, testable subsystem that plugs cleanly into the existing agent/workflow/tool architecture through a single bridge file.
+The implementation path is clear: start with LanceDB + Voyage 4 embeddings behind a LiteLLM abstraction, wire hybrid search (dense + BM25 → RRF → cross-encoder reranking) as a LangGraph `ToolNode` with self-corrective document grading, and wrap everything in Pydantic v2 typed contracts with async-first execution. The three patterns that carry the most weight are the **discriminated union configuration model**, which makes YAML config parsing unambiguous; the **layered resilience strategy** (retry → circuit breaker → local fallback → cache); and the **integrated evaluation pipeline** with YAML-defined rubrics and NDCG regression gates in CI, which is what stops retrieval quality from silently regressing. The module structure keeps RAG as an independent, testable subsystem that plugs cleanly into the existing agent/workflow/tool architecture through a single bridge file.

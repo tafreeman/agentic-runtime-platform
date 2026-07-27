@@ -507,7 +507,7 @@ The eval framework uses these criteria to score workflow outputs on a 1-5 scale 
 | Step | A single unit of work with an agent, inputs, and outputs | See any workflow YAML |
 | Agent | An LLM-backed executor with a persona and optional tools | `agentic_v2/agents/base.py` |
 | Persona | Markdown file defining agent expertise, reasoning, and boundaries | `agentic_v2/prompts/*.md` |
-| Tier | LLM capability level (0=deterministic, 1=fast, 2=standard, 3=highest capability) | `agentic_v2/models/smart_router.py` |
+| Tier | LLM capability level, `TIER_0`–`TIER_5` (0=deterministic, rising to premium cloud models) | `agentic_v2/models/smart_router.py` |
 | Adapter | Pluggable execution engine backend (native or langchain) | `agentic_v2/adapters/` |
 | Protocol | `@runtime_checkable` Python Protocol for structural typing | `agentic_v2/core/protocols.py` |
 | Contract | Pydantic model for step I/O (additive-only) | `agentic_v2/contracts/` |

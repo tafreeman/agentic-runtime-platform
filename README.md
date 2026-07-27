@@ -2,7 +2,7 @@
 
 # Agentic Runtime Platform
 
-**Runs multi-agent LLM workflows defined in YAML, with human approval required before any tool call and automatic failover when a provider goes down.**
+**Runs multi-agent LLM workflows defined in YAML, with fail-closed human-approval gates on high-impact tool calls (shell, file writes, HTTP) and automatic failover when a provider goes down.**
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Nightly E2E](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml)
