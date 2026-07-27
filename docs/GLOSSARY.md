@@ -55,7 +55,7 @@ See `agentic_v2/agents/base.py`.
 **MemoryStoreProtocol** -- The async interface for persistent memory backends, supporting key-value CRUD (store, retrieve, delete) and query-based search with ranked results. Implementations include `InMemoryStore` (dict-backed, for testing) and `RAGMemoryStore` (vector-backed). The deprecated alias `MemoryStore` is kept for backward compatibility.
 See `agentic_v2/core/memory.py`.
 
-**Persona** -- A markdown definition of an agent's expertise, reasoning protocol, output format, and boundaries. Located in `agentic_v2/prompts/*.md`, each persona file must define sections for Expertise, Reasoning Protocol, Boundaries, Critical Rules, and Output Format. The codebase contains 7 agent persona definitions (architect, coder, orchestrator, planner, reviewer, tester, validator).
+**Persona** -- A markdown definition of an agent's expertise, reasoning protocol, output format, and boundaries. Located in `agentic_v2/prompts/*.md`, each persona file must define sections for Expertise, Reasoning Protocol, Boundaries, Critical Rules, and Output Format. The codebase contains one persona definition per agent role (architect, coder, orchestrator, planner, reviewer, tester, validator).
 See `agentic_v2/prompts/`.
 
 **Tool** -- A callable capability available to agents during execution, satisfying `ToolProtocol` (properties: `name`, `description`; method: `execute(**kwargs)`). The codebase ships built-in tool modules (code analysis, file ops, git ops, HTTP ops, memory ops, search ops, shell ops, transform, etc.). Tools are registered in a `ToolRegistry` and allowlisted per workflow step, with high-risk tools (`shell`, `git`, `file_delete`) defaulting to DENY.

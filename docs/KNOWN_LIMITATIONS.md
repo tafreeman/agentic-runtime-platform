@@ -71,7 +71,7 @@ The runtime supports `AGENTIC_NO_LLM=1` for deterministic placeholder execution 
 - **Status:** Accepted for v0.3.0. Free LLM access in CI vs. provider dependency trade-off is explicit in ADR-016.
 - **Upstream fix:** None — placeholder mode is live. Future work: extend mode to evaluation/rubric scoring.
 
-### 3.2 Windows is a fully supported target but has specific gotchas
+### 3.2 Windows is a supported target but has specific gotchas
 
 Epic 3 hardened the Windows bring-up story. Known residual friction:
 

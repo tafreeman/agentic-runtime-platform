@@ -141,7 +141,7 @@ while len(completed) < len(dag.steps):
 ### 6. Chain-of-thought scaffolding
 
 **Category:** Prompting
-**Implementation:** All 7 persona files in `agentic-workflows-v2/agentic_v2/prompts/*.md` (`architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, `validator`) -- `## Reasoning Protocol` sections
+**Implementation:** Every persona file in `agentic-workflows-v2/agentic_v2/prompts/*.md` (`architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, `validator`) -- `## Reasoning Protocol` sections
 **How It Works:** Every agent persona includes a `## Reasoning Protocol` section with a domain-specific multi-step cognitive workflow that instructs the LLM to reason through the task before generating output. These are not generic "think step-by-step" prompts -- each is tailored to the persona's function. For example, the coder persona uses stack-identification-first reasoning, while the reviewer, tester, and validator personas each define their own review, test-design, and verification protocols.
 **Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/coder.md` (`## Reasoning Protocol` section; the other personas follow the same convention)
 **Example:**
