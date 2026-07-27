@@ -188,6 +188,60 @@ The `SmartModelRouter` extends this with health-weighted selection, adaptive coo
 
 LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across independent dimensions (coverage, source quality, agreement, verification, recency) into DORA-inspired performance tiers (Elite, High, Medium, Low), gating on a non-compensatory High floor across all dimensions.
 
+## LLM-as-Judge Evaluation
+
+The evaluation framework lives in [`agentic-v2-eval/`](agentic-v2-eval/) and scores agent and workflow
+outputs against **YAML-defined rubrics**, via **batch and streaming runners**. Objective scoring runs
+without any model call; LLM-as-judge evaluation adds bias mitigation on top (see
+[Why Rubric-Based Scoring?](#why-rubric-based-scoring) for the rationale).
+
+A rubric declares weighted criteria with 0–5 level descriptors — excerpt from
+[`rubrics/code.yaml`](agentic-v2-eval/src/agentic_v2_eval/rubrics/code.yaml):
+
+```yaml
+criteria:
+  - name: Correctness
+    weight: 0.30
+    description: "Does the code produce correct output for the given specification?"
+    levels:
+      5: "Passes all test cases, handles edge cases"
+      4: "Passes main tests, minor edge case issues"
+      3: "Mostly correct, some test failures"
+```
+
+Run the scorer end-to-end — **no API keys required**:
+
+```bash
+python examples/05_evaluation.py
+```
+
+Real output, weighted score over four criteria:
+
+```text
+  Rubric: Code Review Quality v1.0
+  Input metrics: {'Accuracy': 0.85, 'Completeness': 0.72, 'Actionability': 0.9, 'Efficiency': 0.65}
+
+  Results:
+    Weighted score: 0.801
+    Total score   : 0.780
+    Per-criterion :
+      Accuracy: 0.85
+      Completeness: 0.72
+      Actionability: 0.90
+      Efficiency: 0.65
+```
+
+Eight rubrics ship in the canonical set. Missing criteria are reported explicitly rather than
+scored as zero, so a partial evaluation cannot silently inflate a result.
+
+| Topic | Doc |
+|---|---|
+| Rubric schema, weights, level descriptors, loading API | [`docs/evaluation/rubrics.md`](docs/evaluation/rubrics.md) |
+| Batch and streaming runners | [`docs/evaluation/runners.md`](docs/evaluation/runners.md) |
+| Bias-aware LLM-as-judge, calibration against human labels | [`docs/evaluation/judge.md`](docs/evaluation/judge.md) |
+| Non-compensatory gating and performance tiers | [`docs/evaluation/gating.md`](docs/evaluation/gating.md) |
+| Evaluation datasets | [`docs/evaluation/datasets.md`](docs/evaluation/datasets.md) |
+
 ## Workflow Definitions
 
 The engine ships with these workflow definitions:
@@ -252,6 +306,7 @@ Full documentation is published at **https://tafreeman.github.io/agentic-runtime
 - [Pattern Catalog](https://tafreeman.github.io/agentic-runtime-platform/PATTERN_CATALOG/) — Agentic pattern reference
 - [API Reference](https://tafreeman.github.io/agentic-runtime-platform/api-contracts-runtime/) — REST endpoints and contracts
 - [Development Guide](https://tafreeman.github.io/agentic-runtime-platform/development-guide/) — Setup, testing, CLI
+- [Evaluation](docs/evaluation/rubrics.md) — YAML rubrics, batch/streaming runners, LLM-as-judge, gating
 
 ## Development
 
