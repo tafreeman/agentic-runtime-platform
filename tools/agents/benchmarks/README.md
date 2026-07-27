@@ -1,6 +1,6 @@
 # Multi-Agent Benchmark System
 
-A comprehensive system for evaluating multi-agent coding workflows against industry-standard benchmarks.
+A system for evaluating multi-agent coding workflows against industry-standard benchmarks.
 
 ## Quick Start
 

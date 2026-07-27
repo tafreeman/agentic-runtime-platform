@@ -2,11 +2,9 @@
 
 ## Overview
 
-Production-ready Python implementation of Model Context Protocol (MCP) client for dynamically loading tools, resources, and prompts from external MCP servers.
+A Python implementation of Model Context Protocol (MCP) client for dynamically loading tools, resources, and prompts from external MCP servers.
 
-**Status**: All 8 phases complete (transport, protocol, runtime, discovery, adapters, results, config, tests)
-
-**Lines of Code**: 6,012 / 4,930 (122% of original estimate)
+**Status**: All phases complete (transport, protocol, runtime, discovery, adapters, results, config, tests)
 
 ## Quick Start
 
@@ -267,14 +265,14 @@ Test files (`tests/integrations/mcp/`):
 
 ## Roadmap
 
-- ✅ Phase 1: Transports (stdio, WebSocket) — 739 LOC
-- ✅ Phase 2: Protocol (JSON-RPC correlation) — 528 LOC
-- ✅ Phase 3: Runtime (connection manager) — 457 LOC
-- ✅ Phase 4: Discovery (capabilities) — 451 LOC
-- ✅ Phase 5: Adapters (tool/prompt/resource) — 601 LOC
-- ✅ Phase 6: Output safety (truncation, storage) — 607 LOC
-- ✅ Phase 7: Configuration (loading, expansion) — 998 LOC
-- ✅ Phase 8: Testing (75-80% coverage) — 1,631 LOC
+- ✅ Phase 1: Transports (stdio, WebSocket)
+- ✅ Phase 2: Protocol (JSON-RPC correlation)
+- ✅ Phase 3: Runtime (connection manager)
+- ✅ Phase 4: Discovery (capabilities)
+- ✅ Phase 5: Adapters (tool/prompt/resource)
+- ✅ Phase 6: Output safety (truncation, storage)
+- ✅ Phase 7: Configuration (loading, expansion)
+- ✅ Phase 8: Testing (75-80% coverage)
 - ⏳ Phase 9: Integration with orchestrator
 
 ## Troubleshooting

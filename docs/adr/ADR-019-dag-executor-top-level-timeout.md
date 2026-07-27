@@ -79,6 +79,6 @@ When `timeout` is `None` (the default), behavior is unchanged. Per-step timeouts
 
 Re-evaluate when:
 
-- The HTTP API exposes `timeout` as a first-class `execution_profile` field (planned follow-on to S1-3).
+- The HTTP API exposes `timeout` as a top-level `execution_profile` field (planned follow-on to S1-3).
 - A production incident demonstrates that cooperative cancellation is insufficient for a specific step type (may require adding cancellation checkpoints to long-running step bodies).
 - The OTEL attribute names are standardised by an OpenTelemetry semantic-conventions update for workflow systems.

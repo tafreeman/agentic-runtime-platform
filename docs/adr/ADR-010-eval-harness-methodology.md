@@ -72,7 +72,7 @@ Gold solutions edit an average of **1.7 files, 3.0 functions, and 32.8 lines**. 
 RAG-only baseline solved just **1.96%** of instances; even the "oracle" condition (given the
 exact files to edit) reached only **4.80%**. This intentionally high bar forced the field
 toward proper agent scaffolding and validated the commit-as-ground-truth structure as a
-rigorous, non-trivial evaluation surface.
+rigorous evaluation surface.
 
 ```
 ┌───────────────────────────────────────────────────────┐

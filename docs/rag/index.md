@@ -386,7 +386,7 @@ Deduplication is by `chunk_id`; the first-seen content and metadata are used for
 **Why RRF over weighted score combination:**
 
 - No need to normalize scores across heterogeneous scoring systems (cosine similarity vs. BM25).
-- Robust to score magnitude differences between providers.
+- Not affected by score magnitude differences between providers.
 - Simple to reason about: a result that ranks first in every list gets `1/(k+1) * num_lists`.
 
 ---

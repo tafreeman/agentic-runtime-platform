@@ -6,7 +6,7 @@
 ## Context
 
 The server currently protects HTTP API routes with a single shared
-`AGENTIC_API_KEY` when configured. Epic 8 requires production-ready
+`AGENTIC_API_KEY` when configured. Epic 8 requires
 OAuth2/OIDC bearer-token authentication while preserving the existing API-key
 behavior for local development, service integrations, and rollout fallback.
 

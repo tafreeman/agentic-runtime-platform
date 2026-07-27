@@ -95,7 +95,7 @@ The following primary-source lessons shape the design:
 - [DeepResearch Bench II](https://arxiv.org/abs/2601.08536): prefer atomic, verifiable, expert-derived binary rubrics over broad LLM-generated scoring dimensions.
 - [Deep Research Bench / RetroSearch](https://arxiv.org/abs/2506.06287): freeze time-varying external environments when longitudinal comparison requires a stable world state.
 - [Microsoft M365 Copilot Eval](https://github.com/microsoft/m365-copilot-eval): a versioned document schema, discoverable defaults, interactive scaffolding, concurrency control, and multiple report formats materially improve developer experience.
-- [Langfuse experiments](https://langfuse.com/docs/evaluation/experiments/experiments-via-ui): dataset experiments should make run comparison and sample inspection first-class, but ARP must pin dataset versions rather than silently using the latest version.
+- [Langfuse experiments](https://langfuse.com/docs/evaluation/experiments/experiments-via-ui): dataset experiments should make run comparison and sample inspection a priority, but ARP must pin dataset versions rather than silently using the latest version.
 - [OpenAI Evals](https://github.com/openai/evals): registry-driven templates lower authoring cost, but ARP should avoid coupling evaluation definitions to a monolithic local-data registry.
 - [OpenAI Frontier Evals](https://github.com/openai/frontier-evals): complex frontier benchmarks should remain isolated, reproducible projects with their own locked environments.
 - [OpenAI simple-evals](https://github.com/openai/simple-evals): benchmark prompting policy is part of the benchmark and must be versioned with results.

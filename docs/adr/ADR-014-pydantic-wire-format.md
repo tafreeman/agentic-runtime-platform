@@ -54,7 +54,7 @@ Define the full execution event stream as a **Pydantic v2 discriminated union** 
 ### Alternatives considered
 
 - **Protobuf / FlatBuffers.** Would eliminate the TS drift by generating both sides from a single `.proto`. Rejected for v0.3 because it introduces a build step and a new runtime dependency; the schema-drift CI gate addresses the worst-case risk cheaply. Revisit if the UI surface grows substantially.
-- **JSON Schema as source of truth.** Considered. Rejected because Pydantic already emits JSON Schema and we wanted the ergonomics of dataclass-style producers at the emit site.
+- **JSON Schema as source of truth.** Considered. Rejected because Pydantic already emits JSON Schema and we wanted the ease of use of dataclass-style producers at the emit site.
 
 ---
 

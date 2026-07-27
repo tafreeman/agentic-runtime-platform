@@ -28,7 +28,7 @@
 - Cloud discovery is **best‑effort and bounded**: probes run concurrently, 8 s
   per request, any failure degrades to the static catalog, keys are never
   logged, and the whole cloud merge is **skipped under `AGENTIC_NO_LLM=1`**
-  (which keeps the unit suite hermetic).
+  (which keeps the unit suite network-free).
 - It is **engine‑agnostic** and lives in the native/LangChain **model layer**
   (`langchain/models.py` + `langchain/model_utils.py` + the
   `agentic_v2/models/*_discovery.py` modules). It is **not** an ExecutionKit
@@ -353,7 +353,7 @@ Results are appended by `_merge_cloud_models()` at **tier 0**:
 **No‑LLM gating:** `_merge_cloud_models()` is skipped entirely under
 `AGENTIC_NO_LLM=1` — that mode routes every tier to the deterministic
 placeholder, so a live listing would mislead, and the gate keeps the unit suite
-(which runs with `AGENTIC_NO_LLM=1`) hermetic with no per‑test patching. Local
+(which runs with `AGENTIC_NO_LLM=1`) network-free with no per‑test patching. Local
 discovery (localhost, free) stays ungated; cloud discovery (internet, metered)
 does not. Covered by mocked‑HTTP tests in `tests/models/test_cloud_discovery.py`.
 

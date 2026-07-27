@@ -14,4 +14,4 @@ Consequences
 
 - Easier imports and versioning
 - Single install for core runtime
-- Slightly larger package surface area for consumers
+- Slightly larger public API for consumers

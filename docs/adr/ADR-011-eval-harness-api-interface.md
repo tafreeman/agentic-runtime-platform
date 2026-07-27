@@ -64,7 +64,7 @@ thin adapter shells — hexagonal architecture (Cockburn, 2005).
 
 ### 3.1 Existing WebSocket Infrastructure
 
-The project already has a battle-tested WebSocket pattern for real-time streaming:
+The project already has a proven WebSocket pattern for real-time streaming:
 
 ```
 api/websocket.ts:connectExecutionStream()

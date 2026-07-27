@@ -141,9 +141,9 @@ while len(completed) < len(dag.steps):
 ### 6. Chain-of-thought scaffolding
 
 **Category:** Prompting
-**Implementation:** All 7 persona files in `agentic-workflows-v2/agentic_v2/prompts/*.md` (`architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, `validator`) -- `## Reasoning Protocol` sections
+**Implementation:** Every persona file in `agentic-workflows-v2/agentic_v2/prompts/*.md` (`architect`, `coder`, `orchestrator`, `planner`, `reviewer`, `tester`, `validator`) -- `## Reasoning Protocol` sections
 **How It Works:** Every agent persona includes a `## Reasoning Protocol` section with a domain-specific multi-step cognitive workflow that instructs the LLM to reason through the task before generating output. These are not generic "think step-by-step" prompts -- each is tailored to the persona's function. For example, the coder persona uses stack-identification-first reasoning, while the reviewer, tester, and validator personas each define their own review, test-design, and verification protocols.
-**Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/coder.md` (`## Reasoning Protocol` section; the other six personas follow the same convention)
+**Code Reference:** `agentic-workflows-v2/agentic_v2/prompts/coder.md` (`## Reasoning Protocol` section; the other personas follow the same convention)
 **Example:**
 ```markdown
 ## Reasoning Protocol  (from coder.md)
@@ -301,6 +301,6 @@ The following patterns were implemented by files that have since been removed fr
 - **Tree-of-thought** *(removed)* — `deep_research.yaml`'s `hypothesis_tree_tot_roundN` steps had a `tier3_reasoner` agent build a search plan as a tree of hypotheses with confirming and disconfirming evidence paths, forcing exploration of multiple reasoning branches per round.
 - **ReAct** *(removed)* — `deep_research.yaml`'s `retrieval_react_roundN` steps ran a Reason+Act loop: a `tier2_researcher` agent alternated between reasoning about what evidence to gather and invoking `web_search` / `http_get` / `context_store` tools.
 - **Chain-of-verification** *(removed)* — `deep_research.yaml`'s `cove_verify_roundN` steps had a `tier3_reviewer` agent independently re-verify claims from the parallel analyst steps against fresh evidence, producing a verification score and unresolved questions for the next round.
-- **Adversarial review** *(removed)* — two orthogonal antagonist personas (`antagonist_implementation.md`, FMEA-style failure-mode enumeration; `antagonist_systemic.md`, pre-mortem systemic risk analysis) attacked plans from non-overlapping angles.
+- **Adversarial review** *(removed)* — two independent antagonist personas (`antagonist_implementation.md`, FMEA-style failure-mode enumeration; `antagonist_systemic.md`, pre-mortem systemic risk analysis) attacked plans from non-overlapping angles.
 - **Confidence gating** *(removed)* — `deep_research.yaml`'s `coverage_confidence_audit_roundN` steps computed a multi-dimensional confidence index and emitted a `gate_passed` boolean; later rounds ran only `when:` the gate had not yet passed. The shipped `iterative_review` and `consensus_review` workflows use related (but simpler) status- and agreement-based gates.
 - **Domain-adaptive recency** *(removed)* — `deep_research.yaml` accepted a `domain` enum and a `recency_window_days` input that propagated to every retrieval step, so fast-moving domains required more recent sources than stable ones.

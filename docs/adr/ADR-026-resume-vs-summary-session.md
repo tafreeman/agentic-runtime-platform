@@ -80,7 +80,7 @@ disturbing the original run — the SDK `fork_session` analogue.
 
 ## Consequences
 
-- **Positive:** Resume and fork are now first-class and CLI-accessible, built on
+- **Positive:** Resume and fork are now fully supported and CLI-accessible, built on
   proven checkpoint primitives with no change to existing behavior.
 - **Positive:** Stale-result risk is made *visible* via the changed-file notice
   rather than silently carried forward.

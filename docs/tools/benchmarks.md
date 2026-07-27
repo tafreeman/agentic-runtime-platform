@@ -204,7 +204,7 @@ Scores are on a 0.0–10.0 scale per dimension:
 | Score | Label | Meaning |
 |-------|-------|---------|
 | 10.0 | Perfect | Flawless execution, all requirements met, exceeds expectations |
-| 9.0 | Excellent | Near-perfect, trivial gaps only, production-ready |
+| 9.0 | Excellent | Near-perfect, trivial gaps only, ready to ship |
 | 8.0 | Very Good | Strong output, 1–2 minor issues, high quality |
 | 7.0 | Good | Solid work, meets most requirements, some improvements possible |
 | 6.0 | Adequate | Acceptable output, notable gaps but fundamentally correct |
@@ -306,7 +306,7 @@ for dim_name, dim in result.dimension_scores.items():
 
 ### Response Parsing
 
-`parse_evaluation_response()` handles the judge's output robustly:
+`parse_evaluation_response()` handles the judge's output defensively:
 
 1. Strip markdown code fences if present
 2. Attempt direct `json.loads()`

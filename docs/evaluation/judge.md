@@ -155,7 +155,7 @@ STANDARD_CHOICES = [
 
 Temperature is hardcoded to 0.0 for determinism.
 
-**Why choice-extraction rather than JSON:** The five-point choice model is simpler to implement and more robust to minor response format variations than strict JSON parsing. The last-line convention is easy for LLMs to follow consistently, and the containment fallback handles cases where the model adds a trailing word.
+**Why choice-extraction rather than JSON:** The five-point choice model is simpler to implement and more resistant to minor response format variations than strict JSON parsing. The last-line convention is easy for LLMs to follow consistently, and the containment fallback handles cases where the model adds a trailing word.
 
 **Return dict:**
 

@@ -111,7 +111,7 @@ candidate cross-layer types from the platform vision (`ExecutionStep`, `AgentMes
 `WorkflowState`, `EvaluationResult`). Both packages depend on contracts; neither depends
 on the other's implementation. Interop happens at the boundary via thin adapters: an EK
 `Provider` can be wrapped as a runtime backend, and a runtime backend can emit EK's
-`LLMResponse`. EK is positioned as the best-in-class single-process library; the runtime
+`LLMResponse`. EK is positioned as the reference single-process library; the runtime
 as the enterprise orchestration platform.
 
 **Pros**

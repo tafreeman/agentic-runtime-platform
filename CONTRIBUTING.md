@@ -139,7 +139,7 @@ pre-commit install --install-hooks   # installs the commit-msg stage too
 
 ### Commit signing
 
-Signing commits is strongly recommended to show the "Verified" badge on GitHub, which matters for a repo claiming enterprise-grade practices.
+Signing commits is strongly recommended to show the "Verified" badge on GitHub.
 
 **SSH signing (recommended — no GPG installation required):**
 

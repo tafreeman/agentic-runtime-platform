@@ -15,7 +15,7 @@ hide:
 
 # Agentic Runtime Platform
 
-<p class="hero-sub">Declarative YAML workflows compile to executable DAGs — tiered routing across eight LLM providers, rubric-scored evaluation, and OpenTelemetry on every stage. Deterministic core; the LLM sits at the boundary. Built solo to production discipline: every consequential decision has an ADR, every quality gate is enforced in CI.</p>
+<p class="hero-sub">Declarative YAML workflows compile to executable DAGs — tiered routing across multiple LLM providers, rubric-scored evaluation, and OpenTelemetry on every stage. Deterministic core; the LLM sits at the boundary. Built solo: every consequential decision has an ADR, every quality gate is enforced in CI.</p>
 
 <div class="hero-actions" markdown>
 [Get started](getting-started/quickstart.md){ .md-button .md-button--primary }
@@ -114,7 +114,7 @@ flowchart LR
 
 <div class="feature-card" markdown>
 <div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M30,30H22V22h8Zm-6-2h4V24H24Z"></path><path d="M20,27H8A6,6,0,0,1,8,15h2v2H8a4,4,0,0,0,0,8H20Z"></path><path d="M20,20H12V12h8Zm-6-2h4V14H14Z"></path><path d="M24,17H22V15h2a4,4,0,0,0,0-8H12V5H24a6,6,0,0,1,0,12Z"></path><path d="M10,10H2V2h8ZM4,8H8V4H4Z"></path></svg></div>
-<h3 class="fc-title">Eight LLM providers</h3>
+<h3 class="fc-title">Multiple LLM providers</h3>
 <p class="fc-body">OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models, Ollama, and local ONNX / Windows AI — one client, per-provider bulkhead concurrency limits.</p>
 [Tools & providers](architecture-tools.md){ .fc-link }
 </div>
@@ -150,7 +150,7 @@ flowchart LR
 <div class="feature-card" markdown>
 <div class="fc-icon"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z" transform="translate(0 0)"></path><path d="M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z" transform="translate(0 0)"></path></svg></div>
 <h3 class="fc-title">Windows-first support</h3>
-<p class="fc-body">Runtime and tooling validated on Windows in CI. <code>scripts/setup-dev.ps1</code> is a one-command bring-up; the Windows AI Bridge (Phi Silica) is first-class.</p>
+<p class="fc-body">Runtime and tooling validated on Windows in CI. <code>scripts/setup-dev.ps1</code> is a one-command bring-up; the Windows AI Bridge (Phi Silica) is directly supported.</p>
 [Development guide](development-guide.md){ .fc-link }
 </div>
 
@@ -164,10 +164,6 @@ flowchart LR
 
 <div class="stat-strip" markdown>
 <div class="stat-item">
-  <div class="stat-value">187K</div>
-  <div class="stat-label">Lines of Python</div>
-</div>
-<div class="stat-item">
   <div class="stat-value">3,970</div>
   <div class="stat-label">Backend tests</div>
 </div>
@@ -178,10 +174,6 @@ flowchart LR
 <div class="stat-item">
   <div class="stat-value">50</div>
   <div class="stat-label">ADRs</div>
-</div>
-<div class="stat-item">
-  <div class="stat-value">8</div>
-  <div class="stat-label">LLM providers</div>
 </div>
 <div class="stat-item">
   <div class="stat-value">6</div>
@@ -231,7 +223,7 @@ Everything below is committed, versioned, and CI-enforced.
 
 ## Production workflow definitions
 
-The engine ships with six production workflow definitions:
+The engine ships with these production workflow definitions:
 
 | Workflow | Pattern | Description |
 |----------|---------|-------------|

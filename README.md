@@ -2,7 +2,7 @@
 
 # Agentic Runtime Platform
 
-**Multi-agent AI orchestration with a fail-closed governance layer — circuit-breaker model routing, human-in-the-loop approval gates, bias-aware LLM-as-judge evaluation, and a default-on SSRF guard. Works with 8+ LLM providers.**
+**Runs multi-agent LLM workflows defined in YAML, with fail-closed human-approval gates on high-impact tool calls (shell, file writes, HTTP) and automatic failover when a provider goes down.**
 
 [![CI](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml)
 [![Nightly E2E](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml/badge.svg)](https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/nightly.yml)
@@ -22,7 +22,7 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 | Component | What it does |
 |-----------|-------------|
 | **DAG Executor** | Kahn's algorithm scheduling with `asyncio` parallel dispatch — diamond dependencies, conditional execution, iterative refinement |
-| **Circuit-Breaker Model Router** | Bulkhead-isolated, health-weighted selection across 8+ providers with adaptive exponential cooldowns and HALF_OPEN single-probe circuit breakers — no single-provider lock-in |
+| **Circuit-Breaker Model Router** | Bulkhead-isolated, health-weighted selection across multiple providers with adaptive exponential cooldowns and HALF_OPEN single-probe circuit breakers — no single-provider lock-in |
 | **HITL Approval Gate** | Human-in-the-loop approval for high-impact tools (shell, `build_app` build/test runners, file-write, HTTP); **fails closed** — a gated tool is denied when no approval provider is registered, never silently allowed. The shipped server does not register a provider by default, so gated calls stay denied until one is wired in — see [Known Limitations §4.3](docs/KNOWN_LIMITATIONS.md#43-human-approval-gates-are-programmatic-only-no-ui-pauseresume-yet) |
 | **Bias-Aware LLM-as-Judge** | Seeded criterion-shuffle positional-bias mitigation, swapped-order consistency checks, and MAE calibration against human-labeled fixtures |
 | **Non-Compensatory Gated Evaluation** | YAML-defined rubrics, DORA-inspired Elite/High/Medium/Low tiers, gated on a non-compensatory floor across all scoring dimensions |
@@ -33,7 +33,7 @@ Agentic Runtime Platform orchestrates multi-agent AI pipelines where each agent 
 | **MCP Client** | [Model Context Protocol](agentic-workflows-v2/agentic_v2/integrations/mcp/README.md) client — stdio and WebSocket transports, capability discovery, and LLM-facing tool/prompt/resource adapters |
 | **Zero-credential dev mode** | `AGENTIC_NO_LLM=1` runs end-to-end with placeholder backends — the full test suite passes without API keys |
 
-**Engine defaults:** CLI, server, and dashboard requests use the LangGraph adapter (`adapter=langchain`) for named YAML workflows during the migration window. Use `--adapter native` or request `adapter: "native"` for the dependency-light native DAG/Pipeline path. Runtime-generated DAGs use the native engine by default. `AGENTIC_NO_LLM=1` changes provider calls to deterministic placeholders; it does not change engine selection.
+**Engine defaults:** CLI, server, and dashboard requests use the LangGraph adapter (`adapter=langchain`) for named YAML workflows during the migration window. Use `--adapter native` or request `adapter: "native"` for the dependency-light native DAG/Pipeline path. Runtime-generated DAGs use the native engine by default. `AGENTIC_NO_LLM=1` swaps provider calls for placeholders that return the same output every time; it does not change engine selection.
 
 ## Quick Start
 
@@ -182,15 +182,15 @@ The `SmartModelRouter` extends this with health-weighted selection, adaptive coo
 
 ### asyncio Orchestrator vs. SDK-`Task` Orchestration
 
-`OrchestratorAgent` decomposes a task, scores agents against a capability set, and fans subtasks out with `asyncio.gather`. The **SDK-native counterpart** — using the real Claude Agent SDK `Task` tool with `AgentDefinition` subagents, dynamic model-driven selection, and parallel `Task` calls in one turn — lives in [`examples/sdk_task_orchestrator.py`](examples/sdk_task_orchestrator.py). The tradeoff (deterministic capability-routed fan-out vs. open-ended model-driven delegation) is documented in [ADR-025](docs/adr/ADR-025-sdk-task-orchestration.md).
+`OrchestratorAgent` decomposes a task, scores agents against a capability set, and fans subtasks out with `asyncio.gather`. The **SDK-native counterpart** — using the real Claude Agent SDK `Task` tool with `AgentDefinition` subagents, dynamic model-driven selection, and parallel `Task` calls in one turn — lives in [`examples/sdk_task_orchestrator.py`](examples/sdk_task_orchestrator.py). The tradeoff (rule-based capability-routed fan-out vs. open-ended model-driven delegation) is documented in [ADR-025](docs/adr/ADR-025-sdk-task-orchestration.md).
 
 ### Why Rubric-Based Scoring?
 
-LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across five orthogonal dimensions (coverage, source quality, agreement, verification, recency) into DORA-inspired performance tiers (Elite, High, Medium, Low), gating on a non-compensatory High floor across all dimensions.
+LLM outputs resist binary pass/fail evaluation. The scoring system uses YAML-defined rubrics with weighted criteria, score normalization, and explicit handling of missing criteria. For complex evaluations, a multidimensional scoring engine classifies outputs across independent dimensions (coverage, source quality, agreement, verification, recency) into DORA-inspired performance tiers (Elite, High, Medium, Low), gating on a non-compensatory High floor across all dimensions.
 
 ## Workflow Definitions
 
-The engine ships with **6 production workflow definitions**:
+The engine ships with these workflow definitions:
 
 | Workflow | Pattern | Description |
 |----------|---------|-------------|
@@ -210,7 +210,7 @@ agentic-runtime-platform/
 │   │   ├── engine/                # DAG executor, step runner, expression engine
 │   │   ├── models/                # Tiered routing, provider backends
 │   │   ├── agents/                # Agent implementations
-│   │   ├── workflows/definitions/ # 6 YAML workflow definitions
+│   │   ├── workflows/definitions/ # YAML workflow definitions
 │   │   ├── langchain/             # LangGraph integration
 │   │   ├── server/                # FastAPI backend
 │   │   ├── rag/                   # Full RAG pipeline
@@ -232,7 +232,7 @@ agentic-runtime-platform/
 ## Features
 
 - **Dual execution engine**: LangGraph for default named YAML workflow runs; native DAG/Pipeline execution for explicit `--adapter native` runs and runtime-generated DAGs
-- **8+ LLM providers**: OpenAI, Anthropic, Gemini, Azure OpenAI, Azure Foundry, GitHub Models, Ollama, local ONNX
+- **Multiple LLM providers**: OpenAI, Anthropic, Gemini, Azure OpenAI, Azure Foundry, GitHub Models, Ollama, local ONNX
 - **Tiered model routing** with health-weighted selection and circuit breakers
 - **Observable execution**: SSE/WebSocket streaming to React dashboard
 - **Rubric-based evaluation** with YAML-defined criteria and LLM-as-judge

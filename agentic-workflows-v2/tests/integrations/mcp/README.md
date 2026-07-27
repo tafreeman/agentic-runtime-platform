@@ -1,6 +1,6 @@
 # MCP Integration Tests
 
-Comprehensive test suite for the MCP client integration.
+Test suite for the MCP client integration.
 
 ## Running Tests
 

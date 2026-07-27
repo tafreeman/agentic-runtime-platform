@@ -5,7 +5,7 @@
 ## Executive summary
 
 `agentic-tools` is the shared utility layer for the `tafreeman/agentic-runtime-platform` monorepo. It
-provides a multi-provider LLM client abstraction (eight providers across nine routing backends), a disk-backed SHA-256
+provides a multi-provider LLM client abstraction, a disk-backed SHA-256
 response cache, model probing and provider discovery, a model bakeoff runner, a benchmark and
 LLM-as-judge evaluation framework, a structured error taxonomy, and script bootstrap helpers.
 
@@ -15,7 +15,7 @@ also the `uv` workspace root; there is no `tools/pyproject.toml`. Members `agent
 
 The central design choice is a **static facade + provider adapters + two-level cache** pattern.
 Callers never instantiate a client object; they call `LLMClient.generate_text(model_name, prompt)`
-as a static method. The method dispatches to one of nine routing backends (local ONNX and Windows AI are distinct local backends) based on a name prefix
+as a static method. The method dispatches to one of several routing backends (local ONNX and Windows AI are distinct local backends) based on a name prefix
 in the model string. A 24-hour, SHA-256-keyed disk cache sits in front of all provider calls when
 enabled.
 

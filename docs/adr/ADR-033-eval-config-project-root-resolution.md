@@ -57,7 +57,7 @@ absorb the failure. I chose to keep root resolution at import time (the
 make it total over all path shapes, rather than the alternative of deferring
 resolution to first use and wrapping call sites in try/except. Keeping it eager
 preserves the existing contract -- config path is known at import -- and confines
-the robustness fix to one function. The assistant implemented the comprehension;
+the fix to one function. The assistant implemented the comprehension;
 the "stay eager, make the function total" call is mine.
 
 ## Consequences

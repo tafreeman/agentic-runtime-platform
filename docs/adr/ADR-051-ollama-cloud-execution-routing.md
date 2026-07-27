@@ -50,7 +50,7 @@ tier membership a curated judgment, so retired ids linger until edited):
    `Authorization: Bearer $OLLAMA_API_KEY` on both the sync and async
    clients — but only when the key is set.
 3. Without `OLLAMA_API_KEY`, behavior is byte-for-byte unchanged (no probe,
-   no cloud attempt), keeping the keyless/no-LLM baseline hermetic.
+   no cloud attempt), keeping the keyless/no-LLM baseline network-free.
 
 The tags lookup is memoised in `ollama_discovery.local_model_names()` with a
 60 s TTL so routing costs one local round-trip per window, not one per model
@@ -59,7 +59,7 @@ cloud when a key exists, which is the best remaining option anyway).
 
 **Registry rungs point at ids their providers actually list.** In this
 deployment the `openai:` slot cannot serve OpenAI ids, so its chain rungs move
-to the first-class `nvidia:` provider (live-verified completions on
+to the supported `nvidia:` provider (live-verified completions on
 2026-07-12): `nvidia:meta/llama-3.1-8b-instruct` (tier 1),
 `nvidia:deepseek-ai/deepseek-v4-flash` (tiers 2–3),
 `nvidia:deepseek-ai/deepseek-v4-pro` (tiers 4–5). The dated sonnet id becomes

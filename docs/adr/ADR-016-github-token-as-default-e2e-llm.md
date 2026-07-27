@@ -71,7 +71,7 @@ Forks that do not receive `GITHUB_TOKEN` fall back to deterministic (tier-0) wor
 
 ## Alternatives considered
 
-- **Paid OpenAI + maintainer secret.** Rejected because cost is non-trivial at nightly 50× cadence and forks still cannot access the secret.
+- **Paid OpenAI + maintainer secret.** Rejected because cost adds up at nightly 50× cadence and forks still cannot access the secret.
 - **Mocked LLM with recorded responses.** Considered for the deterministic fixture work (see `test(golden): add deterministic golden-output regression test`, commit `a6ffeba`). Used for specific regression tests but not extensible to the full streaming surface.
 - **Self-hosted Ollama runner.** Viable but introduces runner-fleet maintenance burden.
 - **Azure OpenAI via maintainer secret.** Works for maintainer runs; does not solve the fork asymmetry.
@@ -84,7 +84,7 @@ Re-evaluate when:
 
 - GitHub Models tightens the daily quota in a way that breaks nightly cadence.
 - GitHub Models is deprecated or materially re-priced.
-- A separate hermetic-mock provider is built (Sprint B candidate — see ROADMAP).
+- A separate offline-mock provider is built (Sprint B candidate — see ROADMAP).
 - The platform gets a paying production deployment that is willing to fund a proper provider for CI.
 
 ---
