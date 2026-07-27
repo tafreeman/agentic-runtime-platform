@@ -26,8 +26,8 @@ dependencies = [
     "filelock>=3.0,<4",
     "cachetools>=5.0,<8",
     "typer>=0.9,<1",
-    "rich>=13.0,<14",
-    "python-json-logger>=3.0,<4",
+    "rich>=13.0,<16",
+    "python-json-logger>=3.0,<5",
     "agentic-tools",
 ]
 
@@ -49,7 +49,7 @@ ek = ["executionkit>=0.3.0,<0.4.0"]
 # on PyPI. Consumed as a normal versioned PyPI dependency; CI can install this
 # extra now that the repo is public (no cross-repo credential needed).
 eval = [
-    "agentic-evalkit>=0.1.1,<0.2.0",
+    "agentic-evalkit>=0.1.1,<0.4.0",
 ]
 dev = [
     "pytest>=7.0",
