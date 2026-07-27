@@ -3419,7 +3419,7 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks<span class="w">   </span><span class="c1"># installs the commit-msg stage too</span>
 </span></code></pre></div>
 <h3 id="commit-signing">Commit signing<a class="headerlink" href="#commit-signing" title="Permanent link">&para;</a></h3>
-<p>Signing commits is strongly recommended to show the "Verified" badge on GitHub, which matters for a repo claiming enterprise-grade practices.</p>
+<p>Signing commits is strongly recommended to show the "Verified" badge on GitHub.</p>
 <p><strong>SSH signing (recommended — no GPG installation required):</strong></p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 1. Generate a signing key (skip if you already have one)</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;your-email@example.com&quot;</span><span class="w"> </span>-f<span class="w"> </span>~/.ssh/id_ed25519_signing

@@ -23,7 +23,7 @@
     
     
       
-        <title>Blueprint for a portfolio-grade RAG retrieval pipeline - Agentic Runtime Platform</title>
+        <title>Blueprint for the RAG retrieval pipeline - Agentic Runtime Platform</title>
       
     
     
@@ -63,7 +63,7 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Blueprint for a portfolio-grade RAG retrieval pipeline - Agentic Runtime Platform" />
+<meta property="og:title" content="Blueprint for the RAG retrieval pipeline - Agentic Runtime Platform" />
 <meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/RAG-pipeline-blueprint.png" />
 <meta property="og:image:type" content="image/png" />
@@ -71,7 +71,7 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/adr/RAG-pipeline-blueprint/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Blueprint for a portfolio-grade RAG retrieval pipeline - Agentic Runtime Platform" />
+<meta property="twitter:title" content="Blueprint for the RAG retrieval pipeline - Agentic Runtime Platform" />
 <meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/adr/RAG-pipeline-blueprint.png" />
 </head>
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#blueprint-for-a-portfolio-grade-rag-retrieval-pipeline" class="md-skip">
+        <a href="#blueprint-for-the-rag-retrieval-pipeline" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Blueprint for a portfolio-grade RAG retrieval pipeline
+              Blueprint for the RAG retrieval pipeline
             
           </span>
         </div>
@@ -2785,15 +2785,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#engineering-patterns-that-signal-senior-level-craft" class="md-nav__link">
+  <a href="#engineering-patterns-this-pipeline-commits-to" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Engineering patterns that signal senior-level craft
+        Engineering patterns this pipeline commits to
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Engineering patterns that signal senior-level craft">
+    <nav class="md-nav" aria-label="Engineering patterns this pipeline commits to">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2922,13 +2922,13 @@
   
 
 
-<h1 id="blueprint-for-a-portfolio-grade-rag-retrieval-pipeline">Blueprint for a portfolio-grade RAG retrieval pipeline<a class="headerlink" href="#blueprint-for-a-portfolio-grade-rag-retrieval-pipeline" title="Permanent link">&para;</a></h1>
-<p><strong>LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts form the strongest foundation for a RAG pipeline that will impress senior technical reviewers at top AI companies.</strong> This architecture demonstrates async-first design, provider abstraction via LiteLLM, multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and production resilience patterns — the exact signals that distinguish senior engineering from tutorial-grade work. The research below covers every layer of implementation, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.</p>
+<h1 id="blueprint-for-the-rag-retrieval-pipeline">Blueprint for the RAG retrieval pipeline<a class="headerlink" href="#blueprint-for-the-rag-retrieval-pipeline" title="Permanent link">&para;</a></h1>
+<p><strong>LanceDB with Voyage 4 embeddings, hybrid search with cross-encoder reranking, and full Pydantic v2 typed contracts are the selected foundation for this pipeline.</strong> The design is async-first, abstracts providers via LiteLLM, uses multi-stage retrieval (dense + BM25 → RRF fusion → reranking), and layers explicit resilience around every external call. The research below covers each implementation layer, from vector store selection to CI/CD regression testing, calibrated to the existing monorepo's LangChain/LangGraph engine, Pydantic contracts, YAML configuration style, and eval framework.</p>
 <hr />
 <h2 id="lancedb-emerges-as-the-clear-vector-store-choice">LanceDB emerges as the clear vector store choice<a class="headerlink" href="#lancedb-emerges-as-the-clear-vector-store-choice" title="Permanent link">&para;</a></h2>
-<p>Among the five local vector stores evaluated — ChromaDB, FAISS, LanceDB, Qdrant (embedded mode), and Milvus Lite — <strong>LanceDB</strong> stands out for a portfolio project demanding engineering sophistication. The decisive advantages are its native Pydantic integration via <code>LanceModel</code> with <code>Vector(768)</code> type hints, native async/await support through <code>connect_async()</code>, and built-in hybrid search with integrated rerankers (linear combination, RRF, cross-encoder, ColBERT). The Lance columnar format provides <strong>automatic data versioning</strong> on every write — a feature that signals awareness of data engineering best practices that reviewers will notice.</p>
+<p>Among the five local vector stores evaluated — ChromaDB, FAISS, LanceDB, Qdrant (embedded mode), and Milvus Lite — <strong>LanceDB</strong> is the best fit for this codebase. The decisive advantages are its native Pydantic integration via <code>LanceModel</code> with <code>Vector(768)</code> type hints, native async/await support through <code>connect_async()</code>, and built-in hybrid search with integrated rerankers (linear combination, RRF, cross-encoder, ColBERT). The Lance columnar format also provides <strong>automatic data versioning</strong> on every write, which makes ingestion runs reproducible and rollback-able.</p>
 <p>LanceDB's SQL-like filter syntax (<code>.where("date &gt; '2025-01-01' AND category = 'architecture'")</code>) is far more expressive than ChromaDB's dict-based operators, while its schema-driven embedding registry (<code>get_registry().get("openai").create()</code>) eliminates boilerplate. The Lance SDK hit v1.0.0 in December 2025, and LanceDB Cloud launched mid-2025, demonstrating active development velocity. Performance is strong for disk-based workloads using IVF-PQ indexing, with production deployments handling <strong>700M+ vectors</strong>.</p>
-<p>Qdrant in local mode is the strong runner-up, offering the best metadata filtering of any option (filterable HNSW with boolean <code>must/should/must_not</code> clauses), full Pydantic types throughout its API, and FastEmbed integration for ONNX-based local embeddings. Reddit selected Qdrant over alternatives in 2025 after extensive evaluation, which gives it real-world credibility. Choose Qdrant if the portfolio emphasizes infrastructure engineering; choose LanceDB if it emphasizes data engineering fluency and modern Python patterns.</p>
+<p>Qdrant in local mode is the strong runner-up, offering the best metadata filtering of any option (filterable HNSW with boolean <code>must/should/must_not</code> clauses), full Pydantic types throughout its API, and FastEmbed integration for ONNX-based local embeddings. Reddit selected Qdrant over alternatives in 2025 after extensive evaluation. Choose Qdrant if the deployment is infrastructure-centric and needs heavy metadata filtering; choose LanceDB — as this pipeline does — for tighter Pydantic integration and a simpler embedded story.</p>
 <p>Avoid ChromaDB (too prototype-oriented, sync-only in embedded mode, minimal type safety), FAISS (zero metadata awareness — it's a library, not a database), and Milvus Lite (FLAT-index only, sync-only, dict-based API).</p>
 <table>
 <thead>
@@ -2987,7 +2987,7 @@
 <hr />
 <h2 id="embedding-model-selection-and-provider-abstraction">Embedding model selection and provider abstraction<a class="headerlink" href="#embedding-model-selection-and-provider-abstraction" title="Permanent link">&para;</a></h2>
 <p><strong>Voyage 4</strong> ($0.06/1M tokens) delivers the best price-to-performance ratio among API embedding models as of early 2026. Its MoE architecture tops the RTEB retrieval leaderboard, supports Matryoshka dimensionality (256–2048), handles <strong>32K token</strong> context windows, and offers 200M free tokens per model for prototyping. The Voyage 4 family's shared embedding space is a unique advantage: documents indexed with <code>voyage-4-large</code> can be queried with the cheaper <code>voyage-4-lite</code> without re-indexing.</p>
-<p>For a fallback, <strong>OpenAI text-embedding-3-small</strong> ($0.02/1M tokens) provides the widest ecosystem support and is instantly recognizable to any reviewer. For fully local/offline operation, <strong>Nomic Embed Text v2 MoE</strong> runs via Ollama with zero setup, is Apache 2.0 licensed, supports 100+ languages, and provides Matryoshka dimensionality at 768 dimensions. For code-heavy retrieval, <strong>Voyage Code-3</strong> outperforms OpenAI's best model by 13.8% across 238 code retrieval datasets.</p>
+<p>For a fallback, <strong>OpenAI text-embedding-3-small</strong> ($0.02/1M tokens) provides the widest ecosystem support. For fully local/offline operation, <strong>Nomic Embed Text v2 MoE</strong> runs via Ollama with zero setup, is Apache 2.0 licensed, supports 100+ languages, and provides Matryoshka dimensionality at 768 dimensions. For code-heavy retrieval, <strong>Voyage Code-3</strong> outperforms OpenAI's best model by 13.8% across 238 code retrieval datasets.</p>
 <p>The provider abstraction layer should use <strong>LiteLLM</strong>, which provides a unified <code>embedding()</code> function across 100+ providers with identical response formats. This enables single-config model switching and demonstrates production-level engineering:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">litellm</span><span class="w"> </span><span class="kn">import</span> <span class="n">embedding</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Swap providers with zero code changes</span>
@@ -3001,7 +3001,7 @@
 <p><strong>Stage 1 — Hybrid retrieval.</strong> Run dense vector search (via LanceDB) and BM25 sparse search in parallel using <code>asyncio.gather</code>. LanceDB's native hybrid search makes this a single call: <code>table.search("query", query_type="hybrid")</code>. The critical insight from IBM's research is that three-way retrieval (BM25 + dense + sparse vectors) outperforms any single method. Fix recall first — if recall@50 is below 90%, adding a reranker won't help.</p>
 <p><strong>Stage 2 — Fusion via Reciprocal Rank Fusion.</strong> RRF combines ranked lists with the formula <code>score(d) = Σ 1/(k + rank_i(d))</code> where k=60. LanceDB includes built-in <code>LinearCombinationReranker</code> and RRF, or use LangChain's <code>EnsembleRetriever</code> with configurable weights for explicit control.</p>
 <p><strong>Stage 3 — Cross-encoder reranking.</strong> Rerank the top 20–50 fused candidates down to the final 3–5 using a cross-encoder (e.g., <code>cross-encoder/ms-marco-MiniLM-L-12-v2</code>) or ColBERTv2 for better latency. ColBERT's late-interaction architecture provides near-cross-encoder accuracy at <strong>100x the speed</strong> by pre-computing document token embeddings and using MaxSim scoring. Jina ColBERT v2 supports 89 languages and 8192 tokens.</p>
-<p><strong>Wiring RAG as a LangGraph tool</strong> follows the official agentic RAG pattern: wrap the retrieval pipeline as a <code>@tool</code>-decorated function, bind it to agent LLMs via <code>.bind_tools([retriever_tool])</code>, and use LangGraph's <code>ToolNode</code> with <code>tools_condition</code> for routing. The state graph should include a <code>grade_documents</code> node using a Pydantic <code>GradeDocuments</code> model (with binary relevance scoring) as a conditional edge — if retrieved documents are irrelevant, the graph routes to a <code>rewrite_question</code> node that reformulates the query before retrying. This self-corrective loop is the signature pattern of production-grade agentic RAG.</p>
+<p><strong>Wiring RAG as a LangGraph tool</strong> follows the official agentic RAG pattern: wrap the retrieval pipeline as a <code>@tool</code>-decorated function, bind it to agent LLMs via <code>.bind_tools([retriever_tool])</code>, and use LangGraph's <code>ToolNode</code> with <code>tools_condition</code> for routing. The state graph should include a <code>grade_documents</code> node using a Pydantic <code>GradeDocuments</code> model (with binary relevance scoring) as a conditional edge — if retrieved documents are irrelevant, the graph routes to a <code>rewrite_question</code> node that reformulates the query before retrying. This self-corrective loop is the signature pattern of agentic RAG.</p>
 <p>For the multi-agent system, register the RAG retriever as a shared tool that all agents (Coder, Architect, Reviewer) can invoke alongside their specialty tools. Each agent autonomously decides when to invoke RAG based on its system prompt. The Orchestrator routes queries to the appropriate specialist, and per-agent retrieval configuration (different collections, different <code>top_k</code>) is supported through the YAML config system.</p>
 <h3 id="query-transformation-and-context-management">Query transformation and context management<a class="headerlink" href="#query-transformation-and-context-management" title="Permanent link">&para;</a></h3>
 <p>For complex queries, implement <strong>multi-query retrieval</strong> as the default query transformation: the LLM generates 3–5 alternative phrasings, each retrieves independently, and results are deduplicated. LangChain's <code>MultiQueryRetriever</code> handles this out of the box. Reserve HyDE (Hypothetical Document Embedding) for vague or domain-specific queries where the semantic gap between question and document is large, but test carefully — if the LLM lacks domain knowledge, the hypothetical document can mislead retrieval.</p>
@@ -3010,14 +3010,14 @@
 <p>Use <strong>RecursiveCharacterTextSplitter at 400–512 tokens with 10–20% overlap</strong> as the default chunking strategy. A February 2026 Firecrawl benchmark across 50 academic papers found recursive 512-token splitting scored <strong>69% accuracy</strong> versus only 54% for semantic chunking (which produced fragments averaging 43 tokens). For code, use code-aware separators that split at class/function boundaries first.</p>
 <p>Each chunk must carry structured metadata: <code>source_file</code>, <code>page_number</code>, <code>section_header</code> (extracted from document structure), <code>document_id</code>, <code>ingested_at</code>, <code>content_hash</code>, and <code>chunk_index</code>. The <code>content_hash</code> enables incremental updates: on re-ingestion, compare hashes and only re-embed changed documents, using the vector store's delete-by-metadata plus re-insert pattern to avoid full re-indexing.</p>
 <hr />
-<h2 id="engineering-patterns-that-signal-senior-level-craft">Engineering patterns that signal senior-level craft<a class="headerlink" href="#engineering-patterns-that-signal-senior-level-craft" title="Permanent link">&para;</a></h2>
-<p>The gap between tutorial-grade and portfolio-grade RAG lies in five areas: typed contracts, async design, resilience, observability, and testing. Each deserves deliberate implementation.</p>
+<h2 id="engineering-patterns-this-pipeline-commits-to">Engineering patterns this pipeline commits to<a class="headerlink" href="#engineering-patterns-this-pipeline-commits-to" title="Permanent link">&para;</a></h2>
+<p>Five areas carry most of the operational risk in a RAG pipeline: typed contracts, async design, resilience, observability, and testing. Each deserves deliberate implementation.</p>
 <h3 id="typed-contracts-with-pydantic-v2">Typed contracts with Pydantic v2<a class="headerlink" href="#typed-contracts-with-pydantic-v2" title="Permanent link">&para;</a></h3>
-<p>Define explicit Pydantic models for every data boundary. The essential models are <code>ChunkMetadata</code> (source, page, headings, content hash), <code>RetrievalQuery</code> (text with <code>min_length</code> validation, <code>top_k</code> with bounds, <code>score_threshold</code>, metadata filters), <code>RetrievalResult</code> (content, score, metadata, <code>computed_field</code> for <code>is_high_confidence</code>), <code>DocumentIngestionRequest</code> (with <code>model_validator</code> ensuring overlap &lt; chunk_size), and <code>EmbeddingConfig</code> as a discriminated union across providers. Use <code>ConfigDict(extra='forbid')</code> on all models to reject unknown fields at load time — catching config typos immediately rather than silently ignoring them. Leverage Pydantic v2's <code>computed_field</code> for derived values that appear in serialization, and discriminated unions (<code>Field(discriminator='provider')</code>) for zero-ambiguity configuration parsing backed by Rust-speed validation.</p>
+<p>Define explicit Pydantic models for every data boundary. The essential models are <code>ChunkMetadata</code> (source, page, headings, content hash), <code>RetrievalQuery</code> (text with <code>min_length</code> validation, <code>top_k</code> with bounds, <code>score_threshold</code>, metadata filters), <code>RetrievalResult</code> (content, score, metadata, <code>computed_field</code> for <code>is_high_confidence</code>), <code>DocumentIngestionRequest</code> (with <code>model_validator</code> ensuring overlap &lt; chunk_size), and <code>EmbeddingConfig</code> as a discriminated union across providers. Use <code>ConfigDict(extra='forbid')</code> on all models to reject unknown fields at load time — catching config typos immediately rather than silently ignoring them. Use Pydantic v2's <code>computed_field</code> for derived values that appear in serialization, and discriminated unions (<code>Field(discriminator='provider')</code>) for zero-ambiguity configuration parsing backed by Rust-speed validation.</p>
 <h3 id="async-first-with-controlled-concurrency">Async-first with controlled concurrency<a class="headerlink" href="#async-first-with-controlled-concurrency" title="Permanent link">&para;</a></h3>
 <p>RAG pipelines are heavily I/O-bound. The embedding service should use <code>asyncio.Semaphore</code> for rate limiting concurrent API calls, <code>asyncio.gather</code> for parallel hybrid retrieval (dense + BM25 simultaneously), and <code>asyncio.to_thread</code> for offloading blocking operations like cross-encoder inference. LanceDB's <code>AsyncConnection</code> and <code>AsyncTable</code> provide native async vector store operations. The anti-pattern to avoid: synchronous <code>requests.get()</code> blocking the event loop, or sequential embedding calls for 1,000 documents.</p>
 <h3 id="layered-resilience-retry-circuit-breaker-fallback-cache">Layered resilience: retry → circuit breaker → fallback → cache<a class="headerlink" href="#layered-resilience-retry-circuit-breaker-fallback-cache" title="Permanent link">&para;</a></h3>
-<p>Use <strong>tenacity</strong> for retry with exponential backoff (1s, 2s, 4s, 8s, 16s) on transient errors only (<code>RateLimitError</code>, <code>APIError</code>) — never retry auth or validation errors. Layer a circuit breaker (via <code>circuitbreaker</code> or <code>pybreaker</code>) that opens after 5 consecutive failures and falls back to local sentence-transformers embedding. The final fallback layer checks an embedding cache. Each layer returns a typed <code>EmbeddingResult</code> with a <code>source</code> field ("api", "local_fallback", "cache") for observability. This layered approach — resilience as a strategy, not an afterthought — is a signature senior engineering pattern.</p>
+<p>Use <strong>tenacity</strong> for retry with exponential backoff (1s, 2s, 4s, 8s, 16s) on transient errors only (<code>RateLimitError</code>, <code>APIError</code>) — never retry auth or validation errors. Layer a circuit breaker (via <code>circuitbreaker</code> or <code>pybreaker</code>) that opens after 5 consecutive failures and falls back to local sentence-transformers embedding. The final fallback layer checks an embedding cache. Each layer returns a typed <code>EmbeddingResult</code> with a <code>source</code> field ("api", "local_fallback", "cache") for observability, so a degraded run is visible in telemetry rather than silently indistinguishable from a healthy one.</p>
 <h3 id="opentelemetry-based-observability">OpenTelemetry-based observability<a class="headerlink" href="#opentelemetry-based-observability" title="Permanent link">&para;</a></h3>
 <p>Instrument every pipeline stage as a span in a trace tree: <code>rag.query</code> (root) → <code>rag.embed_query</code> → <code>rag.vector_search</code> → <code>rag.rerank</code> → <code>rag.assemble_context</code> → <code>rag.llm_inference</code>. Record key attributes on each span: embedding latency, model name, result count, top/min scores, token counts, and estimated cost. Export traces to LangSmith (set <code>LANGSMITH_OTEL_ENABLED=true</code> with langsmith ≥ 0.4.25) or Langfuse (OTLP endpoint at <code>/api/public/otel</code>). The critical metrics to dashboard are <strong>embedding latency</strong> (histogram), <strong>retrieval score distribution</strong> (gauge), <strong>context token utilization</strong> (histogram), and <strong>end-to-end query latency at p50/p95/p99</strong>.</p>
 <h3 id="testing-at-three-levels">Testing at three levels<a class="headerlink" href="#testing-at-three-levels" title="Permanent link">&para;</a></h3>
@@ -3108,7 +3108,7 @@
 <p>The <code>tools/rag_tool.py</code> bridge is deliberately thin — it wraps the <code>rag/</code> module's retriever as a LangChain <code>@tool</code> with a clear docstring that tells agents when to invoke it. Tool discovery uses the existing registry's auto-import pattern (<code>pkgutil.iter_modules</code>), checking for <code>BaseTool</code> instances in each module. The RAG config follows the same YAML pattern as existing workflow definitions, with per-workflow overrides using an <code>_extends</code> key for config inheritance.</p>
 <hr />
 <h2 id="conclusion">Conclusion<a class="headerlink" href="#conclusion" title="Permanent link">&para;</a></h2>
-<p>The implementation path is clear: start with LanceDB + Voyage 4 embeddings behind a LiteLLM abstraction, wire hybrid search (dense + BM25 → RRF → cross-encoder reranking) as a LangGraph <code>ToolNode</code> with self-corrective document grading, and wrap everything in Pydantic v2 typed contracts with async-first execution. The three patterns that will most impress reviewers are the <strong>discriminated union configuration model</strong> (showing Pydantic v2 mastery), the <strong>layered resilience strategy</strong> (retry → circuit breaker → local fallback → cache), and the <strong>integrated evaluation pipeline</strong> with YAML-defined rubrics and NDCG regression gates in CI. Each of these signals that the builder understands not just how RAG works, but how production ML systems are engineered. The module structure keeps RAG as an independent, testable subsystem that plugs cleanly into the existing agent/workflow/tool architecture through a single bridge file.</p>
+<p>The implementation path is clear: start with LanceDB + Voyage 4 embeddings behind a LiteLLM abstraction, wire hybrid search (dense + BM25 → RRF → cross-encoder reranking) as a LangGraph <code>ToolNode</code> with self-corrective document grading, and wrap everything in Pydantic v2 typed contracts with async-first execution. The three patterns that carry the most weight are the <strong>discriminated union configuration model</strong>, which makes YAML config parsing unambiguous; the <strong>layered resilience strategy</strong> (retry → circuit breaker → local fallback → cache); and the <strong>integrated evaluation pipeline</strong> with YAML-defined rubrics and NDCG regression gates in CI, which is what stops retrieval quality from silently regressing. The module structure keeps RAG as an independent, testable subsystem that plugs cleanly into the existing agent/workflow/tool architecture through a single bridge file.</p>
 
 
 
@@ -3131,7 +3131,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
   </span>
 
     

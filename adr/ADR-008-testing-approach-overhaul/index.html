@@ -1663,7 +1663,7 @@
 </table>
 <hr/>
 <h2 id="3-context-problem-statement">3. Context &amp; Problem Statement<a class="headerlink" href="#3-context-problem-statement" title="Permanent link">¶</a></h2>
-<p>The <code>tafreeman/agentic-runtime-platform</code> monorepo targets 80%+ Python test coverage and emphasizes TDD workflows. A comprehensive audit of all test files revealed two systemic problems operating in opposite directions: <strong>test bloat</strong> (redundant tests inflating counts without adding defect detection) and <strong>coverage voids</strong> (critical modules with zero or near-zero coverage).</p>
+<p>The <code>tafreeman/agentic-runtime-platform</code> monorepo targets 80%+ Python test coverage and emphasizes TDD workflows. A full audit of all test files revealed two systemic problems operating in opposite directions: <strong>test bloat</strong> (redundant tests inflating counts without adding defect detection) and <strong>coverage voids</strong> (critical modules with zero or near-zero coverage).</p>
 <h3 id="31-the-bloat-problem-quantitative-evidence">3.1 The Bloat Problem — Quantitative Evidence<a class="headerlink" href="#31-the-bloat-problem-quantitative-evidence" title="Permanent link">¶</a></h3>
 <p>An audit of all 60+ test files across the monorepo uncovered <strong>~95 tests</strong> that should be removed, consolidated, or rewritten:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>╔══════════════════════════════════════════════════════════════════════════╗
@@ -1903,7 +1903,7 @@
 <strong>Cons:</strong> Destroys ~1,005 good tests to fix ~95 bad ones. The eval package (230 tests), rate_limit_tracker (67 tests), and expressions (46 tests) are already excellent. Impractical time investment. Would pause all feature development.</p>
 <h3 id="option-d-ai-assisted-continuous-audit">Option D — AI-Assisted Continuous Audit<a class="headerlink" href="#option-d-ai-assisted-continuous-audit" title="Permanent link">¶</a></h3>
 <p>Use the existing <code>/test-coverage</code> command to periodically re-audit tests. No policy changes — rely on ongoing audits to flag issues.</p>
-<p><strong>Pros:</strong> Low implementation cost. Leverages existing tooling.
+<p><strong>Pros:</strong> Low implementation cost. Uses existing tooling.
 <strong>Cons:</strong> Reactive, not preventive. Does not address the ~95 existing problematic tests. Does not establish criteria for what "good" looks like.</p>
 <h3 id="tradeoff-matrix">Tradeoff Matrix<a class="headerlink" href="#tradeoff-matrix" title="Permanent link">¶</a></h3>
 <table>
@@ -2007,7 +2007,7 @@
 <p>Tests that validate <strong>contracts, schemas, or boundary conditions</strong> without exercising complex logic.</p>
 <p><strong>Characteristics:</strong></p>
 <ul>
-<li>Validates Pydantic model serialization/deserialization with non-trivial schemas (nested objects, optional fields, validators)</li>
+<li>Validates Pydantic model serialization/deserialization with complex schemas (nested objects, optional fields, validators)</li>
 <li>Tests boundary values of numeric parameters</li>
 <li>Validates that error messages contain expected context</li>
 <li>Tests configuration loading from YAML/env with real file I/O</li>
@@ -2575,7 +2575,7 @@
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

@@ -2846,7 +2846,7 @@ tier membership a curated judgment, so retired ids linger until edited):</p>
    <code>Authorization: Bearer $OLLAMA_API_KEY</code> on both the sync and async
    clients — but only when the key is set.</li>
 <li>Without <code>OLLAMA_API_KEY</code>, behavior is byte-for-byte unchanged (no probe,
-   no cloud attempt), keeping the keyless/no-LLM baseline hermetic.</li>
+   no cloud attempt), keeping the keyless/no-LLM baseline network-free.</li>
 </ol>
 <p>The tags lookup is memoised in <code>ollama_discovery.local_model_names()</code> with a
 60 s TTL so routing costs one local round-trip per window, not one per model
@@ -2854,7 +2854,7 @@ build; a failed probe caches an empty set (a down daemon then defers to the
 cloud when a key exists, which is the best remaining option anyway).</p>
 <p><strong>Registry rungs point at ids their providers actually list.</strong> In this
 deployment the <code>openai:</code> slot cannot serve OpenAI ids, so its chain rungs move
-to the first-class <code>nvidia:</code> provider (live-verified completions on
+to the supported <code>nvidia:</code> provider (live-verified completions on
 2026-07-12): <code>nvidia:meta/llama-3.1-8b-instruct</code> (tier 1),
 <code>nvidia:deepseek-ai/deepseek-v4-flash</code> (tiers 2–3),
 <code>nvidia:deepseek-ai/deepseek-v4-pro</code> (tiers 4–5). The dated sonnet id becomes
@@ -2916,7 +2916,7 @@ lists them; they revive when the token is rotated.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 13, 2026 06:54:33 UTC">July 13, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
   </span>
 
     
