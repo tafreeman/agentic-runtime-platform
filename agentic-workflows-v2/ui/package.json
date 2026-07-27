@@ -30,8 +30,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "lucide-react": "^1.25.0",
-    "radix-ui": "^1.6.4",
+    "lucide-react": "^1.27.0",
+    "radix-ui": "^1.6.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-resizable-panels": "^4.12.2",
@@ -40,7 +40,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.62.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^25.9.5",
@@ -51,7 +51,7 @@
     "autoprefixer": "^10.5.4",
     "jsdom": "^25.0.0",
     "json-schema-to-typescript": "^15.0.4",
-    "postcss": "^8.5.22",
+    "postcss": "^8.5.23",
     "tailwindcss": "^3.4.17",
     "typescript": "^6.0.3",
     "vite": "^8.1.5",
