@@ -1,119 +1,118 @@
-# Contributing to Agentic Runtime Platform v2
+# Contributing to Agentic Workflows v2
 
-> **Scope:** this file covers contributions specific to the `agentic-workflows-v2/` package (runtime + UI).
-> For monorepo-wide policy — local gates, commit format, when to write an ADR, the PR checklist — see the root [`CONTRIBUTING.md`](../CONTRIBUTING.md).
-> **Last verified:** 2026-04-22
+This page adds runtime- and UI-specific rules to the repository
+[contributor guide](../CONTRIBUTING.md). The root guide owns branch, commit,
+pull-request, documentation, and full validation policy.
 
-Thanks for contributing. This project uses docs-as-code, typed contracts, and test-first changes.
+Last verified: 2026-07-28.
 
-## Scope
+## Package boundaries
 
-Contributions are welcome for:
-- Workflow runtime improvements (`agentic_v2/engine`, `agentic_v2/workflows`)
-- Agent/model/tool integrations
-- API/UI improvements
-- Tests and fixtures
-- Documentation and examples
+Keep runtime concerns inside their existing areas:
 
-## Prerequisites
+| Area | Path |
+|---|---|
+| Execution engines | `agentic_v2/engine/`, `agentic_v2/langchain/`, `agentic_v2/adapters/` |
+| Agents and prompts | `agentic_v2/agents/`, `agentic_v2/prompts/` |
+| Public wire models | `agentic_v2/contracts/` and selected `agentic_v2/server/models*` |
+| Server | `agentic_v2/server/` |
+| Model routing | `agentic_v2/models/` |
+| RAG | `agentic_v2/rag/` |
+| Workflow definitions | `agentic_v2/workflows/` |
+| Dashboard | `ui/src/` |
 
-- Python 3.11+
-- Node.js 20+ (for `ui/`)
-- `pip` and `npm`
+Do not import source directly from `agentic-v2-eval` or a sibling repository.
+Review the root architecture and relevant ADR before adding a package
+dependency.
 
-## Local Setup
+## Set up
 
-```bash
-# From the repo root
+The supported full setup runs from the repository root:
+
+```text
 just setup
 ```
 
-If you prefer a containerized workspace, open the repo in the provided devcontainer instead of bootstrapping locally.
+The root `justfile` uses PowerShell. Other environments should follow the
+[manual setup](../docs/getting-started/installation.md#manual-setup).
 
-## Development Workflow
+To install only this package, run from `agentic-workflows-v2`:
 
-1. Create a branch for your change.
-2. Make the smallest coherent change set.
-3. Add or update tests.
-4. Update docs for behavior, API, config, or workflow changes.
-5. Run local checks before opening a PR.
+```text
+python -m pip install -e ".[dev,server,langchain]"
+```
 
-## Required Local Checks
+## Run focused checks
 
-```bash
-# From the repo root
+From the repository root:
+
+```text
+python -m pytest agentic-workflows-v2/tests -q
+npm --prefix agentic-workflows-v2/ui test
+npm --prefix agentic-workflows-v2/ui run build
+```
+
+The runtime configures an 80% Python coverage floor. The UI configures 60% for
+lines, statements, and functions and a 56% branch ratchet. Use the values in
+`pyproject.toml` and `ui/vitest.config.ts` as the source of truth.
+
+Before review, also run the root checks:
+
+```text
 just test
 just docs
 pre-commit run --all-files
 ```
 
-UI checks (when frontend files changed):
+Live-provider, slow, and some end-to-end tests are separate from the normal
+unit path. Report exactly which commands ran.
 
-```bash
-cd ui
-npm run build
-npm test
-npm run test:coverage
+## Test behavior changes
+
+- Put Python regression tests in `tests/test_*.py`.
+- Put UI unit tests in `ui/src/**/__tests__/` or `*.test.ts(x)`.
+- Put browser flows in `ui/e2e/*.spec.ts`.
+- Use the registered `slow`, `e2e`, or `integration` marker when its definition
+  matches the test.
+- Use deterministic fakes for normal CI. Do not silently convert a live test
+  into a mock-only claim.
+
+## Change a wire contract
+
+Pydantic models generate committed JSON Schemas, which then generate
+TypeScript types. Do not edit the generated artifacts by hand.
+
+From `agentic-workflows-v2`:
+
+```text
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+npm --prefix ui run build
 ```
 
-The UI package enforces a 60% coverage floor in `ui/vitest.config.ts`.
+Commit the Python model, JSON Schema, generated TypeScript, and tests together.
+The `wire-format-drift` CI job repeats generation.
 
-## Pull Request Expectations
+## Update the matching documentation
 
-Use `.github/PULL_REQUEST_TEMPLATE.md` and include:
-- Problem statement
-- What changed
-- Validation evidence (tests/screenshots/logs)
-- Risks and rollback notes
-- Documentation updates
+| Change | Document |
+|---|---|
+| CLI behavior | `../docs/cli-reference.md` |
+| Configuration variable | `../.env.example` and `../docs/configuration.md` |
+| Workflow syntax | `../docs/WORKFLOW_AUTHORING.md` |
+| API route or schema | `../docs/api-contracts-runtime.md` |
+| UI route or API use | `../docs/ui/` |
+| Architecture boundary | `../docs/ARCHITECTURE.md` and an ADR when needed |
+| Current unsupported behavior | `../docs/KNOWN_LIMITATIONS.md` |
 
-## Documentation Rules
-
-If your change affects users or contributors, update the docs in the same PR.
-
-Typical mappings:
-- New workflow: `docs/WORKFLOWS.md`
-- New environment variable: `README.md` and `docs/DEVELOPMENT.md`
-- New endpoint: `docs/API_REFERENCE.md`
-- New architecture pattern: `docs/ARCHITECTURE.md`
-- New bootstrap command or devcontainer behavior: `README.md`, `docs/ONBOARDING.md`, and `CONTRIBUTING.md`
-
-### Editing the execution-event wire format
-
-`agentic_v2/contracts/events.py` is the single source of truth for the
-WebSocket / SSE execution event contract. The TypeScript mirror in
-`ui/src/api/events.generated.ts` is produced from a committed JSON Schema
-(`tests/schemas/events.schema.json`) and **must never be hand-edited**.
-
-If you change any event model in `contracts/events.py`:
-
-1. Regenerate both sides:
-   ```bash
-   cd agentic-workflows-v2
-   python scripts/generate_ts_types.py      # Python  -> JSON Schema
-   cd ui && npm run generate:types          # JSON Schema -> TypeScript
-   ```
-2. Commit the regenerated `tests/schemas/events.schema.json` and
-   `ui/src/api/events.generated.ts` alongside the Python change.
-
-The `wire-format-drift` CI job regenerates both files and fails any PR
-that forgets either step. Editing the generated TypeScript by hand will
-also fail CI on the next regeneration.
-
-## Code Style
-
-- Keep functions and classes focused.
-- Prefer explicit schemas/contracts over untyped dicts.
-- Keep workflow YAML declarative; avoid hidden runtime coupling.
-- Add concise comments only where behavior is non-obvious.
+Keep examples small and executable. Do not copy the environment-variable
+catalog into another page.
 
 ## Security
 
-- Never commit secrets, keys, or production tokens.
-- Prefer environment variables for credentials.
-- Resolve runtime secrets through `agentic_v2.models.secrets.get_secret()` / `get_first_secret()` instead of reading `os.environ` directly in application code.
-- Follow `SECURITY.md` for vulnerability reporting.
-
-## Need Help?
-
-Open a discussion or issue and use `SUPPORT.md` for support channels and expected response paths.
+- Never commit credentials, provider responses containing private data, or
+  generated run artifacts.
+- Resolve runtime secrets through the secret-provider layer instead of reading
+  environment variables directly in new application code.
+- Keep file, shell, HTTP, MCP, and tool-approval boundaries fail-closed.
+- Follow [SECURITY.md](../SECURITY.md) for vulnerability reports.

@@ -1,28 +1,32 @@
-# Workflow Execution Fixtures
+# Runtime fixtures
 
-This directory contains sample workflow execution artifacts for documentation and testing purposes.
+These files are committed examples used for documentation, manual inspection,
+and tests. They are not a directory of current run history.
 
-## About Workflow Runs
+| File | Purpose |
+| --- | --- |
+| `example_code_review_run.json` | A saved `code_review` run envelope showing workflow, step, timing, dataset, model, token, and output fields. |
+| `multi_agent_codegen_e2e_input.json` | Input payload for the full-stack multi-agent end-to-end scenario. |
 
-The agentic workflows engine generates JSON run logs in `runs/` directory during execution. These files contain:
-- Workflow execution metadata (run_id, status, timing)
-- Step-by-step execution details
-- Model usage and token counts
-- Input/output data for each step
+Treat fixture values as test data. A successful status in a fixture does not
+prove that the current code reproduces that result.
 
-## Why are run logs not committed?
+## Generated run files
 
-Run logs are excluded from git (via `.gitignore`) because:
-- They are generated artifacts, not source code
-- They can be large and create noisy diffs
-- They accumulate rapidly during development
-- They vary by environment and execution context
+`RunLogger` writes normal execution records under
+`agentic-workflows-v2/runs/`. Tenant-scoped server requests use a tenant
+subdirectory. Run files are ignored by Git because they are generated,
+environment-specific, and may contain prompts, outputs, file content, model
+names, timing data, or errors.
 
-## Representative Samples
+Before sharing a run:
 
-This fixtures directory contains minimal representative samples for:
-- Documentation purposes
-- Understanding the output format
-- Testing parsing logic
+1. remove credentials, personal data, proprietary input, and sensitive model
+   output;
+2. remove unstable timestamps and identifiers when they are not relevant;
+3. state whether a real model, mock, or `AGENTIC_NO_LLM=1` produced it; and
+4. record the command and commit used to generate it.
 
-Actual run logs from your executions will be stored in `runs/` but not committed to the repository.
+For scored committed results, use
+[`datasets/default/`](../../datasets/default/README.md). Those files have a
+separate update and validation contract.

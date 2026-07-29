@@ -13,7 +13,7 @@ The package is defined by the **repo-root** `pyproject.toml` (project name `agen
 also the `uv` workspace root; there is no `tools/pyproject.toml`. Members `agentic-workflows-v2` and
 `agentic-v2-eval` declare `agentic-tools` as a workspace dependency.
 
-The central design choice is a **static facade + provider adapters + two-level cache** pattern.
+The central design choice is a **static facade + provider adapters + shared disk cache** pattern.
 Callers never instantiate a client object; they call `LLMClient.generate_text(model_name, prompt)`
 as a static method. The method dispatches to one of several routing backends (local ONNX and Windows AI are distinct local backends) based on a name prefix
 in the model string. A 24-hour, SHA-256-keyed disk cache sits in front of all provider calls when
@@ -73,7 +73,7 @@ graph TD
 pyproject.toml                        # Repo root: package definition (agentic-tools) + uv workspace root
 tools/
 ├── __init__.py
-├── llm/                              # 25 modules — LLM client and provider layer
+├── llm/                              # LLM client and provider layer
 │   ├── llm_client.py                 # LLMClient static facade — primary entry point
 │   ├── provider_adapters.py          # All provider adapter functions
 │   ├── langchain_adapter.py          # LangChain compatibility shim
@@ -100,7 +100,7 @@ tools/
 │   ├── run_local_concurrency.py      # Local concurrency stress harness
 │   ├── windows_ai.py                 # WindowsAIModel — .NET bridge to Phi Silica
 │   └── windows_ai_bridge/            # C# .NET bridge project (PhiSilicaBridge.csproj)
-├── core/                             # 9 modules — shared utilities
+├── core/                             # Shared utilities
 │   ├── config.py                     # ModelConfig, PathConfig, Config dataclasses
 │   ├── errors.py                     # ErrorCode StrEnum + classify_error()
 │   ├── cache.py                      # Function-based cache API (delegates to ResponseCache)
@@ -112,7 +112,7 @@ tools/
 │   └── model_availability.py        # Runtime model availability helpers
 ├── agents/
 │   ├── repo_analyzer/                # Repository analysis agent helpers
-│   └── benchmarks/                   # 11 modules — benchmark infrastructure
+│   └── benchmarks/                   # Benchmark infrastructure
 │       ├── registry.py               # BenchmarkRegistry + PRESET_CONFIGS
 │       ├── datasets.py               # BENCHMARK_DEFINITIONS per benchmark
 │       ├── loader.py                 # load_benchmark() + clear_cache()
@@ -124,7 +124,7 @@ tools/
 │       ├── evaluator_reporting.py    # summarize_batch_results, save_evaluation_report
 │       ├── evaluation_pipeline.py    # evaluate_task_output_llm, get_gold_standard_for_task
 │       └── workflow_pipeline.py      # extract_workflow_data, save_workflow_phases_md
-└── tests/                            # Test suite (14 files) — no live LLM calls
+└── tests/                            # Key-free test suite
     ├── conftest.py
     ├── test_benchmark_pipeline.py
     ├── test_config.py
@@ -210,7 +210,7 @@ prevents accidental API spend during local development and CI runs.
 # Blocked unless PROMPTEVAL_ALLOW_REMOTE=1
 LLMClient.generate_text("gpt-4o", "Hello")  # raises RuntimeError
 
-# Always allowed (local + free-tier)
+# Exempt from this gate; GitHub still makes a remote, token-backed call
 LLMClient.generate_text("local:phi4mini", "Hello")     # OK
 LLMClient.generate_text("gh:gpt-4o-mini", "Hello")     # OK
 LLMClient.generate_text("ollama:llama3", "Hello")       # OK
@@ -218,6 +218,9 @@ LLMClient.generate_text("windows-ai:phi-silica", "Hi") # OK
 ```
 
 Set `PROMPTEVAL_ALLOW_REMOTE=1` to enable the remote providers (OpenAI, Anthropic, Gemini, and the Azure variants).
+GitHub Models is exempt from this application gate, but it still sends a
+network request and its availability, quota, and billing depend on the current
+account.
 
 ---
 
@@ -284,9 +287,8 @@ the bakeoff. The primary entry point is `evaluate_with_llm()` in `llm_evaluator.
 output on five weighted dimensions (Completeness, Correctness, Quality, Specificity, Alignment)
 on a 0.0–10.0 scale.
 
-Research gating thresholds (enforced by `agentic-v2-eval`):
-- `coverage_score >= 0.80`
-- `source_quality_score >= 0.80`
+Consumers define their own acceptance thresholds. The shared benchmark package
+does not impose a global coverage or source-quality gate.
 
 ---
 

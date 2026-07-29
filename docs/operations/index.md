@@ -1,39 +1,47 @@
 # Operations
 
-Operator-facing documentation for deploying and running the platform in production.
-These pages assume the server is deployed from the `agentic-workflows-v2/` package and
-accessible via uvicorn or a container.
+Use these pages to configure, deploy, secure, and diagnose the FastAPI server.
 
----
+## Before deployment
 
-## Pages in this section
+1. Read the [deployment guide](../deployment-guide.md).
+2. Set production values from the
+   [configuration reference](../configuration.md).
+3. Apply the controls in
+   [security hardening](security-hardening.md).
+4. Review [known limitations](../KNOWN_LIMITATIONS.md).
+5. Test the same artifact and environment settings that will run in
+   production.
 
-| Page | Description |
-|------|-------------|
-| [Security Hardening](security-hardening.md) | Security knobs, rate limiting, auth throttling, filesystem sandboxing, sanitization, and CORS |
-| [Troubleshooting](troubleshooting.md) | Common failure modes, log patterns, and diagnostic recipes |
-| [Deployment Guide](../deployment-guide.md) | CI/CD pipeline, Docker, environment setup, and observability |
+The development command is not a production process manager. Run the server
+behind an appropriate proxy or platform service, keep secrets outside the
+image, and use explicit health checks:
 
----
+```text
+GET /api/health
+GET /api/health/ready
+```
 
-## Companion references
+The first endpoint reports process health. Readiness also checks dependencies
+needed to accept work.
 
-| Reference | Description |
-|-----------|-------------|
-| [Configuration Reference](../configuration.md) | Every environment variable, its default, and accepted values |
-| [Known Limitations](../KNOWN_LIMITATIONS.md) | Current rough edges — in-process caveats, multi-replica behavior, and deferred Sprint 2 work |
-| [Architecture](../ARCHITECTURE.md) | Runtime engine internals — DAG executor, adapter registry, RAG pipeline |
+## During operation
 
----
+- Use structured logs and preserve the `run_id` for each workflow.
+- Monitor failed steps, retries, model routing, provider errors, and latency.
+- Keep workflow run storage on durable storage if run history matters.
+- Confirm that each replica can reach the same required configuration and
+  state.
+- Treat model and evaluator output as untrusted data at system boundaries.
 
-## Where to start
+See [troubleshooting](troubleshooting.md) for startup, API, model, workflow,
+RAG, and UI diagnostics.
 
-If you are hardening a new production deployment, begin with [Security Hardening](security-hardening.md)
-and work through the **Reference deployment posture** section at the bottom of that page.
-The copy-pasteable `.env` block there represents the minimum recommended configuration
-for an internet-exposed instance.
+## Related references
 
-If the server is not starting, see [Troubleshooting](troubleshooting.md) for startup
-failure patterns. The most common cause is a missing LangChain extras install; the
-[Security Hardening](security-hardening.md#5-adapter-eager-validation) page explains
-how to bypass this with `AGENTIC_DEFAULT_ADAPTER=native`.
+| Page | Use it for |
+| --- | --- |
+| [Runtime API contracts](../api-contracts-runtime.md) | Routes and request shapes |
+| [Architecture](../ARCHITECTURE.md) | Component and execution boundaries |
+| [No-LLM mode](../NO_LLM_MODE.md) | Deterministic and provider-free checks |
+| [Migration guide](../MIGRATIONS.md) | Breaking changes between versions |

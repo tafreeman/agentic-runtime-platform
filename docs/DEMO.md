@@ -1,144 +1,113 @@
-# Five-minute demo
+# Five-minute local demo
 
-**Audience:** a reviewer or teammate who already cloned the repo and ran `scripts/setup-dev.ps1`. This page answers one question: *what do I do now?*
+This demo proves that the runtime, API, WebSocket stream, and dashboard work
+together. It does not require a provider credential.
 
-If you haven't run setup yet, start at [`docs/ONBOARDING.md`](./ONBOARDING.md) instead.
+Complete [Installation](getting-started/installation.md) first.
 
----
+## 1. Run the deterministic workflow
 
-## The narrative arc
+From the repository root in PowerShell:
 
-You are about to:
-
-1. **Run a deterministic workflow** (no LLM, no keys) to prove the runtime is alive — ~5 seconds.
-2. **Run an LLM-backed workflow** (`code_review` against a real file) to see the full agent pipeline — ~30 seconds.
-3. **See both runs in the live dashboard** with the DAG animating step-by-step — instant.
-
-Expected total wall time: **under 5 minutes** — closer to 3 on a warm cache.
-
----
-
-## Prerequisites
-
-- You ran `agentic-workflows-v2/scripts/setup-dev.ps1` (Windows) or `just setup` (macOS/Linux) successfully.
-- At least one LLM provider key is in your `.env` — **needed for step 2 only**; steps 1 and 3 run without any key (the cheapest path is `GITHUB_TOKEN` — see [`docs/ONBOARDING.md`](./ONBOARDING.md#prerequisites)).
-
----
-
-## Step 1 — Deterministic workflow (no LLM)
-
-This validates the runtime and CLI wiring without spending a token.
-
-```bash
-# from repo root
-agentic run test_deterministic --input agentic-workflows-v2/scripts/fixtures/smoke-input.json --verbose
-```
-
-**Expected output (abridged):**
-
-```
-Status: SUCCESS
-Elapsed: 0.1s
-```
-
-If that failed, the platform is not installed correctly — go back to `ONBOARDING.md` section "Bootstrap the workspace" before continuing.
-
----
-
-## Step 2 — LLM-backed workflow (code_review)
-
-This exercises the full pipeline: tiered model routing, 5-step DAG, tool calls, the WebSocket event stream, and the run logger.
-
-Create `examples/hello.json` at the repo root (or reuse the committed fixture):
-
-```bash
-# option A: use the committed minimal fixture
-agentic run code_review \
-  --input agentic-workflows-v2/tests/fixtures/code_review_input.json \
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+.\.venv\Scripts\agentic.exe run test_deterministic `
+  --input agentic-workflows-v2\tests\fixtures\deterministic_input.json `
   --verbose
-
-# option B: review a real file (PowerShell)
-New-Item -ItemType Directory -Force examples | Out-Null
-@'
-{
-  "code_file": "agentic-workflows-v2/agentic_v2/cli/main.py",
-  "review_depth": "quick"
-}
-'@ | Set-Content examples/hello.json
-agentic run code_review --input examples/hello.json --verbose
 ```
 
-**Expected output (abridged):**
+The command should end with:
 
-```
-▶ workflow_start        run_id=r-...
-  ▶ step_start          parse_code          [tier0]
-  ✓ step_end            parse_code          92ms
-  ▶ step_start          style_check         [tier1]
-  ✓ step_end            style_check         2.4s
-  ▶ step_start          complexity_analysis [tier1]
-  ✓ step_end            complexity_analysis 1.8s
-  ▶ step_start          review_code         [tier2]
-  ✓ step_end            review_code         6.1s
-  ▶ step_start          generate_summary    [tier2]
-  ✓ step_end            generate_summary    3.7s
-✓ workflow_end          status=success       12.1s
-
+```text
 Status: SUCCESS
 ```
 
-Exact timings vary by provider. The run is logged to `agentic-workflows-v2/runs/r-<id>.json`.
+This checks the CLI, workflow loader, input validation, and dependency order.
+It does not test provider access.
 
----
+## 2. Start the development services
 
-## Step 3 — See it live
+Keep `AGENTIC_NO_LLM=1` in the same environment, then run:
 
-Open two terminals:
-
-**Terminal 1 — backend** (from `agentic-workflows-v2/`):
-
-```bash
-python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+```text
+just dev
 ```
 
-**Terminal 2 — frontend** (from `agentic-workflows-v2/ui/`):
+Check the services:
 
-```bash
-npm run dev
-```
-
-Open http://127.0.0.1:5173 in a browser.
-
-1. Click **Workflows** in the sidebar.
-2. Click **`code_review`**.
-3. Click **Run**. You'll be redirected to `/live/{run_id}`.
-4. Watch the DAG animate as each step transitions **queued → running → complete**. Step nodes glow while running (the `clay-glow` keyframe). Edges between completed and running steps show a flowing dash pattern.
-5. Click any step node to open the 5-field drill-down panel (inputs, outputs, scores, status, duration).
-
-When the workflow completes, the header badge flips to `[OK]` (or `[ERR]` on failure).
-
----
-
-## What you just proved
-
-| Capability | Where to look next |
+| Service | Address |
 |---|---|
-| DAG execution with parallel steps | [`docs/architecture-runtime.md`](./architecture-runtime.md) |
-| Tiered model routing across providers | [`docs/architecture-runtime.md`](./architecture-runtime.md) §Tiered Model Router |
-| WebSocket event streaming | [`docs/api-contracts-runtime.md`](./api-contracts-runtime.md) §`/ws/execution/{run_id}` |
-| Live DAG animation + drill-down | [`agentic-workflows-v2/ui/README.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/ui/README.md) |
-| Rubric-based evaluation | [`docs/architecture-eval.md`](./architecture-eval.md) |
+| Dashboard | `http://127.0.0.1:5173` |
+| Backend health | `http://127.0.0.1:8010/api/health` |
+| Backend readiness | `http://127.0.0.1:8010/api/health/ready` |
+| API documentation | `http://127.0.0.1:8010/docs` |
 
----
+On a system that cannot run the PowerShell-based `just` recipe, start the
+services in separate terminals:
+
+```text
+python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+npm --prefix agentic-workflows-v2/ui run dev
+```
+
+## 3. Run from the dashboard
+
+1. Open `http://127.0.0.1:5173`.
+2. Open **Workflows**.
+3. Select `test_deterministic`.
+4. Enter the required `input_text`.
+5. Start the run.
+6. Open the live view and watch each step change state.
+7. Open the saved run after it completes and inspect its step results.
+
+The deterministic workflow has two tier-0 steps. A successful live run confirms
+that the HTTP request, execution event stream, and saved result reached the
+dashboard.
+
+## 4. Optional provider-backed run
+
+To demonstrate model routing:
+
+1. stop the development services with `just dev-stop`;
+2. run `Remove-Item Env:AGENTIC_NO_LLM` in PowerShell;
+3. copy `.env.example` to `.env`;
+4. configure one supported provider;
+5. restart with `just dev`; and
+6. run `code_review` from the dashboard or CLI.
+
+CLI example:
+
+```powershell
+.\.venv\Scripts\agentic.exe run code_review `
+  --input agentic-workflows-v2\tests\fixtures\code_review_input.json `
+  --verbose
+```
+
+Provider response time, availability, and cost depend on the selected account
+and model. A provider-backed failure does not invalidate the deterministic
+runtime test; inspect the provider probe and the failed step separately.
+
+## What each step verifies
+
+| Check | Evidence |
+|---|---|
+| Deterministic CLI run | Workflow discovery and local engine execution |
+| Health and readiness | Server process and configured dependencies |
+| Dashboard workflow list | REST API and UI data loading |
+| Live run page | WebSocket execution events |
+| Saved run page | Result serialization and run retrieval |
+| Optional `code_review` | Provider routing and model-backed steps |
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `agentic: command not found` | Package not installed in the active venv | `pip install -e agentic-workflows-v2/` |
-| Workflow hangs on `style_check` or `review_code` | No LLM provider key in `.env` | See [`docs/ONBOARDING.md`](./ONBOARDING.md#prerequisites) |
-| Frontend shows "Connecting…" forever on `/live/...` | Backend not running on port 8010 | Start Terminal 1 first; check `curl http://127.0.0.1:8010/api/health` |
-| `[ERR]` status on every LLM step | Rate-limited / key invalid | Rotate the key; check `agentic-workflows-v2/runs/r-<id>.json` for error detail |
-| Port 8010 or 5173 already in use | Another dev server is running | `python -m agentic_v2.cli port-guard` |
+| Symptom | Check |
+|---|---|
+| `agentic` is not found | Activate `.venv` or use `.\.venv\Scripts\agentic.exe` |
+| Port conflict | Run `agentic devex port-guard --backend-port 8010 --frontend-port 5173` |
+| Dashboard cannot reach the API | Open `/api/health` and confirm backend port `8010` |
+| Live view cannot connect | Confirm the backend is running and the dashboard origin is allowed |
+| Provider-backed step fails | Inspect `/api/models/probe`, the run result, and the provider variable |
 
-For anything else, see [`docs/KNOWN_LIMITATIONS.md`](./KNOWN_LIMITATIONS.md) or [open an issue](https://github.com/tafreeman/agentic-runtime-platform/issues/new) on the repository.
+For more detail, see [Troubleshooting](operations/troubleshooting.md),
+[Runtime architecture](architecture-runtime.md), and the
+[Runtime API](api-contracts-runtime.md).

@@ -1,29 +1,37 @@
-# Agentic V2 Evaluation Module
+# `agentic_v2_eval` package
 
-## Overview
-This module provides a flexible evaluation framework for agentic workflows, supporting rubric-based scoring, batch and streaming runners, and multiple report formats.
+This package provides rubric scoring, evaluators, batch and streaming runners,
+and JSON, Markdown, and HTML reports.
 
-## Features
-- Scorer framework with YAML rubrics
-- Accuracy, quality, and performance metrics
-- Batch and streaming evaluation runners
-- JSON, Markdown, and HTML reporters
-- Extensible for custom metrics and rubrics
+Import from the installed package name, not from `src`:
 
-## Usage Example
 ```python
-from src.agentic_v2_eval.scorer import Scorer
-scorer = Scorer('src/agentic_v2_eval/rubrics/default.yaml')
-results = {'Accuracy': 0.8, 'Completeness': 0.9, 'Efficiency': 0.7}
-score = scorer.score(results)
-print(f"Weighted score: {score}")
+from agentic_v2_eval import Scorer
+
+scorer = Scorer("agentic-v2-eval/src/agentic_v2_eval/rubrics/default.yaml")
+result = scorer.score(
+    {
+        "Accuracy": 0.8,
+        "Completeness": 0.9,
+        "Efficiency": 0.7,
+    }
+)
+
+print(result.weighted_score)
 ```
 
-## API Reference
-- `Scorer`: Loads rubric and computes weighted scores
-- `run_batch_evaluation`: Runs batch evaluation
-- `run_streaming_evaluation`: Runs streaming evaluation
-- `generate_json_report`, `generate_markdown_report`, `generate_html_report`: Output results
+`Scorer.score()` returns `ScoringResult`; it does not return a bare number.
+Metric names must match the selected rubric.
 
-## Extending
-Add new metrics in `metrics/`, new rubrics in `rubrics/`, or custom reporters in `reporters/`.
+Public top-level exports include:
+
+- `Scorer` and `ScoringResult`;
+- pattern, standard, and quality evaluators;
+- evaluator registry and interfaces.
+
+Runner classes live in `agentic_v2_eval.runners`. `AsyncStreamingRunner` must
+be imported from `agentic_v2_eval.runners.streaming`.
+
+See the package [README](../../README.md) and the repository
+[evaluation guide](../../../docs/evaluation/index.md) for installation,
+CLI usage, rubrics, gates, and reports.

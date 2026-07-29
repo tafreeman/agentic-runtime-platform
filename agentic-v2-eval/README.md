@@ -1,134 +1,197 @@
-# Agentic V2 Evaluation Framework
+# Agentic v2 evaluation
 
-An evaluation framework for AI agent workflows, providing scoring, metrics, runners, and report generation.
+`agentic-v2-eval` scores structured evaluation results. It can:
 
-## Features
+- apply weighted YAML rubrics;
+- calculate accuracy, quality, and performance metrics;
+- run synchronous or streaming batches;
+- use pattern, quality, standard, or LLM-backed evaluators;
+- write JSON, Markdown, and HTML reports; and
+- execute code in a restricted local subprocess sandbox.
 
-- **Metrics**: Accuracy, quality, and performance evaluation
-- **Runners**: Batch and streaming evaluation execution
-- **Reporters**: JSON, Markdown, and HTML report generation
-- **Rubrics**: Configurable scoring rubrics in YAML format
-- **CLI**: Command-line interface for evaluations
+The package does not run an Agentic workflow by itself. Produce results with
+the runtime, a test harness, or another system, then pass those results to this
+package.
 
-## Installation
+## Install
 
-```bash
-pip install -e .
+The repository-wide contributor setup is:
+
+```text
+just setup
 ```
 
-For development:
+To install only this package, change to `agentic-v2-eval` and run:
 
-```bash
-pip install -e ".[dev]"
+```text
+python -m pip install -e .
 ```
 
-## Quick Start
+For its test and lint dependencies:
 
-### Python API
+```text
+python -m pip install -e ".[dev]"
+```
+
+Python 3.11 or newer is required.
+
+## Score results from Python
+
+The bundled default rubric contains `Accuracy`, `Completeness`, and
+`Efficiency`, with values normalized to the range from `0.0` to `1.0`.
 
 ```python
 from agentic_v2_eval import Scorer
-from agentic_v2_eval.metrics import calculate_accuracy, code_quality_score
-from agentic_v2_eval.runners import BatchRunner
-from agentic_v2_eval.reporters import generate_html_report
+from agentic_v2_eval.rubrics import load_rubric
 
-# Calculate accuracy
-accuracy = calculate_accuracy(
-    predictions=["A", "B", "A"],
-    ground_truth=["A", "B", "B"]
+scorer = Scorer(load_rubric("default"))
+score = scorer.score(
+    {
+        "Accuracy": 0.90,
+        "Completeness": 0.80,
+        "Efficiency": 0.75,
+    }
 )
-print(f"Accuracy: {accuracy:.2%}")
 
-# Score with a rubric
-scorer = Scorer("rubrics/default.yaml")  # or pass an in-memory rubric dict
-result = scorer.score({"Accuracy": 0.85, "Completeness": 0.9})
-print(f"Weighted Score: {result.weighted_score:.2f}")
-
-# Run batch evaluation
-runner = BatchRunner(evaluator=my_eval_function)
-batch_result = runner.run(test_cases)
-print(f"Success rate: {batch_result.success_rate:.1%}")
-
-# Generate report
-generate_html_report(results, "report.html")
+print(score.weighted_score)
+print(score.missing_criteria)
 ```
 
-### Command Line
+A missing criterion contributes no points and is reported in
+`missing_criteria`. Values outside a criterion's configured range are clamped
+before scoring.
 
-```bash
-# Show help
-python -m agentic_v2_eval --help
+`Scorer` also accepts a path to a custom YAML file or an in-memory dictionary:
 
-# Evaluate results with a rubric
-python -m agentic_v2_eval evaluate results.json
-
-# Optionally override the default rubric
-python -m agentic_v2_eval evaluate results.json --rubric rubrics/default.yaml
-
-# Generate HTML report
-python -m agentic_v2_eval report results.json --format html --output report.html
+```yaml
+name: Release check
+version: "1.0"
+criteria:
+  - name: Correctness
+    weight: 0.7
+    min_value: 0
+    max_value: 1
+  - name: Completeness
+    weight: 0.3
+    min_value: 0
+    max_value: 1
 ```
 
-## Modules
+Criterion names are case-sensitive and must match the keys in the result.
 
-### scorer
+## Use the command line
 
-- `scorer.py`: YAML rubric loader and weighted-score calculator
+Create a JSON file containing one result object or a list of result objects:
 
-### interfaces
-
-- `interfaces.py`: `LLMClientProtocol` and `Evaluator` structural typing contracts for dependency injection
-
-### datasets
-
-- `datasets.py`: Dataset discovery, loading, and adaptation for HuggingFace/local sources
-
-### evaluators
-
-- `evaluators/base.py`: Abstract evaluator base class and evaluator registry
-- `evaluators/llm.py`: LLM-as-Judge evaluator with choice-anchored prompts
-- `evaluators/pattern.py`: Universal + pattern-specific scoring with hard-gate thresholds
-- `evaluators/quality.py`: Five-dimension quality evaluator
-- `evaluators/standard.py`: Five-dimension standard scoring with median aggregation
-
-### metrics
-
-- `metrics/accuracy.py`: Accuracy, F1, precision, recall calculations
-- `metrics/quality.py`: Code quality, lint, and complexity scores
-- `metrics/performance.py`: Execution time, latency, and benchmarking
-
-### runners
-
-- `runners/batch.py`: Synchronous batch evaluation with progress tracking
-- `runners/streaming.py`: Streaming evaluation with real-time callbacks
-
-### reporters
-
-- `reporters/json.py`: JSON format reports with summary statistics
-- `reporters/markdown.py`: Markdown reports with tables
-- `reporters/html.py`: Styled HTML reports with color-coded scores
-
-### sandbox
-
-- `sandbox/base.py`: Abstract sandbox interface and execution result model
-- `sandbox/local.py`: Subprocess-based sandbox with import blocklist and path-escape prevention
-
-### adapters
-
-- `adapters/`: Dataset format adapters for specific benchmark formats
-
-### rubrics
-
-YAML files defining scoring criteria with weights and descriptions.
-
-## Running Tests
-
-```bash
-pytest tests/ -v
-pytest --cov=agentic_v2_eval --cov-report=term-missing --cov-report=xml
-./scripts/run_coverage.sh
+```json
+[
+  {
+    "Accuracy": 0.9,
+    "Completeness": 0.8,
+    "Efficiency": 0.75
+  }
+]
 ```
+
+Score the file:
+
+```text
+agentic-v2-eval evaluate results.json --output scored.json
+```
+
+Use a custom rubric:
+
+```text
+agentic-v2-eval evaluate results.json --rubric rubric.yaml
+```
+
+Turn the average score into a build gate:
+
+```text
+agentic-v2-eval evaluate results.json --fail-under 0.80
+```
+
+The command exits with:
+
+| Code | Meaning |
+|---|---|
+| `0` | Results loaded and the optional threshold passed |
+| `1` | A file, JSON, rubric, or scoring error occurred |
+| `2` | The average score was below `--fail-under` |
+
+Generate a report:
+
+```text
+agentic-v2-eval report scored.json --format markdown --output report.md
+agentic-v2-eval report scored.json --format html --output report.html
+agentic-v2-eval report scored.json --format json --output report.json
+```
+
+`python -m agentic_v2_eval` provides the same commands.
+
+## Run a batch
+
+`BatchRunner` applies a normal Python function to every input and records
+failures without stopping by default:
+
+```python
+from agentic_v2_eval.runners import BatchRunner
+
+def evaluate_case(case: dict[str, str]) -> dict[str, bool]:
+    return {"matches": case["actual"] == case["expected"]}
+
+runner = BatchRunner(evaluator=evaluate_case)
+batch = runner.run(
+    [
+        {"actual": "A", "expected": "A"},
+        {"actual": "B", "expected": "C"},
+    ]
+)
+
+print(batch.results)
+print(batch.success_rate)
+```
+
+`success_rate` describes whether the evaluator function completed without an
+exception. It does not mean the evaluated output was correct.
+
+## Package map
+
+| Path | Purpose |
+|---|---|
+| `scorer.py` | Load rubrics and calculate weighted scores |
+| `rubrics/` | Bundled YAML rubrics |
+| `metrics/` | Accuracy, code-quality, and performance helpers |
+| `evaluators/` | Pattern, quality, standard, and LLM-backed evaluators |
+| `runners/` | Batch and streaming execution |
+| `reporters/` | JSON, Markdown, and HTML output |
+| `datasets.py` | Access benchmark definitions and dataset loaders |
+| `interfaces.py` | Protocols for evaluator and LLM-client implementations |
+| `sandbox/` | Restricted local subprocess execution |
+
+LLM-backed evaluators use an injected `LLMClientProtocol`. This keeps provider
+selection and credentials outside the evaluation package.
+
+## Test
+
+From the repository root:
+
+```text
+python -m pytest agentic-v2-eval/tests -q
+```
+
+To include the package's 80% coverage gate:
+
+```text
+python -m pytest agentic-v2-eval/tests `
+  --cov=agentic_v2_eval `
+  --cov-report=term-missing `
+  --cov-report=xml
+```
+
+On Bash-compatible systems, `agentic-v2-eval/scripts/run_coverage.sh` runs the
+same coverage check.
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).

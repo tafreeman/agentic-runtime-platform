@@ -1,53 +1,53 @@
-# Shared Tools (`agentic-tools`)
+# Shared Python tools
 
-Shared utilities for the `agentic-workflows-v2` runtime, `agentic-v2-eval` evaluation framework, and standalone CLI scripts.
+`tools` is the repository-level `agentic-tools` package. It contains utilities
+shared by the runtime, evaluation package, and standalone maintenance
+commands.
 
-## Installation
+Install it from the repository root:
 
-The `agentic-tools` package is defined by the **repo-root** `pyproject.toml` (not inside `tools/`). Install from the repository root:
-
-```bash
-# From the repo root
-pip install -e .
+```powershell
+python -m pip install -e .
 ```
 
-Imported by the main agentic packages as `from tools.llm.llm_client import LLMClient`, `from tools.core import ...`, etc.
+## Package areas
 
-## Modules
+| Directory | Purpose |
+| --- | --- |
+| `core/` | Shared configuration, errors, caching, and encoding |
+| `llm/` | Provider clients, local-model discovery, probing, and comparisons |
+| `agents/benchmarks/` | Benchmark registry, loaders, runner, and evaluators |
+| `research/` | Research-library construction helpers |
 
-| Module | Description |
-|--------|-------------|
-| `core/` | Configuration (`ModelConfig`, `PathConfig`), error codes, caching, encoding helpers |
-| `llm/` | Unified `LLMClient` facade — multi-provider LLM access (see below) |
-| `agents/benchmarks/` | Benchmark definitions, task loaders, evaluator pipeline, registry (HumanEval, MBPP, SWE-bench) |
-| `research/` | Research library builder and helpers |
+The LLM utilities cover remote providers and local servers. Availability
+depends on installed extras, credentials, network access, and local services.
+A provider listed in code is not necessarily configured on the current
+machine.
 
+## Commands
 
-### LLM Providers (`llm/`)
+Run command modules from the repository root:
 
-| Provider | Module | Notes |
-|----------|--------|-------|
-| OpenAI | `llm_client.py` | Direct API |
-| Anthropic Claude | `llm_client.py` | Direct API |
-| Google Gemini | `llm_client.py`, `list_gemini.py` | Direct API |
-| GitHub Models | `llm_client.py` | Via GitHub token |
-| Azure OpenAI | `llm_client.py` | Supports `_0` through `_n` endpoint failover |
-| Ollama / LM Studio | `local_model.py` | Local inference |
-| Windows AI (Phi Silica) | `windows_ai.py` | NPU bridge via C# interop |
+```powershell
+python -m tools.llm.model_probe --help
+python -m tools.llm.model_bakeoff --help
+python -m tools.llm.rank_models --help
+python -m tools.llm.check_provider_limits --help
+python -m tools.agents.benchmarks.runner --help
+```
 
-### CLI Scripts
+The current `tools.llm.model_inventory` entry point has an import-path defect
+and exits with `No module named 'llm_client'`. Use `model_probe` for live
+discovery until that command is fixed.
 
-Several modules are runnable as standalone scripts:
+Some commands contact model providers, download datasets, or write reports.
+Inspect `--help`, start with a small limit, and keep secrets and private data
+out of prompts and generated artifacts.
 
-- `python -m tools.llm.model_inventory` — List available models across providers
-- `python -m tools.llm.rank_models` — Rank models by performance
-- `python -m tools.llm.check_provider_limits` — Check rate limits per provider
-- `python -m tools.llm.run_local_concurrency` — Local model concurrency tests
+## Detailed guides
 
-> **Note:** CLI scripts require `logging.basicConfig()` in their `main()` function to produce visible output.
-
-## Related
-
-- [Agentic Runtime Platform v2](../agentic-workflows-v2/README.md) — Main runtime consumer
-- [Evaluation Framework](../agentic-v2-eval/README.md) — Eval consumer
-- [Root README](../README.md) — Monorepo overview
+- [LLM client](../docs/tools/llm-client.md)
+- [Local models](../docs/tools/local-models.md)
+- [Model probing](../docs/tools/model-probing.md)
+- [Model and agent benchmarks](../docs/tools/benchmarks.md)
+- [Provider limit heuristics](../docs/tools/provider-limits.md)

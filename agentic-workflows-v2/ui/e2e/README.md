@@ -1,56 +1,73 @@
-# E2E Tests (Playwright)
+# UI end-to-end tests
 
-Streaming end-to-end tests for the Agentic Runtime Platform v2 UI. Introduced in
-Epic 2 Story 2.2 — *Playwright E2E Bootstrap + 5× PR Gate*.
+These Playwright tests exercise the React dashboard against a real local
+FastAPI process.
 
-## Quick start
+## Run
 
 From `agentic-workflows-v2/ui/`:
 
-```bash
-npm install                          # installs @playwright/test
-npx playwright install chromium      # (once) downloads the browser
-npm run test:e2e                     # single pass
-npm run test:e2e:5x                  # 5× PR gate (matches CI)
-npm run test:e2e:ui                  # interactive debug mode
+```powershell
+npm install
+npx playwright install chromium
+npm run test:e2e
 ```
 
-`playwright.config.ts` spawns an isolated no-LLM backend (`uvicorn` on `:8010`)
-and the Vite dev server (`:5173`) automatically via its `webServer` block. It
-does not reuse an already-running development server, because doing so can
-silently introduce provider credentials and non-deterministic live calls. Stop
-local services on those ports before running the suite.
+Other modes:
 
-## What's covered
+```powershell
+npm run test:e2e -- streaming.spec.ts
+npm run test:e2e:5x
+npm run test:e2e:ui
+```
 
-| Spec | Story | Asserts |
-|------|-------|---------|
-| `streaming.spec.ts` | 2.2 | code_review renders 5 step rows, shows a terminal status, UI status matches `/api/runs/{id}.json` |
+`test:e2e:5x` is the repeated CI flake gate.
 
-Planned additions:
+## Test environment
 
-| Spec | Story |
-|------|-------|
-| `reconnect.spec.ts` | 2.3 — WebSocket fault-injection + replay |
-| `slo-first-span.spec.ts` | 2.7 — time-to-first-span p95 ≤ 2s |
+`playwright.config.ts` starts and owns:
+
+- FastAPI on `127.0.0.1:8010`;
+- Vite on `127.0.0.1:5173`.
+
+It sets `AGENTIC_NO_LLM=1` for the backend and does not reuse existing
+services. Stop anything already using those ports before running the suite.
+Provider credentials are not required for this default E2E path.
+
+The Python command uses `agentic-workflows-v2/.venv` when present and otherwise
+uses `python` from `PATH`. Install the runtime and its test dependencies before
+starting Playwright.
+
+## Coverage
+
+The current specs cover:
+
+- application shell and navigation;
+- workflow parameters and run submission;
+- run list and run detail views;
+- live streaming, reconnect behavior, and first-span timing;
+- datasets and evaluation pages;
+- model probe and settings pages;
+- chat playground behavior.
+
+The exact list is the `*.spec.ts` files in this directory.
 
 ## Conventions
 
-- **Selectors:** use `data-testid`. Never rely on class names or visible text
-  for stable selection.
-- **Timeouts:** 30 s for step rendering, 60 s for terminal status. Override
-  per-test if a workflow is longer.
-- **Retries:** zero (retries mask flakes). The nightly 50× job (Story 2.4)
-  measures the rolling flake rate.
-- **Backend LLM credentials:** the `code_review` workflow must reach a
-  terminal state, which today requires at least one configured LLM provider.
-  CI uses `GITHUB_TOKEN` + `models: read` to reach GitHub Models. Locally,
-  set `GITHUB_TOKEN`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or any other
-  supported provider key before running `npm run test:e2e`. True
-  placeholder / no-LLM mode is available through `AGENTIC_NO_LLM=1`; provider-backed E2E still validates real model integration separately.
+- Prefer roles, labels, and `data-testid` selectors over CSS class names.
+- Keep provider calls disabled unless a test is explicitly marked and isolated
+  as a live integration test.
+- Use route mocks only for the boundary a test owns; do not mock the UI logic
+  under test.
+- Keep retries at zero. Repeated CI runs measure flakes instead of hiding
+  them.
+- Preserve Playwright traces, screenshots, and videos from failures.
+
+The test timeout is 90 seconds and assertion timeout is 10 seconds by default.
+Override them only when the behavior itself has a longer documented bound.
 
 ## CI
 
-See `.github/workflows/ci.yml` — the `e2e-streaming` job runs
-`streaming.spec.ts` 5× on every PR. Traces and videos of the first failure
-are uploaded as artifacts.
+The root `.github/workflows/ci.yml` runs the repeated E2E gate and uploads
+failure artifacts. `.github/workflows/nightly.yml` runs additional repeated
+streaming checks.

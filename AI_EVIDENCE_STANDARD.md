@@ -1,80 +1,256 @@
-# AI Implementation Evidence Standard — Scorecard
+# AI implementation evidence standard
 
-**Repo:** `agentic-runtime-platform`
-**Method:** Evidence-only review. Original assessment (2026-06-10): 18 agents fanned out over the repo; 10 pattern/dimension claims re-checked by independent adversarial verifiers who opened the cited files and *ran the tests*. Regenerated 2026-07-03 from live code, then **refutation-verified later the same day** by a full 22-agent adversarial re-run: independent verifiers executed the parsing, router, observability, consensus, and approval-gate suites (all green — counts intentionally not restated here, see "Honest scope caveats" below) and ran the platform four independent keyless ways (two `examples/`, `agentic run code_review --adapter native`, pytest subsets). Every changed row below is now second-verifier confirmed — the earlier interim † markers are retired. Labels reflect what was verified, not what the README asserts.
+Use this standard when describing the repository in a README, release note,
+architecture document, audit, résumé, demo, or review. A claim must be narrow
+enough that another engineer can verify it.
 
----
+This file does not grade the repository. Point-in-time scorecards belong in a
+dated report, not in the maintained product documentation.
 
-## Verdict: **A− · Production-credible, pin-worthy**
+## Evidence labels
 
-This is a genuinely implemented multi-agent runtime, not a narrative repo. The headline subsystems — provider abstraction, tiered routing with circuit breakers, the Kahn's-algorithm DAG executor, structured-output parsing, tool dispatch, OpenTelemetry observability, and the evaluation/judge stack — are all **STRONG**: real code, wired into hot paths, and backed by *behavioral* tests. All six `examples/` run end-to-end under `AGENTIC_NO_LLM=1`, and CI enforces an 80% coverage gate credential-free.
+Use one of these labels when the level of proof matters:
 
-The caveats that justified the minus at the original assessment — narrative-vs-code drift, two over-labeled patterns, missing approval gates, no consensus primitive, SSRF guard defaulting off — **have closed and are now refutation-verified** (remediation section below). The 2026-07-03 adversarial re-run graded the repo **maturity Level 4 (cap 5) and pin-worthy**, noting the code is stronger than its narrative in places. The minus now rests on a *new*, verifier-confirmed set of defects — three security gaps that contradict the fail-closed-governance headline, plus a fail-open consensus edge and an inert runtime budget path (see "Fix before featuring" below). All are assessed as fixable in days; none undermines the core capability labels.
+| Label | Meaning |
+| --- | --- |
+| **SOURCE-VERIFIED** | The cited implementation path exists and was inspected. No execution claim is made. |
+| **TEST-VERIFIED** | A named automated test exercised the behavior and passed in the stated environment. |
+| **RUNTIME-VERIFIED** | A named command or request exercised the real local path and produced the recorded result. |
+| **LIVE-VERIFIED** | A real external provider or service was called successfully. Record the provider, model or service, date, and safe result summary. |
+| **INFERRED** | The conclusion follows from cited evidence but was not directly exercised. State the inference. |
+| **UNVERIFIED** | Evidence was unavailable, blocked, or not run. Do not restate the claim as fact. |
 
----
+Passing a mock or no-LLM test is not live-provider evidence. Finding a class is
+not proof that the class is constructed in the active path.
 
-## Pattern labels (evidence-graded)
+## Rules for claims
 
-| Pattern | Label | Basis |
-|---|---|---|
-| Provider abstraction | **STRONG** | ABC + 6 cloud + 2 local backends, real per-provider format translation; behavioral suite ran green at original assessment |
-| Routing | **STRONG** | Health-weighted scoring, adaptive cooldowns, circuit breaker state machine, cross-tier degradation, Redis CAS |
-| DAG / workflow orchestration | **STRONG** | Event-driven `asyncio.wait(FIRST_COMPLETED)`, cascade-skip, timeout watchdog w/ structural cancel |
-| Structured output | **STRONG** | Parser w/ salvage + sentinel `<<<ARTIFACT>>>` blocks, Pydantic discriminated event union |
-| Tool calling | **STRONG** | Schema-gen + multi-round dispatch loop, builtin tools, fail-closed shell allowlist |
-| Observability | **STRONG** | OTEL traces/metrics wired into engine+agent+router hot paths, parent/child span propagation test |
-| Eval-driven development | **STRONG** | LLM-judge w/ seeded criterion-shuffle positional-bias mitigation, swapped-order consistency checks, MAE calibration (`docs/evaluation/judge.md`); three-stage gating w/ six hard gates and `enforce_hard_gates=True` production default (`docs/evaluation/gating.md`) |
-| Human approval gates | **STRONG** ⬆ | Was **NONE**. `agentic_v2/governance/approval.py` (337 lines) + `escalation.py`; consulted *before* validation/execution in `engine/tool_execution.py` (`evaluate_tool_approval`); **fails closed** — gated tool w/ no registered provider is DENIED; hung provider fails closed within a bounded timeout (ADR-041); 19 tests in `tests/test_approval_gates.py` |
-| Consensus / voting | **IMPLEMENTED** ⬆ | Was **NONE**. `agentic_v2/engine/consensus.py` (255 lines: ensemble + self-consistency primitives); 20 tests in `tests/engine/test_consensus.py` |
-| ReAct | **IMPLEMENTED** ⬆ | Was **PARTIAL** (loop branch untested, `_is_task_complete` hardcoded). The agent loop's tool→observe→continue branch is now covered by `tests/test_agent_react_loop.py` (14 tests); `_is_task_complete` is a real overridable hook (e.g. `agents/architect.py`) |
-| Planning / orchestration | **IMPLEMENTED** ⬆ | Behavioral orchestrator suites now exist (`tests/test_orchestrator_behavior.py`, `test_orchestrator_adaptive.py`, `test_agents_orchestrator.py`) — the original "shape tests only" caveat no longer holds |
-| Token budgeting | **IMPLEMENTED** | `TokenBudget` enforced before cache, raises on overflow; tested |
-| Refinement / iterative review | **IMPLEMENTED** | Original defect (inputs resolved once *before* the retry loop, staling `coalesce()` feedback) fixed in PR #70: `loop_until` inputs re-resolve each round |
+1. Cite the active call path, not only a configuration default or unused
+   module.
+2. Distinguish an implemented component from a component enabled by default.
+3. Name optional dependencies and settings required for the claimed behavior.
+4. State the environment and command for runtime evidence.
+5. Record failures and warnings as part of the result.
+6. Do not convert missing evidence into a defect. Use **UNVERIFIED** until the
+   relevant path is checked.
+7. Do not claim production readiness, security, compliance, scale, or model
+   quality from unit tests alone.
+8. Prefer stable behavior and thresholds over test counts or line counts.
+9. Link to the test, workflow, or generated artifact that makes the claim
+   reproducible.
+10. Add a date to live-provider, performance, dependency, and platform-support
+    claims because they can change without a source edit.
 
-⬆ = label changed in the 2026-07-03 refresh; independently confirmed by the same-day adversarial re-run (see Method).
+## Claim format
 
----
+Use this compact structure:
 
-## Dimension verdicts
+```text
+Claim:
+Evidence level:
+Scope:
+Evidence:
+Command or test:
+Observed result:
+Limits:
+Verified:
+```
 
-- **AI / Deterministic boundary — STRONG (unusually disciplined).** Deterministic code owns parsing, structure recovery, enum normalization, path containment, and branch evaluation; the LLM owns only free-form content and *proposed* tool-call/status values, all re-derived before action. Fail-safe by design: any unparseable reviewer output is forced to `NEEDS_FIXES` — bad output can only trigger *more* review, never fake an approval.
+Example:
 
-- **Evaluation evidence — STRONG.** Three-stage gating (weighted hybrid → grade map → hard-gate force-to-F), non-compensatory multidimensional gate, immutable A–E profiles, committed golden fixture w/ refresh path. Judge bias controls are real: seeded criterion shuffle (`sha256(candidate || expected || prompt_version)`), swapped-order consistency flagging, `evaluate_calibration_set` MAE drift detection. **Gaps:** golden regression covers a subset of workflows; judge tests use mock providers (live-model judge quality unverified — by design for credential-free CI).
+```text
+Claim: Workflow inputs are validated against the selected workflow schema.
+Evidence level: TEST-VERIFIED
+Scope: FastAPI POST /api/run
+Evidence: agentic_v2/server/routes/workflows.py
+Command or test: python -m pytest tests/test_server_workflows.py -q
+Observed result: Invalid inputs returned HTTP 400 in the tested cases.
+Limits: Does not cover every workflow or external reverse-proxy behavior.
+Verified: 2026-07-28
+```
 
-- **Production readiness (resilience + observability) — STRONG.** Classified jittered retries, DAG timeout watchdog, circuit breakers/bulkheads, token budgeting, TTL+LRU cache, opt-in OTEL. Secret-safety is deliberate: `api_key` fields are `repr=False`, prompt/response capture redacted-by-default.
+## Minimum evidence by subject
 
-- **Execution-path verification — STRONG.** All six examples executed under `AGENTIC_NO_LLM=1` at the original assessment; the no-LLM baseline is a maintained CI job (`no-llm-smoke`). The original README drift items (`run_workflow` signature, `researcher` role, OTEL attribute name, `result.cost` example) were corrected in PR #70 and re-checked in the Phase-1 docs pass (PR #147).
+### Workflow execution
 
-- **Security & governance — MIXED (strong primitives, three verifier-confirmed gaps).** Real and tested: shell-free exec w/ metacharacter rejection + fail-closed allowlist, file ops fail-closed on unset sandbox root w/ `resolve()` traversal+symlink containment, secret-stripped subprocess env, rlimit'd Python sandbox, RAG indirect-injection defenses, agent-loop sanitization default-on incl. the Claude/SDK agents, fail-closed approval gates in the dispatch path, SSRF blocking default-ON with DNS-rebinding pinning. The original wiring gaps are closed and refutation-verified. What keeps the dimension MIXED is a **new trio of verifier-confirmed defects** that contradict the fail-closed headline: (1) `tools/builtin/build_ops.py:120-164` — `build_app` executes install/build/test commands with **no approval gate and a bypassable substring denylist**, including a `create_subprocess_shell` path outside the shell allowlist; (2) `middleware/response_sanitizer.py:79-97` — findings classified "REDACTED" are **not actually scrubbed** from returned text (only Unicode is mutated); (3) `workflows/artifact_extractor.py:55-92` — a Windows **drive-letter path escapes** the `artifacts/<run_id>/` sandbox (only `..` traversal is covered), with extraction default-on. **Update (2026-07-08): all three are now fixed and tested** — `build_app` is gated (ADR-045); response secrets are masked with `[REDACTED:<category>]`; and `_safe_rel_path` rejects drive/UNC/root-absolute paths with a resolved containment check on write. The consensus fail-open is fail-closed on malformed config (its `None`-vote/golden half remains). See Remediation status below. Residuals: auth throttle in-process-only (`KNOWN_LIMITATIONS`); git write ops (`git_ops.py:74-96`) run without approval or cwd containment.
+Required:
 
----
+- workflow definition;
+- loader or validator path;
+- active adapter path;
+- engine behavior test; and
+- one deterministic runtime command when practical.
 
-## Fix before featuring (2026-07-03 refutation findings — P2)
+For model-backed behavior, add a separate live-provider result. Do not use
+`AGENTIC_NO_LLM=1` as evidence of output quality.
 
-Verifier-confirmed; each contradicts a headline claim until fixed. All assessed fixable in days.
+### Model routing and fallback
 
-1. **Gate `build_app`** — **FIXED (2026-07-08):** `BuildAppTool.requires_approval` now returns `True`, so every `build_app` call is routed through `evaluate_tool_approval` before any phase runs; no provider → DENIED (fail-closed). See `tools/builtin/build_ops.py` (`requires_approval`), ADR-045, and the gate tests in `tests/test_approval_gates.py` (`test_build_app_gate_fires_before_execute`, `test_build_app_no_provider_fails_closed`, and the exhaustive `test_destructive_builtins_require_approval`). The bypassable substring denylist is retained only as defense-in-depth.
-2. **Make "REDACTED" redact** — **FIXED (2026-07-08):** `SecretDetector.scan_and_mask` replaces each matched span with `[REDACTED:<category>]`, and `ResponseSanitizer` adopts the masked text whenever secret findings exist (`middleware/detectors/secrets.py`, `middleware/response_sanitizer.py`); CLEAN input still round-trips byte-identically. Test: `tests/test_response_sanitizer_redaction.py`. Scope note: the response path runs SecretDetector + UnicodeSanitizer only; PII redaction stays an inbound-`SanitizationMiddleware` concern.
-3. **Close the drive-letter artifact escape** — **FIXED (2026-07-08):** `_safe_rel_path` now rejects any path absolute under either convention (Windows drive/UNC via `PureWindowsPath`, POSIX root), and `_write_files` re-verifies each destination resolves inside `run_dir` before writing (`workflows/artifact_extractor.py`). Test: `tests/test_artifact_extractor.py::TestDriveAnchorEscape` asserts nothing is written outside `run_dir`.
-4. **Close the consensus fail-open** — **PARTIALLY FIXED (2026-07-08):** a missing/`None` `min_agreement` keeps the documented `0.0` default, but a present-but-unparseable or out-of-range value now raises `ConfigurationError` (fail-closed) instead of silently coercing to 0.0 (`engine/agent_resolver.py` `_coerce_min_agreement`; tests in `tests/engine/test_consensus_step.py`). **Still open:** `None` votes counting as valid consensus candidates, and regenerating `datasets/default/consensus_review_output.json`.
-5. **Make the runtime budget real** — no production path calls `set_budget` (tests only), so `TokenBudget` is inert at runtime; install a settings-driven default and act on `consume()` returning False. **PARTIALLY FIXED (ADR-048, 2026-07-09):** an opt-in, settings-armed path now exists — `AGENTIC_TOKEN_BUDGET` / `agentic_token_budget` arms a `ProcessWideTokenBudget` on the shared `get_client()` singleton. **Still open:** the default stays `None` (uncapped), so the budget remains inert at runtime out of the box.
-6. **Fix the nightly live-eval install** — **FIXED (2026-07-08, companion CI change):** the `eval-live-gate` install now uses the `[server]` extra (`.github/workflows/eval-package-ci.yml`), and `workflow_dispatch` + an extended live-gate `if:` make it verifiable on demand instead of only on the nightly. **Still open:** making `eval-golden-gate` a required status check (a branch-protection setting).
-7. **Wire `loop_max` expression resolution** — **FIXED (2026-07-18):** the loader converts `${inputs.max_review_rounds}` to sentinel 0 and stores the expression in `metadata["loop_max_expr"]`, which the native engine previously never read (so `iterative_review` looped exactly once under `--adapter native`). `StepExecutor._resolve_loop_max` (`engine/step.py`) now resolves it via `ExpressionEvaluator` before the loop-continuation check, mirroring `langchain/graph_wiring.py`'s clamping and fallback semantics. Tests: `tests/engine/test_step_loop_refinement.py` (`test_native_loop_max_expression_bounds_iteration`, `test_resolve_loop_max_falls_back_when_expression_unresolvable`) — both fail against the pre-fix engine.
-8. **Purge doc drift** — split, both halves now closed: (a) **CLOSED** — the `docs/index.md` stat strip (ADR count, workflow count, backend test count, coverage gate) is generator-owned: `scripts/generate_doc_stats.py` recomputes each value from source and a CI drift gate (`--check`) fails the build on any mismatch, so the numbers can no longer silently go stale. (b) **CLOSED** — the RAG-loader overclaim is fixed at `docs/architecture-runtime.md:406`, which now states `rag/loaders.py`'s actual scope (plain text and Markdown only; no PDF/HTML loader, no `pypdf` dependency).
+Required:
 
----
+- the registry or discovery source;
+- the constructed backend path;
+- selection and failure-classification tests; and
+- a runtime result for each provider named in a public claim.
 
-## Honest scope caveats
+A model listed in a catalog may still be unavailable, unsupported by the
+selected adapter, missing credentials, or rejected by provider policy.
 
-- LanceDB ANN, cross-encoder reranking, and the `agentic rag` CLI exist as code but were **not executed** (optional deps).
-- The Windows AI / Phi Silica path is real code (Python + a C# bridge) but sits outside the CI-gated `agentic_v2` package.
-- Test *counts* and coverage *percentages* are deliberately not restated here — they drift. The enforced floors live in CI (80% on `agentic_v2`, credential-free) and the suites cited above are the evidence.
+### Retrieval
 
----
+Required:
 
-## Remediation status (maintainer-tracked)
+- loader and chunking path;
+- embedding implementation actually constructed;
+- vector-store implementation actually constructed;
+- retrieval and context-assembly tests; and
+- persistence behavior across process boundaries.
 
-- **P0 (original "fix three things"): DONE** — PR #70 (merged 2026-06-10): sanitization wired into `complete_chat` default-on/fail-closed, `loop_until` inputs re-resolved each round, README over-claims corrected.
-- **P1: CLOSED and refutation-verified** — ReAct iteration wiring (#9 → `tests/test_agent_react_loop.py`), planning/orchestration behavioral tests (#10 → orchestrator suites), consensus/voting (#11 → `engine/consensus.py`, verifier label IMPLEMENTED), human approval gates (#12 → `governance/approval.py` + ADR-041), SSRF default-on (#13 → `settings.py` default=True + `.env.example`).
-- **P2: PARTIALLY CLOSED (2026-07-08)** — the three HIGH security defects (items 1-3: `build_app` gate, response-path redaction, artifact drive-letter escape) are fixed and tested; the consensus fail-open (item 4) is now fail-closed on malformed/out-of-range config (its `None`-vote + golden-regen half remains); the eval-live-gate `[server]` install (item 6) is fixed via a companion CI change; and doc drift (item 8) is fully closed (docs-stats generator-owned, RAG-loader claim corrected). Item 5 and the noted residuals remain OPEN (item 7 was FIXED 2026-07-18, above).
-- **Standing residuals:** in-process-only auth throttle (multi-replica deployments need a shared store); live-model judge calibration corpus (mock-judged in CI by design).
+The current `agentic rag` CLI uses a process-local hash embedder and in-memory
+store. It is useful for exercising the command path, but it is not evidence of
+semantic retrieval or persistent indexing. Provider-backed embeddings and
+LanceDB require a separately verified construction path.
+
+### Evaluation
+
+Required:
+
+- dataset or sample source;
+- rubric version;
+- runner and scorer path;
+- number of runs;
+- threshold and failure behavior; and
+- whether the judge was deterministic, mocked, local, or remote.
+
+The committed golden gate scores saved structural results. It does not rerun
+the workflow unless `--live` is used.
+
+### Security
+
+Required:
+
+- threat and trust boundary;
+- control implementation;
+- configuration that activates the control;
+- negative test or abuse case;
+- deployment dependency; and
+- residual risk.
+
+A source control is not a deployment guarantee. Authentication, tenant
+identity, rate limits, audit durability, model provenance, egress controls,
+and operating-system permissions must be tested in the deployed environment.
+
+Use [Security hardening](docs/operations/security-hardening.md),
+[OWASP threat review](docs/OWASP_LLM_THREAT_MODEL.md), and
+[Supply-chain security](docs/SUPPLY_CHAIN.md).
+
+### Performance and reliability
+
+Required:
+
+- exact commit;
+- hardware and operating system;
+- process, worker, and concurrency configuration;
+- workload and data size;
+- warm-up policy;
+- sample count;
+- percentile calculation;
+- failure count; and
+- raw or generated result artifact.
+
+Do not generalize a component benchmark to end-to-end service capacity. The
+current load report includes direct worker-level concurrency evidence and must
+not be presented as successful HTTP-path load evidence where requests failed
+before measurement.
+
+### UI behavior
+
+Required:
+
+- route or component;
+- API or WebSocket contract;
+- unit or browser test; and
+- screenshot for a visual claim.
+
+A component file that is not rendered by a route is not a shipped UI feature.
+The node configuration overlay is currently an unfinished prototype.
+
+## Repository verification commands
+
+Use the narrowest relevant command while editing. Before a release or broad
+evidence refresh, run the repository gates:
+
+```powershell
+just test
+just docs
+pre-commit run --all-files
+npm --prefix agentic-workflows-v2/ui run build
+```
+
+Key documentation and contract checks:
+
+```powershell
+python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/generate_doc_stats.py --check
+python scripts/check-doc-drift.py
+python -m pytest agentic-workflows-v2/tests/test_schema_drift.py -q
+```
+
+Deterministic evaluation gate:
+
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+python scripts/eval_gate.py `
+  --cases datasets/default/golden_cases.json `
+  --threshold 0.80
+```
+
+From `agentic-workflows-v2`, regenerate wire contracts after an intentional
+contract change:
+
+```powershell
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+python scripts/generate_schemas.py
+```
+
+`just` recipes in this repository invoke PowerShell. On Linux or macOS, run
+the underlying Python and npm commands directly.
+
+## Current evidence boundaries
+
+These limits must remain visible in public summaries:
+
+- The RAG CLI index is process-local and uses deterministic hash embeddings.
+- `tools.llm.model_inventory` currently fails to import its legacy
+  `llm_client` dependency.
+- ONNX discovery and exact-model LangChain chat do not use the same model-ID
+  prefix contract.
+- Local-model weight verification is not wired into every model load path.
+- MCP support is optional and not registered in normal workflow execution by
+  default.
+- The dashboard does not provide a complete human approval pause-and-resume
+  flow.
+- The node configuration overlay is not connected to workflow execution.
+- Application rate limits and several resilience counters are process-local.
+- `simple_agent.py` is not currently runnable because its example agent omits
+  required abstract methods.
+- Live provider quality, cost, latency, quota, and availability require fresh
+  evidence.
+
+See [Known limitations](docs/KNOWN_LIMITATIONS.md) for details and owners.
+
+## Updating evidence
+
+When behavior changes:
+
+1. update or add the test;
+2. run the narrow test and record the result;
+3. update the active documentation;
+4. update generated artifacts through their generator;
+5. keep ADRs and changelog entries as historical records;
+6. remove obsolete scores and counts from maintained pages; and
+7. run the documentation and link checks.
+
+Do not edit a report to make a failed check appear successful. Fix the
+implementation, narrow the claim, or mark it **UNVERIFIED**.

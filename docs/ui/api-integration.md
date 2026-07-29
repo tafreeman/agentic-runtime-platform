@@ -1,6 +1,6 @@
 # UI API integration
 
-**Current:** 2026-07-14
+**Current:** 2026-07-28
 **Client:** `agentic-workflows-v2/ui/src/api/client.ts`
 **Types:** `ui/src/api/types.ts` plus `*.generated.ts`
 
@@ -21,11 +21,11 @@ execution uses the WebSocket hook and bounded reducer.
 | UI function/family | HTTP resource | Notes |
 |---|---|---|
 | workflow list/DAG/editor | `/api/workflows...` | Registry, graph, document, validation/save |
-| `runWorkflow` | `POST /api/workflows/run` | Optional exact `model_pack` and direct `model_override` |
+| `runWorkflow` | `POST /api/run` | Optional exact `model_pack` and direct `model_override` |
 | run list/detail/replay | `/api/runs...` | Permanent evidence and guarded replay |
 | evaluation/datasets | `/api/eval...` | Scores, comparison, dataset paging/sample detail |
 | model probe | `/api/models/probe` | Live availability/catalog; no fake discovery |
-| hardware | `/api/models/hardware...` | Detection and operator override |
+| hardware | `/api/model-finder/profile...` | Detection, recommendations, and operator override |
 | provider settings | `/api/settings/providers` | Full-replacement settings document |
 | tier settings | `/api/settings/tiers` | Ordered model overrides and capabilities |
 | model packs | `/api/settings/model-packs...` | Immutable lifecycle and bindings |
@@ -94,10 +94,10 @@ SSE frames are discriminated JSON objects:
 
 ```text
 route  { type, requested_tier, model }
-token  { type, content }
+token  { type, delta }
 media  { type, mime_type, url, alt? }
 done   { type, model }
-error  { type, code, message }
+error  { type, category, message }
 ```
 
 The request is an overload: `{model, messages, temperature?}` targets one
@@ -117,9 +117,11 @@ unmounts.
 Python Pydantic models own the wire format. Run:
 
 ```powershell
-.venv\Scripts\python.exe agentic-workflows-v2/scripts/generate_schemas.py
-npm --prefix agentic-workflows-v2/ui run generate:types
-.venv\Scripts\python.exe -m pytest agentic-workflows-v2/tests/test_schema_drift.py -q
+Push-Location agentic-workflows-v2
+..\.venv\Scripts\python.exe -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+..\.venv\Scripts\python.exe -m pytest tests/test_schema_drift.py -q
+Pop-Location
 ```
 
 The snapshots cover workflow/step events, DAG/editor/input/run shapes, chat

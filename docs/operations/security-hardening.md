@@ -1,813 +1,302 @@
-# Security Hardening
+# Security hardening
 
-This page is for **production operators** deploying the Agentic Workflows V2 FastAPI server.
-It describes every in-process security control, its environment-variable knobs, its default
-behavior, and practical recipes for tuning it to your environment.
+This guide covers the security controls built into the FastAPI server and its
+tools. It does not replace a deployment threat model, network policy, secret
+manager, or incident-response plan.
 
-**This page is NOT** an ADR, a code specification, or a threat model. For decision rationale
-see the linked ADRs; for the formal threat model see
-[`docs/OWASP_LLM_THREAT_MODEL.md`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md)
-(excluded from the built site). For the complete env-var
-index see the [Configuration Reference](../configuration.md).
+See [Configuration](../configuration.md) for every setting and
+[Known limitations](../KNOWN_LIMITATIONS.md) for remaining gaps.
 
----
+## Before exposing the server
 
-## At a glance
+At minimum:
 
-| Control | Environment variable(s) | Default | Sprint 1 reference |
-|---------|------------------------|---------|-------------------|
-| API key authentication | `AGENTIC_API_KEY` | Not set — all routes open | ADR-018 |
-| Global rate limiting | `AGENTIC_RATE_LIMIT_DEFAULT`, `AGENTIC_RATE_LIMIT_DISABLED` | `60/minute` per IP | ADR-018 |
-| 401 brute-force throttle — window | `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` | `60` seconds | ADR-018 |
-| 401 brute-force throttle — threshold | `AGENTIC_AUTH_LOCKOUT_THRESHOLD` | `5` failures | ADR-018 |
-| 401 brute-force throttle — lockout | `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` | `300` seconds | ADR-018 |
-| DAG workflow timeout | No env var — set per call via `timeout` kwarg | None (unlimited) | ADR-019 |
-| Adapter eager validation | `AGENTIC_DEFAULT_ADAPTER` | `langchain` | ADR-020 |
-| Filesystem sandbox | `AGENTIC_FILE_BASE_DIR` | Not set — file tools refuse all operations | — |
-| Shell tool allowlist | `AGENTIC_SHELL_ALLOWED_COMMANDS` | Not set — all shell commands disabled | — |
-| Sanitization fail-closed | `AGENTIC_SANITIZER_FAIL_OPEN` | Not set — 503 returned when layer unavailable | — |
-| CORS origins | `AGENTIC_CORS_ORIGINS` | localhost dev ports (5173, 8000, 8010) | — |
-| Block private IPs in HTTP tool | `AGENTIC_BLOCK_PRIVATE_IPS` | Not set — private IPs **blocked** (default ON; set to `0` to opt out) | P1 #13 |
+1. Enable API-key or OIDC authentication.
+2. Put TLS and an ingress or API gateway in front of the server.
+3. Restrict CORS to the deployed frontend origins.
+4. Set a dedicated file-tool root.
+5. Keep shell commands disabled unless a reviewed workflow needs them.
+6. Register an approval provider before enabling tools with side effects.
+7. Keep private-address blocking enabled for HTTP tools.
+8. Add gateway-level rate limits for multi-replica deployments.
+9. Choose durable, access-controlled storage for runs, replay events, and
+   audit records.
+10. Decide which prompt, output, trace, and audit fields may be retained.
 
----
+The defaults support local development. They are not a complete
+internet-facing deployment policy.
 
-## 1. API key authentication
+## Authentication
 
-### How it works
+### API key
 
-When `AGENTIC_API_KEY` is set in the environment, the `APIKeyMiddleware` (layer 3 in the
-middleware stack, see §Middleware order below) gates every request whose path starts with
-`/api/`. The key must be supplied via one of two headers:
+Set `AGENTIC_API_KEY` to protect `/api/*` routes:
+
+```dotenv
+AGENTIC_API_KEY=<secret-from-your-secret-manager>
+```
+
+Clients can send either header:
 
 ```http
 Authorization: Bearer <key>
 ```
+
 ```http
 X-API-Key: <key>
 ```
 
-Token comparison uses `secrets.compare_digest()` to prevent timing side-channel attacks.
-The key is **re-read from the environment on every request** (via `_get_api_key()` →
-`get_secret("AGENTIC_API_KEY")`). This means you can rotate the key without restarting the
-server — new requests will immediately use the updated value.
+The server uses constant-time comparison. When no key is configured and OIDC
+is disabled, API routes are open.
 
-When `AGENTIC_API_KEY` is **not set**, the middleware is a no-op and all routes are publicly
-accessible. The server logs a warning at startup:
+The following remain public:
 
-```
-WARNING: AGENTIC_API_KEY is not set — all API routes are publicly accessible.
-```
-
-!!! warning "Never run without a key in internet-exposed environments"
-    A server without `AGENTIC_API_KEY` accepts unauthenticated workflow runs, which may
-    execute arbitrary LLM calls against your provider quotas.
-
-### Public path exemptions
-
-The following paths bypass authentication regardless of whether a key is set:
-
-- `/api/health`
+- `/api/health` and paths below it, including `/api/health/ready`
 - `/docs`
 - `/openapi.json`
 - `/redoc`
+- `/metrics`, when enabled
+- non-API static UI paths
 
-All other paths under `/api/` require a valid key. Non-API routes (UI static files, WebSocket
-upgrade) also bypass authentication so the React frontend can load without credentials.
+The WebSocket endpoint validates the browser origin and uses the same API key.
+Send the key in a header. Query-string WebSocket tokens are rejected.
 
-### WebSocket origin validation
+The key lookup occurs for each request, but changing a running process's
+environment is deployment-platform specific. Use a secret provider or restart
+strategy that you have tested before relying on live rotation.
 
-WebSocket connections go through a separate origin check (`is_websocket_origin_allowed()`).
-A connection is allowed when any of the following is true:
+### OIDC
 
-- The `Origin` header is absent (non-browser clients such as curl or SDK calls).
-- The origin matches the HTTP `Host` header of the request exactly.
-- The origin hostname is `localhost`, `127.0.0.1`, or `::1` (any port — Vite dev server uses
-  dynamic ports).
-- The origin appears in the `AGENTIC_CORS_ORIGINS` allowlist (see §9).
+OIDC mode validates JWT signatures, issuer, audience, expiry, subject, and the
+configured signing-algorithm allowlist.
 
-### Recipe: rotate the key without a restart
-
-```bash
-# Update the secret in your environment manager (e.g., Kubernetes secret, AWS Secrets Manager)
-# then export in the server's process environment.  No restart needed — auth.py reads the
-# env var on every request.
-export AGENTIC_API_KEY="$(openssl rand -hex 32)"
+```dotenv
+AGENTIC_OIDC_ENABLED=1
+AGENTIC_OIDC_ISSUER=https://identity.example.com/
+AGENTIC_OIDC_AUDIENCE=agentic-runtime
+AGENTIC_OIDC_JWKS_URL=https://identity.example.com/.well-known/jwks.json
+AGENTIC_OIDC_ALGORITHMS=RS256
 ```
 
-Because the key is re-read per request, the old key stops working the moment the environment
-variable changes. Brief request-level races (in-flight requests that already read the old key
-at header extraction) complete normally; the new key is enforced on the next request.
+Startup fails if OIDC is enabled without issuer, audience, or JWKS URL.
+`AGENTIC_API_KEY` remains a compatibility fallback in OIDC mode.
 
----
+Keep the signing-algorithm list narrow. Test key rotation, JWKS outage, expired
+tokens, incorrect audiences, and clock skew.
 
-## 2. Global rate limiting
+## Tenant scope
 
-### How it works
+OIDC-authenticated requests can derive tenant scope from validated tenant or
+organization claims. Without OIDC, the compatibility header `X-Tenant-ID`
+selects the run and dataset directory.
 
-The server uses [slowapi](https://github.com/laurentS/slowapi) for per-IP global rate limiting.
-`slowapi` is built on the `limits` library and is applied at the **outermost middleware layer**
-(layer 1), before auth and sanitization, so abusive clients are rejected before any auth work
-is done.
+`X-Tenant-ID` is client supplied. It is not an authorization boundary. Do not
+use header-based tenant scope as isolation between untrusted customers.
 
-The key function is `remote_address` — the client's IP as seen by the server process. Every
-unique IP is tracked independently in an in-process memory store.
+For multi-tenant deployments:
 
-**Default limit:** `60/minute` per IP. Configurable via `AGENTIC_RATE_LIMIT_DEFAULT`.
+- derive tenant identity from validated credentials;
+- enforce authorization before reading or writing tenant data;
+- isolate storage and encryption keys as required;
+- test cross-tenant filenames and dataset IDs; and
+- include tenant-aware audit review.
 
-**Response on breach:**
+## Rate limits and failed-login lockout
 
-```http
-HTTP/1.1 429 Too Many Requests
-Retry-After: <seconds-to-next-window>
-Content-Type: application/json
+The default global limit is `60/minute` per client IP:
 
-{"detail": "Rate limit exceeded: <detail>"}
+```dotenv
+AGENTIC_RATE_LIMIT_DEFAULT=60/minute
 ```
 
-**Public paths are exempt.** `/api/health`, `/docs`, `/openapi.json`, and `/redoc` return
-`None` from the key function, which instructs slowapi to skip enforcement.
+The counter is in-process. Several replicas do not share one limit, and the
+address seen by the application may be a proxy unless forwarding is configured
+correctly. Enforce the authoritative limit at the ingress or API gateway.
 
-### Disabling for tests
+These test and exception flags remove the application limit:
 
-```bash
-AGENTIC_RATE_LIMIT_DISABLED=1 python -m uvicorn agentic_v2.server.app:app ...
+```dotenv
+AGENTIC_RATE_LIMIT_DISABLED=1
+AGENTIC_DISABLE_RATE_LIMITING=1
 ```
 
-!!! warning "Do not disable in production"
-    `AGENTIC_RATE_LIMIT_DISABLED=1` removes all per-IP rate gating. Use only in isolated
-    test environments.
+Do not set them in a normal production deployment. The first disables the
+middleware. The second explicitly accepts startup without the optional rate
+limit dependency.
 
-### Middleware order
+Failed API-key authentication is also tracked per IP:
 
-The server middleware stack (outermost to innermost, i.e., the order in which an inbound
-request passes through each layer) is:
+| Setting | Default |
+| --- | ---: |
+| `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` | `60` |
+| `AGENTIC_AUTH_LOCKOUT_THRESHOLD` | `5` |
+| `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` | `300` |
 
-```
-1. SlowAPIMiddleware        — global per-IP rate limit
-2. SanitizationASGIMiddleware — prompt-injection / secret redaction
-3. APIKeyMiddleware         — bearer-token auth + per-IP 401 throttle
-4. CORSMiddleware           — CORS preflight / header injection
-```
+The threshold-triggering request and later locked requests receive HTTP 429
+with `Retry-After`. A successful authentication clears that IP's failure
+history. This state is also in-process.
 
-`app.add_middleware` prepends each layer, so the first `add_middleware` call (CORS) becomes
-the innermost layer and the last call (SlowAPI) becomes the outermost.
+## Request and model-loop sanitization
 
-### Tuning recipes
+JSON request bodies pass through sanitization middleware. It can classify
+content as clean, requiring approval, redacted, or blocked. Blocked input
+returns HTTP 422.
 
-**Low-traffic development environment:**
+The middleware fails closed when it is unavailable or raises unexpectedly.
+`AGENTIC_SANITIZER_FAIL_OPEN=1` bypasses that behavior and should be limited to
+isolated diagnosis.
 
-```bash
-AGENTIC_RATE_LIMIT_DEFAULT=200/minute
-```
+Model-client sanitization is enabled by default:
 
-Relaxes the cap to avoid friction during development while still exercising the rate-limit
-code path.
-
-**High-traffic production behind a load balancer:**
-
-```bash
-AGENTIC_RATE_LIMIT_DEFAULT=120/minute
+```dotenv
+AGENTIC_SANITIZE_AGENT_LOOP=1
 ```
 
-!!! warning "Multi-replica caveat"
-    The rate-limit counter is in-process. In a multi-replica deployment behind a load
-    balancer, each replica tracks only the requests it receives. The effective per-IP rate
-    cap is `N × configured_limit` where `N` is the number of replicas. A caller can bypass
-    the limit by distributing requests across replicas.
+This also checks content returned by tools or retrieval before it is sent back
+to supported model-client paths. Sanitization reduces risk; it cannot prove
+that an instruction is safe or true.
 
-    The planned Sprint 2 Redis migration will replace the in-process store with a shared
-    counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
-    / API-gateway layer for multi-replica deployments.
+## File, Git, and shell tools
 
-    See [KNOWN_LIMITATIONS.md §4.1](../KNOWN_LIMITATIONS.md#41-rate-limiting-is-in-process-only).
+File and Git tools refuse operations until a sandbox root is configured:
 
-!!! note "Reference"
-    See [ADR-018](../adr/ADR-018-api-rate-limiting-and-auth-throttle.md) for the design
-    rationale and the Sprint 2 Redis migration plan.
-
----
-
-## 3. 401 brute-force throttle (AuthThrottle)
-
-### How it works
-
-`AuthThrottle` (in `server/auth.py`) tracks failed authentication attempts per client IP
-using monotonic timestamps. It is integrated into `APIKeyMiddleware` and runs at layer 3.
-
-**Sliding window:** Only failures within the last `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS`
-seconds count toward the threshold. Failures older than the window are evicted on the next
-request from that IP.
-
-**Defaults (verified against `server/auth.py`):**
-
-| Parameter | Default | Override |
-|-----------|---------|----------|
-| Sliding window | `60` seconds | `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` |
-| Failure threshold | `5` failures | `AGENTIC_AUTH_LOCKOUT_THRESHOLD` |
-| Lockout duration | `300` seconds | `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` |
-
-### Lockout semantics
-
-When an IP reaches the threshold, the `AuthThrottle` sets a `locked_until` timestamp. Every
-subsequent request from that IP — including the threshold-triggering request — receives:
-
-```http
-HTTP/1.1 429 Too Many Requests
-Retry-After: <remaining-lockout-seconds>
-Content-Type: application/json
-
-{
-  "detail": "Too many failed authentication attempts. Please retry later.",
-  "retry_after": <remaining-lockout-seconds>
-}
+```dotenv
+AGENTIC_FILE_BASE_DIR=C:\agentic-data
 ```
 
-The lockout is checked **before** credential verification. Locked IPs are rejected before
-the server even reads the `Authorization` or `X-API-Key` header, so lockout cannot be
-cleared by supplying a correct key during the lockout period.
+Use a dedicated directory that contains no application source, credentials, or
+system files. Apply operating-system permissions in addition to the
+application path check.
 
-**Successful authentication clears the failure counter.** A valid key from a previously
-failing IP resets its failure history entirely.
+Shell commands are disabled when the allowlist is empty:
 
-### Eviction
-
-The `_evict_expired()` method cleans up state entries lazily on each request — no background
-task is needed. An IP's entry is removed when its lockout has expired **and** its failure
-window has also expired.
-
-### In-process limitation
-
-!!! warning "Multi-replica caveat"
-    `AuthThrottle` state is per-process. In a multi-replica deployment, a distributed
-    attacker who spreads probes across replicas can stay under each replica's threshold while
-    collectively exceeding the intended lockout threshold.
-
-    See [KNOWN_LIMITATIONS.md §4.2](../KNOWN_LIMITATIONS.md#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat).
-    Sprint 2 will migrate to a Redis-backed shared store.
-
-### Recipe: investigate a locked-out client
-
-The server logs a warning for every lockout event and every rejected locked-IP request:
-
-```
-WARNING: Auth throttle: IP 203.0.113.42 locked out for 300 seconds after 5 failures
-WARNING: Auth throttle: rejecting locked IP 203.0.113.42 (retry after 287s)
-```
-
-To find lockout events for a specific IP:
-
-```bash
-# journalctl / docker logs / file log depending on your deployment
-grep "locked out\|locked IP" server.log | grep "203.0.113.42"
-```
-
-Authentication failures (before lockout) are also logged:
-
-```
-WARNING: Authentication failed for /api/workflows/run from 203.0.113.42
-```
-
-### Recipe: lowering thresholds for high-value endpoints
-
-The threshold and lockout duration currently apply globally across all endpoints. If you
-need tighter thresholds, lower the environment variables:
-
-```bash
-AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS=30
-AGENTIC_AUTH_LOCKOUT_THRESHOLD=3
-AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS=900
-```
-
-!!! note
-    Per-endpoint throttle granularity is listed as future work in
-    [ADR-018](../adr/ADR-018-api-rate-limiting-and-auth-throttle.md). Today the
-    configuration is global.
-
----
-
-## 4. DAG workflow timeout
-
-### Where it applies
-
-`DAGExecutor.execute(workflow, ..., timeout=N)` accepts an optional `timeout` parameter
-(seconds, float). When set, the entire scheduling loop is wrapped with
-`asyncio.wait_for(scheduling_loop(), timeout=N)`.
-
-There is **no environment variable** for the default timeout. The value is set per call by
-the server route layer. Today this means you configure it by adjusting the route-level
-call site — it is not a startup configuration knob.
-
-### What happens on timeout
-
-When the timeout elapses:
-
-1. All in-flight `asyncio.Task` objects for running steps are cancelled
-   (`task.cancel()`) and awaited to prevent "Task was destroyed but it is pending" warnings.
-2. Every step still in `RUNNING` state is transitioned to `FAILED` with `error_type:
-   "TimeoutError"` and a descriptive message.
-3. All transitive dependents of those failed steps are cascade-skipped via BFS (the same
-   propagation used for step-level failures).
-4. Steps that never started are also skipped.
-5. The returned `WorkflowResult` has `overall_status=FAILED`.
-6. `result.metadata` contains:
-   ```python
-   {"timeout_exceeded": True, "timeout_seconds": <N>, "error": "<message>"}
-   ```
-
-**OTEL attributes** emitted on the active span:
-
-```
-workflow.timeout_exceeded = True
-workflow.timeout_seconds = <N>   # on the span event "workflow.timeout"
-```
-
-These attributes are queryable in Jaeger/Tempo dashboards to identify timed-out runs.
-
-### Relationship to per-step timeouts
-
-The workflow-level timeout and per-step timeouts in `StepExecutor` are **additive, not
-mutually exclusive**. Both can be active simultaneously:
-
-- A step's individual timeout fires if that step alone runs too long.
-- The workflow timeout fires if the cumulative execution across all steps (including
-  dependencies and waiting time) exceeds the ceiling.
-
-Set a tight per-step budget for individual agent calls and a looser workflow ceiling as a
-backstop.
-
-### Tuning guidance
-
-A reasonable starting point:
-
-```
-workflow_timeout = longest_legitimate_single_workflow_duration × 1.5
-```
-
-For example, if your most complex workflow takes about 4 minutes under normal conditions,
-set a 6-minute (360 second) timeout. This gives headroom for provider latency spikes while
-still bounding runaway workflows.
-
-!!! note
-    Cooperative cancellation via `asyncio.wait_for` depends on `await` points in step
-    bodies. A tightly-looping synchronous step may not cancel promptly. If you have steps
-    with synchronous-heavy bodies, consider adding explicit cancellation checkpoints.
-
-!!! note "Reference"
-    See [ADR-019](../adr/ADR-019-dag-executor-top-level-timeout.md) for the design rationale
-    and the follow-on task to expose `timeout` as a top-level `execution_profile` HTTP field.
-
----
-
-## 5. Adapter eager validation
-
-### How it works
-
-`AGENTIC_DEFAULT_ADAPTER` selects which execution engine the server validates at startup.
-The default is `langchain`.
-
-During the FastAPI lifespan startup sequence, `AdapterRegistry.validate_selected(name)` is
-called. For the `langchain` adapter, this immediately attempts to import `langchain` and
-`langgraph`. If either import fails (the optional extras are not installed), a
-`ConfigurationError` is raised:
-
-```
-ConfigurationError: LangChain engine selected but extras not installed.
-Install with: pip install -e '.[langchain]'
-```
-
-uvicorn logs the error and **exits with a non-zero code**. The server does not start, and
-no requests are served. This fail-fast behavior is intentional — a misconfigured deployment
-fails at boot rather than mid-workflow.
-
-For `AGENTIC_DEFAULT_ADAPTER=native` (and any other adapter value that is not `langchain`),
-`validate_selected()` is a no-op.
-
-### Recipe: deploy with native engine only (no LangChain extras)
-
-```bash
-AGENTIC_DEFAULT_ADAPTER=native
-```
-
-Set this when:
-
-- You have not installed the `[langchain]` extras.
-- You want to minimize the dependency footprint.
-- All workflows in your deployment explicitly specify `adapter: native`.
-
-!!! warning
-    Setting `AGENTIC_DEFAULT_ADAPTER=native` bypasses the LangChain check but does not
-    prevent workflows from requesting the `langchain` adapter at run time. If a workflow
-    request specifies `adapter: langchain` and the extras are absent, the error surfaces at
-    request time rather than boot time.
-
-!!! note "Reference"
-    See [ADR-020](../adr/ADR-020-langchain-adapter-eager-validation.md) for the rationale
-    and the CLI pre-flight check planned as a follow-on.
-
----
-
-## 6. Filesystem sandboxing
-
-### AGENTIC_FILE_BASE_DIR
-
-The `file_ops` built-in tool uses this variable to establish a sandbox root. All file
-operations are resolved relative to this directory, and any attempt to traverse outside it
-(e.g., via `../`) is rejected at the validator boundary.
-
-!!! warning "Fail-closed"
-    When `AGENTIC_FILE_BASE_DIR` is **not set**, all file tool operations are refused. File
-    tools will return an error on every call until this variable is configured.
-
-    Operators who need file operations **must** set this variable. Leaving it unset is the
-    safe default — no accidental file access can occur.
-
-**Recommended value:** a dedicated, isolated directory that the server process can write to
-and that does not contain sensitive system files or application secrets.
-
-```bash
-# Container deployments
-AGENTIC_FILE_BASE_DIR=/app/data
-
-# Bare-metal / VM deployments
-AGENTIC_FILE_BASE_DIR=/var/lib/agentic/data
-```
-
-Ensure the directory:
-
-- Exists and is writable by the server process user.
-- Does not overlap with application code, secrets, or system directories.
-- Has appropriate filesystem-level permissions (mode `700` or `750` for the server user).
-
----
-
-## 7. Shell tool allowlist
-
-### AGENTIC_SHELL_ALLOWED_COMMANDS
-
-The `shell_ops` built-in tool executes shell commands inside the server process. By default
-(when the variable is not set or is empty), **all shell commands are disabled**.
-
-!!! warning "Fail-closed"
-    An empty or missing `AGENTIC_SHELL_ALLOWED_COMMANDS` means no shell commands can run.
-    This is the safe default.
-
-When set, the value is a comma-separated list of command **basenames** (the executable name
-without path). Only commands whose basename appears in this list are allowed to execute.
-
-```bash
-# Disable entirely (default — omit the variable or set it to empty)
+```dotenv
 AGENTIC_SHELL_ALLOWED_COMMANDS=
-
-# Allow only specific commands
-AGENTIC_SHELL_ALLOWED_COMMANDS=ls,cat,python,git
 ```
 
-!!! tip "Minimum set for code-execution workflows"
-    The following covers most code-execution workflow patterns while keeping the attack
-    surface narrow:
-    ```bash
-    AGENTIC_SHELL_ALLOWED_COMMANDS=ls,cat,python,git
-    ```
-    Add additional commands only when a specific workflow requires them. Never include
-    interpreters (`bash`, `sh`, `zsh`) unless the workflow explicitly requires a shell
-    runner and you have reviewed the associated risk.
+If a workflow requires shell access, list executable basenames:
 
----
-
-## 8. Sanitization middleware
-
-### How it works
-
-`SanitizationASGIMiddleware` (layer 2 in the middleware stack) inspects the JSON body of
-every inbound request. It applies the `SanitizationMiddleware` instance stored in
-`app.state.sanitization` (initialized in the FastAPI lifespan with `dry_run=False`).
-
-Classification outcomes:
-
-| Classification | Action |
-|---------------|--------|
-| `clean` | Request passes through unmodified. |
-| `requires_approval` | Request passes through unmodified (advisory only in current release). |
-| `redacted` | Request body replaced with sanitized text before passing downstream. |
-| `blocked` | `422 Unprocessable Entity` returned immediately. |
-
-### Fail-closed behavior
-
-!!! warning "Fail-closed by default"
-    When the sanitization layer fails to initialize (or is explicitly `None`), the middleware
-    returns `503 Service Unavailable` unless `AGENTIC_SANITIZER_FAIL_OPEN=1` is set.
-
-    On any unexpected exception during sanitization processing, the middleware returns
-    `500 Internal Server Error` rather than passing the request through unsanitized.
-
-    Only JSON bodies (`Content-Type: application/json`) are inspected. All other content
-    types pass through unchanged.
-
-### AGENTIC_SANITIZER_FAIL_OPEN
-
-!!! note "Only the literal `1` enables fail-open"
-    Since 2026-05-09, only the string `"1"` is accepted as enabling fail-open. Earlier
-    versions accepted `"true"`, `"yes"`, and other truthy strings. If your deployment
-    scripts set `AGENTIC_SANITIZER_FAIL_OPEN=true`, update them to
-    `AGENTIC_SANITIZER_FAIL_OPEN=1`.
-
-Setting `AGENTIC_SANITIZER_FAIL_OPEN=1` causes the middleware to pass requests through
-when the sanitization layer is unavailable or encounters an error, rather than returning
-`503`/`500`.
-
-!!! warning "Not for production"
-    `AGENTIC_SANITIZER_FAIL_OPEN=1` disables the prompt-injection and secret-redaction
-    safety net when the sanitization layer is unavailable. Use only for debugging in
-    isolated environments. **Do not set this in production.**
-
-### Recipe: legacy debugging mode
-
-```bash
-# Temporarily enable fail-open to diagnose sanitization startup failures
-AGENTIC_SANITIZER_FAIL_OPEN=1 python -m uvicorn agentic_v2.server.app:app ...
-# After diagnosing, remove the variable and fix the root cause.
+```dotenv
+AGENTIC_SHELL_ALLOWED_COMMANDS=python,git
 ```
 
----
+An allowlist entry permits the executable, not a safe subset of its arguments.
+Interpreters and Git can still read, write, execute, or contact remote systems.
+Run the server with a restricted OS account and container or host controls.
 
-## 9. CORS
+## HTTP tool and SSRF controls
 
-### AGENTIC_CORS_ORIGINS
+Private, loopback, link-local, reserved, and known cloud-metadata addresses are
+blocked by default:
 
-Controls which browser origins the server includes in `Access-Control-Allow-Origin` response
-headers (via FastAPI's `CORSMiddleware`, the innermost middleware layer).
-
-**Default origins (when `AGENTIC_CORS_ORIGINS` is not set):**
-
-```
-http://localhost:5173
-http://127.0.0.1:5173
-http://localhost:8000
-http://127.0.0.1:8000
-http://localhost:8010
-http://127.0.0.1:8010
+```dotenv
+AGENTIC_BLOCK_PRIVATE_IPS=1
 ```
 
-These defaults cover the local Vite dev server and common local API ports. They are not
-appropriate for production.
+The HTTP tools validate DNS results and redirect targets. Metadata addresses
+remain blocked even when private-address blocking is disabled.
 
-!!! warning "Production deployments must restrict CORS origins"
-    Set `AGENTIC_CORS_ORIGINS` to the actual frontend origin(s) in every production
-    deployment. Leaving the default allows any localhost browser session to make
-    credentialed cross-origin requests.
+Application checks cannot replace egress controls. Restrict outbound network
+destinations at the firewall, container network, service mesh, or cloud policy.
+Set `AGENTIC_BLOCK_PRIVATE_IPS=0` only when a reviewed workflow must contact
+internal services and compensating controls are in place.
 
-```bash
-# Single frontend origin
+## Approval gates
+
+A tool call requires approval when any of these is true:
+
+- the tool declares `requires_approval=True`;
+- `AGENTIC_REQUIRE_TOOL_APPROVAL=1`; or
+- the tool name appears in `AGENTIC_APPROVAL_REQUIRED_TOOLS`.
+
+High-impact built-ins such as command execution, file mutation, and
+state-changing HTTP operations require approval by default.
+
+If a gated tool has no registered provider, the call is denied. The default
+approval timeout is 1,800 seconds:
+
+```dotenv
+AGENTIC_APPROVAL_TIMEOUT_SECONDS=1800
+```
+
+The current gate is programmatic. The dashboard does not provide a complete
+pause, approve, and resume workflow. Register an `ApprovalProvider` during
+application startup and test deny, timeout, provider failure, and duplicate
+request behavior.
+
+Do not use `AutoApproveProvider` as a substitute for reviewing whether a tool
+needs a gate.
+
+## CORS and browser access
+
+Set only the deployed browser origins:
+
+```dotenv
 AGENTIC_CORS_ORIGINS=https://app.example.com
-
-# Multiple origins (comma-separated, no spaces)
-AGENTIC_CORS_ORIGINS=https://app.example.com,https://admin.example.com
 ```
 
-### WebSocket origin validation
+Multiple origins are comma-separated. The local defaults include development
+ports and should not be reused as a production policy.
 
-WebSocket origin validation reuses the same `AGENTIC_CORS_ORIGINS` allowlist via
-`get_allowed_origins()`. Additionally, any `localhost` or `127.0.0.1` origin (any port) is
-always allowed for WebSocket connections — the Vite dev server starts on dynamic ports
-(5173, 5174, …) so they cannot be enumerated statically.
+CORS controls which browser pages can read responses. It is not authentication,
+and it does not restrict non-browser clients.
 
-Non-browser clients that omit the `Origin` header are always allowed for WebSocket
-connections.
+## Audit, tracing, and metrics
 
----
+Audit logging is off by default:
 
-## 10. HTTP tool SSRF protection
-
-### AGENTIC_BLOCK_PRIVATE_IPS
-
-The `http_ops` built-in tool (and `langchain/tools.py`) make outbound HTTP requests
-during workflow execution. As of P1 #13, **SSRF protection is enabled by default** and
-covers:
-
-- Private/loopback/link-local/reserved IP literals (RFC 1918, RFC 4193, etc.)
-- DNS names: all returned addresses are resolved and checked — a hostname that resolves to
-  a private address is blocked even if it looks public.
-- Cloud metadata endpoints: `169.254.169.254`, `fd00:ec2::254`, `100.100.100.200`,
-  `metadata.google.internal` are always blocked regardless of the flag.
-- Redirect re-validation: each redirect hop is validated before following (max 5 hops).
-  Per RFC 7538/9110, `307`/`308` hops preserve the original method and body; `301`/`302`/`303`
-  degrade to a bodyless `GET`. Caller headers (e.g. `Authorization`) are sent on the first hop
-  only, so credentials are never replayed to a redirect target.
-- IPv4-mapped IPv6 (`::ffff:127.0.0.1`) is normalised before checking.
-- Legacy IPv4 literal forms the OS resolver accepts (decimal `2130706433`, hex `0x7f000001`,
-  octal `0177.0.0.1`, short `127.1`) are parsed and blocked — they cannot bypass the
-  string-based check.
-
-### DNS-rebinding residual risk
-
-The guard validates the hostname's resolved addresses *and* pins the connection to a
-validated address so the HTTP client cannot independently re-resolve to a different
-(private/metadata) IP between the check and the connect:
-
-- **aiohttp path** (`http_ops`): a `GuardedResolver` re-validates every address aiohttp is
-  about to dial at connect time.
-- **httpx path** (`langchain/tools`): `validate_url_pinned` rewrites the request URL to the
-  validated IP, carrying the real hostname in the `Host` header (and `sni_hostname` extension
-  for TLS), so the connection goes to the address that was checked.
-
-**Residual:** both mitigations rely on `getaddrinfo`/the resolver returning the same answer the
-guard validated. A sufficiently hostile authoritative DNS server with a near-zero TTL could, in
-principle, return a different address to the connect-time lookup than to the validation lookup on
-a path not covered by pinning, and OS-level resolver caching is not under the application's
-control. For threat models that include attacker-controlled DNS, treat the application guard as
-defense-in-depth and add a **network-layer egress control** (egress firewall / service-mesh
-authorization / network policy) restricting which addresses the server process may reach. See
-`docs/KNOWN_LIMITATIONS.md`.
-
-!!! warning "SSRF defense"
-    In environments where the server process has network access to internal services
-    (databases, metadata APIs, internal dashboards), an unauthenticated or malicious
-    workflow could exploit the HTTP tool to make requests to those services. The SSRF guard
-    is **on by default** — this is a security-critical default. Do not disable it without
-    applying compensating controls.
-
-```bash
-# On by default — opt out only with explicit justification
-# AGENTIC_BLOCK_PRIVATE_IPS=0  # disables private-IP blocking (NOT recommended)
+```dotenv
+AUDIT_LOG_ENABLED=1
+AUDIT_LOG_BACKEND=file
+AUDIT_LOG_FILE_PATH=C:\agentic-data\audit.jsonl
 ```
 
-Set `AGENTIC_BLOCK_PRIVATE_IPS=0` only when workflows legitimately need to reach internal
-network endpoints and you have applied other controls (network policy, service mesh
-authorization) to restrict which internal addresses the server can reach. Note that
-cloud metadata endpoints (`169.254.169.254` etc.) remain blocked even when the flag
-is set to `0`.
+The supported backends are `file` and `redis`. File records are append-only
+from the application's perspective, but filesystem administrators can still
+change or delete them. Protect, ship, retain, and verify audit records outside
+the process.
 
----
+Tracing and metrics are also opt-in:
 
-## 11. Human approval gates
-
-As of P1 #12, high-impact tools no longer execute the instant the LLM emits a call: the
-tool-execution hot path consults an injectable **approval gate** first, at *both* dispatch
-points (the engine tool loop and the agent loop). The gate is implemented in
-`agentic_v2/governance/approval.py`.
-
-### Contract
-
-A tool requires approval when **any** of these is true (the triggers are OR'd):
-
-1. The tool opts in via `requires_approval = True` on its class.
-2. The global override `AGENTIC_REQUIRE_TOOL_APPROVAL=1` is set (gates **every** tool).
-3. The tool's name appears in `AGENTIC_APPROVAL_REQUIRED_TOOLS` (comma-separated).
-
-When a tool requires approval, the registered `ApprovalProvider` decides. The decision is
-returned to the model as a normal (failed) tool result, so a denied call does not crash the
-run — the model sees the denial and can adapt.
-
-### Fail-closed rule
-
-**If a tool requires approval and no provider is registered, the call is DENIED and never
-executes.** There is no implicit "allow when unconfigured" path. To run gated tools you must
-either register a provider or remove the requirement. The denial error tells the operator
-exactly that.
-
-### Default posture change
-
-The global override defaults **OFF** so existing flows are not broken. The real default
-posture change is the per-tool flag: the following high-impact builtins are gated **by
-default**, so a deployment that registers no provider will have these tools fail closed until
-one is wired:
-
-| Tool name | Why gated |
-|-----------|-----------|
-| `shell`, `shell_exec` | Arbitrary command execution |
-| `execute_python` | Arbitrary code execution |
-| `file_write`, `file_delete`, `file_move`, `file_copy`, `directory_create` | Filesystem mutation |
-| `http`, `http_post` | State-changing network requests |
-
-Read-only tools (`file_read`, `http_get`, search/transform/context ops) are **not** gated.
-
-### Provider examples
-
-```python
-from agentic_v2.governance import (
-    AutoApproveProvider,
-    AutoDenyProvider,
-    CallbackApprovalProvider,
-    PolicyApprovalProvider,
-    set_approval_provider,
-)
-
-# Trusted, non-interactive environment: approve everything (use with care).
-set_approval_provider(AutoApproveProvider())
-
-# Hard kill-switch: deny every gated call.
-set_approval_provider(AutoDenyProvider())
-
-# Allowlist by tool name.
-set_approval_provider(PolicyApprovalProvider(frozenset({"file_write"})))
-
-# Interactive / custom: a sync-or-async callable decides per request.
-async def decide(request):
-    from agentic_v2.governance import ApprovalDecision
-    # request.tool_name, request.call_id, request.agent_or_step are available;
-    # request.tool_args values longer than ~200 chars are redacted in its repr.
-    return ApprovalDecision.APPROVED if request.tool_name == "file_write" else ApprovalDecision.DENIED
-
-set_approval_provider(CallbackApprovalProvider(decide))
-```
-
-The provider is a **process-wide** module global — set it once at process start. Approval
-policy is an application-level posture decision; it is not bound per-task.
-
-!!! note "UI-driven pause/resume is a follow-on, not built yet"
-    This release ships the **programmatic** gate: an injectable provider consulted
-    synchronously on the hot path. A full UI-driven *pause-and-resume* flow — where a run
-    suspends, surfaces an approval prompt to a human operator in the web UI, and resumes on
-    their click — is an explicit follow-on. The wire-format events
-    (`approval_required`, `approval_decision` in `contracts/events.py`) already exist so the
-    server/UI can build on them, but the engine tool loop currently surfaces approval activity
-    via the logger and the serialized result metadata rather than streaming those events. See
-    [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md) §4.3.
-
----
-
-## Reference deployment posture
-
-The following block represents the minimum recommended configuration for a hardened,
-internet-exposed production instance. Copy and adapt it to your environment.
-
-```bash
-# ── Authentication ────────────────────────────────────────────────────────────
-# Generate with: openssl rand -hex 32
-AGENTIC_API_KEY=<32-byte-random-hex>
-
-# ── CORS ─────────────────────────────────────────────────────────────────────
-AGENTIC_CORS_ORIGINS=https://app.example.com
-
-# ── Filesystem sandbox ────────────────────────────────────────────────────────
-AGENTIC_FILE_BASE_DIR=/app/data
-
-# ── Shell tool ────────────────────────────────────────────────────────────────
-# Empty = all shell commands disabled (recommended unless workflows require shell)
-AGENTIC_SHELL_ALLOWED_COMMANDS=
-
-# ── Engine ───────────────────────────────────────────────────────────────────
-# Use native engine to avoid LangChain extras requirement.
-# Remove or set to langchain if LangChain extras are installed.
-AGENTIC_DEFAULT_ADAPTER=native
-
-# ── SSRF defense (default ON — no action required for production) ────────────
-# AGENTIC_BLOCK_PRIVATE_IPS is True by default. Unset or set to 1 to keep the
-# default. Set to 0 only if workflows must reach internal services and
-# compensating network controls are in place.
-# AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended
-
-# ── Human approval gates (§11) ───────────────────────────────────────────────
-# High-impact builtins (shell/exec, file writes/deletes, http/post) are gated by
-# default and FAIL CLOSED with no provider registered. Register an
-# ApprovalProvider at process start (see §11) before relying on those tools.
-# Optionally gate EVERYTHING, or extra tools by name:
-# AGENTIC_REQUIRE_TOOL_APPROVAL=1            # gate every tool call
-# AGENTIC_APPROVAL_REQUIRED_TOOLS=git_commit,deploy   # extra tools by name
-
-# ── Rate limiting ─────────────────────────────────────────────────────────────
-# Tune based on expected traffic. Lower for higher-security, lower-traffic
-# environments. Raise with caution — in-process only, see §2.
-AGENTIC_RATE_LIMIT_DEFAULT=30/minute
-
-# ── Auth brute-force throttle ─────────────────────────────────────────────────
-# Window (seconds), threshold (failures), lockout (seconds)
-# Defaults are 60 / 5 / 300; values below are more aggressive for production.
-AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS=60
-AGENTIC_AUTH_LOCKOUT_THRESHOLD=5
-AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS=600
-
-# ── Sanitization ──────────────────────────────────────────────────────────────
-# Leave AGENTIC_SANITIZER_FAIL_OPEN unset (fail-closed is the safe default).
-# AGENTIC_SANITIZER_FAIL_OPEN=   # do not set
-
-# ── Observability ─────────────────────────────────────────────────────────────
+```dotenv
 AGENTIC_TRACING=1
-OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+AGENTIC_TRACE_SENSITIVE=0
+AGENTIC_METRICS=1
 ```
 
-!!! tip "Secret generation"
-    Use a cryptographically strong random value for `AGENTIC_API_KEY`:
-    ```bash
-    openssl rand -hex 32
-    ```
-    Store it in your secret manager (AWS Secrets Manager, Vault, Kubernetes Secret) and
-    inject it at runtime — never commit it to the repository.
+`/metrics` is public so a scraper can reach it. Protect it at the network layer
+if metric names or labels are sensitive. Keep sensitive trace content disabled
+unless collection and retention have been approved.
 
----
+## Middleware order
 
-## See also
+Inbound HTTP requests pass through:
 
-- [Configuration Reference](../configuration.md) — full environment variable index with types,
-  defaults, and accepted values
-- [ADR-018](../adr/ADR-018-api-rate-limiting-and-auth-throttle.md) — rate limiting and auth
-  throttle design rationale, Sprint 2 Redis migration plan
-- [ADR-019](../adr/ADR-019-dag-executor-top-level-timeout.md) — DAG executor top-level timeout
-  watchdog design
-- [ADR-020](../adr/ADR-020-langchain-adapter-eager-validation.md) — LangChain adapter eager
-  validation at startup
-- [KNOWN_LIMITATIONS.md](../KNOWN_LIMITATIONS.md) — in-process caveats, multi-replica
-  behavior (§4.1, §4.2), and deferred Sprint 2 work
-- [Troubleshooting](troubleshooting.md) — common failure modes and diagnostic recipes
-- [Deployment Guide](../deployment-guide.md) — CI/CD pipeline, Docker, environment setup,
-  and production observability checklist
+1. CORS
+2. global rate limiting
+3. request metrics
+4. trace-context handling
+5. sanitization
+6. OIDC or API-key authentication
+
+Some public paths bypass authentication and application rate limiting as
+described above. Network controls still apply.
+
+## Verification
+
+Before release, verify the deployed instance rather than only the source
+configuration:
+
+- unauthenticated protected route returns 401;
+- invalid tokens trigger lockout and `Retry-After`;
+- liveness and readiness probes have the intended network exposure;
+- unapproved file, shell, and HTTP mutations are denied;
+- file traversal and private-address requests are rejected;
+- a tenant cannot read another tenant's runs or datasets;
+- audit events arrive in durable storage;
+- traces omit disallowed content;
+- ingress rate limits work across replicas; and
+- provider, Redis, and approval-service failures produce the intended response.
+
+Use [Troubleshooting](troubleshooting.md) for diagnostics and
+[Deployment](../deployment-guide.md) for the runtime setup.

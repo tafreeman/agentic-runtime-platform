@@ -1,81 +1,118 @@
-# Development Guide
+# Runtime package development
 
-## Local Environment
+Use the repository-level [development guide](../../docs/development-guide.md)
+for workspace setup and broad checks. This page lists package-local commands.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -e ".[dev,server,langchain]"
+## Install
+
+From `agentic-workflows-v2`:
+
+```text
+python -m pip install -e ".[dev,server,langchain]"
 ```
 
-UI dependencies:
+The root `agentic-tools` package must already be installed. The normal
+repository setup handles both:
 
-```bash
-cd ui
-npm install
-cd ..
+```text
+just setup
 ```
 
-## Day-to-Day Commands
+## Run the backend
 
-### CLI and workflow checks
+From `agentic-workflows-v2`:
 
-```bash
+```text
+python -m uvicorn agentic_v2.server.app:app `
+  --host 127.0.0.1 `
+  --port 8010 `
+  --reload
+```
+
+Health routes:
+
+- `http://127.0.0.1:8010/api/health`
+- `http://127.0.0.1:8010/api/health/ready`
+
+## Run the dashboard
+
+From the repository root:
+
+```text
+npm --prefix agentic-workflows-v2/ui run dev
+```
+
+Vite starts on port `5173` and sends API requests to the backend on port
+`8010`. Set `VITE_API_PROXY_TARGET` before startup to change that target.
+
+## Run workflows
+
+From either the repository root or this package directory:
+
+```text
 agentic list workflows
 agentic validate code_review
 agentic run code_review --dry-run
 ```
 
-### Backend server
+Deterministic smoke test from the repository root:
 
-```bash
-python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+.\.venv\Scripts\agentic.exe run test_deterministic `
+  --input agentic-workflows-v2\tests\fixtures\deterministic_input.json
 ```
 
-### UI dev mode
+## Test
 
-```bash
-# backend first (port 8000)
-python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8000
+From the repository root:
 
-# then frontend
-cd ui
-npm run dev
+```text
+python -m pytest agentic-workflows-v2/tests -q
 ```
 
-### Combined helper script
+Coverage:
 
-```bash
-bash dev.sh
+```text
+python -m pytest agentic-workflows-v2/tests `
+  --cov=agentic_v2 `
+  --cov-report=term-missing
 ```
 
-## Testing and Quality
+UI:
 
-```bash
-pre-commit run --all-files
-python -m pytest tests -v
-python -m pytest --cov=agentic_v2 --cov-report=term-missing --cov-report=xml
-python scripts/check_docs_refs.py
+```text
+npm --prefix agentic-workflows-v2/ui test
+npm --prefix agentic-workflows-v2/ui run test:coverage
+npm --prefix agentic-workflows-v2/ui run build
 ```
 
-UI tests:
+## Validate package documentation and contracts
 
-```bash
-cd ui
-npm test
-npm run test:coverage
+From the repository root:
+
+```text
+python agentic-workflows-v2/scripts/check_docs_refs.py
 ```
 
-## Logs and Run Artifacts
+After changing a generated wire model, run from `agentic-workflows-v2`:
 
-- Runtime logs: `.run-logs/`
-- Run outputs/events: `runs/` (generated and typically not committed)
-- Fixture samples for docs/tests: `fixtures/`
+```text
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+npm --prefix ui run build
+```
 
-## Environment Variables Most Used In Development
+## Local outputs
 
-- `AGENTIC_API_KEY`
-- `AGENTIC_CORS_ORIGINS`
-- `AGENTIC_MODEL_TIER_1`, `AGENTIC_MODEL_TIER_2`, `AGENTIC_MODEL_TIER_3`
-- `AGENTIC_MEMORY_PATH`
-- `AGENTIC_TRACING`, `AGENTIC_TRACE_SENSITIVE`
+| Path | Contents |
+|---|---|
+| `.run-logs/` | Backend and dashboard development logs |
+| `runs/` | Saved run output when configured to this location |
+| `ui/dist/` | Production dashboard bundle |
+
+These are generated outputs and normally should not be committed.
+
+For environment variables, use the central
+[configuration reference](../../docs/configuration.md). For failures, use
+[troubleshooting](../../docs/operations/troubleshooting.md).

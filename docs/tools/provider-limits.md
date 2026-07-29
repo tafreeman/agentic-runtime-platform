@@ -1,271 +1,143 @@
-# Provider rate limits and model ranking
+# Provider checks and model ranking
 
-> Modules: `tools.llm.check_provider_limits` · `tools.llm.rank_models`
+Two scripts enrich a model-discovery report:
 
-## Overview
+- `check_provider_limits.py` makes small provider or local-server requests.
+- `rank_models.py` applies a fixed repository preference order to the probe and
+  check results.
 
-Before running a large bakeoff or evaluation batch across multiple providers, it is useful to know:
+Despite the first script's name, most checks do not return an authoritative
+generation quota. Use provider consoles and response headers for real quota and
+billing decisions.
 
-1. Which providers are actually reachable with the configured API keys
-2. What rate-limit quotas each provider reports
-3. Which models to prefer given availability and quota
+## Install the extra dependency
 
-This is handled by a two-step pipeline:
+The checker imports `requests`, which is not declared by the root package:
 
-```
-model_probe (probe_discovery.py)
-    ↓  produces: discovery output JSON
-check_provider_limits.py
-    ↓  produces: runs/provider_limits.json
-rank_models.py
-    ↓  produces: runs/model_ranking.json
+```powershell
+python -m pip install requests
 ```
 
-`check_provider_limits` and `rank_models` are standalone CLI scripts designed to be run in sequence. The output files are consumed by the evaluation infrastructure and `model_bakeoff.py`.
+`python-dotenv` is optional. When present, the checker loads a local `.env`;
+otherwise the calling process must already contain provider settings.
 
----
+## Run the pipeline
 
-## Full three-step pipeline
+### 1. Discover models
 
-```bash
-# Step 1 — Probe model availability
-python -m tools.llm.model_probe --discover --output runs/probe_output.json
-
-# Step 2 — Check rate limits for discovered providers
-python tools/llm/check_provider_limits.py \
-    --probe-file runs/probe_output.json \
-    --out runs/provider_limits.json
-
-# Step 3 — Rank models
-python tools/llm/rank_models.py \
-    --probe-file runs/probe_output.json \
-    --limits-file runs/provider_limits.json \
-    --out runs/model_ranking.json
-
-# View ranked result
-cat runs/model_ranking.json
+```powershell
+python -m tools.llm.model_probe `
+  --discover `
+  --output .\runs\probe-output.json
 ```
 
-The probe step is described in [model-probing.md](model-probing.md). This document covers steps 2 and 3.
+### 2. Check configured providers
 
----
-
-## `check_provider_limits.py`
-
-Reads a model probe JSON file and performs lightweight HTTP checks against each provider for which an API key or host is configured. Extracts rate-limit headers and model counts.
-
-### CLI
-
-```bash
-python tools/llm/check_provider_limits.py \
-    --probe-file runs/probe_output.json \
-    --out runs/provider_limits.json
+```powershell
+python .\tools\llm\check_provider_limits.py `
+  --probe-file .\runs\probe-output.json `
+  --out .\runs\provider-checks.json
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--probe-file` | `filename.json` | Model probe JSON produced by step 1 |
-| `--out` | (stdout) | Output path for the limits JSON |
+Always pass `--probe-file`. The script's default `filename.json` is a
+development placeholder.
 
-> **Note:** The built-in `--probe-file` default (`filename.json`) is a leftover development
-> artifact name — always pass your own probe file explicitly, as in the example above.
+The checker currently handles:
 
-### What it checks
+| Provider | Request or result |
+| --- | --- |
+| GitHub | `GET https://api.github.com/rate_limit` |
+| OpenAI or compatible base URL | `GET /v1/models` and selected limit headers |
+| Anthropic | `GET /v1/models` and returned model count |
+| Gemini | Records that a key is present; no quota request |
+| LM Studio | `GET /api/v1/models` |
+| Ollama | `GET /api/tags` |
+| Local OpenAI-compatible server | `GET /v1/models` |
 
-For each provider where a relevant env var is set, the script issues a single lightweight API call:
+The GitHub request reports GitHub REST API limits. It does not establish the
+remaining GitHub Models inference quota.
 
-| Provider | Check call | Rate-limit info extracted |
-|----------|-----------|--------------------------|
-| GitHub | `GET https://api.github.com/rate_limit` | Core remaining/limit/reset |
-| OpenAI | `GET {base}/v1/models` | `x-ratelimit-*` headers |
-| Anthropic | `GET https://api.anthropic.com/v1/models` | Model count |
-| LM Studio | `GET {LMSTUDIO_HOST}/api/v1/models` | Downloaded models, loaded instances, and capabilities |
-| Ollama | `GET {OLLAMA_HOST}/api/models` | Installed models |
-| Local OpenAI | `GET {LOCAL_AI_API_BASE_URL}/v1/models` | Available models |
+Each configured check records an HTTP result or an error. Unconfigured
+providers are omitted from `checked`.
 
-Providers with no matching env var set are skipped silently.
+### 3. Produce the fixed ranking
 
-### Environment variables read
-
-| Variable | Provider |
-|----------|----------|
-| `GITHUB_TOKEN` or `GH_TOKEN` | GitHub Models API |
-| `OPENAI_API_KEY` | OpenAI |
-| `OPENAI_BASE_URL` or `OPENAI_API_BASE` | Custom OpenAI-compatible endpoint |
-| `ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY_0` | Anthropic |
-| `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
-| `LMSTUDIO_HOST` or `LMSTUDIO_URL` | LM Studio |
-| `OLLAMA_HOST` or `OLLAMA_URL` | Ollama |
-| `LOCAL_AI_API_BASE_URL` | Local OpenAI-compatible server |
-| `AZURE_OPENAI_API_KEY_0` | Azure OpenAI |
-| `AZURE_OPENAI_ENDPOINT_0` | Azure OpenAI endpoint |
-
-### Output schema
-
-```json
-{
-  "checked": {
-    "github": {
-      "status_code": 200,
-      "ok": true,
-      "json": {
-        "resources": {
-          "core": { "limit": 5000, "remaining": 4987, "reset": 1716318000 }
-        }
-      }
-    },
-    "openai": {
-      "status_code": 200,
-      "ok": true,
-      "headers": {
-        "x-ratelimit-limit-requests": "10000",
-        "x-ratelimit-remaining-requests": "9874"
-      }
-    }
-  },
-  "probe_summary": { ... }
-}
+```powershell
+python .\tools\llm\rank_models.py `
+  --probe-file .\runs\probe-output.json `
+  --limits-file .\runs\provider-checks.json `
+  --out .\runs\model-ranking.json
 ```
 
-### Python API
+Always pass all three paths. The checked-in defaults include development
+artifact names and should not be used for a repeatable run.
 
-```python
-from tools.llm.check_provider_limits import (
-    detect_env_keys,
-    check_github,
-    check_openai,
-    check_anthropic,
-    check_lmstudio,
-    check_ollama,
-    check_local_openai,
-    mask,
-)
+## What the ranking means
 
-# Check which env vars are configured (never exposes values)
-keys = detect_env_keys()
-# → {"github": {"GITHUB_TOKEN": True, "GH_TOKEN": False}, "openai": {...}, ...}
+The script assigns fixed provider scores:
 
-# Safe log masker
-print(mask("sk-abc123xyz789"))  # → "sk-a...789"
+| Provider | Fixed score when included |
+| --- | ---: |
+| Local ONNX | 100 |
+| AI Toolkit | 95 |
+| LM Studio | 90 |
+| Ollama when reachable | 85 |
+| OpenAI | 80 |
+| GitHub Models | 70 |
+| Anthropic | 60 |
+| Gemini | 50 |
+| Ollama when its check fails | 30 |
 
-# Check a specific provider
-import os
-result = check_github(os.environ["GITHUB_TOKEN"])
-print(result["json"]["resources"]["core"]["remaining"])
-```
+These numbers encode one preference: local availability first, then reachable
+local APIs, then authenticated cloud providers. They are not measured quality,
+latency, price, security, or reliability scores.
 
-### Installation
+The output also writes fixed recommendations such as
+`best_capability_paid: openai`. Do not present those recommendations as
+benchmark findings. Use [benchmarks](benchmarks.md) when selection depends on
+task performance.
 
-`check_provider_limits.py` requires the `requests` library, which is not in the default install:
+## Configuration read by the checker
 
-```bash
-pip install requests
-```
+| Provider | Settings |
+| --- | --- |
+| GitHub | `GITHUB_TOKEN` or `GH_TOKEN` |
+| OpenAI | `OPENAI_API_KEY`, optional `OPENAI_BASE_URL` or `OPENAI_API_BASE` |
+| Anthropic | `ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY_0` |
+| Gemini | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
+| LM Studio | `LMSTUDIO_HOST`, optional `LM_API_TOKEN` |
+| Ollama | `OLLAMA_HOST` |
+| Local compatible server | `LOCAL_AI_API_BASE_URL` or `OPENAI_BASE_URL` |
 
----
+The script never writes the credential value deliberately. Provider responses
+and error messages may still contain environment-specific information, so
+review generated files before publishing them.
 
-## `rank_models.py`
+## Exit behavior
 
-Combines probe data and provider limits data to produce a ranked list of available models, sorted by preference for batch evaluation use.
+Both scripts return:
 
-### CLI
+- `0` when their file processing completes;
+- `2` when a required input JSON file cannot be loaded.
 
-```bash
-python tools/llm/rank_models.py \
-    --probe-file  runs/probe_output.json   \
-    --limits-file runs/provider_limits.json \
-    --out         runs/model_ranking.json
-```
+An individual provider request failure is recorded in the output and does not
+make `check_provider_limits.py` fail. Inspect `checked.<provider>.error` and
+`ok` fields before using the result.
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--probe-file` | `tools/llm/output44.json` | Model probe JSON |
-| `--limits-file` | `runs/provider_limits.json` | Provider limits JSON from step 2 |
-| `--out` | `runs/model_ranking.json` | Output ranking JSON |
+## Recommended use
 
-> **Note:** The default `--probe-file` path (`output44.json`) is a development artifact name. Always pass your own `--probe-file` explicitly.
+Use the pipeline to answer:
 
-### Ranking algorithm
+- Which providers were configured at this time?
+- Which local catalog endpoints responded?
+- Which model lists were returned?
+- Which providers would the repository's fixed local-first heuristic prefer?
 
-Providers are scored by a static preference table in `tools/llm/rank_models.py` (the source of truth for these values — regenerate this table from there rather than restating scores elsewhere):
+Do not use it alone to answer:
 
-| Rank | Provider | Score | Rationale |
-|------|----------|-------|-----------|
-| 1 | `local_onnx` | 100 | Local models on disk; no external quota or billing; highest throughput |
-| 1.5 | `ai_toolkit` | 95 | VS Code AI Toolkit local models available |
-| 2 | `lmstudio` | 90 | LM Studio reachable locally, OpenAI-compatible |
-| 2.5 | `ollama` (reachable) | 85 | Ollama running locally |
-| 3 | `openai` | 80 | API validated and returning models; billable usage |
-| 4 | `github_models` | 70 | GitHub token valid; good fallback for `gh:` models |
-| 5 | `anthropic` | 60 | Keys present; probe lists models |
-| 6 | `gemini` | 50 | Keys present; quota check requires GCP Console |
-| 7 | `ollama` (unreachable) | 30 | Fallback score when the Ollama host check fails (e.g. returns 404) — the provider is still listed, just deprioritized |
+- Which model is best for this workload?
+- How much quota remains for inference?
+- Which provider is cheapest or safest?
+- Whether a model will remain available during a release.
 
-Ranks can be fractional (`ai_toolkit` slots in at 1.5, reachable `ollama` at 2.5). Azure and Windows AI are not ranked by this script. A provider is included only when it appears in the probe data; `lmstudio` additionally requires a reachable host, `openai` requires a non-empty model list, and `ai_toolkit` requires at least one local model.
-
-### Output schema
-
-The output is a JSON object whose `providers` field is a **dict keyed by provider name** (not an array):
-
-```json
-{
-  "generated_at": "2026-05-21T14:23:00Z",
-  "source_probe": "runs/probe_output.json",
-  "source_checks": "runs/provider_limits.json",
-  "summary": {
-    "total_available": 10,
-    "providers_configured": 2,
-    "note": "Scoring favors local availability, reachable local APIs, then authenticated cloud providers."
-  },
-  "providers": {
-    "local_onnx": {
-      "score": 100,
-      "rank": 1,
-      "reason": "Local models available on disk; no external quota or billing; highest throughput.",
-      "available_count": 2,
-      "models": ["local:phi4", "local:mistral"]
-    },
-    "github_models": {
-      "score": 70,
-      "rank": 4,
-      "reason": "GitHub token valid. Good fallback for gh: models.",
-      "available_count": 8,
-      "models": ["gh:gpt-4o-mini", "gh:gpt-4o", "..."],
-      "evidence": {"rate_core_limit": 5000, "rate_core_remaining": 4987}
-    }
-  },
-  "recommended_use_cases": {
-    "high_throughput_low_cost": "local_onnx",
-    "local_api_with_compat": "lmstudio",
-    "best_capability_paid": "openai",
-    "fallback_catalog": "github_models"
-  }
-}
-```
-
-Some entries carry an `evidence` field (HTTP status, rate-limit headers) from the limits check. `recommended_use_cases` maps common evaluation scenarios to the preferred provider given what was found.
-
-### Python API
-
-```python
-from tools.llm.rank_models import main
-
-# Run as a function
-exit_code = main([
-    "--probe-file", "runs/probe_output.json",
-    "--limits-file", "runs/provider_limits.json",
-    "--out", "runs/model_ranking.json",
-])
-```
-
----
-
-The ranking file is a standalone artifact for evaluation planning — `LLMClient` does not read `model_ranking.json`; model selection there is always explicit via the provider-prefixed model name.
-
----
-
-## See also
-
-- [model-probing.md](model-probing.md) — step 1 of the pipeline (availability probe)
-- [benchmarks.md](benchmarks.md) — full multi-model bakeoff using probe + limits + rank
-- [configuration.md](../configuration.md) — all provider API key environment variables
+Record the three JSON files and their timestamp with any decision.

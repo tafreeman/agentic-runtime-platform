@@ -1,55 +1,112 @@
-# Agentic Runtime Platform UI
+# Runtime dashboard
 
-React 19 + Vite 6 dashboard for running and inspecting Agentic Runtime Platform.
+This package is the React 19 dashboard for Agentic Workflows v2. It uses
+TypeScript, Vite 8, React Router, TanStack Query, and XYFlow.
 
-## Quick Start
+## Start development
 
-```bash
-cd agentic-workflows-v2/ui
-npm install
+The normal repository-wide command is:
 
-npm run dev          # Dev server on :5173 (proxies /api and /ws)
-npm run build        # Type check + production bundle
-npm run test         # Vitest suite
-npm run test:coverage
+```text
+just dev
 ```
 
-Backend proxy:
-- Defaults to http://localhost:8010. Override with `VITE_API_PROXY_TARGET=http://<host>:<port>` when running the backend elsewhere.
+It starts the FastAPI backend on port `8010` and this Vite server on port
+`5173`.
 
-## Architecture Notes
+To work on the UI by itself, first start the backend, then run:
 
-- **Entry:** `src/main.tsx` — renders the app wrapped in `AppErrorBoundary` and React Query provider.
-- **Routing & views:** `src/App.tsx` (React Router 7); pages under `src/pages/`.
-- **Layout:** `src/components/layout/Sidebar.tsx` — theme switcher (dark / paper / bolt), nav links.
-- **Flow visualization:** `@xyflow/react` in `src/components/dag/WorkflowDAG.tsx` (full interactive); `BDagMini.tsx` for static SVG thumbnails.
-- **Data fetching:** `@tanstack/react-query` with API clients in `src/api/`.
-- **Hooks:** `src/hooks/useHotkeys.ts` — global keyboard shortcuts (n / f / / / j / k / Esc).
+```text
+npm --prefix agentic-workflows-v2/ui ci
+npm --prefix agentic-workflows-v2/ui run dev
+```
 
-## Component Catalogue
+Vite forwards `/api` requests to `http://localhost:8010`. In development, the
+WebSocket client connects directly to that backend because Vite's hot-module
+reload also uses WebSockets.
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `StatusBadge` | `components/common/` | ASCII bracket status: `[OK ]` `[RUN]` `[ERR]` `[WARN]` |
-| `BDagMini` | `components/dag/` | Static SVG DAG thumbnail (no xyflow) |
-| `WorkflowDAG` | `components/dag/` | Interactive xyflow DAG with live step states |
-| `EmptyState` | `components/states/` | `$ no <entity> yet` terminal-style empty page |
-| `ErrorBanner` | `components/states/` | `[!] {message}` full-page error |
-| `NotFoundPage` | `components/states/` | `404 not found` with breadcrumb |
-| `AppErrorBoundary` | `components/states/` | React error boundary wrapping the whole app |
+Set `VITE_API_PROXY_TARGET` before starting Vite to use a different backend:
 
-## Keyboard Shortcuts
+```powershell
+$env:VITE_API_PROXY_TARGET = "http://127.0.0.1:9000"
+npm --prefix agentic-workflows-v2/ui run dev
+```
 
-| Key | Action |
-|-----|--------|
-| `/` or `f` | Focus the filter input on Dashboard / Workflows pages |
-| `Esc` | Clear filter and blur input |
-| `j` / `k` | (reserved — next / prev item) |
-| `n` | (reserved — new run) |
+## Pages
 
-## Themes
+| Route | Purpose |
+|---|---|
+| `/` | Runtime summary |
+| `/workflows` | Workflow catalog |
+| `/workflows/:name` | Workflow details and run controls |
+| `/workflows/:name/edit` | Workflow editor |
+| `/datasets` | Evaluation datasets |
+| `/evaluations` | Evaluation setup and comparison |
+| `/models` | Model finder, providers, tiers, and model packs |
+| `/runs` | Saved runs |
+| `/runs/:filename` | Saved run details |
+| `/live/:runId` | Live execution |
 
-Three CSS themes via `data-theme` on `<html>`: `dark` (default), `paper` (warm cream), `bolt` (cobalt).
-All colors defined as space-separated RGB triplets in `src/styles/tokens.css` and consumed as `rgb(var(--b-*))`.
+`/settings` redirects to the provider tab under `/models`.
 
-Keep backend (`agentic-workflows-v2` FastAPI app) running for live data; the proxy forwards `/api` and `/ws` to the configured target.
+The workflow editor is enabled by default in development. Production builds
+require `VITE_AGENTIC_ENABLE_WORKFLOW_BUILDER=1` or
+`AGENTIC_ENABLE_WORKFLOW_BUILDER=1`.
+
+## Commands
+
+Run these from the repository root:
+
+```text
+npm --prefix agentic-workflows-v2/ui run dev
+npm --prefix agentic-workflows-v2/ui run build
+npm --prefix agentic-workflows-v2/ui test
+npm --prefix agentic-workflows-v2/ui run test:coverage
+npm --prefix agentic-workflows-v2/ui run test:e2e
+```
+
+- `build` runs TypeScript project checks before creating `dist/`.
+- `test` runs the Vitest unit suite once.
+- `test:coverage` enforces 60% for lines, statements, and functions, and 56%
+  for branches. The branch threshold is a temporary ratchet recorded in
+  `vitest.config.ts`.
+- `test:e2e` runs Playwright and requires its configured backend and browser
+  setup.
+
+## Code map
+
+| Path | Purpose |
+|---|---|
+| `src/App.tsx` | Application routes |
+| `src/pages/` | Route-level pages |
+| `src/components/` | Shared UI and workflow/run views |
+| `src/api/` | HTTP clients and generated wire types |
+| `src/hooks/` | Shared state and interaction hooks |
+| `src/styles/` | Design tokens and global styles |
+| `src/__tests__/` | Vitest tests |
+| `e2e/` | Playwright tests |
+
+`src/main.tsx` installs the router, React Query client, and top-level error
+boundary.
+
+## API contract changes
+
+The Python contracts generate JSON Schemas under
+`agentic-workflows-v2/tests/schemas/`. After those schemas are regenerated,
+update the TypeScript types with:
+
+```text
+npm --prefix agentic-workflows-v2/ui run generate:types
+```
+
+Commit the schemas and generated TypeScript together. CI regenerates both and
+fails when they do not match.
+
+## Production serving
+
+`npm run build` writes `dist/`. When that directory exists, FastAPI serves it
+as a single-page application and keeps `/api`, `/ws`, `/docs`, and
+`/openapi.json` on their backend routes.
+
+See the central [runtime API guide](../../docs/api-contracts-runtime.md) for
+the route contracts.

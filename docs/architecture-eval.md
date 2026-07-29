@@ -10,7 +10,9 @@ tags:
 
 ## Executive summary
 
-`agentic-v2-eval` (v0.3.0) is the rubric-driven evaluation framework for the `agentic-runtime-platform` monorepo. It turns LLM outputs — prose responses, agent workflow results, code artifacts, prompt templates — into reproducible, weighted scores and human-readable reports.
+`agentic-v2-eval` (v0.3.0) is the offline evaluation package in the
+`agentic-runtime-platform` monorepo. It turns structured metrics and model
+outputs into weighted scores and JSON, Markdown, or HTML reports.
 
 The framework provides four complementary scoring paths:
 
@@ -21,7 +23,11 @@ The framework provides four complementary scoring paths:
 
 All evaluator implementations depend only on `LLMClientProtocol` — a structural (duck-typed) protocol. Tests inject mocks that satisfy the protocol; no live API calls are made in the test suite.
 
-The package is a `uv` workspace member. `agentic-tools` supplies the concrete `LLMClient` and is lazy-loaded at evaluation time. The `agentic-workflows-v2` runtime imports only `LLMClientProtocol` from this package, keeping the dependency graph acyclic.
+The package is a `uv` workspace member and declares `agentic-tools` as a
+dependency. Its concrete LLM adapter loads the shared client only when needed.
+The runtime imports the evaluation protocol and, for optional step scoring,
+rubric and scorer helpers. The evaluation package does not import the runtime,
+so the package dependency remains one-way.
 
 ---
 
@@ -32,7 +38,7 @@ The package is a `uv` workspace member. `agentic-tools` supplies the concrete `L
 | Language | Python 3.11+ | `match` statements and `tomllib` used |
 | Build backend | hatchling | `pyproject.toml` as single config source |
 | Rubric format | YAML (PyYAML 6.0+) | Loaded at call time, not import time |
-| LLM access | `agentic-tools` workspace dep | Lazy-loaded; optional at import |
+| LLM access | `agentic-tools` workspace dependency | Concrete client loaded by the adapter when needed |
 | Test runner | pytest + pytest-asyncio | `asyncio_mode = "auto"` |
 | Coverage gate | pytest-cov | `fail_under = 80`, branch coverage on |
 | Static analysis | mypy `--strict` | Zero findings on `src/agentic_v2_eval/` |
@@ -76,13 +82,20 @@ graph LR
 
 ### Key design decisions
 
-**Structural protocols instead of abstract base classes for the LLM boundary.** `LLMClientProtocol` uses `typing.Protocol` with `@runtime_checkable`. Any object whose `generate_text` method matches the signature satisfies the protocol — no import-time coupling between the eval package and `agentic-tools`. This means the eval package can be imported in environments where `agentic-tools` is not installed, reducing test setup friction.
+**Structural protocol for the LLM boundary.** `LLMClientProtocol` uses
+`typing.Protocol` with `@runtime_checkable`. Any object whose `generate_text`
+method matches the signature can be injected into an evaluator. Tests use
+small fakes instead of calling a provider.
 
 **Rubric YAML loaded at call time, not import time.** Rubric YAML files are opened when a `Scorer` is constructed or an evaluator method is first called. The module-level `__init__.py` exports are pure class symbols with no file I/O. This keeps import overhead negligible and allows test code to override the rubric path trivially.
 
 **EvaluatorRegistry as a classvar singleton.** The registry is a class-level dict rather than a module-level global. Evaluators register themselves at class-definition time via the `@EvaluatorRegistry.register("name")` decorator. Discovery is automatic: importing any evaluator module is sufficient for it to appear in the registry.
 
-**Median aggregation over multiple judge runs.** Both `PatternEvaluator` and `StandardEvaluator` optionally run the judge prompt `N` times (default 20 for pattern, 1 for standard) and report the median across runs. This reduces the impact of stochastic LLM output on the final score. The `runs` parameter is the primary handle for trading cost against variance.
+**Median aggregation over multiple judge runs.** `PatternEvaluator` and
+`StandardEvaluator` can run a judge prompt more than once and report the median.
+Both constructors default to one run. Increasing `runs` may reduce the effect
+of one unusual response, but it also increases provider calls and does not make
+an LLM judge deterministic.
 
 **Discriminated union return type for async evaluation.** `AsyncStreamingRunner._eval_one` returns `tuple[Literal[True], R] | tuple[Literal[False], Exception]` — a discriminated union that avoids raising exceptions across `asyncio.Task` boundaries. This pattern keeps the runner fully typed under `mypy --strict`.
 
@@ -131,7 +144,7 @@ agentic-v2-eval/
 │   └── sandbox/
 │       ├── base.py          # BaseSandbox abstract class
 │       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
-└── tests/                   # 13 test files
+└── tests/                   # Package tests
     ├── conftest.py
     ├── test_adapters.py
     ├── test_benchmarks.py

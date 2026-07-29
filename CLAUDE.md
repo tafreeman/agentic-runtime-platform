@@ -41,6 +41,14 @@ is in context.
 
 @.claude/rules/testing.md
 
+## Portfolio context
+
+The command catalogue CI actually runs, the architecture seams, and the CI gotchas that
+neither rules file covers (constraints generation, the suppression ratchet, coverage omits,
+the EK-extra blind spot) live in the imported portfolio rules.
+
+@.claude/rules/portfolio-context.md
+
 ## Where things live
 
 - Architecture decisions: `docs/adr/` (use the existing numbering scheme; 004-006

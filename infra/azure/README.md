@@ -1,50 +1,52 @@
-# Reference IaC — NOT deployed, $0
+# Azure reference template
 
-This Bicep is **prod-readiness evidence**, not a running deployment. The ARP
-flagship's *live* proof is the local k6 run + the GitHub Pages report
-(`load/`, `scripts/build_load_report.py`, `docs/load-report.md`). This template
-is authored, `az bicep build`/`lint`-clean, and secret-free — but it is **never
-deployed**. No `az login`, no `az deployment`, no paid resource is ever stood up
-from this repo's automation.
+The Bicep files in this directory describe a possible managed deployment. They
+are not deployed by the repository's normal CI and do not prove that a live
+Azure environment exists.
 
-## What it maps
+## Service mapping
 
-It expresses the local load topology as managed Azure services, 1:1:
+| Local component | Azure resource |
+| --- | --- |
+| FastAPI replicas and nginx entry point | Azure Container Apps |
+| Shared Redis circuit-breaker state | Azure Cache for Redis |
+| Container image | Azure Container Registry |
+| Logs and traces | Log Analytics and Application Insights |
+| Registry access | User-assigned managed identity with `AcrPull` |
 
-| Local load proof | Azure (this template) |
-|---|---|
-| nginx round-robin + N replicas | Container Apps, HTTP-concurrency autoscale, `minReplicas..maxReplicas` |
-| local Redis (shared CAS store) | Azure Cache for Redis (Standard, TLS-only) |
-| OTel collector + Jaeger | Log Analytics + Application Insights |
-| local `docker build` | Azure Container Registry (admin user **off**) |
-| no static keys | user-assigned managed identity + `AcrPull` |
+The template's minimum replica count defaults to two.
 
-`minReplicas` defaults to **2**, mirroring the multi-replica Redis-CAS proof
-(at least two replicas sharing one Redis under concurrent load).
+## Parameters and secrets
 
-## Secret-free by construction
+`main.bicepparam.example` is a placeholder file. Copy it to the ignored
+`main.bicepparam` before an authorized deployment.
 
-- No secrets are committed. Redis keys, the App Insights connection string, and
-  ACR pull are all resolved **at deploy time** inside the template via
-  `listKeys()` / managed identity — never as committed parameters or literals.
-- `main.bicepparam.example` is the committed, secret-free parameter template.
-  Copy it to `main.bicepparam` (gitignored) and fill real values before any
-  deploy.
-- The deploy workflow (`.github/workflows/infra-deploy.yml`) uses **OIDC**
-  federation (`id-token: write`) — no stored client secret.
+The template resolves service-generated values at deployment time and uses a
+managed identity for registry pulls. Do not add Redis keys, connection strings,
+provider tokens, or service-principal secrets to committed parameter files.
 
-## Validate locally (no cloud, no cost)
+## Validate without deploying
 
-```bash
-az bicep install          # one-time
-az bicep build --file infra/azure/main.bicep   # compile + lint -> main.json
-az bicep lint  --file infra/azure/main.bicep   # lint only
+From the repository root:
+
+```powershell
+az bicep install
+az bicep build --file infra\azure\main.bicep
+az bicep lint --file infra\azure\main.bicep
 ```
 
-## Why it is never run
+`build` creates `main.json`; treat it as generated output unless a workflow
+explicitly requires it.
 
-The deploy workflow is `workflow_dispatch`-only (no push/PR/schedule trigger)
-and additionally gated behind a typed `DEPLOY` confirmation plus an
-`az deployment ... what-if` preview. It exists to demonstrate the production
-shape of the system, not to spend money. Triggering it is an explicit,
-out-of-band decision.
+## Deployment workflow
+
+`.github/workflows/infra-deploy.yml` is manually triggered. It requires a
+typed confirmation and runs an Azure `what-if` preview before deployment. Its
+authentication design uses GitHub OIDC rather than a stored client secret.
+
+A manual workflow is still a real, billable infrastructure action. Review the
+subscription, region, resource names, SKU costs, identity permissions, and
+`what-if` output before authorizing it.
+
+The current local load evidence is documented separately in
+[the load harness](../../load/README.md).
