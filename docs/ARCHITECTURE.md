@@ -1,167 +1,206 @@
 # Architecture
 
-> **Audience:** Engineers orienting to the monorepo for design or review work.
-> **Outcome:** After reading, you know which package owns which concern, how they communicate, and where to dive deeper.
-> **Last verified:** 2026-07-05
+This page explains the repository boundaries and the main runtime path. Use the
+linked deep dives for implementation detail.
 
-This document is the umbrella. It does not re-derive system internals — it points at the existing per-package architecture docs and the ADRs that ratify each decision. If you are new to the repo, read this in full first; if you are in a specific area, jump to the per-package link.
+Last verified: 2026-07-28.
 
----
+## Repository boundaries
 
-## 1. System at a glance
+| Area | Path | Owns |
+|---|---|---|
+| Shared Python code | repository root and `tools/` | Provider clients, benchmark utilities, and shared helpers |
+| Runtime | `agentic-workflows-v2/` | Workflow loading, execution, agents, model routing, RAG, CLI, and server |
+| Dashboard | `agentic-workflows-v2/ui/` | Browser UI for workflows, models, runs, and evaluations |
+| Evaluation package | `agentic-v2-eval/` | Offline rubrics, evaluators, runners, metrics, and reports |
+
+The root Python project installs as `agentic-tools`. The runtime and evaluation
+packages depend on that installed package; they should not reach into the
+`tools/` source tree through relative path manipulation.
+
+The runtime and `agentic-v2-eval` use separate evaluation implementations:
+
+- `agentic_v2/scoring/` scores saved runs for the runtime API and dashboard;
+- `agentic-v2-eval` is a reusable offline package that consumes structured
+  results.
+
+They can exchange JSON data, but neither needs to import the other.
+
+## Request and execution flow
 
 ```mermaid
-graph TB
-    subgraph Clients["Clients"]
-        CLI["agentic CLI<br/><i>Typer</i>"]
-        UI["React 19 Dashboard<br/><i>Vite 8 · @xyflow/react</i>"]
-        EXT["External callers<br/><i>REST · WS · SSE</i>"]
-    end
-
-    subgraph Runtime["agentic-workflows-v2/"]
-        API["FastAPI Server<br/><i>REST · WebSocket · SSE · 500-event replay</i>"]
-        ADR["AdapterRegistry<br/><i>singleton</i>"]
-        NATIVE["Native DAG Engine<br/><i>Kahn's algorithm · asyncio.wait FIRST_COMPLETED</i>"]
-        LG["LangGraph Engine<br/><i>StateGraph · checkpointing</i>"]
-        ROUTER["SmartModelRouter<br/><i>tier routing · circuit breakers · stats persistence</i>"]
-        RAG["RAG Pipeline<br/><i>chunk · embed · index · retrieve · assemble</i>"]
-        AGENTS["Agents<br/><i>Base + Coder + Reviewer + Architect + Orchestrator</i>"]
-    end
-
-    subgraph Eval["agentic-v2-eval/"]
-        RUNNERS["Batch · Streaming · AsyncStreaming Runners"]
-        SCORER["Scorer<br/><i>rubric-based</i>"]
-        REPORTER["Reporters<br/><i>json · markdown · html</i>"]
-    end
-
-    subgraph Shared["tools/ (agentic-tools)"]
-        LLM["LLMClient<br/><i>eight providers · nine routing backends</i>"]
-        BENCH["Benchmarks"]
-        CACHE["Response cache"]
-    end
-
-    CLI --> ADR
-    UI -->|REST · WS| API
-    EXT -->|REST · WS · SSE| API
-    API --> ADR
-    ADR --> NATIVE
-    ADR --> LG
-    NATIVE --> AGENTS
-    LG --> AGENTS
-    AGENTS --> ROUTER
-    AGENTS --> RAG
-    ROUTER -->|provider calls| LLM
-    API -.->|run JSON artifacts| RUNNERS
-    RUNNERS --> SCORER
-    SCORER --> REPORTER
-
-    classDef rt fill:#4a90d9,stroke:#2c5f8a,color:#fff
-    classDef ev fill:#00b894,stroke:#008060,color:#fff
-    classDef sh fill:#fdcb6e,stroke:#c8a034,color:#333
-    class API,ADR,NATIVE,LG,ROUTER,RAG,AGENTS rt
-    class SCORER,RUNNERS,REPORTER ev
-    class LLM,BENCH,CACHE sh
+flowchart LR
+    CLI["CLI"] --> ADAPTER["Adapter registry"]
+    UI["Dashboard"] --> API["FastAPI"]
+    CLIENT["Other clients"] --> API
+    API --> ADAPTER
+    ADAPTER --> NATIVE["Native engine"]
+    ADAPTER --> GRAPH["LangGraph adapter"]
+    NATIVE --> AGENT["Agents and tools"]
+    GRAPH --> AGENT
+    AGENT --> ROUTER["Model router"]
+    AGENT --> RAG["RAG components"]
+    ROUTER --> PROVIDER["Model providers"]
+    NATIVE --> RESULT["Typed run result"]
+    GRAPH --> RESULT
+    RESULT --> STORE["Run storage"]
+    STORE --> SCORE["Runtime scoring"]
+    RESULT -. "JSON input" .-> EVAL["Offline evaluation package"]
 ```
 
-The three Python packages have **no source-tree imports between them** — `tools/` is consumed as an installed workspace package (`agentic-tools`), like any other library, by both the runtime and the eval package. Beyond that:
+The normal path is:
 
-- The runtime and the offline eval harness integrate at the **data level**: the runtime persists run results as JSON artifacts, and `agentic-v2-eval` reads those files as input. Neither package imports the other.
-- The runtime's own in-server scoring (`agentic_v2/scoring/`, exposed via `GET /api/runs/{filename}/evaluation`) is independent of `agentic-v2-eval` — see [`integration-architecture.md`](integration-architecture.md).
+1. the CLI or API loads and validates a workflow;
+2. the adapter registry selects `native` or `langchain`;
+3. the engine schedules steps whose dependencies are complete;
+4. a step invokes an agent, a deterministic tool, or both;
+5. model-backed agents ask the router for an available model;
+6. the engine emits typed events and builds a typed result; and
+7. the server saves the result for later inspection or evaluation.
 
----
+## Execution engines
 
-## 2. Per-package deep dives
+The repository intentionally keeps two engines:
 
-| Package | Entry point | Deep dive |
-|---------|------------|-----------|
-| Runtime | `agentic-workflows-v2/agentic_v2/` | [`architecture-runtime.md`](architecture-runtime.md) |
-| UI | `agentic-workflows-v2/ui/src/` | [`architecture-ui.md`](architecture-ui.md) |
-| Evaluation | `agentic-v2-eval/src/agentic_v2_eval/` | [`architecture-eval.md`](architecture-eval.md) |
-| Shared tools | `tools/` | [`architecture-tools.md`](architecture-tools.md) |
-| Cross-package integration | — | [`integration-architecture.md`](integration-architecture.md) |
+| Engine | Use |
+|---|---|
+| `native` | Platform-specific DAG behavior, including conditional edges, retries, execution budgets, and observer hooks |
+| `langchain` | LangGraph execution for compatible workflows and engine comparison |
 
-Additional supporting documents:
+`agentic run` defaults to `langchain`. A workflow can require native features,
+so engine support must be checked rather than inferred. The API exposes
+workflow capabilities, and `agentic compare` runs both adapters against the
+same input.
 
-- [`api-contracts-runtime.md`](api-contracts-runtime.md) — REST endpoint, WebSocket, and SSE schemas.
-- [`data-models-runtime.md`](data-models-runtime.md) — Pydantic v2 models across server, contracts, core.
-- [`component-inventory-ui.md`](component-inventory-ui.md) — UI component inventory.
-- [`development-guide.md`](development-guide.md) — dev environments, CLI, tests.
-- [`deployment-guide.md`](deployment-guide.md) — CI/CD, environment variables, production checklist.
+`AdapterRegistry` owns engine discovery. At server startup, it validates the
+adapter selected by `AGENTIC_DEFAULT_ADAPTER` and reports a missing optional
+dependency before accepting work.
 
----
+See [ADR-001](adr/ADR-001-002-003-architecture-decisions.md) and
+[ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
 
-## 3. The load-bearing mechanisms
+## Workflow and agent configuration
 
-These are the places where a change ripples across the system. Understand these before proposing architectural work.
+Workflow YAML files define:
 
-### 3.1 Adapter registry
+- their input schema;
+- steps and dependencies;
+- the agent or deterministic role for each step;
+- optional tools, persona, model settings, observers, and conditions; and
+- output selection.
 
-`AdapterRegistry` is a process-wide singleton in [`agentic_v2/adapters/registry.py`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/adapters/registry.py). Engines register with a name (`native`, `langchain`), the CLI resolves `--adapter <name>` at runtime, and tests reset the singleton via an autouse fixture to prevent cross-test leakage. At FastAPI lifespan startup, `AdapterRegistry.validate_selected()` is called for the adapter named by `AGENTIC_DEFAULT_ADAPTER`; missing extras raise `ConfigurationError` with an install hint at boot time rather than mid-workflow.
+The loader turns YAML into typed definitions and rejects invalid dependencies
+and cycles. The runtime keeps model selection separate from workflow structure:
+a step requests a tier or model, and the router resolves that request using
+environment pins, saved UI settings, provider availability, health, and
+fallback chains.
 
-- **Why it exists:** [ADR-001](adr/ADR-001-002-003-architecture-decisions.md) — dual execution engine.
-- **Current default:** `langchain` (configurable per run); startup validation ratified by [ADR-020](adr/ADR-020-langchain-adapter-eager-validation.md).
+Personas are Markdown prompt assets under `agentic_v2/prompts/`. They are not
+Python agent classes. See [Workflow authoring](WORKFLOW_AUTHORING.md) and
+[Agents](deep-dive-agents.md).
 
-### 3.2 Typed execution-event wire format
+## API and event contracts
 
-`contracts/events.py` defines a Pydantic discriminated union covering `workflow_start`, `step_start`, `step_end`, `token_delta`, `step_complete`, `step_error`, `workflow_end`, `error`, `evaluation_start`, `evaluation_complete`, `approval_required`, and `approval_decision`. WebSocket and SSE broadcasts validate before emit. The TypeScript union in `ui/src/api/events.generated.ts` is generated from this contract, and the `wire-format-drift` CI job fails any PR where the committed schemas or generated types diverge from the Python source of truth.
+Pydantic models under `agentic_v2/contracts/` and selected server models define
+the public wire format. The generation path is:
 
-The same drift gate also covers four HTTP response shapes: `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, and `RunsSummaryResponse`. Their JSON schemas are committed under `tests/schemas/` and regenerated via `scripts/generate_schemas.py`.
+```text
+Pydantic models -> committed JSON Schemas -> generated TypeScript
+```
 
-- **Ratifies:** [ADR-014](adr/ADR-014-pydantic-wire-format.md).
-- **Related:** the 500-event replay buffer in `server/websocket.py` — clients reconnecting mid-run receive missed events.
+The dashboard imports generated TypeScript rather than maintaining a separate
+handwritten copy. CI regenerates the artifacts and fails when they differ from
+the Python source.
 
-### 3.3 SLO gates in git
+HTTP requests use REST. Workflow execution can stream over:
 
-Time-to-first-span p95 and nightly flake rate are stored as rolling windows in git — measurements are appended to JSON artifacts committed on each CI run, and the gate reads the window, not a fresh sample. This keeps the signal stable across single bad runs.
+- WebSocket for interactive execution and reconnect;
+- server-sent events for chat and saved run events; and
+- normal HTTP for run creation and later retrieval.
 
-- **Ratifies:** [ADR-015](adr/ADR-015-slo-in-git-rolling-window.md).
-- **Known limitation:** p95 gate passes trivially when the window is empty — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md).
+Authentication, rate limiting, sanitization, and CORS are applied at the server
+boundary. See [Runtime API contracts](api-contracts-runtime.md),
+[Data models](data-models-runtime.md), and
+[ADR-014](adr/ADR-014-pydantic-wire-format.md).
 
-### 3.4 SmartModelRouter
+## Model routing
 
-Maps a numeric capability tier (`ModelTier.TIER_0` through `TIER_5` in `models/router.py`) → best available model at runtime. Health-weighted selection, exponential cooldowns, circuit breakers, persisted stats across restarts, `Retry-After` header awareness. Circuit-breaker state can be shared across workers via Redis (`agentic_v2/models/redis_state.py`) with an in-process fallback.
+`SmartModelRouter` maps a requested capability tier to an available model. It
+tracks provider health, observes retry guidance, applies cooldowns, and tries
+configured fallbacks. Circuit-breaker state can use Redis across workers; when
+Redis is not configured or cannot be used, routing state remains local to the
+process.
 
-- **Ratifies:** [ADR-002](adr/ADR-001-002-003-architecture-decisions.md).
-- **Provider default for CI:** GitHub Models via `GITHUB_TOKEN` — see [ADR-016](adr/ADR-016-github-token-as-default-e2e-llm.md).
+Provider credentials stay in environment variables or the configured secret
+provider. Saved UI settings may select endpoints and models but do not return
+secret values.
 
-### 3.5 RAG pipeline
+See [Runtime architecture](architecture-runtime.md) and
+[Configuration](configuration.md#model-providers).
 
-Modules in [`agentic_v2/rag/`](https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/rag/): loader → recursive chunker → embedder (content-hash dedup) → cosine vectorstore + BM25 keyword index → RRF hybrid retriever → token-budget assembler. Full OTEL tracing. Memory backed by `MemoryStoreProtocol` (`InMemoryStore` or `RAGMemoryStore`).
+## RAG boundary
 
-- **Blueprint:** [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md).
+`agentic_v2/rag/` provides document models, loaders, character-based chunking,
+embedding adapters, vector stores, BM25 search, reciprocal-rank fusion,
+optional reranking, and token-budget context assembly.
 
-### 3.6 Core protocols
+The Python factory can construct provider-backed embeddings and a durable
+LanceDB store when the required extra is installed. `InMemoryEmbedder` and
+`InMemoryVectorStore` are test and demonstration components.
 
-The seams above are held together by a small set of `typing.Protocol` contracts in [`agentic_v2/core/protocols.py`](https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/core/protocols.py). Implementations are structurally typed against these, so an engine, tool, or middleware can be swapped without touching call sites:
+The current `agentic rag` CLI does not persist an index between commands and
+does not yet use the new factory. Do not treat its ingest command as a durable
+indexing service. See [RAG](rag/index.md) and
+[Known limitations](KNOWN_LIMITATIONS.md).
 
-| Protocol | Contract |
-|----------|----------|
-| `ExecutionEngine` | Runs a compiled workflow graph; the seam the adapter registry resolves (`native`, `langchain`). |
-| `SupportsStreaming` | Optional capability — an engine that emits incremental execution events. |
-| `SupportsCheckpointing` | Optional capability — an engine that persists and resumes run state. |
-| `AgentProtocol` | A single agent step: takes context, returns a typed result. |
-| `ToolProtocol` | An invocable tool exposed to agents through the MCP client stack. |
-| `DetectorProtocol` | A sanitization/threat detector applied to inbound content. |
-| `MiddlewareProtocol` | An ASGI-layer request/response interceptor (auth, rate limit, sanitization). |
-| `VerifierProtocol` | A post-step check that gates whether a result is accepted. |
+## Persistence and shared state
 
-A CI drift check (`scripts/check-doc-drift.py`) fails any PR where a protocol defined in source is missing from this section.
+Different data has different storage:
 
----
+| Data | Default behavior | Optional durable or shared behavior |
+|---|---|---|
+| Saved workflow runs | JSON files | Deployment-specific mounted storage |
+| WebSocket replay | Configured replay store | SQLite or Redis |
+| LangGraph checkpoints | Engine configuration | SQLite or PostgreSQL |
+| Model-router circuit state | Process-local | Redis |
+| Authentication lockouts | Process-local | No shared backend |
+| UI provider and tier settings | `~/.agentic/ui-settings.json` | No remote settings backend |
+| `RAGMemoryStore` key map | Process-local | No durable key map |
 
-## 4. The decision record
+Do not assume that configuring Redis makes every type of state shared. See
+[Configuration](configuration.md#redis-and-replay-storage) for the settings
+that select each backend.
 
-Every architecturally significant decision is captured as an ADR. The record spans decisions from the founding dual-engine and router decisions (ADR-001/002) through wire-format contracts (ADR-014), authentication and tenancy (ADR-021/022), the ExecutionKit seam (ADR-023), scoring extraction (ADR-032), the RAG pipeline (ADR-035), and model discovery (ADR-036–040). Numbers 004–006 and 013 are intentionally unused gaps and must not be reclaimed.
+## Core protocols
 
-The full, maintained index — with status, one-line summaries, and a suggested reading order — is [`adr/ADR-INDEX.md`](adr/ADR-INDEX.md). This page deliberately does not duplicate that table.
+The main extension seams are structural `typing.Protocol` contracts in
+`agentic_v2/core/protocols.py`.
 
-Deeper mechanism docs that used to live here have moved to the runtime deep dive: core protocols, operability infrastructure (Redis, metrics, replay store, structured logging), the ExecutionKit ↔ runtime LLM seam (ADR-023), and the governance module are all covered in [`architecture-runtime.md`](architecture-runtime.md).
+| Protocol | Responsibility |
+|---|---|
+| `ExecutionEngine` | Execute a compiled workflow |
+| `SupportsStreaming` | Emit incremental execution events |
+| `SupportsCheckpointing` | Save and resume execution state |
+| `AgentProtocol` | Run one agent step and return a typed result |
+| `ToolProtocol` | Invoke a tool exposed to an agent |
+| `DetectorProtocol` | Inspect untrusted content |
+| `MiddlewareProtocol` | Process an HTTP request and response |
+| `VerifierProtocol` | Decide whether a step result is acceptable |
 
----
+Implementations satisfy these contracts by shape. `scripts/check-doc-drift.py`
+checks that every protocol in the source remains listed here.
 
-## 5. What this document is not
+## Where to read next
 
-- Not a replacement for per-package docs — it is a map.
-- Not a roadmap — see [`ROADMAP.md`](ROADMAP.md).
-- Not a limitations list — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md).
-- Not a migration guide — see [`MIGRATIONS.md`](MIGRATIONS.md).
+| Topic | Document |
+|---|---|
+| Runtime modules and execution | [Runtime architecture](architecture-runtime.md) |
+| Dashboard state and components | [UI architecture](architecture-ui.md) |
+| Offline evaluation | [Evaluation architecture](architecture-eval.md) |
+| Shared tools | [Tools architecture](architecture-tools.md) |
+| Package integration | [Integration architecture](integration-architecture.md) |
+| Deployment | [Deployment guide](deployment-guide.md) |
+| Design decisions | [ADR index](adr/ADR-INDEX.md) |
+
+ADRs are historical decision records. Do not rewrite an accepted ADR to
+describe a later design; add a new ADR that supersedes it and update the index.

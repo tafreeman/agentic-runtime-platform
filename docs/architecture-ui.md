@@ -1,7 +1,7 @@
 # UI architecture — Evidence Ledger
 
 > **Scope:** `agentic-workflows-v2/ui/`
-> **Current:** 2026-07-14
+> **Current:** 2026-07-28
 > **Decision:** [ADR-054](adr/ADR-054-evidence-ledger-ui-and-model-packs.md)
 
 The dashboard is the evidence and control surface for workflow execution. It

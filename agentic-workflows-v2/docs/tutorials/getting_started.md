@@ -1,28 +1,27 @@
-## Getting Started
+# First native DAG
 
-This quick tutorial shows how to install and run a minimal workflow example.
+From the repository root, install the runtime:
 
-1. Install in editable mode:
-
-```bash
-pip install -e .
+```powershell
+python -m pip install -e .\agentic-workflows-v2
 ```
 
-2. (Optional) Explore what's available via the CLI:
+Check the CLI:
 
-```bash
-agentic list agents
-agentic list tools
+```powershell
+agentic version
+agentic list workflows
 ```
 
-3. Run a tiny in-process DAG (no LLM required):
+The following program runs entirely in process and does not call a model:
 
 ```python
 import asyncio
 
 from agentic_v2 import DAG, DAGExecutor, ExecutionContext, step
 
-async def main():
+
+async def main() -> None:
     @step("produce")
     async def produce(ctx: ExecutionContext) -> dict:
         return {"text": "hello"}
@@ -33,16 +32,32 @@ async def main():
         return {"text": str(text).upper()}
 
     produce_step = produce.with_output(text="text")
-    shout_step = shout.with_input(text="text").with_output(text="shout_text")
+    shout_step = (
+        shout.with_input(text="text").with_output(text="shout_text")
+    )
 
     dag = DAG(name="hello_dag").add(produce_step).add(shout_step)
-    ctx = ExecutionContext(workflow_id="hello_dag")
+    context = ExecutionContext(workflow_id="hello_dag")
 
-    result = await DAGExecutor().execute(dag, ctx=ctx)
+    result = await DAGExecutor().execute(dag, ctx=context)
     print(result.overall_status)
-    print(result.final_output["shout_text"])  # -> HELLO
+    print(result.final_output["shout_text"])
+
 
 asyncio.run(main())
 ```
 
-See `../examples/` for runnable examples.
+Expected final value:
+
+```text
+HELLO
+```
+
+`depends_on` controls scheduling. `with_input()` reads a context key and
+`with_output()` maps a returned key back into the shared execution context.
+
+Next:
+
+- [Build a workflow](building_workflow.md)
+- [Create an agent](creating_agent.md)
+- Browse the runnable [examples](../../examples/README.md)

@@ -1,218 +1,193 @@
-# Agentic Runtime Platform v2
+# Agentic Workflows v2
 
-Tier-based, multi-model workflow orchestration for coding and research tasks.
+`agentic-workflows-v2` is the repository's workflow runtime. It provides:
 
-This package combines:
-- A typed Python workflow runtime (`agentic_v2`)
-- YAML-defined multi-step workflows (`agentic_v2/workflows/definitions`)
-- A CLI (`agentic`)
-- A FastAPI backend and React UI for live runs and evaluation
+- a typed Python package named `agentic_v2`;
+- YAML workflow definitions;
+- native and LangGraph execution engines;
+- the `agentic` command-line interface;
+- a FastAPI backend; and
+- a React dashboard in `ui/`.
 
-## What You Can Do
+The native engine is the implementation for runtime features such as conditional
+edges, retry policies, execution budgets, and observer hooks. The LangGraph
+adapter remains available for compatible workflows and engine comparisons.
 
-- Run workflows from YAML with dependency-aware DAG execution.
-- Route steps to different model tiers (`tier0` to `tier3`).
-- Execute deterministic tool steps and model-backed agent steps in one graph.
-- Stream workflow events over SSE and WebSocket.
-- Run workflow-level evaluation with scoring profiles and rubric criteria.
+## Install
 
-## Repository Map
+The supported contributor setup starts at the repository root:
 
-| Path | Purpose |
-| --- | --- |
-| `agentic_v2/` | Core runtime package (agents, engine, models, tools, workflows, server) |
-| `agentic_v2/workflows/definitions/` | Built-in workflow definitions |
-| `docs/` | Tutorials, architecture, API, and operations documentation |
-| `examples/` | Minimal runnable examples |
-| `tests/` | Backend test suite |
-| `ui/` | React + Vite frontend |
-| `scripts/` | Dev, evaluation, and docs helper scripts |
-
-For a deeper map, see `docs/REPO_MAP.md`.
-
-## Quick Start
-
-Contributors can bootstrap the full workspace from the repo root with `just setup`, then use `just dev`, `just test`, and `just docs` for the canonical local workflow.
-
-### 1) Install
-
-From this directory:
-
-```bash
-pip install -e ".[dev,server,langchain]"
+```text
+just setup
 ```
 
-Optional extras:
+That command creates the root `.venv`, installs all Python workspace packages
+in editable mode, and installs the dashboard dependencies. The current
+`justfile` uses PowerShell; use the central manual installation guide on other
+operating systems.
 
-```bash
-# OpenTelemetry tracing support
-pip install -e ".[tracing]"
+To install only this package, change to `agentic-workflows-v2` and run:
 
-# Claude SDK adapters
-pip install -e ".[claude]"
+```text
+python -m pip install -e ".[dev,server,langchain]"
 ```
 
-> **No provider keys?** Set `AGENTIC_NO_LLM=1` to run the native and LangChain engines with a deterministic placeholder. See [`docs/NO_LLM_MODE.md`](../docs/NO_LLM_MODE.md) for scope and limitations.
+Useful optional extras are:
 
-### Your First Run (no API keys needed)
+| Extra | Adds |
+|---|---|
+| `ek` | ExecutionKit integration |
+| `eval` | Agentic EvalKit integration |
+| `tracing` | OpenTelemetry exporters and metrics support |
+| `claude` | Claude SDK adapters |
+| `rag` | LanceDB and document-loading support |
+| `devex` | Process and port-management helpers |
+| `mcp` | MCP support |
+| `redis` | Redis event and replay support |
+| `sqlite` | SQLite LangGraph checkpoints |
+| `postgres` | PostgreSQL LangGraph checkpoints |
 
-> The `--input` flag accepts a **JSON file path**. Create a small input file first:
+## Run a workflow
 
-**Bash / Linux / macOS:**
-```bash
-echo '{"input_text": "Hello World"}' > /tmp/test-input.json
-AGENTIC_NO_LLM=1 agentic run test_deterministic --input /tmp/test-input.json
-```
+From the repository root:
 
-**Windows PowerShell:**
 ```powershell
-'{"input_text": "Hello World"}' | Out-File -Encoding utf8 test-input.json
 $env:AGENTIC_NO_LLM = "1"
-agentic run test_deterministic --input test-input.json
+.\.venv\Scripts\agentic.exe run test_deterministic `
+  --input agentic-workflows-v2\tests\fixtures\deterministic_input.json
 ```
 
-This is also the project's smoke test — runs without any provider credentials.
+This uses a deterministic test workflow and does not call a model provider.
+The default `run` adapter is `langchain`; select the native engine explicitly
+when needed:
 
-### 2) Explore CLI
+```text
+agentic run test_deterministic --input <input.json> --adapter native
+```
 
-```bash
+Other common commands:
+
+```text
 agentic list workflows
-agentic list agents
-agentic list tools
 agentic validate code_review
+agentic compare test_deterministic --input <input.json>
 agentic run code_review --dry-run
 agentic version
 ```
 
-### 3) Run API + UI (single server path)
+The `--input` value is a path to a JSON file, not inline JSON. See the
+[CLI reference](../docs/cli-reference.md) for all commands and exit behavior.
 
-```bash
+## Start the backend and dashboard
+
+From the repository root:
+
+```text
+just dev
+```
+
+This starts:
+
+- FastAPI at `http://127.0.0.1:8010`;
+- the Vite development server at `http://127.0.0.1:5173`; and
+- API and WebSocket proxies from Vite to FastAPI.
+
+Use `just dev-stop` to stop both processes.
+
+To run only the backend from this directory:
+
+```text
 python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
 ```
 
-Open:
-- UI: `http://127.0.0.1:8010`
-- Health: `http://127.0.0.1:8010/api/health`
-- OpenAPI docs: `http://127.0.0.1:8010/docs`
+The packaged `agentic serve` command also starts the backend, but its default
+port is `8000`.
 
-### 4) Frontend Hot Reload (optional)
+## Workflow definitions
 
-```bash
-# terminal 1
-python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+Production examples in `agentic_v2/workflows/definitions/`:
 
-# terminal 2
-cd ui
-npm install
-npm run dev
-```
+| Workflow | Demonstrates |
+|---|---|
+| `bug_resolution` | Analyze, implement, test, and review a fix |
+| `code_review` | Parallel review followed by synthesis |
+| `conditional_branching` | Route execution from a condition |
+| `consensus_review` | Combine multiple review perspectives |
+| `fullstack_generation` | Coordinate backend and frontend generation |
+| `iterative_review` | Repeat a review step until an exit condition |
 
-Vite serves `http://127.0.0.1:5173` and proxies `/api` and `/ws` to backend.
+`test_deterministic` and `test_workflow` are test fixtures. They are useful for
+smoke tests but are not production examples.
 
-## Built-In Workflows
+Workflow names resolve against the definitions packaged with `agentic_v2`.
+The CLI also accepts a direct path to a `.yaml` or `.yml` file. Python callers
+can pass a custom `definitions_dir` to `WorkflowLoader` or `WorkflowRunner`.
 
-Current built-in definitions (in `workflows/definitions/`):
-- `bug_resolution`
-- `code_review`
-- `conditional_branching`
-- `fullstack_generation`
-- `iterative_review`
-- `test_deterministic`
+See [Workflows](docs/WORKFLOWS.md) for the YAML format and runtime behavior.
 
-See `docs/WORKFLOWS.md` for inputs/outputs and guidance.
+## Project map
 
-## API Surfaces
+| Path | Purpose |
+|---|---|
+| `agentic_v2/agents/` | Agent definitions and model-backed execution |
+| `agentic_v2/engine/` | Native and LangGraph execution |
+| `agentic_v2/contracts/` | Stable request, result, and event models |
+| `agentic_v2/workflows/` | Workflow loading, validation, and definitions |
+| `agentic_v2/server/` | FastAPI application and routes |
+| `agentic_v2/rag/` | Retrieval components and embedding adapters |
+| `tests/` | Runtime and server tests |
+| `ui/` | React dashboard |
+| `scripts/` | Contract generation and local utilities |
 
-Primary routes:
-- `GET /api/health`
-- `GET /api/agents`
-- `GET /api/workflows`
-- `GET /api/workflows/{name}/dag`
-- `GET /api/workflows/{name}/capabilities`
-- `GET /api/workflows/{name}/editor`
-- `PUT /api/workflows/{name}`
-- `POST /api/workflows/validate`
-- `POST /api/run`
-- `GET /api/runs`
-- `GET /api/runs/{filename}`
-- `GET /api/runs/{run_id}/stream` (SSE)
-- `GET /api/eval/datasets`
-- `GET /api/workflows/{workflow_name}/preview-dataset-inputs`
-- `WS /ws/execution/{run_id}`
-
-## Sub-Agents
-
-This project supports two related sub-agent patterns:
-- Workflow-tier agents in YAML (`tier0_parser`, `tier2_reviewer`, etc.).
-- Claude SDK sub-agents loaded from Markdown frontmatter definitions.
-
-
+See [Repository map](docs/REPO_MAP.md) for a more detailed package guide.
 
 ## Configuration
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `AGENTIC_API_KEY` | unset | Enables API key auth for `/api/*` (except health/docs); send via `Authorization: Bearer <key>` or `X-API-Key: <key>` |
-| `AGENTIC_CORS_ORIGINS` | local dev origins | Comma-separated CORS allowlist |
-| `AGENTIC_MEMORY_PATH` | unset | File path for persistent memory tools |
-| `AGENTIC_TRACING` | unset | Set `1/true/yes` to enable tracing |
-| `AGENTIC_TRACE_SENSITIVE` | unset | Include prompts/outputs in spans |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OTLP collector endpoint |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `grpc` | `grpc` or `http/protobuf` |
-| `OTEL_SERVICE_NAME` | `agentic-workflows-v2` | Service name used in traces |
-| `AGENTIC_MODEL_TIER_1` | unset | Force tier 1 model |
-| `AGENTIC_MODEL_TIER_2` | unset | Force tier 2 model |
-| `AGENTIC_MODEL_TIER_3` | unset | Force tier 3 model |
-| `AGENTIC_EXTERNAL_AGENTS_DIR` | unset | Directory of external Markdown agent definitions |
+Copy the root `.env.example` to `.env` and set only the providers and features
+you use. Important behavior:
 
-## Development
+- `AGENTIC_NO_LLM=1` prevents provider calls and returns deterministic
+  placeholder output.
+- `AGENTIC_MODEL_TIER_1` through `AGENTIC_MODEL_TIER_3` override model routing.
+- `AGENTIC_API_KEY` protects `/api/*` except public health and documentation
+  paths.
+- `AGENTIC_CORS_ORIGINS` sets the browser origin allowlist.
+- `AGENTIC_TRACING=true` enables tracing when the `tracing` extra is installed.
 
-Quality checks:
+The full variable reference, including RAG, OIDC, replay, checkpoint, and
+tool-boundary settings, is in [Configuration](../docs/configuration.md).
 
-```bash
+## Development checks
+
+Run the broad checks from the repository root:
+
+```text
 just test
 just docs
 pre-commit run --all-files
 ```
 
-Backend tests:
+During iteration, use the smallest relevant command:
 
-```bash
-python -m pytest tests -v
-python -m pytest --cov=agentic_v2 --cov-report=term-missing --cov-report=xml
+```text
+python -m pytest agentic-workflows-v2/tests -q
+npm --prefix agentic-workflows-v2/ui test
+npm --prefix agentic-workflows-v2/ui run build
 ```
 
-UI tests:
+Changes to Pydantic wire contracts require regenerated JSON Schemas and
+TypeScript types. Follow the commands in the root
+[contributor guide](../CONTRIBUTING.md#change-generated-contracts).
 
-```bash
-cd ui
-npm test
-npm run test:coverage
-```
+## More documentation
 
-The UI package enforces a 60% coverage floor in `ui/vitest.config.ts`.
-
-More details: `docs/DEVELOPMENT.md`.
-
-## Documentation Index
-
-Start here:
-- `docs/README.md`
-- `docs/ARCHITECTURE.md`
-- `docs/WORKFLOWS.md`
-- `docs/API_REFERENCE.md`
-- `docs/tutorials/getting_started.md`
-- `docs/DOCS_BEST_PRACTICES.md`
-
-## Community Health Files
-
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SECURITY.md`
-- `SUPPORT.md`
-- `.github/ISSUE_TEMPLATE/`
-- `.github/PULL_REQUEST_TEMPLATE.md`
+- [Architecture](../docs/ARCHITECTURE.md)
+- [Getting started](../docs/getting-started/index.md)
+- [Runtime API](../docs/api-contracts-runtime.md)
+- [RAG](../docs/rag/index.md)
+- [Known limitations](../docs/KNOWN_LIMITATIONS.md)
+- [Package development guide](docs/DEVELOPMENT.md)
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See the repository's [LICENSE](../LICENSE).

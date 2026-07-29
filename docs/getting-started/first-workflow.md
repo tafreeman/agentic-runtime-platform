@@ -1,202 +1,233 @@
 ---
-title: Your first workflow
-description: Author a two-step DAG from scratch — YAML grammar, contracts, validation, and execution explained.
+title: First workflow
+description: Create, validate, and run a small YAML workflow without a model provider.
 tags:
   - getting-started
   - workflow
 ---
 
-# Your first workflow
+# First workflow
 
-Writes a custom workflow from an empty file to a successful run. The
-result is a small two-step DAG — `summarize` then `review` — that covers
-every piece of the YAML grammar you'll need for real work.
+This guide creates a two-step workflow that runs without a model. It uses the
+same tier-0 agents as the repository's deterministic smoke test, so you can
+focus on the YAML contract.
 
-## Anatomy of a workflow
+## 1. Create the definition
 
-Every workflow is a YAML document with top-level `name`, `description`,
-`version`, `inputs`, `outputs`, and `steps` keys:
+Save this file as `my-first-workflow.yaml` in the repository root:
 
 ```yaml
 name: my_first_workflow
-description: A two-step example - summarize an input, then review the summary.
+description: Process text and count the result
 version: "1.0"
 
 inputs:
-  task:
+  input_text:
     type: string
-    description: The text to summarize
+    description: Text to process
     required: true
 
 outputs:
-  summary:
-    from: ${steps.summarize.outputs.summary}
-  review:
-    from: ${steps.review.outputs.review}
+  processed_text:
+    from: ${steps.process.outputs.result}
+  character_count:
+    from: ${steps.count.outputs.count}
 
 steps:
-  - name: summarize
-    agent: tier1_summarizer
-    description: Produce a one-paragraph summary of the input task.
+  - name: process
+    agent: tier0_process
+    description: Process the input text
     inputs:
-      task: ${inputs.task}
+      text: ${inputs.input_text}
     outputs:
-      summary: task_summary
+      result: processed_text
 
-  - name: review
-    agent: tier2_reviewer
-    description: Review the summary for accuracy and clarity.
-    depends_on: [summarize]
+  - name: count
+    agent: tier0_counter
+    description: Count characters in the processed text
+    depends_on: [process]
     inputs:
-      summary: ${steps.summarize.outputs.summary}
+      text: ${steps.process.outputs.result}
     outputs:
-      review: summary_review
+      count: count_value
 ```
 
-The top-level blocks:
+The top-level sections have distinct jobs:
 
-- **`inputs`** — the workflow's input schema. Each entry declares a `type`,
-  a `description`, and optionally `required: true` or a `default`.
-- **`outputs`** — the workflow's final artifact. Each entry maps an output
-  name to a `from:` expression that pulls a value out of a step
-  (`optional: true` marks outputs that a skipped step may not produce).
+| Section | Meaning |
+|---|---|
+| `name`, `description`, `version` | Workflow identity and human-readable context |
+| `inputs` | Values callers may or must supply |
+| `outputs` | Values returned from the completed workflow |
+| `steps` | Work to execute and the dependencies between steps |
 
-Each step requires:
+Each step has a unique `name` and an `agent`. `depends_on` creates a graph
+edge. Here, `count` cannot run until `process` succeeds.
 
-- **`name`** — a unique identifier within the workflow
-- **`agent`** — the agent that runs this step. The name follows the
-  tier-prefix convention used by every shipped workflow:
-  `tier0_*` agents are deterministic (no LLM), `tier1_*` route to a fast
-  model, `tier2_*` route to a capable model. The suffix (`summarizer`,
-  `reviewer`, …) names the role.
-- **`description`** — human-readable purpose; surfaces in the UI and traces
-- **`depends_on`** — list of step names that must complete before this step
-  is eligible to run; the executor uses this to compute the topological
-  order (omit it, as `summarize` does, for entry steps)
-- **`inputs`** — a mapping of names to value expressions; expressions can
-  reference workflow inputs (`${inputs.*}`) or earlier step outputs
-  (`${steps.<name>.outputs.<field>}`)
-- **`outputs`** — a mapping from the output name downstream steps reference
-  to an alias used internally (for example `summary: task_summary`). This
-  is a name→alias mapping, not a type declaration — compare
-  `code_review.yaml`, where `review: code_review` is consumed downstream as
-  `${steps.review_code.outputs.review}`.
+Expressions connect values:
 
-## Step 1 — Create the file
+- `${inputs.input_text}` reads a workflow input.
+- `${steps.process.outputs.result}` reads an earlier step output.
+- top-level `outputs` select the values returned in `final_output`.
 
-Save the YAML above as
-`agentic-workflows-v2/agentic_v2/workflows/definitions/my_first_workflow.yaml`.
+The mapping under a step's `outputs` declares the public output name and its
+internal context alias. Downstream expressions use the public name on the left.
 
-The runtime auto-discovers any `*.yaml` file in this directory at startup.
-There is no central registry to update.
-
-## Step 2 — Validate the definition
+## 2. Validate
 
 ```bash
-cd agentic-workflows-v2
-agentic validate my_first_workflow
+agentic validate ./my-first-workflow.yaml --verbose
 ```
 
-`validate` runs two tiers of checks:
+Validation checks:
 
-1. **Structural lint** — YAML syntax, step shape, and dependency
-   references (no extras required)
-2. **Graph compilation** — the definition is loaded into the workflow
-   config model and compiled through LangGraph to catch graph-level errors
-   such as cycles (this tier requires the `langchain` extra:
-   `pip install -e ".[langchain]"`)
+- YAML syntax;
+- required workflow fields;
+- duplicate or missing step names;
+- dependency references;
+- cycles; and
+- LangGraph compilation.
 
-A successful run prints:
+The final compilation check requires the `langchain` extra even if you later
+run with `--adapter native`.
 
-```
+Expected result:
+
+```text
 OK Workflow 'my_first_workflow' is valid!
 ```
 
-Errors include the offending step and the field that failed; fix and
-re-run. Add `--verbose` to print the step, input, and output counts plus
-the execution plan.
+## 3. Create an input file
 
-## Step 3 — About agents and personas
-
-You do not need to author a prompt file for this workflow. The tier prefix
-in the agent name (`tier1_`, `tier2_`) selects the model tier, and in
-`AGENTIC_NO_LLM=1` mode the placeholder backend answers for any LLM-backed
-agent.
-
-For richer behavior, the runtime ships seven agent personas as markdown
-files under `agentic-workflows-v2/agentic_v2/prompts/`: `architect`,
-`coder`, `orchestrator`, `planner`, `reviewer`, `tester`, and `validator`.
-See the persona-authoring section of [ONBOARDING.md](../ONBOARDING.md) for
-the required sections and an example of adding your own.
-
-## Step 4 — Run the workflow
-
-The `--input` flag expects a JSON **file path**. Create a small input file first:
+Bash:
 
 ```bash
-# Linux/macOS
-echo '{"task": "Explain how the DAG executor schedules parallel steps."}' > /tmp/first-workflow-input.json
-export AGENTIC_NO_LLM=1
-agentic run my_first_workflow --input /tmp/first-workflow-input.json
+printf '{"input_text":"hello"}\n' > /tmp/my-first-input.json
 ```
+
+PowerShell:
 
 ```powershell
-# Windows PowerShell
-'{"task": "Explain how the DAG executor schedules parallel steps."}' | Out-File -Encoding utf8 first-workflow-input.json
-$env:AGENTIC_NO_LLM = "1"
-agentic run my_first_workflow --input first-workflow-input.json
+'{"input_text":"hello"}' |
+  Set-Content -Encoding utf8 .\my-first-input.json
 ```
 
-You should see `Status: SUCCESS` and, with `--verbose`, both steps
-(`summarize`, `review`) marked `success` in the step results table. Two
-no-LLM caveats are expected and harmless here:
+## 4. Run
 
-- Each LLM-backed step reports a `raw_response` output — the placeholder
-  backend returns a fixed string rather than the structured JSON a real
-  model would produce.
-- The CLI warns `Output 'summary' could not be resolved` (and likewise for
-  `review`), because the named step outputs cannot be extracted from the
-  unstructured placeholder. With a real provider key the outputs resolve
-  normally.
+Bash:
 
-If the run reports `SUCCESS`, the DAG executor, contract validator, and
-agent resolution are all working as expected.
+```bash
+AGENTIC_NO_LLM=1 agentic run ./my-first-workflow.yaml \
+  --input /tmp/my-first-input.json \
+  --verbose
+```
 
-## Step 5 — Try a parallel branch
+PowerShell:
 
-To prove the parallel-dispatch story, add a second downstream step:
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+agentic run .\my-first-workflow.yaml `
+  --input .\my-first-input.json `
+  --verbose
+```
+
+Expected status:
+
+```text
+Status: SUCCESS
+```
+
+The resolved output should contain the processed text and its character count.
+Save the full result when you want to inspect the contract:
+
+```bash
+agentic run ./my-first-workflow.yaml \
+  --input /tmp/my-first-input.json \
+  --output my-first-result.json
+```
+
+## 5. Run through the native engine
+
+The default named-workflow adapter is LangGraph. Select the native engine
+explicitly:
+
+```bash
+agentic run ./my-first-workflow.yaml \
+  --input /tmp/my-first-input.json \
+  --adapter native
+```
+
+For this simple workflow, both adapters should return the same output.
+
+## 6. Add a parallel branch
+
+Steps with the same satisfied dependencies are eligible to run at the same
+time. Add this step after `count`:
 
 ```yaml
-  - name: tone_check
-    agent: tier1_analyzer
-    description: Independent tone evaluation, runs in parallel with review.
-    depends_on: [summarize]
+  - name: second_count
+    agent: tier0_counter
+    description: Independently count the original input
     inputs:
-      summary: ${steps.summarize.outputs.summary}
+      text: ${inputs.input_text}
     outputs:
-      tone: tone_report
+      count: original_count
 ```
 
-`review` and `tone_check` both depend only on `summarize`, so the executor
-dispatches them concurrently. Re-run with `agentic run --verbose` — the
-execution plan shows both steps at the same level, and their wall-clock
-times overlap even though the plan order is deterministic.
+`second_count` has no dependency, so it can run at the same time as `process`.
+Add its result to the top-level outputs:
 
-## Going further
+```yaml
+outputs:
+  processed_text:
+    from: ${steps.process.outputs.result}
+  character_count:
+    from: ${steps.count.outputs.count}
+  original_character_count:
+    from: ${steps.second_count.outputs.count}
+```
 
-- **Conditional gates.** Add a `when:` expression to skip a step based on
-  an upstream output. See `conditional_branching.yaml` for the canonical
-  example.
-- **Loops.** Use `loop_until:` and `loop_max:` to repeat a step until a
-  predicate holds. See `iterative_review.yaml`.
-- **Tool calls.** Allowlist a built-in tool on a step with the `tools:`
-  key. The default policy is DENY for high-risk tools (shell, git,
-  file_delete) — explicit allowlists are required.
-- **Fan-in.** Multiple `depends_on` entries cause the executor to wait
-  for all listed steps; their outputs become available in the input
-  expression namespace.
+Validate again after every graph change:
 
-The full grammar reference is in the
-[Workflow authoring guide](../WORKFLOW_AUTHORING.md), and the production
-workflows in [Workflow reference](../workflows/index.md) are the best
-real-world examples to study next.
+```bash
+agentic validate ./my-first-workflow.yaml --verbose
+```
+
+## Common errors
+
+### Input is missing
+
+If the input JSON omits `input_text`, validation fails before execution.
+Compare the file with the top-level `inputs` block.
+
+### Dependency name is wrong
+
+`depends_on` uses step names, not agent names. A dependency such as
+`depends_on: [tier0_process]` is invalid unless a step is actually named
+`tier0_process`.
+
+### Output cannot be resolved
+
+Check all three names:
+
+1. the producer step name;
+2. the step's public output name; and
+3. the top-level `from` expression.
+
+An expression for this file must use
+`${steps.process.outputs.result}`, not the internal alias
+`processed_text`.
+
+### LLM-backed step returns placeholder text
+
+Tier-1 and higher agents call a model. Under `AGENTIC_NO_LLM=1`, they receive
+fixed placeholder text. That text may not satisfy JSON or typed-artifact
+contracts. Use tier-0 steps while learning the graph, then configure a real
+provider before testing model-dependent output.
+
+## Next
+
+- [Workflow authoring](../WORKFLOW_AUTHORING.md)
+- [Workflow reference](../workflows/index.md)
+- [Pattern catalog](../PATTERN_CATALOG.md)
+- [CLI reference](../cli-reference.md)

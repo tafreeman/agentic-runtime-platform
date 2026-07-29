@@ -305,7 +305,7 @@ Sensitive data (prompt text, LLM outputs, tool arguments) is excluded from spans
 |---|---|---|---|
 | FastAPI backend | 8010 | HTTP / WebSocket | `--port 8010` default |
 | Vite dev server | 5173 | HTTP | Frontend development server |
-| Storybook | 6006 | HTTP | Not installed by default |
+| Vite hot-module reload | 5183 | WebSocket | Frontend development only |
 | OTLP gRPC collector | 4317 | gRPC | Default OTLP endpoint |
 | OTLP HTTP collector | 4318 | HTTP | `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` |
 

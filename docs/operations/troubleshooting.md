@@ -1,279 +1,358 @@
 # Troubleshooting
 
-Symptoms and fixes for the most common failure modes when running the platform locally or in production. Organized by component — search for the HTTP status code, exception class, or symptom you're seeing.
+Start with the symptom, confirm the cause, and change one setting at a time.
+For behavior that is intentionally unsupported, see
+[Known limitations](../KNOWN_LIMITATIONS.md).
 
-For systemic limitations rather than transient failures, see [Known Limitations](../KNOWN_LIMITATIONS.md). For tuning knobs, see [Security Hardening](security-hardening.md) and [Configuration Reference](../configuration.md).
+## Collect basic state
 
-If your symptom isn't here, file an issue at <https://github.com/tafreeman/agentic-runtime-platform/issues>.
+On Windows, the development scripts can report their process and port state:
 
----
+```text
+just dev-status
+agentic devex port-guard --backend-port 8010 --frontend-port 5173
+```
 
-## Startup failures
+Check the backend separately:
 
-### `ConfigurationError: LangChain engine selected but extras not installed`
+```powershell
+Invoke-RestMethod http://127.0.0.1:8010/api/health
+Invoke-RestMethod http://127.0.0.1:8010/api/health/ready
+```
 
-- **Symptom.** FastAPI server fails to start during lifespan startup; a critical log line names the missing extras and the install hint.
-- **Cause.** `AGENTIC_DEFAULT_ADAPTER=langchain` (the default) but `pip install -e ".[langchain]"` was not run in the active environment.
-- **Fix.** Either install the extras:
-  ```bash
-  cd agentic-workflows-v2
-  pip install -e ".[langchain]"
-  ```
-  Or switch to the native engine, which has no optional-deps gate:
-  ```bash
-  export AGENTIC_DEFAULT_ADAPTER=native
-  ```
-- **Reference.** [ADR-020](../adr/ADR-020-langchain-adapter-eager-validation.md).
+`/api/health` confirms that the process is running. `/api/health/ready` also
+checks configured required dependencies, including Redis when a Redis URL is
+set.
 
-### Server starts but every request returns 503 "sanitization layer not initialized"
+When reporting a problem, include:
 
-- **Symptom.** All `/api/*` responses are HTTP 503.
-- **Cause.** The sanitization middleware is fail-closed by design; when its dependencies aren't wired (test app fixtures, partial init), it rejects requests.
-- Fix. Production: ensure the sanitization layer is wired into the app factory. Local/test debugging only: AGENTIC_SANITIZER_FAIL_OPEN=1 (note the [2026-05-09 breaking change](../configuration.md#security-and-sandboxing) — only the literal value 1 is accepted now).
+- the exact command;
+- the complete error message and exit code;
+- Python, Node, and package versions;
+- the selected adapter;
+- whether the workflow is deterministic or provider-backed; and
+- the smallest input that reproduces the problem.
 
-### Port already in use (8010 / 5173 / 6006)
+Remove credentials, prompts containing private data, and sensitive tool output.
 
-- **Symptom.** `uvicorn`, Vite, or Storybook fails to bind with `EADDRINUSE` / `address already in use`.
-- **Cause.** Another process is bound to the port.
-- **Fix.**
-  - PowerShell: `Get-NetTCPConnection -LocalPort 8010 | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }`
-  - bash: `lsof -ti:8010 | xargs kill -9`
-- **Prevention.** The `port-guard` devex tool detects holders before startup. See `scripts/setup-dev.ps1`.
+## Installation and startup
 
-### `.venv` not found / Python imports fail
+### `agentic` is not found
 
-- **Symptom.** `ModuleNotFoundError: No module named 'agentic_v2'` or similar.
-- **Fix.**
-  ```bash
-  cd agentic-workflows-v2
-  python -m venv .venv
-  # PowerShell: .\.venv\Scripts\Activate.ps1
-  # bash:       source .venv/bin/activate
-  pip install -e ".[dev,server,langchain]"
-  ```
+Activate the repository environment:
 
----
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-## Authentication & rate limiting
+Or call the executable directly:
 
-### HTTP 401 "Invalid or missing API key"
+```powershell
+.\.venv\Scripts\agentic.exe version
+```
 
-- **Symptom.** Request to `/api/*` rejected with `{"detail": "Invalid or missing API key"}`.
-- **Cause.** `AGENTIC_API_KEY` is set on the server, and the request did not include a matching `Authorization: Bearer <key>` or `X-API-Key: <key>` header.
-- **Fix.** Send the header. The key value is re-read on every request, so rotating it does not require a restart.
-- **Warning.** Each 401 increments a per-IP failure counter — sustained bad-key traffic triggers the lockout (next entry).
+If `.venv` does not exist, run `just setup` on Windows or follow the
+[manual installation guide](../getting-started/installation.md#manual-setup).
 
-### HTTP 429 "Too Many Requests" with `Retry-After` header
+### `ModuleNotFoundError: agentic_v2`
 
-Two distinct causes — distinguish by response body and server log.
+The runtime package is not installed in the active Python environment. From the
+repository root:
 
-**Cause A — global rate limit (slowapi).**
+```text
+python -m pip install -e "./agentic-workflows-v2[dev,server,langchain]"
+```
 
-- **Identify.** Response body looks like `{"detail": "Rate limit exceeded: 60 per 1 minute"}`. No per-IP failure log.
-- **Fix.** Reduce client request rate, OR raise `AGENTIC_RATE_LIMIT_DEFAULT` (e.g., `300/minute`). For tests: `AGENTIC_RATE_LIMIT_DISABLED=1`.
+Install the root `agentic-tools` package first if the dependency cannot be
+resolved:
 
-**Cause B — auth brute-force throttle.**
+```text
+python -m pip install -e .
+```
 
-- **Identify.** Response body is `{"detail": "Too many failed authentication attempts. Please retry later.", "retry_after": <n>}` and the server log shows `Authentication failed for /api/... from <ip>` entries leading up to the lockout.
-- **Fix.** Wait `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` (default 300) or restart the server to clear in-process state. Then submit a successful request — that clears the IP's failure history.
-- Tune. [AGENTIC_AUTH_LOCKOUT_* vars](../configuration.md#rate-limiting-and-auth-throttle).
+### LangGraph or LangChain extra is missing
 
-### A legitimate client is locked out
+The default `agentic run` adapter is `langchain`. Install the extra:
 
-- **Diagnose.** Search server logs: `grep "Authentication failed" logs/*.log | grep <client-ip>`. Confirm the requests were genuinely the locked-out client (not a script with a stale key).
-- **Recovery.** Either:
-  - Wait for the lockout window to expire, OR
-  - Restart the server (lockout state is in-process), OR
-  - For sustained operations: raise `AGENTIC_AUTH_LOCKOUT_THRESHOLD` or shorten `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS`.
+```text
+python -m pip install -e "./agentic-workflows-v2[langchain]"
+```
 
-### Rate limit feels uneven across replicas
+For a workflow that supports it, select the native engine instead:
 
-- **Cause.** Rate-limit and lockout state are in-process — each replica counts independently. A client hitting two replicas via a load balancer effectively gets 2× the limit.
-- **Fix.** Sprint 2 will introduce Redis-backed shared state. Until then, either pin sticky sessions at the load balancer or accept the multi-replica drift.
+```text
+agentic run <workflow> --input <input.json> --adapter native
+```
 
----
+### Port 8010 or 5173 is in use
 
-## WebSocket / streaming
+Identify the owner before stopping anything:
 
-### WebSocket connection rejected with HTTP 403 "origin not allowed"
+```powershell
+Get-NetTCPConnection -State Listen -LocalPort 8010,5173 |
+  Select-Object LocalPort, OwningProcess
+Get-Process -Id <pid>
+```
 
-- **Cause.** The browser sent an `Origin` header that isn't in `AGENTIC_CORS_ORIGINS` or recognized as a localhost loopback.
-- **Fix.** Add the deploying frontend's origin to `AGENTIC_CORS_ORIGINS` (comma-separated, no trailing slash).
+Stop the process only after confirming that it belongs to the development
+environment:
 
-### WebSocket disconnects mid-run and UI loses state
+```powershell
+Stop-Process -Id <pid>
+```
 
-- **Expected behavior.** The server's 500-event replay buffer should restore state on reconnect.
-- **If it doesn't.** Check that the reconnect handshake uses the same `run_id`. Verify the buffer hasn't been evicted (long-running workflows on a low-memory deployment).
+The standalone `agentic serve` command defaults to port `8000`, while
+`just dev` uses backend port `8010` and dashboard port `5173`.
 
----
+### Sanitization initialization fails
+
+The server fails closed when the sanitization layer cannot initialize. Fix the
+startup error or missing dependency. `AGENTIC_SANITIZER_FAIL_OPEN=1` bypasses
+sanitization and is only suitable for isolated debugging; do not use it on an
+exposed service.
+
+## Authentication and request limits
+
+### HTTP 401
+
+When `AGENTIC_API_KEY` is set, send the same value with either:
+
+```text
+Authorization: Bearer <key>
+X-API-Key: <key>
+```
+
+Health and API-documentation routes remain public. If OIDC is enabled, verify
+the issuer, audience, and JWKS settings in
+[Configuration](../configuration.md#http-authentication).
+
+### HTTP 429
+
+There are two independent limits:
+
+- the normal per-IP request limit, configured by
+  `AGENTIC_RATE_LIMIT_DEFAULT`; and
+- the failed-authentication lockout, configured by the
+  `AGENTIC_AUTH_LOCKOUT_*` variables.
+
+Inspect the response body and server log to determine which limit rejected the
+request. Honor `Retry-After` rather than retrying immediately. The disable
+flags are for tests or an explicitly accepted deployment risk, not a normal
+fix.
+
+Authentication failure counters are in-process and are not shared across
+replicas. There is currently no Redis-backed authentication lockout. Account
+for that limit in the deployment design; Redis support elsewhere in the
+runtime does not make this counter global.
 
 ## Workflow execution
 
-### Workflow stalls indefinitely
+### `--input` does not parse
 
-- **Expected.** Should not happen since the Sprint 1 timeout watchdog. If the call passes `timeout=N` (per call, not env var) the executor caps total wall time at N seconds.
-- **If it stalls anyway.** The route is calling the executor without a `timeout=`. Add a default at the server layer.
-- **Reference.** [ADR-019](../adr/ADR-019-dag-executor-top-level-timeout.md).
+`agentic run --input` expects a path to a JSON file:
 
-### Workflow returns `FAILED` with `metadata.timeout_exceeded=True`
+```text
+agentic run test_deterministic --input .\input.json
+```
 
-- **Cause.** Total wall time exceeded the configured `timeout`.
-- **Diagnose.** Inspect per-step durations in the run log — the slow step is the one that didn't finish before cancellation.
-- **Fix.** Either raise the timeout for that workflow, or optimize the bottleneck step.
+It does not accept inline JSON.
 
-### Steps cascade-skipped after one failure
+### Workflow is not found
 
-- **Expected behavior.** When a step fails, all transitive dependents are marked `SKIPPED` via BFS.
-- **Find the root cause.** The first step with status `FAILED` in DAG topological order is the trigger. Everything `SKIPPED` downstream is collateral.
+List packaged workflows:
 
-### `ValidationError: depends_on` field required
+```text
+agentic list workflows
+```
 
-- **Cause.** Sprint 1 made `depends_on` required on `DAGNodeModel` and `WorkflowEditorStep` (was optional with `default=[]`).
-- **Fix.** Callers constructing these models from raw dicts must pass `"depends_on": []` explicitly.
-- **Reference.** Sprint 1 wire-format extension; see [api-contracts-runtime.md](../api-contracts-runtime.md) and [ADR-014 addendum](../adr/ADR-014-pydantic-wire-format.md).
+For a custom workflow, pass its `.yaml` or `.yml` path directly. Validate it
+before execution:
 
----
+```text
+agentic validate .\workflows\my_workflow.yaml
+agentic devex workflow-linter .\workflows\my_workflow.yaml --strict
+```
 
-## File and shell tools
+### A step is skipped after another step fails
 
-### File tool fails with "AGENTIC_FILE_BASE_DIR is not set"
+Dependent steps are skipped when a prerequisite fails. Find the first `FAILED`
+step in graph order; later `SKIPPED` results are usually consequences, not
+independent failures.
 
-- **Cause.** File tools are fail-closed by design — without an explicit sandbox root, every file operation is rejected.
-- **Fix.** Set `AGENTIC_FILE_BASE_DIR` to an absolute path before starting the server. Example: `AGENTIC_FILE_BASE_DIR=/app/data`.
+### The native and LangGraph results differ
 
-### Shell tool refuses every command with "not in allowlist"
+Check the workflow capability response or `agentic compare` output. Conditional
+edges, retry policy, budgets, and other native features may not have matching
+LangGraph behavior. Use the adapter required by the workflow rather than
+assuming the engines are interchangeable.
 
-- **Cause.** `AGENTIC_SHELL_ALLOWED_COMMANDS` is empty or unset — all commands disabled.
-- **Fix.** Whitelist exactly the basenames the workflow needs:
-  ```bash
-  export AGENTIC_SHELL_ALLOWED_COMMANDS=ls,cat,python,git
-  ```
-- **Note.** Absolute paths are resolved to their basename for comparison.
+### Execution reaches its timeout
 
-### `CodeExecutionTool` raises during `import os`-style traversal
+Inspect per-step durations and provider retries in the saved run. Raise a
+timeout only after confirming the expected worst-case duration; otherwise fix
+the slow or retrying step.
 
-- **Expected.** The sandbox blocks dangerous imports including `os`, `sys.modules`, `__loader__` traversal.
-- **Workaround.** None — the block is intentional. If you genuinely need filesystem or shell access in a code step, use the dedicated file/shell tools with the appropriate allowlist instead.
+## Model providers
 
----
+### No model is available for a tier
 
-## LLM provider failures
+Confirm that the process received the intended provider variable and that the
+configured model exists for that account. With the backend running, inspect:
 
-### `No model available for tier <X>` / smart router fails to route
+```powershell
+Invoke-RestMethod http://127.0.0.1:8010/api/models/probe
+```
 
-- **Cause.** No provider key configured for the requested tier.
-- **Fix.** Configure at least one provider key:
-  - OpenAI: `OPENAI_API_KEY`
-  - Anthropic: `ANTHROPIC_API_KEY`
-  - Gemini: `GEMINI_API_KEY`
-  - Azure OpenAI: `AZURE_OPENAI_API_KEY_0` + `AZURE_OPENAI_ENDPOINT_0`
-  - GitHub Models (free tier): `GITHUB_TOKEN`
-- **Zero-key dev.** `AGENTIC_NO_LLM=1` installs deterministic placeholders so the engine runs end-to-end without credentials. Structured parsers and evaluation still need real keys.
+Use `AGENTIC_NO_LLM=1` for deterministic development. It proves runtime flow,
+not provider access or output quality.
 
-### Azure OpenAI returns 429 / quota exceeded
+### Provider returns 401 or 403
 
-- **Cause.** Hit the configured slot's rate limit.
-- **Fix.** Configure additional numbered slots — `AZURE_OPENAI_API_KEY_1`, `AZURE_OPENAI_ENDPOINT_1`, etc. The router falls back through them automatically.
+Check that the credential is active, has no surrounding whitespace, and is
+allowed to use the requested model. Do not print the key while debugging.
 
-### Anthropic / OpenAI returns 401
+### Provider returns 429
 
-- **Fix.** Verify the key value (don't paste with leading/trailing whitespace). Confirm the key is active in the provider console. Check that the provider's organization/project allows the model you requested.
+Honor the provider's retry guidance and inspect the router's fallback result.
+Do not copy rate or quota values from documentation; provider limits depend on
+the current account and can change.
 
----
+## RAG
 
-## Tracing and observability
+### Search in a new shell returns no results
 
-### No spans appear in Jaeger / Tempo / your OTEL collector
+The current `agentic rag ingest` and `agentic rag search` commands use separate
+in-process stores. An index created by one command is not available to the next
+process. The CLI also does not yet apply its collection option.
 
-- **Checklist.**
-  1. `AGENTIC_TRACING=1` is set in the server process environment.
-  2. `OTEL_EXPORTER_OTLP_ENDPOINT` points to a reachable collector. Default is `http://localhost:4317` (gRPC).
-  3. If using HTTP, set `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` and the endpoint suffix `:4318/v1/traces`.
-  4. Network: the collector port is reachable from the server (firewalls, K8s services).
-- **Verify.** With `AGENTIC_TRACING=1`, the server emits "OTEL tracing enabled" at startup.
+Use the Python RAG API with a durable vector store for real applications. See
+the [RAG guide](../rag/index.md) and [Known limitations](../KNOWN_LIMITATIONS.md).
 
-### Sensitive content missing from spans
+### Retrieval quality is unexpectedly poor
 
-- **Cause.** By default, prompts/outputs/tool args are excluded from spans.
-- **Fix.** `AGENTIC_TRACE_SENSITIVE=1`. Only enable in trusted environments — those values can carry PII.
+Check which embedder was constructed. `InMemoryEmbedder` is a deterministic
+hash test double, not a semantic embedding model. Also confirm that stored and
+query vectors came from the same provider, model, dimensions, and
+normalization. Do not silently fall back to a different embedding space.
 
----
+### LanceDB cannot be imported
 
-## Windows-specific
+Install the runtime's RAG extra:
 
-### `npx <command>` fails or hangs
+```text
+python -m pip install -e "./agentic-workflows-v2[rag]"
+```
 
-- **Cause.** `npx` is unreliable on Windows PATH.
-- **Fix.** Use `npm run <script>` or `npm exec -- <command>` instead. Pre-commit and project scripts have been adapted accordingly.
+## File, shell, and code tools
 
-### Path errors with backslashes in Python tools
+### File or Git tool says `AGENTIC_FILE_BASE_DIR` is not set
 
-- **Fix.** Use forward slashes or `pathlib.Path` for cross-platform paths. The codebase already follows this convention — third-party code that doesn't is the usual culprit.
+Set `AGENTIC_FILE_BASE_DIR` to the absolute directory the tool may access.
+File and Git tools reject operations when this boundary is missing.
 
-### `pnpm` fails with EPERM on a mounted/shared drive
+### Shell command is not allowed
 
-- **Fix.** Fall back to `npm`. This is a well-known pnpm limitation on Windows network mounts.
+`AGENTIC_SHELL_ALLOWED_COMMANDS` is a comma-separated list of command
+basenames. Keep it as small as possible:
 
-### PowerShell scripts mangled in Git Bash
+```powershell
+$env:AGENTIC_SHELL_ALLOWED_COMMANDS = "git,python"
+```
 
-- **Cause.** `$_` and `$_.Property` interact badly with bash extglob.
-- **Fix.** Invoke PowerShell with explicit profile/quoting: `powershell.exe -NoProfile -Command '...'` using single quotes.
+### Code execution blocks an import
 
----
+The local code sandbox intentionally blocks imports and traversal techniques
+that could escape its boundary. Use the dedicated file or shell tool when the
+workflow legitimately needs those capabilities.
 
-## Frontend / UI
+## Dashboard
 
-### `npm run build` fails with TypeScript errors after Pydantic changes
+### The page loads but API calls fail
 
-- **Cause.** The wire-format drift gate caught a Python/TypeScript mismatch.
-- **Fix.** Regenerate the TypeScript mirrors:
-  ```bash
-  cd agentic-workflows-v2
-  python -m scripts.generate_ts_types
-  cd ui
-  npm run generate:types
-  npm run build
-  ```
-- **Reference.** [ADR-014](../adr/ADR-014-pydantic-wire-format.md) and the `wire-format-drift` CI job.
+Confirm that FastAPI is on port `8010`. If it is elsewhere, set
+`VITE_API_PROXY_TARGET` before starting Vite:
 
-### Storybook fails with "Cannot find @storybook/addon-actions"
+```powershell
+$env:VITE_API_PROXY_TARGET = "http://127.0.0.1:9000"
+npm --prefix agentic-workflows-v2/ui run dev
+```
 
-- **Cause.** Not installed by default in this project.
-- **Fix.** Use the project's stand-in: `const action = (name) => (...args) => console.log(name, ...args)`. Don't add the addon unless the team agrees.
+### WebSocket is rejected with 403
 
-### Vite dev server resolves `.js` imports but the production build fails
+Add the dashboard's exact origin to `AGENTIC_CORS_ORIGINS`. Do not include a
+trailing slash.
 
-- **Cause.** Rollup (production) doesn't auto-resolve `.js` to `.ts` like Vite dev does.
-- **Fix.** When renaming `.js` → `.ts`, update every explicit `.js` import path or the production build will break.
+### TypeScript types no longer match Python
 
----
+From `agentic-workflows-v2`:
 
-## CI / pre-commit
+```text
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+npm --prefix ui run build
+```
 
-### Pre-commit `detect-secrets` flags a file
+Review and commit the generated JSON Schemas and TypeScript together.
 
-- **Diagnose.** If the flagged content is a real secret: rotate it immediately, then sanitize history. If it's a false positive: review carefully, then add to the `.secrets.baseline` with `detect-secrets scan --baseline .secrets.baseline`.
-- **Never** disable the hook to push past it.
+## Tracing
 
-### `ruff check` fails on changed files locally but green on main
+If no spans arrive:
 
-- **Cause.** You may have a stale ruff cache or are running an older version.
-- **Fix.** `pip install -U ruff` and re-run. Pre-commit hooks pin their own ruff version — `pre-commit autoupdate` syncs it.
+1. confirm `AGENTIC_TRACING=true` in the server process;
+2. confirm the `tracing` extra is installed;
+3. confirm the OTLP protocol matches the endpoint;
+4. check network access from the server to the collector; and
+5. inspect startup logs for the tracing initialization result.
 
-### `mkdocs build --strict` fails in the docs CI job
+Prompts, outputs, and tool arguments are excluded by default. Only set
+`AGENTIC_TRACE_SENSITIVE=true` in a trusted environment with an approved data
+handling policy.
 
-- **Common causes.**
-  - Broken intra-doc markdown link (target file moved/renamed without updating the link).
-  - A new page added to nav but the file doesn't exist.
-  - A new `.md` was committed that links to `../<file>.md` — mkdocs reads relative to the docs root, not the repo root.
-- **Fix.** Re-run locally: `mkdocs build --strict`. Address each WARNING. The "first revision timestamp" warning from the git-revision plugin is benign for newly-committed files.
+## Tests and documentation
 
----
+### Generated contract check fails
 
-## See also
+Regenerate both sides as shown in the Dashboard section above. The committed
+schemas are part of the API contract.
 
-- [Configuration Reference](../configuration.md) — full env var catalog
-- [Security Hardening](security-hardening.md) — production tuning knobs
-- [Known Limitations](../KNOWN_LIMITATIONS.md) — caveats that aren't bugs
-- [Architecture: Runtime](../architecture-runtime.md) — what's actually happening when a request hits the server
-- File an issue: <https://github.com/tafreeman/agentic-runtime-platform/issues>
+### Documentation reference check fails
+
+Run:
+
+```text
+python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/generate_doc_stats.py --check
+```
+
+The first command reports missing local targets. The second reports stale
+generated counts; run it without `--check` only when the repository facts have
+changed and the documentation should be updated.
+
+### MkDocs strict build fails
+
+Install the dependencies used by `.github/workflows/docs.yml`, then run:
+
+```text
+mkdocs build --strict
+```
+
+Fix every missing page, broken link, invalid navigation entry, or plugin error.
+Do not hide a content error by disabling strict mode.
+
+## Windows notes
+
+- Use `npm run <script>` or `npm exec -- <command>` instead of relying on
+  `npx`.
+- Use `pathlib.Path` in Python and quote paths that contain spaces.
+- Run the PowerShell development scripts from PowerShell, not through Git Bash
+  quoting.
+- If script execution is blocked, review the organization's execution policy;
+  do not weaken a managed security policy without approval.
+
+## More help
+
+- [Configuration](../configuration.md)
+- [Security hardening](security-hardening.md)
+- [Runtime API](../api-contracts-runtime.md)
+- [Contributor guide](../CONTRIBUTING.md)
+- [GitHub issues](https://github.com/tafreeman/agentic-runtime-platform/issues)

@@ -105,9 +105,12 @@ Token comparison uses `secrets.compare_digest()` to prevent timing side-channels
 
 After `AGENTIC_AUTH_LOCKOUT_THRESHOLD` (default 5) failed attempts within `AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS` (default 60), the middleware returns HTTP 429 with a `Retry-After` header for `AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS` (default 300). State is per-IP, in-process only, and resets on successful authentication.
 
-**Key rotation without restart:**
+**Key lookup and rotation:**
 
-`_get_api_key()` reads `AGENTIC_API_KEY` on every request via `get_secret()`. Rotating the environment variable takes effect for the next request without a server restart.
+`_get_api_key()` resolves `AGENTIC_API_KEY` through the configured secret
+provider for every request. Whether a changed value becomes visible without a
+restart depends on that provider and the deployment platform. Test the actual
+rotation path before relying on live rotation.
 
 ### CORS configuration
 
@@ -288,7 +291,9 @@ The SSE stream (`GET /api/runs/{run_id}/stream`, listed above) mirrors the WebSo
 
 ## 8. Security hardening reference
 
-See [security hardening in the runtime architecture](architecture-runtime.md#8-security-hardening-sprint-1-s1-01-through-s1-07) for the complete hardening table.
+See the
+[runtime security architecture](architecture-runtime.md#13-security-architecture)
+and [security hardening guide](operations/security-hardening.md).
 
 Key items that directly affect the server layer:
 
@@ -314,7 +319,7 @@ python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
 # Ports:
 #   8010  — backend API
 #   5173  — Vite frontend (npm run dev in ui/)
-#   6006  — Storybook
+#   5183  — Vite hot-module reload WebSocket
 
 # Check if port is in use (Linux/macOS)
 lsof -i :8010
@@ -374,7 +379,8 @@ AGENTIC_NO_LLM=1 python -m uvicorn agentic_v2.server.app:app --port 8010
 
 ### `evaluation_scoring.py` — **moved to `agentic_v2.scoring`** (ADR-032)
 - Extracted to `agentic_v2/scoring/evaluation_scoring.py`. The `server/` package imports from `agentic_v2.scoring` rather than hosting the logic directly. `server/evaluation.py` remains as a thin orchestration wrapper.
-- See [Scoring package](architecture-runtime.md#scoring-package) in the runtime architecture doc.
+- See [Scoring package](architecture-runtime.md#10-scoring-package) in the
+  runtime architecture.
 
 ### `execution.py`
 - **Purpose:** Async workflow execution orchestrator. Handles LangGraph runner singleton lifecycle, stream payload materialization, LangGraph streaming orchestration (`_stream_and_run`), native adapter execution (`_run_via_native_adapter`), and the full background task lifecycle (`_run_and_evaluate`).

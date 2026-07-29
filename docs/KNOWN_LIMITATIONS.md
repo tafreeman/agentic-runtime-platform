@@ -2,9 +2,11 @@
 
 > **Audience:** Operators, auditors, and contributors reading failing CI or trying to understand why something "works but not quite."
 > **Outcome:** After reading, you know what is intentionally unfinished and what the next sprint is expected to address.
-> **Last verified:** 2026-07-18
+> **Last verified:** 2026-07-28
 
-This is an honest accounting. Every item here is real, reproducible, and has shipped into the current release. Nothing here is a guess. If you find a new limitation, add it — do not paper over it elsewhere.
+This page records limitations confirmed in the current checkout. Some describe
+accepted design boundaries; others describe work that is not complete. Check
+the linked source and tests when a branch has moved beyond the date above.
 
 Each item includes a **Status** (reflecting how we're treating it today) and an **Upstream fix** field pointing at the relevant ticket, workaround, or follow-up.
 
@@ -16,14 +18,20 @@ Each item includes a **Status** (reflecting how we're treating it today) and an 
 
 ### 1.1 Python ↔ TypeScript wire format is manually mirrored (partial)
 
-`agentic_v2/contracts/events.py` defines the execution-event discriminated union in Python; `ui/src/api/types.ts` mirrors it by hand. Drift is caught by reviewer eyeball, not by automation.
+Python models remain the source for frontend wire contracts, but only selected
+shapes are generated and checked automatically.
 
-Sprint 1 (S1-1 / ROADMAP T1-1) added four HTTP response shapes to the schema-drift CI gate — `DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, and `RunsSummaryResponse` — joining the previously covered `ExecutionEvent` and `StepResultRecord` for six gated shapes in total. These six shapes have committed JSON schema snapshots under `tests/schemas/` and the gate regenerates them in CI. Other endpoint payloads (beyond these six) remain hand-mirrored without an automated drift check.
+The current drift gate covers eight shapes: `ExecutionEvent`,
+`StepResultRecord`, `DAGResponse`, `WorkflowInputSchemaResponse`,
+`WorkflowEditorStep`, `RunsSummaryResponse`, `ChatRequest`, and
+`ChatStreamEvent`. Their JSON schema snapshots are under `tests/schemas/`, and
+the generated TypeScript files are under `ui/src/api/`. Other endpoint
+payloads remain manually maintained.
 
 - **Surface:** Any new event field in the uncovered endpoints requires an edit in both files.
 - **Risk:** Silent shape mismatches between backend emit and frontend decode for endpoints not yet covered by the drift gate.
 - **Workaround:** When editing `contracts/events.py` or `server/models.py`, grep `ui/src/api/types.ts` for the type name and update in the same PR.
-- **Status:** Partially resolved by S1-1 (six shapes now gated). Remainder ratified as manual in [ADR-014](adr/ADR-014-pydantic-wire-format.md).
+- **Status:** Partially resolved (eight shapes are gated). The remaining manual boundary is recorded in [ADR-014](adr/ADR-014-pydantic-wire-format.md).
 - **Upstream fix:** Future sprint — extend gate coverage to remaining endpoint payloads.
 
 ### 1.2 The 80% coverage gate scopes out optional provider/plugin surfaces
@@ -45,10 +53,13 @@ The `--cov-fail-under=80` gate measures the core runtime only. By design, `[tool
 Running `agentic run <workflow> --adapter langchain` requires that the package was installed with the `[langchain]` extras:
 
 ```bash
-pip install -e ".[dev,server,langchain]"
+python -m pip install \
+  -e "./agentic-workflows-v2[dev,server,langchain]" \
+  -c ci-constraints.txt
 ```
 
-A bare `pip install -e ".[dev,server]"` will succeed, but any `--adapter langchain` call fails at import time.
+A runtime install without the `langchain` extra succeeds, but
+`--adapter langchain` cannot resolve the adapter.
 
 - **Surface:** `agentic_v2/langchain/` imports are guarded with `try/except ImportError`.
 - **Risk:** Confusing first-run failure if a contributor installed minimal extras.
@@ -60,25 +71,36 @@ A bare `pip install -e ".[dev,server]"` will succeed, but any `--adapter langcha
 
 ## 3. CI and environment dependencies
 
-### 3.1 Placeholder mode exists but CI still validates provider integration
+### 3.1 The blocking CI path does not prove live provider behavior
 
-The runtime supports `AGENTIC_NO_LLM=1` for deterministic placeholder execution across both native and LangChain engines (committed in `c2aff71`, documented in [`docs/NO_LLM_MODE.md`](NO_LLM_MODE.md)). However, some end-to-end CI gates intentionally exercise GitHub Models through `GITHUB_TOKEN` to validate provider integration itself. The trade-off is ratified in [ADR-016](adr/ADR-016-github-token-as-default-e2e-llm.md).
+The regular CI path uses deterministic tests and `AGENTIC_NO_LLM=1` for its
+no-credential smoke coverage. The evaluation workflow has an opt-in or
+scheduled live gate, but it skips cleanly when no provider secrets are
+configured.
 
-- **Surface:** `ci.yml`, `nightly.yml`, `performance-benchmark.yml` (which require live provider credentials).
-- **Zero-config alternative:** Set `AGENTIC_NO_LLM=1` to run workflows without any LLM provider. See [`docs/NO_LLM_MODE.md`](NO_LLM_MODE.md) for scope and limitations.
-- **Risk:** A GitHub Models outage or rate-limit event fails the provider-integration CI jobs, but `AGENTIC_NO_LLM=1` jobs remain unaffected.
-- **Workaround:** `agentic run test_deterministic` or `AGENTIC_NO_LLM=1 agentic run <workflow>` runs entirely without LLM calls — use for shape and flow testing.
-- **Status:** Accepted for v0.3.0. Free LLM access in CI vs. provider dependency trade-off is explicit in ADR-016.
-- **Upstream fix:** None — placeholder mode is live. Future work: extend mode to evaluation/rubric scoring.
+- **Surface:** `.github/workflows/ci.yml` and
+  `.github/workflows/eval-package-ci.yml`.
+- **Risk:** A green pull request does not prove that every provider accepts the
+  current request shape, streams correctly, honors tool choice, or handles
+  current quota behavior.
+- **Workaround:** Run targeted integration tests with each provider used by the
+  deployment. Record the provider, model, endpoint, and date with the result.
+- **Status:** Intentional. The default pull-request path remains deterministic
+  and does not spend provider quota.
+- **Upstream fix:** Keep opt-in live lanes and add provider-specific coverage
+  only where credentials and cost controls are available.
 
 ### 3.2 Windows is a supported target but has specific gotchas
 
-Epic 3 hardened the Windows bring-up story. Known residual friction:
+Known residual friction:
 
-- `npx` is unreliable on Windows PATH; always use `npm` for running scripts.
-- `jq` is not available; JSON parsing in scripts uses `python -c` or `grep`.
-- `pnpm` fails with EPERM on mounted / shared drives; fall back to `npm`.
-- PowerShell run from Git Bash mangles `$_` and `$_.Property` — wrap with `powershell.exe -NoProfile -Command '…'` and single quotes.
+- use PowerShell for the shipped `.ps1` lifecycle scripts;
+- use `npm --prefix agentic-workflows-v2/ui ...` from the repository root so
+  the working directory is explicit;
+- use Windows paths or resolved `Path` objects when invoking Python file tools;
+  and
+- avoid passing PowerShell expressions containing `$` through another shell,
+  which can expand them before PowerShell receives the command.
 
 - **Surface:** Developer workflow scripts.
 - **Status:** Documented here and in onboarding guidance. No single fix — all require awareness.
@@ -141,6 +163,156 @@ Tenant scoping ([ADR-022](adr/ADR-022-tenant-isolation.md)) resolves a tenant fr
 - **Status:** Accepted. `X-Tenant-ID` is a documented compatibility path for local/dev and API-key deployments (ADR-022), not a per-tenant security boundary in the unauthenticated default. [ROADMAP.md](ROADMAP.md) E8-2 is worded to match.
 - **Upstream fix:** None at the header layer — tenant enforcement requires an authenticated identity ([ADR-021](adr/ADR-021-jwt-oidc-authentication.md)) or a gateway.
 
+### 4.6 No CI job installs the `rag` extra, so the embedding and LanceDB paths are proven only against fakes
+
+The RAG pipeline's two optional backends live behind the `rag` extra (`lancedb>=0.15,<1`, `litellm>=1.84,<2` in `agentic-workflows-v2/pyproject.toml`). **No CI job installs it.** `ci.yml` installs `agentic-workflows-v2/[dev,server,mcp,langchain,tracing]` (plus `ek` in the single `ek-delegation-tests` job), and `windows-workflows-ci.yml` runs `uv sync --frozen --extra dev --extra server --extra langchain`. Grepping the workflow directory for the `rag` extra returns nothing.
+
+The code is written for this: `LiteLLMEmbedder` imports `litellm` lazily inside `_load_litellm()`, and `LanceDBVectorStore` is bound to `None` when `lancedb` is absent, so `import agentic_v2.rag` is safe. The suites are written for it too — `tests/test_rag_embeddings_litellm.py` and `tests/test_rag_factory.py` deliberately avoid `pytest.importorskip` and inject a fake `litellm` instead, so the real embedder code executes in CI rather than being skipped silently while the run stays green.
+
+What that leaves unproven is the part a fake cannot stand in for: **no automated test anywhere calls a real embedding provider, and no CI run ever constructs a real LanceDB table.** Response-shape parsing is duck-typed (accepting `.data`/`["data"]` and `.embedding`/`["embedding"]`) and was validated against a real provider response by hand, not against a pinned `litellm` response model in a test.
+
+- **Surface:** `.github/workflows/ci.yml` (install steps), `.github/workflows/windows-workflows-ci.yml`, `agentic_v2/rag/embeddings.py` (`_load_litellm`, `_parse_embedding_response`), `agentic_v2/rag/vectorstore.py` (`_LANCEDB_AVAILABLE` guard), `tests/test_vectorstore_lancedb.py` (`pytest.importorskip("lancedb")` — skipped in CI).
+- **Risk:** A breaking change in `litellm`'s embedding response shape, or in LanceDB's table API, passes CI green. The failure would first appear at runtime on a machine that actually installed the extra.
+- **Workaround:** From the repository root, install the extra with
+  `python -m pip install -e "./agentic-workflows-v2[dev,rag]"`, then run
+  `python -m pytest agentic-workflows-v2/tests -k "rag or vectorstore or embed" -q`.
+  Treat that as a pre-release step, not a per-PR one.
+- **Status:** Accepted. The extra is heavy (`litellm` pulls a large dependency tree), and the fake-injection pattern is what keeps the LiteLLM and factory code measured rather than skipped — `agentic_v2/rag/*` is **not** in `[tool.coverage.run] omit`, unlike the optional surfaces in §1.2, so uncovered lines there would drag the gated 80% figure down.
+- **Upstream fix:** Future sprint — an optional, non-blocking `rag-extra-tests` job installing `[dev,rag]` and running the RAG suites plus `tests/test_vectorstore_lancedb.py`, so the LanceDB path is exercised at least once per merge. A live-provider embedding call would need a credential and belongs in a cron lane, not a PR gate.
+
+### 4.7 Cross-provider embedding fallback mixes semantic spaces and pins a single dimensionality
+
+`build_embedder(config, fallback=True)` wraps the configured provider in the ADR-035 chain — configured provider first, then the remaining providers in the documented Voyage → OpenAI → local order (`FALLBACK_PROVIDER_ORDER` in `agentic_v2/rag/factory.py`). It is opt-in and **must stay opt-in**, for two independent reasons.
+
+First, **different providers embed into different semantic spaces.** A vector from `openai/text-embedding-3-small` is not comparable to one from `voyage/voyage-3`. If a fallback fires mid-ingestion, the index ends up holding vectors from two spaces and cosine similarity across them is meaningless — retrieval quality degrades and nothing raises. `FallbackEmbedder.__init__` refuses a chain whose members disagree on provider identity unless the caller passes `allow_mixed_provider_identities=True`; the factory passes it and logs a `WARNING` naming every model in the chain, but a warning is not a guard.
+
+Second, **`FallbackEmbedder` requires one shared dimensionality**, so `_fallback_chain()` gives every member the configured `EmbeddingConfig.dimensions` via `model_copy`. `LiteLLMEmbedder` does **not** forward a `dimensions=` request parameter to LiteLLM (`_call_litellm` sends only `model`, `input`, and optionally `api_key`), so a provider whose native width differs fails the post-parse width check and the chain advances to the next member. At the `EmbeddingConfig` default of 1536, `voyage-3` (1024 native) and `nomic-embed-text` (768 native) both fail that check, so a default-configured chain can exhaust without producing a vector. Failing loudly is correct — a truncated or padded vector would corrupt the index silently — but it means the chain works in practice only when every provider natively emits the configured width.
+
+- **Surface:** `agentic_v2/rag/factory.py` (`_fallback_chain`, `build_embedder`, `FALLBACK_PROVIDER_ORDER`, `FALLBACK_EMBEDDING_MODELS`), `agentic_v2/rag/embeddings.py` (`FallbackEmbedder`, `_validate_provider_dimensions`, `_validate_provider_identities`, `_call_litellm`).
+- **Risk:** Enabling fallback against an index already populated by one provider silently poisons it with vectors from another space. Enabling it at default dimensions produces `EmbeddingError: All 3 embedding providers failed` rather than a working fallback.
+- **Workaround:** Leave `fallback=False` (the default) for any pipeline writing to a persistent index. If you do enable it, set `EmbeddingConfig.dimensions` to a width every provider in the chain emits natively, and rebuild the index from scratch when the effective provider changes. For a read-only query path against an index you did not build, do not enable it at all.
+- **Status:** Accepted and deliberate. The alternative — silently reshaping vectors to fit — is worse. The documented ADR-035 fallback order is preserved; the constraint that makes it narrow is now written down in [ADR-035](adr/ADR-035-rag-pipeline-architecture.md) rather than discovered at runtime.
+- **Upstream fix:** Future sprint — pass `dimensions` through to LiteLLM for providers that honor a Matryoshka/`dimensions` request, and stamp the producing provider identity into stored chunk metadata so a mixed index is detectable after the fact.
+
+### 4.8 The reranker is not fully constructible from configuration
+
+`build_reranker(config)` is config-driven only for `strategy="none"`. Neither model-backed strategy can be built from a `RerankerConfig` alone, because a frozen JSON-shaped Pydantic model cannot carry a callable:
+
+- **`"cross_encoder"`** with no `predict_fn=` falls through to `CrossEncoderReranker`'s own loader, which imports **`sentence-transformers` — a package no extra in `agentic-workflows-v2/pyproject.toml` declares**, not `rag` and not any other. A machine that ran `pip install -e ".[rag]"` still gets `ImportError: sentence-transformers is required for CrossEncoderReranker`.
+- **`"llm"`** has no default scorer at all; `build_reranker` raises `RAGError` unless the caller passes `score_fn=`.
+
+Two further config fields are inert. `RerankerConfig.top_k` is not a constructor argument for any reranker — it is a per-call argument of `rerank()` — so a caller who sets it in config and never threads it through gets the library default of 5. `RerankerConfig.model_name` is ignored entirely for `strategy="llm"`, since `LLMReranker` takes no model name.
+
+Separately, two implementations do not structurally match the protocols they are declared against, and `isinstance` cannot catch it because `runtime_checkable` only checks member presence:
+
+- `NoOpReranker.rerank` names its first parameter `_query` where `RerankerProtocol` declares `query`, so `rerank(query=..., results=...)` raises `TypeError` for the **default** strategy while succeeding for the other two. mypy does not flag a leading-underscore parameter name, so no static gate catches it. The only in-repo caller (`agentic_v2/rag/retrieval.py`) calls positionally, so nothing is broken today.
+- `LanceDBVectorStore.search` names its third parameter `_metadata_filter` and also accepts `**kwargs`, so a `metadata_filter={...}` keyword call does not raise — it is absorbed and **ignored**, returning plausible-looking but unfiltered results. This one mypy does catch, which is why `factory.py` carries a load-bearing `# type: ignore[return-value]` on the LanceDB construction with the reason inline.
+
+- **Surface:** `agentic_v2/rag/factory.py` (`build_reranker`, `_build_cross_encoder`, and the three module-docstring notes), `agentic_v2/rag/reranking.py` (`NoOpReranker.rerank`, `CrossEncoderReranker.__init__`), `agentic_v2/rag/vectorstore.py` (`LanceDBVectorStore.search`), `agentic_v2/rag/protocols.py`.
+- **Risk:** The ADR-035 three-stage pipeline is not reachable from configuration alone — a caller must supply a scorer in Python. Metadata filtering against a LanceDB store returns wrong results rather than an error, which is the worse failure mode of the two.
+- **Workaround:** Pass `reranker_predict_fn=` / `reranker_score_fn=` to `build_rag_components()` (explicit, documented keyword arguments), `pip install sentence-transformers` separately if you want the default cross-encoder, call every reranker **positionally**, and do not rely on `metadata_filter` against LanceDB — filter in the caller.
+- **Status:** Accepted for now. The keyword escape hatch is explicit rather than silent, and both protocol mismatches are recorded in `factory.py`'s docstrings rather than hidden.
+- **Upstream fix:** Rename `_query` → `query` in `reranking.py` and either implement or reject `metadata_filter` in `LanceDBVectorStore.search` (removing the `# type: ignore`). Decide separately whether `sentence-transformers` should be declared by an extra or the cross-encoder default should require an explicit `predict_fn`.
+
+### 4.9 `InMemoryEmbedder` is a hash-based test double, not an embedder
+
+`InMemoryEmbedder` (`agentic_v2/rag/embeddings.py`) produces vectors by hashing text with SHA-256 and expanding the digest bytes to the requested dimensionality. It is deterministic and needs no credentials, which makes it useful for tests and offline development — but it carries **no semantic signal whatsoever**. Two paraphrases of the same sentence hash to unrelated vectors, so similarity search over an `InMemoryEmbedder` index degenerates to near-exact-match.
+
+It matters because several examples and docstrings use it as the obvious zero-setup default — `agentic_v2/rag/memory.py`'s module docstring hardcodes `InMemoryEmbedder(dimensions=384)` — and because a hash embedder never errors, so a pipeline built on one looks healthy while retrieving noise.
+
+- **Surface:** `agentic_v2/rag/embeddings.py` (`InMemoryEmbedder`, `provider="local"`, `model_name="in-memory-hash-v1"`), `agentic_v2/rag/memory.py` (docstring example).
+- **Risk:** Mistaking it for a working local embedder. A demo or evaluation run built on it produces retrieval numbers that mean nothing.
+- **Workaround:** Use `build_embedder(EmbeddingConfig(provider="local", model_name="nomic-embed-text", dimensions=768))` for a genuinely local path (routes to `ollama/nomic-embed-text` via LiteLLM and needs a running Ollama), or a hosted provider for anything measured.
+- **Status:** Accepted and intentional. `build_embedder()` / `build_rag_components()` never return it for a production provider string: `factory.py` does not reference `InMemoryEmbedder` at all except in the module docstring stating the prohibition, and `tests/test_rag_factory.py::test_provider_routes_to_expected_litellm_model_string` asserts `isinstance(embedder, LiteLLMEmbedder)` for each of the four provider strings. It must be constructed directly and on purpose.
+- **Upstream fix:** None planned. The guard is that no factory path can hand it back by accident.
+
+### 4.10 A failed embedding call scrubs the credential from the message but not from the exception chain
+
+`LiteLLMEmbedder._call_litellm` wraps any provider exception in an `EmbeddingError` whose message has been passed through `_redact_secret(str(exc), api_key)`, so the API key cannot appear in the raised message. But it raises `from exc`, which keeps the **original, unscrubbed** exception on `__cause__`. Providers do sometimes echo request material — including the key — back in their error text.
+
+The practical consequence: `str(err)` is safe, and `FallbackEmbedder`'s own `logger.warning("Embedding provider failed, trying next: %s", exc)` is safe because it passes no `exc_info`. Any caller that logs with `logger.exception(...)`, `exc_info=True`, or prints a full traceback will print the credential.
+
+- **Surface:** `agentic_v2/rag/embeddings.py` (`_call_litellm`'s `raise EmbeddingError(...) from exc`, `_redact_secret`).
+- **Risk:** A credential reaching application logs or an error-reporting service through the `__cause__` chain, in violation of the no-secrets-in-logs rule that the redaction was added to enforce.
+- **Workaround:** Do not log embedding failures with `exc_info` / `logger.exception`. Log `str(err)` from the `EmbeddingError`, which is already scrubbed.
+- **Status:** Known, not yet fixed. Documented here rather than left to be rediscovered; the redaction that does exist covers the message, which is the path every in-repo caller uses.
+- **Upstream fix:** Raise from a scrubbed exception, or use `raise ... from None` with the scrubbed detail already inlined in the message, accepting the loss of the original traceback frame.
+
+### 4.11 The `agentic rag` commands do not share or persist an index
+
+`agentic rag ingest` constructs an `InMemoryEmbedder`,
+`InMemoryVectorStore`, and `HybridRetriever` in module globals. A CLI command
+runs in a new process, so those globals disappear when `ingest` exits. A later
+`agentic rag search` process has no retriever and returns no results.
+
+The command also accepts `--collection` without using it and shows a directory
+example even though the helper selects a single file loader and does not
+enumerate a directory.
+
+- **Surface:** `agentic_v2/cli/rag_commands.py` and
+  `agentic_v2/cli/helpers.py`.
+- **Risk:** The commands report successful ingestion but cannot provide a
+  useful follow-up search from a normal second invocation.
+- **Workaround:** Build the RAG Python components or `RAGIngestTool` and
+  `RAGSearchTool` inside one long-lived process. Use a LanceDB store when
+  vectors must survive restarts.
+- **Status:** Incomplete CLI surface. The Python RAG pipeline is usable and
+  documented separately.
+- **Upstream fix:** Construct components from `RAGConfig`, persist the selected
+  collection, and make both commands reopen the same index. Remove or implement
+  directory ingestion and collection selection as part of that change.
+
+### 4.12 The model inventory command fails from the repository root
+
+`python -m tools.llm.model_inventory` imports `llm_client` as a top-level
+module. In the installed repository package, that module is
+`tools.llm.llm_client`, so the command exits with
+`No module named 'llm_client'`.
+
+- **Surface:** `tools/llm/model_inventory.py`.
+- **Risk:** A model discovery run fails before checking any provider.
+- **Workaround:** Use `python -m tools.llm.model_probe` for live discovery.
+- **Status:** Known command defect.
+- **Upstream fix:** Change the command to package-relative imports and add a
+  repository-root CLI smoke test.
+
+### 4.13 The model catalog exposes `onnx:` IDs that exact-model chat cannot use
+
+ONNX discovery emits `onnx:<relative-path>` IDs and the native model backend
+supports that prefix. The LangChain model builder uses `local:` for its ONNX
+path and has no `onnx:` prefix builder. `POST /api/chat` uses the LangChain
+builder, so selecting a discovered `onnx:` entry there produces an unsupported
+provider error.
+
+- **Surface:** `agentic_v2/models/local_discovery.py`,
+  `agentic_v2/models/backends.py`, `agentic_v2/langchain/models.py`, and
+  `agentic_v2/server/routes/chat.py`.
+- **Risk:** The model page can list a local model that its chat playground
+  cannot test.
+- **Workaround:** Use the native backend for `onnx:` models. Use `local:` only
+  where the LangChain ONNX builder's path contract is appropriate.
+- **Status:** Known cross-adapter mismatch.
+- **Upstream fix:** Normalize the prefix contract across discovery and both
+  execution paths, then add an end-to-end discovered-model chat test.
+
+### 4.14 Strict model-weight verification is not wired into every model loader
+
+The SHA-256 verifier and strict-mode behavior are implemented in
+`agentic_v2/models/weight_integrity.py`. The shared-tools local provider calls
+it before loading a local model. The runtime's native `OnnxBackend` and
+LangChain local ONNX builder do not call it.
+
+- **Surface:** `tools/llm/provider_adapters.py`,
+  `agentic_v2/models/backends_local.py`, and
+  `agentic_v2/langchain/model_builders.py`.
+- **Risk:** `AGENTIC_STRICT_MODEL_VERIFY=1` can be set while a runtime ONNX
+  load still proceeds without consulting the trusted hash file.
+- **Workaround:** Call `verify_model_weights()` explicitly before starting the
+  runtime and restrict the model directory against later changes.
+- **Status:** Partial enforcement.
+- **Upstream fix:** Put verification in the common runtime load boundary and
+  add strict-mode tests for every local model backend.
+
 ---
 
 ## 5. Documentation and process
@@ -153,12 +325,16 @@ Epics 1 and 2 have proper pre-implementation plan docs. Epics 3, 5, and 6 shippe
 - **Mitigation:** Load-bearing decisions are captured in ADRs (`docs/adr/`).
 - **Status:** Accepted; new epics are expected to ship with prospective plans going forward.
 
-### 5.2 `Generated:` and `Last Updated:` dates in docs may lag
+### 5.2 Historical documents describe the version that created them
 
-Per-package deep-dive docs under `docs/architecture-*.md` carry generation dates that were set during an initial documentation pass (2026-04-16 to 2026-04-18). Subsequent epic work may have moved details under them without updating the dates.
+ADRs, design plans, audit reports, prompts, and changelog entries are retained
+as records. They may describe files, commands, or behavior that no longer
+exist.
 
-- **Status:** Accepted. Trust the current code over the doc when the date is older than 2 weeks; file an issue.
-- **Upstream fix:** Future sprint — audit and either refresh or re-date.
+- **Status:** Intentional. Current engineer guidance lives outside the
+  historical directories and is checked against the active code.
+- **Upstream fix:** None. Add a new ADR, migration entry, or changelog entry
+  instead of rewriting an older decision record.
 
 ---
 

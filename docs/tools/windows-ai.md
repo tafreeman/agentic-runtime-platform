@@ -1,209 +1,135 @@
-# Windows AI (Phi Silica)
+# Windows AI and Phi Silica
 
-> Module: `tools.llm.windows_ai`
+`tools.llm.windows_ai.WindowsAIModel` calls Phi Silica through the repository's
+.NET bridge:
 
-## Overview
+```text
+tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj
+```
 
-`windows_ai.py` integrates **Phi Silica** — Microsoft's on-device SLM that runs on the NPU of [Copilot+ PCs](https://www.microsoft.com/windows/copilot-plus-pcs). Unlike `LocalModel` (which uses `onnxruntime-genai`), Phi Silica calls the Windows AI APIs via the Windows App SDK and runs on dedicated NPU silicon, delivering very low latency without consuming GPU or CPU resources.
+Python does not call the Windows AI API directly. For each check or generation
+request it starts the bridge with `dotnet run`.
 
-The Python module communicates with the Windows AI APIs through a **C# bridge** (`tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj`) because the WinRT APIs are not directly accessible from Python.
+## Prerequisites
 
-### When to use this vs `LocalModel`
+The integration requires:
 
-| Concern | `WindowsAIModel` (Phi Silica) | `LocalModel` (ONNX) |
-|---------|-------------------------------|----------------------|
-| Hardware requirement | Copilot+ PC with NPU | Any machine |
-| OS requirement | Windows only | Cross-platform |
-| Install requirement | .NET SDK + `dotnet build` | `pip install onnxruntime-genai` |
-| Inference speed | Very fast (NPU dedicated) | Depends on CPU/GPU |
-| Power usage | Low (NPU dedicated) | Higher |
-| Model choice | Phi Silica only | phi4, phi3, mistral, custom |
-| LAF token required? | Sometimes (see below) | No |
+- Windows;
+- a device and Windows configuration that expose Phi Silica;
+- a compatible .NET SDK on `PATH`;
+- the bridge project and its Windows App SDK dependencies; and
+- Limited Access Feature settings when required by the installed Windows/App
+  SDK channel.
 
----
+The repository cannot infer that a machine is supported from its processor name
+alone. Use the bridge check.
 
-## Requirements
+## Check availability
 
-1. **Windows** — Phi Silica is a Windows-only API.
-2. **Copilot+ PC** — The device must have a qualifying NPU. See [the Microsoft device list](https://www.microsoft.com/windows/copilot-plus-pcs).
-3. **[.NET SDK](https://dotnet.microsoft.com/download)** — Required to build and run the C# bridge.
-4. **Build the bridge** before first use:
+From the repository root:
 
 ```powershell
-dotnet build tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj
+python -m tools.llm.windows_ai --info
 ```
 
----
-
-## Limited Access Features (LAF)
-
-On some Windows/App SDK channels, Phi Silica is gated behind a **Limited Access Feature (LAF)** token. If you encounter a "feature not available" error, you may need LAF credentials from Microsoft.
-
-Configure LAF via environment variables:
-
-| Variable | Description |
-|----------|-------------|
-| `PHI_SILICA_LAF_FEATURE_ID` | LAF feature identifier string |
-| `PHI_SILICA_LAF_TOKEN` | LAF bearer token |
-| `PHI_SILICA_LAF_ATTESTATION` | LAF attestation payload |
-
-All three must be set together. The C# bridge reads them from the process environment automatically.
-
-Resources:
-- [Phi Silica documentation](https://learn.microsoft.com/windows/ai/apis/phi-silica)
-- [Unlock Phi Silica (aka.ms/phi-silica-unlock)](https://aka.ms/phi-silica-unlock)
-- [Troubleshooting](https://learn.microsoft.com/windows/ai/apis/troubleshooting)
-
----
-
-## Quick start
+Or from Python:
 
 ```python
-from tools.llm.windows_ai import WindowsAIModel, check_windows_ai_available
+from tools.llm.windows_ai import (
+    check_windows_ai_available,
+    get_model_info,
+)
 
-# Check availability without loading
-if not check_windows_ai_available():
-    print("Phi Silica not available — falling back to LocalModel")
-else:
-    model = WindowsAIModel()
-    response = model.generate("Summarise this text in three bullet points: ...")
-    print(response)
+print(check_windows_ai_available())
+print(get_model_info())
 ```
 
----
+The check runs:
 
-## `WindowsAIModel` class
+```text
+dotnet run --project <bridge-project> -- --info
+```
+
+and parses the bridge's JSON output. `available: true` is stronger evidence than
+the project merely building, but a real generation smoke test is still needed.
+
+## Generate text
 
 ```python
 from tools.llm.windows_ai import WindowsAIModel
-```
 
-### Constructor
-
-```python
-WindowsAIModel(verbose: bool = False)
-```
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `verbose` | `False` | Enable debug-level logging |
-
-**Raises at construction time:**
-
-- `OSError` — if not running on Windows
-- `RuntimeError` — if Phi Silica is not available (bridge reports `available: false`)
-
-If construction succeeds, the model is ready and subsequent `generate()` calls will not re-probe availability.
-
-### `generate()`
-
-```python
-response: str = model.generate(
-    prompt: str,
-    system_instruction: str | None = None,
-    temperature: float = 0.7,
-    max_tokens: int = 2000,
+model = WindowsAIModel(verbose=True)
+response = model.generate(
+    "Explain this stack trace.",
+    system_instruction="Answer for a software engineer.",
+    temperature=0.2,
+    max_tokens=600,
 )
+print(response)
 ```
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `prompt` | required | User input |
-| `system_instruction` | `None` | Optional system prompt prepended to the input |
-| `temperature` | `0.7` | Sampling temperature (`0.0–1.0`) |
-| `max_tokens` | `2000` | Maximum tokens to generate |
+Important current behavior:
 
-Returns the generated text as a string. On bridge errors, returns an error string prefixed with `[ERROR]` rather than raising, so callers can detect failure without wrapping in try/except.
+- construction runs an availability check;
+- generation has a 120-second bridge subprocess timeout;
+- `temperature` and `max_tokens` are logged in verbose mode but are not passed
+  as separate bridge command-line arguments;
+- generation failures are returned as strings beginning with `[ERROR]` instead
+  of being raised.
 
----
+Check for the error prefix before treating the response as model output.
 
-## Utility functions
+## Shared client
 
-### `check_windows_ai_available() → bool`
-
-Safe availability check — returns `False` (not `RuntimeError`) on any failure:
-
-```python
-from tools.llm.windows_ai import check_windows_ai_available
-
-if check_windows_ai_available():
-    # Safe to construct WindowsAIModel
-    ...
-```
-
-### `get_model_info() → dict`
-
-Detailed diagnostic info for the current machine:
-
-```python
-from tools.llm.windows_ai import get_model_info
-
-info = get_model_info()
-print(info)
-# {
-#   "platform": "win32",
-#   "bridge": {
-#     "project": "C:/path/to/PhiSilicaBridge.csproj",
-#     "dotnet_on_path": true
-#   },
-#   "info": {
-#     "available": true,
-#     "model": "Phi Silica",
-#     "version": "1.0"
-#   }
-# }
-```
-
-### `get_phi_silica_bridge_info(timeout_s=60) → tuple[dict | None, str | None]`
-
-Low-level function that invokes the C# bridge and returns `(parsed_dict, raw_stdout)`. Most callers should use `check_windows_ai_available()` or `get_model_info()` instead.
-
----
-
-## How the C# bridge works
-
-The bridge (`tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj`) is a minimal C# console application that:
-
-1. Accepts the prompt as a command-line argument
-2. Calls the Windows AI `PhiSilicaClient` WinRT API
-3. Prints the generated text to stdout
-
-Python invokes it via `subprocess.run(["dotnet", "run", "--project", bridge_proj, "--", prompt], ...)` with a 120-second timeout.
-
-The C# bridge reads LAF environment variables (`PHI_SILICA_LAF_FEATURE_ID`, `PHI_SILICA_LAF_TOKEN`, `PHI_SILICA_LAF_ATTESTATION`) from the process environment, so they must be set before the Python process starts or in the same shell session.
-
----
-
-## Troubleshooting
-
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `OSError: Windows AI APIs are only available on Windows` | Running on Linux/macOS | Use `LocalModel` instead |
-| `RuntimeError: Phi Silica not available` | Hardware doesn't have NPU or LAF tokens missing | Check device eligibility; configure LAF env vars |
-| `[ERROR] C# bridge not found. Run: dotnet build ...` | Bridge not built | `dotnet build tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj` |
-| `[ERROR] dotnet not found` | .NET SDK not installed | Install from [dotnet.microsoft.com](https://dotnet.microsoft.com/download) |
-| `[ERROR] Phi Silica request timed out (120s)` | Bridge hung | Check Windows AI service state; reboot device |
-| `[ERROR] Bridge error: Feature not available` | LAF gate | Configure `PHI_SILICA_LAF_*` env vars — see [aka.ms/phi-silica-unlock](https://aka.ms/phi-silica-unlock) |
-
----
-
-## Using via `LLMClient`
-
-`LLMClient` routes to `WindowsAIModel` purely by the `windows-ai:` model-name prefix — there is no probe-based auto-routing. If Phi Silica is unavailable, the call fails; use `check_windows_ai_available()` first when you need a fallback:
+The root shared client exposes the bridge through a model prefix:
 
 ```python
 from tools.llm.llm_client import LLMClient
 
-# Check first — LLMClient will raise if the model is unavailable
-from tools.llm.windows_ai import check_windows_ai_available
-if check_windows_ai_available():
-    response = LLMClient.generate_text("windows-ai:phi-silica", "Hello world")
+response = LLMClient.generate_text(
+    "windows-ai:phi-silica",
+    "Summarize this change.",
+)
 ```
 
----
+The shared client wraps bridge failures in `LLMClientError`, but the underlying
+Windows wrapper may still return an `[ERROR]` string. Test the failure paths
+used by your caller.
 
-## See also
+## Limited Access Feature settings
 
-- [local-models.md](local-models.md) — ONNX inference via `onnxruntime-genai` (cross-platform)
-- [model-probing.md](model-probing.md) — probe both `local:` and `windows-ai:` models with one call
-- [configuration.md](../configuration.md) — `PHI_SILICA_LAF_*` environment variable reference
+When the Windows API requires Limited Access Feature credentials, the bridge
+reads:
+
+```dotenv
+PHI_SILICA_LAF_FEATURE_ID=<feature-id>
+PHI_SILICA_LAF_TOKEN=<token>
+PHI_SILICA_LAF_ATTESTATION=<attestation>
+```
+
+Treat these values as secrets. Do not commit them or print them in diagnostic
+output.
+
+## Diagnose a failure
+
+Run checks in this order:
+
+1. `dotnet --info`
+2. `dotnet build .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj`
+3. `dotnet run --project .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj -- --info`
+4. `python -m tools.llm.windows_ai --info`
+5. one short generation request
+
+Common results:
+
+| Result | Meaning |
+| --- | --- |
+| `Not running on Windows` | The bridge is unavailable on this platform |
+| `Bridge project not found` | The repository path or installation is incomplete |
+| `dotnet not found` | Install or expose a compatible .NET SDK |
+| `available: false` with a bridge error | Read the returned Windows/Phi Silica error |
+| `Bridge --info timed out` | The .NET or Windows AI initialization did not finish in the check timeout |
+| `[ERROR] Phi Silica request timed out (120s)` | Generation exceeded the Python subprocess timeout |
+
+Keep the full `--info` result, Windows build, bridge revision, and device model
+with benchmark evidence.

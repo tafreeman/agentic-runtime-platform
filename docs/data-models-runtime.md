@@ -1,388 +1,192 @@
-# Data Models — Runtime Backend
+# Runtime data contracts
 
-> **Audience:** Backend engineers, frontend developers consuming the API, and contributors writing new agents or contracts.
+The runtime uses Pydantic v2 models for Python boundaries and JSON wire
+formats. This page identifies the source of truth for each contract family.
+Use the generated OpenAPI document for the complete HTTP schema.
 
-**Package:** `agentic-workflows-v2`
-**Validation library:** Pydantic v2
-**Persistence:** Filesystem only — JSON run-log files, no database or ORM
-**Schema contract rule:** Contracts are **additive-only**. Fields may be added with defaults; existing fields must never be removed or renamed without a migration entry in `docs/MIGRATIONS.md`.
+## Contract ownership
 
----
+| Contract | Python source | Main consumers |
+| --- | --- | --- |
+| Step and workflow results | `agentic_v2/contracts/messages.py` | Engine, run logs, server |
+| Agent task inputs and outputs | `agentic_v2/contracts/schemas.py` | Agents and workflows |
+| Execution stream events | `agentic_v2/contracts/events.py` | WebSocket server and UI |
+| Chat request and stream events | `agentic_v2/contracts/chat.py` | Chat API and UI |
+| Sanitization results | `agentic_v2/contracts/sanitization.py` | Security middleware |
+| HTTP request and response models | `agentic_v2/server/models.py` | FastAPI routes and UI |
+| RAG contracts | `agentic_v2/rag/models.py` | Retrieval pipeline |
 
-## 1. Design Principles
+Paths in this table are relative to `agentic-workflows-v2/`.
 
-All runtime Pydantic models follow these conventions:
+Models in `contracts/` follow an additive-change policy. Do not remove,
+rename, or tighten an existing wire field without a documented migration.
+Add optional fields with safe defaults when possible.
 
-- **Pydantic v2 API**: `model_dump()` not `.dict()`, `model_validate()` not `.parse_obj()`.
-- **Immutable RAG models**: `ConfigDict(frozen=True, extra="forbid")` on all RAG contracts.
-- **Additive wire format**: New fields always carry defaults so older clients can deserialize newer payloads.
-- **Enum normalization**: `ReviewStatus.normalize()`, `TestGateStatus.normalize()`, and `FindingSeverity.normalize()` coerce freeform LLM strings to canonical enum values, eliminating string comparisons in YAML `when:` conditions.
+## Execution results
 
----
+`StepStatus` has six values:
 
-## 2. Core Execution Models
+```text
+pending, running, success, failed, skipped, retrying
+```
 
-Source: `contracts/messages.py`
+`StepResult` records one step's identity, status, model information, inputs,
+outputs, error, timing, retry count, and metadata. Its computed properties
+include completion flags and `duration_ms`.
 
-### `StepStatus`
+`WorkflowResult` collects ordered `StepResult` values and the final workflow
+output. It also calculates total duration, step success rate, failed steps,
+and retry count.
+
+These models allow extra fields so persisted run data can evolve. Code that
+reads a run should still use named fields and tolerate unknown additions.
+
+## Review and gate values
+
+`ReviewStatus` normalizes common model responses to:
+
+```text
+APPROVED
+APPROVED_WITH_NOTES
+NEEDS_FIXES
+REJECTED
+```
+
+Unknown review values become `NEEDS_FIXES`.
+
+`TestGateStatus` normalizes test outcomes to:
+
+```text
+PASS, FAIL, ERROR, SKIPPED
+```
+
+Unknown test values become `FAIL`.
+
+The conservative defaults prevent an unrecognized model response from
+opening a workflow gate.
+
+`ReviewReport` contains the normalized status, an optional 0–10 quality
+score, structured findings, summary counts, and positive observations.
+`Finding` requires an ID, severity, and description; location and fix fields
+are optional.
+
+## Agent task models
+
+`TaskInput` provides optional `task_id`, `context`, and `constraints`.
+Task-specific models add required fields:
+
+| Input model | Required task data |
+| --- | --- |
+| `CodeGenerationInput` | `description`, `language` |
+| `CodeReviewInput` | source code and review settings |
+| `TestGenerationInput` | source code and test settings |
+
+All task outputs inherit `TaskOutput`, whose required `success` field is the
+authoritative completion flag. An output may also carry `error`,
+`confidence`, token usage, and model identity.
+
+Do not infer success from a non-empty generated string. Construct and
+validate the declared output model.
+
+## Execution events
+
+`ExecutionEvent` is a discriminated union on the `type` field. The current
+wire event types are:
+
+- `workflow_start` and `workflow_end`;
+- `step_start`, `step_end`, `step_complete`, and `step_error`;
+- `evaluation_start` and `evaluation_complete`;
+- `approval_required` and `approval_decision`;
+- `error`;
+- `token_delta`.
+
+`token_delta` is reserved in the contract but has no runtime producer yet.
+Current model streams are assembled before a completed step event is emitted.
+
+Approval events omit tool arguments because those arguments may contain
+sensitive data.
+
+Validate untrusted event mappings before broadcast:
 
 ```python
-class StepStatus(str, Enum):
-    PENDING   = "pending"
-    RUNNING   = "running"
-    SUCCESS   = "success"
-    FAILED    = "failed"
-    SKIPPED   = "skipped"
-    RETRYING  = "retrying"
+from agentic_v2.contracts.events import validate_event
+
+event = validate_event(payload)
+wire_value = event.model_dump(mode="json")
 ```
 
-Used by `StepResult`, `WorkflowResult`, `WorkflowRunResponse`, and all server models.
+The UI's generated event union is
+`agentic-workflows-v2/ui/src/api/events.generated.ts`. Client-only connection
+events remain in `ui/src/api/types.ts` and are not part of the Python union.
 
----
+## Chat events
 
-### `StepResult`
+Chat uses a separate discriminated union in `contracts/chat.py`. It covers
+token, route, media, done, and error events from `POST /api/chat`.
 
-The outcome of a single workflow step execution. Stored in `WorkflowResult.steps` and emitted as part of `step_end` events.
+Do not reuse execution events for the chat stream. The request, correlation,
+and completion fields are different.
 
-| Field | Type | Description |
-|---|---|---|
-| `step_name` | `str` | Unique step identifier within the DAG |
-| `status` | `StepStatus` | Terminal status |
-| `agent_role` | `str \| None` | Role of the executing agent |
-| `tier` | `int \| None` | Model tier used (0 = no LLM, 1–5) |
-| `model_used` | `str \| None` | Specific model identifier (e.g. `"gh:gpt-4o"`) |
-| `input_data` | `dict[str, Any]` | Step input variables |
-| `output_data` | `dict[str, Any]` | Step output variables |
-| `error` | `str \| None` | Error message if failed |
-| `error_type` | `str \| None` | Exception class name |
-| `start_time` | `datetime` | UTC start timestamp |
-| `end_time` | `datetime \| None` | UTC completion timestamp |
-| `retry_count` | `int` | Retries attempted (default 0) |
-| `metadata` | `dict[str, Any]` | Tokens, cache hits, inferred model flags |
+## Sanitization results
 
-**Computed fields:** `is_success`, `is_failed`, `is_complete`, `duration_ms` (float ms or None).
+`Finding` and `SanitizationResult` in `contracts/sanitization.py` are frozen
+Pydantic models.
 
----
+A sanitization result contains:
 
-### `WorkflowResult`
+- `classification`: `clean`, `redacted`, `blocked`, or
+  `requires_approval`;
+- immutable findings with category, severity, location, pattern name, and a
+  redacted preview;
+- sanitized text, or `None` when blocked;
+- a SHA-256 hash of the original input;
+- a timestamp and detector versions.
 
-Aggregate result of a complete workflow run.
+The finding stores the detector's pattern name, not the matched secret.
+`is_safe` is true only for `clean` and `redacted`.
 
-| Field | Type | Description |
-|---|---|---|
-| `workflow_id` | `str` | Unique run identifier |
-| `workflow_name` | `str` | Human-readable workflow name |
-| `steps` | `list[StepResult]` | Ordered step results |
-| `overall_status` | `StepStatus` | Aggregate terminal status |
-| `start_time` | `datetime` | UTC start |
-| `end_time` | `datetime \| None` | UTC completion |
-| `final_output` | `dict[str, Any]` | Merged context variables after all steps |
-| `metadata` | `dict[str, Any]` | Cost, resource usage, etc. |
+## Server models
 
-**Computed fields:** `total_duration_ms`, `success_rate` (0.0–100.0), `failed_steps`, `total_retries`.
+`WorkflowRunRequest` is the body for `POST /api/run`. It includes:
 
----
+- workflow name or path;
+- `input_data`;
+- an optional validated `run_id`;
+- adapter, defaulting to `langchain`;
+- an optional model override or model-pack reference;
+- optional evaluation and execution settings.
 
-### `AgentMessage`
+`WorkflowRunResponse` confirms acceptance with `run_id` and initial status. It
+does not contain the completed result.
 
-Inter-agent communication envelope used by the orchestrator.
+Other groups in `server/models.py` cover:
 
-| Field | Type | Description |
-|---|---|---|
-| `message_type` | `MessageType` | `task`, `response`, `error`, `status`, `tool_call`, `tool_result` |
-| `role` | `str` | Agent role (e.g. `"coder"`, `"reviewer"`) |
-| `content` | `str` | Message content |
-| `metadata` | `dict` | Model, tier, token counts |
-| `timestamp` | `datetime` | Auto-assigned UTC creation time |
-| `correlation_id` | `str \| None` | Cross-workflow correlation |
+- workflow summaries, DAGs, input schemas, and editor requests;
+- run lists, run details, and aggregate statistics;
+- evaluation dataset selection and score details;
+- model discovery and routing;
+- execution profiles.
 
-**Computed fields:** `is_error`, `is_tool_call`, `is_tool_result`.
+See [Runtime API contracts](api-contracts-runtime.md) for route-to-model
+mappings. When the server is running, `/docs` and `/openapi.json` are the
+exact current HTTP schemas.
 
----
+## Regenerate TypeScript contracts
 
-## 3. Review and Gate Contracts
+After changing an execution event, chat contract, or generated server model:
 
-Source: `contracts/messages.py`
-
-### `ReviewStatus`
-
-Canonical review outcome values used in YAML `when:` conditions.
-
-| Value | Meaning |
-|---|---|
-| `APPROVED` | No changes needed |
-| `APPROVED_WITH_NOTES` | Acceptable with minor non-blocking notes |
-| `NEEDS_FIXES` | Issues found, rework required |
-| `REJECTED` | Fundamental problems, major rework required |
-
-`ReviewStatus.normalize(raw)` maps all known LLM variants (`"PASS"`, `"lgtm"`, `"NEEDS_REVISION"`, etc.) to canonical values. Unknown values default to `NEEDS_FIXES` (conservative).
-
-### `TestGateStatus`
-
-```python
-class TestGateStatus(str, Enum):
-    PASS    = "PASS"
-    FAIL    = "FAIL"
-    ERROR   = "ERROR"
-    SKIPPED = "SKIPPED"
+```powershell
+Push-Location agentic-workflows-v2
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+python -m pytest tests/test_schema_drift.py -q
+Pop-Location
 ```
 
-`TestGateStatus.normalize(raw)` maps `"SUCCESS"`, `"GREEN"` → `PASS`; `"CRASH"` → `ERROR`; etc.
-
-### `ReviewReport`
-
-Structured output from a code-review step.
-
-| Field | Type | Description |
-|---|---|---|
-| `overall_status` | `ReviewStatus` | Drives `when:` YAML conditions |
-| `quality_score` | `float \| None` | 0–10 quality score |
-| `findings` | `list[Finding]` | Machine-readable findings (critical first) |
-| `summary` | `dict` | Counts by severity |
-| `positive_observations` | `list[str]` | Things done well |
-
-**Computed fields:** `needs_fixes` (bool), `critical_count` (int).
-
-### `Finding` (code review)
-
-| Field | Type | Description |
-|---|---|---|
-| `finding_id` | `str` | e.g. `"F-001"` |
-| `severity` | `FindingSeverity` | `critical`, `high`, `medium`, `low` |
-| `category` | `str` | `"security"`, `"quality"`, `"performance"` |
-| `title` | `str` | One-line title |
-| `file` | `str` | Affected file path |
-| `line_range` | `tuple[int,int] \| None` | `(start_line, end_line)` |
-| `description` | `str` | What is wrong |
-| `impact` | `str` | What could happen if unfixed |
-| `suggested_fix` | `str` | How to fix it |
-| `code_before` / `code_after` | `str` | Before/after snippets |
-| `references` | `list[str]` | CWE / OWASP references |
-
----
-
-## 4. Task Schemas
-
-Source: `contracts/schemas.py`
-
-Task schemas define typed I/O for the three primary task domains. All inherit from `TaskInput` / `TaskOutput`.
-
-### `TaskInput`
-
-Base class with fluent builder:
-
-```python
-input = CodeGenerationInput(description="...", language="python")
-input.with_context(project="myproject").with_constraint("max_tokens", 2000)
-```
-
-### `CodeGenerationInput` / `CodeGenerationOutput`
-
-Input fields: `description`, `language`, `file_path`, `existing_code`, `dependencies`, `style_guide`, `examples`.
-Output fields: `code`, `language`, `imports`, `explanation`. Computed: `line_count`, `get_diff(original)`.
-
-### `CodeReviewInput` / `CodeReviewOutput`
-
-Input fields: `code`, `language`, `file_path`, `focus_areas` (list of `IssueCategory`), `min_severity`, `previous_issues`.
-Output computed: `critical_count`, `high_count`, `issues_by_category`, `issues_by_severity`, `needs_attention`.
-
-### `TestGenerationInput` / `TestGenerationOutput`
-
-Input fields: `code`, `language`, `test_types`, `framework` (auto-inferred from language), `coverage_target`, `edge_cases`, `mock_dependencies`.
-Output: `tests` (list of `TestCase`), `setup_code`, `teardown_code`, `estimated_coverage`.
-
----
-
-## 5. Execution Events (Wire Format)
-
-Source: `contracts/events.py`
-
-All WebSocket/SSE broadcast payloads are Pydantic models validated before transmission. The `ExecutionEvent` is a discriminated union on the `type` field.
-
-!!! warning
-    The TypeScript mirror `ui/src/api/events.generated.ts` is **auto-generated** from `contracts/events.py`. Never hand-edit the generated file. Run `python scripts/generate_ts_types.py` after modifying this module.
-
-### `WorkflowStartEvent`
-
-```json
-{
-  "type": "workflow_start",
-  "run_id": "code_review-a3f12b89",
-  "workflow_name": "code_review",
-  "timestamp": "2026-05-01T14:32:00.000Z"
-}
-```
-
-### `StepStartEvent`
-
-```json
-{
-  "type": "step_start",
-  "run_id": "code_review-a3f12b89",
-  "step": "load_code",
-  "input": { "file_path": "src/main.py" },
-  "timestamp": "2026-05-01T14:32:00.100Z"
-}
-```
-
-### `StepEndEvent`
-
-```json
-{
-  "type": "step_end",
-  "run_id": "code_review-a3f12b89",
-  "step": "load_code",
-  "status": "success",
-  "duration_ms": 120.5,
-  "model_used": "gh:gpt-4o",
-  "tokens_used": 450,
-  "tier": "2",
-  "input": { "file_path": "src/main.py" },
-  "output": { "code": "def hello(): ..." },
-  "error": null,
-  "timestamp": "2026-05-01T14:32:00.220Z"
-}
-```
-
-### `StepCompleteEvent`
-
-Like `StepEndEvent` but with an additional `outputs` field (resolved workflow-level output variables from this step).
-
-### `StepErrorEvent`
-
-Same shape as `StepEndEvent` but `type = "step_error"` and `error` is non-null.
-
-### `WorkflowEndEvent`
-
-```json
-{
-  "type": "workflow_end",
-  "run_id": "code_review-a3f12b89",
-  "status": "success",
-  "timestamp": "2026-05-01T14:32:04.500Z"
-}
-```
-
-### `ErrorEvent`
-
-```json
-{
-  "type": "error",
-  "run_id": "code_review-a3f12b89",
-  "error": "Step load_code raised ValueError: ...",
-  "timestamp": "..."
-}
-```
-
-### `EvaluationStartEvent` / `EvaluationCompleteEvent`
-
-```json
-{
-  "type": "evaluation_complete",
-  "run_id": "code_review-a3f12b89",
-  "rubric": "Code Quality",
-  "weighted_score": 87.5,
-  "overall_score": 82.5,
-  "grade": "B",
-  "passed": true,
-  "pass_threshold": 70.0,
-  "criteria": [ { "criterion": "correctness", "weight": 0.4, "raw_score": 90 } ],
-  "timestamp": "..."
-}
-```
-
-**Full union type:**
-```python
-ExecutionEvent = Annotated[
-    Union[
-        WorkflowStartEvent, StepStartEvent, StepEndEvent, StepCompleteEvent,
-        StepErrorEvent, WorkflowEndEvent, ErrorEvent,
-        EvaluationStartEvent, EvaluationCompleteEvent,
-    ],
-    Field(discriminator="type"),
-]
-```
-
----
-
-## 6. Sanitization Contracts
-
-Source: `contracts/sanitization.py`
-
-The sanitization pipeline produces immutable `SanitizationResult` objects. These are never exposed in API responses but drive the `SanitizationASGIMiddleware` classification logic.
-
-### `Classification` (StrEnum)
-
-| Value | Middleware action |
-|---|---|
-| `clean` | Pass through |
-| `redacted` | Replace request body with sanitized text |
-| `blocked` | Return HTTP 422 |
-| `requires_approval` | Pass through (flag for human review) |
-
-### `Finding` (sanitization)
-
-| Field | Type | Description |
-|---|---|---|
-| `category` | `FindingCategory` | `api_key`, `bearer_token`, `password`, `pii_email`, `prompt_injection`, etc. |
-| `severity` | `Severity` | `low`, `medium`, `high`, `critical` |
-| `location` | `str` | e.g. `"message[2].content"` |
-| `matched_pattern` | `str` | Pattern **name** only — never the matched text |
-| `redacted_preview` | `str` | Context with `[REDACTED]` marker |
-
-### `SanitizationResult`
-
-```python
-@dataclass(frozen=True)
-class SanitizationResult:
-    classification: Classification
-    findings: tuple[Finding, ...]
-    sanitized_text: str | None       # None when blocked
-    original_hash: str               # SHA-256 of original input (not the input)
-    timestamp: datetime
-    detector_versions: dict[str, str]
-```
-
-`is_safe` property: `True` when `classification` is `clean` or `redacted`.
-
----
-
-## 7. Server Request/Response Models
-
-Source: `server/models.py`
-
-### `WorkflowRunRequest` (POST /api/run)
-
-See [API Contracts](api-contracts-runtime.md#post-apirun) for the full field reference.
-
-### `WorkflowRunResponse`
-
-```json
-{ "run_id": "code_review-a3f12b89", "status": "pending" }
-```
-
-### `RunSummaryModel`
-
-Lightweight summary for list views. All fields are nullable except `filename`.
-
-### `RunsSummaryResponse`
-
-Aggregate counts: `total_runs`, `success`, `failed`, `avg_duration_ms`, `workflows`, `tokens_30d`.
-
-### `DAGResponse`
-
-Returned by `GET /api/workflows/{name}/dag`. Contains `nodes[]` (`DAGNodeModel`) and `edges[]` (`DAGEdgeModel`) plus the inline `inputs[]` schema.
-
-### Evaluation Models
-
-| Model | Purpose |
-|---|---|
-| `RunEvaluationDetail` | Full rubric breakdown (criteria, score layers, hard gates, floor violations) |
-| `EvaluationCriterionDetail` | Per-criterion score with weight, raw score, floor, and violation flag |
-| `ScoreLayersModel` | Hybrid score decomposition: layer1 (objective), layer2 (LLM judge), layer3 (advisory) |
-| `HardGatesModel` | Six binary gates that must all pass for a grade above F |
-| `FloorViolationModel` | Criterion + actual score vs. required floor |
-| `DatasetSampleSummary` | Compact sample preview for grid views |
-| `DatasetSampleDetailResponse` | Full sample data with workflow preview |
-
-> **Schema policy:** All contracts defined in `contracts/` are **additive-only**. Existing fields must never be removed or renamed in a breaking way. Add new optional fields; deprecate old ones with a comment before eventual removal.
+The Python command writes committed JSON Schemas under
+`agentic-workflows-v2/tests/schemas/`. The npm command compiles those schemas
+into the generated TypeScript files. Do not edit a `*.generated.ts` file by
+hand.
+
+If a contract change breaks existing run logs or clients, add an entry to
+[Migrations](MIGRATIONS.md) and include compatibility tests.

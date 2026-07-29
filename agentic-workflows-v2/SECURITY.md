@@ -1,47 +1,53 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported code
 
-This project is under active development. Security fixes are applied to the default branch first.
+Security fixes are applied to the repository's default branch. Older commits
+and unmaintained snapshots do not have a guaranteed support window.
 
-| Version | Supported |
-| --- | --- |
-| `main` / latest | Yes |
-| Older snapshots | Best effort |
+## Report a vulnerability
 
-## Reporting a Vulnerability
+Do not open a public issue for a suspected vulnerability.
 
-Please do not open public issues for suspected vulnerabilities.
+Use a private
+[GitHub Security Advisory](https://github.com/tafreeman/agentic-runtime-platform/security/advisories/new).
+If that path is unavailable, contact a maintainer privately and ask for a
+secure reporting channel. Do not send exploit details, credentials, or private
+data through a public issue.
 
-Use one of these private paths:
-- Create a GitHub Security Advisory draft (preferred), or
-- Contact maintainers through the private support path in `SUPPORT.md`.
+Include:
 
-## What to Include
+- the affected component and version or commit;
+- the required configuration and deployment assumptions;
+- minimal reproduction steps or a proof of concept;
+- the expected and observed behavior;
+- the confidentiality, integrity, or availability impact; and
+- a suggested mitigation, if known.
 
-- Affected component and file path
-- Reproduction steps or proof of concept
-- Impact assessment (confidentiality, integrity, availability)
-- Suggested mitigation (if available)
+Maintainers will confirm receipt, assess scope and severity, coordinate a fix,
+and agree on disclosure timing with the reporter. Response time depends on
+maintainer availability and issue complexity; this project does not publish a
+support SLA.
 
-## Response Targets
+## Contributor requirements
 
-- Initial acknowledgment: within 3 business days
-- Triage decision: within 7 business days
-- Fix timeline: based on severity and complexity
+- Never commit credentials, LAF tokens, private keys, or private datasets.
+- Use the runtime secret-provider layer instead of adding direct environment
+  reads for provider credentials.
+- Add negative tests for authentication, authorization, path, URL, command,
+  output-handling, and resource-limit changes.
+- Keep file and Git tools inside a configured sandbox.
+- Keep shell access disabled unless a reviewed workflow needs an explicit
+  executable allowlist.
+- Treat model, retrieval, tool, and MCP output as untrusted input.
+- Document settings that weaken a fail-closed control.
 
-## Disclosure Policy
+See:
 
-We follow coordinated disclosure:
-- Keep details private until a fix is available
-- Publish remediation details after patch release
-- Credit reporters who want attribution
+- [Security hardening](../docs/operations/security-hardening.md)
+- [OWASP LLM threat review](../docs/OWASP_LLM_THREAT_MODEL.md)
+- [Supply-chain security](../docs/SUPPLY_CHAIN.md)
+- [Known limitations](../docs/KNOWN_LIMITATIONS.md)
 
-## Hardening Guidance for Contributors
-
-- Never commit secrets, credentials, or private datasets.
-- Keep API keys in environment variables.
-- Resolve runtime secrets through `agentic_v2.models.secrets.get_secret()` / `get_first_secret()` instead of direct `os.environ` reads so the default provider chain, tests, and future secret backends behave consistently.
-- HTTP API authentication is opt-in with `AGENTIC_API_KEY`; protected `/api/*` routes accept `Authorization: Bearer <key>` or `X-API-Key: <key>`.
-- WebSocket clients must send credentials in headers, and browser origin checks still apply via `AGENTIC_CORS_ORIGINS`.
-- Add tests for security-sensitive behavior changes
+These guides describe source controls and deployment responsibilities. They
+are not a compliance certification or penetration-test result.

@@ -1,6 +1,6 @@
 # Evidence Ledger page guide
 
-This guide describes the production UI as of 2026-07-14. All pages share the
+This guide describes the production UI as of 2026-07-28. All pages share the
 responsive Evidence Ledger shell, warm-paper tokens, route Suspense state,
 focus rules, semantic status treatment, and CLI parity where a command exists.
 

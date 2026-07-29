@@ -151,7 +151,7 @@ Configure at least one of the following:
 
 | Variable | Description |
 |---|---|
-| `GITHUB_TOKEN` | GitHub Models API — free tier, good default choice |
+| `GITHUB_TOKEN` | GitHub Models access token; availability and limits depend on the current account |
 | `OPENAI_API_KEY` | OpenAI GPT-4o, GPT-4.1, o-series |
 | `ANTHROPIC_API_KEY` | Anthropic Claude 3/4 family |
 | `GEMINI_API_KEY` | Google Gemini 2.5 family |
@@ -202,7 +202,7 @@ Configure at least one of the following:
 |---|---|---|---|
 | FastAPI backend | 8010 | HTTP / WebSocket | `uvicorn --port 8010` |
 | Vite dev server | 5173 | HTTP | Configured in `vite.config.ts` |
-| Storybook | 6006 | HTTP | Not installed by default |
+| Vite hot-module reload | 5183 | WebSocket | Development only; configured in `vite.config.ts` |
 | OTLP gRPC | 4317 | gRPC | `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | OTLP HTTP | 4318 | HTTP/protobuf | Use with `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` |
 | Jaeger UI | 16686 | HTTP | Docker Compose `jaeger` service |
