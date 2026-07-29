@@ -1,8 +1,58 @@
 # ADR-016: GitHub Models via `GITHUB_TOKEN` as Default E2E LLM Provider
 
-**Status:** Accepted
-**Date:** 2026-04-22
+**Status:** Superseded — GitHub Models retired upstream 2026-07-30; no
+CI-executed path defaults to it any more (see disposition note below)
+**Date:** 2026-04-22 (original) · superseded 2026-07-29
 **Related:** Epic 2 (Observable Execution), Epic 6 (Evaluation & Data Depth)
+**Superseded by:** No single successor ADR — the default was retired in
+place rather than replaced. See the disposition note immediately below.
+
+---
+
+> **Disposition (2026-07-29).** GitHub Models was fully retired upstream on
+> 2026-07-30 — playground, model catalog, inference API, and BYOK stopped
+> for every customer (per GitHub's own changelog; brownouts ran 2026-07-16
+> and 2026-07-23). The **Decision** and **Consequences** sections below no
+> longer describe this platform's CI posture and are retained **verbatim,
+> for decision-traceability only** — treat them as a record of what was
+> decided in 2026-04, not as current policy.
+>
+> What actually changed, with evidence:
+>
+> - **No CI-executed E2E path still defaults to `gh:*`.** The nightly
+>   Playwright streaming job hard-sets `AGENTIC_NO_LLM: '1'` for its backend
+>   (`agentic-workflows-v2/ui/playwright.config.ts`, line 59).
+>   `.github/workflows/eval-package-ci.yml`'s required `eval-golden-gate`
+>   job (lines 140-171) also runs with `AGENTIC_NO_LLM: "1"` (line 168), and
+>   its opt-in `eval-live-gate` job (lines 172-233) injects only
+>   `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` /
+>   `AZURE_OPENAI_API_KEY` / `AZURE_FOUNDRY_API_KEY` — no `GITHUB_TOKEN`, no
+>   `gh:` provider, anywhere in that job.
+> - **The `performance-benchmark.yml` workflow this ADR cites no longer
+>   exists.** `.github/workflows/` has no file by that name today.
+> - **The one place GitHub Models still had special standing — the LLM
+>   judge's default model — has been repointed off it.** PR #240
+>   (`fix(judge): default the LLM judge off retiring GitHub Models`, merged
+>   2026-07-29) changed `special.judge_default` in
+>   `agentic-workflows-v2/agentic_v2/config/defaults/model_registry.yaml`
+>   from `gh:openai/gpt-4o` to `nvidia:deepseek-ai/deepseek-v4-pro`, because
+>   `LLMJudge` passes an explicit model to `run_with_fallback`, which forces
+>   a single attempt with no tier-based cycling — a GitHub Models outage
+>   would otherwise fail the judge closed with no fallback.
+> - **GitHub Models remains a selectable provider — this is not a removal.**
+>   Every other `gh:` entry in `model_registry.yaml` is untouched and still
+>   resolvable via an explicit model id or the `AGENTIC_JUDGE_MODEL`
+>   override; the provider backend, live discovery (ADR-039), and
+>   fallback-chain rungs (ADR-051) are unchanged. What changed is narrower:
+>   GitHub Models is no longer *any* default — not the CI default this ADR
+>   named, not the judge default — and, independently, the upstream service
+>   itself stopped serving requests entirely on 2026-07-30.
+>
+> `docs/adr/ADR-INDEX.md` reflects this status change. A separate,
+> unrelated stale claim was also found while investigating this: `docs/
+> architecture-runtime.md`'s environment-variable table still describes
+> `GITHUB_TOKEN` as the "default E2E LLM provider" — flagged for a follow-up
+> fix, not corrected in this change.
 
 ---
 
