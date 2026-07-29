@@ -76,7 +76,7 @@ def test_tier_chain_order_and_escalation():
 
 
 def test_special_accessor():
-    assert mr.special("judge_default") == "gh:openai/gpt-4o"
+    assert mr.special("judge_default") == "nvidia:deepseek-ai/deepseek-v4-pro"
     assert mr.special("tier_ultimate_fallback") == "ollama:qwen3-coder:30b"
     with pytest.raises(AttributeError):
         mr.special("not_a_slot")
