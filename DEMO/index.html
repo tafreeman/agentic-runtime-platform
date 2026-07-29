@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -66,7 +66,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Demo - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/DEMO.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -74,7 +74,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/DEMO/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Demo - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/DEMO.png" />
 </head>
   
@@ -93,7 +93,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#five-minute-demo" class="md-skip">
+        <a href="#five-minute-local-demo" class="md-skip">
           Skip to content
         </a>
       
@@ -306,7 +306,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1204,6 +1204,8 @@
       
         
       
+        
+      
     
     
     
@@ -1248,6 +1250,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2074,6 +2104,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2171,6 +2205,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2483,6 +2573,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2546,6 +2640,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2738,10 +2888,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-narrative-arc" class="md-nav__link">
+  <a href="#1-run-the-deterministic-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The narrative arc
+        1. Run the deterministic workflow
       
     </span>
   </a>
@@ -2749,10 +2899,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#2-start-the-development-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        2. Start the development services
       
     </span>
   </a>
@@ -2760,10 +2910,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-deterministic-workflow-no-llm" class="md-nav__link">
+  <a href="#3-run-from-the-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Deterministic workflow (no LLM)
+        3. Run from the dashboard
       
     </span>
   </a>
@@ -2771,10 +2921,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-llm-backed-workflow-code_review" class="md-nav__link">
+  <a href="#4-optional-provider-backed-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — LLM-backed workflow (code_review)
+        4. Optional provider-backed run
       
     </span>
   </a>
@@ -2782,21 +2932,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-see-it-live" class="md-nav__link">
+  <a href="#what-each-step-verifies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — See it live
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-you-just-proved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What you just proved
+        What each step verifies
       
     </span>
   </a>
@@ -2857,10 +2996,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-narrative-arc" class="md-nav__link">
+  <a href="#1-run-the-deterministic-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The narrative arc
+        1. Run the deterministic workflow
       
     </span>
   </a>
@@ -2868,10 +3007,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#2-start-the-development-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        2. Start the development services
       
     </span>
   </a>
@@ -2879,10 +3018,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-deterministic-workflow-no-llm" class="md-nav__link">
+  <a href="#3-run-from-the-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Deterministic workflow (no LLM)
+        3. Run from the dashboard
       
     </span>
   </a>
@@ -2890,10 +3029,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-llm-backed-workflow-code_review" class="md-nav__link">
+  <a href="#4-optional-provider-backed-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — LLM-backed workflow (code_review)
+        4. Optional provider-backed run
       
     </span>
   </a>
@@ -2901,21 +3040,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-see-it-live" class="md-nav__link">
+  <a href="#what-each-step-verifies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — See it live
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-you-just-proved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What you just proved
+        What each step verifies
       
     </span>
   </a>
@@ -2966,160 +3094,158 @@
   
 
 
-<h1 id="five-minute-demo">Five-minute demo<a class="headerlink" href="#five-minute-demo" title="Permanent link">&para;</a></h1>
-<p><strong>Audience:</strong> a reviewer or teammate who already cloned the repo and ran <code>scripts/setup-dev.ps1</code>. This page answers one question: <em>what do I do now?</em></p>
-<p>If you haven't run setup yet, start at <a href="../ONBOARDING/"><code>docs/ONBOARDING.md</code></a> instead.</p>
-<hr />
-<h2 id="the-narrative-arc">The narrative arc<a class="headerlink" href="#the-narrative-arc" title="Permanent link">&para;</a></h2>
-<p>You are about to:</p>
-<ol>
-<li><strong>Run a deterministic workflow</strong> (no LLM, no keys) to prove the runtime is alive — ~5 seconds.</li>
-<li><strong>Run an LLM-backed workflow</strong> (<code>code_review</code> against a real file) to see the full agent pipeline — ~30 seconds.</li>
-<li><strong>See both runs in the live dashboard</strong> with the DAG animating step-by-step — instant.</li>
-</ol>
-<p>Expected total wall time: <strong>under 5 minutes</strong> — closer to 3 on a warm cache.</p>
-<hr />
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<ul>
-<li>You ran <code>agentic-workflows-v2/scripts/setup-dev.ps1</code> (Windows) or <code>just setup</code> (macOS/Linux) successfully.</li>
-<li>At least one LLM provider key is in your <code>.env</code> — <strong>needed for step 2 only</strong>; steps 1 and 3 run without any key (the cheapest path is <code>GITHUB_TOKEN</code> — see <a href="../ONBOARDING/#prerequisites"><code>docs/ONBOARDING.md</code></a>).</li>
-</ul>
-<hr />
-<h2 id="step-1-deterministic-workflow-no-llm">Step 1 — Deterministic workflow (no LLM)<a class="headerlink" href="#step-1-deterministic-workflow-no-llm" title="Permanent link">&para;</a></h2>
-<p>This validates the runtime and CLI wiring without spending a token.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># from repo root</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>agentic-workflows-v2/scripts/fixtures/smoke-input.json<span class="w"> </span>--verbose
+<h1 id="five-minute-local-demo">Five-minute local demo<a class="headerlink" href="#five-minute-local-demo" title="Permanent link">&para;</a></h1>
+<p>This demo proves that the runtime, API, WebSocket stream, and dashboard work
+together. It does not require a provider credential.</p>
+<p>Complete <a href="../getting-started/installation/">Installation</a> first.</p>
+<h2 id="1-run-the-deterministic-workflow">1. Run the deterministic workflow<a class="headerlink" href="#1-run-the-deterministic-workflow" title="Permanent link">&para;</a></h2>
+<p>From the repository root in PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span> <span class="p">`</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  <span class="p">-</span><span class="n">-verbose</span>
 </span></code></pre></div>
-<p><strong>Expected output (abridged):</strong></p>
+<p>The command should end with:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Status: SUCCESS
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Elapsed: 0.1s
 </span></code></pre></div>
-<p>If that failed, the platform is not installed correctly — go back to <code>ONBOARDING.md</code> section "Bootstrap the workspace" before continuing.</p>
-<hr />
-<h2 id="step-2-llm-backed-workflow-code_review">Step 2 — LLM-backed workflow (code_review)<a class="headerlink" href="#step-2-llm-backed-workflow-code_review" title="Permanent link">&para;</a></h2>
-<p>This exercises the full pipeline: tiered model routing, 5-step DAG, tool calls, the WebSocket event stream, and the run logger.</p>
-<p>Create <code>examples/hello.json</code> at the repo root (or reuse the committed fixture):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># option A: use the committed minimal fixture</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--input<span class="w"> </span>agentic-workflows-v2/tests/fixtures/code_review_input.json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--verbose
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># option B: review a real file (PowerShell)</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>New-Item<span class="w"> </span>-ItemType<span class="w"> </span>Directory<span class="w"> </span>-Force<span class="w"> </span>examples<span class="w"> </span><span class="p">|</span><span class="w"> </span>Out-Null
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>@<span class="s1">&#39;</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">{</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s1">  &quot;code_file&quot;: &quot;agentic-workflows-v2/agentic_v2/cli/main.py&quot;,</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s1">  &quot;review_depth&quot;: &quot;quick&quot;</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s1">}</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="s1">&#39;</span>@<span class="w"> </span><span class="p">|</span><span class="w"> </span>Set-Content<span class="w"> </span>examples/hello.json
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>examples/hello.json<span class="w"> </span>--verbose
+<p>This checks the CLI, workflow loader, input validation, and dependency order.
+It does not test provider access.</p>
+<h2 id="2-start-the-development-services">2. Start the development services<a class="headerlink" href="#2-start-the-development-services" title="Permanent link">&para;</a></h2>
+<p>Keep <code>AGENTIC_NO_LLM=1</code> in the same environment, then run:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>just dev
 </span></code></pre></div>
-<p><strong>Expected output (abridged):</strong></p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>▶ workflow_start        run_id=r-...
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  ▶ step_start          parse_code          [tier0]
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  ✓ step_end            parse_code          92ms
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  ▶ step_start          style_check         [tier1]
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  ✓ step_end            style_check         2.4s
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  ▶ step_start          complexity_analysis [tier1]
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  ✓ step_end            complexity_analysis 1.8s
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>  ▶ step_start          review_code         [tier2]
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>  ✓ step_end            review_code         6.1s
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  ▶ step_start          generate_summary    [tier2]
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>  ✓ step_end            generate_summary    3.7s
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>✓ workflow_end          status=success       12.1s
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>Status: SUCCESS
-</span></code></pre></div>
-<p>Exact timings vary by provider. The run is logged to <code>agentic-workflows-v2/runs/r-&lt;id&gt;.json</code>.</p>
-<hr />
-<h2 id="step-3-see-it-live">Step 3 — See it live<a class="headerlink" href="#step-3-see-it-live" title="Permanent link">&para;</a></h2>
-<p>Open two terminals:</p>
-<p><strong>Terminal 1 — backend</strong> (from <code>agentic-workflows-v2/</code>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
-</span></code></pre></div>
-<p><strong>Terminal 2 — frontend</strong> (from <code>agentic-workflows-v2/ui/</code>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
-</span></code></pre></div>
-<p>Open http://127.0.0.1:5173 in a browser.</p>
-<ol>
-<li>Click <strong>Workflows</strong> in the sidebar.</li>
-<li>Click <strong><code>code_review</code></strong>.</li>
-<li>Click <strong>Run</strong>. You'll be redirected to <code>/live/{run_id}</code>.</li>
-<li>Watch the DAG animate as each step transitions <strong>queued → running → complete</strong>. Step nodes glow while running (the <code>clay-glow</code> keyframe). Edges between completed and running steps show a flowing dash pattern.</li>
-<li>Click any step node to open the 5-field drill-down panel (inputs, outputs, scores, status, duration).</li>
-</ol>
-<p>When the workflow completes, the header badge flips to <code>[OK]</code> (or <code>[ERR]</code> on failure).</p>
-<hr />
-<h2 id="what-you-just-proved">What you just proved<a class="headerlink" href="#what-you-just-proved" title="Permanent link">&para;</a></h2>
+<p>Check the services:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Where to look next</th>
+<th>Service</th>
+<th>Address</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>DAG execution with parallel steps</td>
-<td><a href="../architecture-runtime/"><code>docs/architecture-runtime.md</code></a></td>
+<td>Dashboard</td>
+<td><code>http://127.0.0.1:5173</code></td>
 </tr>
 <tr>
-<td>Tiered model routing across providers</td>
-<td><a href="../architecture-runtime/"><code>docs/architecture-runtime.md</code></a> §Tiered Model Router</td>
+<td>Backend health</td>
+<td><code>http://127.0.0.1:8010/api/health</code></td>
 </tr>
 <tr>
-<td>WebSocket event streaming</td>
-<td><a href="../api-contracts-runtime/"><code>docs/api-contracts-runtime.md</code></a> §<code>/ws/execution/{run_id}</code></td>
+<td>Backend readiness</td>
+<td><code>http://127.0.0.1:8010/api/health/ready</code></td>
 </tr>
 <tr>
-<td>Live DAG animation + drill-down</td>
-<td><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/ui/README.md"><code>agentic-workflows-v2/ui/README.md</code></a></td>
-</tr>
-<tr>
-<td>Rubric-based evaluation</td>
-<td><a href="../architecture-eval/"><code>docs/architecture-eval.md</code></a></td>
+<td>API documentation</td>
+<td><code>http://127.0.0.1:8010/docs</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
+<p>On a system that cannot run the PowerShell-based <code>just</code> recipe, start the
+services in separate terminals:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>npm --prefix agentic-workflows-v2/ui run dev
+</span></code></pre></div>
+<h2 id="3-run-from-the-dashboard">3. Run from the dashboard<a class="headerlink" href="#3-run-from-the-dashboard" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Open <code>http://127.0.0.1:5173</code>.</li>
+<li>Open <strong>Workflows</strong>.</li>
+<li>Select <code>test_deterministic</code>.</li>
+<li>Enter the required <code>input_text</code>.</li>
+<li>Start the run.</li>
+<li>Open the live view and watch each step change state.</li>
+<li>Open the saved run after it completes and inspect its step results.</li>
+</ol>
+<p>The deterministic workflow has two tier-0 steps. A successful live run confirms
+that the HTTP request, execution event stream, and saved result reached the
+dashboard.</p>
+<h2 id="4-optional-provider-backed-run">4. Optional provider-backed run<a class="headerlink" href="#4-optional-provider-backed-run" title="Permanent link">&para;</a></h2>
+<p>To demonstrate model routing:</p>
+<ol>
+<li>stop the development services with <code>just dev-stop</code>;</li>
+<li>run <code>Remove-Item Env:AGENTIC_NO_LLM</code> in PowerShell;</li>
+<li>copy <code>.env.example</code> to <code>.env</code>;</li>
+<li>configure one supported provider;</li>
+<li>restart with <code>just dev</code>; and</li>
+<li>run <code>code_review</code> from the dashboard or CLI.</li>
+</ol>
+<p>CLI example:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">code_review</span> <span class="p">`</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">code_review_input</span><span class="p">.</span><span class="n">json</span> <span class="p">`</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  <span class="p">-</span><span class="n">-verbose</span>
+</span></code></pre></div>
+<p>Provider response time, availability, and cost depend on the selected account
+and model. A provider-backed failure does not invalidate the deterministic
+runtime test; inspect the provider probe and the failed step separately.</p>
+<h2 id="what-each-step-verifies">What each step verifies<a class="headerlink" href="#what-each-step-verifies" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deterministic CLI run</td>
+<td>Workflow discovery and local engine execution</td>
+</tr>
+<tr>
+<td>Health and readiness</td>
+<td>Server process and configured dependencies</td>
+</tr>
+<tr>
+<td>Dashboard workflow list</td>
+<td>REST API and UI data loading</td>
+</tr>
+<tr>
+<td>Live run page</td>
+<td>WebSocket execution events</td>
+</tr>
+<tr>
+<td>Saved run page</td>
+<td>Result serialization and run retrieval</td>
+</tr>
+<tr>
+<td>Optional <code>code_review</code></td>
+<td>Provider routing and model-backed steps</td>
+</tr>
+</tbody>
+</table>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Symptom</th>
-<th>Likely cause</th>
-<th>Fix</th>
+<th>Check</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>agentic: command not found</code></td>
-<td>Package not installed in the active venv</td>
-<td><code>pip install -e agentic-workflows-v2/</code></td>
+<td><code>agentic</code> is not found</td>
+<td>Activate <code>.venv</code> or use <code>.\.venv\Scripts\agentic.exe</code></td>
 </tr>
 <tr>
-<td>Workflow hangs on <code>style_check</code> or <code>review_code</code></td>
-<td>No LLM provider key in <code>.env</code></td>
-<td>See <a href="../ONBOARDING/#prerequisites"><code>docs/ONBOARDING.md</code></a></td>
+<td>Port conflict</td>
+<td>Run <code>agentic devex port-guard --backend-port 8010 --frontend-port 5173</code></td>
 </tr>
 <tr>
-<td>Frontend shows "Connecting…" forever on <code>/live/...</code></td>
-<td>Backend not running on port 8010</td>
-<td>Start Terminal 1 first; check <code>curl http://127.0.0.1:8010/api/health</code></td>
+<td>Dashboard cannot reach the API</td>
+<td>Open <code>/api/health</code> and confirm backend port <code>8010</code></td>
 </tr>
 <tr>
-<td><code>[ERR]</code> status on every LLM step</td>
-<td>Rate-limited / key invalid</td>
-<td>Rotate the key; check <code>agentic-workflows-v2/runs/r-&lt;id&gt;.json</code> for error detail</td>
+<td>Live view cannot connect</td>
+<td>Confirm the backend is running and the dashboard origin is allowed</td>
 </tr>
 <tr>
-<td>Port 8010 or 5173 already in use</td>
-<td>Another dev server is running</td>
-<td><code>python -m agentic_v2.cli port-guard</code></td>
+<td>Provider-backed step fails</td>
+<td>Inspect <code>/api/models/probe</code>, the run result, and the provider variable</td>
 </tr>
 </tbody>
 </table>
-<p>For anything else, see <a href="../KNOWN_LIMITATIONS/"><code>docs/KNOWN_LIMITATIONS.md</code></a> or <a href="https://github.com/tafreeman/agentic-runtime-platform/issues/new">open an issue</a> on the repository.</p>
+<p>For more detail, see <a href="../operations/troubleshooting/">Troubleshooting</a>,
+<a href="../architecture-runtime/">Runtime architecture</a>, and the
+<a href="../api-contracts-runtime/">Runtime API</a>.</p>
 
 
 
@@ -3142,7 +3268,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="LLM client - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/llm-client.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/llm-client/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="LLM client - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/llm-client.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#llm-client-and-provider-reference" class="md-skip">
+        <a href="#shared-llm-client" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1954,10 +1984,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#basic-call" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Basic call
       
     </span>
   </a>
@@ -1965,198 +1995,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#method-reference" class="md-nav__link">
+  <a href="#model-names" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Method reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmclientgenerate_text" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.generate_text
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmclientlist_openai_models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.list_openai_models
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmclientlist_gemini_models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.list_gemini_models
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-type" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error type
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-routing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider routing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider details
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Provider details">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#local-onnx-local" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Local ONNX (local:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ollama-ollama" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ollama (ollama:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-ai-phi-silica-windows-ai" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows AI / Phi Silica (windows-ai:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#azure-ai-foundry-azure-foundry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Azure AI Foundry (azure-foundry:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#azure-openai-service-azure-openai" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Azure OpenAI Service (azure-openai:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#github-models-gh" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GitHub Models (gh:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#openai-openai-or-bare-gpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OpenAI (openai:* or bare gpt*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#google-gemini-gemini-or-bare-gemini" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Google Gemini (gemini:* or bare gemini*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#anthropic-claude-claude-or-bare-claude" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Anthropic Claude (claude:* or bare claude*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#langchain-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangChain adapter
+        Model names
       
     </span>
   </a>
@@ -2167,7 +2009,90 @@
   <a href="#remote-provider-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remote provider gate
+        Remote-provider gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure OpenAI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-openai-gemini-and-claude" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hosted OpenAI, Gemini, and Claude
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-onnx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local ONNX
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
       
     </span>
   </a>
@@ -2186,10 +2111,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#minimal-langchain-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Minimal LangChain adapter
       
     </span>
   </a>
@@ -2371,6 +2296,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2468,6 +2397,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2778,6 +2763,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2838,6 +2827,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3025,10 +3070,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#basic-call" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Basic call
       
     </span>
   </a>
@@ -3036,198 +3081,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#method-reference" class="md-nav__link">
+  <a href="#model-names" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Method reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Method reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmclientgenerate_text" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.generate_text
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmclientlist_openai_models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.list_openai_models
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#llmclientlist_gemini_models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMClient.list_gemini_models
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-type" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error type
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-routing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider routing
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-details" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider details
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Provider details">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#local-onnx-local" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Local ONNX (local:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ollama-ollama" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ollama (ollama:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-ai-phi-silica-windows-ai" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows AI / Phi Silica (windows-ai:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#azure-ai-foundry-azure-foundry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Azure AI Foundry (azure-foundry:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#azure-openai-service-azure-openai" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Azure OpenAI Service (azure-openai:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#github-models-gh" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GitHub Models (gh:*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#openai-openai-or-bare-gpt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OpenAI (openai:* or bare gpt*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#google-gemini-gemini-or-bare-gemini" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Google Gemini (gemini:* or bare gemini*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#anthropic-claude-claude-or-bare-claude" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Anthropic Claude (claude:* or bare claude*)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#langchain-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangChain adapter
+        Model names
       
     </span>
   </a>
@@ -3238,7 +3095,90 @@
   <a href="#remote-provider-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Remote provider gate
+        Remote-provider gate
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provider-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Provider notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provider notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#github-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitHub Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure OpenAI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-openai-gemini-and-claude" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hosted OpenAI, Gemini, and Claude
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-onnx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local ONNX
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors
       
     </span>
   </a>
@@ -3257,10 +3197,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#minimal-langchain-adapter" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Minimal LangChain adapter
       
     </span>
   </a>
@@ -3300,550 +3240,190 @@
   
 
 
-<h1 id="llm-client-and-provider-reference">LLM client and provider reference<a class="headerlink" href="#llm-client-and-provider-reference" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>Module: <code>tools.llm.llm_client</code> | Entry point: <code>LLMClient.generate_text()</code></p>
-</blockquote>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>LLMClient</code> is a static-method facade that routes text-generation requests to multiple providers
-across several routing backends (Azure has two: Azure OpenAI and Azure AI Foundry) based on a name
-prefix in the model string. The facade is stateless — no instance is ever created. All
-provider-specific transport logic lives in <code>tools/llm/provider_adapters.py</code>. Note this count is
-specific to the <code>tools</code> package; the <code>agentic_v2</code> runtime selects providers separately via its
-own <code>SmartModelRouter</code>.</p>
+<h1 id="shared-llm-client">Shared LLM client<a class="headerlink" href="#shared-llm-client" title="Permanent link">&para;</a></h1>
+<p><code>tools.llm.llm_client.LLMClient</code> is a stateless text-generation facade for the
+root <code>agentic-tools</code> package. It selects a provider from the model-name prefix.</p>
+<p>This client is separate from <code>agentic_v2.models</code>. Runtime workflows normally
+use the runtime model client and router, not this class.</p>
+<h2 id="basic-call">Basic call<a class="headerlink" href="#basic-call" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">text</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Summarize the key properties of ONNX Runtime.&quot;</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;Reply in three bullet points.&quot;</span><span class="p">,</span>  <span class="c1"># optional</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>                                     <span class="c1"># default</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>                                     <span class="c1"># default</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;ollama:llama3&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Explain the purpose of a circuit breaker.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;Answer in plain language.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </span></code></pre></div>
-<hr />
-<h2 id="method-reference">Method reference<a class="headerlink" href="#method-reference" title="Permanent link">&para;</a></h2>
-<h3 id="llmclientgenerate_text"><code>LLMClient.generate_text</code><a class="headerlink" href="#llmclientgenerate_text" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@staticmethod</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_text</span><span class="p">(</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">system_instruction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4096</span><span class="p">,</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
-</span></code></pre></div>
-<p>Dispatch a text-generation request to the appropriate backend.</p>
-<p><strong>Parameters</strong></p>
+<p><code>generate_text()</code> returns a string. Its defaults are <code>temperature=0.7</code> and
+<code>max_tokens=4096</code>.</p>
+<h2 id="model-names">Model names<a class="headerlink" href="#model-names" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Type</th>
+<th>Pattern</th>
+<th>Backend</th>
+<th>Main configuration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local:&lt;key&gt;</code></td>
+<td>Local ONNX Runtime GenAI</td>
+<td>Model under <code>~/.cache/aigallery</code> or a catalog path</td>
+</tr>
+<tr>
+<td><code>ollama:&lt;model&gt;</code></td>
+<td>Ollama <code>/api/generate</code></td>
+<td><code>OLLAMA_HOST</code>, default <code>http://localhost:11434</code></td>
+</tr>
+<tr>
+<td><code>windows-ai:&lt;model&gt;</code></td>
+<td>Windows AI / Phi Silica bridge</td>
+<td>Compatible Windows device and bridge prerequisites</td>
+</tr>
+<tr>
+<td><code>gh:&lt;model&gt;</code></td>
+<td><code>gh models run</code> subprocess</td>
+<td>Authenticated GitHub CLI with Models access</td>
+</tr>
+<tr>
+<td><code>azure-openai:&lt;deployment&gt;</code></td>
+<td>Azure OpenAI SDK</td>
+<td><code>AZURE_OPENAI_ENDPOINT</code>, <code>AZURE_OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>azure-openai:&lt;slot&gt;:&lt;deployment&gt;</code></td>
+<td>Numbered Azure OpenAI settings</td>
+<td><code>AZURE_OPENAI_ENDPOINT_&lt;slot&gt;</code>, <code>AZURE_OPENAI_API_KEY_&lt;slot&gt;</code></td>
+</tr>
+<tr>
+<td><code>azure-foundry:&lt;name&gt;</code></td>
+<td>OpenAI-compatible Azure Foundry endpoint</td>
+<td><code>AZURE_FOUNDRY_API_KEY</code>, endpoint variables</td>
+</tr>
+<tr>
+<td><code>openai:&lt;model&gt;</code></td>
+<td>OpenAI SDK</td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>gemini:&lt;model&gt;</code></td>
+<td>Google Generative AI SDK</td>
+<td><code>GOOGLE_API_KEY</code> or <code>GEMINI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>claude:&lt;model&gt;</code></td>
+<td>Anthropic SDK</td>
+<td><code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_API_KEY</code></td>
+</tr>
+</tbody>
+</table>
+<p>Plain names containing <code>gpt</code>, <code>gemini</code>, or <code>claude</code> are also inferred, but
+explicit prefixes are easier to review.</p>
+<p>Model availability, names, and provider access change. Use
+<a href="../model-probing/">model probing</a> before a benchmark or release decision.</p>
+<h2 id="remote-provider-gate">Remote-provider gate<a class="headerlink" href="#remote-provider-gate" title="Permanent link">&para;</a></h2>
+<p>The shared client blocks OpenAI, Gemini, Claude, Azure OpenAI, and Azure
+Foundry calls unless this flag is enabled:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>PROMPTEVAL_ALLOW_REMOTE=1
+</span></code></pre></div>
+<p>Local ONNX, Ollama, Windows AI, AI Toolkit, and GitHub Models prefixes are
+allowed without that flag. GitHub Models is still a remote service; the flag
+name does not describe a network isolation boundary.</p>
+<p>The gate is intended to prevent an accidental paid-provider call during prompt
+evaluation. It does not provide authorization, budget enforcement, or network
+egress control.</p>
+<h2 id="provider-notes">Provider notes<a class="headerlink" href="#provider-notes" title="Permanent link">&para;</a></h2>
+<h3 id="github-models">GitHub Models<a class="headerlink" href="#github-models" title="Permanent link">&para;</a></h3>
+<p><code>gh:&lt;model&gt;</code> executes:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>gh models run &lt;publisher/model&gt;
+</span></code></pre></div>
+<p>The adapter maps several short names such as <code>gpt-4o-mini</code> to full catalog
+names. Other values are passed through.</p>
+<p>The subprocess removes <code>GITHUB_TOKEN</code> from its environment and relies on the
+GitHub CLI's own authenticated state. Check it before running:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">gh</span> <span class="n">auth</span> <span class="n">status</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">gh</span> <span class="n">models</span> <span class="p">-</span><span class="n">-help</span>
+</span></code></pre></div>
+<p>Rate-limit behavior is controlled by:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
 <th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>model_name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-<td>Provider-prefixed model ID (see routing table)</td>
-</tr>
-<tr>
-<td><code>prompt</code></td>
-<td><code>str</code></td>
-<td>—</td>
-<td>User-turn prompt text</td>
-</tr>
-<tr>
-<td><code>system_instruction</code></td>
-<td><code>str \| None</code></td>
-<td><code>None</code></td>
-<td>System prompt prepended per provider convention</td>
-</tr>
-<tr>
-<td><code>temperature</code></td>
-<td><code>float</code></td>
-<td><code>0.7</code></td>
-<td>Sampling temperature 0.0–2.0</td>
-</tr>
-<tr>
-<td><code>max_tokens</code></td>
-<td><code>int</code></td>
-<td><code>4096</code></td>
-<td>Maximum generated tokens</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Returns</strong>: <code>str</code> — the generated text.</p>
-<p><strong>Raises</strong>: <code>LLMClientError</code> — wraps any provider failure. Inspect <code>.model</code> and <code>.original_error</code>.</p>
-<hr />
-<h3 id="llmclientlist_openai_models"><code>LLMClient.list_openai_models</code><a class="headerlink" href="#llmclientlist_openai_models" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nd">@staticmethod</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">list_openai_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-</span></code></pre></div>
-<p>Return model IDs available to the current <code>OPENAI_API_KEY</code>. Returns <code>[]</code> if the key is absent or
-the SDK is not installed.</p>
-<hr />
-<h3 id="llmclientlist_gemini_models"><code>LLMClient.list_gemini_models</code><a class="headerlink" href="#llmclientlist_gemini_models" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nd">@staticmethod</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">list_gemini_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-</span></code></pre></div>
-<p>Return Gemini model IDs that support <code>generateContent</code>, filtered from the <code>genai.list_models()</code>
-response. Returns <code>[]</code> if <code>GEMINI_API_KEY</code> / <code>GOOGLE_API_KEY</code> is absent.</p>
-<hr />
-<h2 id="error-type">Error type<a class="headerlink" href="#error-type" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LLMClientError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>                   <span class="c1"># model identifier that was requested</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">original_error</span><span class="p">:</span> <span class="ne">Exception</span> <span class="o">|</span> <span class="kc">None</span>  <span class="c1"># upstream exception</span>
-</span></code></pre></div>
-<p><code>LLMClientError</code> is always raised for any provider failure. The <code>model</code> attribute identifies which
-model string triggered the failure. The <code>original_error</code> attribute holds the raw upstream exception
-for inspection or logging.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">except</span> <span class="n">LLMClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provider failed for </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">original_error</span><span class="p">:</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Root cause: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">original_error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="provider-routing">Provider routing<a class="headerlink" href="#provider-routing" title="Permanent link">&para;</a></h2>
-<p>Model name parsing is performed left-to-right on the prefix. Inferred providers (bare <code>gpt*</code>,
-<code>gemini*</code>, <code>claude*</code>) are checked last as substring matches.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>model_name string
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>  │
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  ├── &quot;local:*&quot;           → Local ONNX (onnxruntime-genai)
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  ├── &quot;ollama:*&quot;          → Ollama REST API
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>  ├── &quot;windows-ai:*&quot;      → Windows Copilot Runtime (Phi Silica)
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  ├── &quot;azure-foundry:*&quot;   → Azure AI Foundry (chat/completions endpoint)
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>  ├── &quot;azure-openai:*&quot;    → Azure OpenAI Service
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  ├── &quot;gh:*&quot;              → GitHub Models (gh CLI subprocess)
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>  ├── &quot;openai:*&quot;          → OpenAI hosted API
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>  ├── &quot;gemini:*&quot;          → Google Gemini API
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>  ├── &quot;claude:*&quot;          → Anthropic Claude API
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>  ├── contains &quot;gpt&quot;      → OpenAI (inferred)
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>  ├── contains &quot;gemini&quot;   → Google Gemini (inferred)
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>  ├── contains &quot;claude&quot;   → Anthropic (inferred)
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>  └── unknown             → raises LLMClientError(UNAVAILABLE_MODEL)
-</span></code></pre></div>
-<hr />
-<h2 id="provider-details">Provider details<a class="headerlink" href="#provider-details" title="Permanent link">&para;</a></h2>
-<h3 id="local-onnx-local">Local ONNX (<code>local:*</code>)<a class="headerlink" href="#local-onnx-local" title="Permanent link">&para;</a></h3>
-<p>Runs ONNX models downloaded from AI Dev Gallery to <code>~/.cache/aigallery/</code>. Requires
-<code>onnxruntime-genai</code> (<code>pip install onnxruntime-genai</code>).</p>
-<p><strong>Model catalog</strong> (<code>tools/llm/local_models.py</code>):</p>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Model family</th>
-<th>Variants</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>phi4</code> / <code>phi4mini</code></td>
-<td>Phi-4 Mini instruct</td>
-<td><code>phi4-cpu</code>, <code>phi4-gpu</code> (DirectML)</td>
-</tr>
-<tr>
-<td><code>phi3.5</code></td>
-<td>Phi-3.5 Mini instruct</td>
-<td><code>phi3.5-cpu</code>, <code>phi3.5-vision</code></td>
-</tr>
-<tr>
-<td><code>phi3</code></td>
-<td>Phi-3 Mini 4k instruct</td>
-<td><code>phi3-cpu</code>, <code>phi3-dml</code>, <code>phi3-vision</code></td>
-</tr>
-<tr>
-<td><code>phi3-medium</code></td>
-<td>Phi-3 Medium 4k instruct</td>
-<td><code>phi3-medium-cpu</code>, <code>phi3-medium-dml</code></td>
-</tr>
-<tr>
-<td><code>mistral</code> / <code>mistral-7b</code></td>
-<td>Mistral 7B instruct v0.2</td>
-<td><code>mistral-cpu</code>, <code>mistral-dml</code></td>
-</tr>
-<tr>
-<td><code>minilm-l6</code> / <code>minilm-l12</code></td>
-<td>MiniLM embeddings</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>whisper</code></td>
-<td>Whisper int8 CPU</td>
-<td><code>whisper-tiny</code>, <code>whisper-small</code>, <code>whisper-medium</code></td>
-</tr>
-<tr>
-<td><code>stable-diffusion</code></td>
-<td>Stable Diffusion v1.4</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>esrgan</code></td>
-<td>ESRGAN upscaler</td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Path resolution</strong> — the key is resolved to a directory via <code>resolve_local_model_path()</code>:
-1. Direct path: if <code>~/.cache/aigallery/&lt;model_dir&gt;</code> contains <code>.onnx</code> files, use it.
-2. Variant hint: keys ending in <code>-gpu</code> / <code>-dml</code> prefer <code>directml</code> subdirectories; <code>-cpu</code> prefers
-   <code>cpu_and_mobile</code>.
-3. Alphabetical fallback to first subdirectory containing <code>.onnx</code> files.</p>
-<div class="admonition warning">
-<p class="admonition-title">Model loading concurrency</p>
-<p><code>model_locks.py</code> creates a PID-keyed lock file when a local model is loaded and removes it
-on process exit. Parallel scripts can call <code>get_models_in_use()</code> to detect conflicts before
-loading.</p>
-</div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;local:phi4mini&quot;</span><span class="p">,</span> <span class="s2">&quot;What is entropy?&quot;</span><span class="p">)</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;local:phi4-gpu&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>   <span class="c1"># DirectML acceleration</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;local:mistral&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>For direct <code>LocalModel</code> usage, CLI modes, and model discovery details, see
-<a href="../local-models/">Local ONNX Models</a>.</p>
-<hr />
-<h3 id="ollama-ollama">Ollama (<code>ollama:*</code>)<a class="headerlink" href="#ollama-ollama" title="Permanent link">&para;</a></h3>
-<p>Calls a running Ollama server at <code>OLLAMA_HOST</code> (default <code>http://localhost:11434</code>) via its
-<code>/api/generate</code> REST endpoint.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;ollama:llama3&quot;</span><span class="p">,</span> <span class="s2">&quot;Explain Docker networking.&quot;</span><span class="p">)</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;ollama:mistral:7b&quot;</span><span class="p">,</span> <span class="s2">&quot;Write a Python parser.&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Configuration</strong>:</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Effect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>OLLAMA_HOST</code></td>
-<td><code>http://localhost:11434</code></td>
-<td>Server address</td>
-</tr>
-<tr>
-<td><code>OLLAMA_TIMEOUT_SECONDS</code></td>
-<td><code>180</code></td>
-<td>Request timeout</td>
-</tr>
-</tbody>
-</table>
-<p>The model name after the <code>ollama:</code> prefix is passed directly to the Ollama API. Start Ollama and
-pull a model with <code>ollama pull &lt;name&gt;</code> before use.</p>
-<hr />
-<h3 id="windows-ai-phi-silica-windows-ai">Windows AI / Phi Silica (<code>windows-ai:*</code>)<a class="headerlink" href="#windows-ai-phi-silica-windows-ai" title="Permanent link">&para;</a></h3>
-<p>Calls Microsoft's Phi Silica SLM running on the NPU of a Windows 11 Copilot+ PC. This uses a
-.NET bridge (<code>tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj</code>) because the WinRT APIs are
-not directly accessible from Python.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;windows-ai:phi-silica&quot;</span><span class="p">,</span> <span class="s2">&quot;Summarize this text.&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>For bridge setup, LAF token troubleshooting, and availability checks, see
-<a href="../windows-ai/">Windows AI</a>.</p>
-<p><strong>Requirements</strong>:
-- Windows 11 with NPU hardware (Qualcomm Snapdragon X; AMD Ryzen AI support rolling out)
-- Windows App SDK 1.7+
-- <code>dotnet</code> CLI on <code>PATH</code>
-- <code>winrt-runtime</code> Python package</p>
-<div class="admonition note">
-<p class="admonition-title">AMD NPU status</p>
-<p>As of mid-2025 Windows Insider builds (e.g. build 26220), AMD XDNA NPU support for Phi
-Silica is not yet fully enabled — this may have changed on newer builds.
-The LAF (Limited Access Feature) unlock returns <code>Unavailable</code> on AMD hardware. See
-<code>tools/llm/windows_ai_bridge/PHI_SILICA_STATUS.md</code> for the current status and workarounds.</p>
-</div>
-<p><strong>LAF token configuration</strong> (if required):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">PHI_SILICA_LAF_FEATURE_ID</span><span class="o">=</span>com.microsoft.windows.ai.languagemodel
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nv">PHI_SILICA_LAF_TOKEN</span><span class="o">=</span>&lt;your-token&gt;
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nv">PHI_SILICA_LAF_ATTESTATION</span><span class="o">=</span>&lt;your-attestation&gt;
-</span></code></pre></div>
-<hr />
-<h3 id="azure-ai-foundry-azure-foundry">Azure AI Foundry (<code>azure-foundry:*</code>)<a class="headerlink" href="#azure-ai-foundry-azure-foundry" title="Permanent link">&para;</a></h3>
-<p>Calls an Azure AI Foundry chat/completions endpoint directly via <code>urllib.request</code>. The endpoint
-URL is constructed from numbered environment variables, allowing different models per slot.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-foundry:phi4mini&quot;</span><span class="p">,</span> <span class="s2">&quot;Design a microservice.&quot;</span><span class="p">)</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-foundry:1&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>   <span class="c1"># explicit slot 1</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-foundry:2&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>   <span class="c1"># explicit slot 2 (mistral)</span>
-</span></code></pre></div>
-<p><strong>Slot routing</strong>:</p>
-<table>
-<thead>
-<tr>
-<th>Model name part</th>
-<th>Endpoint variable</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>phi4mini</code>, <code>phi4</code>, <code>phi</code>, <code>1</code></td>
-<td><code>AZURE_FOUNDRY_ENDPOINT_1</code></td>
-</tr>
-<tr>
-<td><code>mistral</code>, <code>2</code></td>
-<td><code>AZURE_FOUNDRY_ENDPOINT_2</code></td>
-</tr>
-<tr>
-<td><code>&lt;n&gt;</code> (numeric)</td>
-<td><code>AZURE_FOUNDRY_ENDPOINT_&lt;n&gt;</code></td>
-</tr>
-<tr>
-<td>unknown</td>
-<td>fallback to <code>AZURE_FOUNDRY_ENDPOINT_1</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Required variables</strong>: <code>AZURE_FOUNDRY_API_KEY</code>, <code>AZURE_FOUNDRY_ENDPOINT_&lt;n&gt;</code>.</p>
-<p>The endpoint URL is automatically appended with <code>/chat/completions?api-version=2024-02-15-preview</code>
-if not already present.</p>
-<hr />
-<h3 id="azure-openai-service-azure-openai">Azure OpenAI Service (<code>azure-openai:*</code>)<a class="headerlink" href="#azure-openai-service-azure-openai" title="Permanent link">&para;</a></h3>
-<p>Uses the <code>openai.AzureOpenAI</code> SDK. Supports numbered slot failover for multi-endpoint deployments.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-openai:my-gpt4-deployment&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-openai:0:my-deployment&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>   <span class="c1"># explicit slot 0</span>
-</span></code></pre></div>
-<p><strong>Slot format</strong>: <code>azure-openai:&lt;slot&gt;:&lt;deployment&gt;</code> where slot is an integer.</p>
-<p><strong>Environment variables</strong>: <code>AZURE_OPENAI_ENDPOINT_&lt;n&gt;</code>, <code>AZURE_OPENAI_API_KEY_&lt;n&gt;</code> (slots 0–9).
-Also accepts legacy <code>AZURE_OPENAI_ENDPOINT</code> / <code>AZURE_OPENAI_API_KEY</code> (no slot suffix).</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AZURE_OPENAI_API_VERSION</code></td>
-<td><code>2024-02-15-preview</code></td>
-<td>API version for all slots</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3 id="github-models-gh">GitHub Models (<code>gh:*</code>)<a class="headerlink" href="#github-models-gh" title="Permanent link">&para;</a></h3>
-<p>Uses the <code>gh</code> CLI's <code>models run</code> subcommand. The friendly name is mapped to a publisher-qualified
-model ID before calling the CLI.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;Explain async/await.&quot;</span><span class="p">)</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:llama-4-scout&quot;</span><span class="p">,</span> <span class="s2">&quot;Summarize this paper.&quot;</span><span class="p">)</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:deepseek-r1&quot;</span><span class="p">,</span> <span class="s2">&quot;Prove the halting problem.&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Friendly-name alias table</strong> (partial):</p>
-<table>
-<thead>
-<tr>
-<th>Short name</th>
-<th>Full GitHub model ID</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>gpt-4o-mini</code></td>
-<td><code>openai/gpt-4o-mini</code></td>
-</tr>
-<tr>
-<td><code>gpt-4o</code></td>
-<td><code>openai/gpt-4o</code></td>
-</tr>
-<tr>
-<td><code>gpt-4.1</code></td>
-<td><code>openai/gpt-4.1</code></td>
-</tr>
-<tr>
-<td><code>gpt-4.1-mini</code></td>
-<td><code>openai/gpt-4.1-mini</code></td>
-</tr>
-<tr>
-<td><code>gpt-5</code></td>
-<td><code>openai/gpt-5</code></td>
-</tr>
-<tr>
-<td><code>llama-3.3-70b</code></td>
-<td><code>meta/llama-3.3-70b-instruct</code></td>
-</tr>
-<tr>
-<td><code>llama-4-scout</code></td>
-<td><code>meta/llama-4-scout-17b-16e-instruct</code></td>
-</tr>
-<tr>
-<td><code>llama-4-maverick</code></td>
-<td><code>meta/llama-4-maverick-17b-128e-instruct-fp8</code></td>
-</tr>
-<tr>
-<td><code>mistral-small</code></td>
-<td><code>mistral-ai/mistral-small-2503</code></td>
-</tr>
-<tr>
-<td><code>mistral-medium</code></td>
-<td><code>mistral-ai/mistral-medium-2505</code></td>
-</tr>
-<tr>
-<td><code>codestral</code></td>
-<td><code>mistral-ai/codestral-2501</code></td>
-</tr>
-<tr>
-<td><code>deepseek-r1</code></td>
-<td><code>deepseek/deepseek-r1</code></td>
-</tr>
-<tr>
-<td><code>deepseek-v3</code></td>
-<td><code>deepseek/deepseek-v3-0324</code></td>
-</tr>
-<tr>
-<td><code>phi-4</code></td>
-<td><code>microsoft/phi-4</code></td>
-</tr>
-<tr>
-<td><code>phi-4-reasoning</code></td>
-<td><code>microsoft/phi-4-reasoning</code></td>
-</tr>
-<tr>
-<td><code>grok-3</code></td>
-<td><code>xai/grok-3</code></td>
-</tr>
-<tr>
-<td><code>grok-3-mini</code></td>
-<td><code>xai/grok-3-mini</code></td>
-</tr>
-</tbody>
-</table>
-<p>Unknown short names are passed through unchanged. Full publisher/model format (e.g.,
-<code>meta/llama-3.3-70b-instruct</code>) is always accepted.</p>
-<p><strong>Rate limit handling</strong> — configurable via environment:</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Effect</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>PROMPTS_GH_RATE_LIMIT_STRATEGY</code></td>
 <td><code>fallback</code></td>
-<td><code>fallback</code> returns an error string; <code>wait</code> retries with backoff</td>
 </tr>
 <tr>
 <td><code>PROMPTS_GH_MAX_RETRIES</code></td>
 <td><code>1</code></td>
-<td>Number of retry attempts on rate limit</td>
 </tr>
 <tr>
 <td><code>PROMPTS_GH_BASE_DELAY_SECONDS</code></td>
 <td><code>2</code></td>
-<td>Base delay (doubles exponentially)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Prerequisites</strong>: <code>gh</code> CLI on PATH, authenticated with <code>gh auth login</code>, <code>GITHUB_TOKEN</code> set.</p>
-<hr />
-<h3 id="openai-openai-or-bare-gpt">OpenAI (<code>openai:*</code> or bare <code>gpt*</code>)<a class="headerlink" href="#openai-openai-or-bare-gpt" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;openai:gpt-4o&quot;</span><span class="p">,</span> <span class="s2">&quot;Write a Dockerfile.&quot;</span><span class="p">)</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>   <span class="c1"># inferred from substring</span>
+<h3 id="ollama">Ollama<a class="headerlink" href="#ollama" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>OLLAMA_HOST=http://localhost:11434
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>OLLAMA_TIMEOUT_SECONDS=180
 </span></code></pre></div>
-<p>Uses <code>openai.OpenAI</code> SDK. Requires <code>OPENAI_API_KEY</code>. Must enable <code>PROMPTEVAL_ALLOW_REMOTE=1</code>.</p>
-<hr />
-<h3 id="google-gemini-gemini-or-bare-gemini">Google Gemini (<code>gemini:*</code> or bare <code>gemini*</code>)<a class="headerlink" href="#google-gemini-gemini-or-bare-gemini" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gemini:gemini-2.0-flash&quot;</span><span class="p">,</span> <span class="s2">&quot;Compare LSTMs and Transformers.&quot;</span><span class="p">)</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gemini-1.5-pro&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>  <span class="c1"># inferred</span>
+<p>The adapter sends a non-streaming request to <code>/api/generate</code>. Confirm the
+requested model is already installed in Ollama.</p>
+<h3 id="azure-openai">Azure OpenAI<a class="headerlink" href="#azure-openai" title="Permanent link">&para;</a></h3>
+<p>For one endpoint:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>AZURE_OPENAI_ENDPOINT=https://example.openai.azure.com/
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>AZURE_OPENAI_API_KEY=&lt;secret&gt;
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>AZURE_OPENAI_API_VERSION=2024-02-15-preview
 </span></code></pre></div>
-<p>Uses <code>google.generativeai</code> SDK. Requires <code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code>. Must enable
-<code>PROMPTEVAL_ALLOW_REMOTE=1</code>. The system instruction is prepended inline as
-<code>"System Instruction: {system}\n\n{prompt}"</code>; the adapter deliberately skips the SDK's
-<code>system_instruction</code> parameter to keep the call path uniform across providers.</p>
-<hr />
-<h3 id="anthropic-claude-claude-or-bare-claude">Anthropic Claude (<code>claude:*</code> or bare <code>claude*</code>)<a class="headerlink" href="#anthropic-claude-claude-or-bare-claude" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude:claude-sonnet-4-6&quot;</span><span class="p">,</span> <span class="s2">&quot;Review this code.&quot;</span><span class="p">)</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude-haiku-4-5&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>  <span class="c1"># inferred</span>
+<p>The model name after <code>azure-openai:</code> is the deployment name, not necessarily
+the provider's base model name.</p>
+<h3 id="hosted-openai-gemini-and-claude">Hosted OpenAI, Gemini, and Claude<a class="headerlink" href="#hosted-openai-gemini-and-claude" title="Permanent link">&para;</a></h3>
+<p>These paths require <code>PROMPTEVAL_ALLOW_REMOTE=1</code> and the provider credential.
+Provider-specific optional SDKs must also be installed when they are not part
+of the root package.</p>
+<h2 id="local-onnx">Local ONNX<a class="headerlink" href="#local-onnx" title="Permanent link">&para;</a></h2>
+<p>Local names come from <code>tools.llm.local_models.LOCAL_MODELS</code>. A key such as
+<code>local:phi4mini</code> is resolved under:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>~/.cache/aigallery/
 </span></code></pre></div>
-<p>Uses the <code>anthropic.Anthropic</code> SDK. Requires <code>ANTHROPIC_API_KEY</code> or <code>CLAUDE_API_KEY</code>. System
-instruction is passed as the <code>system</code> parameter in the Messages API. Must enable
-<code>PROMPTEVAL_ALLOW_REMOTE=1</code>. <code>max_tokens</code> is fixed at 4096 for Claude calls.</p>
-<hr />
-<h2 id="langchain-adapter">LangChain adapter<a class="headerlink" href="#langchain-adapter" title="Permanent link">&para;</a></h2>
-<p><code>tools/llm/langchain_adapter.py</code> provides a thin shim for LangChain integration.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.langchain_adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LangChainAdapter</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">LangChainAdapter</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">)</span>
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
-</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1"># Callable like a LangChain LLM</span>
-</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">llm</span><span class="p">(</span><span class="s2">&quot;Explain the chain of responsibility pattern.&quot;</span><span class="p">)</span>
-</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
-</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="c1"># predict() method</span>
-</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="n">text</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="s2">&quot;You are a Python expert.&quot;</span><span class="p">)</span>
-</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>
-</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="c1"># generate() returns LLMResult if langchain is installed, dict otherwise</span>
-</span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">([</span><span class="s2">&quot;Prompt 1&quot;</span><span class="p">,</span> <span class="s2">&quot;Prompt 2&quot;</span><span class="p">])</span>
+<p>The selected model directory must contain an ONNX file. See
+<a href="../local-models/">Local models</a> for setup and direct use.</p>
+<h2 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h2>
+<p>Provider failures are normally wrapped in <code>LLMClientError</code>, which includes the
+requested model and keeps the original exception in <code>original_error</code>.
+Configuration gates and some provider validation can raise <code>RuntimeError</code>,
+<code>ValueError</code>, or <code>ImportError</code> before a provider call.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span><span class="p">,</span> <span class="n">LLMClientError</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;ollama:missing-model&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">except</span> <span class="n">LLMClientError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">original_error</span><span class="p">)</span>
 </span></code></pre></div>
-<p>The adapter delegates all calls to <code>LLMClient.generate_text()</code> and tries to construct real
-<code>langchain.schema.LLMResult</code> / <code>Generation</code> objects when <code>langchain</code> is installed. If LangChain
-is not present, it returns a simple dict with a <code>generations</code> key.</p>
-<hr />
-<h2 id="remote-provider-gate">Remote provider gate<a class="headerlink" href="#remote-provider-gate" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># All of these raise RuntimeError when PROMPTEVAL_ALLOW_REMOTE is unset:</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;openai:gpt-4o&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;claude:claude-3-opus&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gemini:gemini-1.5-pro&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-foundry:phi4mini&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;azure-openai:my-deploy&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
-</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># These always succeed (local / free-tier):</span>
-</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;local:phi4mini&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;ollama:llama3&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;windows-ai:phi-silica&quot;</span><span class="p">,</span> <span class="s2">&quot;...&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
+<p>Do not log prompts, credentials, or complete provider responses by default.</p>
 <h2 id="response-cache">Response cache<a class="headerlink" href="#response-cache" title="Permanent link">&para;</a></h2>
-<p>The cache is applied transparently inside <code>generate_text()</code>. The cache key is the SHA-256 hash of
-<code>(model_name, prompt, system_instruction, temperature, max_tokens)</code>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Disable globally for stochastic/median-scoring runs</span>
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PROMPTS_CACHE_ENABLED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
-</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
-</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="c1"># Or use the cache API directly</span>
-</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_cached_response</span><span class="p">,</span> <span class="n">cache_response</span><span class="p">,</span> <span class="n">clear_cache</span><span class="p">,</span> <span class="n">get_cache_stats</span>
-</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>
-</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="c1"># Manual look-up before a call</span>
-</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="n">cached</span> <span class="o">=</span> <span class="n">get_cached_response</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>
-</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="c1"># Manual population after a call</span>
-</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="n">cache_response</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">prompt</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>
-</span><span id="__span-19-15"><a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="c1"># Clear entries older than 12 hours</span>
-</span><span id="__span-19-16"><a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="n">clear_cache</span><span class="p">(</span><span class="n">max_age_hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-</span><span id="__span-19-17"><a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a>
-</span><span id="__span-19-18"><a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="c1"># Stats</span>
-</span><span id="__span-19-19"><a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">get_cache_stats</span><span class="p">()</span>
-</span><span id="__span-19-20"><a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a><span class="nb">print</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;hit_rate&quot;</span><span class="p">],</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;entries&quot;</span><span class="p">])</span>
+<p>The client attempts to use the shared response cache when it is importable.
+Set <code>PROMPTS_CACHE_ENABLED=0</code> when every call must reach the provider.</p>
+<p>A cache hit is not proof that a provider is currently available. Disable or
+clear caches for availability probes and time-sensitive comparisons.</p>
+<h2 id="minimal-langchain-adapter">Minimal LangChain adapter<a class="headerlink" href="#minimal-langchain-adapter" title="Permanent link">&para;</a></h2>
+<p><code>tools.llm.langchain_adapter.LangChainAdapter</code> exposes <code>predict()</code>,
+<code>generate()</code>, and <code>__call__()</code> over <code>LLMClient</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.langchain_adapter</span><span class="w"> </span><span class="kn">import</span> <span class="n">LangChainAdapter</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LangChainAdapter</span><span class="p">(</span><span class="s2">&quot;ollama:llama3&quot;</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="s2">&quot;Summarize this change.&quot;</span><span class="p">))</span>
 </span></code></pre></div>
-<p>Storage: <code>~/.cache/prompts-eval/responses/&lt;sha256_hex&gt;.json</code>.<br />
-Default TTL: 24 hours.<br />
-Max size: 500 MB (LRU eviction).</p>
-<hr />
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<p>All tests in <code>tools/tests/test_llm_client.py</code> are fully mocked. No live API calls are made.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">patch</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_gh_dispatch</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setenv</span><span class="p">(</span><span class="s2">&quot;PROMPTS_CACHE_ENABLED&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span>
-</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;tools.llm.provider_adapters.call_github_models&quot;</span><span class="p">,</span> <span class="n">return_value</span><span class="o">=</span><span class="s2">&quot;ok&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mock_gh</span><span class="p">:</span>
-</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;hi&quot;</span><span class="p">)</span>
-</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="s2">&quot;ok&quot;</span>
-</span><span id="__span-20-9"><a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>    <span class="n">mock_gh</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span>
-</span></code></pre></div>
-<p>Key test classes: <code>TestRemoteProviderGating</code>, <code>TestLLMClientError</code>, <code>TestPickPreferredModel</code>.</p>
+<p>This is a small compatibility shim, not the runtime's LangGraph execution
+adapter. Test it against the exact LangChain version used by the caller.</p>
 
 
 
@@ -3866,7 +3446,7 @@ Max size: 500 MB (LRU eviction).</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

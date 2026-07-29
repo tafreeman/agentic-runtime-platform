@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Overview - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/index.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/operations/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Overview - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/index.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2078,6 +2108,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2178,6 +2212,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2488,6 +2578,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2548,6 +2642,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2735,10 +2885,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pages-in-this-section" class="md-nav__link">
+  <a href="#before-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pages in this section
+        Before deployment
       
     </span>
   </a>
@@ -2746,10 +2896,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#companion-references" class="md-nav__link">
+  <a href="#during-operation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Companion references
+        During operation
       
     </span>
   </a>
@@ -2757,10 +2907,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-to-start" class="md-nav__link">
+  <a href="#related-references" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Where to start
+        Related references
       
     </span>
   </a>
@@ -2801,67 +2951,64 @@
 
 
 <h1 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h1>
-<p>Operator-facing documentation for deploying and running the platform in production.
-These pages assume the server is deployed from the <code>agentic-workflows-v2/</code> package and
-accessible via uvicorn or a container.</p>
-<hr />
-<h2 id="pages-in-this-section">Pages in this section<a class="headerlink" href="#pages-in-this-section" title="Permanent link">&para;</a></h2>
+<p>Use these pages to configure, deploy, secure, and diagnose the FastAPI server.</p>
+<h2 id="before-deployment">Before deployment<a class="headerlink" href="#before-deployment" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Read the <a href="../deployment-guide/">deployment guide</a>.</li>
+<li>Set production values from the
+   <a href="../configuration/">configuration reference</a>.</li>
+<li>Apply the controls in
+   <a href="security-hardening/">security hardening</a>.</li>
+<li>Review <a href="../KNOWN_LIMITATIONS/">known limitations</a>.</li>
+<li>Test the same artifact and environment settings that will run in
+   production.</li>
+</ol>
+<p>The development command is not a production process manager. Run the server
+behind an appropriate proxy or platform service, keep secrets outside the
+image, and use explicit health checks:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET /api/health
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>GET /api/health/ready
+</span></code></pre></div>
+<p>The first endpoint reports process health. Readiness also checks dependencies
+needed to accept work.</p>
+<h2 id="during-operation">During operation<a class="headerlink" href="#during-operation" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use structured logs and preserve the <code>run_id</code> for each workflow.</li>
+<li>Monitor failed steps, retries, model routing, provider errors, and latency.</li>
+<li>Keep workflow run storage on durable storage if run history matters.</li>
+<li>Confirm that each replica can reach the same required configuration and
+  state.</li>
+<li>Treat model and evaluator output as untrusted data at system boundaries.</li>
+</ul>
+<p>See <a href="troubleshooting/">troubleshooting</a> for startup, API, model, workflow,
+RAG, and UI diagnostics.</p>
+<h2 id="related-references">Related references<a class="headerlink" href="#related-references" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Page</th>
-<th>Description</th>
+<th>Use it for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="security-hardening/">Security Hardening</a></td>
-<td>Security knobs, rate limiting, auth throttling, filesystem sandboxing, sanitization, and CORS</td>
-</tr>
-<tr>
-<td><a href="troubleshooting/">Troubleshooting</a></td>
-<td>Common failure modes, log patterns, and diagnostic recipes</td>
-</tr>
-<tr>
-<td><a href="../deployment-guide/">Deployment Guide</a></td>
-<td>CI/CD pipeline, Docker, environment setup, and observability</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="companion-references">Companion references<a class="headerlink" href="#companion-references" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Reference</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="../configuration/">Configuration Reference</a></td>
-<td>Every environment variable, its default, and accepted values</td>
-</tr>
-<tr>
-<td><a href="../KNOWN_LIMITATIONS/">Known Limitations</a></td>
-<td>Current rough edges — in-process caveats, multi-replica behavior, and deferred Sprint 2 work</td>
+<td><a href="../api-contracts-runtime/">Runtime API contracts</a></td>
+<td>Routes and request shapes</td>
 </tr>
 <tr>
 <td><a href="../ARCHITECTURE/">Architecture</a></td>
-<td>Runtime engine internals — DAG executor, adapter registry, RAG pipeline</td>
+<td>Component and execution boundaries</td>
+</tr>
+<tr>
+<td><a href="../NO_LLM_MODE/">No-LLM mode</a></td>
+<td>Deterministic and provider-free checks</td>
+</tr>
+<tr>
+<td><a href="../MIGRATIONS/">Migration guide</a></td>
+<td>Breaking changes between versions</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="where-to-start">Where to start<a class="headerlink" href="#where-to-start" title="Permanent link">&para;</a></h2>
-<p>If you are hardening a new production deployment, begin with <a href="security-hardening/">Security Hardening</a>
-and work through the <strong>Reference deployment posture</strong> section at the bottom of that page.
-The copy-pasteable <code>.env</code> block there represents the minimum recommended configuration
-for an internet-exposed instance.</p>
-<p>If the server is not starting, see <a href="troubleshooting/">Troubleshooting</a> for startup
-failure patterns. The most common cause is a missing LangChain extras install; the
-<a href="security-hardening/#5-adapter-eager-validation">Security Hardening</a> page explains
-how to bypass this with <code>AGENTIC_DEFAULT_ADAPTER=native</code>.</p>
 
 
 
@@ -2884,7 +3031,7 @@ how to bypass this with <code>AGENTIC_DEFAULT_ADAPTER=native</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

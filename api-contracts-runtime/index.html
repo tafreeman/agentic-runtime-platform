@@ -6,14 +6,14 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
         <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/api-contracts-runtime/">
       
       
-        <link rel="prev" href="../deep-dive-agentic-v2-eval/">
+        <link rel="prev" href="../cli-reference/">
       
       
         <link rel="next" href="../data-models-runtime/">
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="REST endpoints - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/api-contracts-runtime.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/api-contracts-runtime/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="REST endpoints - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/api-contracts-runtime.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-contracts-runtime-backend" class="md-skip">
+        <a href="#runtime-api-contracts" class="md-skip">
           Skip to content
         </a>
       
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1208,6 +1208,8 @@
       
         
       
+        
+      
     
     
     
@@ -1255,6 +1257,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1321,6 +1351,78 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#route-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Route map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-and-catalogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health and catalogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-chat-and-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models, chat, and settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-finder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model finder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflows-and-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflows and execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runs-and-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runs and evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#endpoint-reference" class="md-nav__link">
@@ -2266,6 +2368,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2363,6 +2469,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2673,6 +2835,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2733,6 +2899,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2920,6 +3142,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#route-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Route map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Route map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-and-catalogs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health and catalogs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#models-chat-and-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models, chat, and settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-finder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model finder
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflows-and-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflows and execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runs-and-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runs and evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#endpoint-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3090,16 +3384,327 @@
   
 
 
-<h1 id="api-contracts-runtime-backend">API contracts — runtime backend<a class="headerlink" href="#api-contracts-runtime-backend" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Audience:</strong> Frontend engineers, integration developers, and QA engineers who need a precise reference of every REST endpoint and WebSocket contract.
-<strong>Base URL (development):</strong> <code>http://localhost:8010</code>
-<strong>OpenAPI spec:</strong> <code>GET /openapi.json</code> | <strong>Swagger UI:</strong> <code>GET /docs</code> | <strong>ReDoc:</strong> <code>GET /redoc</code></p>
-</blockquote>
-<p><strong>Authentication:</strong> When <code>AGENTIC_API_KEY</code> is set, protected endpoints require one of:
-- <code>Authorization: Bearer &lt;key&gt;</code> header
-- <code>X-API-Key: &lt;key&gt;</code> header</p>
-<p>Public endpoints that bypass auth: <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, <code>/redoc</code>.</p>
+<h1 id="runtime-api-contracts">Runtime API contracts<a class="headerlink" href="#runtime-api-contracts" title="Permanent link">&para;</a></h1>
+<p>This page explains the runtime backend routes used by the dashboard and other
+clients. In the standard development environment, the base URL is
+<code>http://localhost:8010</code>.</p>
+<ul>
+<li>OpenAPI document: <code>GET /openapi.json</code></li>
+<li>Swagger UI: <code>GET /docs</code></li>
+<li>ReDoc: <code>GET /redoc</code></li>
+</ul>
+<p><strong>Authentication:</strong> When <code>AGENTIC_API_KEY</code> is set, protected endpoints require one of:</p>
+<ul>
+<li><code>Authorization: Bearer &lt;key&gt;</code> header</li>
+<li><code>X-API-Key: &lt;key&gt;</code> header</li>
+</ul>
+<p>The <code>/api/health</code> prefix, <code>/docs</code>, <code>/openapi.json</code>, and <code>/redoc</code> bypass API-key
+authentication. This includes <code>/api/health/ready</code>. If OIDC is enabled, use the
+OIDC settings described in <a href="../configuration/#http-authentication">Configuration</a>.</p>
+<h2 id="route-map">Route map<a class="headerlink" href="#route-map" title="Permanent link">&para;</a></h2>
+<p>The OpenAPI document is the machine-readable source of truth for request and
+response schemas. This table gives the complete route inventory.</p>
+<h3 id="health-and-catalogs">Health and catalogs<a class="headerlink" href="#health-and-catalogs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/health</code></td>
+<td>Check whether the process is running</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/health/ready</code></td>
+<td>Check whether required runtime dependencies are ready</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/agents</code></td>
+<td>List configured agents</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/personas</code></td>
+<td>List available personas</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/tools</code></td>
+<td>List tools that workflow steps may allow</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/observers</code></td>
+<td>List available observers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="models-chat-and-settings">Models, chat, and settings<a class="headerlink" href="#models-chat-and-settings" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/models/probe</code></td>
+<td>Probe configured model providers</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/models/lmstudio/load</code></td>
+<td>Ask LM Studio to load a local model</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/chat</code></td>
+<td>Stream a model or tier-based chat response</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>PUT</code></td>
+<td><code>/api/settings/providers</code></td>
+<td>Read or replace saved provider settings</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/providers/{provider_id}/probe</code></td>
+<td>Test one saved provider</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>PUT</code></td>
+<td><code>/api/settings/tiers</code></td>
+<td>Read or replace tier routing settings</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>POST</code></td>
+<td><code>/api/settings/model-packs</code></td>
+<td>List or create model packs</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/settings/model-packs/{pack_id}</code></td>
+<td>Create a new version of a model pack</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/duplicate</code></td>
+<td>Copy a model pack</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/validate</code></td>
+<td>Validate a model pack</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/activate</code></td>
+<td>Make a model pack active</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/settings/model-packs/active</code></td>
+<td>Clear the active model pack</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/bindings/{workflow_name}</code></td>
+<td>Bind a model pack to one workflow</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/api/settings/model-packs/bindings/{workflow_name}</code></td>
+<td>Clear a workflow-specific model-pack binding</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/dependencies</code></td>
+<td>Find runs and bindings that use a model pack</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/archive</code></td>
+<td>Archive an unused model pack</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/settings/model-packs/{pack_id}/export</code></td>
+<td>Export a model pack</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/settings/model-packs/import</code></td>
+<td>Import a model pack</td>
+</tr>
+</tbody>
+</table>
+<p>Provider and tier settings are stored in <code>~/.agentic/ui-settings.json</code>. Secrets
+remain in environment variables; the settings API does not return secret
+values.</p>
+<h3 id="model-finder">Model finder<a class="headerlink" href="#model-finder" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/model-finder/profile</code></td>
+<td>Inspect the detected hardware profile</td>
+</tr>
+<tr>
+<td><code>GET</code>, <code>PUT</code>, <code>DELETE</code></td>
+<td><code>/api/model-finder/profile-override</code></td>
+<td>Read, set, or remove a hardware override</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/model-finder/recommendations</code></td>
+<td>Rank local models for the current profile and filters</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflows-and-execution">Workflows and execution<a class="headerlink" href="#workflows-and-execution" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows</code></td>
+<td>List discovered workflows</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/adapters</code></td>
+<td>List execution adapters</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows/{name}/dag</code></td>
+<td>Return the workflow graph</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows/{name}/capabilities</code></td>
+<td>Describe workflow features and engine compatibility</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows/{name}/editor</code></td>
+<td>Return an editable workflow document</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/workflows/{name}</code></td>
+<td>Save a workflow document</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/workflows/validate</code></td>
+<td>Validate an unsaved workflow document</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/run</code></td>
+<td>Start a workflow run</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows/{workflow_name}/preview-dataset-inputs</code></td>
+<td>Preview how dataset samples map to workflow inputs</td>
+</tr>
+<tr>
+<td><code>WS</code></td>
+<td><code>/ws/execution/{run_id}</code></td>
+<td>Start and observe an interactive run</td>
+</tr>
+</tbody>
+</table>
+<h3 id="runs-and-evaluation">Runs and evaluation<a class="headerlink" href="#runs-and-evaluation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/runs</code></td>
+<td>List saved runs</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/runs/summary</code></td>
+<td>Return aggregate run counts</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/runs/{filename}</code></td>
+<td>Read one saved run</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/runs/{filename}/evaluate</code></td>
+<td>Evaluate one saved run</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/runs/{filename}/evaluation</code></td>
+<td>Read a saved evaluation</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/runs/{run_id}/stream</code></td>
+<td>Stream saved run events over SSE</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/eval/compare</code></td>
+<td>Compare evaluation results</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets</code></td>
+<td>List evaluation datasets</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets/{source}/{dataset_id:path}/samples</code></td>
+<td>List dataset samples</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets/{source}/{dataset_id:path}/samples/{sample_index}</code></td>
+<td>Read one dataset sample</td>
+</tr>
+</tbody>
+</table>
+<p>The query-string routes <code>/api/eval/datasets/sample-list</code> and
+<code>/api/eval/datasets/sample-detail</code> remain available for older clients. New
+clients should use the path-based routes in the table.</p>
 <hr />
 <h2 id="endpoint-reference">Endpoint reference<a class="headerlink" href="#endpoint-reference" title="Permanent link">&para;</a></h2>
 <h3 id="health">Health<a class="headerlink" href="#health" title="Permanent link">&para;</a></h3>
@@ -3112,6 +3717,10 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.1.0&quot;</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">}</span>
 </span></code></pre></div>
+<h4 id="get-apihealthready"><code>GET /api/health/ready</code><a class="headerlink" href="#get-apihealthready" title="Permanent link">&para;</a></h4>
+<p>Readiness probe. It checks the state needed to accept work and returns <code>503</code>
+when a required dependency is unavailable. Use this route for deployment
+readiness checks; use <code>/api/health</code> for liveness checks.</p>
 <hr />
 <h3 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h3>
 <hr />
@@ -3715,7 +4324,9 @@ extras return <code>503</code>.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Event payloads</strong> — see the <a href="../data-models-runtime/#5-execution-events-wire-format">Data Models</a> document for the full discriminated union schema.</p>
+<p><strong>Event payloads</strong> — see
+<a href="../data-models-runtime/#execution-events">Runtime data contracts</a> for the full
+discriminated union.</p>
 <hr />
 <h2 id="error-response-format">Error response format<a class="headerlink" href="#error-response-format" title="Permanent link">&para;</a></h2>
 <p>All error responses use the standard FastAPI JSON format:</p>
@@ -3842,7 +4453,7 @@ extras return <code>503</code>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 04:03:44 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     
@@ -3887,7 +4498,7 @@ extras return <code>503</code>.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../deep-dive-agentic-v2-eval/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Evaluation engine">
+          <a href="../cli-reference/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CLI commands">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3897,7 +4508,7 @@ extras return <code>503</code>.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Evaluation engine
+                CLI commands
               </div>
             </div>
           </a>

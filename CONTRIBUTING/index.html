@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Contributing - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/CONTRIBUTING.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/CONTRIBUTING/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Contributing - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/CONTRIBUTING.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing-to-tafreemanagentic-runtime-platform" class="md-skip">
+        <a href="#contributing" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2485,6 +2575,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2548,6 +2642,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2712,10 +2862,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-what-lives-in-this-repo" class="md-nav__link">
+  <a href="#repository-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. What lives in this repo
+        Repository boundaries
       
     </span>
   </a>
@@ -2723,22 +2873,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-local-setup" class="md-nav__link">
+  <a href="#set-up-the-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Local setup
+        Set up the workspace
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Local setup">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a branch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-a-focused-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make a focused change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-ci-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What CI checks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What CI checks">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#provider-credentials" class="md-nav__link">
+  <a href="#run-without-provider-keys" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider credentials
+        Run without provider keys
       
     </span>
   </a>
@@ -2751,10 +2945,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-development-workflow" class="md-nav__link">
+  <a href="#change-generated-contracts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Development workflow
+        Change generated contracts
       
     </span>
   </a>
@@ -2762,77 +2956,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-required-local-gates" class="md-nav__link">
+  <a href="#write-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Required local gates
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Required local gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#per-package-test-entrypoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Per-package test entrypoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ci-gates-you-must-not-break" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI gates you must not break
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-commit-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Commit format
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Commit format">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#commit-signing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Commit signing
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-when-to-write-an-adr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. When to write an ADR
+        Write documentation
       
     </span>
   </a>
@@ -2840,10 +2967,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-documentation" class="md-nav__link">
+  <a href="#write-an-adr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Documentation
+        Write an ADR
       
     </span>
   </a>
@@ -2851,10 +2978,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-security" class="md-nav__link">
+  <a href="#commit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Security
+        Commit
       
     </span>
   </a>
@@ -2862,10 +2989,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#9-need-help" class="md-nav__link">
+  <a href="#pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. Need help
+        Pull request
       
     </span>
   </a>
@@ -2873,10 +3000,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-pr-checklist" class="md-nav__link">
+  <a href="#security-reports" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. PR checklist
+        Security reports
       
     </span>
   </a>
@@ -2884,10 +3011,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development-provenance-verification" class="md-nav__link">
+  <a href="#help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Provenance &amp; Verification
+        Help
       
     </span>
   </a>
@@ -2965,10 +3092,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-what-lives-in-this-repo" class="md-nav__link">
+  <a href="#repository-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. What lives in this repo
+        Repository boundaries
       
     </span>
   </a>
@@ -2976,22 +3103,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-local-setup" class="md-nav__link">
+  <a href="#set-up-the-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Local setup
+        Set up the workspace
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. Local setup">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a branch
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-a-focused-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make a focused change
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-ci-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What CI checks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What CI checks">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#provider-credentials" class="md-nav__link">
+  <a href="#run-without-provider-keys" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Provider credentials
+        Run without provider keys
       
     </span>
   </a>
@@ -3004,10 +3175,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-development-workflow" class="md-nav__link">
+  <a href="#change-generated-contracts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Development workflow
+        Change generated contracts
       
     </span>
   </a>
@@ -3015,77 +3186,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-required-local-gates" class="md-nav__link">
+  <a href="#write-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Required local gates
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Required local gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#per-package-test-entrypoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Per-package test entrypoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ci-gates-you-must-not-break" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI gates you must not break
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-commit-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Commit format
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Commit format">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#commit-signing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Commit signing
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-when-to-write-an-adr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. When to write an ADR
+        Write documentation
       
     </span>
   </a>
@@ -3093,10 +3197,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-documentation" class="md-nav__link">
+  <a href="#write-an-adr" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Documentation
+        Write an ADR
       
     </span>
   </a>
@@ -3104,10 +3208,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-security" class="md-nav__link">
+  <a href="#commit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Security
+        Commit
       
     </span>
   </a>
@@ -3115,10 +3219,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#9-need-help" class="md-nav__link">
+  <a href="#pull-request" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. Need help
+        Pull request
       
     </span>
   </a>
@@ -3126,10 +3230,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#10-pr-checklist" class="md-nav__link">
+  <a href="#security-reports" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. PR checklist
+        Security reports
       
     </span>
   </a>
@@ -3137,10 +3241,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#development-provenance-verification" class="md-nav__link">
+  <a href="#help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Development Provenance &amp; Verification
+        Help
       
     </span>
   </a>
@@ -3180,287 +3284,218 @@
   
 
 
-<h1 id="contributing-to-tafreemanagentic-runtime-platform">Contributing to <code>tafreeman/agentic-runtime-platform</code><a class="headerlink" href="#contributing-to-tafreemanagentic-runtime-platform" title="Permanent link">&para;</a></h1>
+<h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
+<p>Use this guide when preparing a change for review. For installation and normal
+usage, start with <a href="../getting-started/">Getting started</a>.</p>
 <blockquote>
-<p><strong>Audience:</strong> Anyone landing their first PR on this monorepo.
-<strong>Outcome:</strong> After reading this, you can clone, change code, pass local gates, and open a merge-ready PR.
-<strong>Last verified:</strong> 2026-04-22</p>
+<p><strong>Last verified:</strong> 2026-07-28</p>
 </blockquote>
-<p>If you just want to run the platform, start at <a href="../ONBOARDING/"><code>docs/ONBOARDING.md</code></a> — it takes ~5 minutes to a first workflow run. This file is for contributors who intend to land code.</p>
-<hr />
-<h2 id="1-what-lives-in-this-repo">1. What lives in this repo<a class="headerlink" href="#1-what-lives-in-this-repo" title="Permanent link">&para;</a></h2>
+<h2 id="repository-boundaries">Repository boundaries<a class="headerlink" href="#repository-boundaries" title="Permanent link">&para;</a></h2>
+<p>This monorepo contains three Python packages and one frontend:</p>
 <table>
 <thead>
 <tr>
 <th>Path</th>
-<th>What it is</th>
-<th>Build backend</th>
-<th>Notes</th>
+<th>Ownership</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>agentic-workflows-v2/</code></td>
-<td>Runtime (CLI, DAG executor, LangGraph adapter, FastAPI server, WebSocket streaming)</td>
-<td>hatchling</td>
-<td>Python 3.11+</td>
-</tr>
-<tr>
-<td><code>agentic-workflows-v2/ui/</code></td>
-<td>React 19 dashboard (Vite 6, Tailwind, @xyflow/react)</td>
-<td>Vite</td>
-<td>Node 20+</td>
+<td>Runtime, CLI, FastAPI server, RAG, integrations, and UI</td>
 </tr>
 <tr>
 <td><code>agentic-v2-eval/</code></td>
-<td>Rubric-based evaluation framework</td>
-<td>hatchling</td>
-<td>Python 3.11+</td>
+<td>Evaluation models, rubrics, runners, and reporters</td>
 </tr>
 <tr>
 <td><code>tools/</code></td>
-<td>Shared LLM client, benchmarks, caching utilities (package name: <code>agentic-tools</code>)</td>
-<td>hatchling</td>
-<td>Python 3.11+</td>
+<td>Shared provider and benchmark utilities packaged as <code>agentic-tools</code></td>
+</tr>
+<tr>
+<td><code>tests/e2e/</code></td>
+<td>Cross-package behavior</td>
 </tr>
 </tbody>
 </table>
-<p>Each Python package installs independently. There are <strong>zero cross-package imports</strong> — <code>tools</code> is the only optional shared surface, imported with <code>from tools.llm import LLMClient</code>.</p>
-<p>Package-specific contribution notes live at <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/CONTRIBUTING.md"><code>agentic-workflows-v2/CONTRIBUTING.md</code></a>. This root document covers monorepo-wide policy.</p>
-<hr />
-<h2 id="2-local-setup">2. Local setup<a class="headerlink" href="#2-local-setup" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>just<span class="w"> </span>setup<span class="w">          </span><span class="c1"># installs root helpers + all three Python packages + UI deps</span>
+<p>The runtime and evaluation packages depend on the root <code>agentic-tools</code> package
+through the workspace configuration. Do not introduce another cross-package
+import or an editable sibling-repository dependency without reviewing
+<a href="../ARCHITECTURE/">Architecture</a> and the relevant ADRs.</p>
+<p>Package-specific notes are in
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/CONTRIBUTING.md"><code>agentic-workflows-v2/CONTRIBUTING.md</code></a>.</p>
+<h2 id="set-up-the-workspace">Set up the workspace<a class="headerlink" href="#set-up-the-workspace" title="Permanent link">&para;</a></h2>
+<p>Use Python 3.11 or newer and Node.js 20 or newer.</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">://</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="p">/</span><span class="n">tafreeman</span><span class="p">/</span><span class="n">agentic-runtime-platform</span><span class="p">.</span><span class="n">git</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd </span><span class="n">agentic-runtime-platform</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">just</span> <span class="n">setup</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pre-commit</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">pre-commit</span> <span class="n">install</span> <span class="p">-</span><span class="n">-install-hooks</span>
 </span></code></pre></div>
-<p><code>just setup</code> wraps the individual <code>pip install -e</code> and <code>npm install</code> steps so every contributor ends up with the same environment. If <code>just</code> is not on your PATH, install it (<code>winget install casey.just</code> on Windows, <code>brew install just</code> on macOS) or run the equivalent commands manually — see <code>justfile</code> for the exact wrapping.</p>
-<p>If you prefer a containerized workspace, open the repo in the provided devcontainer (<code>.devcontainer/</code>) — it installs everything at build time.</p>
-<h3 id="provider-credentials">Provider credentials<a class="headerlink" href="#provider-credentials" title="Permanent link">&para;</a></h3>
-<p>At least one LLM provider must be configured before any non-deterministic workflow will run:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># edit .env and set ONE of:</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1">#   GITHUB_TOKEN=ghp_…        (free tier, used by CI)</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">#   GEMINI_API_KEY=…          (free tier)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1">#   OPENAI_API_KEY=…          (paid)</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">#   ANTHROPIC_API_KEY=…       (paid)</span>
+<p>The current <code>justfile</code> uses PowerShell. Manual installation for Linux, macOS,
+or a system without <code>just</code> is documented in
+<a href="../getting-started/installation/">Installation</a>.</p>
+<p>Verify the deterministic path:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
 </span></code></pre></div>
-<p>The smart router will use whichever providers are configured. CI uses <code>GITHUB_TOKEN</code> with GitHub Models — see <a href="../adr/ADR-016-github-token-as-default-e2e-llm/"><code>docs/adr/ADR-016-github-token-as-default-e2e-llm.md</code></a> for the trade-off that drove that choice.</p>
-<hr />
-<h2 id="3-development-workflow">3. Development workflow<a class="headerlink" href="#3-development-workflow" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Create a branch from <code>main</code>. Branch naming: <code>feature/…</code>, <code>fix/…</code>, <code>chore/…</code>, <code>docs/…</code>.</li>
-<li>Make the smallest coherent change. Prefer one concern per PR.</li>
-<li>Write tests first (TDD). New backend code targets 80% coverage on changed lines; the UI package enforces a 60% floor in <code>ui/vitest.config.ts</code>.</li>
-<li>Update the docs in the same PR if the change touches user-facing behavior, configuration, or a new pattern. See the <a href="#7-documentation">documentation mapping</a> below.</li>
-<li>Run local gates before pushing (next section).</li>
-<li>Push with <code>-u</code> on first push and open a PR against <code>main</code>.</li>
-</ol>
-<p>Do not push directly to <code>main</code>. All changes land via PR.</p>
-<hr />
-<h2 id="4-required-local-gates">4. Required local gates<a class="headerlink" href="#4-required-local-gates" title="Permanent link">&para;</a></h2>
-<p>These must all pass before a PR will merge. Run them from the repo root:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>just<span class="w"> </span><span class="nb">test</span><span class="w">                     </span><span class="c1"># runs the full backend + eval + UI test suite</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>just<span class="w"> </span>docs<span class="w">                     </span><span class="c1"># verifies documentation (links, code fences, etc.)</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files<span class="w">    </span><span class="c1"># black, isort, ruff, docformatter, mypy, pydocstyle, detect-secrets</span>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}&#39;</span> <span class="p">|</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<h3 id="per-package-test-entrypoints">Per-package test entrypoints<a class="headerlink" href="#per-package-test-entrypoints" title="Permanent link">&para;</a></h3>
-<p>If you only touched one package, you can narrow the run:</p>
+<p>Do not place provider credentials in committed files. Copy <code>.env.example</code> to
+the ignored <code>.env</code> file when a live-provider test is required.</p>
+<h2 id="create-a-branch">Create a branch<a class="headerlink" href="#create-a-branch" title="Permanent link">&para;</a></h2>
+<p>Branch from the current <code>main</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>git<span class="w"> </span>switch<span class="w"> </span>main
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>git<span class="w"> </span>pull<span class="w"> </span>--ff-only
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git<span class="w"> </span>switch<span class="w"> </span>-c<span class="w"> </span>feature/short-description
+</span></code></pre></div>
+<p>Use one of these prefixes:</p>
+<ul>
+<li><code>feature/</code></li>
+<li><code>fix/</code></li>
+<li><code>chore/</code></li>
+<li><code>docs/</code></li>
+</ul>
+<p>Do not push directly to <code>main</code>.</p>
+<h2 id="make-a-focused-change">Make a focused change<a class="headerlink" href="#make-a-focused-change" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Keep package boundaries intact.</li>
+<li>Add or update tests with behavior changes.</li>
+<li>Update user documentation when a command, endpoint, environment variable,
+  schema, workflow, or UI behavior changes.</li>
+<li>Update <code>CHANGELOG.md</code> under <code>Unreleased</code> for user-visible changes.</li>
+<li>Add an ADR for a material architecture or security-boundary decision.</li>
+<li>Do not reformat unrelated files.</li>
+<li>Preserve generated files unless the source contract changed.</li>
+</ul>
+<p>Python uses 4-space indentation, Black with an 88-character target, Ruff, and
+typed public interfaces. Use <code>snake_case</code> for Python modules and functions,
+<code>PascalCase</code> for classes and React components, and <code>UPPER_CASE</code> for constants.</p>
+<p>React components use <code>PascalCase.tsx</code>. Hooks and helpers use descriptive
+camelCase names.</p>
+<h2 id="run-checks">Run checks<a class="headerlink" href="#run-checks" title="Permanent link">&para;</a></h2>
+<p>Run the broad repository checks before requesting review:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>just<span class="w"> </span><span class="nb">test</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>just<span class="w"> </span>docs
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+</span></code></pre></div>
+<p><code>just test</code> runs the runtime, evaluation, cross-package, and UI unit tests.
+Some live-provider and slow checks are intentionally separate.</p>
+<p>Use narrower commands during development:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-workflows-v2/tests<span class="w"> </span>-q
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-v2-eval/tests<span class="w"> </span>-q
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/e2e<span class="w"> </span>-q
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span><span class="nb">test</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>test:coverage
+</span></code></pre></div>
+<p>Documentation checks:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>agentic-workflows-v2/scripts/check_docs_refs.py
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>scripts/generate_doc_stats.py<span class="w"> </span>--check
+</span></code></pre></div>
+<p>If MkDocs and its plugins are installed:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+</span></code></pre></div>
+<p>Do not add a command to documentation until it has been run from the directory
+the page specifies.</p>
+<h2 id="what-ci-checks">What CI checks<a class="headerlink" href="#what-ci-checks" title="Permanent link">&para;</a></h2>
+<p>The blocking checks include:</p>
 <table>
 <thead>
 <tr>
-<th>Package</th>
-<th>Command</th>
+<th>Check</th>
+<th>Scope</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Runtime</td>
-<td><code>cd agentic-workflows-v2 &amp;&amp; python -m pytest tests/ -q</code></td>
+<td>Runtime tests</td>
+<td>Unit tests excluding marked integration and slow tests in the fast job</td>
 </tr>
 <tr>
-<td>Runtime + coverage</td>
-<td><code>cd agentic-workflows-v2 &amp;&amp; python -m pytest tests/ -q --cov=agentic_v2 --cov-report=term-missing</code></td>
+<td>Runtime coverage</td>
+<td>80% over the configured core subset</td>
 </tr>
 <tr>
-<td>Eval</td>
-<td><code>cd agentic-v2-eval &amp;&amp; python -m pytest tests/ -q</code></td>
+<td>UI tests and coverage</td>
+<td>Vitest thresholds defined in <code>ui/vitest.config.ts</code></td>
 </tr>
 <tr>
-<td>UI unit</td>
-<td><code>cd agentic-workflows-v2/ui &amp;&amp; npm test</code></td>
+<td>UI build</td>
+<td>TypeScript project build and Vite production bundle</td>
 </tr>
 <tr>
-<td>UI coverage</td>
-<td><code>cd agentic-workflows-v2/ui &amp;&amp; npm run test:coverage</code></td>
-</tr>
-<tr>
-<td>UI build check</td>
-<td><code>cd agentic-workflows-v2/ui &amp;&amp; npm run build</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="ci-gates-you-must-not-break">CI gates you must not break<a class="headerlink" href="#ci-gates-you-must-not-break" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Gate</th>
-<th>What it enforces</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Ruff lint</td>
-<td><code>E,F,W,I,N,UP,S,B,A,C4,SIM,TCH,RUF</code> — no warnings in changed files</td>
-<td><code>.github/workflows/ci.yml</code></td>
+<td>Ruff</td>
+<td>Runtime source and tests</td>
 </tr>
 <tr>
 <td>Mypy</td>
-<td><code>mypy --strict</code> on <code>agentic-workflows-v2/agentic_v2/</code>. <code>agentic-v2-eval</code> runs with 35 known findings (Sprint B) — see <a href="../KNOWN_LIMITATIONS/"><code>KNOWN_LIMITATIONS.md</code></a>. Note: mypy config is relaxed while type debt is being paid down (see <code>pyproject.toml</code> <code>[tool.mypy]</code>).</td>
-<td><code>ci.yml</code>, <code>eval-package-ci.yml</code></td>
+<td>Strict settings for <code>agentic_v2/engine</code>, <code>agentic_v2/contracts</code>, and <code>agentic-v2-eval</code> source</td>
 </tr>
 <tr>
-<td>Coverage floor</td>
-<td>80% on <code>agentic-workflows-v2/</code>, 60% on <code>ui/</code></td>
-<td><code>ci.yml</code></td>
+<td>Wire-format drift</td>
+<td>Pydantic schemas and generated TypeScript types</td>
 </tr>
 <tr>
-<td>Schema drift</td>
-<td>Snapshot test on <code>contracts/</code> Pydantic models — any wire-format change must be explicitly accepted by regenerating the snapshot</td>
-<td><code>scripts/generate_schemas.py</code>, see <a href="../adr/ADR-014-pydantic-wire-format/">ADR-014</a></td>
+<td>Documentation drift</td>
+<td>Workflow validation, architecture protocol names, local references, and generated homepage statistics</td>
 </tr>
 <tr>
-<td>Playwright streaming (5×)</td>
-<td>End-to-end streaming flow runs 5× per PR. One failure blocks merge</td>
-<td><code>ci.yml</code></td>
+<td>Security and dependencies</td>
+<td>Secret detection, CodeQL, dependency review, and audit workflows</td>
 </tr>
 <tr>
-<td>Nightly reliability (50×)</td>
-<td>Rolling flake-rate gate over 50 runs. Failure blocks a release cut, not a PR</td>
-<td><code>nightly.yml</code></td>
+<td>E2E streaming</td>
+<td>Repeated Playwright streaming path</td>
 </tr>
 <tr>
-<td>Time-to-first-span p95</td>
-<td>SLO gate on trace latency — see <a href="../adr/ADR-015-slo-in-git-rolling-window/">ADR-015</a> for the git-as-time-series pattern</td>
-<td><code>nightly.yml</code></td>
-</tr>
-<tr>
-<td>pip-audit</td>
-<td>No High/Critical advisories</td>
-<td><code>dependency-review.yml</code></td>
-</tr>
-<tr>
-<td>detect-secrets</td>
-<td>Baseline-driven — see <code>.secrets.baseline</code></td>
-<td>pre-commit</td>
+<td>Optional ExecutionKit path</td>
+<td>Dedicated tests with the <code>ek</code> extra installed</td>
 </tr>
 </tbody>
 </table>
-<p>Full CI job catalogue: <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.github/workflows/"><code>.github/workflows/</code></a>.</p>
-<hr />
-<h2 id="5-commit-format">5. Commit format<a class="headerlink" href="#5-commit-format" title="Permanent link">&para;</a></h2>
-<p>Conventional commits. Enforced by review, not by hook.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&lt;type&gt;(&lt;scope&gt;): &lt;subject&gt;
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>&lt;optional body&gt;
+<p>The workflow files under <code>.github/workflows/</code> are the current source of truth.
+Do not infer a green full matrix from one local test command.</p>
+<h3 id="run-without-provider-keys">Run without provider keys<a class="headerlink" href="#run-without-provider-keys" title="Permanent link">&para;</a></h3>
+<p>Use:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>just<span class="w"> </span><span class="nb">test</span>
 </span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Use for</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feat</code></td>
-<td>New user-facing behavior</td>
-</tr>
-<tr>
-<td><code>fix</code></td>
-<td>Bug fix</td>
-</tr>
-<tr>
-<td><code>refactor</code></td>
-<td>No behavior change</td>
-</tr>
-<tr>
-<td><code>test</code></td>
-<td>Tests only</td>
-</tr>
-<tr>
-<td><code>docs</code></td>
-<td>Documentation only</td>
-</tr>
-<tr>
-<td><code>chore</code></td>
-<td>Tooling, CI, dependency bumps</td>
-</tr>
-<tr>
-<td><code>perf</code></td>
-<td>Performance improvement with benchmark evidence</td>
-</tr>
-<tr>
-<td><code>ci</code></td>
-<td>CI pipeline changes</td>
-</tr>
-<tr>
-<td><code>style</code></td>
-<td>Formatting only (rare — pre-commit handles this)</td>
-</tr>
-<tr>
-<td><code>wip</code></td>
-<td>Reserved for draft commits on feature branches — <strong>squash before merge</strong></td>
-</tr>
-</tbody>
-</table>
-<p>Scopes match the package or subsystem: <code>contracts</code>, <code>ui</code>, <code>server</code>, <code>engine</code>, <code>eval</code>, <code>rag</code>, <code>ci</code>, <code>slo</code>, <code>mcp/results</code>, etc. Read the last 40 commits on <code>main</code> (<code>git log --oneline -40</code>) to calibrate tone — terse, specific, present tense.</p>
-<p>AI-assistant attribution (<code>Co-Authored-By: Claude</code> / <code>Generated with Claude Code</code>) is intentionally disabled for this repo and must not be re-enabled. It is stripped at the source (<code>.claude/settings.json</code>, <code>includeCoAuthoredBy: false</code>) and backstopped by a <code>commit-msg</code> hook (<code>scripts/strip_ai_coauthors.py</code>). The hook only removes assistant trailers — human and PR-bot co-authors (<code>dependabot</code>, <code>gemini-code-assist</code>, <code>copilot</code>) are preserved. After cloning, install it once with:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks<span class="w">   </span><span class="c1"># installs the commit-msg stage too</span>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">just</span> <span class="n">test</span>
 </span></code></pre></div>
-<h3 id="commit-signing">Commit signing<a class="headerlink" href="#commit-signing" title="Permanent link">&para;</a></h3>
-<p>Signing commits is strongly recommended to show the "Verified" badge on GitHub.</p>
-<p><strong>SSH signing (recommended — no GPG installation required):</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># 1. Generate a signing key (skip if you already have one)</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;your-email@example.com&quot;</span><span class="w"> </span>-f<span class="w"> </span>~/.ssh/id_ed25519_signing
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># 2. Add the public key to GitHub → Settings → SSH and GPG keys → New SSH key (type: Signing Key)</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># 3. Configure git to use it</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>gpg.format<span class="w"> </span>ssh
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.signingkey<span class="w"> </span>~/.ssh/id_ed25519_signing.pub
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>commit.gpgsign<span class="w"> </span><span class="nb">true</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>tag.gpgsign<span class="w"> </span><span class="nb">true</span>
+<p>The <code>no-llm-smoke</code> CI job validates workflow loading, the deterministic run,
+the LangGraph placeholder path, and the unit suite without provider
+credentials.</p>
+<p>Placeholder mode is not a substitute for provider integration tests.
+Structured-output, tool-choice, latency, retry, quota, and content-quality
+behavior still need live or provider-specific tests.</p>
+<h2 id="change-generated-contracts">Change generated contracts<a class="headerlink" href="#change-generated-contracts" title="Permanent link">&para;</a></h2>
+<p>When a Pydantic event or server model changes, regenerate the committed
+schemas and TypeScript types:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nb">cd</span><span class="w"> </span>ui
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
 </span></code></pre></div>
-<p><strong>GPG signing (if you prefer GPG):</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>gpg<span class="w"> </span>--full-generate-key<span class="w">              </span><span class="c1"># RSA, 4096 bits, no expiry for a signing key</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>gpg<span class="w"> </span>--list-secret-keys<span class="w"> </span>--keyid-format<span class="o">=</span>long
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>user.signingkey<span class="w"> </span>&lt;YOUR_KEY_ID&gt;
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>git<span class="w"> </span>config<span class="w"> </span>--global<span class="w"> </span>commit.gpgsign<span class="w"> </span><span class="nb">true</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Upload public key to GitHub → Settings → SSH and GPG keys → New GPG key</span>
-</span></code></pre></div>
-<p>Once configured, every <code>git commit</code> is signed automatically. Verify with <code>git log --show-signature -1</code>.</p>
-<hr />
-<h2 id="6-when-to-write-an-adr">6. When to write an ADR<a class="headerlink" href="#6-when-to-write-an-adr" title="Permanent link">&para;</a></h2>
-<p>Open an Architecture Decision Record under <a href="adr/"><code>docs/adr/</code></a> when you:</p>
+<p>Review the generated diff. Do not edit generated TypeScript or JSON schema
+files by hand.</p>
+<h2 id="write-documentation">Write documentation<a class="headerlink" href="#write-documentation" title="Permanent link">&para;</a></h2>
+<p>Use the shortest page that answers the reader's task. Prefer:</p>
 <ul>
-<li>Introduce a new wire-format contract (request/response schema, event shape, persistence format).</li>
-<li>Add, replace, or deprecate an execution engine, provider adapter, or storage backend.</li>
-<li>Change a security boundary (tool allowlist, secret source, auth model).</li>
-<li>Pick a pattern that future contributors might reasonably challenge (a new rolling-window design, a retry strategy, an SLO methodology).</li>
+<li>an exact command over a description of a command;</li>
+<li>a table for field or endpoint mappings;</li>
+<li>a small verified example over a hypothetical large example;</li>
+<li>a direct limitation over promotional wording;</li>
+<li>links to one canonical explanation instead of copied sections.</li>
 </ul>
-<p>Use the existing ADR numbering scheme. Next free number is <strong>017</strong> as of 2026-04-22. Skip to the next free integer if you land in a race. ADRs 004-006 are deliberately unused and <strong>should not be reclaimed</strong> — the numbering gap is documented in <a href="../adr/ADR-INDEX/"><code>docs/adr/ADR-INDEX.md</code></a>.</p>
-<p>An ADR is <strong>not</strong> required for:</p>
-<ul>
-<li>Bug fixes, refactors, or test additions.</li>
-<li>UI polish that doesn't change contracts.</li>
-<li>New workflows, personas, or tools that use existing patterns.</li>
-<li>Pre-commit or lint rule tweaks.</li>
-</ul>
-<p>If in doubt, propose the ADR as a stub in the PR and let the reviewer decide.</p>
-<hr />
-<h2 id="7-documentation">7. Documentation<a class="headerlink" href="#7-documentation" title="Permanent link">&para;</a></h2>
-<p>Docs live close to what they describe. The mapping for changes:</p>
+<p>Update these documents with the matching change:</p>
 <table>
 <thead>
 <tr>
@@ -3470,77 +3505,109 @@
 </thead>
 <tbody>
 <tr>
-<td>New or modified workflow</td>
-<td><a href="../WORKFLOW_AUTHORING/"><code>docs/WORKFLOW_AUTHORING.md</code></a></td>
+<td>CLI command or option</td>
+<td><code>docs/cli-reference.md</code></td>
 </tr>
 <tr>
-<td>New environment variable</td>
-<td>Root <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/README.md"><code>README.md</code></a>, <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example"><code>.env.example</code></a>, <a href="../ONBOARDING/"><code>docs/ONBOARDING.md</code></a></td>
+<td>Workflow schema or shipped definition</td>
+<td><code>docs/WORKFLOW_AUTHORING.md</code> and <code>docs/workflows/index.md</code></td>
 </tr>
 <tr>
-<td>New REST or WebSocket endpoint</td>
-<td><a href="../api-contracts-runtime/"><code>docs/api-contracts-runtime.md</code></a></td>
+<td>Environment variable</td>
+<td><code>.env.example</code> and <code>docs/configuration.md</code></td>
 </tr>
 <tr>
-<td>New architecture pattern</td>
-<td><a href="../ARCHITECTURE/"><code>docs/ARCHITECTURE.md</code></a> (umbrella) + relevant <code>docs/architecture-*.md</code></td>
+<td>HTTP, SSE, or WebSocket route</td>
+<td><code>docs/api-contracts-runtime.md</code></td>
 </tr>
 <tr>
-<td>New bootstrap / devcontainer behavior</td>
-<td>Root <code>README.md</code>, <code>docs/ONBOARDING.md</code>, this file</td>
+<td>UI route or component contract</td>
+<td><code>docs/ui/pages.md</code> or <code>docs/ui/api-integration.md</code></td>
 </tr>
 <tr>
-<td>User-visible change (per release)</td>
-<td><code>CHANGELOG.md</code> under <code>## [Unreleased]</code></td>
+<td>Architecture boundary</td>
+<td><code>docs/ARCHITECTURE.md</code> and the relevant deep dive</td>
 </tr>
 <tr>
-<td>Breaking or migration-worthy change</td>
-<td><a href="../MIGRATIONS/"><code>docs/MIGRATIONS.md</code></a></td>
+<td>Known defect or deployment gap</td>
+<td><code>docs/KNOWN_LIMITATIONS.md</code></td>
 </tr>
 <tr>
-<td>Known limitation or temporary defect</td>
-<td><a href="../KNOWN_LIMITATIONS/"><code>docs/KNOWN_LIMITATIONS.md</code></a></td>
+<td>User-visible behavior</td>
+<td><code>CHANGELOG.md</code></td>
 </tr>
 <tr>
-<td>Proposed epic or major initiative</td>
-<td><a href="../ROADMAP/"><code>docs/ROADMAP.md</code></a></td>
+<td>Breaking change</td>
+<td><code>docs/MIGRATIONS.md</code></td>
 </tr>
 </tbody>
 </table>
-<p>Docs must be runnable or falsifiable. Command blocks must actually work. Diagrams use Mermaid. Every top-level doc carries a "last verified" date — update it when the doc is touched.</p>
-<hr />
-<h2 id="8-security">8. Security<a class="headerlink" href="#8-security" title="Permanent link">&para;</a></h2>
+<p>The root <code>CONTRIBUTING.md</code> is the source for the published
+<code>docs/CONTRIBUTING.md</code>. The docs deployment workflow rewrites repository-root
+links for the published site.</p>
+<h2 id="write-an-adr">Write an ADR<a class="headerlink" href="#write-an-adr" title="Permanent link">&para;</a></h2>
+<p>Add an ADR when a change:</p>
 <ul>
-<li>Never commit secrets, API keys, or production tokens. <code>.env</code> is gitignored; <code>.env.example</code> is the only committed template.</li>
-<li>Resolve runtime secrets through <code>agentic_v2.models.secrets.get_secret()</code> / <code>get_first_secret()</code> — not <code>os.environ</code> directly.</li>
-<li>Follow the disclosure process in <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SECURITY.md"><code>SECURITY.md</code></a> for any vulnerability report.</li>
-<li>AI-generated code is untrusted input — run full lint + type check + tests before accepting.</li>
+<li>introduces or changes a public wire format;</li>
+<li>adds, replaces, or removes an execution engine, provider, or storage
+  backend;</li>
+<li>changes authentication, tool approval, path containment, egress, or another
+  security boundary; or</li>
+<li>establishes a pattern future contributors will need to follow.</li>
 </ul>
-<hr />
-<h2 id="9-need-help">9. Need help<a class="headerlink" href="#9-need-help" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Open a discussion or issue on the repository.</li>
-<li>Read <a href="../GLOSSARY/"><code>docs/GLOSSARY.md</code></a> for domain terms.</li>
-<li>Support channels and response expectations: <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/SUPPORT.md"><code>SUPPORT.md</code></a>.</li>
-<li>For architecture questions, start at <a href="../ARCHITECTURE/"><code>docs/ARCHITECTURE.md</code></a> and the ADRs.</li>
-</ul>
-<hr />
-<h2 id="10-pr-checklist">10. PR checklist<a class="headerlink" href="#10-pr-checklist" title="Permanent link">&para;</a></h2>
-<p>Copy into your PR description:</p>
-<div class="language-markdown highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">- [ ]</span> Branch from main; name follows <span class="sb">`feature|fix|chore|docs/…`</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">- [ ]</span> Tests added or updated; coverage holds on changed lines
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">- [ ]</span> <span class="sb">`just test &amp;&amp; just docs &amp;&amp; pre-commit run --all-files`</span> green locally
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">- [ ]</span> CHANGELOG.md [Unreleased] updated for user-visible changes
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">- [ ]</span> ADR added (or confirmed not required — see CONTRIBUTING §6)
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="k">- [ ]</span> Docs updated per CONTRIBUTING §7 table
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="k">- [ ]</span> No secrets, no <span class="sb">`.env`</span> committed
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="k">- [ ]</span> Commit message follows conventional format
+<p>Use <a href="../adr/ADR-INDEX/">ADR-INDEX.md</a> to choose the next number and review
+the status of related decisions. Do not reuse a documented numbering gap.</p>
+<p>An ADR is not required for a local refactor that preserves public behavior.</p>
+<h2 id="commit">Commit<a class="headerlink" href="#commit" title="Permanent link">&para;</a></h2>
+<p>Use Conventional Commits:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>feat(ui): add run filter
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>fix(server): validate adapter override
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>docs(rag): correct CLI persistence limits
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>test(engine): cover timeout cancellation
 </span></code></pre></div>
-<hr />
-<h2 id="development-provenance-verification">Development Provenance &amp; Verification<a class="headerlink" href="#development-provenance-verification" title="Permanent link">&para;</a></h2>
-<p>This repository is built solo with AI-assisted tooling. Because there is no second human reviewer, correctness is gated by <strong>automated evidence</strong>, not peer sign-off:</p>
+<p>Use a short, present-tense subject and keep one concern per commit. Temporary
+<code>wip</code> commits may be used on a feature branch but must be squashed before
+merge.</p>
+<p>Install the commit-message hook with:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
+</span></code></pre></div>
+<p>The repository removes AI-assistant co-author trailers. Human and service-bot
+co-authors are preserved.</p>
+<h2 id="pull-request">Pull request<a class="headerlink" href="#pull-request" title="Permanent link">&para;</a></h2>
+<p>A pull request should include:</p>
 <ul>
-<li><strong>CI gates (every push / PR):</strong> ruff, <code>mypy --strict</code> (engine + contracts), the 80% coverage gate, the Pydantic↔TypeScript wire-format drift check, Playwright E2E (×5), CodeQL, SBOM gen</li>
+<li>the problem and intended behavior;</li>
+<li>the main implementation choices;</li>
+<li>tests and commands that passed;</li>
+<li>known checks that were not run and why;</li>
+<li>linked issues or ADRs;</li>
+<li>screenshots for visible UI changes; and</li>
+<li>migration or rollout notes when behavior changes.</li>
+</ul>
+<p>Use this checklist:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>- [ ] Change is focused and package boundaries are preserved
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>- [ ] Regression tests cover the behavior change
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>- [ ] just test passed, or narrower checks and omissions are listed
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>- [ ] just docs passed
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>- [ ] pre-commit run --all-files passed
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>- [ ] UI build passed when frontend or wire contracts changed
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>- [ ] Documentation and CHANGELOG.md are updated when needed
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>- [ ] No credentials, .env files, run data, or private customer data are included
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>- [ ] Commit messages use Conventional Commits
+</span></code></pre></div>
+<h2 id="security-reports">Security reports<a class="headerlink" href="#security-reports" title="Permanent link">&para;</a></h2>
+<p>Do not open a public issue for a vulnerability. Follow
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SECURITY.md"><code>agentic-workflows-v2/SECURITY.md</code></a>.</p>
+<p>Runtime secrets must be resolved through the repository's secret-provider
+abstraction. Do not add new direct <code>os.environ</code> reads for credentials without
+reviewing the existing provider path.</p>
+<h2 id="help">Help<a class="headerlink" href="#help" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../ARCHITECTURE/">Architecture</a></li>
+<li><a href="../development-guide/">Development guide</a></li>
+<li><a href="../GLOSSARY/">Glossary</a></li>
+<li><a href="../operations/troubleshooting/">Troubleshooting</a></li>
+<li><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/CONTRIBUTING.md">Package contribution notes</a></li>
 </ul>
 
 
@@ -3564,7 +3631,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

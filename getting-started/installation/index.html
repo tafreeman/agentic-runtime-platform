@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Install Agentic Runtime Platform — Python runtime, optional UI, optional providers — for development, evaluation, or production.">
+        <meta name="description" content="Install the Python workspace, optional runtime features, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Installation - Agentic Runtime Platform" />
-<meta property="og:description" content="Install Agentic Runtime Platform — Python runtime, optional UI, optional providers — for development, evaluation, or production." />
+<meta property="og:description" content="Install the Python workspace, optional runtime features, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/getting-started/installation.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/getting-started/installation/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Installation - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Install Agentic Runtime Platform — Python runtime, optional UI, optional providers — for development, evaluation, or production." />
+<meta property="twitter:description" content="Install the Python workspace, optional runtime features, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/getting-started/installation.png" />
 </head>
   
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -679,22 +679,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#python-runtime" class="md-nav__link">
+  <a href="#full-development-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python runtime
+        Full development setup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Python runtime">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manual setup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#editable-install-with-development-extras" class="md-nav__link">
+  <a href="#bash" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Editable install with development extras
+        Bash
       
     </span>
   </a>
@@ -702,21 +713,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#verify-the-install" class="md-nav__link">
+  <a href="#powershell" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify the install
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-one-command-bring-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows one-command bring-up
+        PowerShell
       
     </span>
   </a>
@@ -729,10 +729,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#react-dashboard" class="md-nav__link">
+  <a href="#runtime-extras" class="md-nav__link">
     <span class="md-ellipsis">
       
-        React dashboard
+        Runtime extras
       
     </span>
   </a>
@@ -740,49 +740,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#providers" class="md-nav__link">
+  <a href="#deterministic-verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Providers
+        Deterministic verification
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Providers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#provider-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider matrix
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation-harness" class="md-nav__link">
+  <a href="#provider-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation harness
+        Provider configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#powershell-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerShell bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation package
       
     </span>
   </a>
@@ -1391,6 +1396,8 @@
       
         
       
+        
+      
     
     
     
@@ -1435,6 +1442,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2261,6 +2296,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2358,6 +2397,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2668,6 +2763,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2728,6 +2827,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2915,22 +3070,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#python-runtime" class="md-nav__link">
+  <a href="#full-development-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python runtime
+        Full development setup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Python runtime">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manual-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manual setup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#editable-install-with-development-extras" class="md-nav__link">
+  <a href="#bash" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Editable install with development extras
+        Bash
       
     </span>
   </a>
@@ -2938,21 +3104,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#verify-the-install" class="md-nav__link">
+  <a href="#powershell" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify the install
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-one-command-bring-up" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows one-command bring-up
+        PowerShell
       
     </span>
   </a>
@@ -2965,10 +3120,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#react-dashboard" class="md-nav__link">
+  <a href="#runtime-extras" class="md-nav__link">
     <span class="md-ellipsis">
       
-        React dashboard
+        Runtime extras
       
     </span>
   </a>
@@ -2976,49 +3131,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#providers" class="md-nav__link">
+  <a href="#deterministic-verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Providers
+        Deterministic verification
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Providers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#provider-matrix" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider matrix
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation-harness" class="md-nav__link">
+  <a href="#provider-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation harness
+        Provider configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#powershell-bootstrap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PowerShell bootstrap
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation package
       
     </span>
   </a>
@@ -3095,226 +3255,273 @@
 
 
 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<p>The runtime is a Python package, the dashboard a Vite-built React 19 app;
-providers are optional extras.</p>
-<h2 id="python-runtime">Python runtime<a class="headerlink" href="#python-runtime" title="Permanent link">&para;</a></h2>
-<p>The runtime targets Python 3.11+ and is a uv-style monorepo with three
-installable packages: <code>agentic-workflows-v2</code>, <code>agentic-v2-eval</code>, and
-<code>agentic-tools</code>. The runtime depends on the tools package; the eval harness
-is self-contained.</p>
+<p>The repository contains three Python packages and one Node application:</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Package</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>repository root</td>
+<td><code>agentic-tools</code></td>
+<td>Shared model and benchmark utilities</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/</code></td>
+<td><code>agentic-workflows-v2</code></td>
+<td>Runtime, CLI, server, and RAG components</td>
+</tr>
+<tr>
+<td><code>agentic-v2-eval/</code></td>
+<td><code>agentic-v2-eval</code></td>
+<td>Rubrics, evaluators, runners, and reporters</td>
+</tr>
+<tr>
+<td><code>agentic-workflows-v2/ui/</code></td>
+<td>private npm package</td>
+<td>React dashboard</td>
+</tr>
+</tbody>
+</table>
+<p>Use Python 3.11 or newer and Node.js 20 or newer.</p>
+<h2 id="full-development-setup">Full development setup<a class="headerlink" href="#full-development-setup" title="Permanent link">&para;</a></h2>
+<p>Clone the repository:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform
 </span></code></pre></div>
-<h3 id="editable-install-with-development-extras">Editable install with development extras<a class="headerlink" href="#editable-install-with-development-extras" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Linux/macOS:</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Windows PowerShell:</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>.<span class="se">\.</span>venv<span class="se">\S</span>cripts<span class="se">\A</span>ctivate.ps1
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,server,langchain]&quot;</span>
+<p>On Windows, the repository shortcut creates <code>.venv</code>, installs all Python
+packages, and installs the UI dependencies:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>just<span class="w"> </span>setup
 </span></code></pre></div>
-<p>The extras break down as follows (source of truth:
-<code>agentic-workflows-v2/pyproject.toml</code> <code>[project.optional-dependencies]</code>):</p>
+<p>The current <code>justfile</code> selects <code>powershell.exe</code>. Use the manual setup below on
+Linux or macOS.</p>
+<p>Verify the installation:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>agentic<span class="w"> </span>version
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+</span></code></pre></div>
+<h2 id="manual-setup">Manual setup<a class="headerlink" href="#manual-setup" title="Permanent link">&para;</a></h2>
+<p>Run these commands from the repository root.</p>
+<h3 id="bash">Bash<a class="headerlink" href="#bash" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[dev,server,langchain,tracing]&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-v2-eval[dev]&quot;</span><span class="w"> </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>install
+</span></code></pre></div>
+<h3 id="powershell">PowerShell<a class="headerlink" href="#powershell" title="Permanent link">&para;</a></h3>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">`</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  <span class="n">-e</span> <span class="s2">&quot;./agentic-workflows-v2[dev,server,langchain,tracing]&quot;</span> <span class="p">`</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>  <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="s2">&quot;./agentic-v2-eval[dev]&quot;</span> <span class="n">-c</span> <span class="n">ci-constraints</span><span class="p">.</span><span class="n">txt</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">install</span>
+</span></code></pre></div>
+<p>Installing the root package first matters: both child packages resolve shared
+code through the workspace's <code>agentic-tools</code> package.</p>
+<p><code>ci-constraints.txt</code> is generated from <code>uv.lock</code>. Using it keeps local
+dependency versions aligned with CI.</p>
+<h2 id="runtime-extras">Runtime extras<a class="headerlink" href="#runtime-extras" title="Permanent link">&para;</a></h2>
+<p>Extras are declared in <code>agentic-workflows-v2/pyproject.toml</code>.</p>
 <table>
 <thead>
 <tr>
 <th>Extra</th>
-<th>Pulls in</th>
-<th>When you want it</th>
+<th>Use it for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>dev</code></td>
-<td><code>pytest</code> (+ asyncio/cov/mock/timeout plugins), <code>black</code>, <code>ruff</code>, <code>mypy</code>, <code>fakeredis</code>, <code>jsonschema</code>, <code>pydocstyle</code></td>
-<td>Always — required to run the test suite</td>
+<td>pytest, coverage, Ruff, Black, mypy, test fakes, and schema tools</td>
 </tr>
 <tr>
 <td><code>server</code></td>
-<td><code>fastapi</code>, <code>uvicorn</code>, <code>python-multipart</code>, <code>slowapi</code>, <code>pyjwt</code></td>
-<td>If you plan to expose the REST/WebSocket API</td>
+<td>FastAPI, Uvicorn, multipart uploads, rate limiting, and JWT verification</td>
 </tr>
 <tr>
 <td><code>langchain</code></td>
-<td><code>langchain</code>, <code>langchain-core</code>, <code>langgraph</code> (+ provider adapters and checkpointers)</td>
-<td>The default adapter for named YAML workflows; also enables the deep <code>agentic validate</code> check</td>
+<td>The default adapter for named YAML workflows and LangGraph compilation during validation</td>
 </tr>
 <tr>
 <td><code>tracing</code></td>
-<td><code>opentelemetry-sdk</code>, OTLP/Prometheus exporters</td>
-<td>If you want OTEL traces for every step and tool call</td>
-</tr>
-<tr>
-<td><code>claude</code></td>
-<td><code>anthropic</code>, <code>claude-agent-sdk</code></td>
-<td>If Anthropic is one of your providers</td>
+<td>OpenTelemetry SDK, OTLP exporters, Prometheus exporter, and client</td>
 </tr>
 <tr>
 <td><code>rag</code></td>
-<td><code>lancedb</code>, <code>litellm</code></td>
-<td>If you plan to use the RAG pipeline (loaders, chunker, vectorstore)</td>
+<td>LiteLLM-backed embeddings and LanceDB storage</td>
 </tr>
 <tr>
 <td><code>ek</code></td>
-<td><code>executionkit</code></td>
-<td>Optional ExecutionKit execution kernel</td>
+<td>ExecutionKit integration</td>
 </tr>
 <tr>
 <td><code>devex</code></td>
-<td><code>psutil</code></td>
-<td>Developer-experience commands (<code>agentic devex</code>)</td>
+<td>Process inspection used by development commands</td>
 </tr>
 <tr>
 <td><code>mcp</code></td>
-<td><code>websockets</code></td>
-<td>MCP client transport</td>
+<td>WebSocket transport for the MCP client</td>
 </tr>
 <tr>
-<td><code>redis</code> / <code>sqlite</code> / <code>postgres</code></td>
-<td><code>redis</code>, <code>aiosqlite</code>, <code>psycopg</code> + checkpointer</td>
-<td>Optional storage backends</td>
+<td><code>redis</code></td>
+<td>Redis-backed shared state and replay storage</td>
+</tr>
+<tr>
+<td><code>sqlite</code></td>
+<td>Async SQLite support</td>
+</tr>
+<tr>
+<td><code>postgres</code></td>
+<td>PostgreSQL LangGraph checkpointer</td>
+</tr>
+<tr>
+<td><code>claude</code></td>
+<td>Claude Agent SDK integration</td>
 </tr>
 </tbody>
 </table>
-<h3 id="verify-the-install">Verify the install<a class="headerlink" href="#verify-the-install" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>agentic<span class="w"> </span>--help
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q
+<p>Add extras to the same editable install:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[dev,server,langchain,tracing,rag,redis]&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
 </span></code></pre></div>
-<p>The full test suite runs in roughly 90 seconds on a modern laptop with
-<code>AGENTIC_NO_LLM=1</code> set.</p>
-<h3 id="windows-one-command-bring-up">Windows one-command bring-up<a class="headerlink" href="#windows-one-command-bring-up" title="Permanent link">&para;</a></h3>
-<p>A PowerShell script is provided to install dependencies, validate every
-workflow, and run a smoke test in one go:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">cd </span><span class="n">agentic-workflows-v2</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">.\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span>
+<p>Optional packages fail when their feature is selected, not when the base
+runtime is imported. For example, requesting LanceDB without the <code>rag</code> extra
+raises an install hint.</p>
+<h2 id="deterministic-verification">Deterministic verification<a class="headerlink" href="#deterministic-verification" title="Permanent link">&para;</a></h2>
+<p>Create an input file:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
 </span></code></pre></div>
-<p>Use <code>-SkipFrontend</code> to skip the UI build and <code>-SkipSmokeTest</code> to skip
-workflow validation when you only want a fast dependency install.</p>
-<h2 id="react-dashboard">React dashboard<a class="headerlink" href="#react-dashboard" title="Permanent link">&para;</a></h2>
-<p>The dashboard is optional. The runtime is fully usable from the CLI and the
-REST API; the UI exists for live visualization, run history browsing, and
-rubric inspection.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>npm<span class="w"> </span>install
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">          </span><span class="c1"># Vite dev server on http://localhost:5173</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>npm<span class="w"> </span>run<span class="w"> </span>build<span class="w">        </span><span class="c1"># production build with TypeScript check</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>npm<span class="w"> </span>run<span class="w"> </span><span class="nb">test</span><span class="w">         </span><span class="c1"># Vitest + React Testing Library</span>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}&#39;</span> <span class="p">|</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<p>The dev server proxies API requests to the FastAPI server on port <code>8010</code>,
-so start the backend in a second terminal:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+<p>Expected result: <code>Status: SUCCESS</code>.</p>
+<p>The deterministic workflow itself does not call a model. Setting
+<code>AGENTIC_NO_LLM=1</code> also protects you if you continue with an LLM-backed
+workflow before configuring provider credentials.</p>
+<h2 id="provider-configuration">Provider configuration<a class="headerlink" href="#provider-configuration" title="Permanent link">&para;</a></h2>
+<p>Copy the environment template:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
 </span></code></pre></div>
-<p>If port <code>8010</code> or <code>5173</code> is taken, override with <code>--port</code> on the backend
-and <code>npm run dev -- --port 5174</code> on the frontend.</p>
-<h2 id="providers">Providers<a class="headerlink" href="#providers" title="Permanent link">&para;</a></h2>
-<p>The runtime supports multiple production providers and one offline placeholder
-backend. Configuration is a single environment variable per provider —
-no provider plugin to install separately, no SDK to pin.</p>
-<h3 id="provider-matrix">Provider matrix<a class="headerlink" href="#provider-matrix" title="Permanent link">&para;</a></h3>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
+</span></code></pre></div>
+<p>Set only the providers you intend to use. Common chat-provider variables are:</p>
 <table>
 <thead>
 <tr>
 <th>Provider</th>
-<th>Variable</th>
-<th>Notes</th>
+<th>Main variable</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>None (placeholder)</strong></td>
-<td><code>AGENTIC_NO_LLM=1</code></td>
-<td>Default for development and CI; fully deterministic</td>
-</tr>
-<tr>
-<td><strong>OpenAI</strong></td>
+<td>OpenAI</td>
 <td><code>OPENAI_API_KEY</code></td>
-<td>Standard OpenAI cloud</td>
 </tr>
 <tr>
-<td><strong>Anthropic</strong></td>
+<td>Anthropic</td>
 <td><code>ANTHROPIC_API_KEY</code></td>
-<td>Requires the <code>claude</code> extra</td>
 </tr>
 <tr>
-<td><strong>Google Gemini</strong></td>
-<td><code>GEMINI_API_KEY</code></td>
-<td>Native client, no LangChain wrapper</td>
+<td>Gemini</td>
+<td><code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code></td>
 </tr>
 <tr>
-<td><strong>Azure OpenAI</strong></td>
-<td><code>AZURE_OPENAI_API_KEY_0</code> + <code>AZURE_OPENAI_ENDPOINT_0</code></td>
-<td>Supports <code>_0</code> through <code>_n</code> for round-robin failover</td>
+<td>Azure OpenAI</td>
+<td><code>AZURE_OPENAI_API_KEY</code> and <code>AZURE_OPENAI_ENDPOINT</code></td>
 </tr>
 <tr>
-<td><strong>Azure Foundry</strong></td>
-<td><code>AZURE_FOUNDRY_API_KEY</code> + <code>AZURE_FOUNDRY_ENDPOINT</code></td>
-<td>Inference SDK path</td>
+<td>Azure AI Foundry</td>
+<td><code>AZURE_FOUNDRY_API_KEY</code> and a configured Foundry endpoint</td>
 </tr>
 <tr>
-<td><strong>GitHub Models</strong></td>
-<td><code>GITHUB_TOKEN</code></td>
-<td>Free-tier evaluation; the canonical default for E2E LLM tests in CI (<a href="../../adr/ADR-016-github-token-as-default-e2e-llm/">ADR-016</a>)</td>
+<td>NVIDIA NIM</td>
+<td><code>NVIDIA_API_KEY</code>, or <code>NVIDIA_BASE_URL</code> for a self-hosted endpoint</td>
 </tr>
 <tr>
-<td><strong>Ollama</strong></td>
-<td><code>OLLAMA_BASE_URL</code> (defaults to <code>http://localhost:11434</code>)</td>
-<td>Local models, no key required</td>
+<td>OpenRouter</td>
+<td><code>OPENROUTER_API_KEY</code></td>
 </tr>
 <tr>
-<td><strong>Local ONNX</strong></td>
-<td><code>LOCAL_MODEL_PATH</code></td>
-<td>Auto-detected from <code>~/.cache/aigallery</code> if unset</td>
+<td>GitHub Models</td>
+<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code></td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td><code>OLLAMA_HOST</code>; <code>OLLAMA_API_KEY</code> only when the endpoint requires it</td>
 </tr>
 </tbody>
 </table>
-<p>An <code>.env.example</code> ships at the repo root covering the common providers.
-Copy it to <code>.env</code> and fill in only the providers you need — the model
-router skips providers without credentials at startup. A few variables
-(such as the <code>AZURE_FOUNDRY_*</code> keys) are read from the environment but not
-templated in <code>.env.example</code>; set those directly.</p>
-<h3 id="verify-providers">Verify providers<a class="headerlink" href="#verify-providers" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>version<span class="w">            </span><span class="c1"># confirm the CLI entry point resolves</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows<span class="w">     </span><span class="c1"># confirm workflow discovery works</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--no-open<span class="w">    </span><span class="c1"># startup probes configured providers and logs which are available</span>
+<p>RAG embedding credentials are separate. <code>provider="openai"</code> reads
+<code>OPENAI_API_KEY</code>, <code>provider="voyage"</code> reads <code>VOYAGE_API_KEY</code>, and
+<code>provider="local"</code> routes through an Ollama-compatible embedding endpoint.</p>
+<p>See <a href="../../configuration/">Configuration</a> for model overrides, endpoint
+settings, authentication, storage, and security controls.</p>
+<p>Do not commit <code>.env</code> or provider credentials.</p>
+<h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
+<p>After installing the UI dependencies:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>just<span class="w"> </span>dev
 </span></code></pre></div>
-<p>The quickest end-to-end check is a deterministic run that needs no
-credentials at all:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;: &quot;hello&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-input.json
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>/tmp/test-input.json
+<p>Or start the two processes manually.</p>
+<p>Terminal 1:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev<span class="w"> </span>--no-open
 </span></code></pre></div>
-<h2 id="evaluation-harness">Evaluation harness<a class="headerlink" href="#evaluation-harness" title="Permanent link">&para;</a></h2>
-<p>The eval harness is its own installable package. Most users do not install
-it directly because the runtime invokes it programmatically, but it can be
-exercised standalone:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>path/to/results.json
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>path/to/results.json<span class="w"> </span>--format<span class="w"> </span>html
+<p>Terminal 2:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>dev
 </span></code></pre></div>
+<p>Open <code>http://127.0.0.1:5173</code>. Vite proxies <code>/api</code> and <code>/ws</code> to
+<code>http://127.0.0.1:8010</code>.</p>
+<p>Build the production UI:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+</span></code></pre></div>
+<p>When <code>ui/dist</code> exists, the FastAPI application can serve that build from the
+same origin as the API.</p>
+<h2 id="powershell-bootstrap">PowerShell bootstrap<a class="headerlink" href="#powershell-bootstrap" title="Permanent link">&para;</a></h2>
+<p>The runtime package also includes a Windows setup script:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span>
+</span></code></pre></div>
+<p>Run it from the repository root. Use <code>-SkipFrontend</code> to skip the UI and
+<code>-SkipSmokeTest</code> to skip its workflow smoke check.</p>
+<h2 id="evaluation-package">Evaluation package<a class="headerlink" href="#evaluation-package" title="Permanent link">&para;</a></h2>
+<p>The full setup installs the evaluation package. Verify its command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic-v2-eval<span class="w"> </span>--help
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>--help
+</span></code></pre></div>
+<p>See <a href="../../architecture-eval/">Evaluation architecture</a> and
+<a href="../../evaluation/runners/">evaluation runners</a> before supplying result files.</p>
 <h2 id="pre-commit-hooks">Pre-commit hooks<a class="headerlink" href="#pre-commit-hooks" title="Permanent link">&para;</a></h2>
-<p>The repo enforces formatting, linting, type checking, and secret detection
-on every commit. From the repo root:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pre-commit<span class="w"> </span>install
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<p>Install the configured pre-commit and commit-message hooks:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>pre-commit<span class="w"> </span>install<span class="w"> </span>--install-hooks
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
 </span></code></pre></div>
-<p>The chain is <code>black</code> → <code>isort</code> → <code>ruff</code> → <code>docformatter</code> → <code>mypy</code> →
-<code>pydocstyle</code> → <code>detect-secrets</code>. CI re-runs the same chain, but also
-enforces gates the hooks do not cover — the 80% coverage threshold and the
-wire-format drift check — so a passing local hook run is necessary, not
-sufficient. See <code>.claude/rules/ci.md</code> and <code>CONTRIBUTING.md</code> for the full
-gate list.</p>
+<p>The current hook configuration runs Black, Ruff with import sorting,
+docformatter, detect-secrets, and strict mypy for the evaluation package
+source. Pydocstyle is enforced on selected runtime modules in CI, not by the
+local hook.</p>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li>New to the project? <a href="../quickstart/">Quick start</a> walks the first run
-  end-to-end.</li>
-<li>Want to write your own workflow? <a href="../first-workflow/">First workflow</a>
-  builds a two-step DAG from scratch.</li>
-<li>Wiring a longer-lived environment? <a href="../../ARCHITECTURE/">Architecture overview</a>
-  explains how the runtime, evaluation harness, and UI interact.</li>
+<li><a href="../quickstart/">Quick start</a></li>
+<li><a href="../../cli-reference/">CLI reference</a></li>
+<li><a href="../first-workflow/">First workflow</a></li>
+<li><a href="../../development-guide/">Development guide</a></li>
 </ul>
 
 
@@ -3338,7 +3545,7 @@ gate list.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

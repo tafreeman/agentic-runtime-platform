@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -16,7 +16,7 @@
         <link rel="prev" href="../../deployment-guide/">
       
       
-        <link rel="next" href="../troubleshooting/">
+        <link rel="next" href="../../SUPPLY_CHAIN/">
       
       
         
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Security hardening - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/security-hardening.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/operations/security-hardening/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Security hardening - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/security-hardening.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2078,6 +2108,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2230,10 +2264,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#at-a-glance" class="md-nav__link">
+  <a href="#before-exposing-the-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        At a glance
+        Before exposing the server
       
     </span>
   </a>
@@ -2241,22 +2275,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-api-key-authentication" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. API key authentication
+        Authentication
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. API key authentication">
+    <nav class="md-nav" aria-label="Authentication">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#api-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How it works
+        API key
       
     </span>
   </a>
@@ -2264,32 +2298,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#public-path-exemptions" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Public path exemptions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-origin-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket origin validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-rotate-the-key-without-a-restart" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: rotate the key without a restart
+        OIDC
       
     </span>
   </a>
@@ -2302,40 +2314,94 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-global-rate-limiting" class="md-nav__link">
+  <a href="#tenant-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Global rate limiting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Global rate limiting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
+        Tenant scope
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#disabling-for-tests" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#rate-limits-and-failed-login-lockout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Disabling for tests
+        Rate limits and failed-login lockout
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
+  <a href="#request-and-model-loop-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request and model-loop sanitization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-git-and-shell-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File, Git, and shell tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-tool-and-ssrf-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP tool and SSRF controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approval-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approval gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cors-and-browser-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CORS and browser access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-tracing-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit, tracing, and metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#middleware-order" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2345,478 +2411,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#tuning-recipes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tuning recipes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#3-401-brute-force-throttle-auththrottle" class="md-nav__link">
+  <a href="#verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. 401 brute-force throttle (AuthThrottle)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. 401 brute-force throttle (AuthThrottle)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lockout-semantics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lockout semantics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#eviction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eviction
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#in-process-limitation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In-process limitation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-investigate-a-locked-out-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: investigate a locked-out client
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-lowering-thresholds-for-high-value-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: lowering thresholds for high-value endpoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-dag-workflow-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. DAG workflow timeout
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. DAG workflow timeout">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#where-it-applies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where it applies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-happens-on-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What happens on timeout
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#relationship-to-per-step-timeouts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Relationship to per-step timeouts
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tuning-guidance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tuning guidance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-adapter-eager-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Adapter eager validation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Adapter eager validation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-deploy-with-native-engine-only-no-langchain-extras" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: deploy with native engine only (no LangChain extras)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-filesystem-sandboxing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Filesystem sandboxing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. Filesystem sandboxing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_file_base_dir" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_FILE_BASE_DIR
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-shell-tool-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Shell tool allowlist
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. Shell tool allowlist">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_shell_allowed_commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SHELL_ALLOWED_COMMANDS
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8-sanitization-middleware" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Sanitization middleware
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. Sanitization middleware">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fail-closed-behavior" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fail-closed behavior
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_sanitizer_fail_open" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SANITIZER_FAIL_OPEN
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-legacy-debugging-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: legacy debugging mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9-cors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        9. CORS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="9. CORS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_cors_origins" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_CORS_ORIGINS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-origin-validation_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket origin validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#10-http-tool-ssrf-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        10. HTTP tool SSRF protection
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="10. HTTP tool SSRF protection">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_block_private_ips" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_BLOCK_PRIVATE_IPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dns-rebinding-residual-risk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DNS-rebinding residual risk
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#11-human-approval-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        11. Human approval gates
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="11. Human approval gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contract
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fail-closed-rule" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fail-closed rule
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-posture-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default posture change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provider-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-deployment-posture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference deployment posture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Verification
       
     </span>
   </a>
@@ -2827,6 +2427,62 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -3129,6 +2785,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3189,6 +2849,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3376,10 +3092,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#at-a-glance" class="md-nav__link">
+  <a href="#before-exposing-the-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        At a glance
+        Before exposing the server
       
     </span>
   </a>
@@ -3387,22 +3103,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-api-key-authentication" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. API key authentication
+        Authentication
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. API key authentication">
+    <nav class="md-nav" aria-label="Authentication">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#api-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How it works
+        API key
       
     </span>
   </a>
@@ -3410,32 +3126,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#public-path-exemptions" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Public path exemptions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-origin-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket origin validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-rotate-the-key-without-a-restart" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: rotate the key without a restart
+        OIDC
       
     </span>
   </a>
@@ -3448,40 +3142,94 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-global-rate-limiting" class="md-nav__link">
+  <a href="#tenant-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Global rate limiting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Global rate limiting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
+        Tenant scope
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#disabling-for-tests" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#rate-limits-and-failed-login-lockout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Disabling for tests
+        Rate limits and failed-login lockout
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
+  <a href="#request-and-model-loop-sanitization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request and model-loop sanitization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-git-and-shell-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File, Git, and shell tools
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-tool-and-ssrf-controls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP tool and SSRF controls
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#approval-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Approval gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cors-and-browser-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CORS and browser access
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#audit-tracing-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Audit, tracing, and metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#middleware-order" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3491,478 +3239,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#tuning-recipes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tuning recipes
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#3-401-brute-force-throttle-auththrottle" class="md-nav__link">
+  <a href="#verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. 401 brute-force throttle (AuthThrottle)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. 401 brute-force throttle (AuthThrottle)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lockout-semantics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lockout semantics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#eviction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eviction
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#in-process-limitation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        In-process limitation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-investigate-a-locked-out-client" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: investigate a locked-out client
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-lowering-thresholds-for-high-value-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: lowering thresholds for high-value endpoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-dag-workflow-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. DAG workflow timeout
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. DAG workflow timeout">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#where-it-applies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where it applies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-happens-on-timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What happens on timeout
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#relationship-to-per-step-timeouts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Relationship to per-step timeouts
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tuning-guidance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tuning guidance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-adapter-eager-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Adapter eager validation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Adapter eager validation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-deploy-with-native-engine-only-no-langchain-extras" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: deploy with native engine only (no LangChain extras)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-filesystem-sandboxing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Filesystem sandboxing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. Filesystem sandboxing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_file_base_dir" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_FILE_BASE_DIR
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-shell-tool-allowlist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Shell tool allowlist
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="7. Shell tool allowlist">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_shell_allowed_commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SHELL_ALLOWED_COMMANDS
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8-sanitization-middleware" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Sanitization middleware
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. Sanitization middleware">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-it-works_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How it works
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fail-closed-behavior" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fail-closed behavior
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_sanitizer_fail_open" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SANITIZER_FAIL_OPEN
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recipe-legacy-debugging-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recipe: legacy debugging mode
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9-cors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        9. CORS
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="9. CORS">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_cors_origins" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_CORS_ORIGINS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-origin-validation_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket origin validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#10-http-tool-ssrf-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        10. HTTP tool SSRF protection
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="10. HTTP tool SSRF protection">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_block_private_ips" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_BLOCK_PRIVATE_IPS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dns-rebinding-residual-risk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DNS-rebinding residual risk
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#11-human-approval-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        11. Human approval gates
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="11. Human approval gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Contract
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fail-closed-rule" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fail-closed rule
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-posture-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default posture change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#provider-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#reference-deployment-posture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Reference deployment posture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Verification
       
     </span>
   </a>
@@ -4002,785 +3284,236 @@
   
 
 
-<h1 id="security-hardening">Security Hardening<a class="headerlink" href="#security-hardening" title="Permanent link">&para;</a></h1>
-<p>This page is for <strong>production operators</strong> deploying the Agentic Workflows V2 FastAPI server.
-It describes every in-process security control, its environment-variable knobs, its default
-behavior, and practical recipes for tuning it to your environment.</p>
-<p><strong>This page is NOT</strong> an ADR, a code specification, or a threat model. For decision rationale
-see the linked ADRs; for the formal threat model see
-<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a>
-(excluded from the built site). For the complete env-var
-index see the <a href="../../configuration/">Configuration Reference</a>.</p>
-<hr />
-<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Control</th>
-<th>Environment variable(s)</th>
-<th>Default</th>
-<th>Sprint 1 reference</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>API key authentication</td>
-<td><code>AGENTIC_API_KEY</code></td>
-<td>Not set — all routes open</td>
-<td>ADR-018</td>
-</tr>
-<tr>
-<td>Global rate limiting</td>
-<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code>, <code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
-<td><code>60/minute</code> per IP</td>
-<td>ADR-018</td>
-</tr>
-<tr>
-<td>401 brute-force throttle — window</td>
-<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
-<td><code>60</code> seconds</td>
-<td>ADR-018</td>
-</tr>
-<tr>
-<td>401 brute-force throttle — threshold</td>
-<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
-<td><code>5</code> failures</td>
-<td>ADR-018</td>
-</tr>
-<tr>
-<td>401 brute-force throttle — lockout</td>
-<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
-<td><code>300</code> seconds</td>
-<td>ADR-018</td>
-</tr>
-<tr>
-<td>DAG workflow timeout</td>
-<td>No env var — set per call via <code>timeout</code> kwarg</td>
-<td>None (unlimited)</td>
-<td>ADR-019</td>
-</tr>
-<tr>
-<td>Adapter eager validation</td>
-<td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
-<td><code>langchain</code></td>
-<td>ADR-020</td>
-</tr>
-<tr>
-<td>Filesystem sandbox</td>
-<td><code>AGENTIC_FILE_BASE_DIR</code></td>
-<td>Not set — file tools refuse all operations</td>
-<td>—</td>
-</tr>
-<tr>
-<td>Shell tool allowlist</td>
-<td><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code></td>
-<td>Not set — all shell commands disabled</td>
-<td>—</td>
-</tr>
-<tr>
-<td>Sanitization fail-closed</td>
-<td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
-<td>Not set — 503 returned when layer unavailable</td>
-<td>—</td>
-</tr>
-<tr>
-<td>CORS origins</td>
-<td><code>AGENTIC_CORS_ORIGINS</code></td>
-<td>localhost dev ports (5173, 8000, 8010)</td>
-<td>—</td>
-</tr>
-<tr>
-<td>Block private IPs in HTTP tool</td>
-<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
-<td>Not set — private IPs <strong>blocked</strong> (default ON; set to <code>0</code> to opt out)</td>
-<td>P1 #13</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="1-api-key-authentication">1. API key authentication<a class="headerlink" href="#1-api-key-authentication" title="Permanent link">&para;</a></h2>
-<h3 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
-<p>When <code>AGENTIC_API_KEY</code> is set in the environment, the <code>APIKeyMiddleware</code> (layer 3 in the
-middleware stack, see §Middleware order below) gates every request whose path starts with
-<code>/api/</code>. The key must be supplied via one of two headers:</p>
-<p><div class="language-http highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="err">Authorization: Bearer &lt;key&gt;</span>
+<h1 id="security-hardening">Security hardening<a class="headerlink" href="#security-hardening" title="Permanent link">&para;</a></h1>
+<p>This guide covers the security controls built into the FastAPI server and its
+tools. It does not replace a deployment threat model, network policy, secret
+manager, or incident-response plan.</p>
+<p>See <a href="../../configuration/">Configuration</a> for every setting and
+<a href="../../KNOWN_LIMITATIONS/">Known limitations</a> for remaining gaps.</p>
+<h2 id="before-exposing-the-server">Before exposing the server<a class="headerlink" href="#before-exposing-the-server" title="Permanent link">&para;</a></h2>
+<p>At minimum:</p>
+<ol>
+<li>Enable API-key or OIDC authentication.</li>
+<li>Put TLS and an ingress or API gateway in front of the server.</li>
+<li>Restrict CORS to the deployed frontend origins.</li>
+<li>Set a dedicated file-tool root.</li>
+<li>Keep shell commands disabled unless a reviewed workflow needs them.</li>
+<li>Register an approval provider before enabling tools with side effects.</li>
+<li>Keep private-address blocking enabled for HTTP tools.</li>
+<li>Add gateway-level rate limits for multi-replica deployments.</li>
+<li>Choose durable, access-controlled storage for runs, replay events, and
+   audit records.</li>
+<li>Decide which prompt, output, trace, and audit fields may be retained.</li>
+</ol>
+<p>The defaults support local development. They are not a complete
+internet-facing deployment policy.</p>
+<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<h3 id="api-key">API key<a class="headerlink" href="#api-key" title="Permanent link">&para;</a></h3>
+<p>Set <code>AGENTIC_API_KEY</code> to protect <code>/api/*</code> routes:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>AGENTIC_API_KEY=&lt;secret-from-your-secret-manager&gt;
 </span></code></pre></div>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">X-API-Key: &lt;key&gt;</span>
-</span></code></pre></div></p>
-<p>Token comparison uses <code>secrets.compare_digest()</code> to prevent timing side-channel attacks.
-The key is <strong>re-read from the environment on every request</strong> (via <code>_get_api_key()</code> →
-<code>get_secret("AGENTIC_API_KEY")</code>). This means you can rotate the key without restarting the
-server — new requests will immediately use the updated value.</p>
-<p>When <code>AGENTIC_API_KEY</code> is <strong>not set</strong>, the middleware is a no-op and all routes are publicly
-accessible. The server logs a warning at startup:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>WARNING: AGENTIC_API_KEY is not set — all API routes are publicly accessible.
+<p>Clients can send either header:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">Authorization: Bearer &lt;key&gt;</span>
 </span></code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Never run without a key in internet-exposed environments</p>
-<p>A server without <code>AGENTIC_API_KEY</code> accepts unauthenticated workflow runs, which may
-execute arbitrary LLM calls against your provider quotas.</p>
-</div>
-<h3 id="public-path-exemptions">Public path exemptions<a class="headerlink" href="#public-path-exemptions" title="Permanent link">&para;</a></h3>
-<p>The following paths bypass authentication regardless of whether a key is set:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="err">X-API-Key: &lt;key&gt;</span>
+</span></code></pre></div>
+<p>The server uses constant-time comparison. When no key is configured and OIDC
+is disabled, API routes are open.</p>
+<p>The following remain public:</p>
 <ul>
-<li><code>/api/health</code></li>
+<li><code>/api/health</code> and paths below it, including <code>/api/health/ready</code></li>
 <li><code>/docs</code></li>
 <li><code>/openapi.json</code></li>
 <li><code>/redoc</code></li>
+<li><code>/metrics</code>, when enabled</li>
+<li>non-API static UI paths</li>
 </ul>
-<p>All other paths under <code>/api/</code> require a valid key. Non-API routes (UI static files, WebSocket
-upgrade) also bypass authentication so the React frontend can load without credentials.</p>
-<h3 id="websocket-origin-validation">WebSocket origin validation<a class="headerlink" href="#websocket-origin-validation" title="Permanent link">&para;</a></h3>
-<p>WebSocket connections go through a separate origin check (<code>is_websocket_origin_allowed()</code>).
-A connection is allowed when any of the following is true:</p>
+<p>The WebSocket endpoint validates the browser origin and uses the same API key.
+Send the key in a header. Query-string WebSocket tokens are rejected.</p>
+<p>The key lookup occurs for each request, but changing a running process's
+environment is deployment-platform specific. Use a secret provider or restart
+strategy that you have tested before relying on live rotation.</p>
+<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
+<p>OIDC mode validates JWT signatures, issuer, audience, expiry, subject, and the
+configured signing-algorithm allowlist.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>AGENTIC_OIDC_ENABLED=1
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>AGENTIC_OIDC_ISSUER=https://identity.example.com/
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>AGENTIC_OIDC_AUDIENCE=agentic-runtime
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>AGENTIC_OIDC_JWKS_URL=https://identity.example.com/.well-known/jwks.json
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>AGENTIC_OIDC_ALGORITHMS=RS256
+</span></code></pre></div>
+<p>Startup fails if OIDC is enabled without issuer, audience, or JWKS URL.
+<code>AGENTIC_API_KEY</code> remains a compatibility fallback in OIDC mode.</p>
+<p>Keep the signing-algorithm list narrow. Test key rotation, JWKS outage, expired
+tokens, incorrect audiences, and clock skew.</p>
+<h2 id="tenant-scope">Tenant scope<a class="headerlink" href="#tenant-scope" title="Permanent link">&para;</a></h2>
+<p>OIDC-authenticated requests can derive tenant scope from validated tenant or
+organization claims. Without OIDC, the compatibility header <code>X-Tenant-ID</code>
+selects the run and dataset directory.</p>
+<p><code>X-Tenant-ID</code> is client supplied. It is not an authorization boundary. Do not
+use header-based tenant scope as isolation between untrusted customers.</p>
+<p>For multi-tenant deployments:</p>
 <ul>
-<li>The <code>Origin</code> header is absent (non-browser clients such as curl or SDK calls).</li>
-<li>The origin matches the HTTP <code>Host</code> header of the request exactly.</li>
-<li>The origin hostname is <code>localhost</code>, <code>127.0.0.1</code>, or <code>::1</code> (any port — Vite dev server uses
-  dynamic ports).</li>
-<li>The origin appears in the <code>AGENTIC_CORS_ORIGINS</code> allowlist (see §9).</li>
+<li>derive tenant identity from validated credentials;</li>
+<li>enforce authorization before reading or writing tenant data;</li>
+<li>isolate storage and encryption keys as required;</li>
+<li>test cross-tenant filenames and dataset IDs; and</li>
+<li>include tenant-aware audit review.</li>
 </ul>
-<h3 id="recipe-rotate-the-key-without-a-restart">Recipe: rotate the key without a restart<a class="headerlink" href="#recipe-rotate-the-key-without-a-restart" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Update the secret in your environment manager (e.g., Kubernetes secret, AWS Secrets Manager)</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># then export in the server&#39;s process environment.  No restart needed — auth.py reads the</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># env var on every request.</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span><span class="k">)</span><span class="s2">&quot;</span>
+<h2 id="rate-limits-and-failed-login-lockout">Rate limits and failed-login lockout<a class="headerlink" href="#rate-limits-and-failed-login-lockout" title="Permanent link">&para;</a></h2>
+<p>The default global limit is <code>60/minute</code> per client IP:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>AGENTIC_RATE_LIMIT_DEFAULT=60/minute
 </span></code></pre></div>
-<p>Because the key is re-read per request, the old key stops working the moment the environment
-variable changes. Brief request-level races (in-flight requests that already read the old key
-at header extraction) complete normally; the new key is enforced on the next request.</p>
-<hr />
-<h2 id="2-global-rate-limiting">2. Global rate limiting<a class="headerlink" href="#2-global-rate-limiting" title="Permanent link">&para;</a></h2>
-<h3 id="how-it-works_1">How it works<a class="headerlink" href="#how-it-works_1" title="Permanent link">&para;</a></h3>
-<p>The server uses <a href="https://github.com/laurentS/slowapi">slowapi</a> for per-IP global rate limiting.
-<code>slowapi</code> is built on the <code>limits</code> library and is applied at the <strong>outermost middleware layer</strong>
-(layer 1), before auth and sanitization, so abusive clients are rejected before any auth work
-is done.</p>
-<p>The key function is <code>remote_address</code> — the client's IP as seen by the server process. Every
-unique IP is tracked independently in an in-process memory store.</p>
-<p><strong>Default limit:</strong> <code>60/minute</code> per IP. Configurable via <code>AGENTIC_RATE_LIMIT_DEFAULT</code>.</p>
-<p><strong>Response on breach:</strong></p>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">&lt;seconds-to-next-window&gt;</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="p">{</span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Rate limit exceeded: &lt;detail&gt;&quot;</span><span class="p">}</span>
+<p>The counter is in-process. Several replicas do not share one limit, and the
+address seen by the application may be a proxy unless forwarding is configured
+correctly. Enforce the authoritative limit at the ingress or API gateway.</p>
+<p>These test and exception flags remove the application limit:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>AGENTIC_RATE_LIMIT_DISABLED=1
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>AGENTIC_DISABLE_RATE_LIMITING=1
 </span></code></pre></div>
-<p><strong>Public paths are exempt.</strong> <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, and <code>/redoc</code> return
-<code>None</code> from the key function, which instructs slowapi to skip enforcement.</p>
-<h3 id="disabling-for-tests">Disabling for tests<a class="headerlink" href="#disabling-for-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DISABLED</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>...
-</span></code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Do not disable in production</p>
-<p><code>AGENTIC_RATE_LIMIT_DISABLED=1</code> removes all per-IP rate gating. Use only in isolated
-test environments.</p>
-</div>
-<h3 id="middleware-order">Middleware order<a class="headerlink" href="#middleware-order" title="Permanent link">&para;</a></h3>
-<p>The server middleware stack (outermost to innermost, i.e., the order in which an inbound
-request passes through each layer) is:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. SlowAPIMiddleware        — global per-IP rate limit
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2. SanitizationASGIMiddleware — prompt-injection / secret redaction
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>3. APIKeyMiddleware         — bearer-token auth + per-IP 401 throttle
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>4. CORSMiddleware           — CORS preflight / header injection
-</span></code></pre></div>
-<p><code>app.add_middleware</code> prepends each layer, so the first <code>add_middleware</code> call (CORS) becomes
-the innermost layer and the last call (SlowAPI) becomes the outermost.</p>
-<h3 id="tuning-recipes">Tuning recipes<a class="headerlink" href="#tuning-recipes" title="Permanent link">&para;</a></h3>
-<p><strong>Low-traffic development environment:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">200</span>/minute
-</span></code></pre></div>
-<p>Relaxes the cap to avoid friction during development while still exercising the rate-limit
-code path.</p>
-<p><strong>High-traffic production behind a load balancer:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">120</span>/minute
-</span></code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">Multi-replica caveat</p>
-<p>The rate-limit counter is in-process. In a multi-replica deployment behind a load
-balancer, each replica tracks only the requests it receives. The effective per-IP rate
-cap is <code>N × configured_limit</code> where <code>N</code> is the number of replicas. A caller can bypass
-the limit by distributing requests across replicas.</p>
-<p>The planned Sprint 2 Redis migration will replace the in-process store with a shared
-counter, making the limit cluster-wide. Until then, enforce rate limiting at the ingress
-/ API-gateway layer for multi-replica deployments.</p>
-<p>See <a href="../../KNOWN_LIMITATIONS/#41-rate-limiting-is-in-process-only">KNOWN_LIMITATIONS.md §4.1</a>.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Reference</p>
-<p>See <a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a> for the design
-rationale and the Sprint 2 Redis migration plan.</p>
-</div>
-<hr />
-<h2 id="3-401-brute-force-throttle-auththrottle">3. 401 brute-force throttle (AuthThrottle)<a class="headerlink" href="#3-401-brute-force-throttle-auththrottle" title="Permanent link">&para;</a></h2>
-<h3 id="how-it-works_2">How it works<a class="headerlink" href="#how-it-works_2" title="Permanent link">&para;</a></h3>
-<p><code>AuthThrottle</code> (in <code>server/auth.py</code>) tracks failed authentication attempts per client IP
-using monotonic timestamps. It is integrated into <code>APIKeyMiddleware</code> and runs at layer 3.</p>
-<p><strong>Sliding window:</strong> Only failures within the last <code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code>
-seconds count toward the threshold. Failures older than the window are evicted on the next
-request from that IP.</p>
-<p><strong>Defaults (verified against <code>server/auth.py</code>):</strong></p>
+<p>Do not set them in a normal production deployment. The first disables the
+middleware. The second explicitly accepts startup without the optional rate
+limit dependency.</p>
+<p>Failed API-key authentication is also tracked per IP:</p>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Default</th>
-<th>Override</th>
+<th>Setting</th>
+<th style="text-align: right;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Sliding window</td>
-<td><code>60</code> seconds</td>
 <td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
+<td style="text-align: right;"><code>60</code></td>
 </tr>
 <tr>
-<td>Failure threshold</td>
-<td><code>5</code> failures</td>
 <td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
+<td style="text-align: right;"><code>5</code></td>
 </tr>
 <tr>
-<td>Lockout duration</td>
-<td><code>300</code> seconds</td>
 <td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
+<td style="text-align: right;"><code>300</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="lockout-semantics">Lockout semantics<a class="headerlink" href="#lockout-semantics" title="Permanent link">&para;</a></h3>
-<p>When an IP reaches the threshold, the <code>AuthThrottle</code> sets a <code>locked_until</code> timestamp. Every
-subsequent request from that IP — including the threshold-triggering request — receives:</p>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">&lt;remaining-lockout-seconds&gt;</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">{</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Too many failed authentication attempts. Please retry later.&quot;</span><span class="p">,</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="nt">&quot;retry_after&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">&lt;remai</span><span class="kc">n</span><span class="err">i</span><span class="kc">n</span><span class="err">g</span><span class="mi">-</span><span class="err">lockou</span><span class="kc">t</span><span class="mi">-</span><span class="err">seco</span><span class="kc">n</span><span class="err">ds&gt;</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="p">}</span>
+<p>The threshold-triggering request and later locked requests receive HTTP 429
+with <code>Retry-After</code>. A successful authentication clears that IP's failure
+history. This state is also in-process.</p>
+<h2 id="request-and-model-loop-sanitization">Request and model-loop sanitization<a class="headerlink" href="#request-and-model-loop-sanitization" title="Permanent link">&para;</a></h2>
+<p>JSON request bodies pass through sanitization middleware. It can classify
+content as clean, requiring approval, redacted, or blocked. Blocked input
+returns HTTP 422.</p>
+<p>The middleware fails closed when it is unavailable or raises unexpectedly.
+<code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> bypasses that behavior and should be limited to
+isolated diagnosis.</p>
+<p>Model-client sanitization is enabled by default:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>AGENTIC_SANITIZE_AGENT_LOOP=1
 </span></code></pre></div>
-<p>The lockout is checked <strong>before</strong> credential verification. Locked IPs are rejected before
-the server even reads the <code>Authorization</code> or <code>X-API-Key</code> header, so lockout cannot be
-cleared by supplying a correct key during the lockout period.</p>
-<p><strong>Successful authentication clears the failure counter.</strong> A valid key from a previously
-failing IP resets its failure history entirely.</p>
-<h3 id="eviction">Eviction<a class="headerlink" href="#eviction" title="Permanent link">&para;</a></h3>
-<p>The <code>_evict_expired()</code> method cleans up state entries lazily on each request — no background
-task is needed. An IP's entry is removed when its lockout has expired <strong>and</strong> its failure
-window has also expired.</p>
-<h3 id="in-process-limitation">In-process limitation<a class="headerlink" href="#in-process-limitation" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">Multi-replica caveat</p>
-<p><code>AuthThrottle</code> state is per-process. In a multi-replica deployment, a distributed
-attacker who spreads probes across replicas can stay under each replica's threshold while
-collectively exceeding the intended lockout threshold.</p>
-<p>See <a href="../../KNOWN_LIMITATIONS/#42-per-ip-auth-throttle-shares-the-same-multi-replica-caveat">KNOWN_LIMITATIONS.md §4.2</a>.
-Sprint 2 will migrate to a Redis-backed shared store.</p>
-</div>
-<h3 id="recipe-investigate-a-locked-out-client">Recipe: investigate a locked-out client<a class="headerlink" href="#recipe-investigate-a-locked-out-client" title="Permanent link">&para;</a></h3>
-<p>The server logs a warning for every lockout event and every rejected locked-IP request:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>WARNING: Auth throttle: IP 203.0.113.42 locked out for 300 seconds after 5 failures
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>WARNING: Auth throttle: rejecting locked IP 203.0.113.42 (retry after 287s)
+<p>This also checks content returned by tools or retrieval before it is sent back
+to supported model-client paths. Sanitization reduces risk; it cannot prove
+that an instruction is safe or true.</p>
+<h2 id="file-git-and-shell-tools">File, Git, and shell tools<a class="headerlink" href="#file-git-and-shell-tools" title="Permanent link">&para;</a></h2>
+<p>File and Git tools refuse operations until a sandbox root is configured:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>AGENTIC_FILE_BASE_DIR=C:\agentic-data
 </span></code></pre></div>
-<p>To find lockout events for a specific IP:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># journalctl / docker logs / file log depending on your deployment</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>grep<span class="w"> </span><span class="s2">&quot;locked out\|locked IP&quot;</span><span class="w"> </span>server.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;203.0.113.42&quot;</span>
+<p>Use a dedicated directory that contains no application source, credentials, or
+system files. Apply operating-system permissions in addition to the
+application path check.</p>
+<p>Shell commands are disabled when the allowlist is empty:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>AGENTIC_SHELL_ALLOWED_COMMANDS=
 </span></code></pre></div>
-<p>Authentication failures (before lockout) are also logged:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>WARNING: Authentication failed for /api/workflows/run from 203.0.113.42
+<p>If a workflow requires shell access, list executable basenames:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>AGENTIC_SHELL_ALLOWED_COMMANDS=python,git
 </span></code></pre></div>
-<h3 id="recipe-lowering-thresholds-for-high-value-endpoints">Recipe: lowering thresholds for high-value endpoints<a class="headerlink" href="#recipe-lowering-thresholds-for-high-value-endpoints" title="Permanent link">&para;</a></h3>
-<p>The threshold and lockout duration currently apply globally across all endpoints. If you
-need tighter thresholds, lower the environment variables:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">30</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">3</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">900</span>
+<p>An allowlist entry permits the executable, not a safe subset of its arguments.
+Interpreters and Git can still read, write, execute, or contact remote systems.
+Run the server with a restricted OS account and container or host controls.</p>
+<h2 id="http-tool-and-ssrf-controls">HTTP tool and SSRF controls<a class="headerlink" href="#http-tool-and-ssrf-controls" title="Permanent link">&para;</a></h2>
+<p>Private, loopback, link-local, reserved, and known cloud-metadata addresses are
+blocked by default:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>AGENTIC_BLOCK_PRIVATE_IPS=1
 </span></code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Per-endpoint throttle granularity is listed as future work in
-<a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>. Today the
-configuration is global.</p>
-</div>
-<hr />
-<h2 id="4-dag-workflow-timeout">4. DAG workflow timeout<a class="headerlink" href="#4-dag-workflow-timeout" title="Permanent link">&para;</a></h2>
-<h3 id="where-it-applies">Where it applies<a class="headerlink" href="#where-it-applies" title="Permanent link">&para;</a></h3>
-<p><code>DAGExecutor.execute(workflow, ..., timeout=N)</code> accepts an optional <code>timeout</code> parameter
-(seconds, float). When set, the entire scheduling loop is wrapped with
-<code>asyncio.wait_for(scheduling_loop(), timeout=N)</code>.</p>
-<p>There is <strong>no environment variable</strong> for the default timeout. The value is set per call by
-the server route layer. Today this means you configure it by adjusting the route-level
-call site — it is not a startup configuration knob.</p>
-<h3 id="what-happens-on-timeout">What happens on timeout<a class="headerlink" href="#what-happens-on-timeout" title="Permanent link">&para;</a></h3>
-<p>When the timeout elapses:</p>
+<p>The HTTP tools validate DNS results and redirect targets. Metadata addresses
+remain blocked even when private-address blocking is disabled.</p>
+<p>Application checks cannot replace egress controls. Restrict outbound network
+destinations at the firewall, container network, service mesh, or cloud policy.
+Set <code>AGENTIC_BLOCK_PRIVATE_IPS=0</code> only when a reviewed workflow must contact
+internal services and compensating controls are in place.</p>
+<h2 id="approval-gates">Approval gates<a class="headerlink" href="#approval-gates" title="Permanent link">&para;</a></h2>
+<p>A tool call requires approval when any of these is true:</p>
+<ul>
+<li>the tool declares <code>requires_approval=True</code>;</li>
+<li><code>AGENTIC_REQUIRE_TOOL_APPROVAL=1</code>; or</li>
+<li>the tool name appears in <code>AGENTIC_APPROVAL_REQUIRED_TOOLS</code>.</li>
+</ul>
+<p>High-impact built-ins such as command execution, file mutation, and
+state-changing HTTP operations require approval by default.</p>
+<p>If a gated tool has no registered provider, the call is denied. The default
+approval timeout is 1,800 seconds:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>AGENTIC_APPROVAL_TIMEOUT_SECONDS=1800
+</span></code></pre></div>
+<p>The current gate is programmatic. The dashboard does not provide a complete
+pause, approve, and resume workflow. Register an <code>ApprovalProvider</code> during
+application startup and test deny, timeout, provider failure, and duplicate
+request behavior.</p>
+<p>Do not use <code>AutoApproveProvider</code> as a substitute for reviewing whether a tool
+needs a gate.</p>
+<h2 id="cors-and-browser-access">CORS and browser access<a class="headerlink" href="#cors-and-browser-access" title="Permanent link">&para;</a></h2>
+<p>Set only the deployed browser origins:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>AGENTIC_CORS_ORIGINS=https://app.example.com
+</span></code></pre></div>
+<p>Multiple origins are comma-separated. The local defaults include development
+ports and should not be reused as a production policy.</p>
+<p>CORS controls which browser pages can read responses. It is not authentication,
+and it does not restrict non-browser clients.</p>
+<h2 id="audit-tracing-and-metrics">Audit, tracing, and metrics<a class="headerlink" href="#audit-tracing-and-metrics" title="Permanent link">&para;</a></h2>
+<p>Audit logging is off by default:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>AUDIT_LOG_ENABLED=1
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>AUDIT_LOG_BACKEND=file
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>AUDIT_LOG_FILE_PATH=C:\agentic-data\audit.jsonl
+</span></code></pre></div>
+<p>The supported backends are <code>file</code> and <code>redis</code>. File records are append-only
+from the application's perspective, but filesystem administrators can still
+change or delete them. Protect, ship, retain, and verify audit records outside
+the process.</p>
+<p>Tracing and metrics are also opt-in:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>AGENTIC_TRACING=1
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>AGENTIC_TRACE_SENSITIVE=0
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>AGENTIC_METRICS=1
+</span></code></pre></div>
+<p><code>/metrics</code> is public so a scraper can reach it. Protect it at the network layer
+if metric names or labels are sensitive. Keep sensitive trace content disabled
+unless collection and retention have been approved.</p>
+<h2 id="middleware-order">Middleware order<a class="headerlink" href="#middleware-order" title="Permanent link">&para;</a></h2>
+<p>Inbound HTTP requests pass through:</p>
 <ol>
-<li>All in-flight <code>asyncio.Task</code> objects for running steps are cancelled
-   (<code>task.cancel()</code>) and awaited to prevent "Task was destroyed but it is pending" warnings.</li>
-<li>Every step still in <code>RUNNING</code> state is transitioned to <code>FAILED</code> with <code>error_type:
-   "TimeoutError"</code> and a descriptive message.</li>
-<li>All transitive dependents of those failed steps are cascade-skipped via BFS (the same
-   propagation used for step-level failures).</li>
-<li>Steps that never started are also skipped.</li>
-<li>The returned <code>WorkflowResult</code> has <code>overall_status=FAILED</code>.</li>
-<li><code>result.metadata</code> contains:
-   <div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">{</span><span class="s2">&quot;timeout_exceeded&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;timeout_seconds&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">N</span><span class="o">&gt;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;message&gt;&quot;</span><span class="p">}</span>
-</span></code></pre></div></li>
+<li>CORS</li>
+<li>global rate limiting</li>
+<li>request metrics</li>
+<li>trace-context handling</li>
+<li>sanitization</li>
+<li>OIDC or API-key authentication</li>
 </ol>
-<p><strong>OTEL attributes</strong> emitted on the active span:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>workflow.timeout_exceeded = True
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>workflow.timeout_seconds = &lt;N&gt;   # on the span event &quot;workflow.timeout&quot;
-</span></code></pre></div>
-<p>These attributes are queryable in Jaeger/Tempo dashboards to identify timed-out runs.</p>
-<h3 id="relationship-to-per-step-timeouts">Relationship to per-step timeouts<a class="headerlink" href="#relationship-to-per-step-timeouts" title="Permanent link">&para;</a></h3>
-<p>The workflow-level timeout and per-step timeouts in <code>StepExecutor</code> are <strong>additive, not
-mutually exclusive</strong>. Both can be active simultaneously:</p>
+<p>Some public paths bypass authentication and application rate limiting as
+described above. Network controls still apply.</p>
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<p>Before release, verify the deployed instance rather than only the source
+configuration:</p>
 <ul>
-<li>A step's individual timeout fires if that step alone runs too long.</li>
-<li>The workflow timeout fires if the cumulative execution across all steps (including
-  dependencies and waiting time) exceeds the ceiling.</li>
+<li>unauthenticated protected route returns 401;</li>
+<li>invalid tokens trigger lockout and <code>Retry-After</code>;</li>
+<li>liveness and readiness probes have the intended network exposure;</li>
+<li>unapproved file, shell, and HTTP mutations are denied;</li>
+<li>file traversal and private-address requests are rejected;</li>
+<li>a tenant cannot read another tenant's runs or datasets;</li>
+<li>audit events arrive in durable storage;</li>
+<li>traces omit disallowed content;</li>
+<li>ingress rate limits work across replicas; and</li>
+<li>provider, Redis, and approval-service failures produce the intended response.</li>
 </ul>
-<p>Set a tight per-step budget for individual agent calls and a looser workflow ceiling as a
-backstop.</p>
-<h3 id="tuning-guidance">Tuning guidance<a class="headerlink" href="#tuning-guidance" title="Permanent link">&para;</a></h3>
-<p>A reasonable starting point:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>workflow_timeout = longest_legitimate_single_workflow_duration × 1.5
-</span></code></pre></div>
-<p>For example, if your most complex workflow takes about 4 minutes under normal conditions,
-set a 6-minute (360 second) timeout. This gives headroom for provider latency spikes while
-still bounding runaway workflows.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Cooperative cancellation via <code>asyncio.wait_for</code> depends on <code>await</code> points in step
-bodies. A tightly-looping synchronous step may not cancel promptly. If you have steps
-with synchronous-heavy bodies, consider adding explicit cancellation checkpoints.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Reference</p>
-<p>See <a href="../../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a> for the design rationale
-and the follow-on task to expose <code>timeout</code> as a top-level <code>execution_profile</code> HTTP field.</p>
-</div>
-<hr />
-<h2 id="5-adapter-eager-validation">5. Adapter eager validation<a class="headerlink" href="#5-adapter-eager-validation" title="Permanent link">&para;</a></h2>
-<h3 id="how-it-works_3">How it works<a class="headerlink" href="#how-it-works_3" title="Permanent link">&para;</a></h3>
-<p><code>AGENTIC_DEFAULT_ADAPTER</code> selects which execution engine the server validates at startup.
-The default is <code>langchain</code>.</p>
-<p>During the FastAPI lifespan startup sequence, <code>AdapterRegistry.validate_selected(name)</code> is
-called. For the <code>langchain</code> adapter, this immediately attempts to import <code>langchain</code> and
-<code>langgraph</code>. If either import fails (the optional extras are not installed), a
-<code>ConfigurationError</code> is raised:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>ConfigurationError: LangChain engine selected but extras not installed.
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Install with: pip install -e &#39;.[langchain]&#39;
-</span></code></pre></div>
-<p>uvicorn logs the error and <strong>exits with a non-zero code</strong>. The server does not start, and
-no requests are served. This fail-fast behavior is intentional — a misconfigured deployment
-fails at boot rather than mid-workflow.</p>
-<p>For <code>AGENTIC_DEFAULT_ADAPTER=native</code> (and any other adapter value that is not <code>langchain</code>),
-<code>validate_selected()</code> is a no-op.</p>
-<h3 id="recipe-deploy-with-native-engine-only-no-langchain-extras">Recipe: deploy with native engine only (no LangChain extras)<a class="headerlink" href="#recipe-deploy-with-native-engine-only-no-langchain-extras" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
-</span></code></pre></div>
-<p>Set this when:</p>
-<ul>
-<li>You have not installed the <code>[langchain]</code> extras.</li>
-<li>You want to minimize the dependency footprint.</li>
-<li>All workflows in your deployment explicitly specify <code>adapter: native</code>.</li>
-</ul>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Setting <code>AGENTIC_DEFAULT_ADAPTER=native</code> bypasses the LangChain check but does not
-prevent workflows from requesting the <code>langchain</code> adapter at run time. If a workflow
-request specifies <code>adapter: langchain</code> and the extras are absent, the error surfaces at
-request time rather than boot time.</p>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Reference</p>
-<p>See <a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> for the rationale
-and the CLI pre-flight check planned as a follow-on.</p>
-</div>
-<hr />
-<h2 id="6-filesystem-sandboxing">6. Filesystem sandboxing<a class="headerlink" href="#6-filesystem-sandboxing" title="Permanent link">&para;</a></h2>
-<h3 id="agentic_file_base_dir">AGENTIC_FILE_BASE_DIR<a class="headerlink" href="#agentic_file_base_dir" title="Permanent link">&para;</a></h3>
-<p>The <code>file_ops</code> built-in tool uses this variable to establish a sandbox root. All file
-operations are resolved relative to this directory, and any attempt to traverse outside it
-(e.g., via <code>../</code>) is rejected at the validator boundary.</p>
-<div class="admonition warning">
-<p class="admonition-title">Fail-closed</p>
-<p>When <code>AGENTIC_FILE_BASE_DIR</code> is <strong>not set</strong>, all file tool operations are refused. File
-tools will return an error on every call until this variable is configured.</p>
-<p>Operators who need file operations <strong>must</strong> set this variable. Leaving it unset is the
-safe default — no accidental file access can occur.</p>
-</div>
-<p><strong>Recommended value:</strong> a dedicated, isolated directory that the server process can write to
-and that does not contain sensitive system files or application secrets.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Container deployments</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Bare-metal / VM deployments</span>
-</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/var/lib/agentic/data
-</span></code></pre></div>
-<p>Ensure the directory:</p>
-<ul>
-<li>Exists and is writable by the server process user.</li>
-<li>Does not overlap with application code, secrets, or system directories.</li>
-<li>Has appropriate filesystem-level permissions (mode <code>700</code> or <code>750</code> for the server user).</li>
-</ul>
-<hr />
-<h2 id="7-shell-tool-allowlist">7. Shell tool allowlist<a class="headerlink" href="#7-shell-tool-allowlist" title="Permanent link">&para;</a></h2>
-<h3 id="agentic_shell_allowed_commands">AGENTIC_SHELL_ALLOWED_COMMANDS<a class="headerlink" href="#agentic_shell_allowed_commands" title="Permanent link">&para;</a></h3>
-<p>The <code>shell_ops</code> built-in tool executes shell commands inside the server process. By default
-(when the variable is not set or is empty), <strong>all shell commands are disabled</strong>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Fail-closed</p>
-<p>An empty or missing <code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> means no shell commands can run.
-This is the safe default.</p>
-</div>
-<p>When set, the value is a comma-separated list of command <strong>basenames</strong> (the executable name
-without path). Only commands whose basename appears in this list are allowed to execute.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Disable entirely (default — omit the variable or set it to empty)</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Allow only specific commands</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>ls,cat,python,git
-</span></code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Minimum set for code-execution workflows</p>
-<p>The following covers most code-execution workflow patterns while keeping the attack
-surface narrow:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>ls,cat,python,git
-</span></code></pre></div>
-Add additional commands only when a specific workflow requires them. Never include
-interpreters (<code>bash</code>, <code>sh</code>, <code>zsh</code>) unless the workflow explicitly requires a shell
-runner and you have reviewed the associated risk.</p>
-</div>
-<hr />
-<h2 id="8-sanitization-middleware">8. Sanitization middleware<a class="headerlink" href="#8-sanitization-middleware" title="Permanent link">&para;</a></h2>
-<h3 id="how-it-works_4">How it works<a class="headerlink" href="#how-it-works_4" title="Permanent link">&para;</a></h3>
-<p><code>SanitizationASGIMiddleware</code> (layer 2 in the middleware stack) inspects the JSON body of
-every inbound request. It applies the <code>SanitizationMiddleware</code> instance stored in
-<code>app.state.sanitization</code> (initialized in the FastAPI lifespan with <code>dry_run=False</code>).</p>
-<p>Classification outcomes:</p>
-<table>
-<thead>
-<tr>
-<th>Classification</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>clean</code></td>
-<td>Request passes through unmodified.</td>
-</tr>
-<tr>
-<td><code>requires_approval</code></td>
-<td>Request passes through unmodified (advisory only in current release).</td>
-</tr>
-<tr>
-<td><code>redacted</code></td>
-<td>Request body replaced with sanitized text before passing downstream.</td>
-</tr>
-<tr>
-<td><code>blocked</code></td>
-<td><code>422 Unprocessable Entity</code> returned immediately.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="fail-closed-behavior">Fail-closed behavior<a class="headerlink" href="#fail-closed-behavior" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">Fail-closed by default</p>
-<p>When the sanitization layer fails to initialize (or is explicitly <code>None</code>), the middleware
-returns <code>503 Service Unavailable</code> unless <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> is set.</p>
-<p>On any unexpected exception during sanitization processing, the middleware returns
-<code>500 Internal Server Error</code> rather than passing the request through unsanitized.</p>
-<p>Only JSON bodies (<code>Content-Type: application/json</code>) are inspected. All other content
-types pass through unchanged.</p>
-</div>
-<h3 id="agentic_sanitizer_fail_open">AGENTIC_SANITIZER_FAIL_OPEN<a class="headerlink" href="#agentic_sanitizer_fail_open" title="Permanent link">&para;</a></h3>
-<div class="admonition note">
-<p class="admonition-title">Only the literal <code>1</code> enables fail-open</p>
-<p>Since 2026-05-09, only the string <code>"1"</code> is accepted as enabling fail-open. Earlier
-versions accepted <code>"true"</code>, <code>"yes"</code>, and other truthy strings. If your deployment
-scripts set <code>AGENTIC_SANITIZER_FAIL_OPEN=true</code>, update them to
-<code>AGENTIC_SANITIZER_FAIL_OPEN=1</code>.</p>
-</div>
-<p>Setting <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> causes the middleware to pass requests through
-when the sanitization layer is unavailable or encounters an error, rather than returning
-<code>503</code>/<code>500</code>.</p>
-<div class="admonition warning">
-<p class="admonition-title">Not for production</p>
-<p><code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> disables the prompt-injection and secret-redaction
-safety net when the sanitization layer is unavailable. Use only for debugging in
-isolated environments. <strong>Do not set this in production.</strong></p>
-</div>
-<h3 id="recipe-legacy-debugging-mode">Recipe: legacy debugging mode<a class="headerlink" href="#recipe-legacy-debugging-mode" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Temporarily enable fail-open to diagnose sanitization startup failures</span>
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="nv">AGENTIC_SANITIZER_FAIL_OPEN</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>...
-</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># After diagnosing, remove the variable and fix the root cause.</span>
-</span></code></pre></div>
-<hr />
-<h2 id="9-cors">9. CORS<a class="headerlink" href="#9-cors" title="Permanent link">&para;</a></h2>
-<h3 id="agentic_cors_origins">AGENTIC_CORS_ORIGINS<a class="headerlink" href="#agentic_cors_origins" title="Permanent link">&para;</a></h3>
-<p>Controls which browser origins the server includes in <code>Access-Control-Allow-Origin</code> response
-headers (via FastAPI's <code>CORSMiddleware</code>, the innermost middleware layer).</p>
-<p><strong>Default origins (when <code>AGENTIC_CORS_ORIGINS</code> is not set):</strong></p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>http://localhost:5173
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>http://127.0.0.1:5173
-</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>http://localhost:8000
-</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>http://127.0.0.1:8000
-</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>http://localhost:8010
-</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>http://127.0.0.1:8010
-</span></code></pre></div>
-<p>These defaults cover the local Vite dev server and common local API ports. They are not
-appropriate for production.</p>
-<div class="admonition warning">
-<p class="admonition-title">Production deployments must restrict CORS origins</p>
-<p>Set <code>AGENTIC_CORS_ORIGINS</code> to the actual frontend origin(s) in every production
-deployment. Leaving the default allows any localhost browser session to make
-credentialed cross-origin requests.</p>
-</div>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Single frontend origin</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
-</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Multiple origins (comma-separated, no spaces)</span>
-</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com,https://admin.example.com
-</span></code></pre></div>
-<h3 id="websocket-origin-validation_1">WebSocket origin validation<a class="headerlink" href="#websocket-origin-validation_1" title="Permanent link">&para;</a></h3>
-<p>WebSocket origin validation reuses the same <code>AGENTIC_CORS_ORIGINS</code> allowlist via
-<code>get_allowed_origins()</code>. Additionally, any <code>localhost</code> or <code>127.0.0.1</code> origin (any port) is
-always allowed for WebSocket connections — the Vite dev server starts on dynamic ports
-(5173, 5174, …) so they cannot be enumerated statically.</p>
-<p>Non-browser clients that omit the <code>Origin</code> header are always allowed for WebSocket
-connections.</p>
-<hr />
-<h2 id="10-http-tool-ssrf-protection">10. HTTP tool SSRF protection<a class="headerlink" href="#10-http-tool-ssrf-protection" title="Permanent link">&para;</a></h2>
-<h3 id="agentic_block_private_ips">AGENTIC_BLOCK_PRIVATE_IPS<a class="headerlink" href="#agentic_block_private_ips" title="Permanent link">&para;</a></h3>
-<p>The <code>http_ops</code> built-in tool (and <code>langchain/tools.py</code>) make outbound HTTP requests
-during workflow execution. As of P1 #13, <strong>SSRF protection is enabled by default</strong> and
-covers:</p>
-<ul>
-<li>Private/loopback/link-local/reserved IP literals (RFC 1918, RFC 4193, etc.)</li>
-<li>DNS names: all returned addresses are resolved and checked — a hostname that resolves to
-  a private address is blocked even if it looks public.</li>
-<li>Cloud metadata endpoints: <code>169.254.169.254</code>, <code>fd00:ec2::254</code>, <code>100.100.100.200</code>,
-  <code>metadata.google.internal</code> are always blocked regardless of the flag.</li>
-<li>Redirect re-validation: each redirect hop is validated before following (max 5 hops).
-  Per RFC 7538/9110, <code>307</code>/<code>308</code> hops preserve the original method and body; <code>301</code>/<code>302</code>/<code>303</code>
-  degrade to a bodyless <code>GET</code>. Caller headers (e.g. <code>Authorization</code>) are sent on the first hop
-  only, so credentials are never replayed to a redirect target.</li>
-<li>IPv4-mapped IPv6 (<code>::ffff:127.0.0.1</code>) is normalised before checking.</li>
-<li>Legacy IPv4 literal forms the OS resolver accepts (decimal <code>2130706433</code>, hex <code>0x7f000001</code>,
-  octal <code>0177.0.0.1</code>, short <code>127.1</code>) are parsed and blocked — they cannot bypass the
-  string-based check.</li>
-</ul>
-<h3 id="dns-rebinding-residual-risk">DNS-rebinding residual risk<a class="headerlink" href="#dns-rebinding-residual-risk" title="Permanent link">&para;</a></h3>
-<p>The guard validates the hostname's resolved addresses <em>and</em> pins the connection to a
-validated address so the HTTP client cannot independently re-resolve to a different
-(private/metadata) IP between the check and the connect:</p>
-<ul>
-<li><strong>aiohttp path</strong> (<code>http_ops</code>): a <code>GuardedResolver</code> re-validates every address aiohttp is
-  about to dial at connect time.</li>
-<li><strong>httpx path</strong> (<code>langchain/tools</code>): <code>validate_url_pinned</code> rewrites the request URL to the
-  validated IP, carrying the real hostname in the <code>Host</code> header (and <code>sni_hostname</code> extension
-  for TLS), so the connection goes to the address that was checked.</li>
-</ul>
-<p><strong>Residual:</strong> both mitigations rely on <code>getaddrinfo</code>/the resolver returning the same answer the
-guard validated. A sufficiently hostile authoritative DNS server with a near-zero TTL could, in
-principle, return a different address to the connect-time lookup than to the validation lookup on
-a path not covered by pinning, and OS-level resolver caching is not under the application's
-control. For threat models that include attacker-controlled DNS, treat the application guard as
-defense-in-depth and add a <strong>network-layer egress control</strong> (egress firewall / service-mesh
-authorization / network policy) restricting which addresses the server process may reach. See
-<code>docs/KNOWN_LIMITATIONS.md</code>.</p>
-<div class="admonition warning">
-<p class="admonition-title">SSRF defense</p>
-<p>In environments where the server process has network access to internal services
-(databases, metadata APIs, internal dashboards), an unauthenticated or malicious
-workflow could exploit the HTTP tool to make requests to those services. The SSRF guard
-is <strong>on by default</strong> — this is a security-critical default. Do not disable it without
-applying compensating controls.</p>
-</div>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># On by default — opt out only with explicit justification</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS=0  # disables private-IP blocking (NOT recommended)</span>
-</span></code></pre></div>
-<p>Set <code>AGENTIC_BLOCK_PRIVATE_IPS=0</code> only when workflows legitimately need to reach internal
-network endpoints and you have applied other controls (network policy, service mesh
-authorization) to restrict which internal addresses the server can reach. Note that
-cloud metadata endpoints (<code>169.254.169.254</code> etc.) remain blocked even when the flag
-is set to <code>0</code>.</p>
-<hr />
-<h2 id="11-human-approval-gates">11. Human approval gates<a class="headerlink" href="#11-human-approval-gates" title="Permanent link">&para;</a></h2>
-<p>As of P1 #12, high-impact tools no longer execute the instant the LLM emits a call: the
-tool-execution hot path consults an injectable <strong>approval gate</strong> first, at <em>both</em> dispatch
-points (the engine tool loop and the agent loop). The gate is implemented in
-<code>agentic_v2/governance/approval.py</code>.</p>
-<h3 id="contract">Contract<a class="headerlink" href="#contract" title="Permanent link">&para;</a></h3>
-<p>A tool requires approval when <strong>any</strong> of these is true (the triggers are OR'd):</p>
-<ol>
-<li>The tool opts in via <code>requires_approval = True</code> on its class.</li>
-<li>The global override <code>AGENTIC_REQUIRE_TOOL_APPROVAL=1</code> is set (gates <strong>every</strong> tool).</li>
-<li>The tool's name appears in <code>AGENTIC_APPROVAL_REQUIRED_TOOLS</code> (comma-separated).</li>
-</ol>
-<p>When a tool requires approval, the registered <code>ApprovalProvider</code> decides. The decision is
-returned to the model as a normal (failed) tool result, so a denied call does not crash the
-run — the model sees the denial and can adapt.</p>
-<h3 id="fail-closed-rule">Fail-closed rule<a class="headerlink" href="#fail-closed-rule" title="Permanent link">&para;</a></h3>
-<p><strong>If a tool requires approval and no provider is registered, the call is DENIED and never
-executes.</strong> There is no implicit "allow when unconfigured" path. To run gated tools you must
-either register a provider or remove the requirement. The denial error tells the operator
-exactly that.</p>
-<h3 id="default-posture-change">Default posture change<a class="headerlink" href="#default-posture-change" title="Permanent link">&para;</a></h3>
-<p>The global override defaults <strong>OFF</strong> so existing flows are not broken. The real default
-posture change is the per-tool flag: the following high-impact builtins are gated <strong>by
-default</strong>, so a deployment that registers no provider will have these tools fail closed until
-one is wired:</p>
-<table>
-<thead>
-<tr>
-<th>Tool name</th>
-<th>Why gated</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>shell</code>, <code>shell_exec</code></td>
-<td>Arbitrary command execution</td>
-</tr>
-<tr>
-<td><code>execute_python</code></td>
-<td>Arbitrary code execution</td>
-</tr>
-<tr>
-<td><code>file_write</code>, <code>file_delete</code>, <code>file_move</code>, <code>file_copy</code>, <code>directory_create</code></td>
-<td>Filesystem mutation</td>
-</tr>
-<tr>
-<td><code>http</code>, <code>http_post</code></td>
-<td>State-changing network requests</td>
-</tr>
-</tbody>
-</table>
-<p>Read-only tools (<code>file_read</code>, <code>http_get</code>, search/transform/context ops) are <strong>not</strong> gated.</p>
-<h3 id="provider-examples">Provider examples<a class="headerlink" href="#provider-examples" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">AutoApproveProvider</span><span class="p">,</span>
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">AutoDenyProvider</span><span class="p">,</span>
-</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">CallbackApprovalProvider</span><span class="p">,</span>
-</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>    <span class="n">PolicyApprovalProvider</span><span class="p">,</span>
-</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>    <span class="n">set_approval_provider</span><span class="p">,</span>
-</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="p">)</span>
-</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
-</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a><span class="c1"># Trusted, non-interactive environment: approve everything (use with care).</span>
-</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">AutoApproveProvider</span><span class="p">())</span>
-</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>
-</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="c1"># Hard kill-switch: deny every gated call.</span>
-</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">AutoDenyProvider</span><span class="p">())</span>
-</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>
-</span><span id="__span-26-15"><a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="c1"># Allowlist by tool name.</span>
-</span><span id="__span-26-16"><a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">PolicyApprovalProvider</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;file_write&quot;</span><span class="p">})))</span>
-</span><span id="__span-26-17"><a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>
-</span><span id="__span-26-18"><a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a><span class="c1"># Interactive / custom: a sync-or-async callable decides per request.</span>
-</span><span id="__span-26-19"><a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
-</span><span id="__span-26-20"><a id="__codelineno-26-20" name="__codelineno-26-20" href="#__codelineno-26-20"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.governance</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApprovalDecision</span>
-</span><span id="__span-26-21"><a id="__codelineno-26-21" name="__codelineno-26-21" href="#__codelineno-26-21"></a>    <span class="c1"># request.tool_name, request.call_id, request.agent_or_step are available;</span>
-</span><span id="__span-26-22"><a id="__codelineno-26-22" name="__codelineno-26-22" href="#__codelineno-26-22"></a>    <span class="c1"># request.tool_args values longer than ~200 chars are redacted in its repr.</span>
-</span><span id="__span-26-23"><a id="__codelineno-26-23" name="__codelineno-26-23" href="#__codelineno-26-23"></a>    <span class="k">return</span> <span class="n">ApprovalDecision</span><span class="o">.</span><span class="n">APPROVED</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">tool_name</span> <span class="o">==</span> <span class="s2">&quot;file_write&quot;</span> <span class="k">else</span> <span class="n">ApprovalDecision</span><span class="o">.</span><span class="n">DENIED</span>
-</span><span id="__span-26-24"><a id="__codelineno-26-24" name="__codelineno-26-24" href="#__codelineno-26-24"></a>
-</span><span id="__span-26-25"><a id="__codelineno-26-25" name="__codelineno-26-25" href="#__codelineno-26-25"></a><span class="n">set_approval_provider</span><span class="p">(</span><span class="n">CallbackApprovalProvider</span><span class="p">(</span><span class="n">decide</span><span class="p">))</span>
-</span></code></pre></div>
-<p>The provider is a <strong>process-wide</strong> module global — set it once at process start. Approval
-policy is an application-level posture decision; it is not bound per-task.</p>
-<div class="admonition note">
-<p class="admonition-title">UI-driven pause/resume is a follow-on, not built yet</p>
-<p>This release ships the <strong>programmatic</strong> gate: an injectable provider consulted
-synchronously on the hot path. A full UI-driven <em>pause-and-resume</em> flow — where a run
-suspends, surfaces an approval prompt to a human operator in the web UI, and resumes on
-their click — is an explicit follow-on. The wire-format events
-(<code>approval_required</code>, <code>approval_decision</code> in <code>contracts/events.py</code>) already exist so the
-server/UI can build on them, but the engine tool loop currently surfaces approval activity
-via the logger and the serialized result metadata rather than streaming those events. See
-<a href="../../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> §4.3.</p>
-</div>
-<hr />
-<h2 id="reference-deployment-posture">Reference deployment posture<a class="headerlink" href="#reference-deployment-posture" title="Permanent link">&para;</a></h2>
-<p>The following block represents the minimum recommended configuration for a hardened,
-internet-exposed production instance. Copy and adapt it to your environment.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># ── Authentication ────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="c1"># Generate with: openssl rand -hex 32</span>
-</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;<span class="m">32</span>-byte-random-hex&gt;
-</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
-</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="c1"># ── CORS ─────────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
-</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>
-</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="c1"># ── Filesystem sandbox ────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-9"><a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
-</span><span id="__span-27-10"><a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>
-</span><span id="__span-27-11"><a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="c1"># ── Shell tool ────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-12"><a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Empty = all shell commands disabled (recommended unless workflows require shell)</span>
-</span><span id="__span-27-13"><a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
-</span><span id="__span-27-14"><a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>
-</span><span id="__span-27-15"><a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a><span class="c1"># ── Engine ───────────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-16"><a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="c1"># Use native engine to avoid LangChain extras requirement.</span>
-</span><span id="__span-27-17"><a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a><span class="c1"># Remove or set to langchain if LangChain extras are installed.</span>
-</span><span id="__span-27-18"><a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
-</span><span id="__span-27-19"><a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a>
-</span><span id="__span-27-20"><a id="__codelineno-27-20" name="__codelineno-27-20" href="#__codelineno-27-20"></a><span class="c1"># ── SSRF defense (default ON — no action required for production) ────────────</span>
-</span><span id="__span-27-21"><a id="__codelineno-27-21" name="__codelineno-27-21" href="#__codelineno-27-21"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS is True by default. Unset or set to 1 to keep the</span>
-</span><span id="__span-27-22"><a id="__codelineno-27-22" name="__codelineno-27-22" href="#__codelineno-27-22"></a><span class="c1"># default. Set to 0 only if workflows must reach internal services and</span>
-</span><span id="__span-27-23"><a id="__codelineno-27-23" name="__codelineno-27-23" href="#__codelineno-27-23"></a><span class="c1"># compensating network controls are in place.</span>
-</span><span id="__span-27-24"><a id="__codelineno-27-24" name="__codelineno-27-24" href="#__codelineno-27-24"></a><span class="c1"># AGENTIC_BLOCK_PRIVATE_IPS=0  # opt-out — not recommended</span>
-</span><span id="__span-27-25"><a id="__codelineno-27-25" name="__codelineno-27-25" href="#__codelineno-27-25"></a>
-</span><span id="__span-27-26"><a id="__codelineno-27-26" name="__codelineno-27-26" href="#__codelineno-27-26"></a><span class="c1"># ── Human approval gates (§11) ───────────────────────────────────────────────</span>
-</span><span id="__span-27-27"><a id="__codelineno-27-27" name="__codelineno-27-27" href="#__codelineno-27-27"></a><span class="c1"># High-impact builtins (shell/exec, file writes/deletes, http/post) are gated by</span>
-</span><span id="__span-27-28"><a id="__codelineno-27-28" name="__codelineno-27-28" href="#__codelineno-27-28"></a><span class="c1"># default and FAIL CLOSED with no provider registered. Register an</span>
-</span><span id="__span-27-29"><a id="__codelineno-27-29" name="__codelineno-27-29" href="#__codelineno-27-29"></a><span class="c1"># ApprovalProvider at process start (see §11) before relying on those tools.</span>
-</span><span id="__span-27-30"><a id="__codelineno-27-30" name="__codelineno-27-30" href="#__codelineno-27-30"></a><span class="c1"># Optionally gate EVERYTHING, or extra tools by name:</span>
-</span><span id="__span-27-31"><a id="__codelineno-27-31" name="__codelineno-27-31" href="#__codelineno-27-31"></a><span class="c1"># AGENTIC_REQUIRE_TOOL_APPROVAL=1            # gate every tool call</span>
-</span><span id="__span-27-32"><a id="__codelineno-27-32" name="__codelineno-27-32" href="#__codelineno-27-32"></a><span class="c1"># AGENTIC_APPROVAL_REQUIRED_TOOLS=git_commit,deploy   # extra tools by name</span>
-</span><span id="__span-27-33"><a id="__codelineno-27-33" name="__codelineno-27-33" href="#__codelineno-27-33"></a>
-</span><span id="__span-27-34"><a id="__codelineno-27-34" name="__codelineno-27-34" href="#__codelineno-27-34"></a><span class="c1"># ── Rate limiting ─────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-35"><a id="__codelineno-27-35" name="__codelineno-27-35" href="#__codelineno-27-35"></a><span class="c1"># Tune based on expected traffic. Lower for higher-security, lower-traffic</span>
-</span><span id="__span-27-36"><a id="__codelineno-27-36" name="__codelineno-27-36" href="#__codelineno-27-36"></a><span class="c1"># environments. Raise with caution — in-process only, see §2.</span>
-</span><span id="__span-27-37"><a id="__codelineno-27-37" name="__codelineno-27-37" href="#__codelineno-27-37"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">30</span>/minute
-</span><span id="__span-27-38"><a id="__codelineno-27-38" name="__codelineno-27-38" href="#__codelineno-27-38"></a>
-</span><span id="__span-27-39"><a id="__codelineno-27-39" name="__codelineno-27-39" href="#__codelineno-27-39"></a><span class="c1"># ── Auth brute-force throttle ─────────────────────────────────────────────────</span>
-</span><span id="__span-27-40"><a id="__codelineno-27-40" name="__codelineno-27-40" href="#__codelineno-27-40"></a><span class="c1"># Window (seconds), threshold (failures), lockout (seconds)</span>
-</span><span id="__span-27-41"><a id="__codelineno-27-41" name="__codelineno-27-41" href="#__codelineno-27-41"></a><span class="c1"># Defaults are 60 / 5 / 300; values below are more aggressive for production.</span>
-</span><span id="__span-27-42"><a id="__codelineno-27-42" name="__codelineno-27-42" href="#__codelineno-27-42"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</span><span class="o">=</span><span class="m">60</span>
-</span><span id="__span-27-43"><a id="__codelineno-27-43" name="__codelineno-27-43" href="#__codelineno-27-43"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">5</span>
-</span><span id="__span-27-44"><a id="__codelineno-27-44" name="__codelineno-27-44" href="#__codelineno-27-44"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">600</span>
-</span><span id="__span-27-45"><a id="__codelineno-27-45" name="__codelineno-27-45" href="#__codelineno-27-45"></a>
-</span><span id="__span-27-46"><a id="__codelineno-27-46" name="__codelineno-27-46" href="#__codelineno-27-46"></a><span class="c1"># ── Sanitization ──────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-47"><a id="__codelineno-27-47" name="__codelineno-27-47" href="#__codelineno-27-47"></a><span class="c1"># Leave AGENTIC_SANITIZER_FAIL_OPEN unset (fail-closed is the safe default).</span>
-</span><span id="__span-27-48"><a id="__codelineno-27-48" name="__codelineno-27-48" href="#__codelineno-27-48"></a><span class="c1"># AGENTIC_SANITIZER_FAIL_OPEN=   # do not set</span>
-</span><span id="__span-27-49"><a id="__codelineno-27-49" name="__codelineno-27-49" href="#__codelineno-27-49"></a>
-</span><span id="__span-27-50"><a id="__codelineno-27-50" name="__codelineno-27-50" href="#__codelineno-27-50"></a><span class="c1"># ── Observability ─────────────────────────────────────────────────────────────</span>
-</span><span id="__span-27-51"><a id="__codelineno-27-51" name="__codelineno-27-51" href="#__codelineno-27-51"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-27-52"><a id="__codelineno-27-52" name="__codelineno-27-52" href="#__codelineno-27-52"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://otel-collector:4317
-</span></code></pre></div>
-<div class="admonition tip">
-<p class="admonition-title">Secret generation</p>
-<p>Use a cryptographically strong random value for <code>AGENTIC_API_KEY</code>:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
-</span></code></pre></div>
-Store it in your secret manager (AWS Secrets Manager, Vault, Kubernetes Secret) and
-inject it at runtime — never commit it to the repository.</p>
-</div>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../../configuration/">Configuration Reference</a> — full environment variable index with types,
-  defaults, and accepted values</li>
-<li><a href="../../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a> — rate limiting and auth
-  throttle design rationale, Sprint 2 Redis migration plan</li>
-<li><a href="../../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a> — DAG executor top-level timeout
-  watchdog design</li>
-<li><a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> — LangChain adapter eager
-  validation at startup</li>
-<li><a href="../../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> — in-process caveats, multi-replica
-  behavior (§4.1, §4.2), and deferred Sprint 2 work</li>
-<li><a href="../troubleshooting/">Troubleshooting</a> — common failure modes and diagnostic recipes</li>
-<li><a href="../../deployment-guide/">Deployment Guide</a> — CI/CD pipeline, Docker, environment setup,
-  and production observability checklist</li>
-</ul>
+<p>Use <a href="../troubleshooting/">Troubleshooting</a> for diagnostics and
+<a href="../../deployment-guide/">Deployment</a> for the runtime setup.</p>
 
 
 
@@ -4803,7 +3536,7 @@ inject it at runtime — never commit it to the repository.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     
@@ -4865,13 +3598,13 @@ inject it at runtime — never commit it to the repository.</p>
         
         
           
-          <a href="../troubleshooting/" class="md-footer__link md-footer__link--next" aria-label="Next: Troubleshooting">
+          <a href="../../SUPPLY_CHAIN/" class="md-footer__link md-footer__link--next" aria-label="Next: Supply-chain security">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Troubleshooting
+                Supply-chain security
               </div>
             </div>
             <div class="md-footer__button md-icon">

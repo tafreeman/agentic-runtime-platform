@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI.">
+        <meta name="description" content="Load benchmark tasks and browse repository or local datasets through the server.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Evaluation Datasets - Agentic Runtime Platform</title>
+        <title>Evaluation datasets - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Evaluation Datasets - Agentic Runtime Platform" />
-<meta property="og:description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
+<meta property="og:title" content="Evaluation datasets - Agentic Runtime Platform" />
+<meta property="og:description" content="Load benchmark tasks and browse repository or local datasets through the server." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/datasets.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/datasets/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Evaluation Datasets - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Dataset sources, JSON format, the eval-package loading API, server-side sample browsing endpoints, and the dashboard dataset browser UI." />
+<meta property="twitter:title" content="Evaluation datasets - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Load benchmark tasks and browse repository or local datasets through the server." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/datasets.png" />
 </head>
   
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Evaluation Datasets
+              Evaluation datasets
             
           </span>
         </div>
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1810,115 +1840,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#available-benchmark-datasets" class="md-nav__link">
+  <a href="#benchmark-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available benchmark datasets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#eval-package-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval-package Python API
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Eval-package Python API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#installation-and-import" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation and import
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list_benchmarks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_benchmarks()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_benchmark_definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_benchmark_definitions()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_benchmark_definitionbenchmark_id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_benchmark_definition(benchmark_id)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#load_benchmark" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        load_benchmark()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#benchmarktask" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BenchmarkTask
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_registry()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lazy-import-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lazy import architecture
+        Benchmark API
       
     </span>
   </a>
@@ -1934,152 +1859,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Local dataset format">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-json-structures" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported JSON structures
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#field-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Field discovery
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#jsonl-datasets-external-benchmark-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSONL datasets (external benchmark tools)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#server-side-dataset-apis" class="md-nav__link">
+  <a href="#server-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server-side dataset APIs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Server-side dataset APIs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasetssample-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets/sample-list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasetssample-detail" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets/sample-detail
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apiworkflowsworkflow_namepreview-dataset-inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/workflows/{workflow_name}/preview-dataset-inputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dataset-to-workflow-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dataset-to-workflow compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dataset-to-workflow compatibility">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#match_workflow_dataset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        match_workflow_dataset()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adapt_sample_to_workflow_inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        adapt_sample_to_workflow_inputs()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#eval-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval sets
+        Server API
       
     </span>
   </a>
@@ -2087,60 +1873,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dashboard-dataset-browser" class="md-nav__link">
+  <a href="#workflow-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard dataset browser
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dashboard dataset browser">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pane-1-dataset-picker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 1: dataset picker
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pane-2-sample-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 2: sample list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pane-3-sample-detail-workflow-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 3: sample detail + workflow preview
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-datasets-in-batch-evaluation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using datasets in batch evaluation
+        Workflow compatibility
       
     </span>
   </a>
@@ -2148,10 +1884,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-path-traversal-protection" class="md-nav__link">
+  <a href="#safety" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security: path traversal protection
+        Safety
       
     </span>
   </a>
@@ -2477,6 +2213,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2574,6 +2314,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2884,6 +2680,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2944,6 +2744,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3131,115 +2987,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#available-benchmark-datasets" class="md-nav__link">
+  <a href="#benchmark-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Available benchmark datasets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#eval-package-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval-package Python API
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Eval-package Python API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#installation-and-import" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation and import
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list_benchmarks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        list_benchmarks()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_benchmark_definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_benchmark_definitions()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_benchmark_definitionbenchmark_id" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_benchmark_definition(benchmark_id)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#load_benchmark" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        load_benchmark()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#benchmarktask" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BenchmarkTask
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_registry()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#lazy-import-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lazy import architecture
+        Benchmark API
       
     </span>
   </a>
@@ -3255,152 +3006,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Local dataset format">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-json-structures" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported JSON structures
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#field-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Field discovery
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#jsonl-datasets-external-benchmark-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSONL datasets (external benchmark tools)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#server-side-dataset-apis" class="md-nav__link">
+  <a href="#server-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server-side dataset APIs
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Server-side dataset APIs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasetssample-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets/sample-list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apievaldatasetssample-detail" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/eval/datasets/sample-detail
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-apiworkflowsworkflow_namepreview-dataset-inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GET /api/workflows/{workflow_name}/preview-dataset-inputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dataset-to-workflow-compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dataset-to-workflow compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dataset-to-workflow compatibility">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#match_workflow_dataset" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        match_workflow_dataset()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adapt_sample_to_workflow_inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        adapt_sample_to_workflow_inputs()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#eval-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval sets
+        Server API
       
     </span>
   </a>
@@ -3408,60 +3020,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dashboard-dataset-browser" class="md-nav__link">
+  <a href="#workflow-compatibility" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboard dataset browser
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Dashboard dataset browser">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pane-1-dataset-picker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 1: dataset picker
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pane-2-sample-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 2: sample list
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pane-3-sample-detail-workflow-preview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pane 3: sample detail + workflow preview
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#using-datasets-in-batch-evaluation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using datasets in batch evaluation
+        Workflow compatibility
       
     </span>
   </a>
@@ -3469,10 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-path-traversal-protection" class="md-nav__link">
+  <a href="#safety" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security: path traversal protection
+        Safety
       
     </span>
   </a>
@@ -3527,723 +3089,222 @@
 
 
 <h1 id="evaluation-datasets">Evaluation datasets<a class="headerlink" href="#evaluation-datasets" title="Permanent link">&para;</a></h1>
-<p>Agentic Runtime Platform draws evaluation data from three sources:</p>
-<table>
-<thead>
-<tr>
-<th>Source</th>
-<th>Description</th>
-<th>Requires</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Repository</strong></td>
-<td>Benchmark registries (HuggingFace, GitHub) via <code>tools.agents.benchmarks</code></td>
-<td><code>tools</code> package</td>
-</tr>
-<tr>
-<td><strong>Local</strong></td>
-<td>JSON files on disk under known fixture/dataset directories</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Eval sets</strong></td>
-<td>Predefined groupings of datasets from <code>evaluation.yaml</code></td>
-<td>Config file</td>
-</tr>
-</tbody>
-</table>
-<p>The dataset system is split across two layers:</p>
+<p>The repository has two related dataset interfaces:</p>
 <ul>
-<li><strong><code>agentic-v2-eval</code></strong> (<code>agentic_v2_eval/datasets.py</code>) — Python API for loading benchmark tasks programmatically from the <code>tools.agents.benchmarks</code> bridge.</li>
-<li><strong><code>agentic-workflows-v2</code></strong> server (<code>server/datasets.py</code>, <code>server/routes/evaluation_routes.py</code>) — HTTP API for the dashboard UI and workflow-aligned dataset browsing.</li>
+<li><code>agentic_v2_eval.datasets</code> loads benchmark tasks for Python evaluation code.</li>
+<li>The runtime server lists and pages through repository and local datasets for
+  the dashboard.</li>
 </ul>
-<hr />
-<h2 id="available-benchmark-datasets">Available benchmark datasets<a class="headerlink" href="#available-benchmark-datasets" title="Permanent link">&para;</a></h2>
-<p>The following benchmark IDs are registered in <code>tools.agents.benchmarks.datasets.BENCHMARK_DEFINITIONS</code>:</p>
+<p>Neither interface executes a workflow or scores a result by itself.</p>
+<h2 id="benchmark-api">Benchmark API<a class="headerlink" href="#benchmark-api" title="Permanent link">&para;</a></h2>
+<p>The evaluation package exposes these benchmark identifiers:</p>
 <table>
 <thead>
 <tr>
-<th>Benchmark ID</th>
-<th>Name</th>
-<th>Source</th>
-<th>Approximate Size</th>
+<th>ID</th>
+<th>Source type</th>
+<th>Main use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>swe-bench</code></td>
-<td>SWE-bench</td>
-<td>HuggingFace</td>
-<td>2,294 issues</td>
-</tr>
-<tr>
-<td><code>swe-bench-lite</code></td>
-<td>SWE-bench Lite</td>
-<td>HuggingFace</td>
-<td>300 issues</td>
+<td>Hugging Face</td>
+<td>Repository issue resolution</td>
 </tr>
 <tr>
 <td><code>swe-bench-verified</code></td>
-<td>SWE-bench Verified</td>
-<td>HuggingFace</td>
-<td>~500 issues</td>
+<td>Hugging Face</td>
+<td>Human-validated SWE-bench subset</td>
+</tr>
+<tr>
+<td><code>swe-bench-lite</code></td>
+<td>Hugging Face</td>
+<td>Smaller SWE-bench subset</td>
 </tr>
 <tr>
 <td><code>humaneval</code></td>
-<td>HumanEval</td>
-<td>HuggingFace</td>
-<td>164 functions</td>
+<td>Hugging Face</td>
+<td>Python function generation</td>
+</tr>
+<tr>
+<td><code>humaneval-plus</code></td>
+<td>Hugging Face</td>
+<td>HumanEval with additional tests</td>
 </tr>
 <tr>
 <td><code>mbpp</code></td>
-<td>MBPP</td>
-<td>HuggingFace</td>
-<td>974 tasks</td>
+<td>Hugging Face</td>
+<td>Basic Python problems</td>
+</tr>
+<tr>
+<td><code>mbpp-sanitized</code></td>
+<td>Hugging Face</td>
+<td>Cleaned MBPP subset</td>
 </tr>
 <tr>
 <td><code>codeclash</code></td>
-<td>CodeClash</td>
 <td>GitHub</td>
-<td>varies</td>
+<td>Multi-file development tasks</td>
 </tr>
 <tr>
 <td><code>custom-local</code></td>
-<td>User-defined local</td>
-<td>local</td>
-<td>user-defined</td>
+<td>Local files</td>
+<td>Repository-defined tasks</td>
 </tr>
 </tbody>
 </table>
-<p><code>swe-bench*</code> variants contain real GitHub issues requiring code patches. <code>humaneval</code> and <code>mbpp</code> are function-level Python programming tasks. <code>codeclash</code> contains competitive-programming-style problems.</p>
-<hr />
-<h2 id="eval-package-python-api">Eval-package Python API<a class="headerlink" href="#eval-package-python-api" title="Permanent link">&para;</a></h2>
-<h3 id="installation-and-import">Installation and import<a class="headerlink" href="#installation-and-import" title="Permanent link">&para;</a></h3>
+<p>The registry is defined in <code>tools/agents/benchmarks/datasets.py</code>. Query it at
+runtime instead of copying dataset sizes or URLs into application code:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">load_benchmark</span><span class="p">,</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">get_benchmark_definition</span><span class="p">,</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">list_benchmarks</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">get_benchmark_definitions</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">get_benchmark_definition</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">get_registry</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">BenchmarkTask</span><span class="p">,</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">load_benchmark</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_benchmarks</span><span class="p">())</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">definition</span> <span class="o">=</span> <span class="n">get_benchmark_definition</span><span class="p">(</span><span class="s2">&quot;humaneval&quot;</span><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">definition</span><span class="o">.</span><span class="n">source_url</span> <span class="k">if</span> <span class="n">definition</span> <span class="k">else</span> <span class="s2">&quot;not found&quot;</span><span class="p">)</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">load_benchmark</span><span class="p">(</span><span class="s2">&quot;humaneval&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">language</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">prompt</span><span class="p">[:</span><span class="mi">80</span><span class="p">])</span>
 </span></code></pre></div>
-<p>The <code>datasets</code> module uses a lazy import architecture to avoid hard-coupling <code>agentic-v2-eval</code> to <code>tools.agents.benchmarks</code>. All heavy imports are deferred until first use.</p>
-<h3 id="list_benchmarks"><code>list_benchmarks()</code><a class="headerlink" href="#list_benchmarks" title="Permanent link">&para;</a></h3>
-<p>Returns all registered benchmark IDs as a list of strings:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_benchmarks</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">ids</span> <span class="o">=</span> <span class="n">list_benchmarks</span><span class="p">()</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># [&#39;codeclash&#39;, &#39;custom-local&#39;, &#39;humaneval&#39;, &#39;mbpp&#39;, &#39;swe-bench&#39;, &#39;swe-bench-lite&#39;, &#39;swe-bench-verified&#39;]</span>
-</span></code></pre></div>
-<h3 id="get_benchmark_definitions"><code>get_benchmark_definitions()</code><a class="headerlink" href="#get_benchmark_definitions" title="Permanent link">&para;</a></h3>
-<p>Returns the full definition dict for all benchmarks:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_benchmark_definitions</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">defs</span> <span class="o">=</span> <span class="n">get_benchmark_definitions</span><span class="p">()</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">for</span> <span class="n">bid</span><span class="p">,</span> <span class="n">bdef</span> <span class="ow">in</span> <span class="n">defs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bid</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">bdef</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">bdef</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> tasks (</span><span class="si">{</span><span class="n">bdef</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Each <code>BenchmarkDefinition</code> has:</p>
+<p><code>load_benchmark()</code> accepts:</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>Human-readable name</td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td>Short description</td>
-</tr>
-<tr>
-<td><code>size</code></td>
-<td><code>int</code></td>
-<td>Number of tasks</td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>DataSource</code></td>
-<td>Enum: <code>huggingface</code>, <code>github</code>, <code>local</code></td>
-</tr>
-<tr>
-<td><code>language</code></td>
-<td><code>str \| None</code></td>
-<td>Primary programming language</td>
-</tr>
-</tbody>
-</table>
-<h3 id="get_benchmark_definitionbenchmark_id"><code>get_benchmark_definition(benchmark_id)</code><a class="headerlink" href="#get_benchmark_definitionbenchmark_id" title="Permanent link">&para;</a></h3>
-<p>Returns a single <code>BenchmarkDefinition</code> or <code>None</code> if the ID is not found:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_benchmark_definition</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">bdef</span> <span class="o">=</span> <span class="n">get_benchmark_definition</span><span class="p">(</span><span class="s2">&quot;humaneval&quot;</span><span class="p">)</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">if</span> <span class="n">bdef</span><span class="p">:</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">bdef</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">bdef</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<h3 id="load_benchmark"><code>load_benchmark()</code><a class="headerlink" href="#load_benchmark" title="Permanent link">&para;</a></h3>
-<p>Loads a list of <code>BenchmarkTask</code> objects from a benchmark:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_benchmark</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">load_benchmark</span><span class="p">(</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">benchmark_id</span><span class="o">=</span><span class="s2">&quot;humaneval&quot;</span><span class="p">,</span>  <span class="c1"># required</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>                  <span class="c1"># max tasks to return (None = all)</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">language</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>         <span class="c1"># optional filter by language</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">difficulty</span><span class="o">=</span><span class="s2">&quot;easy&quot;</span><span class="p">,</span>         <span class="c1"># optional filter by difficulty</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>            <span class="c1"># custom cache dir (default: ~/.cache/agentic-benchmarks)</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">force_refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>       <span class="c1"># re-download even if cached</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">prompt</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
+<th>Argument</th>
 <th>Default</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>benchmark_id</code></td>
-<td><code>str</code></td>
 <td>required</td>
-<td>Benchmark registry ID</td>
+<td>Registry identifier</td>
 </tr>
 <tr>
 <td><code>limit</code></td>
-<td><code>int \| None</code></td>
 <td><code>None</code></td>
-<td>Maximum tasks to return</td>
+<td>Maximum returned tasks</td>
 </tr>
 <tr>
 <td><code>language</code></td>
-<td><code>str \| None</code></td>
 <td><code>None</code></td>
-<td>Filter by <code>task.language</code></td>
+<td>Filter loaded tasks by language</td>
 </tr>
 <tr>
 <td><code>difficulty</code></td>
-<td><code>str \| None</code></td>
 <td><code>None</code></td>
-<td>Filter by <code>task.difficulty</code></td>
-</tr>
-<tr>
-<td><code>cache_dir</code></td>
-<td><code>str \| None</code></td>
-<td><code>None</code></td>
-<td>Custom cache directory</td>
+<td>Filter loaded tasks by difficulty</td>
 </tr>
 <tr>
 <td><code>force_refresh</code></td>
-<td><code>bool</code></td>
 <td><code>False</code></td>
-<td>Bypass cache and re-fetch</td>
+<td>Bypass the loader's existing cache</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Raises:</strong> <code>ValueError</code> if <code>benchmark_id</code> is not in the registry. <code>ImportError</code> if <code>tools.agents.benchmarks</code> is not installed.</p>
-<p><strong>Note:</strong> <code>language</code> and <code>difficulty</code> filters are applied in-memory after loading. They rely on <code>task.language</code> and <code>task.difficulty</code> attributes being present on the <code>BenchmarkTask</code>. Benchmarks that do not set these fields will not be filtered.</p>
-<h3 id="benchmarktask"><code>BenchmarkTask</code><a class="headerlink" href="#benchmarktask" title="Permanent link">&para;</a></h3>
-<p>The <code>BenchmarkTask</code> dataclass (defined in <code>tools.agents.benchmarks.loader</code>) is the canonical task representation. Common fields:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>task_id</code></td>
-<td>Unique identifier within the benchmark</td>
-</tr>
-<tr>
-<td><code>prompt</code></td>
-<td>Task prompt / problem statement</td>
-</tr>
-<tr>
-<td><code>expected_output</code></td>
-<td>Reference solution or expected output text</td>
-</tr>
-<tr>
-<td><code>language</code></td>
-<td>Programming language (may be None)</td>
-</tr>
-<tr>
-<td><code>difficulty</code></td>
-<td>Difficulty tier (may be None)</td>
-</tr>
-<tr>
-<td><code>metadata</code></td>
-<td>Dict of extra benchmark-specific fields</td>
-</tr>
-</tbody>
-</table>
-<p>For <code>swe-bench</code> variants, the task also includes <code>repo</code>, <code>base_commit</code>, <code>patch</code>, and <code>test_patch</code> fields.</p>
-<h3 id="get_registry"><code>get_registry()</code><a class="headerlink" href="#get_registry" title="Permanent link">&para;</a></h3>
-<p>Returns a <code>BenchmarkRegistry</code> instance for advanced configuration and preset access:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_registry</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">get_registry</span><span class="p">()</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">configs</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">list_configs</span><span class="p">()</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">benchmark_id</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">limit</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="lazy-import-architecture">Lazy import architecture<a class="headerlink" href="#lazy-import-architecture" title="Permanent link">&para;</a></h2>
-<p>The <code>datasets.py</code> module never imports <code>tools.agents.benchmarks</code> at module load time. Instead:</p>
-<ol>
-<li>Three module-level variables (<code>_datasets_module</code>, <code>_loader_module</code>, <code>_registry_module</code>) are initialised to <code>None</code>.</li>
-<li><code>_ensure_imports()</code> checks whether the modules have been loaded. If not, it attempts the import and stores results in the module-level variables. On <code>ImportError</code>, it re-raises with a descriptive message.</li>
-<li>Public functions call <code>_require_datasets_module()</code>, <code>_require_loader_module()</code>, or <code>_require_registry_module()</code> before accessing any attribute from those modules. These helpers call <code>_ensure_imports()</code> and return the cached module reference.</li>
-<li><code>__getattr__</code> is defined at module level to intercept attribute access for re-exported type names (<code>BenchmarkTask</code>, <code>BenchmarkDefinition</code>, etc.). This allows <code>from agentic_v2_eval.datasets import BenchmarkTask</code> to work at type-checking time (guarded by <code>TYPE_CHECKING</code>) and at runtime (via <code>__getattr__</code>).</li>
-</ol>
-<p>This design lets <code>agentic-v2-eval</code> be used without <code>tools</code> installed — any code path that does not call a dataset function will never trigger the import.</p>
-<hr />
+<p>Benchmark loading requires the repository's <code>agentic-tools</code> package and may
+require network access. The package declares <code>agentic-tools</code> as a dependency,
+but the import is delayed until a dataset function is called.</p>
+<p>Treat benchmark licenses, prompts, tests, and upstream revisions as part of the
+evaluation evidence. Record the benchmark ID, source revision when available,
+filters, and sample count with any published result.</p>
 <h2 id="local-dataset-format">Local dataset format<a class="headerlink" href="#local-dataset-format" title="Permanent link">&para;</a></h2>
-<p>Local datasets are JSON files. The server scans three directories for <code>*.json</code> files:</p>
+<p>The runtime server accepts a top-level JSON list or a JSON object containing
+one of these list fields:</p>
+<ul>
+<li><code>tasks</code></li>
+<li><code>samples</code></li>
+<li><code>items</code></li>
+</ul>
+<p>Example:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="p">{</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sum-001&quot;</span><span class="p">,</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="nt">&quot;feature_spec&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Return the sum of two integers&quot;</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="p">},</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">&quot;expected_output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A tested implementation that returns a + b&quot;</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="p">]</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The exact input keys must match the selected workflow. A dataset record may
+contain more metadata, but evaluation code should not assume optional fields
+exist.</p>
+<p>The server discovers local JSON files under:</p>
 <ul>
 <li><code>agentic-workflows-v2/tests/fixtures/datasets/</code></li>
 <li><code>agentic-workflows-v2/evaluation/datasets/</code></li>
 <li><code>tools/agents/benchmarks/gold_standards/</code></li>
 </ul>
-<h3 id="supported-json-structures">Supported JSON structures<a class="headerlink" href="#supported-json-structures" title="Permanent link">&para;</a></h3>
-<p><strong>Top-level array (most common):</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">[</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="p">{</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">&quot;problem&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Write a function that returns the sum of a list&quot;</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">&quot;expected_output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;def sum_list(items):\n    return sum(items)&quot;</span><span class="p">,</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python&quot;</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">  </span><span class="p">{</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-002&quot;</span><span class="p">,</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nt">&quot;problem&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">    </span><span class="nt">&quot;expected_output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="p">]</span>
-</span></code></pre></div>
-<p><strong>Wrapped object with <code>tasks</code> / <code>samples</code> / <code>items</code> key:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My Evaluation Set&quot;</span><span class="p">,</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span><span class="nt">&quot;tasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t1&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;expected&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t2&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;expected&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">}</span>
-</span></code></pre></div>
-<p><strong>Standalone single sample:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;single-task&quot;</span><span class="p">,</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">&quot;input&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Summarize this document&quot;</span><span class="p">,</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">&quot;expected_output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">&quot;context&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>Non-dict array entries are wrapped as <code>{"value": entry}</code> for schema consistency.</p>
-<h3 id="field-discovery">Field discovery<a class="headerlink" href="#field-discovery" title="Permanent link">&para;</a></h3>
-<p>The sample summary and detail responses use heuristic field discovery:</p>
-<ul>
-<li><strong><code>sample_id</code>:</strong> Derived from <code>id</code>, <code>sample_id</code>, or <code>task_id</code> fields.</li>
-<li><strong><code>title</code>:</strong> First non-empty value from <code>title</code>, <code>name</code>, <code>problem</code>, <code>question</code>, or <code>task</code> fields (truncated at 120 characters).</li>
-<li><strong><code>summary</code>:</strong> First non-empty string field that is not an ID field (truncated at 200 characters).</li>
-</ul>
-<h3 id="jsonl-datasets-external-benchmark-tools">JSONL datasets (external benchmark tools)<a class="headerlink" href="#jsonl-datasets-external-benchmark-tools" title="Permanent link">&para;</a></h3>
-<p>When loading from benchmark registries via <code>tools.agents.benchmarks</code>, the underlying format is JSONL (JSON Lines) — one JSON object per line. The <code>load_benchmark()</code> function abstracts this; callers receive <code>BenchmarkTask</code> objects regardless of the source format.</p>
-<p>If you are providing a custom local file in JSONL format, convert it to a JSON array first:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">lines</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;dataset.jsonl&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;dataset.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-</span></code></pre></div>
-<hr />
-<h2 id="server-side-dataset-apis">Server-side dataset APIs<a class="headerlink" href="#server-side-dataset-apis" title="Permanent link">&para;</a></h2>
-<p>The FastAPI server exposes four dataset-related endpoints under <code>/api/eval/</code>:</p>
-<h3 id="get-apievaldatasets"><code>GET /api/eval/datasets</code><a class="headerlink" href="#get-apievaldatasets" title="Permanent link">&para;</a></h3>
-<p>Lists all available dataset sources for the evaluation picker UI.</p>
-<p><strong>Query parameters:</strong></p>
+<p>Tenant-aware deployments can further restrict local dataset visibility.</p>
+<h2 id="server-api">Server API<a class="headerlink" href="#server-api" title="Permanent link">&para;</a></h2>
+<p>The dashboard uses these routes:</p>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Description</th>
+<th>Method</th>
+<th>Route</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>workflow</code></td>
-<td><code>str \| None</code></td>
-<td>If provided, filters to datasets compatible with this workflow</td>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets</code></td>
+<td>List repository datasets, local datasets, and configured evaluation sets</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/workflows/{workflow_name}/preview-dataset-inputs</code></td>
+<td>Preview how one sample maps to workflow inputs</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets/{source}/{dataset_id}/samples</code></td>
+<td>Return a page of sample summaries</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/eval/datasets/{source}/{dataset_id}/samples/{sample_index}</code></td>
+<td>Return one sample</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Response (<code>ListEvaluationDatasetsResponse</code>):</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">&quot;repository&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;humaneval&quot;</span><span class="p">,</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HumanEval&quot;</span><span class="p">,</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">      </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;repository&quot;</span><span class="p">,</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;164 function-level Python programming tasks&quot;</span><span class="p">,</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">&quot;sample_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">164</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">  </span><span class="nt">&quot;local&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tests/fixtures/datasets/swe_gold.json&quot;</span><span class="p">,</span>
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;swe gold&quot;</span><span class="p">,</span>
-</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">      </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Local JSON dataset (datasets)&quot;</span><span class="p">,</span>
-</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nt">&quot;sample_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span>
-</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">  </span><span class="nt">&quot;eval_sets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;standard_suite&quot;</span><span class="p">,</span>
-</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Standard Suite&quot;</span><span class="p">,</span>
-</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Curated evaluation suite&quot;</span><span class="p">,</span>
-</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nt">&quot;datasets&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;humaneval&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;mbpp&quot;</span><span class="p">]</span>
-</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>When <code>workflow</code> is specified and LangChain extras are installed, the response filters <code>repository</code> and <code>local</code> lists to only datasets whose first sample provides the required inputs for the specified workflow. See <code>match_workflow_dataset()</code> below.</p>
-<p><strong>Status codes:</strong> <code>200</code> on success. <code>501</code> if <code>workflow</code> is provided but LangChain extras are not installed. <code>404</code> if the workflow definition cannot be loaded.</p>
-<hr />
-<h3 id="get-apievaldatasetssample-list"><code>GET /api/eval/datasets/sample-list</code><a class="headerlink" href="#get-apievaldatasetssample-list" title="Permanent link">&para;</a></h3>
-<p>Returns a paginated list of compact sample summaries for a dataset.</p>
-<p><strong>Query parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dataset_source</code></td>
-<td><code>"repository" \| "local"</code></td>
-<td>required</td>
-<td>Dataset source type</td>
-</tr>
-<tr>
-<td><code>dataset_id</code></td>
-<td><code>str</code></td>
-<td>required</td>
-<td>Dataset identifier</td>
-</tr>
-<tr>
-<td><code>offset</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-<td>Zero-based start index</td>
-</tr>
-<tr>
-<td><code>limit</code></td>
-<td><code>int</code></td>
-<td><code>20</code></td>
-<td>Samples per page (1–100)</td>
-</tr>
-<tr>
-<td><code>workflow</code></td>
-<td><code>str \| None</code></td>
-<td><code>None</code></td>
-<td>Currently unused; reserved for future compatibility filtering</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Response (<code>DatasetSampleListResponse</code>):</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;dataset_source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;dataset_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tests/fixtures/datasets/swe_gold.json&quot;</span><span class="p">,</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;sample_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">&quot;offset&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="nt">&quot;samples&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">      </span><span class="nt">&quot;sample_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">      </span><span class="nt">&quot;sample_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">      </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">      </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Refactor authentication middleware&quot;</span><span class="p">,</span>
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">      </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The authentication middleware does not handle expired tokens correctly...&quot;</span><span class="p">,</span>
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">      </span><span class="nt">&quot;field_names&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;problem&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;expected_output&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;repo&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;base_commit&quot;</span><span class="p">]</span>
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>For local datasets, <code>load_local_dataset_samples()</code> reads the JSON file once and slices the in-memory list, avoiding repeated file I/O for paginated browsing. For repository datasets, <code>load_benchmark()</code> is called with <code>limit=offset+limit</code> and the page is sliced in Python.</p>
-<p><strong>Status codes:</strong> <code>200</code> on success. <code>422</code> if <code>dataset_source</code> is invalid, <code>limit</code> is out of 1–100 range, or <code>offset</code> is negative. <code>500</code> if the file cannot be loaded.</p>
-<hr />
-<h3 id="get-apievaldatasetssample-detail"><code>GET /api/eval/datasets/sample-detail</code><a class="headerlink" href="#get-apievaldatasetssample-detail" title="Permanent link">&para;</a></h3>
-<p>Returns the full content of a single dataset sample, with optional workflow input preview.</p>
-<p><strong>Query parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dataset_source</code></td>
-<td><code>"repository" \| "local"</code></td>
-<td>required</td>
-<td>Dataset source type</td>
-</tr>
-<tr>
-<td><code>dataset_id</code></td>
-<td><code>str</code></td>
-<td>required</td>
-<td>Dataset identifier</td>
-</tr>
-<tr>
-<td><code>sample_index</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-<td>Zero-based sample position</td>
-</tr>
-<tr>
-<td><code>workflow</code></td>
-<td><code>str \| None</code></td>
-<td><code>None</code></td>
-<td>If provided, includes a <code>workflow_preview</code> showing adapted inputs</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Response (<code>DatasetSampleDetailResponse</code>):</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;dataset_source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span><span class="nt">&quot;dataset_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tests/fixtures/datasets/swe_gold.json&quot;</span><span class="p">,</span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">  </span><span class="nt">&quot;sample_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">  </span><span class="nt">&quot;sample_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">  </span><span class="nt">&quot;field_names&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;problem&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;expected_output&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;repo&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;base_commit&quot;</span><span class="p">],</span>
-</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The authentication middleware does not handle expired tokens...&quot;</span><span class="p">,</span>
-</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">  </span><span class="nt">&quot;sample&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="w">    </span><span class="nt">&quot;problem&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The authentication middleware does not handle expired tokens correctly...&quot;</span><span class="p">,</span>
-</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="w">    </span><span class="nt">&quot;expected_output&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;def handle_expired_token(request):\n    ...&quot;</span><span class="p">,</span>
-</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;org/auth-service&quot;</span><span class="p">,</span>
-</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="w">    </span><span class="nt">&quot;base_commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123&quot;</span>
-</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="w">  </span><span class="nt">&quot;dataset_meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="w">    </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="w">    </span><span class="nt">&quot;dataset_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tests/fixtures/datasets/swe_gold.json&quot;</span><span class="p">,</span>
-</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="w">    </span><span class="nt">&quot;dataset_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agentic-workflows-v2/tests/fixtures/datasets/swe_gold.json&quot;</span><span class="p">,</span>
-</span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="w">    </span><span class="nt">&quot;sample_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-12-21"><a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a><span class="w">    </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span><span class="p">,</span>
-</span><span id="__span-12-22"><a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="w">    </span><span class="nt">&quot;sample_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span>
-</span><span id="__span-12-23"><a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-12-24"><a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="w">  </span><span class="nt">&quot;workflow_preview&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-12-25"><a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="w">    </span><span class="nt">&quot;compatible&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-12-26"><a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a><span class="w">    </span><span class="nt">&quot;adapted_inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-12-27"><a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="w">      </span><span class="nt">&quot;problem_statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The authentication middleware does not handle...&quot;</span><span class="p">,</span>
-</span><span id="__span-12-28"><a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="w">      </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;org/auth-service&quot;</span>
-</span><span id="__span-12-29"><a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-12-30"><a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-12-31"><a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>When <code>workflow</code> is not specified or LangChain extras are not installed, <code>workflow_preview</code> is <code>null</code>.</p>
-<p><strong>Status codes:</strong> <code>200</code> on success. <code>422</code> for invalid source or load errors. <code>500</code> for unexpected failures.</p>
-<hr />
-<h3 id="get-apiworkflowsworkflow_namepreview-dataset-inputs"><code>GET /api/workflows/{workflow_name}/preview-dataset-inputs</code><a class="headerlink" href="#get-apiworkflowsworkflow_namepreview-dataset-inputs" title="Permanent link">&para;</a></h3>
-<p>Previews how a dataset sample's fields will be mapped to a workflow's input variables before actually executing the run. This is used by the "Preview" button in the evaluation run dialog.</p>
-<p><strong>Query parameters:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dataset_source</code></td>
-<td><code>"repository" \| "local"</code></td>
-<td>required</td>
-<td>Dataset source type</td>
-</tr>
-<tr>
-<td><code>dataset_id</code></td>
-<td><code>str</code></td>
-<td>required</td>
-<td>Dataset identifier</td>
-</tr>
-<tr>
-<td><code>sample_index</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-<td>Sample to preview</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Response:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;compatible&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">&quot;reasons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">  </span><span class="nt">&quot;adapted_inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">&quot;problem_statement&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">&quot;context&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span>
-</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">  </span><span class="nt">&quot;dataset_meta&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nt">&quot;sample_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;task-001&quot;</span>
-</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>When <code>compatible</code> is <code>false</code>, <code>reasons</code> lists the specific mismatches (missing required fields, type conflicts, etc.) and <code>adapted_inputs</code> is an empty dict.</p>
-<p><strong>Requires:</strong> LangChain extras (<code>pip install -e ".[langchain]"</code>). Returns <code>501</code> if not installed.</p>
-<hr />
-<h2 id="dataset-to-workflow-compatibility">Dataset-to-workflow compatibility<a class="headerlink" href="#dataset-to-workflow-compatibility" title="Permanent link">&para;</a></h2>
-<h3 id="match_workflow_dataset"><code>match_workflow_dataset()</code><a class="headerlink" href="#match_workflow_dataset" title="Permanent link">&para;</a></h3>
-<p><code>match_workflow_dataset(workflow_def, sample)</code> checks whether a dataset sample provides the inputs required by a workflow:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.dataset_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_workflow_dataset</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">compatible</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="n">match_workflow_dataset</span><span class="p">(</span><span class="n">workflow_def</span><span class="p">,</span> <span class="n">sample</span><span class="p">)</span>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">compatible</span><span class="p">:</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="k">for</span> <span class="n">reason</span> <span class="ow">in</span> <span class="n">reasons</span><span class="p">:</span>
-</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>The function inspects the workflow's <code>inputs</code> section and checks each non-optional input against the sample's top-level field names, looking for name matches and compatible value types. It returns <code>(True, [])</code> if all required inputs can be satisfied, or <code>(False, [reason_strings...])</code> listing specific mismatches.</p>
-<h3 id="adapt_sample_to_workflow_inputs"><code>adapt_sample_to_workflow_inputs()</code><a class="headerlink" href="#adapt_sample_to_workflow_inputs" title="Permanent link">&para;</a></h3>
-<p><code>adapt_sample_to_workflow_inputs()</code> translates matched sample fields into the workflow's expected input schema:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.dataset_matching</span><span class="w"> </span><span class="kn">import</span> <span class="n">adapt_sample_to_workflow_inputs</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">adapted</span> <span class="o">=</span> <span class="n">adapt_sample_to_workflow_inputs</span><span class="p">(</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">workflow_inputs</span><span class="o">=</span><span class="n">workflow_def</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">run_id</span><span class="o">=</span><span class="s2">&quot;eval-run-001&quot;</span><span class="p">,</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="n">artifacts_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/eval-inputs&quot;</span><span class="p">),</span>
-</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="p">)</span>
-</span></code></pre></div>
-<p>This function handles:</p>
+<p>The source is normally <code>repository</code> or <code>local</code>. Dataset IDs in path-based
+routes are URL encoded by the UI.</p>
+<p>The older query-based sample routes remain for compatibility but are
+deprecated. New clients should use the path-based routes in the table.</p>
+<p>See <a href="../../api-contracts-runtime/">REST endpoints</a> for the complete route map and
+authentication behavior.</p>
+<h2 id="workflow-compatibility">Workflow compatibility<a class="headerlink" href="#workflow-compatibility" title="Permanent link">&para;</a></h2>
+<p>When <code>/api/eval/datasets</code> receives a workflow filter, the server compares the
+workflow's required inputs with a representative dataset sample. This is a
+discovery aid, not a full validation of every row.</p>
+<p>Before a long evaluation:</p>
+<ol>
+<li>Load the intended workflow.</li>
+<li>Inspect at least one complete dataset sample.</li>
+<li>Validate every required workflow input across all selected rows.</li>
+<li>Record skipped or malformed rows.</li>
+<li>Keep the dataset revision and evaluation configuration with the results.</li>
+</ol>
+<h2 id="safety">Safety<a class="headerlink" href="#safety" title="Permanent link">&para;</a></h2>
+<p>Benchmark tasks and local datasets are untrusted input. They can contain code,
+instructions, URLs, or text intended to change model behavior.</p>
 <ul>
-<li><strong>Direct field mapping:</strong> Sample fields whose names match workflow input names are passed through directly.</li>
-<li><strong>Message text extraction:</strong> If a sample field contains a message-style object with a <code>content</code> key, the text content is extracted.</li>
-<li><strong>File materialisation:</strong> If a workflow input has <code>type: file</code>, the corresponding sample field value is written to a temporary file under <code>artifacts_dir</code> and the path is returned.</li>
-<li><strong>Empty value handling:</strong> Fields with <code>None</code>, empty string, or empty list values are treated as absent.</li>
+<li>Do not execute generated code outside an appropriate sandbox.</li>
+<li>Do not put credentials in dataset files.</li>
+<li>Review licensing before redistributing dataset content.</li>
+<li>Restrict network and file access for workflows that process external tasks.</li>
+<li>Do not treat a benchmark score as evidence for an unrelated production use.</li>
 </ul>
-<hr />
-<h2 id="eval-sets">Eval sets<a class="headerlink" href="#eval-sets" title="Permanent link">&para;</a></h2>
-<p>Eval sets are predefined groupings of datasets configured in <code>evaluation.yaml</code>. They allow you to define named suites for repeatable evaluation runs:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># agentic-workflows-v2/agentic_v2/config/defaults/evaluation.yaml</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nt">evaluation</span><span class="p">:</span>
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">  </span><span class="nt">eval_sets</span><span class="p">:</span>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="nt">code_quality_suite</span><span class="p">:</span>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Code</span><span class="nv"> </span><span class="s">Quality</span><span class="nv"> </span><span class="s">Suite&quot;</span>
-</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Standard</span><span class="nv"> </span><span class="s">benchmarks</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">code</span><span class="nv"> </span><span class="s">generation</span><span class="nv"> </span><span class="s">evaluation&quot;</span>
-</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">      </span><span class="nt">datasets</span><span class="p">:</span>
-</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">humaneval</span>
-</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mbpp</span>
-</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
-</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">    </span><span class="nt">swe_validation</span><span class="p">:</span>
-</span><span id="__span-16-12"><a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SWE</span><span class="nv"> </span><span class="s">Validation&quot;</span>
-</span><span id="__span-16-13"><a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GitHub</span><span class="nv"> </span><span class="s">issue</span><span class="nv"> </span><span class="s">resolution</span><span class="nv"> </span><span class="s">benchmarks&quot;</span>
-</span><span id="__span-16-14"><a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">      </span><span class="nt">datasets</span><span class="p">:</span>
-</span><span id="__span-16-15"><a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swe-bench-lite</span>
-</span><span id="__span-16-16"><a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">swe-bench-verified</span>
-</span></code></pre></div>
-<p>Eval sets appear in the <code>eval_sets</code> array of <code>GET /api/eval/datasets</code>. They are informational groupings — selecting an eval set in the UI populates the dataset picker with the constituent datasets.</p>
-<hr />
-<h2 id="dashboard-dataset-browser">Dashboard dataset browser<a class="headerlink" href="#dashboard-dataset-browser" title="Permanent link">&para;</a></h2>
-<p>The React dashboard includes a three-pane dataset browser accessible from the evaluation run dialog.</p>
-<h3 id="pane-1-dataset-picker">Pane 1: dataset picker<a class="headerlink" href="#pane-1-dataset-picker" title="Permanent link">&para;</a></h3>
-<p>The left pane lists available datasets grouped by source (Repository / Local / Eval Sets). Each dataset shows:</p>
-<ul>
-<li>Name and description</li>
-<li>Sample count (when known)</li>
-<li>Source badge (Repository / Local)</li>
-</ul>
-<p>Powered by <code>GET /api/eval/datasets</code>. When a workflow is selected in the run dialog, the picker automatically filters to compatible datasets only.</p>
-<h3 id="pane-2-sample-list">Pane 2: sample list<a class="headerlink" href="#pane-2-sample-list" title="Permanent link">&para;</a></h3>
-<p>The center pane shows a paginated list of samples from the selected dataset. Each row displays:</p>
-<ul>
-<li>Sample index and ID</li>
-<li>Derived title (from the sample's <code>title</code>, <code>name</code>, or <code>problem</code> field)</li>
-<li>One-sentence summary (first text field, truncated to 200 characters)</li>
-<li>Field names badge showing what top-level keys the sample contains</li>
-</ul>
-<p>Powered by <code>GET /api/eval/datasets/sample-list</code> with <code>offset</code>/<code>limit</code> pagination. The frontend increments <code>offset</code> by <code>limit</code> to load the next page.</p>
-<h3 id="pane-3-sample-detail-workflow-preview">Pane 3: sample detail + workflow preview<a class="headerlink" href="#pane-3-sample-detail-workflow-preview" title="Permanent link">&para;</a></h3>
-<p>The right pane shows the full content of the selected sample with two tabs:</p>
-<p><strong>Raw tab:</strong> Full JSON of the <code>sample</code> dict with field labels and values. Large text values are truncated with a "Show more" toggle.</p>
-<p><strong>Workflow Preview tab:</strong> Shows how the sample will be mapped to workflow inputs when a workflow is selected. Uses <code>GET /api/eval/datasets/sample-detail?workflow=&lt;name&gt;</code> to fetch the <code>workflow_preview.adapted_inputs</code> mapping.</p>
-<ul>
-<li>Green check marks for fields that will be populated from the sample.</li>
-<li>Orange warnings for optional fields that are absent in the sample.</li>
-<li>Red error indicators for required fields that cannot be satisfied.</li>
-</ul>
-<hr />
-<h2 id="using-datasets-in-batch-evaluation">Using datasets in batch evaluation<a class="headerlink" href="#using-datasets-in-batch-evaluation" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_benchmark</span><span class="p">,</span> <span class="n">BenchmarkTask</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span>
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
-</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># Load benchmark tasks</span>
-</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BenchmarkTask</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_benchmark</span><span class="p">(</span><span class="s2">&quot;humaneval&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
-</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="c1"># Define evaluation function</span>
-</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">QualityEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
-</span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">eval_task</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">BenchmarkTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="__span-17-13"><a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>    <span class="c1"># Run the task through your agent/model here</span>
-</span><span id="__span-17-14"><a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="n">model_output</span> <span class="o">=</span> <span class="n">my_model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">prompt</span><span class="p">)</span>
-</span><span id="__span-17-15"><a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>
-</span><span id="__span-17-16"><a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>    <span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-17-17"><a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>        <span class="n">definition</span><span class="o">=</span><span class="n">COHERENCE</span><span class="p">,</span>
-</span><span id="__span-17-18"><a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>        <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">prompt</span><span class="p">},</span>
-</span><span id="__span-17-19"><a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>        <span class="n">output</span><span class="o">=</span><span class="n">model_output</span><span class="p">,</span>
-</span><span id="__span-17-20"><a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="p">)</span>
-</span><span id="__span-17-21"><a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>
-</span><span id="__span-17-22"><a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>    <span class="k">return</span> <span class="p">{</span>
-</span><span id="__span-17-23"><a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>        <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
-</span><span id="__span-17-24"><a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>        <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
-</span><span id="__span-17-25"><a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a>        <span class="s2">&quot;passed&quot;</span><span class="p">:</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">,</span>
-</span><span id="__span-17-26"><a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>        <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">model_output</span><span class="p">,</span>
-</span><span id="__span-17-27"><a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>    <span class="p">}</span>
-</span><span id="__span-17-28"><a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>
-</span><span id="__span-17-29"><a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a><span class="c1"># Run batch evaluation</span>
-</span><span id="__span-17-30"><a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_task</span><span class="p">)</span>
-</span><span id="__span-17-31"><a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span>
-</span><span id="__span-17-32"><a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a>
-</span><span id="__span-17-33"><a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Evaluated </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2"> tasks&quot;</span><span class="p">)</span>
-</span><span id="__span-17-34"><a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Passed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">successful</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">success_rate</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</span><span id="__span-17-35"><a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to evaluate: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">failed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="security-path-traversal-protection">Security: path traversal protection<a class="headerlink" href="#security-path-traversal-protection" title="Permanent link">&para;</a></h2>
-<p>Local dataset loading enforces a path allow-list. <code>_resolve_local_dataset()</code> verifies that the resolved absolute path falls under one of the three known dataset roots via <code>_is_under_allowed_root()</code>. A dataset ID that resolves outside these directories raises <code>ValueError</code>, preventing path traversal attacks where a crafted dataset ID might reference arbitrary files on the filesystem.</p>
-<p>This check is performed on the resolved (symlink-expanded) path, not the raw string, ensuring that symlinks pointing outside the allowed directories are also blocked.</p>
 
 
 
@@ -4266,7 +3327,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

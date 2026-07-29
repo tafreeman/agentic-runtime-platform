@@ -164,7 +164,7 @@
         </a>
 </li>
 <li class="md-tabs__item">
-<a class="md-tabs__link" href="../api-contracts-runtime/">
+<a class="md-tabs__link" href="../cli-reference/">
           
   
   
@@ -825,6 +825,18 @@
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="../cli-reference/">
+<span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../api-contracts-runtime/">
 <span class="md-ellipsis">
     
@@ -1462,6 +1474,30 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="../SUPPLY_CHAIN/">
+<span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../load-report/">
+<span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="../operations/troubleshooting/">
 <span class="md-ellipsis">
     
@@ -1603,6 +1639,30 @@
     
   
     Overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../flagship/">
+<span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../project-context/">
+<span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -1942,7 +2002,9 @@
 </a>
 <h1 id="architecture-agentic-v2-eval">Architecture: agentic-v2-eval<a class="headerlink" href="#architecture-agentic-v2-eval" title="Permanent link">¶</a></h1>
 <h2 id="executive-summary">Executive summary<a class="headerlink" href="#executive-summary" title="Permanent link">¶</a></h2>
-<p><code>agentic-v2-eval</code> (v0.3.0) is the rubric-driven evaluation framework for the <code>agentic-runtime-platform</code> monorepo. It turns LLM outputs — prose responses, agent workflow results, code artifacts, prompt templates — into reproducible, weighted scores and human-readable reports.</p>
+<p><code>agentic-v2-eval</code> (v0.3.0) is the offline evaluation package in the
+<code>agentic-runtime-platform</code> monorepo. It turns structured metrics and model
+outputs into weighted scores and JSON, Markdown, or HTML reports.</p>
 <p>The framework provides four complementary scoring paths:</p>
 <ol>
 <li><strong>Rubric scoring</strong> — YAML-defined criteria with explicit weights, applied by the <code>Scorer</code> engine.</li>
@@ -1951,7 +2013,11 @@
 <li><strong>Static quality metrics</strong> — AST-based code quality, cyclomatic complexity, lint scores, and classification accuracy computed without any LLM call.</li>
 </ol>
 <p>All evaluator implementations depend only on <code>LLMClientProtocol</code> — a structural (duck-typed) protocol. Tests inject mocks that satisfy the protocol; no live API calls are made in the test suite.</p>
-<p>The package is a <code>uv</code> workspace member. <code>agentic-tools</code> supplies the concrete <code>LLMClient</code> and is lazy-loaded at evaluation time. The <code>agentic-workflows-v2</code> runtime imports only <code>LLMClientProtocol</code> from this package, keeping the dependency graph acyclic.</p>
+<p>The package is a <code>uv</code> workspace member and declares <code>agentic-tools</code> as a
+dependency. Its concrete LLM adapter loads the shared client only when needed.
+The runtime imports the evaluation protocol and, for optional step scoring,
+rubric and scorer helpers. The evaluation package does not import the runtime,
+so the package dependency remains one-way.</p>
 <hr/>
 <h2 id="technology-stack">Technology stack<a class="headerlink" href="#technology-stack" title="Permanent link">¶</a></h2>
 <table>
@@ -1980,8 +2046,8 @@
 </tr>
 <tr>
 <td>LLM access</td>
-<td><code>agentic-tools</code> workspace dep</td>
-<td>Lazy-loaded; optional at import</td>
+<td><code>agentic-tools</code> workspace dependency</td>
+<td>Concrete client loaded by the adapter when needed</td>
 </tr>
 <tr>
 <td>Test runner</td>
@@ -2037,10 +2103,17 @@
     REPORTERS --&gt; REPORTS
 </code></pre>
 <h3 id="key-design-decisions">Key design decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">¶</a></h3>
-<p><strong>Structural protocols instead of abstract base classes for the LLM boundary.</strong> <code>LLMClientProtocol</code> uses <code>typing.Protocol</code> with <code>@runtime_checkable</code>. Any object whose <code>generate_text</code> method matches the signature satisfies the protocol — no import-time coupling between the eval package and <code>agentic-tools</code>. This means the eval package can be imported in environments where <code>agentic-tools</code> is not installed, reducing test setup friction.</p>
+<p><strong>Structural protocol for the LLM boundary.</strong> <code>LLMClientProtocol</code> uses
+<code>typing.Protocol</code> with <code>@runtime_checkable</code>. Any object whose <code>generate_text</code>
+method matches the signature can be injected into an evaluator. Tests use
+small fakes instead of calling a provider.</p>
 <p><strong>Rubric YAML loaded at call time, not import time.</strong> Rubric YAML files are opened when a <code>Scorer</code> is constructed or an evaluator method is first called. The module-level <code>__init__.py</code> exports are pure class symbols with no file I/O. This keeps import overhead negligible and allows test code to override the rubric path trivially.</p>
 <p><strong>EvaluatorRegistry as a classvar singleton.</strong> The registry is a class-level dict rather than a module-level global. Evaluators register themselves at class-definition time via the <code>@EvaluatorRegistry.register("name")</code> decorator. Discovery is automatic: importing any evaluator module is sufficient for it to appear in the registry.</p>
-<p><strong>Median aggregation over multiple judge runs.</strong> Both <code>PatternEvaluator</code> and <code>StandardEvaluator</code> optionally run the judge prompt <code>N</code> times (default 20 for pattern, 1 for standard) and report the median across runs. This reduces the impact of stochastic LLM output on the final score. The <code>runs</code> parameter is the primary handle for trading cost against variance.</p>
+<p><strong>Median aggregation over multiple judge runs.</strong> <code>PatternEvaluator</code> and
+<code>StandardEvaluator</code> can run a judge prompt more than once and report the median.
+Both constructors default to one run. Increasing <code>runs</code> may reduce the effect
+of one unusual response, but it also increases provider calls and does not make
+an LLM judge deterministic.</p>
 <p><strong>Discriminated union return type for async evaluation.</strong> <code>AsyncStreamingRunner._eval_one</code> returns <code>tuple[Literal[True], R] | tuple[Literal[False], Exception]</code> — a discriminated union that avoids raising exceptions across <code>asyncio.Task</code> boundaries. This pattern keeps the runner fully typed under <code>mypy --strict</code>.</p>
 <hr/>
 <h2 id="package-structure">Package structure<a class="headerlink" href="#package-structure" title="Permanent link">¶</a></h2>
@@ -2084,7 +2157,7 @@
 </span><span id="__span-0-38"><a href="#__codelineno-0-38" id="__codelineno-0-38" name="__codelineno-0-38"></a>│   └── sandbox/
 </span><span id="__span-0-39"><a href="#__codelineno-0-39" id="__codelineno-0-39" name="__codelineno-0-39"></a>│       ├── base.py          # BaseSandbox abstract class
 </span><span id="__span-0-40"><a href="#__codelineno-0-40" id="__codelineno-0-40" name="__codelineno-0-40"></a>│       └── local.py         # LocalSubprocessSandbox (subprocess isolation, safe_mode)
-</span><span id="__span-0-41"><a href="#__codelineno-0-41" id="__codelineno-0-41" name="__codelineno-0-41"></a>└── tests/                   # 13 test files
+</span><span id="__span-0-41"><a href="#__codelineno-0-41" id="__codelineno-0-41" name="__codelineno-0-41"></a>└── tests/                   # Package tests
 </span><span id="__span-0-42"><a href="#__codelineno-0-42" id="__codelineno-0-42" name="__codelineno-0-42"></a>    ├── conftest.py
 </span><span id="__span-0-43"><a href="#__codelineno-0-43" id="__codelineno-0-43" name="__codelineno-0-43"></a>    ├── test_adapters.py
 </span><span id="__span-0-44"><a href="#__codelineno-0-44" id="__codelineno-0-44" name="__codelineno-0-44"></a>    ├── test_benchmarks.py
@@ -2604,7 +2677,7 @@
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">

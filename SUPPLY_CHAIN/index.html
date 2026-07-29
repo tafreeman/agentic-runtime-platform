@@ -6,13 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
         <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/SUPPLY_CHAIN/">
       
       
+        <link rel="prev" href="../operations/security-hardening/">
+      
+      
+        <link rel="next" href="../load-report/">
       
       
         
@@ -23,7 +27,7 @@
     
     
       
-        <title>Supply Chain Integrity - Agentic Runtime Platform</title>
+        <title>Supply-chain security - Agentic Runtime Platform</title>
       
     
     
@@ -63,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Supply Chain Integrity - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:title" content="Supply-chain security - Agentic Runtime Platform" />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/SUPPLY_CHAIN.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/SUPPLY_CHAIN/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Supply Chain Integrity - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:title" content="Supply-chain security - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/SUPPLY_CHAIN.png" />
 </head>
   
@@ -91,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#supply-chain-integrity" class="md-skip">
+        <a href="#local-model-integrity" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Supply Chain Integrity
+              Supply-chain security
             
           </span>
         </div>
@@ -304,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -388,10 +392,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../operations/" class="md-tabs__link">
           
   
@@ -1200,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1244,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2055,6 +2091,8 @@
       
   
   
+    
+  
   
   
     
@@ -2070,20 +2108,27 @@
       
         
       
+        
+      
+        
+      
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <div class="md-nav__link md-nav__container">
@@ -2105,13 +2150,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2167,6 +2212,175 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#current-enforcement-boundary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current enforcement boundary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trust-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trust file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compute-a-digest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compute a digest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verify-explicitly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify explicitly
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-provide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not provide
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2477,6 +2691,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2537,6 +2755,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2724,10 +2998,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#trusted-model-hashes" class="md-nav__link">
+  <a href="#current-enforcement-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Trusted Model Hashes
+        Current enforcement boundary
       
     </span>
   </a>
@@ -2735,10 +3009,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#strict-mode" class="md-nav__link">
+  <a href="#trust-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strict Mode
+        Trust file
       
     </span>
   </a>
@@ -2746,10 +3020,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#slsa-level-1-fit" class="md-nav__link">
+  <a href="#compute-a-digest" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SLSA Level 1 Fit
+        Compute a digest
       
     </span>
   </a>
@@ -2757,10 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sigstore-future-path" class="md-nav__link">
+  <a href="#verify-explicitly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sigstore Future Path
+        Verify explicitly
       
     </span>
   </a>
@@ -2768,10 +3042,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#references" class="md-nav__link">
+  <a href="#test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        References
+        Test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-provide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not provide
       
     </span>
   </a>
@@ -2811,97 +3096,84 @@
   
 
 
-<h1 id="supply-chain-integrity">Supply Chain Integrity<a class="headerlink" href="#supply-chain-integrity" title="Permanent link">&para;</a></h1>
-<p>This project verifies local ONNX model weights with SHA-256 before loading
-them through the <code>local:*</code> provider path. The current control is hash-based
-integrity, not signed provenance.</p>
-<h2 id="trusted-model-hashes">Trusted Model Hashes<a class="headerlink" href="#trusted-model-hashes" title="Permanent link">&para;</a></h2>
-<p>Trusted local model hashes live in
-<code>agentic-workflows-v2/agentic_v2/config/defaults/trusted_model_hashes.yaml</code>.
-The machine-readable schema lives at
-<code>agentic-workflows-v2/schemas/trusted_model_hashes.schema.json</code>. The YAML shape
-is:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">trusted-model-hashes.v1</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">models</span><span class="p">:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable-human-readable-id</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.cache/aigallery/vendor--model/path/to/onnx-folder</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64-character-lowercase-sha256</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sha256</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local-aigallery-discovery</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">notes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Optional context for maintainers</span>
+<h1 id="local-model-integrity">Local model integrity<a class="headerlink" href="#local-model-integrity" title="Permanent link">&para;</a></h1>
+<p>The repository includes a SHA-256 verifier for local model files and
+directories. It compares a model path with a reviewed trust file.</p>
+<p>This is an integrity check, not signed provenance. It proves only that the
+local bytes match the configured digest.</p>
+<h2 id="current-enforcement-boundary">Current enforcement boundary<a class="headerlink" href="#current-enforcement-boundary" title="Permanent link">&para;</a></h2>
+<p><code>agentic_v2.models.weight_integrity.verify_model_weights()</code> implements the
+check. <code>tools/llm/provider_adapters.py</code> calls it before its local-model load
+path.</p>
+<p>The native <code>OnnxBackend</code> and the LangChain local ONNX builder do not currently
+call the verifier. Setting strict mode therefore does not make every runtime
+model-loading path fail closed. See
+<a href="../KNOWN_LIMITATIONS/">known limitations</a> before relying on this control.</p>
+<h2 id="trust-file">Trust file<a class="headerlink" href="#trust-file" title="Permanent link">&para;</a></h2>
+<p>The default file is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>agentic-workflows-v2/agentic_v2/config/defaults/trusted_model_hashes.yaml
 </span></code></pre></div>
-<p>Paths may use <code>~</code> or environment variables. Directory hashes are computed
-deterministically from every file below the directory, using each relative file
-path plus its SHA-256 digest.</p>
-<p>To add a trusted hash:</p>
-<ol>
-<li>Install or place the model in its final local path.</li>
-<li>Compute the digest with the same runtime function:</li>
-</ol>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">uv</span> <span class="n">run</span> <span class="p">-</span><span class="n">-package</span> <span class="n">agentic-workflows-v2</span> <span class="n">python</span> <span class="n">-c</span> <span class="s2">&quot;from pathlib import Path; from agentic_v2.models.weight_integrity import compute_model_sha256; print(compute_model_sha256(Path(r&#39;C:\path\to\model-or-folder&#39;)))&quot;</span>
+<p>Its JSON Schema is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>agentic-workflows-v2/schemas/trusted_model_hashes.schema.json
 </span></code></pre></div>
-<ol>
-<li>Add one YAML entry with that exact path and digest.</li>
-<li>Run:</li>
-</ol>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">uv</span> <span class="n">run</span> <span class="p">-</span><span class="n">-package</span> <span class="n">agentic-workflows-v2</span> <span class="n">pytest</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">tests</span><span class="p">/</span><span class="n">test_weight_integrity</span><span class="p">.</span><span class="n">py</span> <span class="n">-q</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">uv</span> <span class="n">run</span> <span class="p">-</span><span class="n">-package</span> <span class="n">agentic-workflows-v2</span> <span class="n">ruff</span> <span class="n">check</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">agentic_v2</span><span class="p">/</span><span class="n">models</span><span class="p">/</span><span class="n">weight_integrity</span><span class="p">.</span><span class="n">py</span> <span class="n">tools</span><span class="p">/</span><span class="n">llm</span><span class="p">/</span><span class="n">provider_adapters</span><span class="p">.</span><span class="n">py</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">tests</span><span class="p">/</span><span class="n">test_weight_integrity</span><span class="p">.</span><span class="n">py</span>
+<p>Entry shape:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">trusted-model-hashes.v1</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">models</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">reviewed-model</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">C:\models\reviewed-model</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">sha256</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64-character-lowercase-sha256</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sha256</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">internal-model-release</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">notes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Optional review context</span>
 </span></code></pre></div>
-<h2 id="strict-mode">Strict Mode<a class="headerlink" href="#strict-mode" title="Permanent link">&para;</a></h2>
-<p>By default, unknown or mismatched model hashes are logged as warnings and local
-loading continues. This keeps developer machines usable while surfacing drift.</p>
-<p>Set strict mode to block untrusted or tampered weights:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">$env:AGENTIC_STRICT_MODEL_VERIFY</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+<p>Paths may contain <code>~</code> or environment variables. Matching uses resolved paths.
+IDs must be unique and unknown entry fields are rejected.</p>
+<p>For a directory, the digest is deterministic: each file's relative path and
+SHA-256 digest are added in sorted order. Adding, removing, renaming, or
+changing a file changes the directory digest.</p>
+<h2 id="compute-a-digest">Compute a digest<a class="headerlink" href="#compute-a-digest" title="Permanent link">&para;</a></h2>
+<p>From the repository root:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">&quot;from pathlib import Path; from agentic_v2.models.weight_integrity import compute_model_sha256; print(compute_model_sha256(Path(r&#39;C:\models\reviewed-model&#39;)))&quot;</span>
 </span></code></pre></div>
-<p>In strict mode:</p>
+<p>Review where the model came from before adding its digest. Computing a hash
+from an untrusted download and immediately trusting that same hash does not
+establish a trustworthy source.</p>
+<h2 id="verify-explicitly">Verify explicitly<a class="headerlink" href="#verify-explicitly" title="Permanent link">&para;</a></h2>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-c</span> <span class="s2">&quot;from pathlib import Path; from agentic_v2.models.weight_integrity import verify_model_weights; print(verify_model_weights(Path(r&#39;C:\models\reviewed-model&#39;)))&quot;</span>
+</span></code></pre></div>
+<p>Without strict mode:</p>
 <ul>
-<li>a configured hash mismatch raises <code>ModelWeightVerificationError</code>;</li>
-<li>a missing trusted hash raises <code>ModelWeightVerificationError</code>;</li>
-<li>malformed trusted-hash YAML raises <code>ModelWeightVerificationError</code>.</li>
+<li>a match returns <code>verified</code>;</li>
+<li>an unknown path returns <code>unknown</code> and logs a warning;</li>
+<li>a mismatch returns <code>mismatch</code> and logs a warning.</li>
 </ul>
-<p>Use <code>AGENTIC_TRUSTED_MODEL_HASHES</code> to point at an alternate trust file for a
-deployment or test fixture.</p>
-<h2 id="slsa-level-1-fit">SLSA Level 1 Fit<a class="headerlink" href="#slsa-level-1-fit" title="Permanent link">&para;</a></h2>
-<p>SLSA Build Level 1 is the "provenance exists" level: it asks producers to use a
-consistent build process, run on a Build L1 platform, and distribute provenance
-that describes how an artifact was built. SLSA notes that L1 provenance may be
-incomplete or unsigned, so it helps with mistakes and inventory but is not a
-strong tamper-resistance boundary.</p>
-<p>This repository's model hash control is a consumer-side expectation check. It
-supports SLSA-style verification by comparing the local artifact digest against
-a preconfigured trust map, but it does not by itself produce SLSA provenance.
-For model weights, a future producer-side process should publish SLSA Build
-Provenance or equivalent in-toto attestations alongside each model artifact.</p>
-<h2 id="sigstore-future-path">Sigstore Future Path<a class="headerlink" href="#sigstore-future-path" title="Permanent link">&para;</a></h2>
-<p>Sigstore is the natural next step once model artifacts have signed
-attestations. A future implementation should:</p>
+<p>Enable strict behavior inside code paths that call the verifier:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_STRICT_MODEL_VERIFY</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span></code></pre></div>
+<p>In strict mode, an unknown hash, mismatch, or malformed trust file raises
+<code>ModelWeightVerificationError</code>.</p>
+<p>Select another trust file with:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_TRUSTED_MODEL_HASHES</span> <span class="p">=</span> <span class="s2">&quot;C:\secure-config\model-hashes.yaml&quot;</span>
+</span></code></pre></div>
+<p>Protect that file separately from the model artifacts. If an attacker can
+change both the model and its expected digest, the check has no value.</p>
+<h2 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h2>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pytest</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">test_weight_integrity</span><span class="p">.</span><span class="n">py</span> <span class="n">-q</span>
+</span></code></pre></div>
+<h2 id="what-this-does-not-provide">What this does not provide<a class="headerlink" href="#what-this-does-not-provide" title="Permanent link">&para;</a></h2>
+<p>The current control does not provide:</p>
 <ul>
-<li>sign model artifacts or provenance with Sigstore keyless signing;</li>
-<li>verify the Fulcio identity certificate against an expected publisher or CI
-  identity;</li>
-<li>verify Rekor transparency-log inclusion;</li>
-<li>compare the attestation subject digest to the local model digest;</li>
-<li>enforce expected builder identity, source repository, build type, and build
-  parameters before loading weights.</li>
+<li>a publisher identity;</li>
+<li>a signed attestation;</li>
+<li>a transparency-log record;</li>
+<li>build inputs or build instructions;</li>
+<li>proof that the model is safe or suitable;</li>
+<li>complete enforcement across all model loaders.</li>
 </ul>
-<p>Until that exists, SHA-256 trust entries remain the enforcement mechanism.</p>
-<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
-<ul>
-<li>SLSA Build Track Basics, Version 1.2:
-  https://slsa.dev/spec/v1.2/build-track-basics</li>
-<li>SLSA Verifying Artifacts, Version 1.2:
-  https://slsa.dev/spec/v1.2/verifying-artifacts</li>
-<li>SLSA Distributing Provenance, Version 1.2:
-  https://slsa.dev/spec/v1.2/distributing-provenance</li>
-<li>Sigstore overview:
-  https://docs.sigstore.dev/</li>
-<li>Sigstore keyless signing overview:
-  https://docs.sigstore.dev/cosign/signing/overview/</li>
-<li>Python <code>hashlib</code>:
-  https://docs.python.org/3/library/hashlib.html</li>
-<li>PyYAML <code>safe_load</code>:
-  https://pyyaml.org/wiki/PyYAMLDocumentation</li>
-</ul>
+<p>Signed SLSA or in-toto provenance could add producer and build identity in a
+future design. Sigstore could verify signatures and transparency-log inclusion.
+Those mechanisms are not implemented here and should not be claimed as current
+protection.</p>
 
 
 
@@ -2924,7 +3196,7 @@ attestations. A future implementation should:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 28, 2026 00:07:01 UTC">May 28, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     
@@ -2964,6 +3236,44 @@ attestations. A future implementation should:</p>
       
         <footer class="md-footer">
   
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../operations/security-hardening/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Security hardening">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Security hardening
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../load-report/" class="md-footer__link md-footer__link--next" aria-label="Next: Load evidence">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Load evidence
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
     
   
   <div class="md-footer-meta md-typeset">

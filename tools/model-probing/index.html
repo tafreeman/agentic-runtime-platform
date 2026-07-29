@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Model probing - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/model-probing.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/model-probing/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Model probing - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/model-probing.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#model-probing-inventory-and-discovery" class="md-skip">
+        <a href="#model-probing" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2038,10 +2068,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#check-explicit-models" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Check explicit models
       
     </span>
   </a>
@@ -2049,44 +2079,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modelprobe" class="md-nav__link">
+  <a href="#use-the-python-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ModelProbe
+        Use the Python API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ModelProbe">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#probe-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Probe cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#discover-configured-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discover configured providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Discover configured providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#local-endpoint-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
+        Local endpoint defaults
       
     </span>
   </a>
@@ -2099,10 +2129,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#proberesult" class="md-nav__link">
+  <a href="#inventory-limitation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ProbeResult
+        Inventory limitation
       
     </span>
   </a>
@@ -2110,121 +2140,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cache-mechanics" class="md-nav__link">
+  <a href="#interpret-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cache mechanics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#retry-decorator-with_retry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retry decorator (with_retry)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#convenience-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convenience functions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model discovery
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Model discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-inventory-build_inventory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model inventory (build_inventory)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Model inventory (build_inventory)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cli_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-locks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model locks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider detection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration pattern
+        Interpret results
       
     </span>
   </a>
@@ -2314,6 +2233,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -2419,6 +2342,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2729,6 +2708,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2789,6 +2772,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2976,10 +3015,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#check-explicit-models" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Check explicit models
       
     </span>
   </a>
@@ -2987,44 +3026,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modelprobe" class="md-nav__link">
+  <a href="#use-the-python-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ModelProbe
+        Use the Python API
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ModelProbe">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#probe-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Probe cache
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#discover-configured-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discover configured providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Discover configured providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#local-endpoint-defaults" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
+        Local endpoint defaults
       
     </span>
   </a>
@@ -3037,10 +3076,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#proberesult" class="md-nav__link">
+  <a href="#inventory-limitation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ProbeResult
+        Inventory limitation
       
     </span>
   </a>
@@ -3048,121 +3087,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cache-mechanics" class="md-nav__link">
+  <a href="#interpret-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cache mechanics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#retry-decorator-with_retry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retry decorator (with_retry)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#convenience-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convenience functions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model discovery
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Model discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-inventory-build_inventory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model inventory (build_inventory)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Model inventory (build_inventory)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cli_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#model-locks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Model locks
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#provider-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Provider detection
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration pattern
+        Interpret results
       
     </span>
   </a>
@@ -3202,415 +3130,201 @@
   
 
 
-<h1 id="model-probing-inventory-and-discovery">Model probing, inventory and discovery<a class="headerlink" href="#model-probing-inventory-and-discovery" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>Modules: <code>tools.llm.model_probe</code> · <code>tools.llm.model_inventory</code> · <code>tools.llm.probe_*</code> · <code>tools.llm.model_locks</code></p>
-</blockquote>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Before running a batch evaluation or bakeoff across many models it is expensive to discover
-failures mid-run: a misconfigured API key blocks an entire provider, a missing ONNX file
-crashes after 30 seconds, and a rate-limited GitHub token wastes retries on every subsequent
-call. The probing subsystem solves this by checking availability upfront, caching results, and
-surfacing a clean <code>usable: bool</code> flag before any inference work begins.</p>
-<p>The subsystem is split across four concerns:</p>
+<h1 id="model-probing">Model probing<a class="headerlink" href="#model-probing" title="Permanent link">&para;</a></h1>
+<p>Model probing checks whether a configured model appears usable before a longer
+evaluation or benchmark. A successful probe is a point-in-time connectivity
+check, not a guarantee that a later request will succeed.</p>
+<h2 id="check-explicit-models">Check explicit models<a class="headerlink" href="#check-explicit-models" title="Permanent link">&para;</a></h2>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">model_probe</span> <span class="p">`</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  <span class="n">gh</span><span class="p">:</span><span class="n">openai</span><span class="p">/</span><span class="n">gpt</span><span class="p">-</span><span class="n">4o-mini</span> <span class="p">`</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  <span class="n">ollama</span><span class="p">:</span><span class="n">llama3</span> <span class="p">`</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  <span class="k">local:</span><span class="n">phi4</span>
+</span></code></pre></div>
+<p>Write the report to JSON:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">model_probe</span> <span class="p">`</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  <span class="n">gh</span><span class="p">:</span><span class="n">openai</span><span class="p">/</span><span class="n">gpt</span><span class="p">-</span><span class="n">4o-mini</span> <span class="p">`</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  <span class="n">ollama</span><span class="p">:</span><span class="n">llama3</span> <span class="p">`</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">runs</span><span class="p">\</span><span class="n">probe-results</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p>Useful options:</p>
 <table>
 <thead>
 <tr>
-<th>Module</th>
-<th>Responsibility</th>
+<th>Option</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>model_probe.py</code></td>
-<td><code>ModelProbe</code> class + public convenience functions</td>
+<td><code>--force</code></td>
+<td>Ignore cached results</td>
 </tr>
 <tr>
-<td><code>probe_config.py</code></td>
-<td><code>ProbeResult</code> dataclass, constants, cache I/O, <code>with_retry</code> decorator</td>
+<td><code>--verbose</code></td>
+<td>Show probe diagnostics</td>
 </tr>
 <tr>
-<td><code>probe_providers.py</code></td>
-<td>Route a model name to its probe function</td>
+<td><code>--cache-info</code></td>
+<td>Print cache statistics</td>
 </tr>
 <tr>
-<td><code>probe_providers_cloud.py</code></td>
-<td>Cloud probe logic (GitHub, OpenAI, Gemini, Claude, Azure)</td>
+<td><code>--clear-cache</code></td>
+<td>Remove cached probe entries</td>
 </tr>
 <tr>
-<td><code>probe_providers_local.py</code></td>
-<td>Local probe logic (ONNX, Ollama, LM Studio, AITK, Windows AI)</td>
+<td><code>--all-github</code></td>
+<td>Probe the command's built-in GitHub model list</td>
 </tr>
 <tr>
-<td><code>probe_discovery.py</code></td>
-<td><code>discover_all_models()</code> — aggregate scan across all providers</td>
+<td><code>--all-local</code></td>
+<td>Probe known local ONNX model keys</td>
 </tr>
 <tr>
-<td><code>probe_discovery_providers.py</code></td>
-<td>Per-provider <code>_probe_*</code> helper functions</td>
+<td><code>--all-azure</code></td>
+<td>Probe configured Azure models</td>
 </tr>
 <tr>
-<td><code>model_inventory.py</code></td>
-<td><code>build_inventory()</code> — passive + optional active capability audit</td>
+<td><code>--all-ollama</code></td>
+<td>Probe configured Ollama models</td>
 </tr>
 <tr>
-<td><code>model_locks.py</code></td>
-<td>PID-based lock files for concurrent ONNX model loading</td>
+<td><code>--all-aitk</code></td>
+<td>Probe AI Toolkit models</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="modelprobe">ModelProbe<a class="headerlink" href="#modelprobe" title="Permanent link">&para;</a></h2>
-<p><code>ModelProbe</code> is the primary interface. It wraps the per-provider probe functions, maintains a
-two-level cache (in-memory session cache + persistent JSON on disk), and applies TTL-stratified
-expiry.</p>
-<h3 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelProbe</span><span class="p">,</span> <span class="n">get_probe</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Use the process-wide singleton (preferred)</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">probe</span> <span class="o">=</span> <span class="n">get_probe</span><span class="p">()</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Check a single model</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">)</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">usable</span><span class="p">:</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">text</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Filter a candidate list to only runnable models</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;gh:o1&quot;</span><span class="p">,</span> <span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span> <span class="s2">&quot;local:mistral&quot;</span><span class="p">]</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">runnable</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">filter_runnable</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># → [&quot;gh:gpt-4o-mini&quot;, &quot;local:phi4&quot;]  (assuming o1 and mistral fail probe)</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Full report for a set of models</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">report</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get_probe_report</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">&quot;usable_count&quot;</span><span class="p">],</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;unusable&quot;</span><span class="p">])</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># CLI</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">tools</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">model_probe</span> <span class="o">--</span><span class="nb">all</span><span class="o">-</span><span class="n">github</span> <span class="o">--</span><span class="nb">all</span><span class="o">-</span><span class="n">local</span> <span class="o">--</span><span class="n">verbose</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">tools</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">model_probe</span> <span class="o">--</span><span class="n">discover</span> <span class="o">--</span><span class="n">output</span> <span class="n">discovery</span><span class="o">.</span><span class="n">json</span>
+<p>Provider probes can make network calls, consume quota, or start local model
+processes. Review the selected options before running them in CI.</p>
+<h2 id="use-the-python-api">Use the Python API<a class="headerlink" href="#use-the-python-api" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelProbe</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">probe</span> <span class="o">=</span> <span class="n">ModelProbe</span><span class="p">(</span><span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="s2">&quot;ollama:llama3&quot;</span><span class="p">)</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">usable</span><span class="p">)</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">provider</span><span class="p">)</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">error_code</span><span class="p">)</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">error_message</span><span class="p">)</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">cached</span><span class="p">)</span>
 </span></code></pre></div>
-<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">ModelProbe</span><span class="p">(</span><span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+<p><code>ProbeResult</code> contains:</p>
+<ul>
+<li><code>model</code> and <code>provider</code>;</li>
+<li><code>usable</code>;</li>
+<li>normalized error code and message;</li>
+<li>whether retry may help;</li>
+<li>probe timestamp and duration; and</li>
+<li>whether the result came from cache.</li>
+</ul>
+<p>Filter a candidate list:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">runnable</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">filter_runnable</span><span class="p">(</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="p">[</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        <span class="s2">&quot;ollama:llama3&quot;</span><span class="p">,</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="s2">&quot;gh:openai/gpt-4o-mini&quot;</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="p">]</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
 </span></code></pre></div>
-<p><code>use_cache=True</code> loads the persistent JSON cache from disk on construction.<br />
-<code>verbose=True</code> enables debug-level logging of probe results.</p>
-<p>Use <code>get_probe()</code> to obtain the process-wide singleton rather than constructing directly.</p>
-<h3 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h3>
-<h4 id="check_modelmodel-force_probefalse-proberesult"><code>check_model(model, force_probe=False) → ProbeResult</code><a class="headerlink" href="#check_modelmodel-force_probefalse-proberesult" title="Permanent link">&para;</a></h4>
-<p>Check if a model is available. Follows the cache hierarchy:</p>
-<ol>
-<li><strong>Session cache</strong> (in-memory, no TTL check) — fastest, consulted first.</li>
-<li><strong>Persistent cache</strong> (disk JSON) — checked if session cache misses and <code>use_cache=True</code>.</li>
-<li><strong>Live probe</strong> — performed if cache misses or <code>force_probe=True</code>.</li>
-</ol>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">result</span><span class="o">.</span><span class="n">usable</span>          <span class="c1"># bool</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">result</span><span class="o">.</span><span class="n">error_code</span>      <span class="c1"># ErrorCode string or None</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">result</span><span class="o">.</span><span class="n">error_message</span>   <span class="c1"># human-readable error or None</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">result</span><span class="o">.</span><span class="n">cached</span>          <span class="c1"># True if returned from cache</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">result</span><span class="o">.</span><span class="n">duration_ms</span>     <span class="c1"># probe latency (live probes only)</span>
+<h2 id="probe-cache">Probe cache<a class="headerlink" href="#probe-cache" title="Permanent link">&para;</a></h2>
+<p>The persistent cache is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>~/.cache/prompts-eval/model-probes/probe_cache.json
 </span></code></pre></div>
-<h4 id="filter_runnablemodels-force_probefalse-liststr"><code>filter_runnable(models, force_probe=False) → list[str]</code><a class="headerlink" href="#filter_runnablemodels-force_probefalse-liststr" title="Permanent link">&para;</a></h4>
-<p>Return only those model strings for which <code>check_model()</code> returns <code>usable=True</code>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">runnable</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">filter_runnable</span><span class="p">([</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span> <span class="s2">&quot;local:mistral&quot;</span><span class="p">,</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="s2">&quot;gh:o1-preview&quot;</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="s2">&quot;azure-foundry:phi4mini&quot;</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">])</span>
-</span></code></pre></div>
-<h4 id="get_probe_reportmodels-dict"><code>get_probe_report(models) → dict</code><a class="headerlink" href="#get_probe_reportmodels-dict" title="Permanent link">&para;</a></h4>
-<p>Return a structured report dictionary:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-02T14:23:11&quot;</span><span class="p">,</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">&quot;usable_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">&quot;unusable_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nt">&quot;usable&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;azure-foundry:phi4mini&quot;</span><span class="p">],</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nt">&quot;unusable&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local:mistral&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;error_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file_not_found&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gh:o1-preview&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;error_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;permission_denied&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;&lt;model&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...ProbeResul</span><span class="kc">t</span><span class="w"> </span><span class="kc">f</span><span class="err">ields...</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">}</span>
-</span></code></pre></div>
-<h4 id="clear_cachemodelnone"><code>clear_cache(model=None)</code><a class="headerlink" href="#clear_cachemodelnone" title="Permanent link">&para;</a></h4>
-<p>Clear one model's cached probe result, or clear the entire cache if <code>model=None</code>.</p>
-<h4 id="get_cache_summary-dict"><code>get_cache_summary() → dict</code><a class="headerlink" href="#get_cache_summary-dict" title="Permanent link">&para;</a></h4>
-<p>Inspect the current cache state without probing:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get_cache_summary</span><span class="p">()</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s2">&quot;valid_entries&quot;</span><span class="p">],</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;expired_entries&quot;</span><span class="p">])</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s2">&quot;usable_models&quot;</span><span class="p">],</span> <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;unusable_models&quot;</span><span class="p">])</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s2">&quot;cache_file&quot;</span><span class="p">])</span>
-</span></code></pre></div>
-<hr />
-<h2 id="proberesult">ProbeResult<a class="headerlink" href="#proberesult" title="Permanent link">&para;</a></h2>
-<p><code>ProbeResult</code> is a <code>dataclass</code> defined in <code>probe_config.py</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nd">@dataclass</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">ProbeResult</span><span class="p">:</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span>                <span class="c1"># model identifier as passed</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span>             <span class="c1"># inferred provider name</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">usable</span><span class="p">:</span> <span class="nb">bool</span>              <span class="c1"># True if model responded successfully</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">error_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>    <span class="c1"># ErrorCode value or None</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">error_message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="c1"># human-readable failure description</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">should_retry</span><span class="p">:</span> <span class="nb">bool</span>        <span class="c1"># True for transient errors</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">probe_time</span><span class="p">:</span> <span class="nb">str</span>           <span class="c1"># ISO timestamp of last probe</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">duration_ms</span><span class="p">:</span> <span class="nb">int</span>          <span class="c1"># latency of the probe call in milliseconds</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">cached</span><span class="p">:</span> <span class="nb">bool</span>              <span class="c1"># True if result came from cache, not live probe</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-</span></code></pre></div>
-<hr />
-<h2 id="cache-mechanics">Cache mechanics<a class="headerlink" href="#cache-mechanics" title="Permanent link">&para;</a></h2>
-<p>The persistent cache lives at:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>~/.cache/prompts-eval/model-probes/probe_cache.json
-</span></code></pre></div>
-<p>Cache entries are keyed by the MD5 of the model string (12 hex chars). TTL is applied on read:</p>
+<p>Current time-to-live values are:</p>
 <table>
 <thead>
 <tr>
-<th>Result type</th>
-<th>TTL</th>
+<th>Result</th>
+<th style="text-align: right;">Cache lifetime</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>usable=True</code> (SUCCESS)</td>
-<td>1 hour</td>
+<td>Success</td>
+<td style="text-align: right;">1 hour</td>
 </tr>
 <tr>
-<td><code>error_code=PERMISSION_DENIED</code> or <code>UNAVAILABLE_MODEL</code></td>
-<td>24 hours</td>
+<td>Permission denied or unavailable model</td>
+<td style="text-align: right;">24 hours</td>
 </tr>
 <tr>
-<td>All other error codes (transient)</td>
-<td>5 minutes</td>
+<td>Other failures, including rate limit or timeout</td>
+<td style="text-align: right;">5 minutes</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Why TTL stratification?</strong> A model that returns 403 is unlikely to become accessible within an
-hour, so caching the failure for 24 hours avoids repeated permission-check calls. Rate limits and
-timeouts are transient by nature and should be retried after a short window.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Force a fresh probe ignoring the cache</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">,</span> <span class="n">force_probe</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Clear stale entries</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">probe</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Inspect before clearing</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">get_cache_summary</span><span class="p">()</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># → {&quot;total_entries&quot;: 12, &quot;valid_entries&quot;: 8, &quot;expired_entries&quot;: 4, ...}</span>
+<p>The process also keeps a session cache. Use <code>force_probe=True</code> or <code>--force</code>
+when current availability matters.</p>
+<p>Do not use a cached success as current health evidence.</p>
+<h2 id="discover-configured-providers">Discover configured providers<a class="headerlink" href="#discover-configured-providers" title="Permanent link">&para;</a></h2>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">model_probe</span> <span class="p">`</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  <span class="p">-</span><span class="n">-discover</span> <span class="p">`</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">runs</span><span class="p">\</span><span class="n">model-discovery</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<hr />
-<h2 id="retry-decorator-with_retry">Retry decorator (<code>with_retry</code>)<a class="headerlink" href="#retry-decorator-with_retry" title="Permanent link">&para;</a></h2>
-<p><code>probe_config.with_retry</code> is a decorator with exponential backoff + jitter, intended for
-probe functions that may hit transient rate limits or timeouts.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.probe_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">with_retry</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nd">@with_retry</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">base_delay</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">max_delay</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span> <span class="n">exponential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_probe_function</span><span class="p">():</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="o">...</span>
-</span></code></pre></div>
-<p>Only errors classified as transient by <code>classify_error()</code> trigger retries. Permanent errors
-(<code>PERMISSION_DENIED</code>, <code>UNAVAILABLE_MODEL</code>, <code>FILE_NOT_FOUND</code>) propagate immediately.</p>
-<p>Jitter: <code>delay = delay × (0.8 + random() × 0.4)</code>, preventing thundering-herd on parallel probes.</p>
-<hr />
-<h2 id="convenience-functions">Convenience functions<a class="headerlink" href="#convenience-functions" title="Permanent link">&para;</a></h2>
-<p>The module exports three single-call helpers backed by the process singleton:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_model_usable</span><span class="p">,</span> <span class="n">filter_usable_models</span><span class="p">,</span> <span class="n">get_model_error</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Boolean check</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">if</span> <span class="n">is_model_usable</span><span class="p">(</span><span class="s2">&quot;gh:gpt-4o-mini&quot;</span><span class="p">):</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="o">...</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># Filter a list (same as probe.filter_runnable but uses singleton)</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">runnable</span> <span class="o">=</span> <span class="n">filter_usable_models</span><span class="p">([</span><span class="s2">&quot;local:phi4&quot;</span><span class="p">,</span> <span class="s2">&quot;gh:gpt-4o&quot;</span><span class="p">,</span> <span class="s2">&quot;gh:o3&quot;</span><span class="p">])</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># Get the error message for an unusable model</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="n">err</span> <span class="o">=</span> <span class="n">get_model_error</span><span class="p">(</span><span class="s2">&quot;local:mistral&quot;</span><span class="p">)</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="c1"># → &quot;No local ONNX model found for key: mistral&quot; or None if usable</span>
-</span></code></pre></div>
-<hr />
-<h2 id="model-discovery">Model discovery<a class="headerlink" href="#model-discovery" title="Permanent link">&para;</a></h2>
-<p><code>discover_all_models()</code> scans all configured providers and returns
-an inventory of available models grouped by provider.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_all_models</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">discovered</span> <span class="o">=</span> <span class="n">discover_all_models</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Summary</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">discovered</span><span class="p">[</span><span class="s2">&quot;summary&quot;</span><span class="p">][</span><span class="s2">&quot;total_available&quot;</span><span class="p">])</span>       <span class="c1"># total models found</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">discovered</span><span class="p">[</span><span class="s2">&quot;summary&quot;</span><span class="p">][</span><span class="s2">&quot;providers_configured&quot;</span><span class="p">])</span>  <span class="c1"># number of configured providers</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="c1"># Per-provider lists</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="k">for</span> <span class="n">provider</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">discovered</span><span class="p">[</span><span class="s2">&quot;providers&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;available&quot;</span><span class="p">,</span> <span class="p">[]))</span>
-</span></code></pre></div>
-<p><strong>Providers scanned</strong> (in order):</p>
+<p>Discovery checks these provider groups:</p>
 <ol>
-<li><code>local_onnx</code> — checks <code>~/.cache/aigallery</code> for installed models</li>
-<li><code>github_models</code> — checks <code>gh auth</code> status and lists available models</li>
-<li><code>ollama</code> — queries <code>/api/tags</code> on <code>OLLAMA_HOST</code></li>
-<li><code>azure_foundry</code> — checks env vars and DNS for configured endpoints</li>
-<li><code>azure_openai</code> — checks numbered slot env vars (0–9)</li>
-<li><code>openai</code> — calls <code>models.list()</code> API if <code>OPENAI_API_KEY</code> present</li>
-<li><code>gemini</code> — calls <code>genai.list_models()</code> if key present</li>
-<li><code>anthropic</code> — passive check (key present only; no list endpoint used)</li>
-<li><code>windows_ai</code> — runs <code>dotnet run --project PhiSilicaBridge -- --info</code> if on Win32</li>
-<li><code>ai_toolkit</code> — scans <code>~/.aitk/models/</code> for VS Code AI Toolkit models</li>
-<li><code>lmstudio</code> — probes <code>{LMSTUDIO_HOST}/api/v1/models</code> (the current native catalog; <code>LM_API_TOKEN</code> is sent when configured). The shared tool default remains <code>:12340</code>; LM Studio's out-of-the-box port is <code>:1234</code>, so set <code>LMSTUDIO_HOST</code> when needed.</li>
-<li><code>local_openai_compatible</code> — probes <code>OPENAI_BASE_URL</code> / <code>LOCAL_AI_API_BASE_URL</code> if set</li>
+<li>local ONNX;</li>
+<li>GitHub Models;</li>
+<li>local Ollama;</li>
+<li>Ollama Cloud;</li>
+<li>Azure Foundry;</li>
+<li>Azure OpenAI;</li>
+<li>OpenAI;</li>
+<li>Gemini;</li>
+<li>Anthropic;</li>
+<li>Windows AI;</li>
+<li>AI Toolkit;</li>
+<li>LM Studio and other local OpenAI-compatible servers; and</li>
+<li>NVIDIA NIM.</li>
 </ol>
-<h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Discover all providers</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--discover
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Save to file</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--discover<span class="w"> </span>--output<span class="w"> </span>runs/discovery.json
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
-</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1"># Probe specific models</span>
-</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>gh:gpt-4o-mini<span class="w"> </span>local:phi4<span class="w"> </span>gh:deepseek-r1
-</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>
-</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1"># Probe standard groups</span>
-</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--all-github<span class="w"> </span>--all-local<span class="w"> </span>--all-azure
-</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>
-</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="c1"># Force fresh (bypass cache)</span>
-</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--all-github<span class="w"> </span>--force
-</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>
-</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a><span class="c1"># Cache management</span>
-</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--cache-info
-</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_probe<span class="w"> </span>--clear-cache
-</span></code></pre></div>
-<hr />
-<h2 id="model-inventory-build_inventory">Model inventory (<code>build_inventory</code>)<a class="headerlink" href="#model-inventory-build_inventory" title="Permanent link">&para;</a></h2>
-<p><code>model_inventory.py</code> provides <code>build_inventory()</code>, a conservative capability audit of the current
-environment. Unlike <code>discover_all_models()</code>, it defaults to a <strong>passive</strong> scan (environment
-variable checks and DNS resolution only) and does not perform live API calls unless <code>active_probes=True</code>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_inventory</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_inventory</span><span class="p">,</span> <span class="n">format_inventory_summary</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Passive scan (no API calls, no network traffic)</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">inv</span> <span class="o">=</span> <span class="n">build_inventory</span><span class="p">(</span><span class="n">active_probes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># Active scan (lightweight network calls: Ollama /api/tags, gh models --help, etc.)</span>
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">inv</span> <span class="o">=</span> <span class="n">build_inventory</span><span class="p">(</span><span class="n">active_probes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
-</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">format_inventory_summary</span><span class="p">(</span><span class="n">inv</span><span class="p">))</span>
-</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="c1"># → &quot;Capability inventory: local_onnx(installed_keys=3), github_models(configured=True),</span>
-</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1">#    openai(models=0), gemini(models=0), ollama(reachable=True), windows_ai(configured)&quot;</span>
-</span></code></pre></div>
-<p><strong>Returned provider keys</strong>: <code>local_onnx</code>, <code>github_models</code>, <code>openai</code>, <code>gemini</code>, <code>claude</code>,
-<code>azure_foundry</code>, <code>azure_openai</code>, <code>ollama</code>, <code>local_openai_compatible</code>, <code>windows_ai_phi_silica</code>.</p>
-<h3 id="cli_1">CLI<a class="headerlink" href="#cli_1" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Passive inventory</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_inventory
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Active inventory (live checks)</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.model_inventory<span class="w"> </span>--active
-</span></code></pre></div>
-<hr />
-<h2 id="model-locks">Model locks<a class="headerlink" href="#model-locks" title="Permanent link">&para;</a></h2>
-<p><code>model_locks.py</code> prevents concurrent ONNX model loading conflicts. ONNX models consume large
-amounts of RAM. When multiple evaluation processes run in parallel on the same machine, loading
-the same model twice can OOM the system.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_locks</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_model_lock</span><span class="p">,</span> <span class="n">get_models_in_use</span><span class="p">,</span> <span class="n">clear_all_locks</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Called automatically by provider_adapters.call_local()</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">lock_path</span> <span class="o">=</span> <span class="n">create_model_lock</span><span class="p">(</span><span class="s2">&quot;phi4mini&quot;</span><span class="p">)</span>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># Creates ~/.cache/prompts-eval/locks/phi4mini_&lt;pid&gt;.lock</span>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Lock file is automatically removed on process exit via atexit</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
-</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="c1"># Before starting a new local model job</span>
-</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">in_use</span> <span class="o">=</span> <span class="n">get_models_in_use</span><span class="p">()</span>
-</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="k">if</span> <span class="s2">&quot;phi4mini&quot;</span> <span class="ow">in</span> <span class="n">in_use</span><span class="p">:</span>
-</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model in use: </span><span class="si">{</span><span class="n">in_use</span><span class="p">[</span><span class="s1">&#39;phi4mini&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># &quot;PID 1234: run_bakeoff.py&quot;</span>
-</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>
-</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># Recovery after a crash (stale locks)</span>
-</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="n">clear_all_locks</span><span class="p">()</span>
-</span></code></pre></div>
-<p><code>get_models_in_use()</code> validates that the PID in each lock file is still running (requires
-<code>psutil</code>). Stale lock files from crashed processes are removed automatically.</p>
-<hr />
-<h2 id="provider-detection">Provider detection<a class="headerlink" href="#provider-detection" title="Permanent link">&para;</a></h2>
-<p><code>probe_providers.get_provider(model_name)</code> maps a model string to a provider name:</p>
+<p>Each group reports its own configured, available, and error fields. Not every
+provider can list models, so "configured" and "model list returned" are
+different outcomes.</p>
+<h3 id="local-endpoint-defaults">Local endpoint defaults<a class="headerlink" href="#local-endpoint-defaults" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Pattern</th>
 <th>Provider</th>
+<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>local:*</code></td>
-<td><code>local</code></td>
+<td>Ollama</td>
+<td><code>http://localhost:11434</code></td>
 </tr>
 <tr>
-<td><code>gh:*</code> or <code>github:*</code></td>
-<td><code>github</code></td>
-</tr>
-<tr>
-<td><code>ollama:*</code></td>
-<td><code>ollama</code></td>
-</tr>
-<tr>
-<td><code>openai:*</code> or bare <code>gpt*</code></td>
-<td><code>openai</code></td>
-</tr>
-<tr>
-<td><code>gemini:*</code> or bare <code>gemini*</code></td>
-<td><code>gemini</code></td>
-</tr>
-<tr>
-<td><code>claude:*</code> or bare <code>claude*</code></td>
-<td><code>claude</code></td>
-</tr>
-<tr>
-<td><code>azure-foundry:*</code></td>
-<td><code>azure_foundry</code></td>
-</tr>
-<tr>
-<td><code>azure-openai:*</code></td>
-<td><code>azure_openai</code></td>
-</tr>
-<tr>
-<td><code>windows-ai:*</code></td>
-<td><code>windows_ai</code></td>
-</tr>
-<tr>
-<td><code>aitk:*</code> or <code>ai-toolkit:*</code></td>
-<td><code>ai_toolkit</code></td>
-</tr>
-<tr>
-<td><code>lmstudio:*</code> or <code>lm-studio:*</code></td>
-<td><code>lmstudio</code></td>
-</tr>
-<tr>
-<td><code>local-api:*</code></td>
-<td><code>local_api</code></td>
+<td>LM Studio in this tool</td>
+<td><code>http://127.0.0.1:12340</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="integration-pattern">Integration pattern<a class="headerlink" href="#integration-pattern" title="Permanent link">&para;</a></h2>
-<p>The typical integration in an evaluation pipeline:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.model_probe</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_probe</span><span class="p">,</span> <span class="n">discover_all_models</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># 1. Discover what is available</span>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="n">discovered</span> <span class="o">=</span> <span class="n">discover_all_models</span><span class="p">()</span>
-</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">candidate_models</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="n">m</span> <span class="k">for</span> <span class="n">provider</span> <span class="ow">in</span> <span class="n">discovered</span><span class="p">[</span><span class="s2">&quot;providers&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">provider</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;available&quot;</span><span class="p">,</span> <span class="p">[])</span>
-</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="p">]</span>
-</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
-</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="c1"># 2. Probe candidates and filter to runnable</span>
-</span><span id="__span-16-12"><a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="n">probe</span> <span class="o">=</span> <span class="n">get_probe</span><span class="p">()</span>
-</span><span id="__span-16-13"><a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="n">runnable</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">filter_runnable</span><span class="p">(</span><span class="n">candidate_models</span><span class="p">)</span>
-</span><span id="__span-16-14"><a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Runnable models: </span><span class="si">{</span><span class="n">runnable</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-16-15"><a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>
-</span><span id="__span-16-16"><a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="c1"># 3. Run evaluation only on runnable models</span>
-</span><span id="__span-16-17"><a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">runnable</span><span class="p">:</span>
-</span><span id="__span-16-18"><a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">prompt</span><span class="p">)</span>
-</span><span id="__span-16-19"><a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a>    <span class="c1"># ... score result</span>
+<p>Many LM Studio installations use port <code>1234</code>. Set <code>LMSTUDIO_HOST</code> explicitly
+when the default does not match the local server.</p>
+<p>Discovery also checks common local OpenAI-compatible ports. Do not run active
+discovery on an untrusted network.</p>
+<h2 id="inventory-limitation">Inventory limitation<a class="headerlink" href="#inventory-limitation" title="Permanent link">&para;</a></h2>
+<p><code>tools.llm.model_inventory</code> is intended to create a passive or active
+capability inventory. In the current source it imports <code>llm_client</code> as a
+top-level module, so:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">model_inventory</span>
 </span></code></pre></div>
+<p>can return:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Failed to import llm_client: No module named &#39;llm_client&#39;
+</span></code></pre></div>
+<p>Use <code>model_probe --discover</code> for a working repository-wide inventory until the
+package-relative import is fixed.</p>
+<h2 id="interpret-results">Interpret results<a class="headerlink" href="#interpret-results" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>usable=true</code> means the probe's small check passed.</li>
+<li>A timeout may describe the probe limit rather than normal generation time.</li>
+<li>A listed model may still reject the caller's region, quota, input size, or
+  requested feature.</li>
+<li>Local-file discovery does not prove that weights fit memory or that the
+  execution provider is compatible.</li>
+<li>Provider catalogs can change without a repository change.</li>
+</ul>
+<p>Save the JSON report, exact command, environment name, and timestamp with any
+model-selection decision.</p>
 
 
 
@@ -3633,7 +3347,7 @@ the same model twice can OOM the system.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 00:54:21 UTC">July 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

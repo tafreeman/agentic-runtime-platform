@@ -6,14 +6,14 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
         <link rel="canonical" href="https://tafreeman.github.io/agentic-runtime-platform/operations/troubleshooting/">
       
       
-        <link rel="prev" href="../security-hardening/">
+        <link rel="prev" href="../../load-report/">
       
       
         <link rel="next" href="../../configuration/">
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Troubleshooting - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/troubleshooting.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/operations/troubleshooting/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Troubleshooting - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/operations/troubleshooting.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2078,6 +2108,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2195,6 +2229,62 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2258,22 +2348,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#startup-failures" class="md-nav__link">
+  <a href="#collect-basic-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Startup failures
+        Collect basic state
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Startup failures">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-and-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation and startup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation and startup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#configurationerror-langchain-engine-selected-but-extras-not-installed" class="md-nav__link">
+  <a href="#agentic-is-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ConfigurationError: LangChain engine selected but extras not installed
+        agentic is not found
       
     </span>
   </a>
@@ -2281,10 +2382,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#server-starts-but-every-request-returns-503-sanitization-layer-not-initialized" class="md-nav__link">
+  <a href="#modulenotfounderror-agentic_v2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server starts but every request returns 503 "sanitization layer not initialized"
+        ModuleNotFoundError: agentic_v2
       
     </span>
   </a>
@@ -2292,10 +2393,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#port-already-in-use-8010-5173-6006" class="md-nav__link">
+  <a href="#langgraph-or-langchain-extra-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Port already in use (8010 / 5173 / 6006)
+        LangGraph or LangChain extra is missing
       
     </span>
   </a>
@@ -2303,10 +2404,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#venv-not-found-python-imports-fail" class="md-nav__link">
+  <a href="#port-8010-or-5173-is-in-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        .venv not found / Python imports fail
+        Port 8010 or 5173 is in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sanitization-initialization-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sanitization initialization fails
       
     </span>
   </a>
@@ -2319,22 +2431,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-rate-limiting" class="md-nav__link">
+  <a href="#authentication-and-request-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication &amp; rate limiting
+        Authentication and request limits
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Authentication &amp; rate limiting">
+    <nav class="md-nav" aria-label="Authentication and request limits">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#http-401-invalid-or-missing-api-key" class="md-nav__link">
+  <a href="#http-401" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HTTP 401 "Invalid or missing API key"
+        HTTP 401
       
     </span>
   </a>
@@ -2342,71 +2454,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#http-429-too-many-requests-with-retry-after-header" class="md-nav__link">
+  <a href="#http-429" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HTTP 429 "Too Many Requests" with Retry-After header
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#a-legitimate-client-is-locked-out" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A legitimate client is locked out
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rate-limit-feels-uneven-across-replicas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate limit feels uneven across replicas
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#websocket-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket / streaming
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WebSocket / streaming">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#websocket-connection-rejected-with-http-403-origin-not-allowed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket connection rejected with HTTP 403 "origin not allowed"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-disconnects-mid-run-and-ui-loses-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket disconnects mid-run and UI loses state
+        HTTP 429
       
     </span>
   </a>
@@ -2431,10 +2482,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#workflow-stalls-indefinitely" class="md-nav__link">
+  <a href="#-input-does-not-parse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow stalls indefinitely
+        --input does not parse
       
     </span>
   </a>
@@ -2442,10 +2493,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#workflow-returns-failed-with-metadatatimeout_exceededtrue" class="md-nav__link">
+  <a href="#workflow-is-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow returns FAILED with metadata.timeout_exceeded=True
+        Workflow is not found
       
     </span>
   </a>
@@ -2453,10 +2504,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#steps-cascade-skipped-after-one-failure" class="md-nav__link">
+  <a href="#a-step-is-skipped-after-another-step-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Steps cascade-skipped after one failure
+        A step is skipped after another step fails
       
     </span>
   </a>
@@ -2464,10 +2515,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#validationerror-depends_on-field-required" class="md-nav__link">
+  <a href="#the-native-and-langgraph-results-differ" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ValidationError: depends_on field required
+        The native and LangGraph results differ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-reaches-its-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution reaches its timeout
       
     </span>
   </a>
@@ -2480,22 +2542,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#file-and-shell-tools" class="md-nav__link">
+  <a href="#model-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        File and shell tools
+        Model providers
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="File and shell tools">
+    <nav class="md-nav" aria-label="Model providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#file-tool-fails-with-agentic_file_base_dir-is-not-set" class="md-nav__link">
+  <a href="#no-model-is-available-for-a-tier" class="md-nav__link">
     <span class="md-ellipsis">
       
-        File tool fails with "AGENTIC_FILE_BASE_DIR is not set"
+        No model is available for a tier
       
     </span>
   </a>
@@ -2503,10 +2565,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#shell-tool-refuses-every-command-with-not-in-allowlist" class="md-nav__link">
+  <a href="#provider-returns-401-or-403" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell tool refuses every command with "not in allowlist"
+        Provider returns 401 or 403
       
     </span>
   </a>
@@ -2514,10 +2576,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#codeexecutiontool-raises-during-import-os-style-traversal" class="md-nav__link">
+  <a href="#provider-returns-429" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CodeExecutionTool raises during import os-style traversal
+        Provider returns 429
       
     </span>
   </a>
@@ -2530,22 +2592,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llm-provider-failures" class="md-nav__link">
+  <a href="#rag" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM provider failures
+        RAG
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="LLM provider failures">
+    <nav class="md-nav" aria-label="RAG">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-model-available-for-tier-x-smart-router-fails-to-route" class="md-nav__link">
+  <a href="#search-in-a-new-shell-returns-no-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No model available for tier &lt;X&gt; / smart router fails to route
+        Search in a new shell returns no results
       
     </span>
   </a>
@@ -2553,10 +2615,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#azure-openai-returns-429-quota-exceeded" class="md-nav__link">
+  <a href="#retrieval-quality-is-unexpectedly-poor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Azure OpenAI returns 429 / quota exceeded
+        Retrieval quality is unexpectedly poor
       
     </span>
   </a>
@@ -2564,10 +2626,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#anthropic-openai-returns-401" class="md-nav__link">
+  <a href="#lancedb-cannot-be-imported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Anthropic / OpenAI returns 401
+        LanceDB cannot be imported
       
     </span>
   </a>
@@ -2580,22 +2642,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tracing-and-observability" class="md-nav__link">
+  <a href="#file-shell-and-code-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing and observability
+        File, shell, and code tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tracing and observability">
+    <nav class="md-nav" aria-label="File, shell, and code tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-spans-appear-in-jaeger-tempo-your-otel-collector" class="md-nav__link">
+  <a href="#file-or-git-tool-says-agentic_file_base_dir-is-not-set" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No spans appear in Jaeger / Tempo / your OTEL collector
+        File or Git tool says AGENTIC_FILE_BASE_DIR is not set
       
     </span>
   </a>
@@ -2603,10 +2665,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sensitive-content-missing-from-spans" class="md-nav__link">
+  <a href="#shell-command-is-not-allowed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sensitive content missing from spans
+        Shell command is not allowed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-execution-blocks-an-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code execution blocks an import
       
     </span>
   </a>
@@ -2619,22 +2692,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#windows-specific" class="md-nav__link">
+  <a href="#dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Windows-specific
+        Dashboard
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Windows-specific">
+    <nav class="md-nav" aria-label="Dashboard">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#npx-command-fails-or-hangs" class="md-nav__link">
+  <a href="#the-page-loads-but-api-calls-fail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npx &lt;command&gt; fails or hangs
+        The page loads but API calls fail
       
     </span>
   </a>
@@ -2642,10 +2715,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#path-errors-with-backslashes-in-python-tools" class="md-nav__link">
+  <a href="#websocket-is-rejected-with-403" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Path errors with backslashes in Python tools
+        WebSocket is rejected with 403
       
     </span>
   </a>
@@ -2653,21 +2726,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pnpm-fails-with-eperm-on-a-mountedshared-drive" class="md-nav__link">
+  <a href="#typescript-types-no-longer-match-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pnpm fails with EPERM on a mounted/shared drive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#powershell-scripts-mangled-in-git-bash" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PowerShell scripts mangled in Git Bash
+        TypeScript types no longer match Python
       
     </span>
   </a>
@@ -2680,22 +2742,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#frontend-ui" class="md-nav__link">
+  <a href="#tracing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend / UI
+        Tracing
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Frontend / UI">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests and documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tests and documentation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#npm-run-build-fails-with-typescript-errors-after-pydantic-changes" class="md-nav__link">
+  <a href="#generated-contract-check-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npm run build fails with TypeScript errors after Pydantic changes
+        Generated contract check fails
       
     </span>
   </a>
@@ -2703,10 +2776,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#storybook-fails-with-cannot-find-storybookaddon-actions" class="md-nav__link">
+  <a href="#documentation-reference-check-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storybook fails with "Cannot find @storybook/addon-actions"
+        Documentation reference check fails
       
     </span>
   </a>
@@ -2714,10 +2787,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#vite-dev-server-resolves-js-imports-but-the-production-build-fails" class="md-nav__link">
+  <a href="#mkdocs-strict-build-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vite dev server resolves .js imports but the production build fails
+        MkDocs strict build fails
       
     </span>
   </a>
@@ -2730,60 +2803,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ci-pre-commit" class="md-nav__link">
+  <a href="#windows-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI / pre-commit
+        Windows notes
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="CI / pre-commit">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit-detect-secrets-flags-a-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-commit detect-secrets flags a file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ruff-check-fails-on-changed-files-locally-but-green-on-main" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ruff check fails on changed files locally but green on main
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mkdocs-build-strict-fails-in-the-docs-ci-job" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mkdocs build --strict fails in the docs CI job
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#more-help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        More help
       
     </span>
   </a>
@@ -3068,6 +3102,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3128,6 +3166,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3315,22 +3409,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#startup-failures" class="md-nav__link">
+  <a href="#collect-basic-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Startup failures
+        Collect basic state
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Startup failures">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-and-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation and startup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation and startup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#configurationerror-langchain-engine-selected-but-extras-not-installed" class="md-nav__link">
+  <a href="#agentic-is-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ConfigurationError: LangChain engine selected but extras not installed
+        agentic is not found
       
     </span>
   </a>
@@ -3338,10 +3443,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#server-starts-but-every-request-returns-503-sanitization-layer-not-initialized" class="md-nav__link">
+  <a href="#modulenotfounderror-agentic_v2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Server starts but every request returns 503 "sanitization layer not initialized"
+        ModuleNotFoundError: agentic_v2
       
     </span>
   </a>
@@ -3349,10 +3454,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#port-already-in-use-8010-5173-6006" class="md-nav__link">
+  <a href="#langgraph-or-langchain-extra-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Port already in use (8010 / 5173 / 6006)
+        LangGraph or LangChain extra is missing
       
     </span>
   </a>
@@ -3360,10 +3465,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#venv-not-found-python-imports-fail" class="md-nav__link">
+  <a href="#port-8010-or-5173-is-in-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        .venv not found / Python imports fail
+        Port 8010 or 5173 is in use
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sanitization-initialization-fails" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sanitization initialization fails
       
     </span>
   </a>
@@ -3376,22 +3492,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-rate-limiting" class="md-nav__link">
+  <a href="#authentication-and-request-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication &amp; rate limiting
+        Authentication and request limits
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Authentication &amp; rate limiting">
+    <nav class="md-nav" aria-label="Authentication and request limits">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#http-401-invalid-or-missing-api-key" class="md-nav__link">
+  <a href="#http-401" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HTTP 401 "Invalid or missing API key"
+        HTTP 401
       
     </span>
   </a>
@@ -3399,71 +3515,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#http-429-too-many-requests-with-retry-after-header" class="md-nav__link">
+  <a href="#http-429" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HTTP 429 "Too Many Requests" with Retry-After header
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#a-legitimate-client-is-locked-out" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A legitimate client is locked out
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rate-limit-feels-uneven-across-replicas" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate limit feels uneven across replicas
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#websocket-streaming" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket / streaming
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WebSocket / streaming">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#websocket-connection-rejected-with-http-403-origin-not-allowed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket connection rejected with HTTP 403 "origin not allowed"
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#websocket-disconnects-mid-run-and-ui-loses-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WebSocket disconnects mid-run and UI loses state
+        HTTP 429
       
     </span>
   </a>
@@ -3488,10 +3543,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#workflow-stalls-indefinitely" class="md-nav__link">
+  <a href="#-input-does-not-parse" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow stalls indefinitely
+        --input does not parse
       
     </span>
   </a>
@@ -3499,10 +3554,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#workflow-returns-failed-with-metadatatimeout_exceededtrue" class="md-nav__link">
+  <a href="#workflow-is-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow returns FAILED with metadata.timeout_exceeded=True
+        Workflow is not found
       
     </span>
   </a>
@@ -3510,10 +3565,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#steps-cascade-skipped-after-one-failure" class="md-nav__link">
+  <a href="#a-step-is-skipped-after-another-step-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Steps cascade-skipped after one failure
+        A step is skipped after another step fails
       
     </span>
   </a>
@@ -3521,10 +3576,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#validationerror-depends_on-field-required" class="md-nav__link">
+  <a href="#the-native-and-langgraph-results-differ" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ValidationError: depends_on field required
+        The native and LangGraph results differ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-reaches-its-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution reaches its timeout
       
     </span>
   </a>
@@ -3537,22 +3603,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#file-and-shell-tools" class="md-nav__link">
+  <a href="#model-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        File and shell tools
+        Model providers
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="File and shell tools">
+    <nav class="md-nav" aria-label="Model providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#file-tool-fails-with-agentic_file_base_dir-is-not-set" class="md-nav__link">
+  <a href="#no-model-is-available-for-a-tier" class="md-nav__link">
     <span class="md-ellipsis">
       
-        File tool fails with "AGENTIC_FILE_BASE_DIR is not set"
+        No model is available for a tier
       
     </span>
   </a>
@@ -3560,10 +3626,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#shell-tool-refuses-every-command-with-not-in-allowlist" class="md-nav__link">
+  <a href="#provider-returns-401-or-403" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell tool refuses every command with "not in allowlist"
+        Provider returns 401 or 403
       
     </span>
   </a>
@@ -3571,10 +3637,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#codeexecutiontool-raises-during-import-os-style-traversal" class="md-nav__link">
+  <a href="#provider-returns-429" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CodeExecutionTool raises during import os-style traversal
+        Provider returns 429
       
     </span>
   </a>
@@ -3587,22 +3653,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llm-provider-failures" class="md-nav__link">
+  <a href="#rag" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM provider failures
+        RAG
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="LLM provider failures">
+    <nav class="md-nav" aria-label="RAG">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-model-available-for-tier-x-smart-router-fails-to-route" class="md-nav__link">
+  <a href="#search-in-a-new-shell-returns-no-results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No model available for tier &lt;X&gt; / smart router fails to route
+        Search in a new shell returns no results
       
     </span>
   </a>
@@ -3610,10 +3676,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#azure-openai-returns-429-quota-exceeded" class="md-nav__link">
+  <a href="#retrieval-quality-is-unexpectedly-poor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Azure OpenAI returns 429 / quota exceeded
+        Retrieval quality is unexpectedly poor
       
     </span>
   </a>
@@ -3621,10 +3687,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#anthropic-openai-returns-401" class="md-nav__link">
+  <a href="#lancedb-cannot-be-imported" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Anthropic / OpenAI returns 401
+        LanceDB cannot be imported
       
     </span>
   </a>
@@ -3637,22 +3703,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tracing-and-observability" class="md-nav__link">
+  <a href="#file-shell-and-code-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing and observability
+        File, shell, and code tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tracing and observability">
+    <nav class="md-nav" aria-label="File, shell, and code tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#no-spans-appear-in-jaeger-tempo-your-otel-collector" class="md-nav__link">
+  <a href="#file-or-git-tool-says-agentic_file_base_dir-is-not-set" class="md-nav__link">
     <span class="md-ellipsis">
       
-        No spans appear in Jaeger / Tempo / your OTEL collector
+        File or Git tool says AGENTIC_FILE_BASE_DIR is not set
       
     </span>
   </a>
@@ -3660,10 +3726,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sensitive-content-missing-from-spans" class="md-nav__link">
+  <a href="#shell-command-is-not-allowed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sensitive content missing from spans
+        Shell command is not allowed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-execution-blocks-an-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code execution blocks an import
       
     </span>
   </a>
@@ -3676,22 +3753,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#windows-specific" class="md-nav__link">
+  <a href="#dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Windows-specific
+        Dashboard
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Windows-specific">
+    <nav class="md-nav" aria-label="Dashboard">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#npx-command-fails-or-hangs" class="md-nav__link">
+  <a href="#the-page-loads-but-api-calls-fail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npx &lt;command&gt; fails or hangs
+        The page loads but API calls fail
       
     </span>
   </a>
@@ -3699,10 +3776,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#path-errors-with-backslashes-in-python-tools" class="md-nav__link">
+  <a href="#websocket-is-rejected-with-403" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Path errors with backslashes in Python tools
+        WebSocket is rejected with 403
       
     </span>
   </a>
@@ -3710,21 +3787,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pnpm-fails-with-eperm-on-a-mountedshared-drive" class="md-nav__link">
+  <a href="#typescript-types-no-longer-match-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pnpm fails with EPERM on a mounted/shared drive
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#powershell-scripts-mangled-in-git-bash" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PowerShell scripts mangled in Git Bash
+        TypeScript types no longer match Python
       
     </span>
   </a>
@@ -3737,22 +3803,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#frontend-ui" class="md-nav__link">
+  <a href="#tracing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend / UI
+        Tracing
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Frontend / UI">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests-and-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tests and documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tests and documentation">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#npm-run-build-fails-with-typescript-errors-after-pydantic-changes" class="md-nav__link">
+  <a href="#generated-contract-check-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npm run build fails with TypeScript errors after Pydantic changes
+        Generated contract check fails
       
     </span>
   </a>
@@ -3760,10 +3837,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#storybook-fails-with-cannot-find-storybookaddon-actions" class="md-nav__link">
+  <a href="#documentation-reference-check-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storybook fails with "Cannot find @storybook/addon-actions"
+        Documentation reference check fails
       
     </span>
   </a>
@@ -3771,10 +3848,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#vite-dev-server-resolves-js-imports-but-the-production-build-fails" class="md-nav__link">
+  <a href="#mkdocs-strict-build-fails" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vite dev server resolves .js imports but the production build fails
+        MkDocs strict build fails
       
     </span>
   </a>
@@ -3787,60 +3864,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ci-pre-commit" class="md-nav__link">
+  <a href="#windows-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI / pre-commit
+        Windows notes
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="CI / pre-commit">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit-detect-secrets-flags-a-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-commit detect-secrets flags a file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ruff-check-fails-on-changed-files-locally-but-green-on-main" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ruff check fails on changed files locally but green on main
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mkdocs-build-strict-fails-in-the-docs-ci-job" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mkdocs build --strict fails in the docs CI job
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#more-help" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        More help
       
     </span>
   </a>
@@ -3881,252 +3919,235 @@
 
 
 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<p>Symptoms and fixes for the most common failure modes when running the platform locally or in production. Organized by component — search for the HTTP status code, exception class, or symptom you're seeing.</p>
-<p>For systemic limitations rather than transient failures, see <a href="../../KNOWN_LIMITATIONS/">Known Limitations</a>. For tuning knobs, see <a href="../security-hardening/">Security Hardening</a> and <a href="../../configuration/">Configuration Reference</a>.</p>
-<p>If your symptom isn't here, file an issue at <a href="https://github.com/tafreeman/agentic-runtime-platform/issues">https://github.com/tafreeman/agentic-runtime-platform/issues</a>.</p>
-<hr />
-<h2 id="startup-failures">Startup failures<a class="headerlink" href="#startup-failures" title="Permanent link">&para;</a></h2>
-<h3 id="configurationerror-langchain-engine-selected-but-extras-not-installed"><code>ConfigurationError: LangChain engine selected but extras not installed</code><a class="headerlink" href="#configurationerror-langchain-engine-selected-but-extras-not-installed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Symptom.</strong> FastAPI server fails to start during lifespan startup; a critical log line names the missing extras and the install hint.</li>
-<li><strong>Cause.</strong> <code>AGENTIC_DEFAULT_ADAPTER=langchain</code> (the default) but <code>pip install -e ".[langchain]"</code> was not run in the active environment.</li>
-<li><strong>Fix.</strong> Either install the extras:
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[langchain]&quot;</span>
+<p>Start with the symptom, confirm the cause, and change one setting at a time.
+For behavior that is intentionally unsupported, see
+<a href="../../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
+<h2 id="collect-basic-state">Collect basic state<a class="headerlink" href="#collect-basic-state" title="Permanent link">&para;</a></h2>
+<p>On Windows, the development scripts can report their process and port state:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>just dev-status
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>agentic devex port-guard --backend-port 8010 --frontend-port 5173
 </span></code></pre></div>
-  Or switch to the native engine, which has no optional-deps gate:
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
-</span></code></pre></div></li>
-<li><strong>Reference.</strong> <a href="../../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a>.</li>
-</ul>
-<h3 id="server-starts-but-every-request-returns-503-sanitization-layer-not-initialized">Server starts but every request returns 503 "sanitization layer not initialized"<a class="headerlink" href="#server-starts-but-every-request-returns-503-sanitization-layer-not-initialized" title="Permanent link">&para;</a></h3>
+<p>Check the backend separately:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">Invoke-RestMethod</span> <span class="n">http</span><span class="p">://</span><span class="n">127</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">1</span><span class="p">:</span><span class="n">8010</span><span class="p">/</span><span class="n">api</span><span class="p">/</span><span class="n">health</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">Invoke-RestMethod</span> <span class="n">http</span><span class="p">://</span><span class="n">127</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">1</span><span class="p">:</span><span class="n">8010</span><span class="p">/</span><span class="n">api</span><span class="p">/</span><span class="n">health</span><span class="p">/</span><span class="n">ready</span>
+</span></code></pre></div>
+<p><code>/api/health</code> confirms that the process is running. <code>/api/health/ready</code> also
+checks configured required dependencies, including Redis when a Redis URL is
+set.</p>
+<p>When reporting a problem, include:</p>
 <ul>
-<li><strong>Symptom.</strong> All <code>/api/*</code> responses are HTTP 503.</li>
-<li><strong>Cause.</strong> The sanitization middleware is fail-closed by design; when its dependencies aren't wired (test app fixtures, partial init), it rejects requests.</li>
-<li>Fix. Production: ensure the sanitization layer is wired into the app factory. Local/test debugging only: AGENTIC_SANITIZER_FAIL_OPEN=1 (note the <a href="../../configuration/#security-and-sandboxing">2026-05-09 breaking change</a> — only the literal value 1 is accepted now).</li>
+<li>the exact command;</li>
+<li>the complete error message and exit code;</li>
+<li>Python, Node, and package versions;</li>
+<li>the selected adapter;</li>
+<li>whether the workflow is deterministic or provider-backed; and</li>
+<li>the smallest input that reproduces the problem.</li>
 </ul>
-<h3 id="port-already-in-use-8010-5173-6006">Port already in use (8010 / 5173 / 6006)<a class="headerlink" href="#port-already-in-use-8010-5173-6006" title="Permanent link">&para;</a></h3>
+<p>Remove credentials, prompts containing private data, and sensitive tool output.</p>
+<h2 id="installation-and-startup">Installation and startup<a class="headerlink" href="#installation-and-startup" title="Permanent link">&para;</a></h2>
+<h3 id="agentic-is-not-found"><code>agentic</code> is not found<a class="headerlink" href="#agentic-is-not-found" title="Permanent link">&para;</a></h3>
+<p>Activate the repository environment:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">Activate</span><span class="p">.</span><span class="n">ps1</span>
+</span></code></pre></div>
+<p>Or call the executable directly:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">version</span>
+</span></code></pre></div>
+<p>If <code>.venv</code> does not exist, run <code>just setup</code> on Windows or follow the
+<a href="../../getting-started/installation/#manual-setup">manual installation guide</a>.</p>
+<h3 id="modulenotfounderror-agentic_v2"><code>ModuleNotFoundError: agentic_v2</code><a class="headerlink" href="#modulenotfounderror-agentic_v2" title="Permanent link">&para;</a></h3>
+<p>The runtime package is not installed in the active Python environment. From the
+repository root:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python -m pip install -e &quot;./agentic-workflows-v2[dev,server,langchain]&quot;
+</span></code></pre></div>
+<p>Install the root <code>agentic-tools</code> package first if the dependency cannot be
+resolved:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python -m pip install -e .
+</span></code></pre></div>
+<h3 id="langgraph-or-langchain-extra-is-missing">LangGraph or LangChain extra is missing<a class="headerlink" href="#langgraph-or-langchain-extra-is-missing" title="Permanent link">&para;</a></h3>
+<p>The default <code>agentic run</code> adapter is <code>langchain</code>. Install the extra:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python -m pip install -e &quot;./agentic-workflows-v2[langchain]&quot;
+</span></code></pre></div>
+<p>For a workflow that supports it, select the native engine instead:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>agentic run &lt;workflow&gt; --input &lt;input.json&gt; --adapter native
+</span></code></pre></div>
+<h3 id="port-8010-or-5173-is-in-use">Port 8010 or 5173 is in use<a class="headerlink" href="#port-8010-or-5173-is-in-use" title="Permanent link">&para;</a></h3>
+<p>Identify the owner before stopping anything:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">Get-NetTCPConnection</span> <span class="n">-State</span> <span class="n">Listen</span> <span class="n">-LocalPort</span> <span class="n">8010</span><span class="p">,</span><span class="n">5173</span> <span class="p">|</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  <span class="nb">Select-Object</span> <span class="n">LocalPort</span><span class="p">,</span> <span class="n">OwningProcess</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nb">Get-Process</span> <span class="n">-Id</span> <span class="p">&lt;</span><span class="n">pid</span><span class="p">&gt;</span>
+</span></code></pre></div>
+<p>Stop the process only after confirming that it belongs to the development
+environment:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">Stop-Process</span> <span class="n">-Id</span> <span class="p">&lt;</span><span class="n">pid</span><span class="p">&gt;</span>
+</span></code></pre></div>
+<p>The standalone <code>agentic serve</code> command defaults to port <code>8000</code>, while
+<code>just dev</code> uses backend port <code>8010</code> and dashboard port <code>5173</code>.</p>
+<h3 id="sanitization-initialization-fails">Sanitization initialization fails<a class="headerlink" href="#sanitization-initialization-fails" title="Permanent link">&para;</a></h3>
+<p>The server fails closed when the sanitization layer cannot initialize. Fix the
+startup error or missing dependency. <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> bypasses
+sanitization and is only suitable for isolated debugging; do not use it on an
+exposed service.</p>
+<h2 id="authentication-and-request-limits">Authentication and request limits<a class="headerlink" href="#authentication-and-request-limits" title="Permanent link">&para;</a></h2>
+<h3 id="http-401">HTTP 401<a class="headerlink" href="#http-401" title="Permanent link">&para;</a></h3>
+<p>When <code>AGENTIC_API_KEY</code> is set, send the same value with either:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Authorization: Bearer &lt;key&gt;
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>X-API-Key: &lt;key&gt;
+</span></code></pre></div>
+<p>Health and API-documentation routes remain public. If OIDC is enabled, verify
+the issuer, audience, and JWKS settings in
+<a href="../../configuration/#http-authentication">Configuration</a>.</p>
+<h3 id="http-429">HTTP 429<a class="headerlink" href="#http-429" title="Permanent link">&para;</a></h3>
+<p>There are two independent limits:</p>
 <ul>
-<li><strong>Symptom.</strong> <code>uvicorn</code>, Vite, or Storybook fails to bind with <code>EADDRINUSE</code> / <code>address already in use</code>.</li>
-<li><strong>Cause.</strong> Another process is bound to the port.</li>
-<li><strong>Fix.</strong></li>
-<li>PowerShell: <code>Get-NetTCPConnection -LocalPort 8010 | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }</code></li>
-<li>bash: <code>lsof -ti:8010 | xargs kill -9</code></li>
-<li><strong>Prevention.</strong> The <code>port-guard</code> devex tool detects holders before startup. See <code>scripts/setup-dev.ps1</code>.</li>
+<li>the normal per-IP request limit, configured by
+  <code>AGENTIC_RATE_LIMIT_DEFAULT</code>; and</li>
+<li>the failed-authentication lockout, configured by the
+  <code>AGENTIC_AUTH_LOCKOUT_*</code> variables.</li>
 </ul>
-<h3 id="venv-not-found-python-imports-fail"><code>.venv</code> not found / Python imports fail<a class="headerlink" href="#venv-not-found-python-imports-fail" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Symptom.</strong> <code>ModuleNotFoundError: No module named 'agentic_v2'</code> or similar.</li>
-<li><strong>Fix.</strong>
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># PowerShell: .\.venv\Scripts\Activate.ps1</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># bash:       source .venv/bin/activate</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,server,langchain]&quot;</span>
-</span></code></pre></div></li>
-</ul>
-<hr />
-<h2 id="authentication-rate-limiting">Authentication &amp; rate limiting<a class="headerlink" href="#authentication-rate-limiting" title="Permanent link">&para;</a></h2>
-<h3 id="http-401-invalid-or-missing-api-key">HTTP 401 "Invalid or missing API key"<a class="headerlink" href="#http-401-invalid-or-missing-api-key" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Symptom.</strong> Request to <code>/api/*</code> rejected with <code>{"detail": "Invalid or missing API key"}</code>.</li>
-<li><strong>Cause.</strong> <code>AGENTIC_API_KEY</code> is set on the server, and the request did not include a matching <code>Authorization: Bearer &lt;key&gt;</code> or <code>X-API-Key: &lt;key&gt;</code> header.</li>
-<li><strong>Fix.</strong> Send the header. The key value is re-read on every request, so rotating it does not require a restart.</li>
-<li><strong>Warning.</strong> Each 401 increments a per-IP failure counter — sustained bad-key traffic triggers the lockout (next entry).</li>
-</ul>
-<h3 id="http-429-too-many-requests-with-retry-after-header">HTTP 429 "Too Many Requests" with <code>Retry-After</code> header<a class="headerlink" href="#http-429-too-many-requests-with-retry-after-header" title="Permanent link">&para;</a></h3>
-<p>Two distinct causes — distinguish by response body and server log.</p>
-<p><strong>Cause A — global rate limit (slowapi).</strong></p>
-<ul>
-<li><strong>Identify.</strong> Response body looks like <code>{"detail": "Rate limit exceeded: 60 per 1 minute"}</code>. No per-IP failure log.</li>
-<li><strong>Fix.</strong> Reduce client request rate, OR raise <code>AGENTIC_RATE_LIMIT_DEFAULT</code> (e.g., <code>300/minute</code>). For tests: <code>AGENTIC_RATE_LIMIT_DISABLED=1</code>.</li>
-</ul>
-<p><strong>Cause B — auth brute-force throttle.</strong></p>
-<ul>
-<li><strong>Identify.</strong> Response body is <code>{"detail": "Too many failed authentication attempts. Please retry later.", "retry_after": &lt;n&gt;}</code> and the server log shows <code>Authentication failed for /api/... from &lt;ip&gt;</code> entries leading up to the lockout.</li>
-<li><strong>Fix.</strong> Wait <code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code> (default 300) or restart the server to clear in-process state. Then submit a successful request — that clears the IP's failure history.</li>
-<li>Tune. <a href="../../configuration/#rate-limiting-and-auth-throttle">AGENTIC_AUTH_LOCKOUT_* vars</a>.</li>
-</ul>
-<h3 id="a-legitimate-client-is-locked-out">A legitimate client is locked out<a class="headerlink" href="#a-legitimate-client-is-locked-out" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Diagnose.</strong> Search server logs: <code>grep "Authentication failed" logs/*.log | grep &lt;client-ip&gt;</code>. Confirm the requests were genuinely the locked-out client (not a script with a stale key).</li>
-<li><strong>Recovery.</strong> Either:</li>
-<li>Wait for the lockout window to expire, OR</li>
-<li>Restart the server (lockout state is in-process), OR</li>
-<li>For sustained operations: raise <code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code> or shorten <code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code>.</li>
-</ul>
-<h3 id="rate-limit-feels-uneven-across-replicas">Rate limit feels uneven across replicas<a class="headerlink" href="#rate-limit-feels-uneven-across-replicas" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> Rate-limit and lockout state are in-process — each replica counts independently. A client hitting two replicas via a load balancer effectively gets 2× the limit.</li>
-<li><strong>Fix.</strong> Sprint 2 will introduce Redis-backed shared state. Until then, either pin sticky sessions at the load balancer or accept the multi-replica drift.</li>
-</ul>
-<hr />
-<h2 id="websocket-streaming">WebSocket / streaming<a class="headerlink" href="#websocket-streaming" title="Permanent link">&para;</a></h2>
-<h3 id="websocket-connection-rejected-with-http-403-origin-not-allowed">WebSocket connection rejected with HTTP 403 "origin not allowed"<a class="headerlink" href="#websocket-connection-rejected-with-http-403-origin-not-allowed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> The browser sent an <code>Origin</code> header that isn't in <code>AGENTIC_CORS_ORIGINS</code> or recognized as a localhost loopback.</li>
-<li><strong>Fix.</strong> Add the deploying frontend's origin to <code>AGENTIC_CORS_ORIGINS</code> (comma-separated, no trailing slash).</li>
-</ul>
-<h3 id="websocket-disconnects-mid-run-and-ui-loses-state">WebSocket disconnects mid-run and UI loses state<a class="headerlink" href="#websocket-disconnects-mid-run-and-ui-loses-state" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Expected behavior.</strong> The server's 500-event replay buffer should restore state on reconnect.</li>
-<li><strong>If it doesn't.</strong> Check that the reconnect handshake uses the same <code>run_id</code>. Verify the buffer hasn't been evicted (long-running workflows on a low-memory deployment).</li>
-</ul>
-<hr />
+<p>Inspect the response body and server log to determine which limit rejected the
+request. Honor <code>Retry-After</code> rather than retrying immediately. The disable
+flags are for tests or an explicitly accepted deployment risk, not a normal
+fix.</p>
+<p>Authentication failure counters are in-process and are not shared across
+replicas. There is currently no Redis-backed authentication lockout. Account
+for that limit in the deployment design; Redis support elsewhere in the
+runtime does not make this counter global.</p>
 <h2 id="workflow-execution">Workflow execution<a class="headerlink" href="#workflow-execution" title="Permanent link">&para;</a></h2>
-<h3 id="workflow-stalls-indefinitely">Workflow stalls indefinitely<a class="headerlink" href="#workflow-stalls-indefinitely" title="Permanent link">&para;</a></h3>
+<h3 id="-input-does-not-parse"><code>--input</code> does not parse<a class="headerlink" href="#-input-does-not-parse" title="Permanent link">&para;</a></h3>
+<p><code>agentic run --input</code> expects a path to a JSON file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>agentic run test_deterministic --input .\input.json
+</span></code></pre></div>
+<p>It does not accept inline JSON.</p>
+<h3 id="workflow-is-not-found">Workflow is not found<a class="headerlink" href="#workflow-is-not-found" title="Permanent link">&para;</a></h3>
+<p>List packaged workflows:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic list workflows
+</span></code></pre></div>
+<p>For a custom workflow, pass its <code>.yaml</code> or <code>.yml</code> path directly. Validate it
+before execution:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>agentic validate .\workflows\my_workflow.yaml
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>agentic devex workflow-linter .\workflows\my_workflow.yaml --strict
+</span></code></pre></div>
+<h3 id="a-step-is-skipped-after-another-step-fails">A step is skipped after another step fails<a class="headerlink" href="#a-step-is-skipped-after-another-step-fails" title="Permanent link">&para;</a></h3>
+<p>Dependent steps are skipped when a prerequisite fails. Find the first <code>FAILED</code>
+step in graph order; later <code>SKIPPED</code> results are usually consequences, not
+independent failures.</p>
+<h3 id="the-native-and-langgraph-results-differ">The native and LangGraph results differ<a class="headerlink" href="#the-native-and-langgraph-results-differ" title="Permanent link">&para;</a></h3>
+<p>Check the workflow capability response or <code>agentic compare</code> output. Conditional
+edges, retry policy, budgets, and other native features may not have matching
+LangGraph behavior. Use the adapter required by the workflow rather than
+assuming the engines are interchangeable.</p>
+<h3 id="execution-reaches-its-timeout">Execution reaches its timeout<a class="headerlink" href="#execution-reaches-its-timeout" title="Permanent link">&para;</a></h3>
+<p>Inspect per-step durations and provider retries in the saved run. Raise a
+timeout only after confirming the expected worst-case duration; otherwise fix
+the slow or retrying step.</p>
+<h2 id="model-providers">Model providers<a class="headerlink" href="#model-providers" title="Permanent link">&para;</a></h2>
+<h3 id="no-model-is-available-for-a-tier">No model is available for a tier<a class="headerlink" href="#no-model-is-available-for-a-tier" title="Permanent link">&para;</a></h3>
+<p>Confirm that the process received the intended provider variable and that the
+configured model exists for that account. With the backend running, inspect:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">Invoke-RestMethod</span> <span class="n">http</span><span class="p">://</span><span class="n">127</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">1</span><span class="p">:</span><span class="n">8010</span><span class="p">/</span><span class="n">api</span><span class="p">/</span><span class="n">models</span><span class="p">/</span><span class="n">probe</span>
+</span></code></pre></div>
+<p>Use <code>AGENTIC_NO_LLM=1</code> for deterministic development. It proves runtime flow,
+not provider access or output quality.</p>
+<h3 id="provider-returns-401-or-403">Provider returns 401 or 403<a class="headerlink" href="#provider-returns-401-or-403" title="Permanent link">&para;</a></h3>
+<p>Check that the credential is active, has no surrounding whitespace, and is
+allowed to use the requested model. Do not print the key while debugging.</p>
+<h3 id="provider-returns-429">Provider returns 429<a class="headerlink" href="#provider-returns-429" title="Permanent link">&para;</a></h3>
+<p>Honor the provider's retry guidance and inspect the router's fallback result.
+Do not copy rate or quota values from documentation; provider limits depend on
+the current account and can change.</p>
+<h2 id="rag">RAG<a class="headerlink" href="#rag" title="Permanent link">&para;</a></h2>
+<h3 id="search-in-a-new-shell-returns-no-results">Search in a new shell returns no results<a class="headerlink" href="#search-in-a-new-shell-returns-no-results" title="Permanent link">&para;</a></h3>
+<p>The current <code>agentic rag ingest</code> and <code>agentic rag search</code> commands use separate
+in-process stores. An index created by one command is not available to the next
+process. The CLI also does not yet apply its collection option.</p>
+<p>Use the Python RAG API with a durable vector store for real applications. See
+the <a href="../../rag/">RAG guide</a> and <a href="../../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
+<h3 id="retrieval-quality-is-unexpectedly-poor">Retrieval quality is unexpectedly poor<a class="headerlink" href="#retrieval-quality-is-unexpectedly-poor" title="Permanent link">&para;</a></h3>
+<p>Check which embedder was constructed. <code>InMemoryEmbedder</code> is a deterministic
+hash test double, not a semantic embedding model. Also confirm that stored and
+query vectors came from the same provider, model, dimensions, and
+normalization. Do not silently fall back to a different embedding space.</p>
+<h3 id="lancedb-cannot-be-imported">LanceDB cannot be imported<a class="headerlink" href="#lancedb-cannot-be-imported" title="Permanent link">&para;</a></h3>
+<p>Install the runtime's RAG extra:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python -m pip install -e &quot;./agentic-workflows-v2[rag]&quot;
+</span></code></pre></div>
+<h2 id="file-shell-and-code-tools">File, shell, and code tools<a class="headerlink" href="#file-shell-and-code-tools" title="Permanent link">&para;</a></h2>
+<h3 id="file-or-git-tool-says-agentic_file_base_dir-is-not-set">File or Git tool says <code>AGENTIC_FILE_BASE_DIR</code> is not set<a class="headerlink" href="#file-or-git-tool-says-agentic_file_base_dir-is-not-set" title="Permanent link">&para;</a></h3>
+<p>Set <code>AGENTIC_FILE_BASE_DIR</code> to the absolute directory the tool may access.
+File and Git tools reject operations when this boundary is missing.</p>
+<h3 id="shell-command-is-not-allowed">Shell command is not allowed<a class="headerlink" href="#shell-command-is-not-allowed" title="Permanent link">&para;</a></h3>
+<p><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> is a comma-separated list of command
+basenames. Keep it as small as possible:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nv">$env:AGENTIC_SHELL_ALLOWED_COMMANDS</span> <span class="p">=</span> <span class="s2">&quot;git,python&quot;</span>
+</span></code></pre></div>
+<h3 id="code-execution-blocks-an-import">Code execution blocks an import<a class="headerlink" href="#code-execution-blocks-an-import" title="Permanent link">&para;</a></h3>
+<p>The local code sandbox intentionally blocks imports and traversal techniques
+that could escape its boundary. Use the dedicated file or shell tool when the
+workflow legitimately needs those capabilities.</p>
+<h2 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">&para;</a></h2>
+<h3 id="the-page-loads-but-api-calls-fail">The page loads but API calls fail<a class="headerlink" href="#the-page-loads-but-api-calls-fail" title="Permanent link">&para;</a></h3>
+<p>Confirm that FastAPI is on port <code>8010</code>. If it is elsewhere, set
+<code>VITE_API_PROXY_TARGET</code> before starting Vite:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nv">$env:VITE_API_PROXY_TARGET</span> <span class="p">=</span> <span class="s2">&quot;http://127.0.0.1:9000&quot;</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">agentic-workflows-v2</span><span class="p">/</span><span class="n">ui</span> <span class="n">run</span> <span class="n">dev</span>
+</span></code></pre></div>
+<h3 id="websocket-is-rejected-with-403">WebSocket is rejected with 403<a class="headerlink" href="#websocket-is-rejected-with-403" title="Permanent link">&para;</a></h3>
+<p>Add the dashboard's exact origin to <code>AGENTIC_CORS_ORIGINS</code>. Do not include a
+trailing slash.</p>
+<h3 id="typescript-types-no-longer-match-python">TypeScript types no longer match Python<a class="headerlink" href="#typescript-types-no-longer-match-python" title="Permanent link">&para;</a></h3>
+<p>From <code>agentic-workflows-v2</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python -m scripts.generate_ts_types
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>npm --prefix ui run generate:types
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>npm --prefix ui run build
+</span></code></pre></div>
+<p>Review and commit the generated JSON Schemas and TypeScript together.</p>
+<h2 id="tracing">Tracing<a class="headerlink" href="#tracing" title="Permanent link">&para;</a></h2>
+<p>If no spans arrive:</p>
+<ol>
+<li>confirm <code>AGENTIC_TRACING=true</code> in the server process;</li>
+<li>confirm the <code>tracing</code> extra is installed;</li>
+<li>confirm the OTLP protocol matches the endpoint;</li>
+<li>check network access from the server to the collector; and</li>
+<li>inspect startup logs for the tracing initialization result.</li>
+</ol>
+<p>Prompts, outputs, and tool arguments are excluded by default. Only set
+<code>AGENTIC_TRACE_SENSITIVE=true</code> in a trusted environment with an approved data
+handling policy.</p>
+<h2 id="tests-and-documentation">Tests and documentation<a class="headerlink" href="#tests-and-documentation" title="Permanent link">&para;</a></h2>
+<h3 id="generated-contract-check-fails">Generated contract check fails<a class="headerlink" href="#generated-contract-check-fails" title="Permanent link">&para;</a></h3>
+<p>Regenerate both sides as shown in the Dashboard section above. The committed
+schemas are part of the API contract.</p>
+<h3 id="documentation-reference-check-fails">Documentation reference check fails<a class="headerlink" href="#documentation-reference-check-fails" title="Permanent link">&para;</a></h3>
+<p>Run:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>python agentic-workflows-v2/scripts/check_docs_refs.py
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>python scripts/generate_doc_stats.py --check
+</span></code></pre></div>
+<p>The first command reports missing local targets. The second reports stale
+generated counts; run it without <code>--check</code> only when the repository facts have
+changed and the documentation should be updated.</p>
+<h3 id="mkdocs-strict-build-fails">MkDocs strict build fails<a class="headerlink" href="#mkdocs-strict-build-fails" title="Permanent link">&para;</a></h3>
+<p>Install the dependencies used by <code>.github/workflows/docs.yml</code>, then run:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>mkdocs build --strict
+</span></code></pre></div>
+<p>Fix every missing page, broken link, invalid navigation entry, or plugin error.
+Do not hide a content error by disabling strict mode.</p>
+<h2 id="windows-notes">Windows notes<a class="headerlink" href="#windows-notes" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Expected.</strong> Should not happen since the Sprint 1 timeout watchdog. If the call passes <code>timeout=N</code> (per call, not env var) the executor caps total wall time at N seconds.</li>
-<li><strong>If it stalls anyway.</strong> The route is calling the executor without a <code>timeout=</code>. Add a default at the server layer.</li>
-<li><strong>Reference.</strong> <a href="../../adr/ADR-019-dag-executor-top-level-timeout/">ADR-019</a>.</li>
+<li>Use <code>npm run &lt;script&gt;</code> or <code>npm exec -- &lt;command&gt;</code> instead of relying on
+  <code>npx</code>.</li>
+<li>Use <code>pathlib.Path</code> in Python and quote paths that contain spaces.</li>
+<li>Run the PowerShell development scripts from PowerShell, not through Git Bash
+  quoting.</li>
+<li>If script execution is blocked, review the organization's execution policy;
+  do not weaken a managed security policy without approval.</li>
 </ul>
-<h3 id="workflow-returns-failed-with-metadatatimeout_exceededtrue">Workflow returns <code>FAILED</code> with <code>metadata.timeout_exceeded=True</code><a class="headerlink" href="#workflow-returns-failed-with-metadatatimeout_exceededtrue" title="Permanent link">&para;</a></h3>
+<h2 id="more-help">More help<a class="headerlink" href="#more-help" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Cause.</strong> Total wall time exceeded the configured <code>timeout</code>.</li>
-<li><strong>Diagnose.</strong> Inspect per-step durations in the run log — the slow step is the one that didn't finish before cancellation.</li>
-<li><strong>Fix.</strong> Either raise the timeout for that workflow, or optimize the bottleneck step.</li>
-</ul>
-<h3 id="steps-cascade-skipped-after-one-failure">Steps cascade-skipped after one failure<a class="headerlink" href="#steps-cascade-skipped-after-one-failure" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Expected behavior.</strong> When a step fails, all transitive dependents are marked <code>SKIPPED</code> via BFS.</li>
-<li><strong>Find the root cause.</strong> The first step with status <code>FAILED</code> in DAG topological order is the trigger. Everything <code>SKIPPED</code> downstream is collateral.</li>
-</ul>
-<h3 id="validationerror-depends_on-field-required"><code>ValidationError: depends_on</code> field required<a class="headerlink" href="#validationerror-depends_on-field-required" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> Sprint 1 made <code>depends_on</code> required on <code>DAGNodeModel</code> and <code>WorkflowEditorStep</code> (was optional with <code>default=[]</code>).</li>
-<li><strong>Fix.</strong> Callers constructing these models from raw dicts must pass <code>"depends_on": []</code> explicitly.</li>
-<li><strong>Reference.</strong> Sprint 1 wire-format extension; see <a href="../../api-contracts-runtime/">api-contracts-runtime.md</a> and <a href="../../adr/ADR-014-pydantic-wire-format/">ADR-014 addendum</a>.</li>
-</ul>
-<hr />
-<h2 id="file-and-shell-tools">File and shell tools<a class="headerlink" href="#file-and-shell-tools" title="Permanent link">&para;</a></h2>
-<h3 id="file-tool-fails-with-agentic_file_base_dir-is-not-set">File tool fails with "AGENTIC_FILE_BASE_DIR is not set"<a class="headerlink" href="#file-tool-fails-with-agentic_file_base_dir-is-not-set" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> File tools are fail-closed by design — without an explicit sandbox root, every file operation is rejected.</li>
-<li><strong>Fix.</strong> Set <code>AGENTIC_FILE_BASE_DIR</code> to an absolute path before starting the server. Example: <code>AGENTIC_FILE_BASE_DIR=/app/data</code>.</li>
-</ul>
-<h3 id="shell-tool-refuses-every-command-with-not-in-allowlist">Shell tool refuses every command with "not in allowlist"<a class="headerlink" href="#shell-tool-refuses-every-command-with-not-in-allowlist" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> <code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> is empty or unset — all commands disabled.</li>
-<li><strong>Fix.</strong> Whitelist exactly the basenames the workflow needs:
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>ls,cat,python,git
-</span></code></pre></div></li>
-<li><strong>Note.</strong> Absolute paths are resolved to their basename for comparison.</li>
-</ul>
-<h3 id="codeexecutiontool-raises-during-import-os-style-traversal"><code>CodeExecutionTool</code> raises during <code>import os</code>-style traversal<a class="headerlink" href="#codeexecutiontool-raises-during-import-os-style-traversal" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Expected.</strong> The sandbox blocks dangerous imports including <code>os</code>, <code>sys.modules</code>, <code>__loader__</code> traversal.</li>
-<li><strong>Workaround.</strong> None — the block is intentional. If you genuinely need filesystem or shell access in a code step, use the dedicated file/shell tools with the appropriate allowlist instead.</li>
-</ul>
-<hr />
-<h2 id="llm-provider-failures">LLM provider failures<a class="headerlink" href="#llm-provider-failures" title="Permanent link">&para;</a></h2>
-<h3 id="no-model-available-for-tier-x-smart-router-fails-to-route"><code>No model available for tier &lt;X&gt;</code> / smart router fails to route<a class="headerlink" href="#no-model-available-for-tier-x-smart-router-fails-to-route" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> No provider key configured for the requested tier.</li>
-<li><strong>Fix.</strong> Configure at least one provider key:</li>
-<li>OpenAI: <code>OPENAI_API_KEY</code></li>
-<li>Anthropic: <code>ANTHROPIC_API_KEY</code></li>
-<li>Gemini: <code>GEMINI_API_KEY</code></li>
-<li>Azure OpenAI: <code>AZURE_OPENAI_API_KEY_0</code> + <code>AZURE_OPENAI_ENDPOINT_0</code></li>
-<li>GitHub Models (free tier): <code>GITHUB_TOKEN</code></li>
-<li><strong>Zero-key dev.</strong> <code>AGENTIC_NO_LLM=1</code> installs deterministic placeholders so the engine runs end-to-end without credentials. Structured parsers and evaluation still need real keys.</li>
-</ul>
-<h3 id="azure-openai-returns-429-quota-exceeded">Azure OpenAI returns 429 / quota exceeded<a class="headerlink" href="#azure-openai-returns-429-quota-exceeded" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> Hit the configured slot's rate limit.</li>
-<li><strong>Fix.</strong> Configure additional numbered slots — <code>AZURE_OPENAI_API_KEY_1</code>, <code>AZURE_OPENAI_ENDPOINT_1</code>, etc. The router falls back through them automatically.</li>
-</ul>
-<h3 id="anthropic-openai-returns-401">Anthropic / OpenAI returns 401<a class="headerlink" href="#anthropic-openai-returns-401" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Fix.</strong> Verify the key value (don't paste with leading/trailing whitespace). Confirm the key is active in the provider console. Check that the provider's organization/project allows the model you requested.</li>
-</ul>
-<hr />
-<h2 id="tracing-and-observability">Tracing and observability<a class="headerlink" href="#tracing-and-observability" title="Permanent link">&para;</a></h2>
-<h3 id="no-spans-appear-in-jaeger-tempo-your-otel-collector">No spans appear in Jaeger / Tempo / your OTEL collector<a class="headerlink" href="#no-spans-appear-in-jaeger-tempo-your-otel-collector" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Checklist.</strong></li>
-<li><code>AGENTIC_TRACING=1</code> is set in the server process environment.</li>
-<li><code>OTEL_EXPORTER_OTLP_ENDPOINT</code> points to a reachable collector. Default is <code>http://localhost:4317</code> (gRPC).</li>
-<li>If using HTTP, set <code>OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf</code> and the endpoint suffix <code>:4318/v1/traces</code>.</li>
-<li>Network: the collector port is reachable from the server (firewalls, K8s services).</li>
-<li><strong>Verify.</strong> With <code>AGENTIC_TRACING=1</code>, the server emits "OTEL tracing enabled" at startup.</li>
-</ul>
-<h3 id="sensitive-content-missing-from-spans">Sensitive content missing from spans<a class="headerlink" href="#sensitive-content-missing-from-spans" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> By default, prompts/outputs/tool args are excluded from spans.</li>
-<li><strong>Fix.</strong> <code>AGENTIC_TRACE_SENSITIVE=1</code>. Only enable in trusted environments — those values can carry PII.</li>
-</ul>
-<hr />
-<h2 id="windows-specific">Windows-specific<a class="headerlink" href="#windows-specific" title="Permanent link">&para;</a></h2>
-<h3 id="npx-command-fails-or-hangs"><code>npx &lt;command&gt;</code> fails or hangs<a class="headerlink" href="#npx-command-fails-or-hangs" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> <code>npx</code> is unreliable on Windows PATH.</li>
-<li><strong>Fix.</strong> Use <code>npm run &lt;script&gt;</code> or <code>npm exec -- &lt;command&gt;</code> instead. Pre-commit and project scripts have been adapted accordingly.</li>
-</ul>
-<h3 id="path-errors-with-backslashes-in-python-tools">Path errors with backslashes in Python tools<a class="headerlink" href="#path-errors-with-backslashes-in-python-tools" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Fix.</strong> Use forward slashes or <code>pathlib.Path</code> for cross-platform paths. The codebase already follows this convention — third-party code that doesn't is the usual culprit.</li>
-</ul>
-<h3 id="pnpm-fails-with-eperm-on-a-mountedshared-drive"><code>pnpm</code> fails with EPERM on a mounted/shared drive<a class="headerlink" href="#pnpm-fails-with-eperm-on-a-mountedshared-drive" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Fix.</strong> Fall back to <code>npm</code>. This is a well-known pnpm limitation on Windows network mounts.</li>
-</ul>
-<h3 id="powershell-scripts-mangled-in-git-bash">PowerShell scripts mangled in Git Bash<a class="headerlink" href="#powershell-scripts-mangled-in-git-bash" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> <code>$_</code> and <code>$_.Property</code> interact badly with bash extglob.</li>
-<li><strong>Fix.</strong> Invoke PowerShell with explicit profile/quoting: <code>powershell.exe -NoProfile -Command '...'</code> using single quotes.</li>
-</ul>
-<hr />
-<h2 id="frontend-ui">Frontend / UI<a class="headerlink" href="#frontend-ui" title="Permanent link">&para;</a></h2>
-<h3 id="npm-run-build-fails-with-typescript-errors-after-pydantic-changes"><code>npm run build</code> fails with TypeScript errors after Pydantic changes<a class="headerlink" href="#npm-run-build-fails-with-typescript-errors-after-pydantic-changes" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> The wire-format drift gate caught a Python/TypeScript mismatch.</li>
-<li><strong>Fix.</strong> Regenerate the TypeScript mirrors:
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>python<span class="w"> </span>-m<span class="w"> </span>scripts.generate_ts_types
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">cd</span><span class="w"> </span>ui
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>npm<span class="w"> </span>run<span class="w"> </span>generate:types
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>npm<span class="w"> </span>run<span class="w"> </span>build
-</span></code></pre></div></li>
-<li><strong>Reference.</strong> <a href="../../adr/ADR-014-pydantic-wire-format/">ADR-014</a> and the <code>wire-format-drift</code> CI job.</li>
-</ul>
-<h3 id="storybook-fails-with-cannot-find-storybookaddon-actions">Storybook fails with "Cannot find @storybook/addon-actions"<a class="headerlink" href="#storybook-fails-with-cannot-find-storybookaddon-actions" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> Not installed by default in this project.</li>
-<li><strong>Fix.</strong> Use the project's stand-in: <code>const action = (name) =&gt; (...args) =&gt; console.log(name, ...args)</code>. Don't add the addon unless the team agrees.</li>
-</ul>
-<h3 id="vite-dev-server-resolves-js-imports-but-the-production-build-fails">Vite dev server resolves <code>.js</code> imports but the production build fails<a class="headerlink" href="#vite-dev-server-resolves-js-imports-but-the-production-build-fails" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> Rollup (production) doesn't auto-resolve <code>.js</code> to <code>.ts</code> like Vite dev does.</li>
-<li><strong>Fix.</strong> When renaming <code>.js</code> → <code>.ts</code>, update every explicit <code>.js</code> import path or the production build will break.</li>
-</ul>
-<hr />
-<h2 id="ci-pre-commit">CI / pre-commit<a class="headerlink" href="#ci-pre-commit" title="Permanent link">&para;</a></h2>
-<h3 id="pre-commit-detect-secrets-flags-a-file">Pre-commit <code>detect-secrets</code> flags a file<a class="headerlink" href="#pre-commit-detect-secrets-flags-a-file" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Diagnose.</strong> If the flagged content is a real secret: rotate it immediately, then sanitize history. If it's a false positive: review carefully, then add to the <code>.secrets.baseline</code> with <code>detect-secrets scan --baseline .secrets.baseline</code>.</li>
-<li><strong>Never</strong> disable the hook to push past it.</li>
-</ul>
-<h3 id="ruff-check-fails-on-changed-files-locally-but-green-on-main"><code>ruff check</code> fails on changed files locally but green on main<a class="headerlink" href="#ruff-check-fails-on-changed-files-locally-but-green-on-main" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Cause.</strong> You may have a stale ruff cache or are running an older version.</li>
-<li><strong>Fix.</strong> <code>pip install -U ruff</code> and re-run. Pre-commit hooks pin their own ruff version — <code>pre-commit autoupdate</code> syncs it.</li>
-</ul>
-<h3 id="mkdocs-build-strict-fails-in-the-docs-ci-job"><code>mkdocs build --strict</code> fails in the docs CI job<a class="headerlink" href="#mkdocs-build-strict-fails-in-the-docs-ci-job" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Common causes.</strong></li>
-<li>Broken intra-doc markdown link (target file moved/renamed without updating the link).</li>
-<li>A new page added to nav but the file doesn't exist.</li>
-<li>A new <code>.md</code> was committed that links to <code>../&lt;file&gt;.md</code> — mkdocs reads relative to the docs root, not the repo root.</li>
-<li><strong>Fix.</strong> Re-run locally: <code>mkdocs build --strict</code>. Address each WARNING. The "first revision timestamp" warning from the git-revision plugin is benign for newly-committed files.</li>
-</ul>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../../configuration/">Configuration Reference</a> — full env var catalog</li>
-<li><a href="../security-hardening/">Security Hardening</a> — production tuning knobs</li>
-<li><a href="../../KNOWN_LIMITATIONS/">Known Limitations</a> — caveats that aren't bugs</li>
-<li><a href="../../architecture-runtime/">Architecture: Runtime</a> — what's actually happening when a request hits the server</li>
-<li>File an issue: <a href="https://github.com/tafreeman/agentic-runtime-platform/issues">https://github.com/tafreeman/agentic-runtime-platform/issues</a></li>
+<li><a href="../../configuration/">Configuration</a></li>
+<li><a href="../security-hardening/">Security hardening</a></li>
+<li><a href="../../api-contracts-runtime/">Runtime API</a></li>
+<li><a href="../../CONTRIBUTING/">Contributor guide</a></li>
+<li><a href="https://github.com/tafreeman/agentic-runtime-platform/issues">GitHub issues</a></li>
 </ul>
 
 
@@ -4150,7 +4171,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     
@@ -4195,7 +4216,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../security-hardening/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Security hardening">
+          <a href="../../load-report/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Load evidence">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -4205,7 +4226,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Security hardening
+                Load evidence
               </div>
             </div>
           </a>

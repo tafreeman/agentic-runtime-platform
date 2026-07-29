@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Author a two-step DAG from scratch — YAML grammar, contracts, validation, and execution explained.">
+        <meta name="description" content="Create, validate, and run a small YAML workflow without a model provider.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Your first workflow - Agentic Runtime Platform</title>
+        <title>First workflow - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Your first workflow - Agentic Runtime Platform" />
-<meta property="og:description" content="Author a two-step DAG from scratch — YAML grammar, contracts, validation, and execution explained." />
+<meta property="og:title" content="First workflow - Agentic Runtime Platform" />
+<meta property="og:description" content="Create, validate, and run a small YAML workflow without a model provider." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/getting-started/first-workflow.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/getting-started/first-workflow/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Your first workflow - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Author a two-step DAG from scratch — YAML grammar, contracts, validation, and execution explained." />
+<meta property="twitter:title" content="First workflow - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Create, validate, and run a small YAML workflow without a model provider." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/getting-started/first-workflow.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#your-first-workflow" class="md-skip">
+        <a href="#first-workflow" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Your first workflow
+              First workflow
             
           </span>
         </div>
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -735,10 +735,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#anatomy-of-a-workflow" class="md-nav__link">
+  <a href="#1-create-the-definition" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Anatomy of a workflow
+        1. Create the definition
       
     </span>
   </a>
@@ -746,10 +746,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-create-the-file" class="md-nav__link">
+  <a href="#2-validate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Create the file
+        2. Validate
       
     </span>
   </a>
@@ -757,10 +757,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-validate-the-definition" class="md-nav__link">
+  <a href="#3-create-an-input-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — Validate the definition
+        3. Create an input file
       
     </span>
   </a>
@@ -768,10 +768,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-about-agents-and-personas" class="md-nav__link">
+  <a href="#4-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — About agents and personas
+        4. Run
       
     </span>
   </a>
@@ -779,10 +779,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-run-the-workflow" class="md-nav__link">
+  <a href="#5-run-through-the-native-engine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4 — Run the workflow
+        5. Run through the native engine
       
     </span>
   </a>
@@ -790,10 +790,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-try-a-parallel-branch" class="md-nav__link">
+  <a href="#6-add-a-parallel-branch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5 — Try a parallel branch
+        6. Add a parallel branch
       
     </span>
   </a>
@@ -801,10 +801,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#going-further" class="md-nav__link">
+  <a href="#common-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Going further
+        Common errors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-is-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input is missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-name-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency name is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-cannot-be-resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output cannot be resolved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-backed-step-returns-placeholder-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM-backed step returns placeholder text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
       
     </span>
   </a>
@@ -1335,6 +1396,8 @@
       
         
       
+        
+      
     
     
     
@@ -1379,6 +1442,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2205,6 +2296,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2302,6 +2397,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2612,6 +2763,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2672,6 +2827,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2859,10 +3070,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#anatomy-of-a-workflow" class="md-nav__link">
+  <a href="#1-create-the-definition" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Anatomy of a workflow
+        1. Create the definition
       
     </span>
   </a>
@@ -2870,10 +3081,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-create-the-file" class="md-nav__link">
+  <a href="#2-validate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Create the file
+        2. Validate
       
     </span>
   </a>
@@ -2881,10 +3092,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-2-validate-the-definition" class="md-nav__link">
+  <a href="#3-create-an-input-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 2 — Validate the definition
+        3. Create an input file
       
     </span>
   </a>
@@ -2892,10 +3103,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-3-about-agents-and-personas" class="md-nav__link">
+  <a href="#4-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 3 — About agents and personas
+        4. Run
       
     </span>
   </a>
@@ -2903,10 +3114,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-run-the-workflow" class="md-nav__link">
+  <a href="#5-run-through-the-native-engine" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4 — Run the workflow
+        5. Run through the native engine
       
     </span>
   </a>
@@ -2914,10 +3125,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-try-a-parallel-branch" class="md-nav__link">
+  <a href="#6-add-a-parallel-branch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5 — Try a parallel branch
+        6. Add a parallel branch
       
     </span>
   </a>
@@ -2925,10 +3136,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#going-further" class="md-nav__link">
+  <a href="#common-errors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Going further
+        Common errors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common errors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-is-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Input is missing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-name-is-wrong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency name is wrong
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-cannot-be-resolved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output cannot be resolved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-backed-step-returns-placeholder-text" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM-backed step returns placeholder text
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
       
     </span>
   </a>
@@ -2992,169 +3264,191 @@
   
 
 
-<h1 id="your-first-workflow">Your first workflow<a class="headerlink" href="#your-first-workflow" title="Permanent link">&para;</a></h1>
-<p>Writes a custom workflow from an empty file to a successful run. The
-result is a small two-step DAG — <code>summarize</code> then <code>review</code> — that covers
-every piece of the YAML grammar you'll need for real work.</p>
-<h2 id="anatomy-of-a-workflow">Anatomy of a workflow<a class="headerlink" href="#anatomy-of-a-workflow" title="Permanent link">&para;</a></h2>
-<p>Every workflow is a YAML document with top-level <code>name</code>, <code>description</code>,
-<code>version</code>, <code>inputs</code>, <code>outputs</code>, and <code>steps</code> keys:</p>
+<h1 id="first-workflow">First workflow<a class="headerlink" href="#first-workflow" title="Permanent link">&para;</a></h1>
+<p>This guide creates a two-step workflow that runs without a model. It uses the
+same tier-0 agents as the repository's deterministic smoke test, so you can
+focus on the YAML contract.</p>
+<h2 id="1-create-the-definition">1. Create the definition<a class="headerlink" href="#1-create-the-definition" title="Permanent link">&para;</a></h2>
+<p>Save this file as <code>my-first-workflow.yaml</code> in the repository root:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_first_workflow</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">A two-step example - summarize an input, then review the summary.</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Process text and count the result</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nt">inputs</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">task</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">input_text</span><span class="p">:</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The text to summarize</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Text to process</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nt">outputs</span><span class="p">:</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">summary</span><span class="p">:</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.summarize.outputs.summary}</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">review</span><span class="p">:</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.review.outputs.review}</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">processed_text</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.process.outputs.result}</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">character_count</span><span class="p">:</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.count.outputs.count}</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nt">steps</span><span class="p">:</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">summarize</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier1_summarizer</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Produce a one-paragraph summary of the input task.</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">process</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier0_process</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Process the input text</span>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="nt">task</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.task}</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.input_text}</span>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">task_summary</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="nt">result</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">processed_text</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier2_reviewer</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Review the summary for accuracy and clarity.</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">summarize</span><span class="p p-Indicator">]</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier0_counter</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Count characters in the processed text</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">process</span><span class="p p-Indicator">]</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.summarize.outputs.summary}</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.process.outputs.result}</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">review</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">summary_review</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">count_value</span>
 </span></code></pre></div>
-<p>The top-level blocks:</p>
+<p>The top-level sections have distinct jobs:</p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code>, <code>description</code>, <code>version</code></td>
+<td>Workflow identity and human-readable context</td>
+</tr>
+<tr>
+<td><code>inputs</code></td>
+<td>Values callers may or must supply</td>
+</tr>
+<tr>
+<td><code>outputs</code></td>
+<td>Values returned from the completed workflow</td>
+</tr>
+<tr>
+<td><code>steps</code></td>
+<td>Work to execute and the dependencies between steps</td>
+</tr>
+</tbody>
+</table>
+<p>Each step has a unique <code>name</code> and an <code>agent</code>. <code>depends_on</code> creates a graph
+edge. Here, <code>count</code> cannot run until <code>process</code> succeeds.</p>
+<p>Expressions connect values:</p>
 <ul>
-<li><strong><code>inputs</code></strong> — the workflow's input schema. Each entry declares a <code>type</code>,
-  a <code>description</code>, and optionally <code>required: true</code> or a <code>default</code>.</li>
-<li><strong><code>outputs</code></strong> — the workflow's final artifact. Each entry maps an output
-  name to a <code>from:</code> expression that pulls a value out of a step
-  (<code>optional: true</code> marks outputs that a skipped step may not produce).</li>
+<li><code>${inputs.input_text}</code> reads a workflow input.</li>
+<li><code>${steps.process.outputs.result}</code> reads an earlier step output.</li>
+<li>top-level <code>outputs</code> select the values returned in <code>final_output</code>.</li>
 </ul>
-<p>Each step requires:</p>
-<ul>
-<li><strong><code>name</code></strong> — a unique identifier within the workflow</li>
-<li><strong><code>agent</code></strong> — the agent that runs this step. The name follows the
-  tier-prefix convention used by every shipped workflow:
-  <code>tier0_*</code> agents are deterministic (no LLM), <code>tier1_*</code> route to a fast
-  model, <code>tier2_*</code> route to a capable model. The suffix (<code>summarizer</code>,
-  <code>reviewer</code>, …) names the role.</li>
-<li><strong><code>description</code></strong> — human-readable purpose; surfaces in the UI and traces</li>
-<li><strong><code>depends_on</code></strong> — list of step names that must complete before this step
-  is eligible to run; the executor uses this to compute the topological
-  order (omit it, as <code>summarize</code> does, for entry steps)</li>
-<li><strong><code>inputs</code></strong> — a mapping of names to value expressions; expressions can
-  reference workflow inputs (<code>${inputs.*}</code>) or earlier step outputs
-  (<code>${steps.&lt;name&gt;.outputs.&lt;field&gt;}</code>)</li>
-<li><strong><code>outputs</code></strong> — a mapping from the output name downstream steps reference
-  to an alias used internally (for example <code>summary: task_summary</code>). This
-  is a name→alias mapping, not a type declaration — compare
-  <code>code_review.yaml</code>, where <code>review: code_review</code> is consumed downstream as
-  <code>${steps.review_code.outputs.review}</code>.</li>
-</ul>
-<h2 id="step-1-create-the-file">Step 1 — Create the file<a class="headerlink" href="#step-1-create-the-file" title="Permanent link">&para;</a></h2>
-<p>Save the YAML above as
-<code>agentic-workflows-v2/agentic_v2/workflows/definitions/my_first_workflow.yaml</code>.</p>
-<p>The runtime auto-discovers any <code>*.yaml</code> file in this directory at startup.
-There is no central registry to update.</p>
-<h2 id="step-2-validate-the-definition">Step 2 — Validate the definition<a class="headerlink" href="#step-2-validate-the-definition" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>agentic<span class="w"> </span>validate<span class="w"> </span>my_first_workflow
+<p>The mapping under a step's <code>outputs</code> declares the public output name and its
+internal context alias. Downstream expressions use the public name on the left.</p>
+<h2 id="2-validate">2. Validate<a class="headerlink" href="#2-validate" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>agentic<span class="w"> </span>validate<span class="w"> </span>./my-first-workflow.yaml<span class="w"> </span>--verbose
 </span></code></pre></div>
-<p><code>validate</code> runs two tiers of checks:</p>
-<ol>
-<li><strong>Structural lint</strong> — YAML syntax, step shape, and dependency
-   references (no extras required)</li>
-<li><strong>Graph compilation</strong> — the definition is loaded into the workflow
-   config model and compiled through LangGraph to catch graph-level errors
-   such as cycles (this tier requires the <code>langchain</code> extra:
-   <code>pip install -e ".[langchain]"</code>)</li>
-</ol>
-<p>A successful run prints:</p>
+<p>Validation checks:</p>
+<ul>
+<li>YAML syntax;</li>
+<li>required workflow fields;</li>
+<li>duplicate or missing step names;</li>
+<li>dependency references;</li>
+<li>cycles; and</li>
+<li>LangGraph compilation.</li>
+</ul>
+<p>The final compilation check requires the <code>langchain</code> extra even if you later
+run with <code>--adapter native</code>.</p>
+<p>Expected result:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>OK Workflow &#39;my_first_workflow&#39; is valid!
 </span></code></pre></div>
-<p>Errors include the offending step and the field that failed; fix and
-re-run. Add <code>--verbose</code> to print the step, input, and output counts plus
-the execution plan.</p>
-<h2 id="step-3-about-agents-and-personas">Step 3 — About agents and personas<a class="headerlink" href="#step-3-about-agents-and-personas" title="Permanent link">&para;</a></h2>
-<p>You do not need to author a prompt file for this workflow. The tier prefix
-in the agent name (<code>tier1_</code>, <code>tier2_</code>) selects the model tier, and in
-<code>AGENTIC_NO_LLM=1</code> mode the placeholder backend answers for any LLM-backed
-agent.</p>
-<p>For richer behavior, the runtime ships seven agent personas as markdown
-files under <code>agentic-workflows-v2/agentic_v2/prompts/</code>: <code>architect</code>,
-<code>coder</code>, <code>orchestrator</code>, <code>planner</code>, <code>reviewer</code>, <code>tester</code>, and <code>validator</code>.
-See the persona-authoring section of <a href="../../ONBOARDING/">ONBOARDING.md</a> for
-the required sections and an example of adding your own.</p>
-<h2 id="step-4-run-the-workflow">Step 4 — Run the workflow<a class="headerlink" href="#step-4-run-the-workflow" title="Permanent link">&para;</a></h2>
-<p>The <code>--input</code> flag expects a JSON <strong>file path</strong>. Create a small input file first:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Linux/macOS</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;task&quot;: &quot;Explain how the DAG executor schedules parallel steps.&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/first-workflow-input.json
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>agentic<span class="w"> </span>run<span class="w"> </span>my_first_workflow<span class="w"> </span>--input<span class="w"> </span>/tmp/first-workflow-input.json
+<h2 id="3-create-an-input-file">3. Create an input file<a class="headerlink" href="#3-create-an-input-file" title="Permanent link">&para;</a></h2>
+<p>Bash:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/my-first-input.json
 </span></code></pre></div>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c"># Windows PowerShell</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s1">&#39;{&quot;task&quot;: &quot;Explain how the DAG executor schedules parallel steps.&quot;}&#39;</span> <span class="p">|</span> <span class="nb">Out-File</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="n">first-workflow-input</span><span class="p">.</span><span class="n">json</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">my_first_workflow</span> <span class="p">-</span><span class="n">-input</span> <span class="n">first-workflow-input</span><span class="p">.</span><span class="n">json</span>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="s1">&#39;{&quot;input_text&quot;:&quot;hello&quot;}&#39;</span> <span class="p">|</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">my-first-input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<p>You should see <code>Status: SUCCESS</code> and, with <code>--verbose</code>, both steps
-(<code>summarize</code>, <code>review</code>) marked <code>success</code> in the step results table. Two
-no-LLM caveats are expected and harmless here:</p>
+<h2 id="4-run">4. Run<a class="headerlink" href="#4-run" title="Permanent link">&para;</a></h2>
+<p>Bash:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>./my-first-workflow.yaml<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/my-first-input.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>--verbose
+</span></code></pre></div>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">agentic</span> <span class="n">run</span> <span class="p">.\</span><span class="n">my-first-workflow</span><span class="p">.</span><span class="n">yaml</span> <span class="p">`</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">my-first-input</span><span class="p">.</span><span class="n">json</span> <span class="p">`</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>  <span class="p">-</span><span class="n">-verbose</span>
+</span></code></pre></div>
+<p>Expected status:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Status: SUCCESS
+</span></code></pre></div>
+<p>The resolved output should contain the processed text and its character count.
+Save the full result when you want to inspect the contract:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>./my-first-workflow.yaml<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/my-first-input.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span>--output<span class="w"> </span>my-first-result.json
+</span></code></pre></div>
+<h2 id="5-run-through-the-native-engine">5. Run through the native engine<a class="headerlink" href="#5-run-through-the-native-engine" title="Permanent link">&para;</a></h2>
+<p>The default named-workflow adapter is LangGraph. Select the native engine
+explicitly:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>./my-first-workflow.yaml<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/my-first-input.json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">  </span>--adapter<span class="w"> </span>native
+</span></code></pre></div>
+<p>For this simple workflow, both adapters should return the same output.</p>
+<h2 id="6-add-a-parallel-branch">6. Add a parallel branch<a class="headerlink" href="#6-add-a-parallel-branch" title="Permanent link">&para;</a></h2>
+<p>Steps with the same satisfied dependencies are eligible to run at the same
+time. Add this step after <code>count</code>:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">second_count</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier0_counter</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Independently count the original input</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.input_text}</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">original_count</span>
+</span></code></pre></div>
+<p><code>second_count</code> has no dependency, so it can run at the same time as <code>process</code>.
+Add its result to the top-level outputs:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">outputs</span><span class="p">:</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">processed_text</span><span class="p">:</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.process.outputs.result}</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">character_count</span><span class="p">:</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.count.outputs.count}</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">  </span><span class="nt">original_character_count</span><span class="p">:</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.second_count.outputs.count}</span>
+</span></code></pre></div>
+<p>Validate again after every graph change:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic<span class="w"> </span>validate<span class="w"> </span>./my-first-workflow.yaml<span class="w"> </span>--verbose
+</span></code></pre></div>
+<h2 id="common-errors">Common errors<a class="headerlink" href="#common-errors" title="Permanent link">&para;</a></h2>
+<h3 id="input-is-missing">Input is missing<a class="headerlink" href="#input-is-missing" title="Permanent link">&para;</a></h3>
+<p>If the input JSON omits <code>input_text</code>, validation fails before execution.
+Compare the file with the top-level <code>inputs</code> block.</p>
+<h3 id="dependency-name-is-wrong">Dependency name is wrong<a class="headerlink" href="#dependency-name-is-wrong" title="Permanent link">&para;</a></h3>
+<p><code>depends_on</code> uses step names, not agent names. A dependency such as
+<code>depends_on: [tier0_process]</code> is invalid unless a step is actually named
+<code>tier0_process</code>.</p>
+<h3 id="output-cannot-be-resolved">Output cannot be resolved<a class="headerlink" href="#output-cannot-be-resolved" title="Permanent link">&para;</a></h3>
+<p>Check all three names:</p>
+<ol>
+<li>the producer step name;</li>
+<li>the step's public output name; and</li>
+<li>the top-level <code>from</code> expression.</li>
+</ol>
+<p>An expression for this file must use
+<code>${steps.process.outputs.result}</code>, not the internal alias
+<code>processed_text</code>.</p>
+<h3 id="llm-backed-step-returns-placeholder-text">LLM-backed step returns placeholder text<a class="headerlink" href="#llm-backed-step-returns-placeholder-text" title="Permanent link">&para;</a></h3>
+<p>Tier-1 and higher agents call a model. Under <code>AGENTIC_NO_LLM=1</code>, they receive
+fixed placeholder text. That text may not satisfy JSON or typed-artifact
+contracts. Use tier-0 steps while learning the graph, then configure a real
+provider before testing model-dependent output.</p>
+<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Each LLM-backed step reports a <code>raw_response</code> output — the placeholder
-  backend returns a fixed string rather than the structured JSON a real
-  model would produce.</li>
-<li>The CLI warns <code>Output 'summary' could not be resolved</code> (and likewise for
-  <code>review</code>), because the named step outputs cannot be extracted from the
-  unstructured placeholder. With a real provider key the outputs resolve
-  normally.</li>
+<li><a href="../../WORKFLOW_AUTHORING/">Workflow authoring</a></li>
+<li><a href="../../workflows/">Workflow reference</a></li>
+<li><a href="../../PATTERN_CATALOG/">Pattern catalog</a></li>
+<li><a href="../../cli-reference/">CLI reference</a></li>
 </ul>
-<p>If the run reports <code>SUCCESS</code>, the DAG executor, contract validator, and
-agent resolution are all working as expected.</p>
-<h2 id="step-5-try-a-parallel-branch">Step 5 — Try a parallel branch<a class="headerlink" href="#step-5-try-a-parallel-branch" title="Permanent link">&para;</a></h2>
-<p>To prove the parallel-dispatch story, add a second downstream step:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tone_check</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier1_analyzer</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Independent tone evaluation, runs in parallel with review.</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">summarize</span><span class="p p-Indicator">]</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${steps.summarize.outputs.summary}</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">      </span><span class="nt">tone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tone_report</span>
-</span></code></pre></div>
-<p><code>review</code> and <code>tone_check</code> both depend only on <code>summarize</code>, so the executor
-dispatches them concurrently. Re-run with <code>agentic run --verbose</code> — the
-execution plan shows both steps at the same level, and their wall-clock
-times overlap even though the plan order is deterministic.</p>
-<h2 id="going-further">Going further<a class="headerlink" href="#going-further" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Conditional gates.</strong> Add a <code>when:</code> expression to skip a step based on
-  an upstream output. See <code>conditional_branching.yaml</code> for the canonical
-  example.</li>
-<li><strong>Loops.</strong> Use <code>loop_until:</code> and <code>loop_max:</code> to repeat a step until a
-  predicate holds. See <code>iterative_review.yaml</code>.</li>
-<li><strong>Tool calls.</strong> Allowlist a built-in tool on a step with the <code>tools:</code>
-  key. The default policy is DENY for high-risk tools (shell, git,
-  file_delete) — explicit allowlists are required.</li>
-<li><strong>Fan-in.</strong> Multiple <code>depends_on</code> entries cause the executor to wait
-  for all listed steps; their outputs become available in the input
-  expression namespace.</li>
-</ul>
-<p>The full grammar reference is in the
-<a href="../../WORKFLOW_AUTHORING/">Workflow authoring guide</a>, and the production
-workflows in <a href="../../workflows/">Workflow reference</a> are the best
-real-world examples to study next.</p>
 
 
 
@@ -3177,7 +3471,7 @@ real-world examples to study next.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 00:54:21 UTC">July 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

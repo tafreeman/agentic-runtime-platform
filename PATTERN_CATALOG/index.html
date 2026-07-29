@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Pattern catalog - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/PATTERN_CATALOG.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/PATTERN_CATALOG/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Pattern catalog - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/PATTERN_CATALOG.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pattern-catalog" class="md-skip">
+        <a href="#runtime-pattern-catalog" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1567,33 +1597,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#table-of-contents" class="md-nav__link">
+  <a href="#workflow-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Table of contents
+        Workflow execution
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#orchestration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Orchestration patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Orchestration patterns">
+    <nav class="md-nav" aria-label="Workflow execution">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-tool-use" class="md-nav__link">
+  <a href="#dependency-driven-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Tool use
+        Dependency-driven execution
       
     </span>
   </a>
@@ -1601,10 +1620,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-task-decomposition" class="md-nav__link">
+  <a href="#ordered-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Task decomposition
+        Ordered pipelines
       
     </span>
   </a>
@@ -1612,10 +1631,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-capability-matching" class="md-nav__link">
+  <a href="#conditional-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Capability matching
+        Conditional steps
       
     </span>
   </a>
@@ -1623,21 +1642,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-multi-agent-coordination" class="md-nav__link">
+  <a href="#bounded-review-loops" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Multi-agent coordination
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-bounded-iteration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Bounded iteration
+        Bounded review loops
       
     </span>
   </a>
@@ -1650,22 +1658,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prompting-patterns" class="md-nav__link">
+  <a href="#agents-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompting patterns
+        Agents and tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Prompting patterns">
+    <nav class="md-nav" aria-label="Agents and tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#6-chain-of-thought-scaffolding" class="md-nav__link">
+  <a href="#typed-agent-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Chain-of-thought scaffolding
+        Typed agent lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-binding-and-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool binding and calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-based-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability-based assignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-decomposition-and-delegation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task decomposition and delegation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conversation-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation memory
       
     </span>
   </a>
@@ -1678,22 +1730,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieval-patterns" class="md-nav__link">
+  <a href="#models-and-reliability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retrieval patterns
+        Models and reliability
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Retrieval patterns">
+    <nav class="md-nav" aria-label="Models and reliability">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#7-hybrid-retrieval" class="md-nav__link">
+  <a href="#model-routing-and-circuit-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Hybrid retrieval
+        Model routing and circuit state
       
     </span>
   </a>
@@ -1701,10 +1753,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#8-conversational-memory" class="md-nav__link">
+  <a href="#consensus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Conversational memory
+        Consensus
       
     </span>
   </a>
@@ -1717,22 +1769,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#routing-patterns" class="md-nav__link">
+  <a href="#retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Routing patterns
+        Retrieval
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Routing patterns">
+    <nav class="md-nav" aria-label="Retrieval">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#9-circuit-breaker" class="md-nav__link">
+  <a href="#hybrid-retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. Circuit breaker
+        Hybrid retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieved-content-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieved-content boundaries
       
     </span>
   </a>
@@ -1745,22 +1808,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation-patterns" class="md-nav__link">
+  <a href="#evaluation-and-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation patterns
+        Evaluation and review
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Evaluation patterns">
+    <nav class="md-nav" aria-label="Evaluation and review">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#10-self-reflection" class="md-nav__link">
+  <a href="#agent-self-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. Self-reflection
+        Agent self-review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-and-output-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow and output evaluation
       
     </span>
   </a>
@@ -1773,49 +1847,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#safety-patterns" class="md-nav__link">
+  <a href="#historical-patterns" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Safety patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Safety patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#11-prompt-injection-defense" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        11. Prompt injection defense
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-reference-pattern-to-file-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-reference: pattern to file index
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#previously-implemented-removed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Previously implemented (removed)
+        Historical patterns
       
     </span>
   </a>
@@ -2384,6 +2419,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2481,6 +2520,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2791,6 +2886,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2851,6 +2950,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3038,33 +3193,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#table-of-contents" class="md-nav__link">
+  <a href="#workflow-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Table of contents
+        Workflow execution
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#orchestration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Orchestration patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Orchestration patterns">
+    <nav class="md-nav" aria-label="Workflow execution">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-tool-use" class="md-nav__link">
+  <a href="#dependency-driven-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Tool use
+        Dependency-driven execution
       
     </span>
   </a>
@@ -3072,10 +3216,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-task-decomposition" class="md-nav__link">
+  <a href="#ordered-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Task decomposition
+        Ordered pipelines
       
     </span>
   </a>
@@ -3083,10 +3227,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-capability-matching" class="md-nav__link">
+  <a href="#conditional-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Capability matching
+        Conditional steps
       
     </span>
   </a>
@@ -3094,21 +3238,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-multi-agent-coordination" class="md-nav__link">
+  <a href="#bounded-review-loops" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Multi-agent coordination
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-bounded-iteration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Bounded iteration
+        Bounded review loops
       
     </span>
   </a>
@@ -3121,22 +3254,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prompting-patterns" class="md-nav__link">
+  <a href="#agents-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompting patterns
+        Agents and tools
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Prompting patterns">
+    <nav class="md-nav" aria-label="Agents and tools">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#6-chain-of-thought-scaffolding" class="md-nav__link">
+  <a href="#typed-agent-lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Chain-of-thought scaffolding
+        Typed agent lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tool-binding-and-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool binding and calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capability-based-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability-based assignment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-decomposition-and-delegation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task decomposition and delegation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conversation-memory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conversation memory
       
     </span>
   </a>
@@ -3149,22 +3326,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#retrieval-patterns" class="md-nav__link">
+  <a href="#models-and-reliability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retrieval patterns
+        Models and reliability
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Retrieval patterns">
+    <nav class="md-nav" aria-label="Models and reliability">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#7-hybrid-retrieval" class="md-nav__link">
+  <a href="#model-routing-and-circuit-state" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Hybrid retrieval
+        Model routing and circuit state
       
     </span>
   </a>
@@ -3172,10 +3349,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#8-conversational-memory" class="md-nav__link">
+  <a href="#consensus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Conversational memory
+        Consensus
       
     </span>
   </a>
@@ -3188,22 +3365,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#routing-patterns" class="md-nav__link">
+  <a href="#retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Routing patterns
+        Retrieval
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Routing patterns">
+    <nav class="md-nav" aria-label="Retrieval">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#9-circuit-breaker" class="md-nav__link">
+  <a href="#hybrid-retrieval" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. Circuit breaker
+        Hybrid retrieval
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieved-content-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieved-content boundaries
       
     </span>
   </a>
@@ -3216,22 +3404,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#evaluation-patterns" class="md-nav__link">
+  <a href="#evaluation-and-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Evaluation patterns
+        Evaluation and review
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Evaluation patterns">
+    <nav class="md-nav" aria-label="Evaluation and review">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#10-self-reflection" class="md-nav__link">
+  <a href="#agent-self-review" class="md-nav__link">
     <span class="md-ellipsis">
       
-        10. Self-reflection
+        Agent self-review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-and-output-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow and output evaluation
       
     </span>
   </a>
@@ -3244,49 +3443,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#safety-patterns" class="md-nav__link">
+  <a href="#historical-patterns" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Safety patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Safety patterns">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#11-prompt-injection-defense" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        11. Prompt injection defense
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-reference-pattern-to-file-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-reference: pattern to file index
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#previously-implemented-removed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Previously implemented (removed)
+        Historical patterns
       
     </span>
   </a>
@@ -3326,307 +3486,171 @@
   
 
 
-<h1 id="pattern-catalog">Pattern catalog<a class="headerlink" href="#pattern-catalog" title="Permanent link">&para;</a></h1>
-<p>This document maps agentic AI patterns to their implementations in the Agentic Runtime Platform codebase. For each pattern it identifies the specific files, classes, and functions involved, so you can locate how a pattern works without reading the full codebase. Patterns whose implementations have since been removed from the repository are listed separately at the <a href="#previously-implemented-removed">end</a>.</p>
-<hr />
-<h2 id="table-of-contents">Table of contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<h1 id="runtime-pattern-catalog">Runtime pattern catalog<a class="headerlink" href="#runtime-pattern-catalog" title="Permanent link">&para;</a></h1>
+<p>This page points to concrete implementations in <code>agentic-workflows-v2</code>. It is
+an implementation map, not a list of AI design ideas.</p>
+<p>Patterns in the library are not automatically active in every workflow. Check
+the selected adapter and workflow definition before assuming that a pattern is
+part of an execution path.</p>
+<h2 id="workflow-execution">Workflow execution<a class="headerlink" href="#workflow-execution" title="Permanent link">&para;</a></h2>
+<h3 id="dependency-driven-execution">Dependency-driven execution<a class="headerlink" href="#dependency-driven-execution" title="Permanent link">&para;</a></h3>
+<p>Use a directed acyclic graph (DAG) when steps have explicit dependencies and
+independent steps may run at the same time.</p>
 <ul>
-<li><a href="#orchestration-patterns">Orchestration patterns</a></li>
-<li><a href="#1-tool-use">1. Tool use</a></li>
-<li><a href="#2-task-decomposition">2. Task decomposition</a></li>
-<li><a href="#3-capability-matching">3. Capability matching</a></li>
-<li><a href="#4-multi-agent-coordination">4. Multi-agent coordination</a></li>
-<li><a href="#5-bounded-iteration">5. Bounded iteration</a></li>
-<li><a href="#prompting-patterns">Prompting patterns</a></li>
-<li><a href="#6-chain-of-thought-scaffolding">6. Chain-of-thought scaffolding</a></li>
-<li><a href="#retrieval-patterns">Retrieval patterns</a></li>
-<li><a href="#7-hybrid-retrieval">7. Hybrid retrieval</a></li>
-<li><a href="#8-conversational-memory">8. Conversational memory</a></li>
-<li><a href="#routing-patterns">Routing patterns</a></li>
-<li><a href="#9-circuit-breaker">9. Circuit breaker</a></li>
-<li><a href="#evaluation-patterns">Evaluation patterns</a></li>
-<li><a href="#10-self-reflection">10. Self-reflection</a></li>
-<li><a href="#safety-patterns">Safety patterns</a></li>
-<li><a href="#11-prompt-injection-defense">11. Prompt injection defense</a></li>
-<li><a href="#previously-implemented-removed">Previously implemented (removed)</a></li>
+<li>Graph model: <code>agentic_v2/engine/dag.py</code></li>
+<li>Scheduler: <code>agentic_v2/engine/dag_executor.py</code></li>
+<li>Adapter entry point: <code>agentic_v2/adapters/native/engine.py</code></li>
 </ul>
-<hr />
-<h2 id="orchestration-patterns">Orchestration patterns<a class="headerlink" href="#orchestration-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="1-tool-use">1. Tool use<a class="headerlink" href="#1-tool-use" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Orchestration
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/base.py</code> -- <code>BaseAgent._bind_tools()</code>, <code>_handle_tool_calls()</code>, <code>_get_tool_schemas()</code>
-<strong>How It Works:</strong> During initialization, <code>BaseAgent._bind_tools()</code> iterates the global <code>ToolRegistry</code> and binds every tool whose tier is at or below the agent's configured <code>default_tier</code>. When the LLM response contains <code>tool_calls</code>, <code>_handle_tool_calls()</code> dispatches each call to the matching bound tool, executes it, and injects the result back into conversation memory as a <code>"tool"</code> role message so the LLM can incorporate it in the next iteration.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/base.py</code> (<code>_bind_tools</code>, <code>_handle_tool_calls</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Tier-filtered binding at agent init</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_bind_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">max_tier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">default_tier</span><span class="o">.</span><span class="n">value</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">list_tools</span><span class="p">():</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">tier</span> <span class="o">&lt;=</span> <span class="n">max_tier</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_bound_tools</span><span class="p">[</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool</span>
-</span></code></pre></div></p>
-<hr />
-<h3 id="2-task-decomposition">2. Task decomposition<a class="headerlink" href="#2-task-decomposition" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Orchestration
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/orchestrator.py</code> -- <code>OrchestratorAgent._parse_output()</code>, <code>decompose_task()</code>
-<strong>How It Works:</strong> The <code>OrchestratorAgent</code> sends the task description and a list of registered agents (with their capabilities) to the LLM via a system prompt requesting structured JSON decomposition. The LLM returns a JSON plan with subtasks, each declaring required <code>capabilities</code> and <code>dependencies</code>. The orchestrator parses this with <code>_extract_json()</code> (delegating to balanced-brace extraction in <code>json_extraction.py</code>) and builds <code>SubTask</code> objects with dependency edges for downstream scheduling.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/orchestrator.py</code> (<code>decompose_task</code>, <code>_parse_output</code>)
-<strong>Example:</strong>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;subtasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;generate&quot;</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Generate the code&quot;</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;code_generation&quot;</span><span class="p">],</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">&quot;parallel_group&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;review&quot;</span><span class="p">,</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Review the generated code&quot;</span><span class="p">,</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;code_review&quot;</span><span class="p">],</span>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;generate&quot;</span><span class="p">],</span>
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">      </span><span class="nt">&quot;parallel_group&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="p">}</span>
-</span></code></pre></div></p>
-<hr />
-<h3 id="3-capability-matching">3. Capability matching<a class="headerlink" href="#3-capability-matching" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Orchestration
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/capabilities.py</code> -- <code>CapabilitySet.score_match()</code>, <code>get_agent_capabilities()</code>
-<strong>How It Works:</strong> Each agent declares capabilities via mixin classes (<code>CodeGenerationMixin</code>, <code>CodeReviewMixin</code>, etc.) that return a <code>CapabilitySet</code>. When the orchestrator needs to assign an agent to a subtask, <code>score_match()</code> computes a 0.0-1.0 match score by averaging <code>min(1.0, agent_proficiency / required_proficiency)</code> across all required capability types. <code>get_agent_capabilities()</code> walks the agent's MRO to aggregate capabilities from all mixin bases. The orchestrator builds a ranked candidate list sorted by score and stores fallback chains for resilience.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/capabilities.py</code> (<code>score_match</code>, <code>get_agent_capabilities</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Scoring: proficiency ratio averaged across requirements</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">required</span><span class="p">:</span> <span class="s2">&quot;CapabilitySet&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">total_score</span> <span class="o">=</span> <span class="mf">0.0</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">for</span> <span class="n">cap_type</span><span class="p">,</span> <span class="n">req_cap</span> <span class="ow">in</span> <span class="n">required</span><span class="o">.</span><span class="n">capabilities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="n">our_cap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capabilities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cap_type</span><span class="p">)</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="k">if</span> <span class="n">our_cap</span><span class="p">:</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>            <span class="n">total_score</span> <span class="o">+=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">our_cap</span><span class="o">.</span><span class="n">proficiency</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">req_cap</span><span class="o">.</span><span class="n">proficiency</span><span class="p">))</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">return</span> <span class="n">total_score</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">required</span><span class="o">.</span><span class="n">capabilities</span><span class="p">)</span>
-</span></code></pre></div></p>
-<hr />
-<h3 id="4-multi-agent-coordination">4. Multi-agent coordination<a class="headerlink" href="#4-multi-agent-coordination" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Orchestration
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/orchestrator.py</code> -- <code>OrchestratorAgent.execute_as_dag()</code>, <code>_execute_plan()</code>; <code>agentic-workflows-v2/agentic_v2/engine/dag_executor.py</code> -- <code>DAGExecutor.execute()</code>
-<strong>How It Works:</strong> The orchestrator registers specialized agents, decomposes the task, assigns agents via capability scoring, and then executes the resulting plan. The preferred path is <code>execute_as_dag()</code>, which builds a <code>DAG</code> object from subtask dependencies and delegates to the <code>DAGExecutor</code>. The DAG executor implements Kahn's algorithm, tracking in-degrees and scheduling steps via <code>asyncio.wait(FIRST_COMPLETED)</code> for maximum parallelism. A fallback chain in <code>_execute_plan()</code> tries alternative agents if the primary assignment fails.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/orchestrator.py</code> (<code>execute_as_dag</code>, <code>_execute_plan</code>); <code>agentic-workflows-v2/agentic_v2/engine/dag_executor.py</code> (<code>DAGExecutor.execute</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># DAG executor: Kahn&#39;s algorithm with asyncio parallelism</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">ready</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">deg</span> <span class="ow">in</span> <span class="n">in_degree</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">deg</span> <span class="o">==</span> <span class="mi">0</span><span class="p">])</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">completed</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">steps</span><span class="p">):</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">while</span> <span class="n">ready</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">running</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">max_concurrency</span><span class="p">:</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">step_name</span> <span class="o">=</span> <span class="n">ready</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">run_step</span><span class="p">(</span><span class="n">step_name</span><span class="p">)))</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">done</span><span class="p">,</span> <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">return_when</span><span class="o">=</span><span class="n">asyncio</span><span class="o">.</span><span class="n">FIRST_COMPLETED</span><span class="p">)</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="c1"># ... decrement downstream in-degrees, unlock ready steps</span>
-</span></code></pre></div></p>
-<hr />
-<h3 id="5-bounded-iteration">5. Bounded iteration<a class="headerlink" href="#5-bounded-iteration" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Orchestration
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/workflows/loader.py</code> -- <code>loop_max</code> parsing; <code>agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml</code> -- <code>review_rework_loop</code> step (<code>loop_until</code> + <code>loop_max</code>)
-<strong>How It Works:</strong> Workflow steps can declare a <code>loop_until</code> expression and a <code>loop_max</code> integer. The workflow loader parses <code>loop_max</code> (default 3, minimum 1) and attaches it to the <code>StepDefinition</code>. At runtime, the step re-executes until the <code>loop_until</code> condition is satisfied or <code>loop_max</code> iterations are reached, preventing infinite agent loops. The shipped <code>iterative_review</code> workflow demonstrates this: its <code>review_rework_loop</code> step reviews and reworks generated code until the review status is approved or the iteration cap trips, with a post-loop <code>escalation_notice</code> step that fires only when the loop never approved.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/workflows/loader.py</code> (<code>loop_max</code> parsing); <code>agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml</code> (<code>review_rework_loop</code>)
-<strong>Example:</strong>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># iterative_review.yaml -- bounded review/rework loop</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review_rework_loop</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tier3_reviewer</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">implement</span><span class="p p-Indicator">]</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">loop_until</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="no">${steps.review_rework_loop.outputs.review_status} in [&#39;APPROVED&#39;, &#39;APPROVED_WITH_NOTES&#39;]</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nt">loop_max</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.max_review_rounds}</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="prompting-patterns">Prompting patterns<a class="headerlink" href="#prompting-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="6-chain-of-thought-scaffolding">6. Chain-of-thought scaffolding<a class="headerlink" href="#6-chain-of-thought-scaffolding" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Prompting
-<strong>Implementation:</strong> Every persona file in <code>agentic-workflows-v2/agentic_v2/prompts/*.md</code> (<code>architect</code>, <code>coder</code>, <code>orchestrator</code>, <code>planner</code>, <code>reviewer</code>, <code>tester</code>, <code>validator</code>) -- <code>## Reasoning Protocol</code> sections
-<strong>How It Works:</strong> Every agent persona includes a <code>## Reasoning Protocol</code> section with a domain-specific multi-step cognitive workflow that instructs the LLM to reason through the task before generating output. These are not generic "think step-by-step" prompts -- each is tailored to the persona's function. For example, the coder persona uses stack-identification-first reasoning, while the reviewer, tester, and validator personas each define their own review, test-design, and verification protocols.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/prompts/coder.md</code> (<code>## Reasoning Protocol</code> section; the other personas follow the same convention)
-<strong>Example:</strong>
-<div class="language-markdown highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="gu">## Reasoning Protocol  (from coder.md)</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Before generating your response:
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">1.</span> Identify the target stack from inputs and select the matching language/framework conventions
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">2.</span> Read any existing code, review findings, or rework instructions to understand what must change
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">3.</span> Plan the file structure: which files to create vs. modify, and in what dependency order
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">4.</span> For each file, determine imports, types, and error handling before writing implementation
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">5.</span> Verify all artifacts are complete — no TODOs, no missing imports, no placeholder logic
-</span></code></pre></div></p>
-<hr />
-<h2 id="retrieval-patterns">Retrieval patterns<a class="headerlink" href="#retrieval-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="7-hybrid-retrieval">7. Hybrid retrieval<a class="headerlink" href="#7-hybrid-retrieval" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Retrieval
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/rag/retrieval.py</code> -- <code>BM25Index</code>, <code>reciprocal_rank_fusion()</code>, <code>HybridRetriever</code>
-<strong>How It Works:</strong> The <code>HybridRetriever</code> combines two independent retrieval signals. Dense retrieval embeds the query via <code>EmbeddingProtocol</code> and searches a <code>VectorStoreProtocol</code> backend using cosine similarity. Keyword retrieval uses a pure-Python <code>BM25Index</code> implementing Okapi BM25 with k1=1.5 and b=0.75, including proper IDF with Laplace smoothing. Both ranked lists are merged via <code>reciprocal_rank_fusion()</code>, which computes <code>score = sum(1/(k+rank))</code> with k=60 (per Cormack et al. 2009) and deduplicates by <code>chunk_id</code>. This dual-signal approach improves recall over either method alone.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/rag/retrieval.py</code> (<code>BM25Index</code>, <code>reciprocal_rank_fusion</code>, <code>HybridRetriever.retrieve</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># HybridRetriever.retrieve() -- dual signal + RRF fusion</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RetrievalResult</span><span class="p">]:</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">dense_results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_only</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">)</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">bm25_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bm25</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">)</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">results</span> <span class="o">=</span> <span class="n">reciprocal_rank_fusion</span><span class="p">(</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="p">[</span><span class="n">dense_results</span><span class="p">,</span> <span class="n">bm25_results</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_rrf_k</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="n">top_k</span><span class="p">,</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="p">)</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">return</span> <span class="n">results</span>
-</span></code></pre></div></p>
-<hr />
-<h3 id="8-conversational-memory">8. Conversational memory<a class="headerlink" href="#8-conversational-memory" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Retrieval
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/memory.py</code> -- <code>ConversationMemory</code> class
-<strong>How It Works:</strong> <code>ConversationMemory</code> maintains a sliding window of messages (default 50) with a token budget (default 8000 tokens). When the window exceeds either limit, <code>_summarize_and_trim()</code> compacts older messages into textual summaries, preserving the system prompt and most recent messages. Summaries are prepended to the LLM message list as system context by <code>get_messages()</code>. The summary budget is itself bounded (<code>max_summaries=5</code>) to prevent unbounded growth. Token counting uses a <code>len(text) // 4</code> heuristic with an optional pluggable <code>token_counter</code> callable for precise counting.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/memory.py</code> (<code>ConversationMemory</code>, <code>_summarize_and_trim</code>, <code>get_messages</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Automatic summarization when window overflows</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConversationMessage</span><span class="p">:</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">msg</span> <span class="o">=</span> <span class="n">ConversationMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">content</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_messages</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_tokens</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_tokens</span><span class="p">:</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_summarize_and_trim</span><span class="p">()</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="k">return</span> <span class="n">msg</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="routing-patterns">Routing patterns<a class="headerlink" href="#routing-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="9-circuit-breaker">9. Circuit breaker<a class="headerlink" href="#9-circuit-breaker" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Routing
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/models/model_stats.py</code> -- <code>ModelStats</code>, <code>CircuitState</code>; <code>agentic-workflows-v2/agentic_v2/models/smart_router.py</code> -- <code>SmartModelRouter</code>
-<strong>How It Works:</strong> Each model has a per-model <code>ModelStats</code> instance with a <code>CircuitState</code> FSM: <code>CLOSED</code> (normal) -&gt; <code>OPEN</code> (after 5 consecutive failures) -&gt; <code>HALF_OPEN</code> (after the recovery timeout). The <code>SmartModelRouter</code> layers production hardening on top: health-weighted selection scoring <code>success_rate x 0.6 + latency_score x 0.2 + recency_score x 0.2</code>, adaptive cooldowns with <code>base x 1.5^consecutive_failures</code> capped at 600s, per-provider bulkhead semaphores preventing cascade failures, probe lock serialization for HALF_OPEN recovery, cross-tier degradation preferring cheaper tiers first, and rate-limit header parsing. Latency is measured with <code>time.monotonic()</code> to avoid wall-clock jumps.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/models/model_stats.py</code> (<code>CircuitState</code>, <code>ModelStats</code>, <code>check_circuit</code>); <code>agentic-workflows-v2/agentic_v2/models/smart_router.py</code> (<code>SmartModelRouter</code>, <code>call_with_fallback</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Circuit state transition in ModelStats</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">record_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_failures</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">circuit_state</span> <span class="o">==</span> <span class="n">CircuitState</span><span class="o">.</span><span class="n">HALF_OPEN</span><span class="p">:</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">circuit_state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="o">.</span><span class="n">OPEN</span>   <span class="c1"># failed recovery probe</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive_failures</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_failure_threshold</span><span class="p">:</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">circuit_state</span> <span class="o">=</span> <span class="n">CircuitState</span><span class="o">.</span><span class="n">OPEN</span>    <span class="c1"># trip the breaker</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="evaluation-patterns">Evaluation patterns<a class="headerlink" href="#evaluation-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="10-self-reflection">10. Self-reflection<a class="headerlink" href="#10-self-reflection" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Evaluation
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/agents/capabilities.py</code> -- <code>SelfReflectionMixin</code>; <code>agentic-workflows-v2/agentic_v2/agents/coder.py</code> -- <code>CoderAgent.reflect()</code>
-<strong>How It Works:</strong> <code>SelfReflectionMixin</code> declares the <code>SELF_REFLECTION</code> capability type and defines an abstract <code>async reflect(output, criteria)</code> method. <code>CoderAgent</code> inherits both <code>CodeGenerationMixin</code> and <code>SelfReflectionMixin</code>, and provides a concrete <code>reflect()</code> implementation that sends the generated code back to the LLM with a reflection prompt requesting a JSON critique with <code>needs_revision</code>, <code>issues</code>, and optional <code>revised_output</code> fields. The reflection result is parsed via <code>extract_json()</code> for structured consumption. This enables the agent to critique its own output before returning it.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/agents/capabilities.py</code> (<code>SelfReflectionMixin</code>); <code>agentic-workflows-v2/agentic_v2/agents/coder.py</code> (<code>CoderAgent.reflect</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># CoderAgent.reflect() -- self-critique via LLM</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reflect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">criteria</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;correctness&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">reflection_prompt</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>        <span class="sa">f</span><span class="s2">&quot;Review the following code for </span><span class="si">{</span><span class="n">criteria</span><span class="si">}</span><span class="s2"> issues. &quot;</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        <span class="sa">f</span><span class="s2">&quot;Return a JSON object with &#39;needs_revision&#39; (bool), &quot;</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>        <span class="sa">f</span><span class="s2">&quot;&#39;issues&#39; (list of strings), and optionally &#39;revised_output&#39; (str).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="sa">f</span><span class="s2">&quot;```</span><span class="se">\n</span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="se">\n</span><span class="s2">```&quot;</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="p">)</span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_memory</span><span class="o">.</span><span class="n">add_user</span><span class="p">(</span><span class="n">reflection_prompt</span><span class="p">)</span>
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_response</span><span class="p">()</span>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="k">return</span> <span class="n">extract_json</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="safety-patterns">Safety patterns<a class="headerlink" href="#safety-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="11-prompt-injection-defense">11. Prompt injection defense<a class="headerlink" href="#11-prompt-injection-defense" title="Permanent link">&para;</a></h3>
-<p><strong>Category:</strong> Safety
-<strong>Implementation:</strong> <code>agentic-workflows-v2/agentic_v2/rag/context_assembly.py</code> -- <code>frame_content()</code>, <code>TokenBudgetAssembler</code> with <code>frame_results=True</code>
-<strong>How It Works:</strong> Retrieved documents may contain adversarial content designed to hijack LLM behavior (e.g., "Ignore all previous instructions..."). The <code>frame_content()</code> function wraps each chunk in <code>&lt;retrieved_context&gt;</code> / <code>&lt;/retrieved_context&gt;</code> delimiter tags, signaling to the LLM that the enclosed content is untrusted user-provided data and should not be interpreted as instructions. The <code>TokenBudgetAssembler</code> applies this framing by default (<code>frame_results=True</code>) when assembling retrieval results, and accounts for the framing overhead in its token budget calculation. The system prompt instructs the model to treat content within these tags as data only.
-<strong>Code Reference:</strong> <code>agentic-workflows-v2/agentic_v2/rag/context_assembly.py</code> (<code>frame_content</code>, <code>TokenBudgetAssembler</code>)
-<strong>Example:</strong>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Delimiter framing for prompt injection defense</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">CONTEXT_DELIMITER_START</span> <span class="o">=</span> <span class="s2">&quot;&lt;retrieved_context&gt;&quot;</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">CONTEXT_DELIMITER_END</span> <span class="o">=</span> <span class="s2">&quot;&lt;/retrieved_context&gt;&quot;</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">frame_content</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">CONTEXT_DELIMITER_START</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">CONTEXT_DELIMITER_END</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># Applied automatically during assembly</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame_results</span><span class="p">:</span>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="n">framed</span> <span class="o">=</span> <span class="n">RetrievalResult</span><span class="p">(</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="n">content</span><span class="o">=</span><span class="n">frame_content</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">),</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>        <span class="n">score</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="p">,</span>
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="o">...</span>
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="p">)</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="cross-reference-pattern-to-file-index">Cross-reference: pattern to file index<a class="headerlink" href="#cross-reference-pattern-to-file-index" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Primary file(s)</th>
-<th>Key symbols</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Tool use</td>
-<td><code>agents/base.py</code></td>
-<td><code>_bind_tools</code>, <code>_handle_tool_calls</code></td>
-</tr>
-<tr>
-<td>Task decomposition</td>
-<td><code>agents/orchestrator.py</code></td>
-<td><code>decompose_task</code>, <code>_parse_output</code></td>
-</tr>
-<tr>
-<td>Capability matching</td>
-<td><code>agents/capabilities.py</code></td>
-<td><code>score_match</code>, <code>get_agent_capabilities</code></td>
-</tr>
-<tr>
-<td>Multi-agent coordination</td>
-<td><code>agents/orchestrator.py</code>, <code>engine/dag_executor.py</code></td>
-<td><code>execute_as_dag</code>, <code>_execute_plan</code>; <code>DAGExecutor.execute</code></td>
-</tr>
-<tr>
-<td>Bounded iteration</td>
-<td><code>workflows/loader.py</code>, <code>workflows/definitions/iterative_review.yaml</code></td>
-<td><code>loop_max</code> parsing; <code>review_rework_loop</code></td>
-</tr>
-<tr>
-<td>Chain-of-thought scaffolding</td>
-<td><code>prompts/*.md</code> (all 7)</td>
-<td><code>## Reasoning Protocol</code> sections</td>
-</tr>
-<tr>
-<td>Hybrid retrieval</td>
-<td><code>rag/retrieval.py</code></td>
-<td><code>BM25Index</code>, <code>reciprocal_rank_fusion</code>, <code>HybridRetriever</code></td>
-</tr>
-<tr>
-<td>Conversational memory</td>
-<td><code>agents/memory.py</code></td>
-<td><code>ConversationMemory</code>, <code>_summarize_and_trim</code></td>
-</tr>
-<tr>
-<td>Circuit breaker</td>
-<td><code>models/model_stats.py</code>, <code>models/smart_router.py</code></td>
-<td><code>CircuitState</code>, <code>ModelStats</code>; <code>SmartModelRouter</code>, <code>call_with_fallback</code></td>
-</tr>
-<tr>
-<td>Self-reflection</td>
-<td><code>agents/capabilities.py</code>, <code>agents/coder.py</code></td>
-<td><code>SelfReflectionMixin</code>; <code>CoderAgent.reflect</code></td>
-</tr>
-<tr>
-<td>Prompt injection defense</td>
-<td><code>rag/context_assembly.py</code></td>
-<td><code>frame_content</code>, <code>TokenBudgetAssembler</code></td>
-</tr>
-</tbody>
-</table>
-<p>All file paths above are relative to <code>agentic-workflows-v2/agentic_v2/</code>.</p>
-<hr />
-<h2 id="previously-implemented-removed">Previously implemented (removed)<a class="headerlink" href="#previously-implemented-removed" title="Permanent link">&para;</a></h2>
-<p>The following patterns were implemented by files that have since been removed from the repository — principally the <code>deep_research.yaml</code> workflow and the two antagonist persona prompts. They are documented here for historical reference only; there is no current in-repo implementation to cite. Git history contains the removed files if you want to resurrect one.</p>
+<p>The scheduler runs ready nodes up to the configured concurrency limit. A
+dependency failure is propagated instead of reporting the downstream node as
+successful.</p>
+<h3 id="ordered-pipelines">Ordered pipelines<a class="headerlink" href="#ordered-pipelines" title="Permanent link">&para;</a></h3>
+<p>Use a pipeline when the order is more important than maximum concurrency.</p>
 <ul>
-<li><strong>Tree-of-thought</strong> <em>(removed)</em> — <code>deep_research.yaml</code>'s <code>hypothesis_tree_tot_roundN</code> steps had a <code>tier3_reasoner</code> agent build a search plan as a tree of hypotheses with confirming and disconfirming evidence paths, forcing exploration of multiple reasoning branches per round.</li>
-<li><strong>ReAct</strong> <em>(removed)</em> — <code>deep_research.yaml</code>'s <code>retrieval_react_roundN</code> steps ran a Reason+Act loop: a <code>tier2_researcher</code> agent alternated between reasoning about what evidence to gather and invoking <code>web_search</code> / <code>http_get</code> / <code>context_store</code> tools.</li>
-<li><strong>Chain-of-verification</strong> <em>(removed)</em> — <code>deep_research.yaml</code>'s <code>cove_verify_roundN</code> steps had a <code>tier3_reviewer</code> agent independently re-verify claims from the parallel analyst steps against fresh evidence, producing a verification score and unresolved questions for the next round.</li>
-<li><strong>Adversarial review</strong> <em>(removed)</em> — two independent antagonist personas (<code>antagonist_implementation.md</code>, FMEA-style failure-mode enumeration; <code>antagonist_systemic.md</code>, pre-mortem systemic risk analysis) attacked plans from non-overlapping angles.</li>
-<li><strong>Confidence gating</strong> <em>(removed)</em> — <code>deep_research.yaml</code>'s <code>coverage_confidence_audit_roundN</code> steps computed a multi-dimensional confidence index and emitted a <code>gate_passed</code> boolean; later rounds ran only <code>when:</code> the gate had not yet passed. The shipped <code>iterative_review</code> and <code>consensus_review</code> workflows use related (but simpler) status- and agreement-based gates.</li>
-<li><strong>Domain-adaptive recency</strong> <em>(removed)</em> — <code>deep_research.yaml</code> accepted a <code>domain</code> enum and a <code>recency_window_days</code> input that propagated to every retrieval step, so fast-moving domains required more recent sources than stable ones.</li>
+<li>Pipeline types and builder: <code>agentic_v2/engine/pipeline.py</code></li>
+<li>Unified dispatch: <code>agentic_v2/engine/executor.py</code></li>
 </ul>
+<p>Pipelines support sequential steps, explicit parallel groups, and conditional
+branches. They do not infer dependencies between arbitrary steps.</p>
+<h3 id="conditional-steps">Conditional steps<a class="headerlink" href="#conditional-steps" title="Permanent link">&para;</a></h3>
+<p>Workflow <code>when</code> expressions decide whether a step runs.</p>
+<ul>
+<li>Native evaluator: <code>agentic_v2/engine/expressions.py</code></li>
+<li>LangGraph evaluator: <code>agentic_v2/langchain/expressions.py</code></li>
+<li>Authoring rules: <a href="../WORKFLOW_AUTHORING/">Workflow authoring</a></li>
+</ul>
+<p>Expressions are evaluated by the runtime's restricted expression parser. They
+are not Python <code>eval</code> expressions.</p>
+<h3 id="bounded-review-loops">Bounded review loops<a class="headerlink" href="#bounded-review-loops" title="Permanent link">&para;</a></h3>
+<p><code>loop_until</code> repeats a step until its condition passes. <code>loop_max</code> sets a hard
+limit.</p>
+<ul>
+<li>YAML parsing: <code>agentic_v2/workflows/loader.py</code></li>
+<li>Native execution: <code>agentic_v2/engine/step.py</code></li>
+<li>LangGraph wiring: <code>agentic_v2/langchain/graph_wiring.py</code></li>
+<li>Shipped example:
+  <code>agentic_v2/workflows/definitions/iterative_review.yaml</code></li>
+</ul>
+<p>Always set a useful completion condition and a small upper bound. Repetition
+alone does not guarantee a better result.</p>
+<h2 id="agents-and-tools">Agents and tools<a class="headerlink" href="#agents-and-tools" title="Permanent link">&para;</a></h2>
+<h3 id="typed-agent-lifecycle">Typed agent lifecycle<a class="headerlink" href="#typed-agent-lifecycle" title="Permanent link">&para;</a></h3>
+<p><code>BaseAgent[TInput, TOutput]</code> defines initialization, execution, cancellation,
+events, tool calls, and output parsing.</p>
+<ul>
+<li>Base lifecycle: <code>agentic_v2/agents/base.py</code></li>
+<li>Configuration and state: <code>agentic_v2/agents/config.py</code></li>
+<li>Concrete agents: <code>agentic_v2/agents/coder.py</code>,
+  <code>reviewer.py</code>, <code>architect.py</code>, and <code>test_agent.py</code></li>
+</ul>
+<p>See <a href="../deep-dive-agents/">Agents</a> for the extension contract.</p>
+<h3 id="tool-binding-and-calls">Tool binding and calls<a class="headerlink" href="#tool-binding-and-calls" title="Permanent link">&para;</a></h3>
+<p><code>BaseAgent._bind_tools()</code> selects registered tools allowed by the agent's
+configured tier. <code>_handle_tool_calls()</code> dispatches requested calls and adds
+their results to conversation memory.</p>
+<ul>
+<li>Agent integration: <code>agentic_v2/agents/base.py</code></li>
+<li>Registry and tool metadata: <code>agentic_v2/tools/</code></li>
+</ul>
+<p>Registration makes a tool available; it does not make every call safe. Tool
+implementations still need input validation, timeouts, and clear failure
+results.</p>
+<h3 id="capability-based-assignment">Capability-based assignment<a class="headerlink" href="#capability-based-assignment" title="Permanent link">&para;</a></h3>
+<p>Agents declare capabilities such as code generation, review, testing, and
+orchestration. The orchestrator can score those capabilities against a
+subtask.</p>
+<ul>
+<li>Capability types and scoring: <code>agentic_v2/agents/capabilities.py</code></li>
+<li>Assignment and fallback handling: <code>agentic_v2/agents/orchestrator.py</code></li>
+</ul>
+<p>The score is a routing input, not proof that an agent can complete the task.</p>
+<h3 id="task-decomposition-and-delegation">Task decomposition and delegation<a class="headerlink" href="#task-decomposition-and-delegation" title="Permanent link">&para;</a></h3>
+<p><code>OrchestratorAgent</code> can request a structured subtask plan, validate it, select
+agents, and run dependency-ready work with bounded parallelism.</p>
+<ul>
+<li>Public orchestrator: <code>agentic_v2/agents/orchestrator.py</code></li>
+<li>Plan models and prompt: <code>agentic_v2/agents/orchestrator_models.py</code></li>
+<li>Deterministic planning helpers:
+  <code>agentic_v2/agents/orchestrator_planning.py</code></li>
+<li>Input factories: <code>agentic_v2/agents/orchestrator_factories.py</code></li>
+</ul>
+<p>The <code>agentic orchestrate</code> CLI command currently reports that dynamic
+orchestration is not exposed through the default LangGraph workflow path. Use
+the Python API when testing this implementation.</p>
+<h3 id="conversation-memory">Conversation memory<a class="headerlink" href="#conversation-memory" title="Permanent link">&para;</a></h3>
+<p><code>ConversationMemory</code> stores messages within configurable message and token
+limits and can summarize older content.</p>
+<ul>
+<li>Implementation: <code>agentic_v2/agents/memory.py</code></li>
+</ul>
+<p>This is per-agent conversation state. It is separate from the RAG document
+store and from persisted workflow checkpoints.</p>
+<h2 id="models-and-reliability">Models and reliability<a class="headerlink" href="#models-and-reliability" title="Permanent link">&para;</a></h2>
+<h3 id="model-routing-and-circuit-state">Model routing and circuit state<a class="headerlink" href="#model-routing-and-circuit-state" title="Permanent link">&para;</a></h3>
+<p><code>SmartModelRouter</code> combines model availability and recorded statistics when it
+selects a model. <code>ModelStats</code> tracks circuit states so repeatedly failing
+models can be skipped temporarily.</p>
+<ul>
+<li>Routing: <code>agentic_v2/models/smart_router.py</code></li>
+<li>Statistics and circuit state: <code>agentic_v2/models/model_stats.py</code></li>
+</ul>
+<p>Routing decisions depend on the statistics available to that process or
+configured store. They are not a provider service-level guarantee.</p>
+<h3 id="consensus">Consensus<a class="headerlink" href="#consensus" title="Permanent link">&para;</a></h3>
+<p>The engine provides majority voting and repeated-sample consistency helpers.</p>
+<ul>
+<li>Implementation: <code>agentic_v2/engine/consensus.py</code></li>
+<li>Shipped workflow:
+  <code>agentic_v2/workflows/definitions/consensus_review.yaml</code></li>
+</ul>
+<p>Agreement can reduce isolated variation, but several models can agree on the
+same error. Keep evidence-based checks outside the vote.</p>
+<h2 id="retrieval">Retrieval<a class="headerlink" href="#retrieval" title="Permanent link">&para;</a></h2>
+<h3 id="hybrid-retrieval">Hybrid retrieval<a class="headerlink" href="#hybrid-retrieval" title="Permanent link">&para;</a></h3>
+<p><code>HybridRetriever</code> combines keyword and vector rankings with reciprocal rank
+fusion.</p>
+<ul>
+<li>Keyword index and fusion: <code>agentic_v2/rag/retrieval.py</code></li>
+<li>Context assembly: <code>agentic_v2/rag/context_assembly.py</code></li>
+</ul>
+<p>The standalone <code>agentic rag</code> command does not use the complete production RAG
+stack. See <a href="../rag/">RAG</a> for the active CLI limitations.</p>
+<h3 id="retrieved-content-boundaries">Retrieved-content boundaries<a class="headerlink" href="#retrieved-content-boundaries" title="Permanent link">&para;</a></h3>
+<p><code>frame_content()</code> marks retrieved text as data and
+<code>TokenBudgetAssembler</code> limits the amount of content added to a prompt.</p>
+<ul>
+<li>Implementation: <code>agentic_v2/rag/context_assembly.py</code></li>
+</ul>
+<p>Framing reduces ambiguity between instructions and retrieved text. It is one
+control, not a complete prompt-injection defense. Source trust, tool
+permissions, output validation, and human review still matter.</p>
+<h2 id="evaluation-and-review">Evaluation and review<a class="headerlink" href="#evaluation-and-review" title="Permanent link">&para;</a></h2>
+<h3 id="agent-self-review">Agent self-review<a class="headerlink" href="#agent-self-review" title="Permanent link">&para;</a></h3>
+<p><code>CoderAgent.reflect()</code> implements an optional review pass through the
+<code>SelfReflectionMixin</code> contract.</p>
+<ul>
+<li>Contract: <code>agentic_v2/agents/capabilities.py</code></li>
+<li>Coder implementation: <code>agentic_v2/agents/coder.py</code></li>
+</ul>
+<p>Self-review is generated by a model and may repeat the original mistake. Treat
+it as another signal, not independent verification.</p>
+<h3 id="workflow-and-output-evaluation">Workflow and output evaluation<a class="headerlink" href="#workflow-and-output-evaluation" title="Permanent link">&para;</a></h3>
+<p>The runtime and <code>agentic-v2-eval</code> package provide different evaluation paths.</p>
+<ul>
+<li>Runtime scoring: <code>agentic_v2/scoring/</code></li>
+<li>Evaluation package: <code>agentic-v2-eval/src/agentic_v2_eval/</code></li>
+<li>User guide: <a href="../architecture-eval/">Evaluation framework</a></li>
+</ul>
+<p>Choose one path explicitly and record its rubric, model, run count, and input
+set with the result.</p>
+<h2 id="historical-patterns">Historical patterns<a class="headerlink" href="#historical-patterns" title="Permanent link">&para;</a></h2>
+<p>Earlier versions included a <code>deep_research.yaml</code> workflow and antagonist
+personas that are no longer in the repository. Tree search,
+chain-of-verification, adversarial review, confidence gating, and
+domain-specific recency rules described in old ADRs or changelog entries are
+historical unless a current file above implements them.</p>
+<p>Do not copy a historical pattern into a new workflow without rechecking its
+data contract, stopping conditions, provider calls, and tests.</p>
 
 
 
@@ -3649,7 +3673,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

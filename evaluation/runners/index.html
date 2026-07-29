@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="BatchRunner, StreamingRunner, and AsyncStreamingRunner — when to use each, constructor options, return types, and code examples.">
+        <meta name="description" content="Run evaluator functions in batches, streams, or bounded async streams.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Evaluation Runners - Agentic Runtime Platform</title>
+        <title>Evaluation runners - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Evaluation Runners - Agentic Runtime Platform" />
-<meta property="og:description" content="BatchRunner, StreamingRunner, and AsyncStreamingRunner — when to use each, constructor options, return types, and code examples." />
+<meta property="og:title" content="Evaluation runners - Agentic Runtime Platform" />
+<meta property="og:description" content="Run evaluator functions in batches, streams, or bounded async streams." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/runners.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/runners/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Evaluation Runners - Agentic Runtime Platform" />
-<meta property="twitter:description" content="BatchRunner, StreamingRunner, and AsyncStreamingRunner — when to use each, constructor options, return types, and code examples." />
+<meta property="twitter:title" content="Evaluation runners - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Run evaluator functions in batches, streams, or bounded async streams." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/runners.png" />
 </head>
   
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Evaluation Runners
+              Evaluation runners
             
           </span>
         </div>
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1782,10 +1812,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#choosing-a-runner" class="md-nav__link">
+  <a href="#choose-a-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Choosing a runner
+        Choose a runner
       
     </span>
   </a>
@@ -1793,226 +1823,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#batchrunner" class="md-nav__link">
+  <a href="#batch-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BatchRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="BatchRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-method" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run() method
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#batchresultr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BatchResult[R]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run_batch_evaluation-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run_batch_evaluation() function
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#streamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StreamingRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="StreamingRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-method_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run() method
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#iter_results-generator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        iter_results() generator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#streamingstats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StreamingStats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run_streaming_evaluation-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run_streaming_evaluation() function
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#asyncstreamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AsyncStreamingRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AsyncStreamingRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#iter_results-async-iterator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        iter_results() async iterator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#error-handling-discriminated-union" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error handling: discriminated union
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error handling patterns
+        Batch runner
       
     </span>
   </a>
@@ -2020,49 +1834,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#runner-internals" class="md-nav__link">
+  <a href="#synchronous-streaming-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runner internals
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Runner internals">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#concurrency-model-asyncstreamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Concurrency model (AsyncStreamingRunner)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#thread-safety" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Thread safety
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-with-reporters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with reporters
+        Synchronous streaming runner
       
     </span>
   </a>
@@ -2070,10 +1845,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cli-integration" class="md-nav__link">
+  <a href="#asynchronous-streaming-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI integration
+        Asynchronous streaming runner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI
       
     </span>
   </a>
@@ -2427,6 +2235,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2524,6 +2336,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2834,6 +2702,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2894,6 +2766,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3081,10 +3009,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#choosing-a-runner" class="md-nav__link">
+  <a href="#choose-a-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Choosing a runner
+        Choose a runner
       
     </span>
   </a>
@@ -3092,226 +3020,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#batchrunner" class="md-nav__link">
+  <a href="#batch-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BatchRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="BatchRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-method" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run() method
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#batchresultr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BatchResult[R]
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run_batch_evaluation-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run_batch_evaluation() function
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#streamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StreamingRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="StreamingRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-method_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run() method
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#iter_results-generator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        iter_results() generator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#streamingstats" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StreamingStats
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run_streaming_evaluation-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        run_streaming_evaluation() function
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#asyncstreamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AsyncStreamingRunner
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="AsyncStreamingRunner">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#iter_results-async-iterator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        iter_results() async iterator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#error-handling-discriminated-union" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error handling: discriminated union
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-examples_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code examples
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Error handling patterns
+        Batch runner
       
     </span>
   </a>
@@ -3319,49 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#runner-internals" class="md-nav__link">
+  <a href="#synchronous-streaming-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Runner internals
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Runner internals">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#concurrency-model-asyncstreamingrunner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Concurrency model (AsyncStreamingRunner)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#thread-safety" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Thread safety
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-with-reporters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration with reporters
+        Synchronous streaming runner
       
     </span>
   </a>
@@ -3369,10 +3042,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cli-integration" class="md-nav__link">
+  <a href="#asynchronous-streaming-runner" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI integration
+        Asynchronous streaming runner
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reporting-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reporting results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI
       
     </span>
   </a>
@@ -3427,517 +3133,183 @@
 
 
 <h1 id="evaluation-runners">Evaluation runners<a class="headerlink" href="#evaluation-runners" title="Permanent link">&para;</a></h1>
-<p>The <code>agentic-v2-eval</code> package provides three runner classes for executing evaluation functions over collections of test cases. Each runner wraps a caller-supplied <code>evaluator</code> function, handles errors, and delivers results in a different model: batch-at-once, sync-streaming, or async-concurrent.</p>
-<p>All three runners are generic over the test case type <code>T</code> and the result type <code>R</code>, and accept any callable <code>(T) -&gt; R</code> as the evaluator.</p>
-<hr />
-<h2 id="choosing-a-runner">Choosing a runner<a class="headerlink" href="#choosing-a-runner" title="Permanent link">&para;</a></h2>
+<p>An evaluation runner applies a caller-supplied function to a collection of test
+cases. Runners handle iteration, progress, and errors. They do not choose a
+rubric or decide whether a score passes.</p>
+<h2 id="choose-a-runner">Choose a runner<a class="headerlink" href="#choose-a-runner" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Concern</th>
-<th>BatchRunner</th>
-<th>StreamingRunner</th>
-<th>AsyncStreamingRunner</th>
+<th>Runner</th>
+<th>Evaluator type</th>
+<th>Result delivery</th>
+<th>Concurrency</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>When you need all results before continuing</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
+<td><code>BatchRunner</code></td>
+<td>Synchronous</td>
+<td>One <code>BatchResult</code> after all cases</td>
+<td>Sequential</td>
 </tr>
 <tr>
-<td>When you want results as they arrive</td>
-<td>No</td>
-<td>Yes</td>
-<td>Yes</td>
+<td><code>StreamingRunner</code></td>
+<td>Synchronous</td>
+<td>Callback or iterator as cases finish</td>
+<td>Sequential</td>
 </tr>
 <tr>
-<td>When your evaluator is I/O-bound (LLM calls)</td>
-<td>Poor fit</td>
-<td>Poor fit</td>
-<td>Best fit</td>
-</tr>
-<tr>
-<td>When your evaluator is CPU-bound or fast</td>
-<td>Good</td>
-<td>Good</td>
-<td>Adds overhead</td>
-</tr>
-<tr>
-<td>When you need bounded concurrency</td>
-<td>No</td>
-<td>No</td>
-<td>Yes (semaphore)</td>
-</tr>
-<tr>
-<td>When your evaluator is async</td>
-<td>No</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>API complexity</td>
-<td>Low</td>
-<td>Medium</td>
-<td>High</td>
+<td><code>AsyncStreamingRunner</code></td>
+<td>Synchronous or asynchronous</td>
+<td>Async iterator as cases finish</td>
+<td>Bounded; default <code>5</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Rule of thumb:</strong> Use <code>BatchRunner</code> for small offline suites where you post-process all results together. Use <code>StreamingRunner</code> for live progress display with a synchronous evaluator. Use <code>AsyncStreamingRunner</code> whenever the evaluator issues network calls (LLM providers, APIs) and you want to saturate available parallelism without blocking.</p>
-<hr />
-<h2 id="batchrunner">BatchRunner<a class="headerlink" href="#batchrunner" title="Permanent link">&para;</a></h2>
-<p><code>BatchRunner[T, R]</code> runs all test cases sequentially and returns a single <code>BatchResult[R]</code> when the entire batch is complete.</p>
-<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
+<p><code>BatchRunner</code> and <code>StreamingRunner</code> are exported from
+<code>agentic_v2_eval.runners</code>. <code>AsyncStreamingRunner</code> currently requires a direct
+import from <code>agentic_v2_eval.runners.streaming</code>.</p>
+<h2 id="batch-runner">Batch runner<a class="headerlink" href="#batch-runner" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">my_eval_func</span><span class="p">,</span>        <span class="c1"># Callable[[T], R] — required</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">on_progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>              <span class="c1"># Callable[[int, int], None] | None</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">on_error</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>                 <span class="c1"># Callable[[int, T, Exception], None] | None</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>        <span class="c1"># bool — default True</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">cases</span> <span class="o">=</span> <span class="p">[</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="p">{</span><span class="s2">&quot;actual&quot;</span><span class="p">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">:</span> <span class="s2">&quot;A&quot;</span><span class="p">},</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="p">{</span><span class="s2">&quot;actual&quot;</span><span class="p">:</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;expected&quot;</span><span class="p">:</span> <span class="s2">&quot;C&quot;</span><span class="p">},</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">]</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">evaluate_case</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;matches&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;actual&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;expected&quot;</span><span class="p">]}</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">evaluate_case</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">on_progress</span><span class="o">=</span><span class="k">lambda</span> <span class="n">current</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="p">)</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">batch</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cases</span><span class="p">)</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">results</span><span class="p">)</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="nb">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">success_rate</span><span class="p">)</span>
 </span></code></pre></div>
+<p><code>BatchResult</code> contains:</p>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
+<th>Field</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>evaluator</code></td>
-<td><code>Callable[[T], R]</code></td>
-<td>required</td>
-<td>Function to evaluate one test case</td>
+<td><code>results</code></td>
+<td>Successful evaluator return values</td>
 </tr>
 <tr>
-<td><code>on_progress</code></td>
-<td><code>Callable[[int, int], None] \| None</code></td>
-<td><code>None</code></td>
-<td>Called after each case as <code>(current, total)</code></td>
+<td><code>errors</code></td>
+<td><code>(case_index, exception)</code> pairs</td>
 </tr>
 <tr>
-<td><code>on_error</code></td>
-<td><code>Callable[[int, T, Exception], None] \| None</code></td>
-<td><code>None</code></td>
-<td>Called on exception as <code>(index, test_case, error)</code></td>
+<td><code>total</code></td>
+<td>Submitted cases</td>
 </tr>
 <tr>
-<td><code>continue_on_error</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-<td>If <code>False</code>, re-raises the first exception and halts</td>
+<td><code>successful</code></td>
+<td>Calls that returned without an exception</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td>Calls that raised</td>
+</tr>
+<tr>
+<td><code>success_rate</code></td>
+<td><code>successful / total</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="run-method"><code>run()</code> method<a class="headerlink" href="#run-method" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">result</span><span class="p">:</span> <span class="n">BatchResult</span><span class="p">[</span><span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
+<p><code>success_rate</code> measures runner completion. It does not measure answer quality.</p>
+<p>The constructor accepts:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">BatchRunner</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">evaluator</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">on_progress</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">on_error</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
 </span></code></pre></div>
-<p>The <code>run()</code> method accepts a <code>list[T]</code> and blocks until every test case is processed.</p>
-<h3 id="batchresultr"><code>BatchResult[R]</code><a class="headerlink" href="#batchresultr" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nd">@dataclass</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BatchResult</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">R</span><span class="p">]):</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">R</span><span class="p">]</span>                    <span class="c1"># Successfully computed results</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">]]</span> <span class="c1"># (index, exception) for each failure</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">total</span><span class="p">:</span> <span class="nb">int</span>                          <span class="c1"># Total cases submitted</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">successful</span><span class="p">:</span> <span class="nb">int</span>                     <span class="c1"># Cases that completed without error</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">failed</span><span class="p">:</span> <span class="nb">int</span>                         <span class="c1"># Cases that raised an exception</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">success_rate</span><span class="p">:</span> <span class="nb">float</span>                 <span class="c1"># successful / total (property)</span>
+<p>With <code>continue_on_error=False</code>, the first evaluator exception is raised.</p>
+<p>For a result list without statistics, use:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_batch_evaluation</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">run_batch_evaluation</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">evaluate_case</span><span class="p">)</span>
 </span></code></pre></div>
-<h3 id="run_batch_evaluation-function"><code>run_batch_evaluation()</code> function<a class="headerlink" href="#run_batch_evaluation-function" title="Permanent link">&para;</a></h3>
-<p>A simpler function interface that returns only the successful results:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_batch_evaluation</span>
+<h2 id="synchronous-streaming-runner">Synchronous streaming runner<a class="headerlink" href="#synchronous-streaming-runner" title="Permanent link">&para;</a></h2>
+<p>Use <code>StreamingRunner</code> when the input may be an iterator or the caller should
+receive each result immediately:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamingRunner</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">R</span><span class="p">]</span> <span class="o">=</span> <span class="n">run_batch_evaluation</span><span class="p">(</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">test_cases</span><span class="o">=</span><span class="n">test_cases</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">my_eval_func</span><span class="p">,</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">evaluate_case</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">on_result</span><span class="o">=</span><span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">),</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">on_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">case</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">error</span><span class="p">),</span>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cases</span><span class="p">)</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">processed</span><span class="p">,</span> <span class="n">stats</span><span class="o">.</span><span class="n">successful</span><span class="p">,</span> <span class="n">stats</span><span class="o">.</span><span class="n">failed</span><span class="p">)</span>
 </span></code></pre></div>
-<h3 id="code-examples">Code examples<a class="headerlink" href="#code-examples" title="Permanent link">&para;</a></h3>
-<p><strong>Basic batch run with progress bar:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">QualityEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">eval_one</span><span class="p">(</span><span class="n">test_case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">definition</span><span class="o">=</span><span class="n">COHERENCE</span><span class="p">,</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]},</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">output</span><span class="o">=</span><span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">],</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="p">)</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="s2">&quot;coherence&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">}</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="n">on_progress</span><span class="o">=</span><span class="k">lambda</span> <span class="n">current</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">current</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span><span class="p">),</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="n">on_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">idx</span><span class="p">,</span> <span class="n">tc</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Failed </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">)</span>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Done: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">successful</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">total</span><span class="si">}</span><span class="s2"> passed (</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">success_rate</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">exc</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
-</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Error at index </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<p>To consume results as an iterator:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">cases</span><span class="p">):</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </span></code></pre></div>
-<p><strong>Fail-fast mode for CI validation:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># raises on first failure</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">)</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Evaluation aborted: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<p><code>iter_results()</code> yields successful results. It logs and skips evaluator errors
+when <code>continue_on_error=True</code>.</p>
+<h2 id="asynchronous-streaming-runner">Asynchronous streaming runner<a class="headerlink" href="#asynchronous-streaming-runner" title="Permanent link">&para;</a></h2>
+<p>Use the async runner for network-bound evaluators when concurrent calls are
+safe:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncStreamingRunner</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_remote</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">case</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="s2">&quot;complete&quot;</span><span class="p">}</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="n">evaluator</span><span class="o">=</span><span class="n">evaluate_remote</span><span class="p">,</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="p">)</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>        <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;b&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;c&quot;</span><span class="p">}]</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="p">):</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </span></code></pre></div>
-<p><strong>Generating a report from batch results:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">HtmlReporter</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.markdown</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarkdownReporter</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">html_reporter</span> <span class="o">=</span> <span class="n">HtmlReporter</span><span class="p">()</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">html_reporter</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;eval_report.html&quot;</span><span class="p">)</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">md_reporter</span> <span class="o">=</span> <span class="n">MarkdownReporter</span><span class="p">()</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">md_reporter</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;eval_report.md&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="streamingrunner">StreamingRunner<a class="headerlink" href="#streamingrunner" title="Permanent link">&para;</a></h2>
-<p><code>StreamingRunner[T, R]</code> iterates over test cases sequentially but delivers results immediately via a callback or a generator. Results are available before the full batch completes, which suits long-running evaluations where the caller wants to display progress or write partial output to disk.</p>
-<h3 id="constructor_1">Constructor<a class="headerlink" href="#constructor_1" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamingRunner</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">my_eval_func</span><span class="p">,</span>     <span class="c1"># Callable[[T], R] — required</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">on_result</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>             <span class="c1"># Callable[[R], None] | None</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">on_error</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>              <span class="c1"># Callable[[T, Exception], None] | None</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>     <span class="c1"># bool</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="p">)</span>
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>evaluator</code></td>
-<td><code>Callable[[T], R]</code></td>
-<td>required</td>
-<td>Function to evaluate one test case</td>
-</tr>
-<tr>
-<td><code>on_result</code></td>
-<td><code>Callable[[R], None] \| None</code></td>
-<td><code>None</code></td>
-<td>Callback invoked immediately after each successful result</td>
-</tr>
-<tr>
-<td><code>on_error</code></td>
-<td><code>Callable[[T, Exception], None] \| None</code></td>
-<td><code>None</code></td>
-<td>Callback invoked for each failure, with the test case and exception</td>
-</tr>
-<tr>
-<td><code>continue_on_error</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-<td>If <code>False</code>, re-raises on first exception</td>
-</tr>
-</tbody>
-</table>
-<h3 id="run-method_1"><code>run()</code> method<a class="headerlink" href="#run-method_1" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">stats</span><span class="p">:</span> <span class="n">StreamingStats</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Iterates all test cases to completion, invoking <code>on_result</code> and <code>on_error</code> as results arrive. Returns <code>StreamingStats</code> when done.</p>
-<h3 id="iter_results-generator"><code>iter_results()</code> generator<a class="headerlink" href="#iter_results-generator" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">process</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span></code></pre></div>
-<p>A generator alternative that yields each result as it is produced. Errors are swallowed (with a log warning) when <code>continue_on_error=True</code>, or re-raised when <code>False</code>. Suitable for pipeline-style processing where the caller controls the loop.</p>
-<h3 id="streamingstats"><code>StreamingStats</code><a class="headerlink" href="#streamingstats" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@dataclass</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">StreamingStats</span><span class="p">:</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">processed</span><span class="p">:</span> <span class="nb">int</span>    <span class="c1"># Total cases seen so far</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">successful</span><span class="p">:</span> <span class="nb">int</span>   <span class="c1"># Cases that completed without error</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">failed</span><span class="p">:</span> <span class="nb">int</span>       <span class="c1"># Cases that raised an exception</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">success_rate</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># successful / processed (property)</span>
-</span></code></pre></div>
-<h3 id="run_streaming_evaluation-function"><code>run_streaming_evaluation()</code> function<a class="headerlink" href="#run_streaming_evaluation-function" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_streaming_evaluation</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">run_streaming_evaluation</span><span class="p">(</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">test_cases</span><span class="o">=</span><span class="n">test_cases</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">my_eval_func</span><span class="p">,</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">callback</span><span class="o">=</span><span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">),</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span>
-</span></code></pre></div>
-<h3 id="code-examples_1">Code examples<a class="headerlink" href="#code-examples_1" title="Permanent link">&para;</a></h3>
-<p><strong>Writing results to JSONL as they arrive:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamingRunner</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">results_path</span> <span class="o">=</span> <span class="s2">&quot;results.jsonl&quot;</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span>
-</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>        <span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span>
-</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>        <span class="n">on_result</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">),</span>
-</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>        <span class="n">on_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error on </span><span class="si">{</span><span class="n">tc</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
-</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    <span class="p">)</span>
-</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>    <span class="n">stats</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
-</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote </span><span class="si">{</span><span class="n">stats</span><span class="o">.</span><span class="n">successful</span><span class="si">}</span><span class="s2"> results to </span><span class="si">{</span><span class="n">results_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Generator-style pipeline:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamingRunner</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span> <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
-</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="n">passing</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">failing</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>
-</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>    <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.7</span><span class="p">:</span>
-</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>        <span class="n">passing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="n">failing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
-</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Passing: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">passing</span><span class="p">)</span><span class="si">}</span><span class="s2">, Failing: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failing</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Live dashboard display:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">StreamingRunner</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="n">totals</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pass&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;fail&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_result</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">totals</span><span class="p">[</span><span class="s2">&quot;pass&quot;</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;passed&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="s2">&quot;fail&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">Pass: </span><span class="si">{</span><span class="n">totals</span><span class="p">[</span><span class="s1">&#39;pass&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  Fail: </span><span class="si">{</span><span class="n">totals</span><span class="p">[</span><span class="s1">&#39;fail&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
-</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span> <span class="n">on_result</span><span class="o">=</span><span class="n">on_result</span><span class="p">)</span>
-</span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="nb">print</span><span class="p">()</span>  <span class="c1"># newline after carriage-return updates</span>
-</span></code></pre></div>
-<hr />
-<h2 id="asyncstreamingrunner">AsyncStreamingRunner<a class="headerlink" href="#asyncstreamingrunner" title="Permanent link">&para;</a></h2>
-<p><code>AsyncStreamingRunner[T, R]</code> runs evaluations concurrently using asyncio tasks, bounded by a semaphore. Results are yielded via an <code>AsyncIterator</code> as each task completes. This is the correct runner for evaluators that call external LLM APIs, where waiting on I/O serially is a throughput bottleneck.</p>
-<h3 id="constructor_2">Constructor<a class="headerlink" href="#constructor_2" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncStreamingRunner</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">async_eval_func</span><span class="p">,</span>  <span class="c1"># Callable[[T], R | Awaitable[R]] — required</span>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">on_result</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>             <span class="c1"># Callable[[R], None] | None</span>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>     <span class="c1"># bool</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>          <span class="c1"># int — default 5</span>
-</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="p">)</span>
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>evaluator</code></td>
-<td><code>Callable[[T], R \| Awaitable[R]]</code></td>
-<td>required</td>
-<td>Sync or async function; detected via <code>inspect.isawaitable</code> at call time</td>
-</tr>
-<tr>
-<td><code>on_result</code></td>
-<td><code>Callable[[R], None] \| None</code></td>
-<td><code>None</code></td>
-<td>Sync callback invoked after each successful result</td>
-</tr>
-<tr>
-<td><code>continue_on_error</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-<td>If <code>False</code>, re-raises on first error</td>
-</tr>
-<tr>
-<td><code>max_concurrency</code></td>
-<td><code>int</code></td>
-<td><code>5</code></td>
-<td>Maximum tasks running concurrently; clamped to <code>max(1, value)</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="iter_results-async-iterator"><code>iter_results()</code> async iterator<a class="headerlink" href="#iter_results-async-iterator" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">process</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span></code></pre></div>
-<p><code>iter_results()</code> accepts sync lists, sync iterators, or async iterators. It creates up to <code>max_concurrency</code> tasks at once and drains completed tasks using <code>asyncio.FIRST_COMPLETED</code> before accepting new ones, ensuring the queue never grows beyond <code>max_concurrency</code>.</p>
-<h3 id="error-handling-discriminated-union">Error handling: discriminated union<a class="headerlink" href="#error-handling-discriminated-union" title="Permanent link">&para;</a></h3>
-<p>Internally, each task returns a discriminated union:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nb">tuple</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span> <span class="n">R</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">],</span> <span class="ne">Exception</span><span class="p">]</span>
-</span></code></pre></div>
-<p>The first element is a boolean tag. When <code>True</code>, the second element is the result <code>R</code>. When <code>False</code>, it is the exception. This eliminates <code>isinstance</code> checks and produces a precise type narrowing that mypy and pyright can verify statically.</p>
-<p>The runner handles errors transparently: failed tasks emit a <code>WARNING</code> log and are either re-raised (when <code>continue_on_error=False</code>) or silently skipped (when <code>True</code>), without interrupting the in-flight tasks.</p>
-<h3 id="code-examples_2">Code examples<a class="headerlink" href="#code-examples_2" title="Permanent link">&para;</a></h3>
-<p><strong>Async evaluator with LLM calls:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.streaming</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncStreamingRunner</span>
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_eval</span><span class="p">(</span><span class="n">test_case</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    <span class="c1"># Calls an async LLM client directly</span>
-</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm_client</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
-</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>        <span class="n">prompt</span><span class="o">=</span><span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;prompt&quot;</span><span class="p">],</span>
-</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;anthropic:claude-3-5-haiku&quot;</span><span class="p">,</span>
-</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="p">)</span>
-</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">response</span><span class="p">,</span> <span class="s2">&quot;passed&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
-</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>
-</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_evaluation</span><span class="p">():</span>
-</span><span id="__span-18-13"><a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>    <span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span>
-</span><span id="__span-18-14"><a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>        <span class="n">evaluator</span><span class="o">=</span><span class="n">async_eval</span><span class="p">,</span>
-</span><span id="__span-18-15"><a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>        <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-18-16"><a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>        <span class="n">on_result</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">&#39;PASS&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;passed&#39;</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;FAIL&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
-</span><span id="__span-18-17"><a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>    <span class="p">)</span>
-</span><span id="__span-18-18"><a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>
-</span><span id="__span-18-19"><a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-18-20"><a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-18-21"><a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-18-22"><a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a>
-</span><span id="__span-18-23"><a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a>    <span class="n">passed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;passed&quot;</span><span class="p">])</span>
-</span><span id="__span-18-24"><a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Total: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2">, Passed: </span><span class="si">{</span><span class="n">passed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-18-25"><a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a>    <span class="k">return</span> <span class="n">results</span>
-</span><span id="__span-18-26"><a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a>
-</span><span id="__span-18-27"><a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">run_evaluation</span><span class="p">())</span>
-</span></code></pre></div>
-<p><strong>Sync evaluator with async runner (auto-detected):</strong></p>
-<p>The runner accepts sync callables transparently. <code>inspect.isawaitable</code> is called on the return value, not the function itself. Sync evaluators run to completion under the semaphore without special setup.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_with_sync_eval</span><span class="p">():</span>
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span>
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>        <span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span>   <span class="c1"># sync callable — works fine</span>
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>        <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>    <span class="p">)</span>
-</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="k">return</span> <span class="n">results</span>
-</span></code></pre></div>
-<p><strong>Controlling concurrency for rate-limited APIs:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># OpenAI tier-1 limit: 500 RPM → ~8 RPS</span>
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># Set max_concurrency conservatively to stay under quota</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">async_eval</span><span class="p">,</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>  <span class="c1"># conservative for rate-limited endpoints</span>
-</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">continue_on_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="p">)</span>
-</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>
-</span><span id="__span-20-9"><a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="__span-20-10"><a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
-</span><span id="__span-20-11"><a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>        <span class="n">save_result</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-20-12"><a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
-</span><span id="__span-20-13"><a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
-</span></code></pre></div>
-<p><strong>Reading from an async source:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_test_case_source</span><span class="p">():</span>
-</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">database</span><span class="o">.</span><span class="n">stream_records</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="s2">&quot;eval_cases&quot;</span><span class="p">):</span>
-</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>        <span class="k">yield</span> <span class="n">record</span>
-</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
-</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">AsyncStreamingRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">async_eval</span><span class="p">,</span> <span class="n">max_concurrency</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
-</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    <span class="k">async</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">async_test_case_source</span><span class="p">()):</span>
-</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="error-handling-patterns">Error handling patterns<a class="headerlink" href="#error-handling-patterns" title="Permanent link">&para;</a></h2>
-<p>All three runners follow the same <code>continue_on_error</code> contract:</p>
+<p>The runner accepts a normal iterable or an async iterable. Results are yielded
+in completion order, which may differ from input order.</p>
+<h2 id="error-behavior">Error behavior<a class="headerlink" href="#error-behavior" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>continue_on_error=True</code> (default): Exceptions are caught, logged at <code>WARNING</code> level, recorded in <code>BatchResult.errors</code> or skipped in streaming modes. Remaining test cases still execute.</li>
-<li><code>continue_on_error=False</code>: The first exception is re-raised immediately, aborting the run. Use this in CI contexts where any failure should be a hard stop.</li>
+<li><code>continue_on_error=True</code> records or skips a failed case and continues.</li>
+<li><code>continue_on_error=False</code> raises the first observed evaluator exception.</li>
+<li>Callbacks run in the same process as the evaluator. Keep them fast and avoid
+  modifying shared state without synchronization.</li>
+<li>A process interruption can leave a partial result set. Persist results in an
+  <code>on_result</code> callback when partial recovery matters.</li>
 </ul>
-<p><strong>Inspecting errors after a batch run:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
-</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">failed</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">failed</span><span class="si">}</span><span class="s2"> evaluation(s) failed:&quot;</span><span class="p">)</span>
-</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">exc</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
-</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<h2 id="reporting-results">Reporting results<a class="headerlink" href="#reporting-results" title="Permanent link">&para;</a></h2>
+<p>Reporters accept a list of dictionaries:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarkdownReporter</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">MarkdownReporter</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;evaluation-report.md&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<p><strong>Per-error side effects in streaming:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">failed_cases</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
-</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">StreamingRunner</span><span class="p">(</span>
-</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>    <span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">,</span>
-</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="n">on_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tc</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="n">failed_cases</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;case&quot;</span><span class="p">:</span> <span class="n">tc</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}),</span>
-</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="p">)</span>
-</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-23-8"><a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>
-</span><span id="__span-23-9"><a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">if</span> <span class="n">failed_cases</span><span class="p">:</span>
-</span><span id="__span-23-10"><a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-</span><span id="__span-23-11"><a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;failed_cases.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-</span><span id="__span-23-12"><a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">failed_cases</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<p>If an evaluator returns dataclasses such as <code>StandardScore</code> or <code>PatternScore</code>,
+call <code>to_dict()</code> before passing them to a reporter.</p>
+<h2 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h2>
+<p>The CLI scores existing JSON data; it does not expose these runner classes:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">agentic-v2-eval</span> <span class="n">evaluate</span> <span class="p">.\</span><span class="n">results</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">scored</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">agentic-v2-eval</span> <span class="n">report</span> <span class="p">.\</span><span class="n">scored</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-format</span> <span class="n">html</span> <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">report</span><span class="p">.</span><span class="n">html</span>
 </span></code></pre></div>
-<hr />
-<h2 id="runner-internals">Runner internals<a class="headerlink" href="#runner-internals" title="Permanent link">&para;</a></h2>
-<h3 id="concurrency-model-asyncstreamingrunner">Concurrency model (AsyncStreamingRunner)<a class="headerlink" href="#concurrency-model-asyncstreamingrunner" title="Permanent link">&para;</a></h3>
-<p>The async runner implements a bounded producer-consumer pattern:</p>
-<ol>
-<li>Test cases are consumed one at a time from the input source via an internal <code>_aiter_cases()</code> adapter that normalises sync and async iterables.</li>
-<li>For each test case, an <code>asyncio.Task</code> wrapping <code>_eval_one()</code> is created and added to a <code>pending</code> set.</li>
-<li>When <code>len(pending) &gt;= max_concurrency</code>, the runner calls <code>asyncio.wait(pending, return_when=FIRST_COMPLETED)</code> to drain exactly the tasks that have finished before accepting more input.</li>
-<li>After the input source is exhausted, the runner drains all remaining pending tasks in the same loop.</li>
-</ol>
-<p>This ensures <code>pending</code> never exceeds <code>max_concurrency</code> tasks, limiting both memory usage and concurrency pressure on external services.</p>
-<h3 id="thread-safety">Thread safety<a class="headerlink" href="#thread-safety" title="Permanent link">&para;</a></h3>
-<p><code>BatchRunner</code> and <code>StreamingRunner</code> are not thread-safe. Each instance should be used from a single thread. <code>AsyncStreamingRunner</code> is safe within a single event loop but should not be shared across threads.</p>
-<hr />
-<h2 id="integration-with-reporters">Integration with reporters<a class="headerlink" href="#integration-with-reporters" title="Permanent link">&para;</a></h2>
-<p>All runners produce results compatible with the reporter classes:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JsonReporter</span>
-</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.markdown</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarkdownReporter</span>
-</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">HtmlReporter</span>
-</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
-</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
-</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="c1"># JSON report</span>
-</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="n">JsonReporter</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;report.json&quot;</span><span class="p">)</span>
-</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>
-</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="c1"># Markdown report (truncates to 100 rows by default)</span>
-</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="n">MarkdownReporter</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;report.md&quot;</span><span class="p">)</span>
-</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>
-</span><span id="__span-24-14"><a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="c1"># HTML report (self-contained, includes inline CSS)</span>
-</span><span id="__span-24-15"><a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="n">HtmlReporter</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;report.html&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>For streaming runs, collect results into a list first:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">StreamingRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">eval_one</span><span class="p">)</span><span class="o">.</span><span class="n">iter_results</span><span class="p">(</span><span class="n">test_cases</span><span class="p">))</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="n">HtmlReporter</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;report.html&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="cli-integration">CLI integration<a class="headerlink" href="#cli-integration" title="Permanent link">&para;</a></h2>
-<p>The <code>agentic_v2_eval</code> CLI uses <code>BatchRunner</code> internally:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Evaluate a results file using the default rubric</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
-</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Generate an HTML report from a previous evaluation</span>
-</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>results.json<span class="w"> </span>--format<span class="w"> </span>html
-</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
-</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="c1"># Evaluate with a custom output path</span>
-</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json<span class="w"> </span>-o<span class="w"> </span>scored_results.json
-</span></code></pre></div>
-<p>The CLI <code>evaluate</code> subcommand accepts either a JSON array or a <code>{"results": [...]}</code> envelope. The <code>report</code> subcommand accepts the output of <code>evaluate</code> and generates a report in <code>json</code>, <code>markdown</code>, or <code>html</code> format.</p>
+<p>See the <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-v2-eval/README.md">evaluation package
+README</a>
+for the input format and exit codes.</p>
 
 
 
@@ -3960,7 +3332,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

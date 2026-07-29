@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Migrations - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/MIGRATIONS.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/MIGRATIONS/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Migrations - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/MIGRATIONS.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2790,6 +2880,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2850,6 +2944,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3326,9 +3476,7 @@
 
 <h1 id="migrations">Migrations<a class="headerlink" href="#migrations" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Audience:</strong> Contributors resolving build breaks after pulling <code>main</code>, and downstream consumers of this repo's packages.
-<strong>Outcome:</strong> After reading, you know which imports broke, what replaces them, and whether any code change is required.
-<strong>Last verified:</strong> 2026-07-05</p>
+<p><strong>Last verified against the repository:</strong> 2026-07-28</p>
 </blockquote>
 <p>This document tracks breaking changes since v0.3.0. One entry per migration, newest first. Every entry names what broke, how to detect the break, and the exact replacement path. If a migration is additive-only and safe, it does not belong here — note it in <code>CHANGELOG.md</code> instead.</p>
 <hr />
@@ -3338,7 +3486,10 @@
 <h3 id="what-breaks">What breaks<a class="headerlink" href="#what-breaks" title="Permanent link">&para;</a></h3>
 <p>Deployments that set <code>AGENTIC_SANITIZER_FAIL_OPEN=true</code> or <code>AGENTIC_SANITIZER_FAIL_OPEN=yes</code> silently switch to fail-closed behavior: requests are rejected with HTTP 503 when the sanitizer is unavailable and HTTP 500 on sanitizer errors, instead of passing through unsanitized.</p>
 <h3 id="replacement">Replacement<a class="headerlink" href="#replacement" title="Permanent link">&para;</a></h3>
-<p>Update deployment scripts to <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> (and only for debugging — never in production). Full variable documentation: <a href="../configuration/#agentic_sanitizer_fail_open--breaking-change"><code>configuration.md</code></a>.</p>
+<p>Update deployment scripts to <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> only when
+deliberately debugging fail-open behavior. Do not use it on an exposed
+deployment. See
+<a href="../configuration/#file-shell-http-and-mcp-boundaries">Configuration</a>.</p>
 <hr />
 <h2 id="2-presentation-system-extracted-to-standalone-repo-2026-04-22">2. <code>presentation/</code> system extracted to standalone repo (2026-04-22)<a class="headerlink" href="#2-presentation-system-extracted-to-standalone-repo-2026-04-22" title="Permanent link">&para;</a></h2>
 <h3 id="what-changed_1">What changed<a class="headerlink" href="#what-changed_1" title="Permanent link">&para;</a></h3>
@@ -3356,20 +3507,26 @@
 <p><strong>Imports referencing <code>presentation/…</code></strong> from any tool, script, or doc in this repo will fail. There were no runtime imports from the core packages into <code>presentation/</code>, so <code>agentic-workflows-v2</code>, <code>agentic-v2-eval</code>, and <code>tools</code> are unaffected.</p>
 </li>
 <li>
-<p><strong>Docs that referenced deck or theme concepts.</strong> Any doc that linked into <code>presentation/</code>, referenced <code>raw-themes/</code>, or described a deck layout family (<code>verge-pop</code>, <code>engineering</code>, <code>onboarding</code>, <code>handbook</code>, etc.) is stale with respect to the new structure. The stale-docs audit (see <a href="../ROADMAP/"><code>ROADMAP.md</code></a>) is sweeping these; if you land before it does, delete or fix as you find them.</p>
+<p><strong>Docs that referenced deck or theme concepts.</strong> Any doc that links into
+   <code>presentation/</code>, references <code>raw-themes/</code>, or describes the removed deck
+   system is stale. The active documentation sweep is complete; new
+   references should fail review.</p>
 </li>
 <li>
 <p><strong>Tokens and components previously available under <code>presentation/src/tokens/</code></strong> are no longer importable from here. If you need slide tokens or layouts, pull them from the new repo.</p>
 </li>
 </ol>
 <h3 id="how-to-detect-the-break">How to detect the break<a class="headerlink" href="#how-to-detect-the-break" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Returns paths if any stale reference remains</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># (this file documents the migration, so it is excluded from its own check)</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>grep<span class="w"> </span>-rn<span class="w"> </span><span class="s2">&quot;presentation/&quot;</span><span class="w"> </span>--include<span class="o">=</span><span class="s2">&quot;*.md&quot;</span><span class="w"> </span>--include<span class="o">=</span><span class="s2">&quot;*.py&quot;</span><span class="w"> </span>--include<span class="o">=</span><span class="s2">&quot;*.ts&quot;</span><span class="w"> </span>--include<span class="o">=</span><span class="s2">&quot;*.tsx&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--exclude-dir<span class="o">=</span><span class="s2">&quot;.git&quot;</span><span class="w"> </span>--exclude-dir<span class="o">=</span><span class="s2">&quot;node_modules&quot;</span><span class="w"> </span>--exclude-dir<span class="o">=</span><span class="s2">&quot;dist&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--exclude<span class="o">=</span><span class="s2">&quot;MIGRATIONS.md&quot;</span><span class="w"> </span>.
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c"># Returns active paths if a stale reference remains.</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">rg</span> <span class="n">-n</span> <span class="s2">&quot;presentation/&quot;</span> <span class="p">.</span> <span class="p">`</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  <span class="n">-g</span> <span class="s2">&quot;*.md&quot;</span> <span class="n">-g</span> <span class="s2">&quot;*.py&quot;</span> <span class="n">-g</span> <span class="s2">&quot;*.ts&quot;</span> <span class="n">-g</span> <span class="s2">&quot;*.tsx&quot;</span> <span class="p">`</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  <span class="p">-</span><span class="n">-glob</span> <span class="s2">&quot;!docs/MIGRATIONS.md&quot;</span> <span class="p">`</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  <span class="p">-</span><span class="n">-glob</span> <span class="s2">&quot;!docs/adr/**&quot;</span> <span class="p">`</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  <span class="p">-</span><span class="n">-glob</span> <span class="s2">&quot;!**/node_modules/**&quot;</span> <span class="p">`</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  <span class="p">-</span><span class="n">-glob</span> <span class="s2">&quot;!**/dist/**&quot;</span>
 </span></code></pre></div>
-<p>A clean result is zero matches. As of 2026-04-22 the sweep is in progress; expect isolated stragglers in <code>docs/</code> until the stale-docs audit lands.</p>
+<p>A clean result is zero active matches. Historical changelog or ADR references
+may remain because they record the migration.</p>
 <h3 id="replacement_1">Replacement<a class="headerlink" href="#replacement_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Building a deck:</strong> use the presentation system's new home, a private standalone repository.</li>
@@ -3407,11 +3564,11 @@
 <hr />
 <h2 id="4-event-wire-format-contractseventspy-discriminated-union-2026-04-21">4. Event wire format — <code>contracts/events.py</code> discriminated union (2026-04-21)<a class="headerlink" href="#4-event-wire-format-contractseventspy-discriminated-union-2026-04-21" title="Permanent link">&para;</a></h2>
 <h3 id="what-changed_3">What changed<a class="headerlink" href="#what-changed_3" title="Permanent link">&para;</a></h3>
-<p>Execution events previously were emitted as loosely structured dicts. They are now a Pydantic v2 discriminated union declared in <code>agentic-workflows-v2/agentic_v2/contracts/events.py</code>, covering:</p>
-<ul>
-<li><code>workflow_start</code>, <code>step_start</code>, <code>step_end</code>, <code>step_complete</code>, <code>step_error</code>, <code>workflow_end</code></li>
-<li><code>evaluation_start</code>, <code>evaluation_complete</code></li>
-</ul>
+<p>Execution events previously were emitted as loosely structured dictionaries.
+They are now a Pydantic v2 discriminated union in
+<code>agentic-workflows-v2/agentic_v2/contracts/events.py</code>. The current union
+contains workflow, step, token, error, evaluation, and approval events. Read
+the union instead of copying this list into a consumer.</p>
 <p>Both WebSocket broadcasts (<code>/ws/execution/{run_id}</code>) and SSE streams validate emitted events against this union before sending.</p>
 <ul>
 <li><strong>Commit:</strong> <code>36a60ab feat(contracts): pydantic wire format for execution events</code>.</li>
@@ -3426,9 +3583,16 @@
 <h3 id="replacement_3">Replacement<a class="headerlink" href="#replacement_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Python clients:</strong> import the union and use <code>model_validate</code> / <code>model_dump</code> on messages.</li>
-<li><strong>TypeScript / JS clients:</strong> use the mirrored interfaces in <code>ui/src/api/types.ts</code>. These are kept by hand — see <a href="../KNOWN_LIMITATIONS/"><code>KNOWN_LIMITATIONS.md</code></a> §1.1.</li>
-<li><strong>Evaluation-related fields:</strong> <code>EvaluationCompleteEvent</code> now includes <code>passed</code>, <code>pass_threshold</code>, and a full <code>criteria</code> list (Epic 6 additive extension). Existing code that ignored unknown fields is fine; code that matched on a fixed shape may need updating.</li>
+<li><strong>TypeScript / JS clients:</strong> use the generated interfaces in
+  <code>ui/src/api/events.generated.ts</code> and the other <code>*.generated.ts</code> files.
+  Regenerate them from <code>agentic-workflows-v2</code>:</li>
 </ul>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">scripts</span><span class="p">.</span><span class="n">generate_ts_types</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">ui</span> <span class="n">run</span> <span class="n">generate</span><span class="p">:</span><span class="n">types</span>
+</span></code></pre></div>
+<p>Use <code>python scripts/generate_schemas.py</code> for the broader committed JSON
+  Schema snapshots checked by <code>tests/test_schema_drift.py</code>.
+- <strong>Evaluation-related fields:</strong> <code>EvaluationCompleteEvent</code> now includes <code>passed</code>, <code>pass_threshold</code>, and a full <code>criteria</code> list (Epic 6 additive extension). Existing code that ignored unknown fields is fine; code that matched on a fixed shape may need updating.</p>
 <hr />
 <h2 id="how-this-document-is-maintained">How this document is maintained<a class="headerlink" href="#how-this-document-is-maintained" title="Permanent link">&para;</a></h2>
 <ul>
@@ -3459,7 +3623,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

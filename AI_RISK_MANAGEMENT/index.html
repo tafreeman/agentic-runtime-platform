@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="AI risk management - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/AI_RISK_MANAGEMENT.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/AI_RISK_MANAGEMENT/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="AI risk management - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/AI_RISK_MANAGEMENT.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ai-risk-management-framework-alignment" class="md-skip">
+        <a href="#ai-risk-management" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2471,10 +2561,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
+  <a href="#system-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Introduction
+        System boundary
       
     </span>
   </a>
@@ -2482,10 +2572,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#govern-function" class="md-nav__link">
+  <a href="#current-alignment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GOVERN function
+        Current alignment
       
     </span>
   </a>
@@ -2493,55 +2583,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#map-function" class="md-nav__link">
+  <a href="#main-risks-and-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MAP function
+        Main risks and controls
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#measure-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MEASURE function
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manage-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MANAGE function
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gap-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Gap analysis
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Gap analysis">
+    <nav class="md-nav" aria-label="Main risks and controls">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#gap-1-no-formal-threat-model-document" class="md-nav__link">
+  <a href="#incorrect-or-inconsistent-model-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-1: No formal threat model document
+        Incorrect or inconsistent model output
       
     </span>
   </a>
@@ -2549,10 +2606,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-2-no-automated-model-output-monitoring-for-drift-or-behavioral-change" class="md-nav__link">
+  <a href="#prompt-injection-and-unsafe-tool-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-2: No automated model output monitoring for drift or behavioral change
+        Prompt injection and unsafe tool use
       
     </span>
   </a>
@@ -2560,10 +2617,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-3-no-cuifouo-handling-documentation" class="md-nav__link">
+  <a href="#sensitive-data-disclosure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-3: No CUI/FOUO handling documentation
+        Sensitive data disclosure
       
     </span>
   </a>
@@ -2571,10 +2628,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-4-no-formal-authorization-to-operate-ato-boundary-document" class="md-nav__link">
+  <a href="#provider-outage-rate-limit-or-behavior-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-4: No formal Authorization to Operate (ATO) boundary document
+        Provider outage, rate limit, or behavior change
       
     </span>
   </a>
@@ -2582,10 +2639,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-5-eval-framework-implementation-is-substantially-below-proposal" class="md-nav__link">
+  <a href="#retrieval-quality-and-index-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-5: Eval framework implementation is substantially below proposal
+        Retrieval quality and index integrity
       
     </span>
   </a>
@@ -2593,10 +2650,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-6-no-structured-output-enforcement" class="md-nav__link">
+  <a href="#malformed-workflow-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-6: No structured output enforcement
+        Malformed workflow output
       
     </span>
   </a>
@@ -2604,10 +2661,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-7-software-bill-of-materials-was-no-sbom" class="md-nav__link">
+  <a href="#supply-chain-compromise" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-7: Software Bill of Materials (was: no SBOM)
+        Supply-chain compromise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging-metrics-and-audit-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging, metrics, and audit data
       
     </span>
   </a>
@@ -2620,10 +2688,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-other-documents" class="md-nav__link">
+  <a href="#priority-gaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship to other documents
+        Priority gaps
       
     </span>
   </a>
@@ -2631,10 +2699,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#summary-assessment" class="md-nav__link">
+  <a href="#evidence-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary assessment
+        Evidence index
       
     </span>
   </a>
@@ -2693,6 +2761,10 @@
   
     
     
+      
+        
+      
+        
       
         
       
@@ -2766,6 +2838,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2953,10 +3081,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
+  <a href="#system-boundary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Introduction
+        System boundary
       
     </span>
   </a>
@@ -2964,10 +3092,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#govern-function" class="md-nav__link">
+  <a href="#current-alignment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GOVERN function
+        Current alignment
       
     </span>
   </a>
@@ -2975,55 +3103,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#map-function" class="md-nav__link">
+  <a href="#main-risks-and-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MAP function
+        Main risks and controls
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#measure-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MEASURE function
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manage-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MANAGE function
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#gap-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Gap analysis
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Gap analysis">
+    <nav class="md-nav" aria-label="Main risks and controls">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#gap-1-no-formal-threat-model-document" class="md-nav__link">
+  <a href="#incorrect-or-inconsistent-model-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-1: No formal threat model document
+        Incorrect or inconsistent model output
       
     </span>
   </a>
@@ -3031,10 +3126,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-2-no-automated-model-output-monitoring-for-drift-or-behavioral-change" class="md-nav__link">
+  <a href="#prompt-injection-and-unsafe-tool-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-2: No automated model output monitoring for drift or behavioral change
+        Prompt injection and unsafe tool use
       
     </span>
   </a>
@@ -3042,10 +3137,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-3-no-cuifouo-handling-documentation" class="md-nav__link">
+  <a href="#sensitive-data-disclosure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-3: No CUI/FOUO handling documentation
+        Sensitive data disclosure
       
     </span>
   </a>
@@ -3053,10 +3148,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-4-no-formal-authorization-to-operate-ato-boundary-document" class="md-nav__link">
+  <a href="#provider-outage-rate-limit-or-behavior-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-4: No formal Authorization to Operate (ATO) boundary document
+        Provider outage, rate limit, or behavior change
       
     </span>
   </a>
@@ -3064,10 +3159,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-5-eval-framework-implementation-is-substantially-below-proposal" class="md-nav__link">
+  <a href="#retrieval-quality-and-index-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-5: Eval framework implementation is substantially below proposal
+        Retrieval quality and index integrity
       
     </span>
   </a>
@@ -3075,10 +3170,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-6-no-structured-output-enforcement" class="md-nav__link">
+  <a href="#malformed-workflow-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-6: No structured output enforcement
+        Malformed workflow output
       
     </span>
   </a>
@@ -3086,10 +3181,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gap-7-software-bill-of-materials-was-no-sbom" class="md-nav__link">
+  <a href="#supply-chain-compromise" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GAP-7: Software Bill of Materials (was: no SBOM)
+        Supply-chain compromise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logging-metrics-and-audit-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging, metrics, and audit data
       
     </span>
   </a>
@@ -3102,10 +3208,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-other-documents" class="md-nav__link">
+  <a href="#priority-gaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship to other documents
+        Priority gaps
       
     </span>
   </a>
@@ -3113,10 +3219,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#summary-assessment" class="md-nav__link">
+  <a href="#evidence-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Summary assessment
+        Evidence index
       
     </span>
   </a>
@@ -3156,338 +3262,284 @@
   
 
 
-<h1 id="ai-risk-management-framework-alignment">AI risk management framework alignment<a class="headerlink" href="#ai-risk-management-framework-alignment" title="Permanent link">&para;</a></h1>
-<p><strong>Document type:</strong> Engineering alignment artifact<br />
-<strong>Date:</strong> 2026-07-05<br />
-<strong>Scope:</strong> <code>tafreeman/agentic-runtime-platform</code> — multi-agent workflow orchestration platform (v0.3.0)<br />
-<strong>Reference framework:</strong> NIST AI Risk Management Framework 1.0 (January 2023)<br />
-<strong>Status:</strong> Living document — updated with each major release</p>
-<blockquote>
-<p><strong>Disclaimer:</strong> This document is an engineering alignment artifact, not a formal NIST AI RMF assessment or Authorization to Operate (ATO) package. It maps existing engineering governance practices to AI RMF sub-categories to demonstrate organizational risk awareness and to identify gaps requiring future investment. It does not constitute a formal risk determination, ATO boundary document, or compliance certification.</p>
-</blockquote>
-<hr />
-<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
-<p>The NIST AI Risk Management Framework (AI RMF 1.0) provides a voluntary, risk-based structure for managing trustworthiness, accountability, and transparency in AI systems. It is increasingly referenced in federal AI governance policy — including OMB Memorandum M-24-10 and the 2024 AI Executive Order implementation guidance — and is the baseline expectations document for AI system delivery in most federal agency contexts.</p>
-<p>This document demonstrates how the engineering governance artifacts already present in this repository correspond to the four AI RMF functions: GOVERN, MAP, MEASURE, and MANAGE. It is written for a technical audience — solutions architects, delivery leads, and technical reviewers evaluating this platform for enterprise or federal contexts. It is not written for compliance personnel; those audiences should treat this as background context rather than a substitute for a formal ATO package.</p>
-<p>The scope is bounded to this platform as a software artifact. This platform provides multi-agent workflow orchestration infrastructure — a runtime that executes YAML-defined agent graphs against external LLM providers. It does not make autonomous decisions in high-stakes domains. It is intended to augment human decision-making, not replace it. The platform is not designed for, and should not be deployed in, contexts requiring autonomous high-stakes decisions (medical diagnosis, criminal justice, weapons systems selection) without substantial additional human oversight controls beyond what this repository provides.</p>
-<hr />
-<h2 id="govern-function">GOVERN function<a class="headerlink" href="#govern-function" title="Permanent link">&para;</a></h2>
-<p>The GOVERN function establishes the organizational policies, culture, and accountability structures that make risk management possible across the AI lifecycle. Controls in this function answer: who is responsible, what policies govern behavior, and how are decisions made and documented?</p>
-<table>
-<thead>
-<tr>
-<th>Sub-Category</th>
-<th>Description</th>
-<th>Artifact / Control</th>
-<th>Implementation Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>GOVERN-1.1</strong></td>
-<td>Policies, processes, procedures, and practices for AI risk management are documented and in place</td>
-<td><code>CONTRIBUTING.md</code> — branching policy, PR gates, commit format, code review requirements; <code>docs/CODING_STANDARDS.md</code> — Black, isort, ruff, mypy --strict, PEP 8 naming, 80% coverage mandate; <code>docs/adr/ADR-INDEX.md</code> — the ADR corpus governing architecture choices (see the index for the authoritative count); pre-commit hooks enforcing detect-secrets, docformatter, pydocstyle</td>
-<td>Implemented. Policies enforced by CI gates (ci.yml, eval-package-ci.yml, nightly.yml, dependency-review.yml). Attribution is disabled by explicit policy to prevent credential leakage.</td>
-</tr>
-<tr>
-<td><strong>GOVERN-1.2</strong></td>
-<td>Accountability for AI risk management is defined and assigned</td>
-<td><code>CONTRIBUTING.md</code> §6 (ADR authorship), <code>CONTRIBUTING.md</code> §5 (commit attribution), <code>agentic-workflows-v2/SECURITY.md</code> (maintainer contact paths, 3-day acknowledgment SLA, 7-day triage SLA); PR review required before any merge</td>
-<td>Partial. Single-maintainer repository — named roles (author, reviewer, security contact) exist but are not backed by an organizational RACI. Adequate for portfolio/prototype context; would require formal RACI expansion for multi-team delivery.</td>
-</tr>
-<tr>
-<td><strong>GOVERN-1.7</strong></td>
-<td>AI risk management is integrated with broader enterprise risk management</td>
-<td><code>docs/adr/ADR-002</code> (circuit breaker hardening — documents provider risk tolerance, cascade failure mitigations, per-provider bulkhead isolation); <code>docs/KNOWN_LIMITATIONS.md</code> — honest accounting of 10+ known limitations with status, workarounds, and upstream fix tracking; <code>ROADMAP.md</code> — risk items surfaced as Sprint B debt, not buried</td>
-<td>Partial. Limitations are documented rather than formally triaged against an enterprise risk register. No formal risk acceptance authority is named.</td>
-</tr>
-<tr>
-<td><strong>GOVERN-2.1</strong></td>
-<td>Organizational teams understand their roles in AI risk management</td>
-<td><code>CONTRIBUTING.md</code> §3 — developer workflow explicitly includes security boundary review before ADR authorship; <code>docs/adr/ADR-007</code> — stop policy and classification matrix; <code>CONTRIBUTING.md</code> §6 — when to write an ADR (includes "change a security boundary, tool allowlist, secret source, auth model")</td>
-<td>Partial. Role clarity is embedded in contribution guidance, not a standalone responsibility matrix. Sufficient for a portfolio context.</td>
-</tr>
-<tr>
-<td><strong>GOVERN-4.1</strong></td>
-<td>Organizational teams are trained to understand and manage AI risks</td>
-<td><code>docs/ONBOARDING.md</code>, <code>docs/WORKFLOW_AUTHORING.md</code>, and <code>docs/OWASP_LLM_THREAT_MODEL.md</code> provide written context for AI-assisted development patterns, prompt injection awareness, and secret handling.</td>
-<td>Partial. Documentation-based guidance exists. No formal training records or training completion tracking.</td>
-</tr>
-<tr>
-<td><strong>GOVERN-6.1</strong></td>
-<td>Policies and procedures for AI supply chain risk are established</td>
-<td><code>pip-audit</code> CI gate; <code>detect-secrets</code> pre-commit baseline; <code>ADR-016</code>; Epic 8 SBOM and ONNX integrity checks</td>
-<td>Implemented for dependency risk and supply chain integrity. Formal Software Bill of Materials (SBOM) and model weight verification implemented in Epic 8 (<code>weight_integrity.py</code>).</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="map-function">MAP function<a class="headerlink" href="#map-function" title="Permanent link">&para;</a></h2>
-<p>The MAP function establishes context about how an AI system is intended to be used, who it affects, and what risks are present given that deployment context. Controls in this function answer: what is this system for, what could go wrong, and for whom?</p>
-<table>
-<thead>
-<tr>
-<th>Sub-Category</th>
-<th>Description</th>
-<th>Artifact / Control</th>
-<th>Implementation Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>MAP-1.1</strong></td>
-<td>Context of deployment is established</td>
-<td><code>README.md</code> — stated intended use (multi-agent workflow orchestration); <code>docs/ROADMAP.md</code> — versioned feature arcs; <code>docs/ARCHITECTURE.md</code> — high-level system boundaries; <code>docs/AI_RISK_MANAGEMENT.md</code> and <code>docs/OWASP_LLM_THREAT_MODEL.md</code> document risk boundaries and human-review expectations.</td>
-<td>Implemented. Intended use, out-of-scope uses, and deployment context are documented.</td>
-</tr>
-<tr>
-<td><strong>MAP-1.5</strong></td>
-<td>Organizational risk tolerance is established</td>
-<td><code>docs/KNOWN_LIMITATIONS.md</code> — each known limitation carries an explicit status ("Accepted debt", "Accepted for v0.3.0", "Accepted — correct trade-off") and a workaround; <code>docs/adr/ADR-016</code> — explicit trade-off analysis for provider dependency vs. CI access; <code>docs/adr/ADR-001</code> — transitional architecture accepted as carrying cost</td>
-<td>Partial. Risk tolerance is expressed as case-by-case ADR decisions and KNOWN_LIMITATIONS entries rather than a formal enterprise risk appetite statement. Honest and transparent for the portfolio context.</td>
-</tr>
-<tr>
-<td><strong>MAP-2.1</strong></td>
-<td>Risk from deployment context is assessed</td>
-<td><code>docs/KNOWN_LIMITATIONS.md</code> §4 (operational gaps — replay buffer, multi-process state inconsistency); <code>docs/adr/ADR-002</code> (provider failure risk — cascade analysis, bulkhead recommendations, half-open probe strategy); <code>docs/KNOWN_LIMITATIONS.md</code> §3.1 (CI provider dependency); <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md">OWASP LLM threat model</a> mapping attack surfaces to mitigations</td>
-<td>Implemented for known risk categories, including a structured OWASP LLM Top 10 threat model (GAP-1 resolved).</td>
-</tr>
-<tr>
-<td><strong>MAP-2.3</strong></td>
-<td>Scientific integrity and organizational commitments are documented</td>
-<td>The ADRs carry explicit tradeoff matrices with option comparisons; ADR-001 cites Temporal.io production data and Martin Fowler's Strangler Fig guidance; ADR-002 cites Google SRE Book Chapter 22; ADR-015 provides quantitative gate thresholds; <code>docs/KNOWN_LIMITATIONS.md</code> §5.1 explicitly flags that Epics 3/5/6 plans were retrospective, not prospective</td>
-<td>Implemented. Decisions are grounded in cited sources with explicit alternatives considered.</td>
-</tr>
-<tr>
-<td><strong>MAP-3.1</strong></td>
-<td>Mapping of benefits and costs is conducted</td>
-<td><code>docs/adr/ADR-INDEX.md</code> implementation status table — implementation percentages are audited and honest (e.g., ADR-010 at ~10%, ADR-012 at ~10%); <code>docs/KNOWN_LIMITATIONS.md</code> — cost/risk of each limitation is stated; <code>ROADMAP.md</code> §1 — shipped epics with their stated outcomes</td>
-<td>Partial. Benefits and costs are traceable through the ADR corpus and KNOWN_LIMITATIONS. No formal cost-benefit analysis document.</td>
-</tr>
-<tr>
-<td><strong>MAP-5.1</strong></td>
-<td>Practices for AI transparency and explainability are defined</td>
-<td><code>docs/adr/ADR-INDEX.md</code> — all ADRs are public with status, implementation percentages, and lineage chains; <code>docs/KNOWN_LIMITATIONS.md</code> — honest accounting of limitations (stated explicitly: "This is an honest accounting. Every item here is real, reproducible, and has shipped"); <code>CONTRIBUTING.md</code> — PR-required process with mandatory reviewer; <code>ROADMAP.md</code> — tombstone entry for Epic 4 explaining the deliberate numbering gap</td>
-<td>Implemented. Transparency is a design principle in the documentation culture. No explainability tooling for LLM output (outputs are not interpreted by the platform — they pass through to callers).</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="measure-function">MEASURE function<a class="headerlink" href="#measure-function" title="Permanent link">&para;</a></h2>
-<p>The MEASURE function calls for analysis and assessment of AI risks — quantifying what can be quantified, establishing baselines, and monitoring ongoing behavior. Controls in this function answer: how do we know the system is behaving as expected, and how do we detect when it is not?</p>
-<table>
-<thead>
-<tr>
-<th>Sub-Category</th>
-<th>Description</th>
-<th>Artifact / Control</th>
-<th>Implementation Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>MEASURE-1.1</strong></td>
-<td>AI risk metrics are established</td>
-<td>Time-to-first-span p95 SLO (ADR-015, 30-sample rolling window); streaming flake-rate gate (nightly.yml — 50× per night); 80% coverage floor (ci.yml); 60% UI coverage floor (vitest.config.ts); Playwright streaming gate (5× per PR)</td>
-<td>Implemented for operational reliability metrics. No bias or fairness metrics.</td>
-</tr>
-<tr>
-<td><strong>MEASURE-2.1</strong></td>
-<td>Test, evaluation, validation, and verification (TEVV) practices are documented</td>
-<td><code>agentic-v2-eval/</code> — YAML rubrics (default, agent, code, coding_standards, pattern, prompt_pattern, prompt_standard, quality); LLM judge scoring 0.0–10.0 per rubric dimension; BatchRunner, StreamingRunner, AsyncStreamingRunner; a test suite in <code>agentic-workflows-v2/tests/</code>; 80% backend coverage gate; Playwright E2E gate</td>
-<td>Implemented for unit/integration/E2E testing. Eval harness TEVV is partially implemented — ADR-010 (commit-driven A/B methodology) at ~10%, ADR-011 (API interface) at ~15%, ADR-012 (UI hub) at ~10%. See Gap Analysis.</td>
-</tr>
-<tr>
-<td><strong>MEASURE-2.5</strong></td>
-<td>AI system monitoring practices are in place</td>
-<td>OTEL tracing (<code>agentic_v2/integrations/otel.py</code>, <code>agentic_v2/integrations/tracing.py</code>) — parent-child trace assertions in CI; time-to-first-span measurement committed to <code>observability/slo-first-span.json</code>; nightly 50× reliability run committed to <code>observability/slo-flake-rate.json</code>; SmartModelRouter EMA latency tracking (p50–p99), per-model circuit breaker state; Prometheus-compatible <code>/metrics</code> scrape endpoint (<code>AGENTIC_METRICS=1</code>, shipped Sprint 2 T2-1)</td>
-<td>Implemented for CI-level monitoring, and a Prometheus <code>/metrics</code> endpoint is available for scraping. No hosted APM deployment (no managed Grafana/APM stack); OTEL instrumentation requires an external collector to produce dashboards.</td>
-</tr>
-<tr>
-<td><strong>MEASURE-2.6</strong></td>
-<td>Evaluation of impacts and bias is conducted</td>
-<td><code>agentic-v2-eval/rubrics/</code> — quality, agent, and coding_standards rubrics include assessments of output appropriateness; <code>docs/KNOWN_LIMITATIONS.md</code> — explicitly surfaces capability limits rather than overstating reliability; research gating: <code>coverage_score &gt;= 0.80</code>, <code>source_quality_score &gt;= 0.80</code> for research workflows</td>
-<td>Partial. Rubric-based assessment exists for output quality. No automated bias detection, fairness metrics, or demographic impact analysis. The platform is infrastructure (orchestration), not a model — direct bias measurement is a responsibility of the LLM providers used downstream.</td>
-</tr>
-<tr>
-<td><strong>MEASURE-2.8</strong></td>
-<td>Risks from third-party AI systems are documented</td>
-<td><code>docs/adr/ADR-002</code> — per-provider bulkhead isolation, cascade failure analysis, adaptive cooldown; <code>docs/adr/ADR-016</code> — GitHub Models as default CI provider, explicit evaluation of credential-dependency trade-off; <code>docs/KNOWN_LIMITATIONS.md</code> §4.2 — multi-process stat inconsistency for SmartModelRouter (provider stats do not replicate across processes)</td>
-<td>Partial. Provider risk is analyzed for availability and circuit behavior. No formal third-party AI system risk assessment (e.g., no documentation of what happens if a provider's model behavior changes unexpectedly).</td>
-</tr>
-<tr>
-<td><strong>MEASURE-4.1</strong></td>
-<td>Measurement results are documented</td>
-<td>ADR-INDEX.md implementation audit percentages (last audited 2026-04-22); <code>observability/</code> SLO rolling window files committed after each nightly run; CI badge artifacts; coverage and test gates in CI configuration.</td>
-<td>Implemented for most signals. No centralized measurement dashboard.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="manage-function">MANAGE function<a class="headerlink" href="#manage-function" title="Permanent link">&para;</a></h2>
-<p>The MANAGE function focuses on prioritizing and addressing identified AI risks — treatment, response, and recovery. Controls in this function answer: when something goes wrong, what happens?</p>
-<table>
-<thead>
-<tr>
-<th>Sub-Category</th>
-<th>Description</th>
-<th>Artifact / Control</th>
-<th>Implementation Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>MANAGE-1.1</strong></td>
-<td>Response plans for identified risks are in place</td>
-<td><code>agentic-workflows-v2/SECURITY.md</code> — coordinated disclosure process, 3-day acknowledgment SLA, 7-day triage SLA; <code>docs/KNOWN_LIMITATIONS.md</code> — every known limitation has an explicit Status, Workaround, and Upstream fix field; <code>ROADMAP.md</code> Sprint B items are directly traceable to KNOWN_LIMITATIONS entries</td>
-<td>Implemented. Response plans exist for security disclosures and for known operational limitations. No formal incident response runbook or escalation chain beyond SECURITY.md.</td>
-</tr>
-<tr>
-<td><strong>MANAGE-1.3</strong></td>
-<td>Risk controls are implemented and tested</td>
-<td><code>agentic_v2/middleware/sanitization.py</code> — prompt injection detection (PromptInjectionDetector), PII detection (PIIDetector), secret detection (SecretDetector), Unicode normalization (UnicodeSanitizer), SHA-256 audit trail hashing; <code>agentic_v2/contracts/sanitization.py</code> — hash-based immutable audit contracts; SmartModelRouter three-state circuit breaker with adaptive cooldown; tool allowlist DENY-by-default for high-risk operations; Epic 8 Controls: OIDC Authentication (<code>auth_oidc.py</code>), Tenant Isolation (<code>tenant.py</code>), and Append-Only Audit Logging (<code>audit_log.py</code>).</td>
-<td>Implemented. Sanitization middleware, circuit breaker, and tool safety controls are tested (middleware tests in <code>tests/middleware/</code>).</td>
-</tr>
-<tr>
-<td><strong>MANAGE-2.2</strong></td>
-<td>Mechanisms for incident tracking are in place</td>
-<td><code>agentic-workflows-v2/SECURITY.md</code> — GitHub Security Advisory as the private incident intake channel; <code>docs/KNOWN_LIMITATIONS.md</code> — operational issues are tracked with upstream fix pointers; <code>CHANGELOG.md</code> — public record of changes per release including bug fixes</td>
-<td>Partial. Incident tracking is GitHub Advisory + CHANGELOG. No formal incident management system (JIRA, ServiceNow). Appropriate for current project scale.</td>
-</tr>
-<tr>
-<td><strong>MANAGE-2.4</strong></td>
-<td>Decommission and retirement procedures are defined</td>
-<td><code>docs/adr/ADR-INDEX.md</code> — ADR-003 formally marked Superseded by ADR-007 with explicit lineage; <code>docs/ROADMAP.md</code> §1 — Epic 4 tombstone with <code>git log</code> verification command; <code>docs/KNOWN_LIMITATIONS.md</code> §6 — removal policy: "When a limitation is fixed, remove the entry and link the fix from CHANGELOG.md"</td>
-<td>Partial. Supersession patterns exist for ADRs and features. No formal data retention or model retirement policy (platform does not store trained models — it routes to external providers).</td>
-</tr>
-<tr>
-<td><strong>MANAGE-3.1</strong></td>
-<td>Risk treatment decisions are documented</td>
-<td>ADR corpus (see <code>docs/adr/ADR-INDEX.md</code> for the authoritative count) — each ADR includes explicit Decision, Consequences (positive and negative), and Code-level recommendations; lineage chains in ADR-INDEX.md trace how decisions were refined (ADR-003 → ADR-007 → ADR-009 in the Research domain; ADR-010 → ADR-011 → ADR-012 in Evaluation domain); <code>docs/KNOWN_LIMITATIONS.md</code> — every entry includes a Status field indicating whether the risk was accepted, mitigated, or deferred</td>
-<td>Implemented. Risk treatment reasoning is captured in ADR records with citations.</td>
-</tr>
-<tr>
-<td><strong>MANAGE-4.1</strong></td>
-<td>Residual risk is communicated</td>
-<td><code>docs/KNOWN_LIMITATIONS.md</code> — public, in-repo, honest accounting with no mitigation theater; <code>docs/adr/ADR-INDEX.md</code> — implementation percentages are audited and honest (e.g., ADR-010 at ~10% — the gap between decision and implementation is stated); <code>ROADMAP.md</code> Sprint B — residual debt is named and owner-less items are marked "unassigned" rather than hidden</td>
-<td>Implemented. Residual risk communication is a design principle of the documentation approach.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="gap-analysis">Gap analysis<a class="headerlink" href="#gap-analysis" title="Permanent link">&para;</a></h2>
-<p>The following gaps represent areas where the platform's engineering governance does not fully satisfy AI RMF expectations. This section is as important as the mapping above — honest gap analysis is a prerequisite for trust in federal AI delivery contexts.</p>
-<h3 id="gap-1-no-formal-threat-model-document">GAP-1: No formal threat model document<a class="headerlink" href="#gap-1-no-formal-threat-model-document" title="Permanent link">&para;</a></h3>
-<p><strong>Status: Resolved.</strong> <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a> now exists, mapping OWASP LLM Top 10 categories to the platform's controls (sanitization middleware, tool allowlists, DENY-by-default) and identified gaps. It is kept in the repository but excluded from the built documentation site — use the GitHub link above. This closes the previously identified gap that a reviewer could not assess control completeness without constructing the threat model themselves.</p>
-<h3 id="gap-2-no-automated-model-output-monitoring-for-drift-or-behavioral-change">GAP-2: No automated model output monitoring for drift or behavioral change<a class="headerlink" href="#gap-2-no-automated-model-output-monitoring-for-drift-or-behavioral-change" title="Permanent link">&para;</a></h3>
-<p>The platform routes to external LLM providers (OpenAI, Anthropic, Azure OpenAI, Gemini, GitHub Models). There is no mechanism to detect if a provider's underlying model changes behavior — e.g., a model version update that shifts output format, tone, or reasoning patterns. Rubric-based evaluation exists, but it runs on demand (not continuously against live traffic), and ADRs 010/011/012 for the full eval harness methodology are only 10–15% implemented.</p>
-<p><strong>Risk:</strong> Behavioral drift in upstream models could degrade workflow outputs before it is detected.<br />
-<strong>Path to resolution:</strong> Implement CI-gated eval runs per ADR-010/011 proposal; add a canary evaluation workflow that runs the rubric suite against a fixed sample set on a schedule.</p>
-<h3 id="gap-3-no-cuifouo-handling-documentation">GAP-3: No CUI/FOUO handling documentation<a class="headerlink" href="#gap-3-no-cuifouo-handling-documentation" title="Permanent link">&para;</a></h3>
-<p>The platform targets federal/enterprise contexts but has no documentation covering Controlled Unclassified Information (CUI) or For Official Use Only (FOUO) data handling requirements. There is no data classification policy, no CUI marking guidance, and no documentation of what data categories are appropriate to process through external LLM providers.</p>
-<p><strong>Risk:</strong> A team deploying this platform in a federal context could inadvertently route CUI through commercial LLM APIs, violating NIST 800-171 and potentially ITAR/EAR requirements.<br />
-<strong>Path to resolution:</strong> Author a CUI handling appendix covering: which workflow configurations are appropriate for which data classifications, how to configure <code>AGENTIC_NO_LLM=1</code> placeholder mode for offline/air-gapped contexts, and what provider attestations would be required before processing CUI.</p>
-<h3 id="gap-4-no-formal-authorization-to-operate-ato-boundary-document">GAP-4: No formal Authorization to Operate (ATO) boundary document<a class="headerlink" href="#gap-4-no-formal-authorization-to-operate-ato-boundary-document" title="Permanent link">&para;</a></h3>
-<p>This repository is not packaged as an RMF authorization boundary. There is no System Security Plan (SSP), Privacy Impact Assessment (PIA), or Authorization Boundary Diagram. These are prerequisites for operating in a federal information system context.</p>
-<p><strong>Risk:</strong> The platform cannot be used in a federally accredited information system without a separate ATO package being authored by the deploying agency.<br />
-<strong>Path to resolution:</strong> This is intentional for a portfolio/prototype artifact. An ATO package would be authored by the deploying agency as part of their system authorization process, not by the platform itself.</p>
-<h3 id="gap-5-eval-framework-implementation-is-substantially-below-proposal">GAP-5: Eval framework implementation is substantially below proposal<a class="headerlink" href="#gap-5-eval-framework-implementation-is-substantially-below-proposal" title="Permanent link">&para;</a></h3>
-<p>ADR-010 (commit-driven A/B eval methodology), ADR-011 (eval API interface), and ADR-012 (UI evaluation hub) are Proposed status with implementation at ~10%, ~15%, and ~10% respectively. The eval harness runs on demand rather than being CI-gated against every commit. Rubric scoring exists but is not integrated into the PR gate.</p>
-<p><strong>Risk:</strong> The MEASURE function controls rely on a TEVV capability that is substantially aspirational rather than operational.<br />
-<strong>Path to resolution:</strong> The gap is acknowledged in ADR-INDEX.md and ROADMAP.md. Full implementation is an Epic 7+ candidate.</p>
-<h3 id="gap-6-no-structured-output-enforcement">GAP-6: No structured output enforcement<a class="headerlink" href="#gap-6-no-structured-output-enforcement" title="Permanent link">&para;</a></h3>
-<p>The platform does not enforce structured output from LLM providers (no Instructor, Outlines, or equivalent). Agent outputs are parsed by each agent's implementation — there is no platform-level schema validation of LLM responses.</p>
-<p><strong>Risk:</strong> LLM providers can return malformed, inconsistent, or unexpected output that propagates as structured data. Each agent bears the burden of defensive parsing.<br />
-<strong>Path to resolution:</strong> An ADR and prototype implementation for structured output enforcement has not been authored. This is a MEASURE and MANAGE gap.</p>
-<h3 id="gap-7-software-bill-of-materials-was-no-sbom">GAP-7: Software Bill of Materials (was: no SBOM)<a class="headerlink" href="#gap-7-software-bill-of-materials-was-no-sbom" title="Permanent link">&para;</a></h3>
-<p><strong>Status: Resolved in Epic 8.</strong> <code>cyclonedx-bom</code> SBOM generation and ONNX weight hash verification (<code>weight_integrity.py</code>) have been deployed, fulfilling federal software supply chain requirements (EO 14028).</p>
-<hr />
-<h2 id="relationship-to-other-documents">Relationship to other documents<a class="headerlink" href="#relationship-to-other-documents" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Document</th>
-<th>Location</th>
-<th>Relationship to This Document</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Security Policy</td>
-<td><code>agentic-workflows-v2/SECURITY.md</code></td>
-<td>Primary source for MANAGE-1.1 and MANAGE-2.2 controls — disclosure process, response SLAs, hardening guidance</td>
-</tr>
-<tr>
-<td>Known Limitations</td>
-<td><code>docs/KNOWN_LIMITATIONS.md</code></td>
-<td>Primary source for MAP-1.5, MAP-2.1, MANAGE-4.1 — honest risk register with workarounds and upstream fix pointers</td>
-</tr>
-<tr>
-<td>ADR Index</td>
-<td><code>docs/adr/ADR-INDEX.md</code></td>
-<td>Primary source for GOVERN-1.1, MAP-2.3, MANAGE-3.1 — the full decision corpus with lineage, implementation status, and audit dates (see the index for the authoritative count)</td>
-</tr>
-<tr>
-<td>OWASP LLM Threat Model</td>
-<td><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md"><code>docs/OWASP_LLM_THREAT_MODEL.md</code></a> (GitHub; excluded from the built docs site)</td>
-<td>Satisfies MAP-2.1 and MEASURE-2.8 — maps OWASP LLM Top 10 categories to controls. Resolved GAP-1</td>
-</tr>
-<tr>
-<td>Architecture Decision Records</td>
-<td><code>docs/adr/</code> (all ADRs listed in the index)</td>
-<td>Supporting evidence for MAP-2.3, GOVERN-1.7, MANAGE-3.1 — individual decision rationales with tradeoff matrices and cited sources</td>
-</tr>
-<tr>
-<td>Coding Standards</td>
-<td><code>docs/CODING_STANDARDS.md</code></td>
-<td>Supporting evidence for GOVERN-1.1 — technical standards that operationalize the governance policies</td>
-</tr>
-<tr>
-<td>Roadmap</td>
-<td><code>docs/ROADMAP.md</code></td>
-<td>Supporting evidence for MAP-1.1, MANAGE-2.4 — versioned capability arcs and Sprint B debt tracking</td>
-</tr>
-<tr>
-<td>Changelog</td>
-<td><code>CHANGELOG.md</code></td>
-<td>Supporting evidence for MANAGE-2.2 — public change record per release</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="summary-assessment">Summary assessment<a class="headerlink" href="#summary-assessment" title="Permanent link">&para;</a></h2>
+<h1 id="ai-risk-management">AI risk management<a class="headerlink" href="#ai-risk-management" title="Permanent link">&para;</a></h1>
+<p><strong>Updated:</strong> 2026-07-28</p>
+<p><strong>Scope:</strong> this repository as a software platform</p>
+<p><strong>Reference:</strong> <a href="https://doi.org/10.6028/NIST.AI.100-1">NIST AI Risk Management Framework
+1.0</a></p>
+<p>This is an engineering risk review. It is not a compliance assessment,
+security authorization, or claim that a deployment is safe for a specific
+use.</p>
+<p>The NIST AI RMF groups work into four functions: <strong>Govern</strong>, <strong>Map</strong>,
+<strong>Measure</strong>, and <strong>Manage</strong>. The framework is not a checklist. This page uses
+those functions to show what the repository provides, what it does not
+provide, and what a deployment owner must decide.</p>
+<h2 id="system-boundary">System boundary<a class="headerlink" href="#system-boundary" title="Permanent link">&para;</a></h2>
+<p>The platform:</p>
+<ul>
+<li>loads YAML workflow definitions;</li>
+<li>runs deterministic and model-backed steps;</li>
+<li>calls local or external model providers;</li>
+<li>can expose the runtime through a FastAPI server and React dashboard;</li>
+<li>records run data and optional audit, metric, and trace data;</li>
+<li>provides an evaluation package for datasets, rubrics, and reports; and</li>
+<li>includes optional retrieval and indexing components.</li>
+</ul>
+<p>The platform does not train foundation models. It also does not determine
+whether a use case, dataset, prompt, provider, or model is appropriate for a
+particular organization.</p>
+<p>Do not treat the repository as sufficient approval for medical, legal,
+employment, public-benefit, criminal-justice, safety-critical, or other
+high-impact decisions. Those uses require controls, evidence, and accountable
+human review outside this codebase.</p>
+<h2 id="current-alignment">Current alignment<a class="headerlink" href="#current-alignment" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Function</th>
-<th>Coverage</th>
-<th>Assessment</th>
+<th>Repository evidence</th>
+<th>Current limit</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>GOVERN</strong></td>
-<td>Substantial</td>
-<td>Policies, gates, ADR process, and contribution workflow are mature. Accountability structures are lightweight (single maintainer) and appropriate for the current scale. The gap is formal RACI expansion for multi-team delivery.</td>
+<td>Govern</td>
+<td>Contribution rules, coding standards, security reporting, architecture decisions, dependency checks, secret scanning, and CI gates</td>
+<td>The repository does not define an organization's owners, risk appetite, training records, legal review, or approval authority</td>
 </tr>
 <tr>
-<td><strong>MAP</strong></td>
-<td>Good</td>
-<td>Intended use, deployment context, and risk tolerance are documented. ADR tradeoff matrices provide MAP-2.3 evidence, and the OWASP LLM threat model closes the structured-threat-model gap.</td>
+<td>Map</td>
+<td>Architecture, configuration, known limitations, security hardening guidance, and workflow-specific inputs and outputs</td>
+<td>The deploying organization must document affected people, intended decisions, prohibited uses, data classes, and provider boundaries</td>
 </tr>
 <tr>
-<td><strong>MEASURE</strong></td>
-<td>Moderate</td>
-<td>Operational SLOs, E2E gates, and rubric-based eval exist. The gap is that the full eval harness (ADR-010/011/012) is substantially unimplemented, and there are no bias, fairness, or behavioral drift metrics.</td>
+<td>Measure</td>
+<td>Unit, integration, browser, and workflow tests; backend and UI coverage gates; rubrics; evaluation runners; optional metrics and tracing</td>
+<td>There is no universal quality score, continuous model-drift gate, fairness test suite, or production monitoring service</td>
 </tr>
 <tr>
-<td><strong>MANAGE</strong></td>
-<td>Good</td>
-<td>Security disclosure process, known-limitation tracking, and ADR risk treatment documentation are solid. SBOM generation shipped in Epic 8 (GAP-7 resolved); the remaining gaps are CUI handling and a formal incident runbook.</td>
+<td>Manage</td>
+<td>Tool restrictions, input detectors, authentication options, tenant context, audit logging, model fallback, circuit breaking, security reporting, and a public limitations register</td>
+<td>Incident response, retention, rollback, escalation, and provider-disable procedures remain deployment responsibilities</td>
 </tr>
 </tbody>
 </table>
-<p>This platform demonstrates consistent risk awareness across all four functions, with the largest technical gaps in MEASURE (eval harness completeness) and the largest policy gaps in CUI/FOUO handling and formal authorization boundary documentation. For federal deployment readiness, the CUI handling documentation (GAP-3) is the highest-priority authoring task now that the OWASP threat model (GAP-1) and SBOM (GAP-7) are resolved.</p>
+<h2 id="main-risks-and-controls">Main risks and controls<a class="headerlink" href="#main-risks-and-controls" title="Permanent link">&para;</a></h2>
+<h3 id="incorrect-or-inconsistent-model-output">Incorrect or inconsistent model output<a class="headerlink" href="#incorrect-or-inconsistent-model-output" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>Workflow rubrics and the <code>agentic-v2-eval</code> package can score recorded output.</li>
+<li><code>code_artifact</code> contracts can reject empty, unsafe, or placeholder code
+  artifacts.</li>
+<li>Bounded review loops and consensus workflows provide examples of additional
+  checks.</li>
+<li>Provider failures can move to a configured fallback model.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>Artifact contracts are opt-in and currently cover code artifacts only.</li>
+<li>A successful model call does not prove that its answer is correct.</li>
+<li>Switching to a fallback model can change output behavior.</li>
+<li>The repository does not continuously test provider model changes against a
+  fixed production dataset.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Pin or approve provider/model combinations, maintain representative evaluation
+datasets, set acceptance thresholds, and require human review where an error
+could cause material harm.</p>
+<h3 id="prompt-injection-and-unsafe-tool-use">Prompt injection and unsafe tool use<a class="headerlink" href="#prompt-injection-and-unsafe-tool-use" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>Middleware includes prompt-injection, secret, and PII detectors.</li>
+<li>Tool access is filtered by agent tier and an optional per-step allowlist.</li>
+<li>Approval policies can guard tools with side effects.</li>
+<li>HTTP and file tools include configurable restrictions.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>Pattern-based input detection is not a proof that content is safe.</li>
+<li>A broadly permitted tool can still perform a harmful valid operation.</li>
+<li>Model instructions and retrieved content can conflict.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Give workflows the smallest useful tool set, isolate file and network access,
+require approval for material changes, and test hostile inputs before release.</p>
+<h3 id="sensitive-data-disclosure">Sensitive data disclosure<a class="headerlink" href="#sensitive-data-disclosure" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>Secret and PII detectors can flag known patterns.</li>
+<li>API-key and OIDC authentication modes are available.</li>
+<li>Tenant context and audit logging are available for server deployments.</li>
+<li>Configuration keeps provider credentials in environment variables or secret
+  sources rather than workflow YAML.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>The repository does not supply an organizational data-classification policy,
+  data-loss-prevention service, CUI handling plan, privacy impact assessment, or
+  provider contract review.</li>
+<li>Logs, traces, prompts, retrieval indexes, and provider requests can contain
+  sensitive content if a deployment allows it.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Define permitted data classes before enabling a provider. Configure log and
+trace redaction, access control, retention, and deletion. Do not send regulated
+or confidential data to a provider without explicit organizational approval.</p>
+<h3 id="provider-outage-rate-limit-or-behavior-change">Provider outage, rate limit, or behavior change<a class="headerlink" href="#provider-outage-rate-limit-or-behavior-change" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>Model routing supports ordered fallbacks.</li>
+<li>Smart routing includes health statistics, cooldowns, circuit breaking, and
+  per-provider concurrency limits.</li>
+<li>Local runtimes can be configured for some workflows.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>Provider availability and model identifiers change outside this repository.</li>
+<li>Fallbacks protect availability, not output equivalence.</li>
+<li>Router state and some other runtime state are process-local.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Test every configured fallback, define which failures may cross provider
+boundaries, monitor provider-specific results, and document a manual disable
+procedure.</p>
+<h3 id="retrieval-quality-and-index-integrity">Retrieval quality and index integrity<a class="headerlink" href="#retrieval-quality-and-index-integrity" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>RAG components use explicit loader, chunker, embedding, vector-store,
+  retriever, reranker, and context-assembly interfaces.</li>
+<li>Persistent LanceDB storage and provider-backed embeddings are available
+  through optional components.</li>
+<li>Retrieved context can be framed and limited by a token budget.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>The current <code>agentic rag</code> CLI uses a process-local hash embedder and
+  in-memory store. It is suitable for smoke tests, not semantic production
+  retrieval.</li>
+<li>Embeddings from different providers are not interchangeable.</li>
+<li>Reranker and metadata-filter behavior has documented restrictions.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Choose one approved embedding space per index, use durable storage, record the
+embedding model and dimensions with the index, evaluate retrieval quality, and
+  review the <a href="../KNOWN_LIMITATIONS/">known limitations</a> before enabling RAG in a
+  deployment.</p>
+<h3 id="malformed-workflow-output">Malformed workflow output<a class="headerlink" href="#malformed-workflow-output" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>The loader validates graph structure, dependencies, cycles, expressions,
+  evaluation configuration, and artifact-contract bindings.</li>
+<li>Required workflow outputs that cannot be resolved are recorded.</li>
+<li>Code-artifact contracts validate supported generated-code boundaries.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>Most model output is still text or loosely structured mappings.</li>
+<li>A workflow can omit artifact contracts.</li>
+<li>Schema-valid output can still be wrong.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Use contracts at important boundaries, reject unresolved required outputs, and
+add domain validation before downstream systems act on a result.</p>
+<h3 id="supply-chain-compromise">Supply-chain compromise<a class="headerlink" href="#supply-chain-compromise" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>CI includes CodeQL, dependency review, Python and npm dependency audits, and
+  CycloneDX SBOM generation.</li>
+<li>Pre-commit checks include secret detection.</li>
+<li>Optional model-weight integrity helpers are present.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>CI results apply to the tested revision, not every downstream image or
+  deployment environment.</li>
+<li>An SBOM lists components; it does not establish that they are safe.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Rebuild and scan release artifacts in the target environment, verify pinned
+dependencies and model weights, review provenance, and keep a patch process.</p>
+<h3 id="logging-metrics-and-audit-data">Logging, metrics, and audit data<a class="headerlink" href="#logging-metrics-and-audit-data" title="Permanent link">&para;</a></h3>
+<p><strong>Repository controls</strong></p>
+<ul>
+<li>OpenTelemetry tracing and Prometheus metrics are optional.</li>
+<li>The server can write append-only audit records.</li>
+<li>Run records support inspection and offline evaluation.</li>
+</ul>
+<p><strong>Limits</strong></p>
+<ul>
+<li>The repository does not deploy a monitoring service or incident-management
+  system.</li>
+<li>Observability data may expose prompts, filenames, model output, or tenant
+  identifiers if configured without care.</li>
+</ul>
+<p><strong>Deployment action</strong></p>
+<p>Set collection, redaction, access, retention, and alerting rules. Test that
+incident responders can find a failed run without exposing more data than they
+need.</p>
+<h2 id="priority-gaps">Priority gaps<a class="headerlink" href="#priority-gaps" title="Permanent link">&para;</a></h2>
+<p>These gaps should be resolved by a deployment or by future platform work:</p>
+<ol>
+<li>Define owners, approvers, escalation paths, and a risk-acceptance process.</li>
+<li>Document allowed data classes and provider boundaries.</li>
+<li>Maintain representative quality, safety, and fairness datasets for the
+   intended use.</li>
+<li>Add scheduled drift checks for approved provider/model versions.</li>
+<li>Define production incident response, rollback, retention, and deletion.</li>
+<li>Expand structured output contracts beyond generated code where downstream
+   automation depends on model output.</li>
+<li>Test multi-process state, storage, and tenant isolation in the intended
+   deployment topology.</li>
+</ol>
+<h2 id="evidence-index">Evidence index<a class="headerlink" href="#evidence-index" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Architecture and boundaries</td>
+<td><a href="../ARCHITECTURE/">Architecture</a></td>
+</tr>
+<tr>
+<td>Runtime configuration</td>
+<td><a href="../configuration/">Configuration</a></td>
+</tr>
+<tr>
+<td>Known implementation limits</td>
+<td><a href="../KNOWN_LIMITATIONS/">Known limitations</a></td>
+</tr>
+<tr>
+<td>Server hardening</td>
+<td><a href="../operations/security-hardening/">Security hardening</a></td>
+</tr>
+<tr>
+<td>Security reporting</td>
+<td><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SECURITY.md">Repository security policy</a></td>
+</tr>
+<tr>
+<td>Workflow syntax</td>
+<td><a href="../WORKFLOW_AUTHORING/">Workflow authoring</a></td>
+</tr>
+<tr>
+<td>Evaluation</td>
+<td><a href="../architecture-eval/">Evaluation architecture</a></td>
+</tr>
+<tr>
+<td>Engineering rules</td>
+<td><a href="../CONTRIBUTING/">Contributing</a> and <a href="../CODING_STANDARDS/">coding standards</a></td>
+</tr>
+<tr>
+<td>Architecture decisions</td>
+<td><a href="../adr/ADR-INDEX/">ADR index</a></td>
+</tr>
+</tbody>
+</table>
+<p>Review this page when provider policy, security boundaries, persistent storage,
+evaluation gates, or production topology changes.</p>
 
 
 
@@ -3510,7 +3562,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

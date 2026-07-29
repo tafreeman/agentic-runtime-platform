@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Windows AI - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/windows-ai.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/windows-ai/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Windows AI - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/windows-ai.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#windows-ai-phi-silica" class="md-skip">
+        <a href="#windows-ai-and-phi-silica" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2010,38 +2040,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#when-to-use-this-vs-localmodel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When to use this vs LocalModel
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
+        Prerequisites
       
     </span>
   </a>
@@ -2049,10 +2051,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limited-access-features-laf" class="md-nav__link">
+  <a href="#check-availability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limited Access Features (LAF)
+        Check availability
       
     </span>
   </a>
@@ -2060,10 +2062,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Generate text
       
     </span>
   </a>
@@ -2071,99 +2073,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#windowsaimodel-class" class="md-nav__link">
+  <a href="#shared-client" class="md-nav__link">
     <span class="md-ellipsis">
       
-        WindowsAIModel class
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WindowsAIModel class">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utility-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Utility functions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Utility functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check_windows_ai_available-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_windows_ai_available() → bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_model_info-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_model_info() → dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_phi_silica_bridge_infotimeout_s60-tupledict-none-str-none" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_phi_silica_bridge_info(timeout_s=60) → tuple[dict | None, str | None]
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-c-bridge-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the C# bridge works
+        Shared client
       
     </span>
   </a>
@@ -2171,10 +2084,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#limited-access-feature-settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Limited Access Feature settings
       
     </span>
   </a>
@@ -2182,21 +2095,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-via-llmclient" class="md-nav__link">
+  <a href="#diagnose-a-failure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using via LLMClient
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Diagnose a failure
       
     </span>
   </a>
@@ -2322,6 +2224,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2419,6 +2325,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2729,6 +2691,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2789,6 +2755,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2976,38 +2998,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#when-to-use-this-vs-localmodel" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When to use this vs LocalModel
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
+        Prerequisites
       
     </span>
   </a>
@@ -3015,10 +3009,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limited-access-features-laf" class="md-nav__link">
+  <a href="#check-availability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Limited Access Features (LAF)
+        Check availability
       
     </span>
   </a>
@@ -3026,10 +3020,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Generate text
       
     </span>
   </a>
@@ -3037,99 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#windowsaimodel-class" class="md-nav__link">
+  <a href="#shared-client" class="md-nav__link">
     <span class="md-ellipsis">
       
-        WindowsAIModel class
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="WindowsAIModel class">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#utility-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Utility functions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Utility functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#check_windows_ai_available-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_windows_ai_available() → bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_model_info-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_model_info() → dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_phi_silica_bridge_infotimeout_s60-tupledict-none-str-none" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_phi_silica_bridge_info(timeout_s=60) → tuple[dict | None, str | None]
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-c-bridge-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the C# bridge works
+        Shared client
       
     </span>
   </a>
@@ -3137,10 +3042,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#limited-access-feature-settings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Limited Access Feature settings
       
     </span>
   </a>
@@ -3148,21 +3053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-via-llmclient" class="md-nav__link">
+  <a href="#diagnose-a-failure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using via LLMClient
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Diagnose a failure
       
     </span>
   </a>
@@ -3202,283 +3096,132 @@
   
 
 
-<h1 id="windows-ai-phi-silica">Windows AI (Phi Silica)<a class="headerlink" href="#windows-ai-phi-silica" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>Module: <code>tools.llm.windows_ai</code></p>
-</blockquote>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>windows_ai.py</code> integrates <strong>Phi Silica</strong> — Microsoft's on-device SLM that runs on the NPU of <a href="https://www.microsoft.com/windows/copilot-plus-pcs">Copilot+ PCs</a>. Unlike <code>LocalModel</code> (which uses <code>onnxruntime-genai</code>), Phi Silica calls the Windows AI APIs via the Windows App SDK and runs on dedicated NPU silicon, delivering very low latency without consuming GPU or CPU resources.</p>
-<p>The Python module communicates with the Windows AI APIs through a <strong>C# bridge</strong> (<code>tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj</code>) because the WinRT APIs are not directly accessible from Python.</p>
-<h3 id="when-to-use-this-vs-localmodel">When to use this vs <code>LocalModel</code><a class="headerlink" href="#when-to-use-this-vs-localmodel" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Concern</th>
-<th><code>WindowsAIModel</code> (Phi Silica)</th>
-<th><code>LocalModel</code> (ONNX)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Hardware requirement</td>
-<td>Copilot+ PC with NPU</td>
-<td>Any machine</td>
-</tr>
-<tr>
-<td>OS requirement</td>
-<td>Windows only</td>
-<td>Cross-platform</td>
-</tr>
-<tr>
-<td>Install requirement</td>
-<td>.NET SDK + <code>dotnet build</code></td>
-<td><code>pip install onnxruntime-genai</code></td>
-</tr>
-<tr>
-<td>Inference speed</td>
-<td>Very fast (NPU dedicated)</td>
-<td>Depends on CPU/GPU</td>
-</tr>
-<tr>
-<td>Power usage</td>
-<td>Low (NPU dedicated)</td>
-<td>Higher</td>
-</tr>
-<tr>
-<td>Model choice</td>
-<td>Phi Silica only</td>
-<td>phi4, phi3, mistral, custom</td>
-</tr>
-<tr>
-<td>LAF token required?</td>
-<td>Sometimes (see below)</td>
-<td>No</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Windows</strong> — Phi Silica is a Windows-only API.</li>
-<li><strong>Copilot+ PC</strong> — The device must have a qualifying NPU. See <a href="https://www.microsoft.com/windows/copilot-plus-pcs">the Microsoft device list</a>.</li>
-<li><strong><a href="https://dotnet.microsoft.com/download">.NET SDK</a></strong> — Required to build and run the C# bridge.</li>
-<li><strong>Build the bridge</strong> before first use:</li>
-</ol>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">dotnet</span> <span class="n">build</span> <span class="n">tools</span><span class="p">/</span><span class="n">llm</span><span class="p">/</span><span class="n">windows_ai_bridge</span><span class="p">/</span><span class="n">PhiSilicaBridge</span><span class="p">.</span><span class="n">csproj</span>
+<h1 id="windows-ai-and-phi-silica">Windows AI and Phi Silica<a class="headerlink" href="#windows-ai-and-phi-silica" title="Permanent link">&para;</a></h1>
+<p><code>tools.llm.windows_ai.WindowsAIModel</code> calls Phi Silica through the repository's
+.NET bridge:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj
 </span></code></pre></div>
-<hr />
-<h2 id="limited-access-features-laf">Limited Access Features (LAF)<a class="headerlink" href="#limited-access-features-laf" title="Permanent link">&para;</a></h2>
-<p>On some Windows/App SDK channels, Phi Silica is gated behind a <strong>Limited Access Feature (LAF)</strong> token. If you encounter a "feature not available" error, you may need LAF credentials from Microsoft.</p>
-<p>Configure LAF via environment variables:</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>PHI_SILICA_LAF_FEATURE_ID</code></td>
-<td>LAF feature identifier string</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_TOKEN</code></td>
-<td>LAF bearer token</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_ATTESTATION</code></td>
-<td>LAF attestation payload</td>
-</tr>
-</tbody>
-</table>
-<p>All three must be set together. The C# bridge reads them from the process environment automatically.</p>
-<p>Resources:
-- <a href="https://learn.microsoft.com/windows/ai/apis/phi-silica">Phi Silica documentation</a>
-- <a href="https://aka.ms/phi-silica-unlock">Unlock Phi Silica (aka.ms/phi-silica-unlock)</a>
-- <a href="https://learn.microsoft.com/windows/ai/apis/troubleshooting">Troubleshooting</a></p>
-<hr />
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">WindowsAIModel</span><span class="p">,</span> <span class="n">check_windows_ai_available</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Check availability without loading</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">check_windows_ai_available</span><span class="p">():</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Phi Silica not available — falling back to LocalModel&quot;</span><span class="p">)</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">else</span><span class="p">:</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">model</span> <span class="o">=</span> <span class="n">WindowsAIModel</span><span class="p">()</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;Summarise this text in three bullet points: ...&quot;</span><span class="p">)</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="windowsaimodel-class"><code>WindowsAIModel</code> class<a class="headerlink" href="#windowsaimodel-class" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">WindowsAIModel</span>
-</span></code></pre></div>
-<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">WindowsAIModel</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>verbose</code></td>
-<td><code>False</code></td>
-<td>Enable debug-level logging</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Raises at construction time:</strong></p>
+<p>Python does not call the Windows AI API directly. For each check or generation
+request it starts the bridge with <code>dotnet run</code>.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<p>The integration requires:</p>
 <ul>
-<li><code>OSError</code> — if not running on Windows</li>
-<li><code>RuntimeError</code> — if Phi Silica is not available (bridge reports <code>available: false</code>)</li>
+<li>Windows;</li>
+<li>a device and Windows configuration that expose Phi Silica;</li>
+<li>a compatible .NET SDK on <code>PATH</code>;</li>
+<li>the bridge project and its Windows App SDK dependencies; and</li>
+<li>Limited Access Feature settings when required by the installed Windows/App
+  SDK channel.</li>
 </ul>
-<p>If construction succeeds, the model is ready and subsequent <code>generate()</code> calls will not re-probe availability.</p>
-<h3 id="generate"><code>generate()</code><a class="headerlink" href="#generate" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">response</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">system_instruction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">)</span>
+<p>The repository cannot infer that a machine is supported from its processor name
+alone. Use the bridge check.</p>
+<h2 id="check-availability">Check availability<a class="headerlink" href="#check-availability" title="Permanent link">&para;</a></h2>
+<p>From the repository root:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">windows_ai</span> <span class="p">-</span><span class="n">-info</span>
 </span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>prompt</code></td>
-<td>required</td>
-<td>User input</td>
-</tr>
-<tr>
-<td><code>system_instruction</code></td>
-<td><code>None</code></td>
-<td>Optional system prompt prepended to the input</td>
-</tr>
-<tr>
-<td><code>temperature</code></td>
-<td><code>0.7</code></td>
-<td>Sampling temperature (<code>0.0–1.0</code>)</td>
-</tr>
-<tr>
-<td><code>max_tokens</code></td>
-<td><code>2000</code></td>
-<td>Maximum tokens to generate</td>
-</tr>
-</tbody>
-</table>
-<p>Returns the generated text as a string. On bridge errors, returns an error string prefixed with <code>[ERROR]</code> rather than raising, so callers can detect failure without wrapping in try/except.</p>
-<hr />
-<h2 id="utility-functions">Utility functions<a class="headerlink" href="#utility-functions" title="Permanent link">&para;</a></h2>
-<h3 id="check_windows_ai_available-bool"><code>check_windows_ai_available() → bool</code><a class="headerlink" href="#check_windows_ai_available-bool" title="Permanent link">&para;</a></h3>
-<p>Safe availability check — returns <code>False</code> (not <code>RuntimeError</code>) on any failure:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_windows_ai_available</span>
+<p>Or from Python:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">check_windows_ai_available</span><span class="p">,</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">get_model_info</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">check_windows_ai_available</span><span class="p">())</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">get_model_info</span><span class="p">())</span>
+</span></code></pre></div>
+<p>The check runs:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>dotnet run --project &lt;bridge-project&gt; -- --info
+</span></code></pre></div>
+<p>and parses the bridge's JSON output. <code>available: true</code> is stronger evidence than
+the project merely building, but a real generation smoke test is still needed.</p>
+<h2 id="generate-text">Generate text<a class="headerlink" href="#generate-text" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">WindowsAIModel</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">WindowsAIModel</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">response</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s2">&quot;Explain this stack trace.&quot;</span><span class="p">,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;Answer for a software engineer.&quot;</span><span class="p">,</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Important current behavior:</p>
+<ul>
+<li>construction runs an availability check;</li>
+<li>generation has a 120-second bridge subprocess timeout;</li>
+<li><code>temperature</code> and <code>max_tokens</code> are logged in verbose mode but are not passed
+  as separate bridge command-line arguments;</li>
+<li>generation failures are returned as strings beginning with <code>[ERROR]</code> instead
+  of being raised.</li>
+</ul>
+<p>Check for the error prefix before treating the response as model output.</p>
+<h2 id="shared-client">Shared client<a class="headerlink" href="#shared-client" title="Permanent link">&para;</a></h2>
+<p>The root shared client exposes the bridge through a model prefix:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">if</span> <span class="n">check_windows_ai_available</span><span class="p">():</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="c1"># Safe to construct WindowsAIModel</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="o">...</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">response</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">&quot;windows-ai:phi-silica&quot;</span><span class="p">,</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="s2">&quot;Summarize this change.&quot;</span><span class="p">,</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
 </span></code></pre></div>
-<h3 id="get_model_info-dict"><code>get_model_info() → dict</code><a class="headerlink" href="#get_model_info-dict" title="Permanent link">&para;</a></h3>
-<p>Detailed diagnostic info for the current machine:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_model_info</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">info</span> <span class="o">=</span> <span class="n">get_model_info</span><span class="p">()</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># {</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">#   &quot;platform&quot;: &quot;win32&quot;,</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">#   &quot;bridge&quot;: {</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1">#     &quot;project&quot;: &quot;C:/path/to/PhiSilicaBridge.csproj&quot;,</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="c1">#     &quot;dotnet_on_path&quot;: true</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1">#   },</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1">#   &quot;info&quot;: {</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1">#     &quot;available&quot;: true,</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1">#     &quot;model&quot;: &quot;Phi Silica&quot;,</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c1">#     &quot;version&quot;: &quot;1.0&quot;</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="c1">#   }</span>
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="c1"># }</span>
+<p>The shared client wraps bridge failures in <code>LLMClientError</code>, but the underlying
+Windows wrapper may still return an <code>[ERROR]</code> string. Test the failure paths
+used by your caller.</p>
+<h2 id="limited-access-feature-settings">Limited Access Feature settings<a class="headerlink" href="#limited-access-feature-settings" title="Permanent link">&para;</a></h2>
+<p>When the Windows API requires Limited Access Feature credentials, the bridge
+reads:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>PHI_SILICA_LAF_FEATURE_ID=&lt;feature-id&gt;
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>PHI_SILICA_LAF_TOKEN=&lt;token&gt;
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>PHI_SILICA_LAF_ATTESTATION=&lt;attestation&gt;
 </span></code></pre></div>
-<h3 id="get_phi_silica_bridge_infotimeout_s60-tupledict-none-str-none"><code>get_phi_silica_bridge_info(timeout_s=60) → tuple[dict | None, str | None]</code><a class="headerlink" href="#get_phi_silica_bridge_infotimeout_s60-tupledict-none-str-none" title="Permanent link">&para;</a></h3>
-<p>Low-level function that invokes the C# bridge and returns <code>(parsed_dict, raw_stdout)</code>. Most callers should use <code>check_windows_ai_available()</code> or <code>get_model_info()</code> instead.</p>
-<hr />
-<h2 id="how-the-c-bridge-works">How the C# bridge works<a class="headerlink" href="#how-the-c-bridge-works" title="Permanent link">&para;</a></h2>
-<p>The bridge (<code>tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj</code>) is a minimal C# console application that:</p>
+<p>Treat these values as secrets. Do not commit them or print them in diagnostic
+output.</p>
+<h2 id="diagnose-a-failure">Diagnose a failure<a class="headerlink" href="#diagnose-a-failure" title="Permanent link">&para;</a></h2>
+<p>Run checks in this order:</p>
 <ol>
-<li>Accepts the prompt as a command-line argument</li>
-<li>Calls the Windows AI <code>PhiSilicaClient</code> WinRT API</li>
-<li>Prints the generated text to stdout</li>
+<li><code>dotnet --info</code></li>
+<li><code>dotnet build .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj</code></li>
+<li><code>dotnet run --project .\tools\llm\windows_ai_bridge\PhiSilicaBridge.csproj -- --info</code></li>
+<li><code>python -m tools.llm.windows_ai --info</code></li>
+<li>one short generation request</li>
 </ol>
-<p>Python invokes it via <code>subprocess.run(["dotnet", "run", "--project", bridge_proj, "--", prompt], ...)</code> with a 120-second timeout.</p>
-<p>The C# bridge reads LAF environment variables (<code>PHI_SILICA_LAF_FEATURE_ID</code>, <code>PHI_SILICA_LAF_TOKEN</code>, <code>PHI_SILICA_LAF_ATTESTATION</code>) from the process environment, so they must be set before the Python process starts or in the same shell session.</p>
-<hr />
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<p>Common results:</p>
 <table>
 <thead>
 <tr>
-<th>Error</th>
-<th>Cause</th>
-<th>Fix</th>
+<th>Result</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>OSError: Windows AI APIs are only available on Windows</code></td>
-<td>Running on Linux/macOS</td>
-<td>Use <code>LocalModel</code> instead</td>
+<td><code>Not running on Windows</code></td>
+<td>The bridge is unavailable on this platform</td>
 </tr>
 <tr>
-<td><code>RuntimeError: Phi Silica not available</code></td>
-<td>Hardware doesn't have NPU or LAF tokens missing</td>
-<td>Check device eligibility; configure LAF env vars</td>
+<td><code>Bridge project not found</code></td>
+<td>The repository path or installation is incomplete</td>
 </tr>
 <tr>
-<td><code>[ERROR] C# bridge not found. Run: dotnet build ...</code></td>
-<td>Bridge not built</td>
-<td><code>dotnet build tools/llm/windows_ai_bridge/PhiSilicaBridge.csproj</code></td>
+<td><code>dotnet not found</code></td>
+<td>Install or expose a compatible .NET SDK</td>
 </tr>
 <tr>
-<td><code>[ERROR] dotnet not found</code></td>
-<td>.NET SDK not installed</td>
-<td>Install from <a href="https://dotnet.microsoft.com/download">dotnet.microsoft.com</a></td>
+<td><code>available: false</code> with a bridge error</td>
+<td>Read the returned Windows/Phi Silica error</td>
+</tr>
+<tr>
+<td><code>Bridge --info timed out</code></td>
+<td>The .NET or Windows AI initialization did not finish in the check timeout</td>
 </tr>
 <tr>
 <td><code>[ERROR] Phi Silica request timed out (120s)</code></td>
-<td>Bridge hung</td>
-<td>Check Windows AI service state; reboot device</td>
-</tr>
-<tr>
-<td><code>[ERROR] Bridge error: Feature not available</code></td>
-<td>LAF gate</td>
-<td>Configure <code>PHI_SILICA_LAF_*</code> env vars — see <a href="https://aka.ms/phi-silica-unlock">aka.ms/phi-silica-unlock</a></td>
+<td>Generation exceeded the Python subprocess timeout</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="using-via-llmclient">Using via <code>LLMClient</code><a class="headerlink" href="#using-via-llmclient" title="Permanent link">&para;</a></h2>
-<p><code>LLMClient</code> routes to <code>WindowsAIModel</code> purely by the <code>windows-ai:</code> model-name prefix — there is no probe-based auto-routing. If Phi Silica is unavailable, the call fails; use <code>check_windows_ai_available()</code> first when you need a fallback:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Check first — LLMClient will raise if the model is unavailable</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.windows_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_windows_ai_available</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">if</span> <span class="n">check_windows_ai_available</span><span class="p">():</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">response</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span><span class="s2">&quot;windows-ai:phi-silica&quot;</span><span class="p">,</span> <span class="s2">&quot;Hello world&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../local-models/">local-models.md</a> — ONNX inference via <code>onnxruntime-genai</code> (cross-platform)</li>
-<li><a href="../model-probing/">model-probing.md</a> — probe both <code>local:</code> and <code>windows-ai:</code> models with one call</li>
-<li><a href="../../configuration/">configuration.md</a> — <code>PHI_SILICA_LAF_*</code> environment variable reference</li>
-</ul>
+<p>Keep the full <code>--info</code> result, Windows build, bridge revision, and device model
+with benchmark evidence.</p>
 
 
 
@@ -3501,7 +3244,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

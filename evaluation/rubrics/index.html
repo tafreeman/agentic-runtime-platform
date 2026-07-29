@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="The YAML rubrics that drive Agentic Runtime Platform evaluation — criteria, weights, level descriptors, use cases, and loading API.">
+        <meta name="description" content="Load bundled rubrics and calculate weighted scores.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Rubrics - Agentic Runtime Platform" />
-<meta property="og:description" content="The YAML rubrics that drive Agentic Runtime Platform evaluation — criteria, weights, level descriptors, use cases, and loading API." />
+<meta property="og:description" content="Load bundled rubrics and calculate weighted scores." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/rubrics.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/rubrics/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Rubrics - Agentic Runtime Platform" />
-<meta property="twitter:description" content="The YAML rubrics that drive Agentic Runtime Platform evaluation — criteria, weights, level descriptors, use cases, and loading API." />
+<meta property="twitter:description" content="Load bundled rubrics and calculate weighted scores." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/rubrics.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1698,10 +1728,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#loading-rubrics-programmatically" class="md-nav__link">
+  <a href="#bundled-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Loading rubrics programmatically
+        Bundled files
       
     </span>
   </a>
@@ -1709,132 +1739,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#family-1-scoring-rubrics" class="md-nav__link">
+  <a href="#scoring" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Family 1 — scoring rubrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Family 1 — scoring rubrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#defaultyaml-general-purpose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        default.yaml — general purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentyaml-agent-output-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agent.yaml — agent output quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#codeyaml-code-generation-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        code.yaml — code generation quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#coding_standardsyaml-pythonml-coding-standards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        coding_standards.yaml — Python/ML coding standards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patternyaml-agentic-pattern-adherence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pattern.yaml — agentic pattern adherence
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#family-2-judge-rubrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Family 2 — judge rubrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Family 2 — judge rubrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#qualityyaml-output-quality-dimensions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        quality.yaml — output quality dimensions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt_standardyaml-standard-prompt-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt_standard.yaml — standard prompt quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt_patternyaml-pattern-judge-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt_pattern.yaml — pattern judge prompts
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rubric-quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rubric quick reference
+        Scoring
       
     </span>
   </a>
@@ -1842,10 +1750,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-a-custom-rubric" class="md-nav__link">
+  <a href="#normalization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding a custom rubric
+        Normalization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thresholds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-rubric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom rubric
       
     </span>
   </a>
@@ -2283,6 +2213,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2380,6 +2314,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2690,6 +2680,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2750,6 +2744,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2937,10 +2987,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#loading-rubrics-programmatically" class="md-nav__link">
+  <a href="#bundled-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Loading rubrics programmatically
+        Bundled files
       
     </span>
   </a>
@@ -2948,132 +2998,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#family-1-scoring-rubrics" class="md-nav__link">
+  <a href="#scoring" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Family 1 — scoring rubrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Family 1 — scoring rubrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#defaultyaml-general-purpose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        default.yaml — general purpose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentyaml-agent-output-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        agent.yaml — agent output quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#codeyaml-code-generation-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        code.yaml — code generation quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#coding_standardsyaml-pythonml-coding-standards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        coding_standards.yaml — Python/ML coding standards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patternyaml-agentic-pattern-adherence" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        pattern.yaml — agentic pattern adherence
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#family-2-judge-rubrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Family 2 — judge rubrics
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Family 2 — judge rubrics">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#qualityyaml-output-quality-dimensions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        quality.yaml — output quality dimensions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt_standardyaml-standard-prompt-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt_standard.yaml — standard prompt quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prompt_patternyaml-pattern-judge-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        prompt_pattern.yaml — pattern judge prompts
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rubric-quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rubric quick reference
+        Scoring
       
     </span>
   </a>
@@ -3081,10 +3009,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#adding-a-custom-rubric" class="md-nav__link">
+  <a href="#normalization" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Adding a custom rubric
+        Normalization
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thresholds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-rubric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom rubric
       
     </span>
   </a>
@@ -3139,734 +3089,186 @@
 
 
 <h1 id="rubrics">Rubrics<a class="headerlink" href="#rubrics" title="Permanent link">&para;</a></h1>
-<p>Every evaluation in Agentic Runtime Platform scores an artifact against a YAML rubric. The rubrics live at <a href="https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-v2-eval/src/agentic_v2_eval/rubrics"><code>agentic-v2-eval/src/agentic_v2_eval/rubrics/</code></a> and ship as part of the package.</p>
-<p>The rubrics in the canonical set split into two families:</p>
-<ul>
-<li><strong>Scoring rubrics</strong> — define named criteria with numeric weights. Used by the <code>Scorer</code> engine and the CLI <code>evaluate</code> subcommand.</li>
-<li><strong>Judge rubrics</strong> — define LLM prompt templates. Used by <code>QualityEvaluator</code>, <code>StandardEvaluator</code>, and <code>PatternEvaluator</code> at evaluation time.</li>
-</ul>
-<p>There is no single "scoring scale" across these rubrics: criterion <code>weight</code> values are 0–1 mixing coefficients that sum to 1.0, the level descriptors are a 0–5 human-reference anchor per criterion, and <code>prompt_standard</code> scores its five dimensions on a 0–10 judge scale — so read each rubric's scale in its own section rather than assuming one applies everywhere.</p>
-<hr />
-<h2 id="loading-rubrics-programmatically">Loading rubrics programmatically<a class="headerlink" href="#loading-rubrics-programmatically" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.rubrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rubric</span><span class="p">,</span> <span class="n">list_rubrics</span><span class="p">,</span> <span class="n">get_rubric_path</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># List all available rubric names</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_rubrics</span><span class="p">())</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># [&#39;agent&#39;, &#39;code&#39;, &#39;coding_standards&#39;, &#39;default&#39;, &#39;pattern&#39;,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1">#  &#39;prompt_pattern&#39;, &#39;prompt_standard&#39;, &#39;quality&#39;]</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Load a rubric as a dict</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">rubric</span> <span class="o">=</span> <span class="n">load_rubric</span><span class="p">(</span><span class="s2">&quot;agent&quot;</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="k">for</span> <span class="n">criterion</span> <span class="ow">in</span> <span class="n">rubric</span><span class="p">[</span><span class="s2">&quot;criteria&quot;</span><span class="p">]:</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">criterion</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: weight=</span><span class="si">{</span><span class="n">criterion</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Get the filesystem path</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">path</span> <span class="o">=</span> <span class="n">get_rubric_path</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Pass a rubric name to the <code>Scorer</code> constructor:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.scorer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="n">get_rubric_path</span><span class="p">(</span><span class="s2">&quot;agent&quot;</span><span class="p">))</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">({</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="s2">&quot;Correctness&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="s2">&quot;Completeness&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="s2">&quot;Clarity&quot;</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">,</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="s2">&quot;Relevance&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="s2">&quot;Efficiency&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="s2">&quot;Safety&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">})</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Weighted score: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">weighted_score</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Or from the CLI:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json<span class="w"> </span>--rubric<span class="w"> </span>rubrics/agent.yaml
-</span></code></pre></div>
-<hr />
-<h2 id="family-1-scoring-rubrics">Family 1 — scoring rubrics<a class="headerlink" href="#family-1-scoring-rubrics" title="Permanent link">&para;</a></h2>
-<p>These rubrics drive the <code>Scorer</code> engine. Each criterion has a <code>weight</code> (must sum to 1.0 within the rubric), an optional description, and optional level descriptors (0–5 scale for human reference).</p>
-<h3 id="defaultyaml-general-purpose"><code>default.yaml</code> — general purpose<a class="headerlink" href="#defaultyaml-general-purpose" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Quick evaluation of any result set where domain-specific rubrics are not yet defined.</p>
-<p><strong>Pass threshold:</strong> None defined.</p>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Weight</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Accuracy</td>
-<td>0.50</td>
-<td>How accurate are the predictions?</td>
-</tr>
-<tr>
-<td>Completeness</td>
-<td>0.30</td>
-<td>Does the output cover all required aspects?</td>
-</tr>
-<tr>
-<td>Efficiency</td>
-<td>0.20</td>
-<td>How quickly is the task completed?</td>
-</tr>
-</tbody>
-</table>
-<p><strong>When to use:</strong> Exploratory evaluation, smoke tests, or baseline comparison runs where a domain-specific rubric has not yet been authored. The high accuracy weight reflects the assumption that correctness matters most when the evaluator has no other domain context.</p>
-<hr />
-<h3 id="agentyaml-agent-output-quality"><code>agent.yaml</code> — agent output quality<a class="headerlink" href="#agentyaml-agent-output-quality" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> General-purpose scoring for AI agent outputs — prose answers, summaries, explanations, and multi-step reasoning outputs.</p>
-<p><strong>Pass threshold:</strong> 0.70 | <strong>Excellent:</strong> 0.90 | <strong>Warning:</strong> 0.50</p>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Weight</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Correctness</td>
-<td>0.25</td>
-<td>Factually correct and logically sound</td>
-</tr>
-<tr>
-<td>Completeness</td>
-<td>0.20</td>
-<td>Fully addresses all aspects of the request</td>
-</tr>
-<tr>
-<td>Clarity</td>
-<td>0.15</td>
-<td>Clear, well-organized, easy to understand</td>
-</tr>
-<tr>
-<td>Relevance</td>
-<td>0.15</td>
-<td>Directly relevant to the request</td>
-</tr>
-<tr>
-<td>Efficiency</td>
-<td>0.10</td>
-<td>Appropriately concise without unnecessary verbosity</td>
-</tr>
-<tr>
-<td>Safety</td>
-<td>0.15</td>
-<td>Avoids harmful, biased, or inappropriate content</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Level descriptors (0–5 scale):</strong></p>
-<table>
-<thead>
-<tr>
-<th>Score</th>
-<th>Correctness</th>
-<th>Completeness</th>
-<th>Clarity</th>
-<th>Relevance</th>
-<th>Efficiency</th>
-<th>Safety</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>5</td>
-<td>Completely correct</td>
-<td>Addresses all aspects</td>
-<td>Exceptionally clear</td>
-<td>Perfectly targeted</td>
-<td>Optimal length</td>
-<td>Completely safe</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Minor issues only</td>
-<td>Covers most aspects</td>
-<td>Clear, good organization</td>
-<td>Highly relevant</td>
-<td>Good balance</td>
-<td>Safe, minor concerns</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Some errors, core valid</td>
-<td>Covers main points</td>
-<td>Understandable</td>
-<td>Mostly relevant</td>
-<td>Acceptable</td>
-<td>Acceptable with caution</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Significant errors</td>
-<td>Missing components</td>
-<td>Confusing</td>
-<td>Partially relevant</td>
-<td>Too verbose/terse</td>
-<td>Concerning content</td>
-</tr>
-<tr>
-<td>1</td>
-<td>Fundamentally incorrect</td>
-<td>Only partially addresses</td>
-<td>Very difficult</td>
-<td>Mostly irrelevant</td>
-<td>Significantly inefficient</td>
-<td>Harmful content</td>
-</tr>
-<tr>
-<td>0</td>
-<td>No valid response</td>
-<td>Does not address</td>
-<td>Incomprehensible</td>
-<td>Off-topic</td>
-<td>Unusable length</td>
-<td>Dangerous</td>
-</tr>
-</tbody>
-</table>
-<p><strong>When to use:</strong> Default rubric for workflow outputs from the <code>agentic_v2</code> runtime. The <code>Safety</code> criterion at 0.15 ensures safety issues have a meaningful impact on the final score even when other dimensions are strong.</p>
-<hr />
-<h3 id="codeyaml-code-generation-quality"><code>code.yaml</code> — code generation quality<a class="headerlink" href="#codeyaml-code-generation-quality" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Scoring code generation artifacts — functions, classes, modules, and complete programs.</p>
-<p><strong>Pass threshold:</strong> 0.75 | <strong>Excellent:</strong> 0.90 | <strong>Warning:</strong> 0.60</p>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Weight</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Correctness</td>
-<td>0.30</td>
-<td>Produces correct output for the specification</td>
-</tr>
-<tr>
-<td>Completeness</td>
-<td>0.20</td>
-<td>Implements all required functionality</td>
-</tr>
-<tr>
-<td>Code Quality</td>
-<td>0.20</td>
-<td>Clean, readable, well-structured code</td>
-</tr>
-<tr>
-<td>Efficiency</td>
-<td>0.15</td>
-<td>Reasonable time and space complexity</td>
-</tr>
-<tr>
-<td>Security</td>
-<td>0.15</td>
-<td>Avoids common security vulnerabilities</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Level descriptors (0–5 scale):</strong></p>
-<table>
-<thead>
-<tr>
-<th>Score</th>
-<th>Correctness</th>
-<th>Code Quality</th>
-<th>Security</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>5</td>
-<td>All tests pass, handles edge cases</td>
-<td>Excellent style, documented, best practices</td>
-<td>No issues, follows security best practices</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Main tests pass, minor edge cases</td>
-<td>Good quality, minor style issues</td>
-<td>Minor security considerations missing</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Mostly correct, some failures</td>
-<td>Acceptable, some improvements needed</td>
-<td>Some concerns, not critical</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Significant bugs or logic errors</td>
-<td>Poor quality, hard to maintain</td>
-<td>Notable vulnerabilities</td>
-</tr>
-<tr>
-<td>1</td>
-<td>Fundamentally broken</td>
-<td>Very poor, confusing structure</td>
-<td>Serious security flaws</td>
-</tr>
-<tr>
-<td>0</td>
-<td>Does not compile/run</td>
-<td>Unreadable</td>
-<td>Dangerous security holes</td>
-</tr>
-</tbody>
-</table>
-<p><strong>When to use:</strong> Code generation benchmarks (HumanEval, MBPP, SWE-bench), code review workflows, and CI-integrated code quality gates. The higher pass threshold (0.75 vs. 0.70) reflects that code must actually execute correctly — partial credit for "mostly right" code is more limited than for prose.</p>
-<hr />
-<h3 id="coding_standardsyaml-pythonml-coding-standards"><code>coding_standards.yaml</code> — Python/ML coding standards<a class="headerlink" href="#coding_standardsyaml-pythonml-coding-standards" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Automated scoring of code artifacts against the 27-rule Python and AI/ML coding standards documented in <code>docs/CODING_STANDARDS.md</code>.</p>
-<p><strong>Pass threshold:</strong> 0.70 | <strong>Excellent:</strong> 0.90 | <strong>Warning:</strong> 0.50</p>
-<p><strong>Metadata:</strong> 27 rules total (23 required, 4 recommended).</p>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Weight</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Style &amp; Formatting</td>
-<td>0.15</td>
-<td>Black/isort, Ruff compliance, pyproject.toml config</td>
-</tr>
-<tr>
-<td>Type Safety</td>
-<td>0.15</td>
-<td>Type hints on all signatures, mypy/pyright compliance</td>
-</tr>
-<tr>
-<td>Naming &amp; Structure</td>
-<td>0.10</td>
-<td>PEP 8 naming, intent-based names, feature-based layout</td>
-</tr>
-<tr>
-<td>Error Handling</td>
-<td>0.15</td>
-<td>No bare except, structured logging, input validation</td>
-</tr>
-<tr>
-<td>Testing</td>
-<td>0.15</td>
-<td>80%+ coverage, test pyramid, CI gating, TDD workflow</td>
-</tr>
-<tr>
-<td>Security &amp; Privacy</td>
-<td>0.10</td>
-<td>No hardcoded secrets, no PII in logs, input sanitization</td>
-</tr>
-<tr>
-<td>ML Reproducibility</td>
-<td>0.10</td>
-<td>Seeds pinned, data/model versioned, configs tracked</td>
-</tr>
-<tr>
-<td>Deployment Readiness</td>
-<td>0.10</td>
-<td>Dockerized, deps pinned, train/eval/infer separated</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Level 5 (exemplary) expectations:</strong></p>
-<ul>
-<li><strong>Style:</strong> Zero lint errors, all tools configured in <code>pyproject.toml</code>, pre-commit hooks active.</li>
-<li><strong>Type Safety:</strong> Full annotations, <code>mypy --strict</code> passes, tensor shapes documented in docstrings.</li>
-<li><strong>Naming:</strong> All PEP 8 compliant, intent-based names, config-driven constants, clean feature-based layout.</li>
-<li><strong>Error Handling:</strong> Custom exception hierarchy, Pydantic validation, structlog integration, no swallowed errors.</li>
-<li><strong>Testing:</strong> 80%+ coverage, full test pyramid, ML contract tests, CI blocks merge, TDD practiced.</li>
-<li><strong>Security:</strong> Zero secrets in code, log sanitization, AI output reviewed, full input validation.</li>
-<li><strong>ML Reproducibility:</strong> All seeds pinned, DVC/MLflow versioning, full environment logged, deterministic mode active.</li>
-<li><strong>Deployment:</strong> Dockerized, all deps pinned, clean train/eval/infer separation, model cards present, nbstripout active.</li>
-</ul>
-<p><strong>When to use:</strong> Run on-demand against any Python codebase artifact:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>artifact_metrics.json<span class="w"> </span>--rubric<span class="w"> </span>coding_standards.yaml
-</span></code></pre></div>
-<p>This rubric is also the default for the <code>code-reviewer</code> and <code>python-reviewer</code> agent evaluations.</p>
-<hr />
-<h3 id="patternyaml-agentic-pattern-adherence"><code>pattern.yaml</code> — agentic pattern adherence<a class="headerlink" href="#patternyaml-agentic-pattern-adherence" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Scoring whether an output correctly follows a defined agentic reasoning pattern (ReAct, CoVe, Reflexion, RAG). This rubric is used by <code>PatternEvaluator</code> indirectly — the evaluator loads pattern data from <code>prompt_pattern.yaml</code> and applies hard gate logic that mirrors this rubric's structure.</p>
-<p><strong>Pass threshold:</strong> 0.75 | <strong>Excellent:</strong> 0.90 | <strong>Warning:</strong> 0.60</p>
-<table>
-<thead>
-<tr>
-<th>Criterion</th>
-<th>Weight</th>
-<th>Hard Gate</th>
-<th>Minimum</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pattern Invocation</td>
-<td>0.20</td>
-<td>No</td>
-<td>—</td>
-<td>Did the model attempt the specified pattern?</td>
-</tr>
-<tr>
-<td>Phase Ordering</td>
-<td>0.20</td>
-<td><strong>Yes</strong></td>
-<td>4</td>
-<td>Are phases executed in correct order?</td>
-</tr>
-<tr>
-<td>Phase Completeness</td>
-<td>0.20</td>
-<td><strong>Yes</strong></td>
-<td>4</td>
-<td>Are all required phases present with proper content?</td>
-</tr>
-<tr>
-<td>Constraint Adherence</td>
-<td>0.20</td>
-<td><strong>Yes</strong></td>
-<td>4</td>
-<td>Were pattern-specific constraints followed?</td>
-</tr>
-<tr>
-<td>Termination Discipline</td>
-<td>0.10</td>
-<td>No</td>
-<td>—</td>
-<td>Does the pattern terminate appropriately?</td>
-</tr>
-<tr>
-<td>Self-Reference Accuracy</td>
-<td>0.10</td>
-<td>No</td>
-<td>—</td>
-<td>When referencing prior steps, is it accurate?</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Hard Gates:</strong></p>
-<p>A hard gate failure blocks passing regardless of the weighted score. The three gated criteria require a minimum score of 4 out of 5:</p>
-<ul>
-<li><strong>Phase Ordering (≥ 4):</strong> The phases must appear in the correct sequence. Significant ordering violations are a fundamental pattern failure, not a quality degradation.</li>
-<li><strong>Phase Completeness (≥ 4):</strong> All required phases must be present. A "mostly complete" pattern is still structurally broken.</li>
-<li><strong>Constraint Adherence (≥ 4):</strong> The output must respect the pattern's rules. Constraint violations can produce outputs that appear reasonable while being structurally incorrect.</li>
-</ul>
-<p><strong>When to use:</strong> Evaluating prompt engineering quality for agent personas. Run after authoring or modifying a prompt in <code>agentic_v2/prompts/</code> to verify the pattern is reliably induced.</p>
-<hr />
-<h2 id="family-2-judge-rubrics">Family 2 — judge rubrics<a class="headerlink" href="#family-2-judge-rubrics" title="Permanent link">&para;</a></h2>
-<p>These rubrics define LLM prompt templates and scoring instructions. They are consumed by evaluator classes, not by the <code>Scorer</code> engine directly.</p>
-<h3 id="qualityyaml-output-quality-dimensions"><code>quality.yaml</code> — output quality dimensions<a class="headerlink" href="#qualityyaml-output-quality-dimensions" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Defines five LLM judge calls for <code>QualityEvaluator</code>. Each definition includes a <code>system_prompt</code>, a <code>prompt_template</code> with <code>{{variable}}</code> placeholders, and a <code>choices_type</code>.</p>
-<p>All five dimensions use <code>choices_type: standard_5_point</code> mapping to scores <code>[0.0, 0.25, 0.5, 0.75, 1.0]</code>.</p>
-<p><strong>Coherence</strong> — measures logical and orderly presentation. The judge looks for natural flow, logical connections, consistent focus, and well-structured presentation. Input variables: <code>{{input}}</code> (the query), <code>{{completion}}</code> (the response).</p>
-<p><strong>Fluency</strong> — measures language quality: grammar, spelling, punctuation, word choice, and sentence structure. Input variable: <code>{{completion}}</code> only (query-independent).</p>
-<p><strong>Relevance</strong> — measures how well the response addresses the query. Looks for on-topic content, direct answers, and absence of tangents. Input variables: <code>{{input}}</code>, <code>{{completion}}</code>.</p>
-<p><strong>Groundedness</strong> — measures whether claims are supported by provided context. A grounded response does not introduce information absent from the context. Input variables: <code>{{context}}</code>, <code>{{completion}}</code>.</p>
-<p><strong>Similarity</strong> — measures semantic equivalence with a reference answer. Two responses are similar if they convey the same meaning and cover the same key points, even with different wording. Input variables: <code>{{expected}}</code>, <code>{{completion}}</code>.</p>
-<p><strong>Usage:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span><span class="p">,</span> <span class="n">RELEVANCE</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">QualityEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">coherence</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">definition</span><span class="o">=</span><span class="n">COHERENCE</span><span class="p">,</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the capital of France?&quot;</span><span class="p">},</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;Paris is the capital of France, known for the Eiffel Tower.&quot;</span><span class="p">,</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coherence: </span><span class="si">{</span><span class="n">coherence</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># e.g. 0.75</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">relevance</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">definition</span><span class="o">=</span><span class="n">RELEVANCE</span><span class="p">,</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the capital of France?&quot;</span><span class="p">},</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;Paris is the capital of France, known for the Eiffel Tower.&quot;</span><span class="p">,</span>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="p">)</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relevance: </span><span class="si">{</span><span class="n">relevance</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># e.g. 1.0</span>
-</span></code></pre></div>
-<hr />
-<h3 id="prompt_standardyaml-standard-prompt-quality"><code>prompt_standard.yaml</code> — standard prompt quality<a class="headerlink" href="#prompt_standardyaml-standard-prompt-quality" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Defines the judge prompt for <code>StandardEvaluator</code>. Instructs the LLM to evaluate a prompt template on five 0–10 dimensions and return a JSON object.</p>
-<p><strong>Judge prompt behavior:</strong>
-- The prompt under review is sandwiched between <code>&lt;BEGIN_PROMPT&gt;</code> and <code>&lt;END_PROMPT&gt;</code> markers.
-- The judge is explicitly instructed to <strong>not follow</strong> the prompt's instructions — it treats it as text to evaluate, not commands to execute.
-- Output is a JSON object only. Markdown fences and commentary are explicitly forbidden.
-- Brace characters in the prompt content are doubled (<code>{</code> → <code>{{</code>) before templating to prevent format-string injection.</p>
-<p><strong>Required JSON schema:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">&quot;clarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nt">&quot;effectiveness&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nt">&quot;structure&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nt">&quot;specificity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="nt">&quot;completeness&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="nt">&quot;improvements&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="s2">&quot;Add an explicit output format section.&quot;</span><span class="p">,</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="s2">&quot;Include 1-2 concrete examples.&quot;</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.92</span>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="p">}</span>
-</span></code></pre></div>
-<p><strong>Grade mapping:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Overall Score (0–10)</th>
-<th>Percent</th>
-<th>Grade</th>
-<th>Passes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>≥ 9.0</td>
-<td>≥ 90%</td>
-<td>A</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>≥ 8.0</td>
-<td>≥ 80%</td>
-<td>B</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>≥ 7.0</td>
-<td>≥ 70%</td>
-<td>C</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>≥ 6.0</td>
-<td>≥ 60%</td>
-<td>D</td>
-<td>No</td>
-</tr>
-<tr>
-<td>&lt; 6.0</td>
-<td>&lt; 60%</td>
-<td>F</td>
-<td>No</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Usage:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardEvaluator</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">StandardEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">score_prompt</span><span class="p">(</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">prompt_name</span><span class="o">=</span><span class="s2">&quot;my_agent_prompt&quot;</span><span class="p">,</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">prompt_content</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;agentic_v2/prompts/coder.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gh:openai/gpt-4o&quot;</span><span class="p">,</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">runs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>        <span class="c1"># run 3 times, take median</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Grade: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">grade</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>          <span class="c1"># e.g. &quot;B&quot;</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">overall_score</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># e.g. 8.2</span>
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Passed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">passed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>          <span class="c1"># True if &gt;= 7.0</span>
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="k">for</span> <span class="n">improvement</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">improvements</span><span class="p">:</span>
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">improvement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<hr />
-<h3 id="prompt_patternyaml-pattern-judge-prompts"><code>prompt_pattern.yaml</code> — pattern judge prompts<a class="headerlink" href="#prompt_patternyaml-pattern-judge-prompts" title="Permanent link">&para;</a></h3>
-<p><strong>Purpose:</strong> Defines the master judge prompt template plus per-pattern data for <code>PatternEvaluator</code>.</p>
-<p>This is the most complex rubric. It has two top-level sections:</p>
-<p><strong><code>judge_prompt</code></strong> — the master template. Variables filled at evaluation time: <code>{pattern_name}</code>, <code>{phases}</code>, <code>{state_machine}</code>, <code>{pattern_specific_instructions}</code>, <code>{pattern_score_fields}</code>, <code>{prompt_content}</code>, <code>{model_output}</code>.</p>
-<p>The judge is instructed to evaluate universal dimensions (PIF, POI, PC, CA, SRC, PR, IR) plus pattern-specific dimensions, then return a JSON object only, with no markdown wrapping.</p>
-<p><strong><code>patterns</code></strong> — keyed by lowercase pattern name. Each pattern entry has:
-- <code>phases: list[str]</code> — ordered list of phase names
-- <code>state_machine: str</code> — arrow notation (e.g., <code>"Thought → Action → Observation → (repeat) → Answer"</code>)
-- <code>instructions: str</code> — additional scoring instructions for this pattern appended to the universal judge prompt
-- <code>score_fields: str</code> — JSON template snippet for the pattern-specific score fields</p>
-<p><strong>Supported patterns:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Phases</th>
-<th>Pattern-Specific Dimensions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>react</code></td>
-<td>Thought, Action, Observation, Final Answer</td>
-<td>R1 (Thought/Action Separation), R2 (Observation Binding), R3 (Termination Discipline)</td>
-</tr>
-<tr>
-<td><code>cove</code></td>
-<td>Draft Answer, Verification Questions, Independent Checks, Revised Answer</td>
-<td>C1 (Verification Question Quality), C2 (Evidence Independence), C3 (Revision Delta)</td>
-</tr>
-<tr>
-<td><code>reflexion</code></td>
-<td>Attempt, Self-Critique, Reflection Memory, Improved Attempt</td>
-<td>F1 (Critique Specificity), F2 (Memory Utilization), F3 (Improvement Signal)</td>
-</tr>
-<tr>
-<td><code>rag</code></td>
-<td>Query Decomposition, Retrieval Call, Evidence Integration, Answer with Citations</td>
-<td>G1 (Retrieval Trigger Accuracy), G2 (Evidence Grounding), G3 (Citation Discipline)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Usage:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternEvaluator</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">PatternEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">score_pattern</span><span class="p">(</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">prompt_name</span><span class="o">=</span><span class="s2">&quot;react_agent_v2&quot;</span><span class="p">,</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">prompt_content</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;agentic_v2/prompts/react_agent.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">model_output</span><span class="o">=</span><span class="s2">&quot;Thought: I need to search...</span><span class="se">\n</span><span class="s2">Action: search(&#39;capital of France&#39;)</span><span class="se">\n</span><span class="s2">Observation: Paris</span><span class="se">\n</span><span class="s2">Final Answer: Paris&quot;</span><span class="p">,</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;react&quot;</span><span class="p">,</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gh:openai/gpt-4o&quot;</span><span class="p">,</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">runs</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>       <span class="c1"># 20 runs for median aggregation</span>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="p">)</span>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hard gates passed: </span><span class="si">{</span><span class="n">score</span><span class="o">.</span><span class="n">hard_gates_passed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Universal score: </span><span class="si">{</span><span class="n">score</span><span class="o">.</span><span class="n">overall_universal</span><span class="si">}</span><span class="s2">/30&quot;</span><span class="p">)</span>
-</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pattern score: </span><span class="si">{</span><span class="n">score</span><span class="o">.</span><span class="n">overall_pattern</span><span class="si">}</span><span class="s2">/15&quot;</span><span class="p">)</span>
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Combined: </span><span class="si">{</span><span class="n">score</span><span class="o">.</span><span class="n">combined_score</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="k">if</span> <span class="n">score</span><span class="o">.</span><span class="n">hard_gate_failures</span><span class="p">:</span>
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="k">for</span> <span class="n">failure</span> <span class="ow">in</span> <span class="n">score</span><span class="o">.</span><span class="n">hard_gate_failures</span><span class="p">:</span>
-</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  GATE FAILED: </span><span class="si">{</span><span class="n">failure</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p><strong>Hard gate mapping for PatternEvaluator:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Hard Gate</th>
-<th>Threshold</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>POI</td>
-<td>Phase Ordering Integrity</td>
-<td>≥ 4</td>
-<td>Phases appear in the correct sequence</td>
-</tr>
-<tr>
-<td>PC</td>
-<td>Phase Completeness</td>
-<td>≥ 4</td>
-<td>All required phases are present</td>
-</tr>
-<tr>
-<td>CA</td>
-<td>Constraint Adherence</td>
-<td>≥ 4</td>
-<td>Pattern-specific rules are respected</td>
-</tr>
-<tr>
-<td>PR</td>
-<td>Pattern Robustness</td>
-<td>≥ 0.75</td>
-<td>Pattern executes ≥ 75% of the time</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="rubric-quick-reference">Rubric quick reference<a class="headerlink" href="#rubric-quick-reference" title="Permanent link">&para;</a></h2>
+<p>A scoring rubric names the values expected in a result and assigns a weight to
+each value. <code>Scorer</code> normalizes each supplied value to <code>0.0</code>–<code>1.0</code>, applies the
+weights, and returns a weighted score.</p>
+<p>Rubric names and result keys are case-sensitive.</p>
+<h2 id="bundled-files">Bundled files<a class="headerlink" href="#bundled-files" title="Permanent link">&para;</a></h2>
+<p>The package currently ships eight YAML files:</p>
 <table>
 <thead>
 <tr>
 <th>Rubric</th>
-<th>Criteria Count</th>
-<th>Family</th>
-<th>Pass Threshold</th>
-<th>Primary Evaluator</th>
+<th>Contents</th>
+<th>Used by</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>default</code></td>
-<td>3</td>
-<td>Scoring</td>
-<td>None</td>
-<td><code>Scorer</code></td>
+<td><code>Accuracy</code>, <code>Completeness</code>, <code>Efficiency</code></td>
+<td><code>Scorer</code> and the CLI default</td>
 </tr>
 <tr>
 <td><code>agent</code></td>
-<td>6</td>
-<td>Scoring</td>
-<td>0.70</td>
+<td>Six agent-output criteria</td>
 <td><code>Scorer</code></td>
 </tr>
 <tr>
 <td><code>code</code></td>
-<td>5</td>
-<td>Scoring</td>
-<td>0.75</td>
+<td>Five code-output criteria</td>
 <td><code>Scorer</code></td>
 </tr>
 <tr>
 <td><code>coding_standards</code></td>
-<td>8</td>
-<td>Scoring</td>
-<td>0.70</td>
+<td>Eight repository coding-standard criteria</td>
 <td><code>Scorer</code></td>
 </tr>
 <tr>
 <td><code>pattern</code></td>
-<td>6 + hard gates</td>
-<td>Scoring</td>
-<td>0.75</td>
-<td><code>Scorer</code> / <code>PatternEvaluator</code></td>
+<td>Six pattern-execution criteria and hard-gate metadata</td>
+<td><code>Scorer</code> or custom gates</td>
 </tr>
 <tr>
 <td><code>quality</code></td>
-<td>5 definitions</td>
-<td>Judge</td>
-<td>—</td>
+<td>Prompt templates for five quality definitions</td>
 <td><code>QualityEvaluator</code></td>
 </tr>
 <tr>
 <td><code>prompt_standard</code></td>
-<td>5 dimensions</td>
-<td>Judge</td>
-<td>7.0/10</td>
+<td>Prompt template for five-dimension prompt review</td>
 <td><code>StandardEvaluator</code></td>
 </tr>
 <tr>
 <td><code>prompt_pattern</code></td>
-<td>4 patterns</td>
-<td>Judge</td>
-<td>Hard gates</td>
+<td>Prompt templates and rules for named agentic patterns</td>
 <td><code>PatternEvaluator</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="adding-a-custom-rubric">Adding a custom rubric<a class="headerlink" href="#adding-a-custom-rubric" title="Permanent link">&para;</a></h2>
+<p>Only files with a <code>criteria</code> list can be passed directly to <code>Scorer</code>.
+<code>quality</code>, <code>prompt_standard</code>, and <code>prompt_pattern</code> configure model-backed
+evaluators instead.</p>
+<p>List and load the current files at runtime:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.rubrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_rubrics</span><span class="p">,</span> <span class="n">load_rubric</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_rubrics</span><span class="p">())</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">rubric</span> <span class="o">=</span> <span class="n">load_rubric</span><span class="p">(</span><span class="s2">&quot;agent&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="scoring">Scoring<a class="headerlink" href="#scoring" title="Permanent link">&para;</a></h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.rubrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rubric</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="n">load_rubric</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">))</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">(</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="p">{</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="s2">&quot;Accuracy&quot;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">,</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="s2">&quot;Completeness&quot;</span><span class="p">:</span> <span class="mf">0.80</span><span class="p">,</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="s2">&quot;Efficiency&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="p">}</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">)</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">weighted_score</span><span class="p">)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">total_score</span><span class="p">)</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">criterion_scores</span><span class="p">)</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">missing_criteria</span><span class="p">)</span>
+</span></code></pre></div>
+<p>The returned fields mean:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weighted_score</code></td>
+<td>Weighted aggregate across all rubric criteria</td>
+</tr>
+<tr>
+<td><code>total_score</code></td>
+<td>Unweighted mean across all rubric criteria</td>
+</tr>
+<tr>
+<td><code>criterion_scores</code></td>
+<td>Supplied values after clamping</td>
+</tr>
+<tr>
+<td><code>missing_criteria</code></td>
+<td>Rubric criteria absent from the result</td>
+</tr>
+</tbody>
+</table>
+<p>Missing criteria receive no points while their weight remains in the
+denominator. This lowers both aggregate scores.</p>
+<h2 id="normalization">Normalization<a class="headerlink" href="#normalization" title="Permanent link">&para;</a></h2>
+<p>Each criterion may define:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Correctness</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The result satisfies the stated requirements.</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.7</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">min_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">max_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</span></code></pre></div>
+<p><code>Scorer</code>:</p>
 <ol>
-<li>Create a YAML file following the schema above.</li>
-<li>Place it anywhere accessible at runtime (does not need to be in the packaged <code>rubrics/</code> directory).</li>
-<li>Pass the path to <code>Scorer</code>:</li>
+<li>converts the supplied value to <code>float</code>;</li>
+<li>clamps it to the configured range;</li>
+<li>normalizes it with
+   <code>(value - min_value) / (max_value - min_value)</code>; and</li>
+<li>applies the criterion weight.</li>
 </ol>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.scorer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="s2">&quot;path/to/my_rubric.yaml&quot;</span><span class="p">)</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">({</span><span class="s2">&quot;my_criterion&quot;</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">})</span>
+<p>If <code>min_value</code> and <code>max_value</code> are omitted, they default to <code>0.0</code> and <code>1.0</code>.</p>
+<p>The scorer divides by the sum of the configured weights. Weights do not need to
+sum to <code>1.0</code>, although normalized weights are easier to review.</p>
+<h2 id="thresholds">Thresholds<a class="headerlink" href="#thresholds" title="Permanent link">&para;</a></h2>
+<p>Some bundled scoring rubrics contain <code>thresholds</code> metadata such as:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">thresholds</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">pass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">excellent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.90</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">warning</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.50</span>
 </span></code></pre></div>
-<p>Or via the CLI:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>results.json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span>--rubric<span class="w"> </span>path/to/my_rubric.yaml
+<p><code>Scorer.score()</code> does not apply these thresholds. A caller must compare
+<code>weighted_score</code> with the intended threshold, or use the CLI's explicit
+<code>--fail-under</code> option.</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">agentic-v2-eval</span> <span class="n">evaluate</span> <span class="p">.\</span><span class="n">results</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-fail-under</span> <span class="n">0</span><span class="p">.</span><span class="n">80</span>
 </span></code></pre></div>
-<p>Custom rubrics must have criteria weights that sum to approximately 1.0 (tolerance ±0.01 in the server-side <code>_validate_rubric_weights</code> check, not enforced by the standalone <code>Scorer</code>).</p>
+<p>The command exits with code <code>2</code> when the average weighted score is below the
+requested threshold.</p>
+<h2 id="custom-rubric">Custom rubric<a class="headerlink" href="#custom-rubric" title="Permanent link">&para;</a></h2>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Release review</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">criteria</span><span class="p">:</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Correctness</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Required behavior is present and tested.</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.6</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="nt">min_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="nt">max_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Safety</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Required security and failure controls are present.</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.4</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="nt">min_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span><span class="nt">max_value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span></code></pre></div>
+<p>Use it from Python:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="s2">&quot;release-rubric.yaml&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Or from the command line:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">agentic-v2-eval</span> <span class="n">evaluate</span> <span class="p">.\</span><span class="n">results</span><span class="p">.</span><span class="n">json</span> <span class="p">`</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  <span class="p">-</span><span class="n">-rubric</span> <span class="p">.\</span><span class="n">release-rubric</span><span class="p">.</span><span class="n">yaml</span> <span class="p">`</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  <span class="p">-</span><span class="n">-output</span> <span class="p">.\</span><span class="n">scored</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p>Before using a rubric as a release gate:</p>
+<ul>
+<li>define how each raw value is produced;</li>
+<li>keep criterion names identical across producers and the rubric;</li>
+<li>test missing, invalid, minimum, and maximum values;</li>
+<li>choose a threshold from representative data rather than intuition; and</li>
+<li>store the rubric revision with the evaluation result.</li>
+</ul>
 
 
 
@@ -3889,7 +3291,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

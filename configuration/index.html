@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Configuration reference - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/configuration.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/configuration/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Configuration reference - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/configuration.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2359,44 +2449,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-configuration-is-loaded" class="md-nav__link">
+  <a href="#loading-and-precedence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How configuration is loaded
+        Loading and precedence
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How configuration is loaded">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#engine-pydantic-settings" class="md-nav__link">
+  <a href="#model-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Engine: pydantic-settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#precedence-highest-to-lowest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Precedence (highest to lowest)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restart-vs-per-request-reads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Restart vs. per-request reads
+        Model overrides
       
     </span>
   </a>
@@ -2409,22 +2488,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llm-provider-keys" class="md-nav__link">
+  <a href="#rag-embeddings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM provider keys
+        RAG embeddings
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="LLM provider keys">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-and-model-call-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution and model-call settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tool-approval-and-agent-loop-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool approval and agent-loop safety
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HTTP authentication">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#azure-openai-failover-pattern" class="md-nav__link">
+  <a href="#static-api-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Azure OpenAI failover pattern
+        Static API key
       
     </span>
   </a>
@@ -2432,21 +2544,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gemini-rate-limits-reference" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gemini rate limits (reference)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#anthropic-rate-limits-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Anthropic rate limits (reference)
+        OIDC
       
     </span>
   </a>
@@ -2459,22 +2560,121 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tracing-and-observability" class="md-nav__link">
+  <a href="#cors-rate-limiting-and-lockout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing and observability
+        CORS, rate limiting, and lockout
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tracing and observability">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-shell-http-and-mcp-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File, shell, HTTP, and MCP boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracing-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracing and metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-and-audit-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging and audit records
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis-and-replay-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis and replay storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#langgraph-checkpointing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LangGraph checkpointing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ui-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-local-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal local configurations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Minimal local configurations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#span-content-by-setting" class="md-nav__link">
+  <a href="#no-provider-calls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Span content by setting
+        No provider calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#native-engine-without-langgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Native engine without LangGraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exposed-service-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exposed service baseline
       
     </span>
   </a>
@@ -2483,317 +2683,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#runtime-and-local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Runtime and local development
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Runtime and local development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_api_key-per-request-re-read" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_API_KEY — per-request re-read
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_default_adapter-adapter-validation-at-startup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_DEFAULT_ADAPTER — adapter validation at startup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-and-sandboxing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security and sandboxing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security and sandboxing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_file_base_dir-critical-path-containment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_FILE_BASE_DIR — critical path containment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_sanitizer_fail_open-breaking-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SANITIZER_FAIL_OPEN — breaking change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#middleware-execution-order" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Middleware execution order
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#oidc-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OIDC authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OIDC authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-oidc-setup-azure-ad-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick OIDC setup (Azure AD example)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operational-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operational settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operational settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-prometheus-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Prometheus metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enabling-redis-for-multi-replica-deployments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Redis for multi-replica deployments
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-logging-for-log-aggregators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSON logging for log aggregators
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rate-limiting-and-auth-throttle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate limiting and auth throttle
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Rate limiting and auth throttle">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#global-rate-limiter-slowapi" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Global rate limiter (slowapi)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#per-ip-auth-throttle-auththrottle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Per-IP auth throttle (AuthThrottle)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-thresholds-in-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default thresholds in context
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Additional settings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-recipes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick recipes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick recipes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#run-locally-with-no-provider-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run locally with no provider keys
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lock-down-a-production-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lock down a production deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tune-rate-limit-for-low-traffic-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tune rate limit for low-traffic development
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enable-otlp-tracing-to-jaeger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enable OTLP tracing to Jaeger
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-the-native-engine-without-langchain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use the native engine without LangChain
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#complete-variable-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete variable index
-      
-    </span>
-  </a>
   
 </li>
       
@@ -2985,6 +2874,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3045,6 +2938,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3232,44 +3181,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-configuration-is-loaded" class="md-nav__link">
+  <a href="#loading-and-precedence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How configuration is loaded
+        Loading and precedence
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="How configuration is loaded">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model providers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model providers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#engine-pydantic-settings" class="md-nav__link">
+  <a href="#model-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Engine: pydantic-settings
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#precedence-highest-to-lowest" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Precedence (highest to lowest)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restart-vs-per-request-reads" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Restart vs. per-request reads
+        Model overrides
       
     </span>
   </a>
@@ -3282,22 +3220,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#llm-provider-keys" class="md-nav__link">
+  <a href="#rag-embeddings" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM provider keys
+        RAG embeddings
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="LLM provider keys">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#execution-and-model-call-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution and model-call settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tool-approval-and-agent-loop-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tool approval and agent-loop safety
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HTTP authentication">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#azure-openai-failover-pattern" class="md-nav__link">
+  <a href="#static-api-key" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Azure OpenAI failover pattern
+        Static API key
       
     </span>
   </a>
@@ -3305,21 +3276,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gemini-rate-limits-reference" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Gemini rate limits (reference)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#anthropic-rate-limits-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Anthropic rate limits (reference)
+        OIDC
       
     </span>
   </a>
@@ -3332,22 +3292,121 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tracing-and-observability" class="md-nav__link">
+  <a href="#cors-rate-limiting-and-lockout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tracing and observability
+        CORS, rate limiting, and lockout
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tracing and observability">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-shell-http-and-mcp-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File, shell, HTTP, and MCP boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracing-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracing and metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-and-audit-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging and audit records
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis-and-replay-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis and replay storage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#langgraph-checkpointing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LangGraph checkpointing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ui-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UI variables
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#minimal-local-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal local configurations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Minimal local configurations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#span-content-by-setting" class="md-nav__link">
+  <a href="#no-provider-calls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Span content by setting
+        No provider calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#native-engine-without-langgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Native engine without LangGraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exposed-service-baseline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exposed service baseline
       
     </span>
   </a>
@@ -3356,317 +3415,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#runtime-and-local-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Runtime and local development
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Runtime and local development">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_api_key-per-request-re-read" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_API_KEY — per-request re-read
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_default_adapter-adapter-validation-at-startup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_DEFAULT_ADAPTER — adapter validation at startup
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-and-sandboxing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security and sandboxing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security and sandboxing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#agentic_file_base_dir-critical-path-containment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_FILE_BASE_DIR — critical path containment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#agentic_sanitizer_fail_open-breaking-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AGENTIC_SANITIZER_FAIL_OPEN — breaking change
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#middleware-execution-order" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Middleware execution order
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#oidc-authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OIDC authentication
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OIDC authentication">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-oidc-setup-azure-ad-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick OIDC setup (Azure AD example)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#operational-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Operational settings
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Operational settings">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-prometheus-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Prometheus metrics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enabling-redis-for-multi-replica-deployments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling Redis for multi-replica deployments
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json-logging-for-log-aggregators" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        JSON logging for log aggregators
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#rate-limiting-and-auth-throttle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate limiting and auth throttle
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Rate limiting and auth throttle">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#global-rate-limiter-slowapi" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Global rate limiter (slowapi)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#per-ip-auth-throttle-auththrottle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Per-IP auth throttle (AuthThrottle)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#default-thresholds-in-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Default thresholds in context
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-settings" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Additional settings
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-recipes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick recipes
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick recipes">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#run-locally-with-no-provider-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run locally with no provider keys
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lock-down-a-production-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lock down a production deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tune-rate-limit-for-low-traffic-development" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tune rate limit for low-traffic development
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#enable-otlp-tracing-to-jaeger" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enable OTLP tracing to Jaeger
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-the-native-engine-without-langchain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Use the native engine without LangChain
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#complete-variable-index" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete variable index
-      
-    </span>
-  </a>
   
 </li>
       
@@ -3715,1017 +3463,680 @@
 
 
 <h1 id="configuration-reference">Configuration reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h1>
-<p>The Agentic Runtime Platform server (<code>agentic-workflows-v2</code>) reads all configuration from environment variables, which may be supplied directly in the shell environment or via a <code>.env</code> file at the repository root. A fully annotated template with copy-pasteable defaults is available at <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example"><code>.env.example</code></a> in the repository root.</p>
-<p>All variables are read <strong>once at server startup</strong> unless noted otherwise in this document. Changes to any variable require a server restart to take effect — the only exception is <code>AGENTIC_API_KEY</code>, which is re-read on every request to support key rotation without downtime (see <a href="#runtime-and-local-development">Runtime and Local Development</a> for details).</p>
-<hr />
-<h2 id="how-configuration-is-loaded">How configuration is loaded<a class="headerlink" href="#how-configuration-is-loaded" title="Permanent link">&para;</a></h2>
-<h3 id="engine-pydantic-settings">Engine: pydantic-settings<a class="headerlink" href="#engine-pydantic-settings" title="Permanent link">&para;</a></h3>
-<p>Core variables are modelled as a typed <code>Settings</code> class in <code>agentic_v2/settings.py</code> using <a href="https://docs.pydantic.dev/latest/concepts/pydantic_settings/">pydantic-settings</a>. Boolean flags accept a broad set of synonyms (<code>1</code>, <code>true</code>, <code>yes</code>, <code>on</code> for true; <code>0</code>, <code>false</code>, <code>no</code>, <code>off</code>, or empty for false) unless a narrower set is documented for a specific variable. Unknown values produce a logged warning and fall back to the field default rather than crashing.</p>
-<p>A small number of variables — notably those owned by the auth and rate-limiting subsystems — are read directly via <code>os.environ</code> at the point of first use. The precedence rules below apply to both layers.</p>
-<h3 id="precedence-highest-to-lowest">Precedence (highest to lowest)<a class="headerlink" href="#precedence-highest-to-lowest" title="Permanent link">&para;</a></h3>
+<p>The runtime reads configuration from process environment variables and a
+repository-root <code>.env</code> file. Copy the template:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</span></code></pre></div>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
+</span></code></pre></div>
+<p>Do not commit <code>.env</code>.</p>
+<h2 id="loading-and-precedence">Loading and precedence<a class="headerlink" href="#loading-and-precedence" title="Permanent link">&para;</a></h2>
+<p>Most runtime settings are fields on <code>agentic_v2.settings.Settings</code>, backed by
+<code>pydantic-settings</code>.</p>
+<p>Precedence, from highest to lowest:</p>
 <ol>
-<li><strong>Actual environment variables</strong> — values already present in the shell environment at process start.</li>
-<li><strong><code>.env</code> file</strong> — pydantic-settings auto-discovers and loads a file named <code>.env</code> in the repository root. The file must use <code>KEY=value</code> syntax; comments start with <code>#</code>. Lines with a leading space are treated as comments (matches the <code>.env.example</code> format).</li>
-<li><strong>Field defaults</strong> — the typed defaults defined in <code>Settings</code> and documented in the tables below.</li>
+<li>process environment;</li>
+<li>values loaded from <code>.env</code>; and</li>
+<li>the field default.</li>
 </ol>
-<h3 id="restart-vs-per-request-reads">Restart vs. per-request reads<a class="headerlink" href="#restart-vs-per-request-reads" title="Permanent link">&para;</a></h3>
+<p>The <code>Settings</code> object is cached. Treat its values as startup configuration
+unless a section below says otherwise.</p>
+<p>Some subsystems read variables directly:</p>
 <table>
 <thead>
 <tr>
-<th>Variable</th>
-<th>Read cadence</th>
-<th>Notes</th>
+<th>Variables</th>
+<th>Read behavior</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>AGENTIC_API_KEY</code></td>
-<td>Every request</td>
-<td><code>auth.py:_get_api_key()</code> calls <code>get_secret()</code> on each invocation, enabling zero-downtime key rotation.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_CORS_ORIGINS</code></td>
-<td>Startup only</td>
-<td>Loaded once in <code>create_app()</code> into the CORS middleware origin list.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_*</code></td>
-<td>Startup only</td>
-<td>Read once in <code>AuthThrottle.__init__()</code> via <code>os.environ</code>.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_RATE_LIMIT_*</code></td>
-<td>Startup only</td>
-<td>Read once in <code>app.py</code> module scope before <code>create_app()</code> executes.</td>
+<td>Resolved for each HTTP request through the secret-provider chain</td>
 </tr>
 <tr>
 <td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
-<td>Every request</td>
-<td>Checked on each dispatch call in the sanitization middleware.</td>
+<td>Checked during request dispatch</td>
 </tr>
 <tr>
-<td>All other variables</td>
-<td>Startup only</td>
-<td>Standard pydantic-settings singleton cached by <code>lru_cache</code>.</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The <code>Settings</code> singleton is cached via <code>@lru_cache(maxsize=1)</code>. In tests, call <code>get_settings.cache_clear()</code> between test cases that modify environment variables.</p>
-</div>
-<hr />
-<h2 id="llm-provider-keys">LLM provider keys<a class="headerlink" href="#llm-provider-keys" title="Permanent link">&para;</a></h2>
-<p>At least one provider key is required for the server to handle real workflow requests. The runtime probes configured providers at startup and logs which tiers are available.</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Required?</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>OPENAI_API_KEY</code></td>
-<td>—</td>
-<td>No</td>
-<td>API key for OpenAI (GPT-4o, GPT-4, etc.). Obtain at <a href="https://platform.openai.com/api-keys">platform.openai.com/api-keys</a>. Used by the SmartModelRouter when the <code>openai</code> tier is selected.</td>
+<td><code>AGENTIC_AUTH_LOCKOUT_*</code></td>
+<td>Read when <code>AuthThrottle</code> is created</td>
 </tr>
 <tr>
-<td><code>ANTHROPIC_API_KEY</code></td>
-<td>—</td>
-<td>No</td>
-<td>API key for Anthropic Claude models (Opus, Sonnet, Haiku). Obtain at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com/settings/keys</a>. Used when the <code>anthropic</code> tier is selected.</td>
-</tr>
-<tr>
-<td><code>GEMINI_API_KEY</code></td>
-<td>—</td>
-<td>No</td>
-<td>API key for Google Gemini models (2.5 Flash, Gemma 3, etc.). Obtain at <a href="https://aistudio.google.com/app/apikey">aistudio.google.com/app/apikey</a>. Used when the <code>gemini</code> tier is selected.</td>
-</tr>
-<tr>
-<td><code>GITHUB_TOKEN</code></td>
-<td>—</td>
-<td>No</td>
-<td>Personal access token (PAT) for the GitHub Models API (free tier available). Obtain at <a href="https://github.com/settings/tokens">github.com/settings/tokens</a>. Recommended provider for E2E tests and local development. See <a href="../adr/ADR-016-github-token-as-default-e2e-llm/">ADR-016</a>.</td>
-</tr>
-<tr>
-<td><code>AZURE_OPENAI_API_KEY_0</code></td>
-<td>—</td>
-<td>No</td>
-<td>Azure OpenAI API key for the primary deployment slot. See Azure failover pattern below.</td>
-</tr>
-<tr>
-<td><code>AZURE_OPENAI_ENDPOINT_0</code></td>
-<td>—</td>
-<td>No</td>
-<td>Endpoint URL for the primary Azure OpenAI deployment (e.g. <code>https://mydeployment.openai.azure.com/</code>).</td>
-</tr>
-<tr>
-<td><code>AZURE_AI_SERVICES_ENDPOINT</code></td>
-<td>—</td>
-<td>No</td>
-<td>Azure AI Services endpoint for multi-service resource access.</td>
-</tr>
-<tr>
-<td><code>AZURE_COGNITIVE_ENDPOINT</code></td>
-<td>—</td>
-<td>No</td>
-<td>Azure Cognitive Services endpoint (legacy multi-service path).</td>
-</tr>
-<tr>
-<td><code>LOCAL_MODEL_PATH</code></td>
-<td>Auto-detected</td>
-<td>No</td>
-<td>Explicit path to a local ONNX model directory. When unset, the runtime auto-detects models from <code>~/.cache/aigallery</code>. Used when the <code>local</code> tier is selected.</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_FEATURE_ID</code></td>
-<td>—</td>
-<td>No</td>
-<td>Windows AI (Phi Silica) LAF feature identifier. Required only on Windows systems with Phi Silica hardware acceleration.</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_TOKEN</code></td>
-<td>—</td>
-<td>No</td>
-<td>Windows AI (Phi Silica) LAF bearer token. Required alongside <code>PHI_SILICA_LAF_FEATURE_ID</code>.</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_ATTESTATION</code></td>
-<td>—</td>
-<td>No</td>
-<td>Windows AI (Phi Silica) LAF attestation payload. Completes the Phi Silica authentication triple.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="azure-openai-failover-pattern">Azure OpenAI failover pattern<a class="headerlink" href="#azure-openai-failover-pattern" title="Permanent link">&para;</a></h3>
-<p>The platform supports <code>_0</code> through <code>_N</code> key-endpoint pairs for automatic Azure OpenAI failover. When a primary deployment (<code>_0</code>) hits its rate limit or returns errors, the SmartModelRouter automatically promotes to the next available slot.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>AZURE_OPENAI_API_KEY_0=&lt;primary-key&gt;
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>AZURE_OPENAI_ENDPOINT_0=https://primary.openai.azure.com/
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>AZURE_OPENAI_API_KEY_1=&lt;backup-key&gt;
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>AZURE_OPENAI_ENDPOINT_1=https://backup.openai.azure.com/
-</span></code></pre></div>
-<p>Each pair must have matching indices. There is no upper bound on N; add as many failover slots as your Azure subscription provides.</p>
-<h3 id="gemini-rate-limits-reference">Gemini rate limits (reference)<a class="headerlink" href="#gemini-rate-limits-reference" title="Permanent link">&para;</a></h3>
-<p>The free tier of the Gemini API has per-model rate limits. Common limits as of May 2026:</p>
-<table>
-<thead>
-<tr>
-<th>Model</th>
-<th>RPM</th>
-<th>TPM</th>
-<th>RPD</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Gemini 2.5 Flash</td>
-<td>5</td>
-<td>250 K</td>
-<td>20</td>
-</tr>
-<tr>
-<td>Gemini 2.5 Flash Lite</td>
-<td>10</td>
-<td>250 K</td>
-<td>20</td>
-</tr>
-<tr>
-<td>Gemma 3 (all sizes)</td>
-<td>30</td>
-<td>15 K</td>
-<td>14.4 K</td>
-</tr>
-</tbody>
-</table>
-<p>Paid tiers have higher limits. Check the <a href="https://aistudio.google.com/">Google AI Studio console</a> for current quotas on your account.</p>
-<h3 id="anthropic-rate-limits-reference">Anthropic rate limits (reference)<a class="headerlink" href="#anthropic-rate-limits-reference" title="Permanent link">&para;</a></h3>
-<p>Free and Tier 1 Anthropic accounts are limited to 5 RPM across all Claude models. See the <a href="https://console.anthropic.com/settings/limits">Anthropic usage limits</a> page for your tier.</p>
-<hr />
-<h2 id="tracing-and-observability">Tracing and observability<a class="headerlink" href="#tracing-and-observability" title="Permanent link">&para;</a></h2>
-<p>Distributed tracing is opt-in. The platform integrates with the VS Code AI Toolkit collector by default and is compatible with any OTLP-capable backend (Jaeger, Tempo, Honeycomb, etc.).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Tracing requires the <code>[tracing]</code> install extra. Install with:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip install -e &quot;.[tracing]&quot;
-</span></code></pre></div>
-Without the extra, setting <code>AGENTIC_TRACING=1</code> logs a warning and tracing remains inactive. No exception is raised.</p>
-</div>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Required?</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTIC_TRACING</code></td>
-<td><code>0</code> (disabled)</td>
-<td>No</td>
-<td>Set to <code>1</code> to enable OpenTelemetry tracing. When enabled, all workflow executions, agent invocations, LLM calls, and RAG pipeline stages emit OTLP spans.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_TRACE_SENSITIVE</code></td>
-<td><code>0</code> (excluded)</td>
-<td>No</td>
-<td>Set to <code>1</code> to include prompt text, model responses, and tool arguments in span attributes. When <code>0</code>, sensitive fields are omitted from spans. Use with caution — enabling this in production means prompts and responses are stored in your tracing backend.</td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
-<td><code>http://localhost:4317</code></td>
-<td>No</td>
-<td>OTLP exporter endpoint. The default targets the VS Code AI Toolkit local collector over gRPC. For HTTP transport, set to <code>http://localhost:4318</code> and update <code>OTEL_EXPORTER_OTLP_PROTOCOL</code>.</td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_PROTOCOL</code></td>
-<td><code>grpc</code></td>
-<td>No</td>
-<td>Wire protocol for OTLP export. Accepted values: <code>grpc</code> (default) or <code>http/protobuf</code>. When using HTTP, the exporter automatically appends <code>/v1/traces</code> to the endpoint if not already present.</td>
-</tr>
-<tr>
-<td><code>OTEL_SERVICE_NAME</code></td>
-<td><code>agentic-workflows-v2</code></td>
-<td>No</td>
-<td>Service name attached to all emitted spans. Override when running multiple instances in the same tracing namespace to distinguish them.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="span-content-by-setting">Span content by setting<a class="headerlink" href="#span-content-by-setting" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Content type</th>
-<th><code>AGENTIC_TRACE_SENSITIVE=0</code></th>
-<th><code>AGENTIC_TRACE_SENSITIVE=1</code></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Step names, durations, statuses</td>
-<td>Included</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>Workflow ID, run ID</td>
-<td>Included</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>Agent tier, model name</td>
-<td>Included</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>Prompt text</td>
-<td>Omitted</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>Model response text</td>
-<td>Omitted</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>Tool arguments</td>
-<td>Omitted</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>RAG query text</td>
-<td>Omitted</td>
-<td>Included</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Enabling <code>AGENTIC_TRACE_SENSITIVE=1</code> in production causes prompts and model outputs — which may contain user data or PII — to be written to your tracing backend. Ensure your backend storage is appropriately access-controlled and retention-limited before enabling this setting.</p>
-</div>
-<hr />
-<h2 id="runtime-and-local-development">Runtime and local development<a class="headerlink" href="#runtime-and-local-development" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Required?</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTIC_API_KEY</code></td>
-<td>— (disabled)</td>
-<td>No</td>
-<td>When set, every request to <code>/api/</code> (except public paths) must include this key via <code>Authorization: Bearer &lt;key&gt;</code> or <code>X-API-Key: &lt;key&gt;</code>. When unset, all routes are publicly accessible. <strong>Re-read on every request</strong> — changing this value and reloading the <code>.env</code> file rotates the key without a server restart.</td>
+<td><code>AGENTIC_RATE_LIMIT_*</code></td>
+<td>Read when rate limiting is configured</td>
 </tr>
 <tr>
 <td><code>AGENTIC_CORS_ORIGINS</code></td>
-<td>Local dev defaults</td>
-<td>No</td>
-<td>Comma-separated list of allowed browser origins for CORS and WebSocket validation. When unset, the server allows <code>http://localhost:5173</code>, <code>http://127.0.0.1:5173</code>, <code>http://localhost:8000</code>, <code>http://127.0.0.1:8000</code>, <code>http://localhost:8010</code>, and <code>http://127.0.0.1:8010</code>. In production, set this to your deployment origin(s). Any <code>localhost</code> or <code>127.0.0.1</code> origin is additionally permitted unconditionally so the Vite dev server can connect on any port.</td>
+<td>Read when the FastAPI application is created</td>
+</tr>
+<tr>
+<td>Provider credentials</td>
+<td>Resolved when a provider or call needs them</td>
+</tr>
+</tbody>
+</table>
+<p>The environment-backed secret provider loads <code>.env</code> once. Editing the <code>.env</code>
+file does not automatically refresh a running process. Changing
+<code>os.environ</code> in the running process is visible to per-call lookups; normal
+deployments should update the secret source and restart unless they explicitly
+call the secret provider's refresh path.</p>
+<p>Boolean <code>Settings</code> fields accept <code>1</code>, <code>true</code>, <code>yes</code>, or <code>on</code> for true and
+<code>0</code>, <code>false</code>, <code>no</code>, <code>off</code>, or an empty value for false. A few direct-read flags
+accept only the exact value <code>1</code>; those are marked below.</p>
+<h2 id="model-providers">Model providers<a class="headerlink" href="#model-providers" title="Permanent link">&para;</a></h2>
+<p>Set only the providers you use. Model availability still depends on the
+selected adapter, installed extras, endpoint access, and configured model IDs.</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Variables</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI</td>
+<td><code>OPENAI_API_KEY</code>; optional <code>OPENAI_BASE_URL</code> for a compatible endpoint</td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td><code>ANTHROPIC_API_KEY</code>; optional <code>ANTHROPIC_BASE_URL</code></td>
+</tr>
+<tr>
+<td>Gemini</td>
+<td><code>GEMINI_API_KEY</code> or <code>GOOGLE_API_KEY</code></td>
+</tr>
+<tr>
+<td>GitHub Models</td>
+<td><code>GITHUB_TOKEN</code> or <code>GH_TOKEN</code></td>
+</tr>
+<tr>
+<td>NVIDIA NIM</td>
+<td><code>NVIDIA_API_KEY</code>; optional <code>NVIDIA_BASE_URL</code> for self-hosted NIM</td>
+</tr>
+<tr>
+<td>OpenRouter</td>
+<td><code>OPENROUTER_API_KEY</code>; optional <code>OPENROUTER_BASE_URL</code></td>
+</tr>
+<tr>
+<td>Azure OpenAI</td>
+<td><code>AZURE_OPENAI_API_KEY</code> and <code>AZURE_OPENAI_ENDPOINT</code>, or indexed pairs such as <code>_0</code>, <code>_1</code>, and matching deployment values</td>
+</tr>
+<tr>
+<td>Azure AI Foundry</td>
+<td><code>AZURE_FOUNDRY_API_KEY</code> and the endpoint selected by the Foundry adapter</td>
+</tr>
+<tr>
+<td>Ollama runtime</td>
+<td><code>OLLAMA_BASE_URL</code>, default <code>http://localhost:11434</code>; optional <code>OLLAMA_API_KEY</code></td>
+</tr>
+<tr>
+<td>LM Studio discovery</td>
+<td><code>LMSTUDIO_HOST</code>; optional <code>LM_API_TOKEN</code></td>
+</tr>
+<tr>
+<td>ONNX discovery tools</td>
+<td><code>ONNX_MODEL_DIR</code>, <code>AIGALLERY_CACHE</code>, or <code>LOCAL_MODEL_PATH</code>, depending on the tool path</td>
+</tr>
+</tbody>
+</table>
+<p>The runtime Ollama backend uses <code>OLLAMA_BASE_URL</code>. Some repository-level model
+inventory and benchmark tools use <code>OLLAMA_HOST</code>. Set both to the same URL when
+you use both surfaces.</p>
+<p>Provider quotas and model catalogs change outside this repository. Check the
+provider account or official documentation instead of relying on a copied
+quota table.</p>
+<h3 id="model-overrides">Model overrides<a class="headerlink" href="#model-overrides" title="Permanent link">&para;</a></h3>
+<p><code>AGENTIC_MODEL_TIER_&lt;N&gt;</code> forces a model ID for a capability tier:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">AGENTIC_MODEL_TIER_2</span><span class="o">=</span>openai/gpt-4o-mini
+</span></code></pre></div>
+<p>Use the model ID format expected by the selected adapter. An override does not
+install a provider package or supply its credential.</p>
+<p><code>AGENTIC_REGISTRY_STRICT=1</code> makes quarantined model-registry entries fatal
+instead of warnings. <code>AGENTIC_STRICT_MODEL_VERIFY=1</code> enables strict local model
+hash verification. <code>AGENTIC_TRUSTED_MODEL_HASHES</code> may point to an operator
+override for trusted model hashes.</p>
+<h2 id="rag-embeddings">RAG embeddings<a class="headerlink" href="#rag-embeddings" title="Permanent link">&para;</a></h2>
+<p>RAG embedding providers are configured in <code>EmbeddingConfig</code>, not by the chat
+model tier settings.</p>
+<table>
+<thead>
+<tr>
+<th><code>EmbeddingConfig.provider</code></th>
+<th>Credential or endpoint behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>openai</code></td>
+<td>Reads <code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>voyage</code></td>
+<td>Reads <code>VOYAGE_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td>Uses a LiteLLM Ollama model string; no key is forwarded by the RAG module</td>
+</tr>
+<tr>
+<td><code>litellm</code></td>
+<td>Passes the configured model string to LiteLLM, which resolves its normal environment settings</td>
+</tr>
+</tbody>
+</table>
+<p>The configured model and dimensions must match the stored index. See
+<a href="../rag/">RAG pipeline</a>.</p>
+<h2 id="execution-and-model-call-settings">Execution and model-call settings<a class="headerlink" href="#execution-and-model-call-settings" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
+<td><code>langchain</code></td>
+<td>Adapter the server validates and uses by default; set <code>native</code> to avoid the LangChain dependency</td>
 </tr>
 <tr>
 <td><code>AGENTIC_NO_LLM</code></td>
 <td><code>0</code></td>
-<td>No</td>
-<td>Set to <code>1</code> to replace all LLM calls with a deterministic placeholder that echoes a fixed response. No provider keys are required. Useful for integration testing and demos without API spend. See <a href="../NO_LLM_MODE/">NO_LLM_MODE.md</a>. Accepted: <code>1</code>/<code>true</code>/<code>yes</code>/<code>on</code> (true) or <code>0</code>/<code>false</code>/<code>no</code>/<code>off</code>/empty (false).</td>
+<td>Replace model calls with fixed placeholder responses</td>
+</tr>
+<tr>
+<td><code>AGENTIC_TOKEN_BUDGET</code></td>
+<td>unset</td>
+<td>Positive process-wide token cap on the shared native client; zero, negative, blank, or invalid values disable the cap</td>
+</tr>
+<tr>
+<td><code>AGENTIC_EK_PROVIDER</code></td>
+<td><code>1</code></td>
+<td>Use the ExecutionKit-backed provider path when the optional package is available; set <code>0</code> for the legacy path</td>
 </tr>
 <tr>
 <td><code>AGENTIC_EXTERNAL_AGENTS_DIR</code></td>
-<td>— (disabled)</td>
-<td>No</td>
-<td>Path to a directory containing externally managed agent definition files. When set, the agent loader merges these definitions with the built-in agents at startup. Useful for deploying custom agents without modifying the package.</td>
+<td>unset</td>
+<td>Directory containing additional agent definitions</td>
 </tr>
 <tr>
 <td><code>SHELL</code></td>
 <td><code>/bin/bash</code></td>
-<td>No</td>
-<td>Shell executable used by <code>ShellTool</code> when constructing subprocess environments. On Windows this is typically overridden to the Git Bash or PowerShell path.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
-<td><code>1</code> (default <strong>ON</strong>)</td>
-<td>No</td>
-<td>When <code>1</code> (or unset), HTTP tool requests that resolve to private, loopback, link-local, or reserved IP ranges are rejected. Also resolves DNS names and blocks if any returned address is private. Redirects are re-validated at each hop. Set to <code>0</code> only when workflows legitimately reach internal services and you have applied compensating network controls. Implemented in <code>agentic_v2/security/url_guard.py</code>.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_MEMORY_PATH</code></td>
-<td>— (in-memory)</td>
-<td>No</td>
-<td>Path to a file or directory for persistent agent memory storage. When unset, memory is held in-process and is lost on restart. When set, the <code>MemoryTool</code> persists state across restarts.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
-<td><code>langchain</code></td>
-<td>No</td>
-<td>Execution engine adapter selected at server startup. The FastAPI lifespan eagerly validates that the selected adapter's optional extras are installed and raises <code>ConfigurationError</code> with an install hint on failure. Set to <code>native</code> to use the built-in Kahn's-algorithm DAG executor and bypass the LangChain extras check. See <a href="../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a>.</td>
+<td>Shell executable used by shell-enabled paths</td>
 </tr>
 </tbody>
 </table>
-<h3 id="agentic_api_key-per-request-re-read">AGENTIC_API_KEY — per-request re-read<a class="headerlink" href="#agentic_api_key-per-request-re-read" title="Permanent link">&para;</a></h3>
-<p>Unlike most settings, <code>AGENTIC_API_KEY</code> is re-read from the environment on every HTTP request via <code>auth.py:_get_api_key()</code>. This is intentional: it allows operators to rotate the API key by updating the <code>.env</code> file (or the environment variable in a secrets manager) without restarting the server. The key comparison always uses <code>secrets.compare_digest()</code> to prevent timing-side-channel attacks.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>When <code>AGENTIC_API_KEY</code> is not set, the server logs a startup warning and all <code>/api/</code> routes are publicly accessible. Always set this variable in production deployments.</p>
-</div>
-<h3 id="agentic_default_adapter-adapter-validation-at-startup">AGENTIC_DEFAULT_ADAPTER — adapter validation at startup<a class="headerlink" href="#agentic_default_adapter-adapter-validation-at-startup" title="Permanent link">&para;</a></h3>
-<p>When the server starts, it calls <code>AdapterRegistry.validate_selected(AGENTIC_DEFAULT_ADAPTER)</code>. If the selected adapter's dependencies are not installed, the server logs a <code>CRITICAL</code>-level message and exits with a non-zero code rather than allowing silent mid-workflow failures. Example error:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ConfigurationError: Adapter &#39;langchain&#39; requires optional extras.
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Install with: pip install -e &quot;.[langchain]&quot;
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Set AGENTIC_DEFAULT_ADAPTER=native to use the built-in engine instead.
-</span></code></pre></div>
-<p>Valid values: <code>langchain</code> (default), <code>native</code>.</p>
-<hr />
-<h2 id="security-and-sandboxing">Security and sandboxing<a class="headerlink" href="#security-and-sandboxing" title="Permanent link">&para;</a></h2>
-<p>These variables control the containment boundaries for agent tool execution. They protect the host system from agents attempting path traversal, arbitrary shell execution, or prompt injection.</p>
-<div class="admonition warning">
-<p class="admonition-title">Fail-closed defaults</p>
-<p><code>AGENTIC_FILE_BASE_DIR</code> and <code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> default to a <strong>fail-closed</strong> posture. When unset, all file operations and all shell commands are rejected with a descriptive error. This is intentional — operators must explicitly configure what agents are permitted to do before those tools become operational.</p>
-</div>
+<p><code>AGENTIC_TOKEN_BUDGET</code> is process-wide, not per run or tenant. The shared
+client accumulates usage until the process ends. Placeholder calls do not
+consume the budget.</p>
+<p>Named YAML workflows default to LangGraph. Runtime-generated <code>DAG</code> and
+<code>Pipeline</code> objects use the native engine.</p>
+<h2 id="tool-approval-and-agent-loop-safety">Tool approval and agent-loop safety<a class="headerlink" href="#tool-approval-and-agent-loop-safety" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
 <th>Default</th>
-<th>Required?</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AGENTIC_FILE_BASE_DIR</code></td>
-<td>— (fail-closed)</td>
-<td><strong>Yes, if using file tools</strong></td>
-<td>Absolute path to the sandbox root for all file operations. Every path passed to <code>FileTool</code>, <code>FileCopyTool</code>, <code>FileDeleteTool</code>, and related tools is resolved against this directory; paths that escape it (via <code>../</code>, symlinks, or absolute references outside the tree) are rejected with <code>ValueError</code>. <strong>When unset, all file tools raise an error immediately.</strong> Operators must configure this before enabling any file-capable workflow step. Example: <code>AGENTIC_FILE_BASE_DIR=/app/data</code>.</td>
+<td><code>AGENTIC_REQUIRE_TOOL_APPROVAL</code></td>
+<td><code>0</code></td>
+<td>Require approval for every tool call</td>
 </tr>
 <tr>
-<td><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code></td>
-<td>— (all disabled)</td>
-<td><strong>Yes, if using shell tool</strong></td>
-<td>Comma-separated list of shell command basenames that agents are permitted to execute. Basenames are normalized to lowercase and stripped of Windows executable suffixes (<code>.exe</code>, <code>.bat</code>, <code>.cmd</code>, <code>.com</code>) before comparison. Full paths in the list are also reduced to their basename. <strong>When unset or empty, all shell commands are rejected.</strong> Certain commands (<code>format</code>, <code>mkfs</code>) are unconditionally blocked regardless of this list. Recursive deletion flags (<code>-rf</code>, <code>-r</code>, <code>/s</code>, etc.) on <code>rm</code>, <code>del</code>, and <code>rmdir</code> are also blocked unconditionally. Example: <code>AGENTIC_SHELL_ALLOWED_COMMANDS=ls,cat,python,git</code>.</td>
+<td><code>AGENTIC_APPROVAL_REQUIRED_TOOLS</code></td>
+<td>empty</td>
+<td>Comma-separated extra tool names that require approval</td>
 </tr>
 <tr>
-<td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
-<td>— (fail-closed)</td>
-<td>No</td>
-<td>Controls behavior when the prompt-sanitization middleware fails to initialize or encounters an internal error. <strong>Default (unset or any value other than <code>"1"</code>): fail-closed</strong> — requests are rejected with HTTP 503 when the sanitizer is unavailable, and with HTTP 500 when the sanitizer encounters an unexpected error. Set to exactly <code>"1"</code> to pass requests through unsanitized when the sanitizer is not operational. Use only for debugging; never in production.</td>
+<td><code>AGENTIC_APPROVAL_TIMEOUT_SECONDS</code></td>
+<td><code>1800</code></td>
+<td>Maximum wait for an approval decision; zero or negative disables the timeout</td>
+</tr>
+<tr>
+<td><code>AGENTIC_SANITIZE_AGENT_LOOP</code></td>
+<td><code>1</code></td>
+<td>Sanitize model input and output inside the shared agent loop</td>
 </tr>
 </tbody>
 </table>
-<h3 id="agentic_file_base_dir-critical-path-containment">AGENTIC_FILE_BASE_DIR — critical path containment<a class="headerlink" href="#agentic_file_base_dir-critical-path-containment" title="Permanent link">&para;</a></h3>
-<p>This is the primary defense against path traversal attacks. The implementation in <code>tools/builtin/file_ops.py</code> uses <code>pathlib.Path.resolve()</code> to canonicalize the requested path before comparing it to the base directory. Symlinks are followed to their real targets, so a symlink inside the base directory that points outside it is correctly rejected.</p>
-<div class="admonition warning">
-<p class="admonition-title">Production requirement</p>
-<p>Leaving <code>AGENTIC_FILE_BASE_DIR</code> unset in a production deployment where any workflow step uses file tools means those steps will always fail. Set it to the smallest directory that agents genuinely need to read and write.</p>
-</div>
-<h3 id="agentic_sanitizer_fail_open-breaking-change">AGENTIC_SANITIZER_FAIL_OPEN — breaking change<a class="headerlink" href="#agentic_sanitizer_fail_open-breaking-change" title="Permanent link">&para;</a></h3>
-<div class="admonition danger">
-<p class="admonition-title">BREAKING CHANGE — 2026-05-09</p>
-<p>Prior to 2026-05-09, <code>AGENTIC_SANITIZER_FAIL_OPEN</code> accepted <code>"true"</code> and <code>"yes"</code> as truthy values in addition to <code>"1"</code>. The current implementation (<code>server/middleware/__init__.py:_fail_open_enabled()</code>) uses a strict equality check: <strong>only the exact string <code>"1"</code> enables fail-open</strong>. Any other value, including <code>"true"</code> and <code>"yes"</code>, is now treated as fail-closed.</p>
-<p>If your deployment scripts set <code>AGENTIC_SANITIZER_FAIL_OPEN=true</code> or <code>AGENTIC_SANITIZER_FAIL_OPEN=yes</code>, update them to <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> before upgrading, or the server will silently switch to fail-closed behavior.</p>
-</div>
-<h3 id="middleware-execution-order">Middleware execution order<a class="headerlink" href="#middleware-execution-order" title="Permanent link">&para;</a></h3>
-<p>The FastAPI server applies middleware in the following order (outermost to innermost, i.e., the order in which a request encounters them):</p>
-<ol>
-<li><code>SlowAPIMiddleware</code> — global per-IP rate limiting</li>
-<li><code>SanitizationASGIMiddleware</code> — prompt injection detection and secret redaction</li>
-<li><code>APIKeyMiddleware</code> — bearer-token authentication + per-IP 401 throttle</li>
-<li><code>CORSMiddleware</code> — CORS preflight and header injection</li>
-</ol>
-<p>Rate limiting is outermost so abusive clients are rejected before any authentication work is performed.</p>
-<hr />
-<h2 id="oidc-authentication">OIDC authentication<a class="headerlink" href="#oidc-authentication" title="Permanent link">&para;</a></h2>
-<p>The server supports <strong>OpenID Connect (OIDC) JWT authentication</strong> as an alternative to the static <code>AGENTIC_API_KEY</code> bearer token. When OIDC is enabled, the <code>APIKeyMiddleware</code> validates incoming JWTs against the configured identity provider (IdP) instead of comparing a shared secret.</p>
-<p>OIDC is suitable for deployments where operators need user-identity propagation, short-lived tokens, or integration with enterprise IdPs (Azure AD, Okta, Auth0, Keycloak, etc.).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>OIDC and <code>AGENTIC_API_KEY</code> are mutually exclusive. When <code>AGENTIC_OIDC_ENABLED=1</code>, the static API key check is bypassed. Set only one of these two mechanisms per deployment.</p>
-</div>
+<p>High-impact built-in tools can require approval even when the global flag is
+off. A required approval with no registered provider is denied.</p>
+<p><code>AGENTIC_SANITIZE_AGENT_LOOP</code> fails safe: an unrecognized value leaves
+sanitization enabled. It is skipped under <code>AGENTIC_NO_LLM</code>.</p>
+<h2 id="http-authentication">HTTP authentication<a class="headerlink" href="#http-authentication" title="Permanent link">&para;</a></h2>
+<h3 id="static-api-key">Static API key<a class="headerlink" href="#static-api-key" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
 <th>Default</th>
-<th>Required?</th>
-<th>Description</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_API_KEY</code></td>
+<td>unset</td>
+<td>Require this key on protected <code>/api/*</code> routes</td>
+</tr>
+</tbody>
+</table>
+<p>Clients may send:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="err">Authorization: Bearer &lt;key&gt;</span>
+</span></code></pre></div>
+<p>or:</p>
+<div class="language-http highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="err">X-API-Key: &lt;key&gt;</span>
+</span></code></pre></div>
+<p>When the variable is unset, protected API routes are open. Set authentication
+before exposing the server.</p>
+<p>Public paths include health, OpenAPI, Swagger UI, ReDoc, and metrics. Static UI
+files are not protected by this middleware.</p>
+<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
+<p>OIDC validates a bearer JWT and preserves the static API key as a fallback.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>AGENTIC_OIDC_ENABLED</code></td>
 <td><code>0</code></td>
-<td>No</td>
-<td>Set to <code>1</code> to enable OIDC JWT validation. When enabled, all <code>/api/</code> requests (except public paths) must carry an <code>Authorization: Bearer &lt;JWT&gt;</code> header signed by the configured IdP.</td>
+<td>Enable OIDC middleware</td>
 </tr>
 <tr>
 <td><code>AGENTIC_OIDC_ISSUER</code></td>
-<td>—</td>
-<td><strong>Yes (if OIDC enabled)</strong></td>
-<td>OIDC issuer URL (e.g. <code>https://login.microsoftonline.com/&lt;tenant&gt;/v2.0</code>). Used to construct the JWKS discovery URL (<code>{issuer}/.well-known/openid-configuration</code>) and validate the <code>iss</code> claim on incoming JWTs.</td>
+<td>unset</td>
+<td>Required issuer</td>
 </tr>
 <tr>
 <td><code>AGENTIC_OIDC_AUDIENCE</code></td>
-<td>—</td>
-<td><strong>Yes (if OIDC enabled)</strong></td>
-<td>Expected <code>aud</code> claim value. Must match the <code>audience</code> configured in your IdP application registration (typically an application/client ID or a custom URI). JWTs with a mismatched <code>aud</code> are rejected with HTTP 401.</td>
+<td>unset</td>
+<td>Required audience</td>
 </tr>
 <tr>
 <td><code>AGENTIC_OIDC_JWKS_URL</code></td>
-<td>Auto-discovered</td>
-<td>No</td>
-<td>Explicit JWKS endpoint URL. When unset, the middleware auto-discovers it from <code>{AGENTIC_OIDC_ISSUER}/.well-known/openid-configuration</code>. Set this explicitly if your IdP does not support OIDC discovery or if discovery adds unacceptable latency.</td>
+<td>unset</td>
+<td>Required JWKS endpoint</td>
 </tr>
 <tr>
 <td><code>AGENTIC_OIDC_ALGORITHMS</code></td>
 <td><code>RS256</code></td>
-<td>No</td>
-<td>Comma-separated list of accepted JWT signing algorithms (e.g. <code>RS256,ES256</code>). The middleware rejects tokens signed with any algorithm not in this list. Most public IdPs use <code>RS256</code>.</td>
+<td>Comma-separated signing algorithm allowlist</td>
+</tr>
+<tr>
+<td><code>AGENTIC_OIDC_JWKS_CACHE_SECONDS</code></td>
+<td><code>300</code></td>
+<td>JWKS cache time</td>
+</tr>
+<tr>
+<td><code>AGENTIC_OIDC_JWKS_TIMEOUT_SECONDS</code></td>
+<td><code>5</code></td>
+<td>JWKS request timeout</td>
 </tr>
 <tr>
 <td><code>AGENTIC_OIDC_LEEWAY_SECONDS</code></td>
-<td><code>30</code></td>
-<td>No</td>
-<td>Clock-skew tolerance in seconds when validating the <code>exp</code> (expiry) and <code>nbf</code> (not-before) claims. Accommodates minor time differences between the token issuer and this server. Keep small; values above 300 meaningfully weaken expiry enforcement.</td>
+<td><code>60</code></td>
+<td>Allowed clock skew for time claims</td>
 </tr>
 </tbody>
 </table>
-<h3 id="quick-oidc-setup-azure-ad-example">Quick OIDC setup (Azure AD example)<a class="headerlink" href="#quick-oidc-setup-azure-ad-example" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">AGENTIC_OIDC_ENABLED</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">AGENTIC_OIDC_ISSUER</span><span class="o">=</span>https://login.microsoftonline.com/&lt;your-tenant-id&gt;/v2.0
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">AGENTIC_OIDC_AUDIENCE</span><span class="o">=</span>api://&lt;your-app-client-id&gt;
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nv">AGENTIC_OIDC_ALGORITHMS</span><span class="o">=</span>RS256
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nv">AGENTIC_OIDC_LEEWAY_SECONDS</span><span class="o">=</span><span class="m">30</span>
-</span></code></pre></div>
-<p>Calling the API:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>account<span class="w"> </span>get-access-token<span class="w"> </span>--resource<span class="w"> </span>api://&lt;app-client-id&gt;<span class="w"> </span>--query<span class="w"> </span>accessToken<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span>http://localhost:8010/api/agents
-</span></code></pre></div></p>
-<hr />
-<h2 id="operational-settings">Operational settings<a class="headerlink" href="#operational-settings" title="Permanent link">&para;</a></h2>
-<p>These variables control runtime infrastructure integrations — logging format, metrics exposure, audit logging, and the optional Redis backend. They are independent of LLM providers and can be configured without any API keys.</p>
+<p>The server stops at startup if OIDC is enabled without issuer, audience, or
+JWKS URL. The <code>server</code> extra supplies the JWT dependency.</p>
+<h2 id="cors-rate-limiting-and-lockout">CORS, rate limiting, and lockout<a class="headerlink" href="#cors-rate-limiting-and-lockout" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
 <th>Default</th>
-<th>Required?</th>
-<th>Description</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_CORS_ORIGINS</code></td>
+<td>local origins</td>
+<td>Comma-separated allowed browser origins</td>
+</tr>
+<tr>
+<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code></td>
+<td><code>60/minute</code></td>
+<td>SlowAPI per-IP limit string</td>
+</tr>
+<tr>
+<td><code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
+<td>unset</td>
+<td>Exact <code>1</code> disables the rate limiter</td>
+</tr>
+<tr>
+<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
+<td><code>60</code></td>
+<td>Window for failed authentication attempts</td>
+</tr>
+<tr>
+<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
+<td><code>5</code></td>
+<td>Failures in the window before lockout</td>
+</tr>
+<tr>
+<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
+<td><code>300</code></td>
+<td>Lockout duration</td>
+</tr>
+</tbody>
+</table>
+<p>The default CORS list includes <code>localhost</code> and <code>127.0.0.1</code> on ports <code>5173</code>,
+<code>8000</code>, and <code>8010</code>. The implementation also permits loopback origins for local
+development. Set an explicit deployment origin at the edge and in this
+variable.</p>
+<p>Rate-limit and auth-throttle state are process-local. Multiple replicas multiply
+the effective allowance unless an external gateway enforces a shared limit.</p>
+<p>Public rate-limit exemptions are <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, and
+<code>/redoc</code>. <code>/metrics</code> is also public when enabled.</p>
+<h2 id="file-shell-http-and-mcp-boundaries">File, shell, HTTP, and MCP boundaries<a class="headerlink" href="#file-shell-http-and-mcp-boundaries" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_FILE_BASE_DIR</code></td>
+<td>unset</td>
+<td>Required sandbox root for file and git tools; unset fails closed</td>
+</tr>
+<tr>
+<td><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code></td>
+<td>empty</td>
+<td>Allowed command basenames; empty denies all shell commands</td>
+</tr>
+<tr>
+<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
+<td><code>1</code></td>
+<td>Reject private, loopback, link-local, and reserved HTTP targets</td>
+</tr>
+<tr>
+<td><code>AGENTIC_MEMORY_PATH</code></td>
+<td>unset</td>
+<td>File path used by the built-in memory tool</td>
+</tr>
+<tr>
+<td><code>MAX_MCP_OUTPUT_TOKENS</code></td>
+<td>unset</td>
+<td>Cap MCP tool output before it reaches model context</td>
+</tr>
+<tr>
+<td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
+<td>unset</td>
+<td>Exact <code>1</code> permits requests when sanitization is unavailable; every other value fails closed</td>
+</tr>
+</tbody>
+</table>
+<p>Set <code>AGENTIC_FILE_BASE_DIR</code> to the smallest directory tools need. Paths are
+resolved before containment checks, including symlinks.</p>
+<p><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code> is an allowlist, not a sandbox. The tool also
+blocks selected destructive commands and flags, but a deployment should still
+use OS, container, and identity boundaries.</p>
+<p>Disabling <code>AGENTIC_BLOCK_PRIVATE_IPS</code> is appropriate only when workflows need
+internal endpoints and another egress control covers SSRF and DNS-rebinding
+risk.</p>
+<p>Do not set <code>AGENTIC_SANITIZER_FAIL_OPEN=1</code> on an exposed deployment.</p>
+<h2 id="tracing-and-metrics">Tracing and metrics<a class="headerlink" href="#tracing-and-metrics" title="Permanent link">&para;</a></h2>
+<p>Install the tracing extra:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[tracing]&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
+</span></code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AGENTIC_TRACING</code></td>
+<td><code>0</code></td>
+<td>Enable OpenTelemetry traces</td>
+</tr>
+<tr>
+<td><code>AGENTIC_METRICS</code></td>
+<td><code>0</code></td>
+<td>Mount the Prometheus-compatible <code>/metrics</code> application</td>
+</tr>
+<tr>
+<td><code>AGENTIC_TRACE_SENSITIVE</code></td>
+<td><code>0</code></td>
+<td>Include prompts, outputs, and tool arguments in spans</td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
+<td><code>http://localhost:4317</code></td>
+<td>OTLP destination</td>
+</tr>
+<tr>
+<td><code>OTEL_EXPORTER_OTLP_PROTOCOL</code></td>
+<td><code>grpc</code></td>
+<td><code>grpc</code> or <code>http/protobuf</code></td>
+</tr>
+<tr>
+<td><code>OTEL_SERVICE_NAME</code></td>
+<td><code>agentic-workflows-v2</code></td>
+<td>Service name in traces</td>
+</tr>
+</tbody>
+</table>
+<p><code>AGENTIC_TRACE_SENSITIVE=1</code> can send prompts, responses, tool arguments, and
+retrieval queries to the tracing backend. Apply access control and retention
+rules before enabling it.</p>
+<p>Example:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://localhost:4317<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">OTEL_EXPORTER_OTLP_PROTOCOL</span><span class="o">=</span>grpc<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--no-open
+</span></code></pre></div>
+<h2 id="logging-and-audit-records">Logging and audit records<a class="headerlink" href="#logging-and-audit-records" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>LOG_FORMAT</code></td>
 <td><code>text</code></td>
-<td>No</td>
-<td>Log output format. <code>text</code> (default) emits human-readable structured logs. <code>json</code> emits newline-delimited JSON (NDJSON) suitable for log aggregators (Elasticsearch, Splunk, CloudWatch). The JSON format includes all log fields from <code>structlog</code> — <code>timestamp</code>, <code>level</code>, <code>event</code>, <code>logger</code>, and any bound context variables.</td>
+<td><code>text</code> or <code>json</code></td>
 </tr>
 <tr>
-<td><code>AGENTIC_METRICS</code></td>
+<td><code>AUDIT_LOG_ENABLED</code></td>
 <td><code>0</code></td>
-<td>No</td>
-<td>Set to <code>1</code> to enable the Prometheus-compatible metrics endpoint at <code>GET /metrics</code>. Exposes request counts, latencies, error rates, and LLM call durations. Requires the <code>[tracing]</code> install extra: <code>pip install -e ".[tracing]"</code>. When unset or <code>0</code>, <code>/metrics</code> returns HTTP 404.</td>
-</tr>
-<tr>
-<td><code>REDIS_URL</code></td>
-<td>— (in-memory)</td>
-<td>No</td>
-<td>Redis connection URL (e.g. <code>redis://localhost:6379/0</code> or <code>rediss://user:pass@host:6380/0</code> for TLS). When set, enables two features: (1) <strong>shared circuit-breaker state</strong> across multiple server replicas (<code>server/redis_state.py</code>) — without this, circuit breakers are per-process and replicas cannot coordinate; (2) <strong>durable WebSocket replay store</strong> (<code>server/replay_store.py</code>) — replayed run events survive server restarts. When unset, both features fall back to in-memory implementations that are local to each process.</td>
+<td>Enable audit event storage</td>
 </tr>
 <tr>
 <td><code>AUDIT_LOG_BACKEND</code></td>
 <td><code>file</code></td>
-<td>No</td>
-<td>Backend for the append-only, tamper-evident audit log. <code>file</code> (default) writes JSONL to <code>runs/audit.jsonl</code>. <code>redis</code> writes to a Redis APPEND-only stream keyed <code>agentic:audit</code> (requires <code>REDIS_URL</code>). The audit log records all API requests, authentication events, workflow launches, and tool executions. It is designed to be append-only; entries are SHA-256 chained for basic tamper detection.</td>
+<td><code>file</code> or <code>redis</code></td>
+</tr>
+<tr>
+<td><code>AUDIT_LOG_FILE_PATH</code></td>
+<td><code>.agentic_audit.jsonl</code></td>
+<td>File backend path</td>
+</tr>
+<tr>
+<td><code>AUDIT_LOG_REDIS_STREAM</code></td>
+<td><code>agentic:audit</code></td>
+<td>Redis stream name</td>
+</tr>
+<tr>
+<td><code>AUDIT_LOG_MAX_EVENTS</code></td>
+<td><code>10000</code></td>
+<td>Bound for stores that enforce a maximum</td>
 </tr>
 </tbody>
 </table>
-<h3 id="enabling-prometheus-metrics">Enabling Prometheus metrics<a class="headerlink" href="#enabling-prometheus-metrics" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Install the tracing extra (includes prometheus-client)</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[tracing]&quot;</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Enable the /metrics endpoint</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nv">AGENTIC_METRICS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
-</span></code></pre></div>
-<p>Scrape from Prometheus:
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># prometheus.yml</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agentic-runtime</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:8010&#39;</span><span class="p p-Indicator">]</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
-</span></code></pre></div></p>
-<h3 id="enabling-redis-for-multi-replica-deployments">Enabling Redis for multi-replica deployments<a class="headerlink" href="#enabling-redis-for-multi-replica-deployments" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Start Redis</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w"> </span>redis:7-alpine
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Configure server</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://localhost:6379/0
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nv">AUDIT_LOG_BACKEND</span><span class="o">=</span>redis
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Start multiple replicas — they share circuit-breaker state via Redis</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span><span class="p">&amp;</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--port<span class="w"> </span><span class="m">8011</span><span class="w"> </span><span class="p">&amp;</span>
-</span></code></pre></div>
-<h3 id="json-logging-for-log-aggregators">JSON logging for log aggregators<a class="headerlink" href="#json-logging-for-log-aggregators" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">LOG_FORMAT</span><span class="o">=</span>json<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
-</span></code></pre></div>
-<p>Sample output:
-<div class="language-json highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-21T14:23:11.482Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workflow.started&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;workflow&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fullstack_generation&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;run-abc123&quot;</span><span class="p">}</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-21T14:23:18.901Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;info&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;event&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workflow.completed&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;run-abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">7419</span><span class="p">}</span>
-</span></code></pre></div></p>
-<hr />
-<h2 id="rate-limiting-and-auth-throttle">Rate limiting and auth throttle<a class="headerlink" href="#rate-limiting-and-auth-throttle" title="Permanent link">&para;</a></h2>
-<p>These variables configure two complementary in-process controls added in Sprint 1 (see <a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018</a>).</p>
-<div class="admonition note">
-<p class="admonition-title">In-process state</p>
-<p>Both the rate limiter and the auth throttle store state in-process memory only. State is not shared across server replicas and is reset on server restart. In a multi-replica deployment, the effective per-IP limits are multiplied by the replica count. See <a href="../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> §4.1 and §4.2 for details. A Redis-backed cluster-wide implementation remains deferred — Sprint 2 shipped a Redis backend for the circuit breaker only, not for the rate limiter or auth throttle.</p>
-</div>
-<h3 id="global-rate-limiter-slowapi">Global rate limiter (<code>slowapi</code>)<a class="headerlink" href="#global-rate-limiter-slowapi" title="Permanent link">&para;</a></h3>
-<p>The global rate limiter is applied at the outermost middleware layer, before authentication. It uses <a href="https://slowapi.readthedocs.io/">slowapi</a> backed by the <code>limits</code> library.</p>
-<div class="admonition note">
-<p class="admonition-title">Exempt paths</p>
-<p>The following paths are <strong>always exempt</strong> from rate limiting: <code>/api/health</code>, <code>/docs</code>, <code>/openapi.json</code>, <code>/redoc</code>. All other paths are subject to the configured limit.</p>
-</div>
+<p>The audit format uses chained hashes to make later modification detectable. It
+is not an immutable external ledger. Protect the storage and export it when
+your retention policy requires stronger guarantees.</p>
+<h2 id="redis-and-replay-storage">Redis and replay storage<a class="headerlink" href="#redis-and-replay-storage" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
 <th>Default</th>
-<th>Required?</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code></td>
-<td><code>60/minute</code></td>
-<td>No</td>
-<td>Global per-IP rate limit string in <code>slowapi</code> format: <code>"&lt;count&gt;/&lt;period&gt;"</code>. Period is one of <code>second</code>, <code>minute</code>, <code>hour</code>, or <code>day</code>. Applied to all non-exempt paths. When breached, the server returns <code>429 Too Many Requests</code> with a <code>Retry-After</code> header. Example values: <code>"100/minute"</code>, <code>"10/second"</code>, <code>"1000/hour"</code>.</td>
+<td><code>REDIS_URL</code></td>
+<td>unset</td>
+<td>Redis connection for shared circuit-breaker state and optional replay/audit backends</td>
 </tr>
 <tr>
-<td><code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
-<td>— (enabled)</td>
-<td>No</td>
-<td>Set to <code>"1"</code> to disable the global rate-limit middleware entirely. Intended for test environments only. <strong>Do not set in production.</strong> When disabled, the server logs <code>"Rate limiting disabled (AGENTIC_RATE_LIMIT_DISABLED=1)"</code> at startup.</td>
+<td><code>REDIS_CIRCUIT_BREAKER_PREFIX</code></td>
+<td><code>agentic:cb:</code></td>
+<td>Circuit-breaker key prefix</td>
+</tr>
+<tr>
+<td><code>REDIS_CIRCUIT_BREAKER_TTL</code></td>
+<td><code>3600</code></td>
+<td>Circuit-breaker key lifetime in seconds</td>
+</tr>
+<tr>
+<td><code>REPLAY_STORE_BACKEND</code></td>
+<td><code>auto</code></td>
+<td><code>redis</code>, <code>sqlite</code>, <code>memory</code>, or automatic selection</td>
+</tr>
+<tr>
+<td><code>REPLAY_STORE_TTL</code></td>
+<td><code>14400</code></td>
+<td>Redis replay key lifetime</td>
+</tr>
+<tr>
+<td><code>REPLAY_STORE_MAX_EVENTS</code></td>
+<td><code>500</code></td>
+<td>Maximum retained events per run</td>
+</tr>
+<tr>
+<td><code>REPLAY_SQLITE_PATH</code></td>
+<td>repository <code>.agentic_replay.db</code></td>
+<td>SQLite replay database path</td>
+</tr>
+<tr>
+<td><code>REPLAY_STORE_RETENTION_SECONDS</code></td>
+<td><code>3600</code></td>
+<td>Post-terminal retention for memory and SQLite replay data</td>
 </tr>
 </tbody>
 </table>
-<h3 id="per-ip-auth-throttle-auththrottle">Per-IP auth throttle (<code>AuthThrottle</code>)<a class="headerlink" href="#per-ip-auth-throttle-auththrottle" title="Permanent link">&para;</a></h3>
-<p>The auth throttle tracks failed authentication attempts per client IP using a sliding-window counter. It operates inside the <code>APIKeyMiddleware</code> layer.</p>
-<p><strong>Flow:</strong> On each request to a protected path, the middleware first checks whether the client IP is locked out. If locked out, <code>429 Too Many Requests</code> is returned immediately with a <code>Retry-After</code> header — no credential check is performed. If not locked, the supplied token is validated. A valid token clears the failure counter for that IP. An invalid or missing token increments the counter; if the counter reaches the threshold within the window, the IP is immediately locked.</p>
+<p><code>auto</code> tries Redis, then SQLite, then process memory according to installed
+dependencies and configuration. Install the matching <code>redis</code> or <code>sqlite</code>
+extra when selecting it explicitly.</p>
+<p>Redis does not make the built-in API rate limiter or authentication throttle
+cluster-wide.</p>
+<h2 id="langgraph-checkpointing">LangGraph checkpointing<a class="headerlink" href="#langgraph-checkpointing" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
 <th>Default</th>
-<th>Required?</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
-<td><code>60</code></td>
-<td>No</td>
-<td>Sliding-window size in seconds over which failed authentication attempts are counted per client IP. Failures older than this window are discarded before each check. Type: integer (parsed as <code>float</code> internally).</td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
-<td><code>5</code></td>
-<td>No</td>
-<td>Number of consecutive failed authentication attempts within the window that triggers a lockout. On the N-th failure, the IP is immediately locked for <code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code>. The failure counter is cleared when a lockout begins. Type: integer.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
-<td><code>300</code></td>
-<td>No</td>
-<td>Duration in seconds for which a locked-out IP receives <code>429 Too Many Requests</code>. After the lockout expires, the IP's failure counter is cleared and it may retry. The <code>Retry-After</code> response header is set to the remaining lockout duration in whole seconds. Type: integer (parsed as <code>float</code> internally).</td>
-</tr>
-</tbody>
-</table>
-<h3 id="default-thresholds-in-context">Default thresholds in context<a class="headerlink" href="#default-thresholds-in-context" title="Permanent link">&para;</a></h3>
-<p>With the defaults (<code>window=60s</code>, <code>threshold=5</code>, <code>lockout=300s</code>):</p>
-<ul>
-<li>An attacker can make at most 5 failed authentication attempts per minute before being locked out for 5 minutes.</li>
-<li>A legitimate user who miskeys their token 5 times within 60 seconds must wait 5 minutes before retrying.</li>
-<li>Successful authentication at any point resets the failure counter immediately.</li>
-</ul>
-<p>For more permissive local development or stricter production deployments, tune these values via environment variables. See the <a href="#quick-recipes">Quick Recipes</a> section for examples.</p>
-<p>For the security rationale and multi-replica caveats, see:
-- <a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018: API Rate Limiting and Per-IP Auth Throttle</a>
-- <a href="../operations/security-hardening/">Operations: Security Hardening</a> (for operational runbooks)
-- <a href="../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> §4.1 (multi-replica rate limit bypass), §4.2 (multi-replica auth-throttle bypass)</p>
-<hr />
-<h2 id="additional-settings">Additional settings<a class="headerlink" href="#additional-settings" title="Permanent link">&para;</a></h2>
-<p>The following settings appear in <code>settings.py</code> but are not currently listed in <code>.env.example</code>. They are documented here for completeness.</p>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Default</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>AGENTIC_CHECKPOINTER_URL</code></td>
-<td>— (in-memory)</td>
-<td>PostgreSQL connection URL for LangGraph workflow checkpointing (e.g. <code>postgresql://user:pass@host:5432/db</code>). When set, <code>WorkflowRunner</code> uses <code>AsyncPostgresSaver</code> instead of the default <code>MemorySaver</code>. Requires the <code>[postgres]</code> extra: <code>pip install 'agentic-workflows-v2[postgres]'</code>.</td>
-</tr>
-<tr>
-<td><code>MAX_MCP_OUTPUT_TOKENS</code></td>
-<td>— (no cap)</td>
-<td>Token budget cap for MCP tool output. When set, MCP tool responses that exceed this limit are truncated. Useful for preventing large tool outputs from consuming the model's context window.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_STRICT_MODEL_VERIFY</code></td>
-<td><code>0</code></td>
-<td>Set to <code>1</code> to block loading models whose SHA-256 hash does not match the expected value in <code>models/model_hashes.json</code>. Enables supply-chain integrity checking for local ONNX models.</td>
-</tr>
-<tr>
-<td><code>VITE_OTEL_ENABLED</code></td>
-<td><code>false</code></td>
-<td>(UI <code>.env</code> only) Set to <code>true</code> to enable browser-side OpenTelemetry tracing in the React dashboard. Requires <code>VITE_OTEL_ENDPOINT</code> to be set and the server to expose <code>traceparent</code> in CORS response headers.</td>
-</tr>
-<tr>
-<td><code>VITE_OTEL_ENDPOINT</code></td>
-<td>—</td>
-<td>(UI <code>.env</code> only) OTLP/HTTP collector endpoint for browser traces (e.g. <code>http://localhost:4318/v1/traces</code>). Used only when <code>VITE_OTEL_ENABLED=true</code>.</td>
+<td>unset</td>
+<td>PostgreSQL connection URL for the LangGraph checkpointer</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="quick-recipes">Quick recipes<a class="headerlink" href="#quick-recipes" title="Permanent link">&para;</a></h2>
-<h3 id="run-locally-with-no-provider-keys">Run locally with no provider keys<a class="headerlink" href="#run-locally-with-no-provider-keys" title="Permanent link">&para;</a></h3>
-<div class="admonition tip">
-<p class="admonition-title">Local demo without API spend</p>
-<p>Enable placeholder mode to run workflows end-to-end using a deterministic echo model. No API keys, no network calls.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span>
+<p>Install the <code>postgres</code> extra and set the URL:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">&quot;./agentic-workflows-v2[postgres]&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-c<span class="w"> </span>ci-constraints.txt
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nv">AGENTIC_CHECKPOINTER_URL</span><span class="o">=</span>postgresql://user:pass@host:5432/database
 </span></code></pre></div>
-<p>In this mode, every LLM call returns a fixed placeholder response. Tool execution, DAG scheduling, WebSocket streaming, and the React UI all function normally. See <a href="../NO_LLM_MODE/">NO_LLM_MODE.md</a> for full details including the LangChain-adapter caveat.</p>
-</div>
-<h3 id="lock-down-a-production-deployment">Lock down a production deployment<a class="headerlink" href="#lock-down-a-production-deployment" title="Permanent link">&para;</a></h3>
-<div class="admonition warning">
-<p class="admonition-title">Minimum production hardening</p>
-<p>The following combination is the recommended baseline for any internet-exposed deployment:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Require an API key on all non-public routes</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;your-random-token&gt;
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Restrict file access to the data directory</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Disable shell tool entirely (empty list = all commands blocked)</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Block SSRF attempts to internal networks</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1"># Restrict CORS to your deployment origin</span>
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://your-app.example.com
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
-</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1"># Keep rate limiting at default (60/minute per IP)</span>
-</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="c1"># AGENTIC_RATE_LIMIT_DEFAULT=60/minute  # this is already the default</span>
-</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>
-</span><span id="__span-11-19"><a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="c1"># Use native engine if LangChain extras are not installed</span>
-</span><span id="__span-11-20"><a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="c1"># AGENTIC_DEFAULT_ADAPTER=native</span>
-</span></code></pre></div>
-<p>Generate a strong random token for <code>AGENTIC_API_KEY</code> with:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import secrets; print(secrets.token_urlsafe(32))&quot;</span>
-</span></code></pre></div></p>
-</div>
-<h3 id="tune-rate-limit-for-low-traffic-development">Tune rate limit for low-traffic development<a class="headerlink" href="#tune-rate-limit-for-low-traffic-development" title="Permanent link">&para;</a></h3>
-<div class="admonition tip">
-<p class="admonition-title">Relaxed limits for dev/staging</p>
-<p>For a development environment where developers frequently hit the API:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DEFAULT</span><span class="o">=</span><span class="m">1000</span>/minute
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_THRESHOLD</span><span class="o">=</span><span class="m">20</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nv">AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</span><span class="o">=</span><span class="m">60</span>
-</span></code></pre></div>
-<p>This allows 1000 requests per minute per IP and is more forgiving of miskeyed tokens during development.</p>
-<p>For load testing or CI environments where rate limiting interferes with test suites:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nv">AGENTIC_RATE_LIMIT_DISABLED</span><span class="o">=</span><span class="m">1</span>
-</span></code></pre></div></p>
-</div>
-<h3 id="enable-otlp-tracing-to-jaeger">Enable OTLP tracing to Jaeger<a class="headerlink" href="#enable-otlp-tracing-to-jaeger" title="Permanent link">&para;</a></h3>
-<div class="admonition tip">
-<p class="admonition-title">Local Jaeger setup</p>
-<p>Start Jaeger with Docker:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>jaeger<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">16686</span>:16686<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">4317</span>:4317<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">  </span>jaegertracing/all-in-one:latest
-</span></code></pre></div></p>
-<p>Then configure the server:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://localhost:4317
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="nv">OTEL_EXPORTER_OTLP_PROTOCOL</span><span class="o">=</span>grpc
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nv">OTEL_SERVICE_NAME</span><span class="o">=</span>agentic-local
-</span></code></pre></div></p>
-<p>View traces at <a href="http://localhost:16686">http://localhost:16686</a>.</p>
-<p>For HTTP instead of gRPC (e.g., cloud tracing backends):
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="nv">AGENTIC_TRACING</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="nv">OTEL_EXPORTER_OTLP_ENDPOINT</span><span class="o">=</span>http://localhost:4318
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="nv">OTEL_EXPORTER_OTLP_PROTOCOL</span><span class="o">=</span>http/protobuf
-</span></code></pre></div></p>
-<p>Install the tracing extra first:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[tracing]&quot;</span>
-</span></code></pre></div></p>
-</div>
-<h3 id="use-the-native-engine-without-langchain">Use the native engine without LangChain<a class="headerlink" href="#use-the-native-engine-without-langchain" title="Permanent link">&para;</a></h3>
-<div class="admonition tip">
-<p class="admonition-title">Minimal dependency install</p>
-<p>If you do not need LangGraph-based workflow compilation, use the native DAG executor to avoid installing the LangChain extras:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native
-</span></code></pre></div>
-<p>Install without the <code>langchain</code> extra:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev,server]&quot;</span>
-</span></code></pre></div></p>
-<p>The native engine supports all DAG-based workflows and is the recommended choice for environments where dependency footprint must be minimized. See <a href="../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020</a> and <a href="../adr/ADR-001-002-003-architecture-decisions/">ADR-001</a> for the dual-engine architecture rationale.</p>
-</div>
-<hr />
-<h2 id="complete-variable-index">Complete variable index<a class="headerlink" href="#complete-variable-index" title="Permanent link">&para;</a></h2>
-<p>The following table lists every variable in <code>.env.example</code> in one place for quick reference. Click the section link for full documentation of each variable.</p>
+<p>When unset, LangGraph uses its in-memory checkpoint path.</p>
+<h2 id="ui-variables">UI variables<a class="headerlink" href="#ui-variables" title="Permanent link">&para;</a></h2>
+<p>Vite reads frontend variables at build or development-server start.</p>
 <table>
 <thead>
 <tr>
 <th>Variable</th>
-<th>Section</th>
 <th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>GITHUB_TOKEN</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
+<td><code>VITE_API_PROXY_TARGET</code></td>
+<td><code>http://127.0.0.1:8010</code></td>
+<td>Backend used by the Vite development proxy</td>
 </tr>
 <tr>
-<td><code>OPENAI_API_KEY</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
+<td><code>VITE_OTEL_ENABLED</code></td>
+<td><code>false</code></td>
+<td>Enable browser tracing</td>
 </tr>
 <tr>
-<td><code>AZURE_OPENAI_API_KEY_0</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AZURE_OPENAI_ENDPOINT_0</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AZURE_AI_SERVICES_ENDPOINT</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AZURE_COGNITIVE_ENDPOINT</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>GEMINI_API_KEY</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>ANTHROPIC_API_KEY</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>LOCAL_MODEL_PATH</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>Auto-detected</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_FEATURE_ID</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_TOKEN</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_ATTESTATION</code></td>
-<td><a href="#llm-provider-keys">LLM Provider Keys</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AGENTIC_TRACING</code></td>
-<td><a href="#tracing-and-observability">Tracing and Observability</a></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_TRACE_SENSITIVE</code></td>
-<td><a href="#tracing-and-observability">Tracing and Observability</a></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
-<td><a href="#tracing-and-observability">Tracing and Observability</a></td>
-<td><code>http://localhost:4317</code></td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_PROTOCOL</code></td>
-<td><a href="#tracing-and-observability">Tracing and Observability</a></td>
-<td><code>grpc</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_API_KEY</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AGENTIC_CORS_ORIGINS</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td>Local dev defaults</td>
-</tr>
-<tr>
-<td><code>AGENTIC_NO_LLM</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_EXTERNAL_AGENTS_DIR</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>SHELL</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td><code>/bin/bash</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td><code>1</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_MEMORY_PATH</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AGENTIC_DEFAULT_ADAPTER</code></td>
-<td><a href="#runtime-and-local-development">Runtime and Local Development</a></td>
-<td><code>langchain</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_METRICS</code></td>
-<td><a href="#operational-settings">Operational Settings</a></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>LOG_FORMAT</code></td>
-<td><a href="#operational-settings">Operational Settings</a></td>
-<td><code>text</code></td>
-</tr>
-<tr>
-<td><code>REDIS_URL</code></td>
-<td><a href="#operational-settings">Operational Settings</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AUDIT_LOG_BACKEND</code></td>
-<td><a href="#operational-settings">Operational Settings</a></td>
-<td><code>file</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_ENABLED</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_ISSUER</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_AUDIENCE</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_JWKS_URL</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td>Auto-discovered</td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_ALGORITHMS</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td><code>RS256</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_OIDC_LEEWAY_SECONDS</code></td>
-<td><a href="#oidc-authentication">OIDC Authentication</a></td>
-<td><code>30</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_FILE_BASE_DIR</code></td>
-<td><a href="#security-and-sandboxing">Security and Sandboxing</a></td>
-<td>— (fail-closed)</td>
-</tr>
-<tr>
-<td><code>AGENTIC_SHELL_ALLOWED_COMMANDS</code></td>
-<td><a href="#security-and-sandboxing">Security and Sandboxing</a></td>
-<td>— (all disabled)</td>
-</tr>
-<tr>
-<td><code>AGENTIC_SANITIZER_FAIL_OPEN</code></td>
-<td><a href="#security-and-sandboxing">Security and Sandboxing</a></td>
-<td>— (fail-closed)</td>
-</tr>
-<tr>
-<td><code>AGENTIC_RATE_LIMIT_DEFAULT</code></td>
-<td><a href="#rate-limiting-and-auth-throttle">Rate Limiting and Auth Throttle</a></td>
-<td><code>60/minute</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_RATE_LIMIT_DISABLED</code></td>
-<td><a href="#rate-limiting-and-auth-throttle">Rate Limiting and Auth Throttle</a></td>
-<td>— (enabled)</td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_WINDOW_SECONDS</code></td>
-<td><a href="#rate-limiting-and-auth-throttle">Rate Limiting and Auth Throttle</a></td>
-<td><code>60</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_THRESHOLD</code></td>
-<td><a href="#rate-limiting-and-auth-throttle">Rate Limiting and Auth Throttle</a></td>
-<td><code>5</code></td>
-</tr>
-<tr>
-<td><code>AGENTIC_AUTH_LOCKOUT_DURATION_SECONDS</code></td>
-<td><a href="#rate-limiting-and-auth-throttle">Rate Limiting and Auth Throttle</a></td>
-<td><code>300</code></td>
+<td><code>VITE_OTEL_ENDPOINT</code></td>
+<td>unset</td>
+<td>OTLP/HTTP endpoint for browser spans</td>
 </tr>
 </tbody>
 </table>
-<hr />
+<p>Restart Vite after changing these values.</p>
+<h2 id="minimal-local-configurations">Minimal local configurations<a class="headerlink" href="#minimal-local-configurations" title="Permanent link">&para;</a></h2>
+<h3 id="no-provider-calls">No provider calls<a class="headerlink" href="#no-provider-calls" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--no-open
+</span></code></pre></div>
+<p>Placeholder mode checks application flow. It does not make structured,
+tool-calling, or evaluation output meaningful.</p>
+<h3 id="native-engine-without-langgraph">Native engine without LangGraph<a class="headerlink" href="#native-engine-without-langgraph" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nv">AGENTIC_DEFAULT_ADAPTER</span><span class="o">=</span>native<span class="w"> </span>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--no-open
+</span></code></pre></div>
+<p>The <code>agentic validate</code> command still performs LangGraph compilation and needs
+the <code>langchain</code> extra.</p>
+<h3 id="exposed-service-baseline">Exposed service baseline<a class="headerlink" href="#exposed-service-baseline" title="Permanent link">&para;</a></h3>
+<p>At minimum:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nv">AGENTIC_API_KEY</span><span class="o">=</span>&lt;random-secret&gt;
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nv">AGENTIC_CORS_ORIGINS</span><span class="o">=</span>https://app.example.com
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nv">AGENTIC_FILE_BASE_DIR</span><span class="o">=</span>/app/data
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nv">AGENTIC_SHELL_ALLOWED_COMMANDS</span><span class="o">=</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nv">AGENTIC_BLOCK_PRIVATE_IPS</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="nv">AGENTIC_SANITIZER_FAIL_OPEN</span><span class="o">=</span><span class="m">0</span>
+</span></code></pre></div>
+<p>Also configure TLS, an edge rate limiter, storage, network egress, and secret
+management outside the process. See
+<a href="../operations/security-hardening/">Security hardening</a>.</p>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example"><code>.env.example</code></a> — copy-pasteable template with inline comments for every variable.</li>
-<li><a href="../operations/security-hardening/">Operations: Security Hardening</a> — operational runbooks for auth key rotation, SSRF hardening, and rate limit tuning.</li>
-<li><a href="../adr/ADR-018-api-rate-limiting-and-auth-throttle/">ADR-018: API Rate Limiting and Per-IP Auth Throttle</a> — design rationale, alternatives considered, and known limitations for the Sprint 1 rate-limiting implementation.</li>
-<li><a href="../adr/ADR-014-pydantic-wire-format/">ADR-014: Pydantic Wire Format</a> — execution event wire format; relevant context for WebSocket/SSE consumers.</li>
-<li><a href="../adr/ADR-020-langchain-adapter-eager-validation/">ADR-020: LangChain Adapter Eager Validation</a> — why <code>AGENTIC_DEFAULT_ADAPTER</code> triggers a startup-time dependency check.</li>
-<li><a href="../KNOWN_LIMITATIONS/">KNOWN_LIMITATIONS.md</a> — honest accounting of known caveats, including rate-limit multi-replica limitations (§4.1, §4.2).</li>
-<li><a href="../NO_LLM_MODE/">NO_LLM_MODE.md</a> — full documentation for <code>AGENTIC_NO_LLM=1</code> placeholder mode.</li>
-<li><a href="../deployment-guide/">deployment-guide.md</a> — server startup, health checks, and infrastructure considerations.</li>
-<li><a href="../architecture-runtime/">architecture-runtime.md</a> — dual-engine architecture, middleware stack, and server layer details.</li>
+<li><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.env.example">Environment template</a></li>
+<li><a href="../cli-reference/">CLI reference</a></li>
+<li><a href="../operations/security-hardening/">Security hardening</a></li>
+<li><a href="../deployment-guide/">Deployment guide</a></li>
+<li><a href="../KNOWN_LIMITATIONS/">Known limitations</a></li>
 </ul>
 
 
@@ -4749,7 +4160,7 @@ Without the extra, setting <code>AGENTIC_TRACING=1</code> logs a warning and tra
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

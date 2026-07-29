@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts.">
+        <meta name="description" content="Configure, run, and interpret the runtime and evaluation-package judges.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>LLM-as-judge - Agentic Runtime Platform</title>
+        <title>Model-backed judges - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="LLM-as-judge - Agentic Runtime Platform" />
-<meta property="og:description" content="How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts." />
+<meta property="og:title" content="Model-backed judges - Agentic Runtime Platform" />
+<meta property="og:description" content="Configure, run, and interpret the runtime and evaluation-package judges." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/judge.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/judge/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="LLM-as-judge - Agentic Runtime Platform" />
-<meta property="twitter:description" content="How Agentic Runtime Platform uses LLMs to score artifacts — the two judge systems, scoring scales, prompt design, bias mitigation, and how to write evaluatable prompts." />
+<meta property="twitter:title" content="Model-backed judges - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Configure, run, and interpret the runtime and evaluation-package judges." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/judge.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#llm-as-judge" class="md-skip">
+        <a href="#model-backed-judges" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              LLM-as-judge
+              Model-backed judges
             
           </span>
         </div>
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1726,22 +1756,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-1-runtime-llmjudge" class="md-nav__link">
+  <a href="#runtime-judge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 1: runtime LLMJudge
+        Runtime judge
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 1: runtime LLMJudge">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-package-judges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation-package judges
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation-package judges">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-it-scores" class="md-nav__link">
+  <a href="#llmevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it scores
+        LLMEvaluator
       
     </span>
   </a>
@@ -1749,10 +1790,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#scoring-scale" class="md-nav__link">
+  <a href="#qualityevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring scale
+        QualityEvaluator
       
     </span>
   </a>
@@ -1760,10 +1801,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#prompt-design" class="md-nav__link">
+  <a href="#standardevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompt design
+        StandardEvaluator
       
     </span>
   </a>
@@ -1771,43 +1812,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#positional-bias-mitigation" class="md-nav__link">
+  <a href="#patternevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positional bias mitigation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output-schema-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output schema validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calibration-drift-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Calibration drift detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syncasync-bridge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync/async bridge
+        PatternEvaluator
       
     </span>
   </a>
@@ -1820,132 +1828,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#system-2-eval-package-evaluators" class="md-nav__link">
+  <a href="#using-judge-scores-responsibly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 2: eval-package evaluators
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="System 2: eval-package evaluators">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmevaluator-choice-anchored-scoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMEvaluator — choice-anchored scoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#qualityevaluator-five-dimension-output-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        QualityEvaluator — five-dimension output quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standardevaluator-prompt-quality-grading-010" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StandardEvaluator — prompt quality grading (0–10)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patternevaluator-structural-pattern-conformance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PatternEvaluator — structural pattern conformance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#research-gating" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research gating
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-write-evaluatable-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to write evaluatable prompts
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How to write evaluatable prompts">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-standardevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For StandardEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-patternevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For PatternEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-qualityevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For QualityEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integrating-the-judge-into-a-custom-evaluation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integrating the judge into a custom evaluation
+        Using judge scores responsibly
       
     </span>
   </a>
@@ -2355,6 +2241,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2452,6 +2342,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2762,6 +2708,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2822,6 +2772,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3009,22 +3015,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-1-runtime-llmjudge" class="md-nav__link">
+  <a href="#runtime-judge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 1: runtime LLMJudge
+        Runtime judge
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System 1: runtime LLMJudge">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-package-judges" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation-package judges
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation-package judges">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#what-it-scores" class="md-nav__link">
+  <a href="#llmevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it scores
+        LLMEvaluator
       
     </span>
   </a>
@@ -3032,10 +3049,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#scoring-scale" class="md-nav__link">
+  <a href="#qualityevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring scale
+        QualityEvaluator
       
     </span>
   </a>
@@ -3043,10 +3060,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#prompt-design" class="md-nav__link">
+  <a href="#standardevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prompt design
+        StandardEvaluator
       
     </span>
   </a>
@@ -3054,43 +3071,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#positional-bias-mitigation" class="md-nav__link">
+  <a href="#patternevaluator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Positional bias mitigation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#output-schema-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output schema validation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#calibration-drift-detection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Calibration drift detection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syncasync-bridge" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sync/async bridge
+        PatternEvaluator
       
     </span>
   </a>
@@ -3103,132 +3087,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#system-2-eval-package-evaluators" class="md-nav__link">
+  <a href="#using-judge-scores-responsibly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System 2: eval-package evaluators
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="System 2: eval-package evaluators">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#llmevaluator-choice-anchored-scoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLMEvaluator — choice-anchored scoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#qualityevaluator-five-dimension-output-quality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        QualityEvaluator — five-dimension output quality
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#standardevaluator-prompt-quality-grading-010" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        StandardEvaluator — prompt quality grading (0–10)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patternevaluator-structural-pattern-conformance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        PatternEvaluator — structural pattern conformance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#research-gating" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research gating
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-to-write-evaluatable-prompts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How to write evaluatable prompts
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="How to write evaluatable prompts">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#for-standardevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For StandardEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-patternevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For PatternEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#for-qualityevaluator" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For QualityEvaluator
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integrating-the-judge-into-a-custom-evaluation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integrating the judge into a custom evaluation
+        Using judge scores responsibly
       
     </span>
   </a>
@@ -3282,376 +3144,170 @@
   
 
 
-<h1 id="llm-as-judge">LLM-as-judge<a class="headerlink" href="#llm-as-judge" title="Permanent link">&para;</a></h1>
-<p>Agentic Runtime Platform uses two complementary LLM-as-judge systems depending on the context:</p>
-<ol>
-<li>
-<p><strong><code>LLMJudge</code></strong> (in <code>agentic-workflows-v2</code>) — the runtime judge used for production workflow evaluation. Scores on a 1–5 Likert scale per criterion, includes positional-bias mitigation, and exposes a <code>GET /api/runs/{filename}/evaluation</code> endpoint.</p>
-</li>
-<li>
-<p><strong>Eval-package evaluators</strong> (<code>LLMEvaluator</code>, <code>QualityEvaluator</code>, <code>StandardEvaluator</code>, <code>PatternEvaluator</code> in <code>agentic-v2-eval</code>) — standalone evaluators used by the CLI and batch/streaming runners. These use a discrete choice model (1–5 → 0.0–1.0) or a 0–10 JSON scoring scheme.</p>
-</li>
-</ol>
-<p>Both systems are described here. For production workflow scoring, see also <a href="../gating/">Production gating</a>.</p>
-<hr />
-<h2 id="system-1-runtime-llmjudge">System 1: runtime <code>LLMJudge</code><a class="headerlink" href="#system-1-runtime-llmjudge" title="Permanent link">&para;</a></h2>
-<h3 id="what-it-scores">What it scores<a class="headerlink" href="#what-it-scores" title="Permanent link">&para;</a></h3>
-<p><code>LLMJudge</code> (at <code>agentic-workflows-v2/agentic_v2/scoring/judge.py</code>) scores a <strong>candidate output</strong> against an <strong>expected output</strong> on a set of named criteria. Each criterion is defined by:</p>
-<ul>
-<li><code>name</code> — criterion identifier (e.g., <code>"correctness"</code>)</li>
-<li><code>definition</code> — human-readable description of what this criterion measures</li>
-<li><code>scale</code> — dict mapping score values to anchor descriptions (e.g., <code>{"1": "Major failures", "5": "Excellent"</code>)</li>
-</ul>
-<p>The judge returns a normalized score per criterion and an overall score, all on the [0.0, 1.0] scale (internally uses a 1–5 Likert scale that is then normalized).</p>
-<h3 id="scoring-scale">Scoring scale<a class="headerlink" href="#scoring-scale" title="Permanent link">&para;</a></h3>
-<p>Raw scores from the judge are on the 1–5 Likert scale. These are normalized to [0.0, 1.0] via <code>normalize_score(raw, "likert_1_5")</code>:</p>
+<h1 id="model-backed-judges">Model-backed judges<a class="headerlink" href="#model-backed-judges" title="Permanent link">&para;</a></h1>
+<p>A model-backed judge asks one model to score another output. It can make review
+cheaper and repeatable, but it does not turn a subjective model response into
+ground truth.</p>
+<p>The repository contains two separate judge systems:</p>
 <table>
 <thead>
 <tr>
-<th>Raw Score</th>
-<th>Normalized Score</th>
-<th>Interpretation</th>
+<th>System</th>
+<th>Location</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td>0.00</td>
-<td>Very poor / Major failures</td>
+<td>Runtime <code>LLMJudge</code></td>
+<td><code>agentic_v2/scoring/judge.py</code></td>
+<td>Score a workflow result against anchored criteria</td>
 </tr>
 <tr>
-<td>2</td>
-<td>0.25</td>
-<td>Poor / Significant issues</td>
-</tr>
-<tr>
-<td>3</td>
-<td>0.50</td>
-<td>Acceptable / Meets minimum</td>
-</tr>
-<tr>
-<td>4</td>
-<td>0.75</td>
-<td>Good / Minor issues only</td>
-</tr>
-<tr>
-<td>5</td>
-<td>1.00</td>
-<td>Excellent / Fully meets criteria</td>
+<td>Evaluation-package evaluators</td>
+<td><code>agentic_v2_eval/evaluators/</code></td>
+<td>Score choices, quality dimensions, prompts, and named reasoning patterns</td>
 </tr>
 </tbody>
 </table>
-<p>The overall score is the mean of all criterion normalized scores.</p>
-<p>The final <code>score</code> field in the evaluation payload is <code>normalized_score * 100.0</code> (0–100 scale for human readability).</p>
-<h3 id="prompt-design">Prompt design<a class="headerlink" href="#prompt-design" title="Permanent link">&para;</a></h3>
-<p>The judge prompt is assembled by <code>_build_prompt()</code> with this structure:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>You are a strict rubric judge. Return ONLY valid JSON.
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Schema: {&quot;criteria&quot;:[{&quot;name&quot;:&quot;...&quot;,&quot;score&quot;:1-5,&quot;evidence&quot;:&quot;...&quot;}]}
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>mode: single | pairwise
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>rubric:
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>- criterion_name
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  definition: ...
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  anchors: 1:..., 5:...
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>[... more criteria ...]
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>EXPECTED OUTPUT:
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>{expected_output}
+<p>The <code>agentic-v2-eval evaluate</code> CLI does not call these judges. That command
+applies a numeric YAML rubric to values already present in a JSON file.</p>
+<h2 id="runtime-judge">Runtime judge<a class="headerlink" href="#runtime-judge" title="Permanent link">&para;</a></h2>
+<p><code>LLMJudge</code> accepts:</p>
+<ul>
+<li>a candidate output;</li>
+<li>an optional expected output;</li>
+<li>one or more criteria with names, definitions, and 1–5 anchors; and</li>
+<li>an optional second candidate for an order-consistency check.</li>
+</ul>
+<p>It requires a configured runtime model client or an injected
+<code>response_provider</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMJudge</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">fixed_response</span><span class="p">(</span><span class="o">**</span><span class="n">_</span><span class="p">):</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">return</span> <span class="p">{</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="s2">&quot;criteria&quot;</span><span class="p">:</span> <span class="p">[</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>            <span class="p">{</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;correctness&quot;</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                <span class="s2">&quot;evidence&quot;</span><span class="p">:</span> <span class="s2">&quot;The required behavior is present.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>            <span class="p">}</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="p">]</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="p">}</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>CANDIDATE OUTPUT:
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>{candidate_output}
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>Score each criterion on anchored 1..5 scale.
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">judge</span> <span class="o">=</span> <span class="n">LLMJudge</span><span class="p">(</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;test:fixed&quot;</span><span class="p">,</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">model_version</span><span class="o">=</span><span class="s2">&quot;fixed-1&quot;</span><span class="p">,</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">response_provider</span><span class="o">=</span><span class="n">fixed_response</span><span class="p">,</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">result</span> <span class="o">=</span> <span class="n">judge</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">candidate_output</span><span class="o">=</span><span class="s2">&quot;The implementation returns a sorted copy.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">expected_output</span><span class="o">=</span><span class="s2">&quot;Return a sorted copy without changing the input.&quot;</span><span class="p">,</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">criteria</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        <span class="p">{</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;correctness&quot;</span><span class="p">,</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>            <span class="s2">&quot;definition&quot;</span><span class="p">:</span> <span class="s2">&quot;Does the output meet the requirement?&quot;</span><span class="p">,</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>            <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="p">{</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>                <span class="s2">&quot;1&quot;</span><span class="p">:</span> <span class="s2">&quot;Does not meet it&quot;</span><span class="p">,</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                <span class="s2">&quot;3&quot;</span><span class="p">:</span> <span class="s2">&quot;Partly meets it&quot;</span><span class="p">,</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>                <span class="s2">&quot;5&quot;</span><span class="p">:</span> <span class="s2">&quot;Fully meets it&quot;</span><span class="p">,</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>            <span class="p">},</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        <span class="p">}</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="p">],</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="p">)</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">normalized_score</span><span class="p">)</span>
 </span></code></pre></div>
-<p>The system message is <code>"Return strict JSON only for rubric scoring."</code> Temperature is clamped to [0.0, 0.1] regardless of what the caller requests.</p>
-<h3 id="positional-bias-mitigation">Positional bias mitigation<a class="headerlink" href="#positional-bias-mitigation" title="Permanent link">&para;</a></h3>
-<p>LLM judges are susceptible to positional bias — a tendency to favor content presented first (or last) in a prompt. <code>LLMJudge</code> mitigates this with two mechanisms:</p>
-<p><strong>1. Deterministic criterion shuffling.</strong> Before building the prompt, criteria are shuffled using a deterministic seed derived from <code>sha256(candidate_output || expected_output || prompt_version)</code>. The first 8 hex digits of the digest are used as a 32-bit integer seed for <code>random.Random</code>. This ensures the same inputs always produce the same shuffled order (reproducibility) while breaking any systematic first/last position advantage across different candidate outputs.</p>
-<p><strong>2. Pairwise consistency check</strong> (optional). When <code>pairwise_reference_output</code> is provided to <code>evaluate()</code>, the judge is called twice: once with the original presentation order, and once with <code>candidate_output</code> and <code>pairwise_reference_output</code> swapped. <code>check_swapped_order_consistency()</code> flags criteria where the absolute score delta between the two presentations exceeds <code>max_delta=1.0</code>. Inconsistent criteria are recorded in <code>JudgeEvaluationResult.inconsistency_reasons</code>.</p>
-<h3 id="output-schema-validation">Output schema validation<a class="headerlink" href="#output-schema-validation" title="Permanent link">&para;</a></h3>
-<p><code>validate_judge_structured_output()</code> validates the judge's JSON response before processing. It checks:</p>
-<ul>
-<li><code>criteria</code> is a non-empty list</li>
-<li>Each criterion entry has <code>name</code> (non-empty string), <code>score</code> (numeric, 1–5), and <code>evidence</code> (string)</li>
-<li>If <code>expected_criteria</code> is provided, all names must be present</li>
-</ul>
-<p>Validation failures raise <code>ValueError</code> with a description of each error. The call chain in <code>evaluate()</code> is:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>_build_prompt() → _invoke_prompt() → validate_judge_structured_output() → [optional pairwise check] → JudgeEvaluationResult
-</span></code></pre></div>
-<h3 id="calibration-drift-detection">Calibration drift detection<a class="headerlink" href="#calibration-drift-detection" title="Permanent link">&para;</a></h3>
-<p><code>evaluate_calibration_set(judge, fixtures, tolerance)</code> runs the judge on a list of human-labeled fixtures and computes mean absolute error (MAE) between judge-assigned and human-assigned raw scores. If MAE exceeds <code>tolerance</code> (default 0.5), <code>within_tolerance=False</code> is returned.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.scoring.judge</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMJudge</span><span class="p">,</span> <span class="n">evaluate_calibration_set</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">judge</span> <span class="o">=</span> <span class="n">LLMJudge</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gh:openai/gpt-4o&quot;</span><span class="p">)</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">evaluate_calibration_set</span><span class="p">(</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">judge</span><span class="o">=</span><span class="n">judge</span><span class="p">,</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">fixtures</span><span class="o">=</span><span class="p">[</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="p">{</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="s2">&quot;candidate_output&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris is the capital of France.&quot;</span><span class="p">,</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="s2">&quot;expected_output&quot;</span><span class="p">:</span> <span class="s2">&quot;Paris&quot;</span><span class="p">,</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="s2">&quot;criteria&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;correctness&quot;</span><span class="p">,</span> <span class="s2">&quot;definition&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span> <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;1&quot;</span><span class="p">:</span> <span class="s2">&quot;wrong&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">:</span> <span class="s2">&quot;correct&quot;</span><span class="p">}}],</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="s2">&quot;human_scores&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;correctness&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">},</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="p">}</span>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="p">],</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">)</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1"># {&quot;samples&quot;: 1, &quot;mae&quot;: 0.0, &quot;within_tolerance&quot;: True, &quot;tolerance&quot;: 0.5}</span>
-</span></code></pre></div>
-<h3 id="syncasync-bridge">Sync/async bridge<a class="headerlink" href="#syncasync-bridge" title="Permanent link">&para;</a></h3>
-<p><code>LLMJudge.evaluate()</code> is synchronous. Internally it calls <code>_run_coro_sync(coro)</code> to bridge to the async LLM client:</p>
-<ul>
-<li>If no event loop is running: uses <code>asyncio.run(coro)</code>.</li>
-<li>If an event loop is already active (e.g., inside a FastAPI request handler): spawns a daemon thread with its own <code>asyncio.run()</code> to avoid nested-loop errors. A <code>threading.Event</code> is used for synchronization.</li>
-</ul>
-<hr />
-<h2 id="system-2-eval-package-evaluators">System 2: eval-package evaluators<a class="headerlink" href="#system-2-eval-package-evaluators" title="Permanent link">&para;</a></h2>
-<p>The four evaluators in <code>agentic-v2-eval</code> use a simpler choice-extraction model rather than strict JSON schema validation.</p>
-<h3 id="llmevaluator-choice-anchored-scoring"><code>LLMEvaluator</code> — choice-anchored scoring<a class="headerlink" href="#llmevaluator-choice-anchored-scoring" title="Permanent link">&para;</a></h3>
-<p><strong>Scoring model:</strong> 5-point discrete scale extracted from free-text LLM output.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">STANDARD_CHOICES</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>    <span class="c1"># Very poor</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>   <span class="c1"># Poor</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>    <span class="c1"># Acceptable</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>   <span class="c1"># Good</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">Choice</span><span class="p">(</span><span class="s2">&quot;5&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>    <span class="c1"># Excellent</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">]</span>
-</span></code></pre></div>
-<p><strong>Score extraction algorithm:</strong></p>
+<p>The judge:</p>
 <ol>
-<li>Strip and lowercase the full response.</li>
-<li>Split into lines. Take the last line.</li>
-<li>Exact match: if the last line equals a choice label (e.g., <code>"4"</code>), return that choice's score.</li>
-<li>Containment match: if no exact match, scan the last three lines. Return the first choice whose label appears as a substring.</li>
-<li>If no match: return <code>score=0.0</code>, <code>passed=False</code>.</li>
+<li>shuffles criterion order from a stable seed;</li>
+<li>requests strict JSON;</li>
+<li>rejects missing, duplicate, unexpected, or out-of-range criterion results;</li>
+<li>normalizes 1–5 scores to <code>0.0</code>–<code>1.0</code>; and</li>
+<li>returns the mean normalized score.</li>
 </ol>
-<p>Temperature is hardcoded to 0.0 for determinism.</p>
-<p><strong>Why choice-extraction rather than JSON:</strong> The five-point choice model is simpler to implement and more resistant to minor response format variations than strict JSON parsing. The last-line convention is easy for LLMs to follow consistently, and the containment fallback handles cases where the model adds a trailing word.</p>
-<p><strong>Return dict:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>           <span class="c1"># Normalized 0–1</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="s2">&quot;passed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>          <span class="c1"># score &gt; 0</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span>            <span class="c1"># Matched choice label</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="s2">&quot;Matched choice: 4&quot;</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="s2">&quot;raw_response&quot;</span><span class="p">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>   <span class="c1"># Full LLM response for debugging</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+<p>When <code>pairwise_reference_output</code> is supplied, the judge evaluates both
+presentation orders. It reports criteria whose raw scores differ by more than
+the configured consistency tolerance. This checks order sensitivity; it does
+not prove either candidate is correct.</p>
+<p>The result records the judge model, model version, prompt version, temperature,
+criterion evidence, and pairwise consistency fields.</p>
+<h2 id="evaluation-package-judges">Evaluation-package judges<a class="headerlink" href="#evaluation-package-judges" title="Permanent link">&para;</a></h2>
+<p>All evaluation-package judges receive an injected client that implements
+<code>generate_text(...)</code>. Provider setup stays outside the package.</p>
+<h3 id="llmevaluator"><code>LLMEvaluator</code><a class="headerlink" href="#llmevaluator" title="Permanent link">&para;</a></h3>
+<p><code>LLMEvaluator</code> maps a judge response to caller-defined choices:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.evaluators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">LLMEvaluator</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">STANDARD_CHOICES</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">FixedClient</span><span class="p">:</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">generate_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="s2">&quot;4&quot;</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">LLMEvaluator</span><span class="p">(</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">model_id</span><span class="o">=</span><span class="s2">&quot;test:fixed&quot;</span><span class="p">,</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Score the response from 1 to 5.&quot;</span><span class="p">,</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">prompt_template</span><span class="o">=</span><span class="s2">&quot;Response:</span><span class="se">\n</span><span class="s2">{{completion}}</span><span class="se">\n\n</span><span class="s2">Score:&quot;</span><span class="p">,</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">choices</span><span class="o">=</span><span class="n">STANDARD_CHOICES</span><span class="p">,</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">llm_client</span><span class="o">=</span><span class="n">FixedClient</span><span class="p">(),</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="p">)</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">result</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="s2">&quot;A complete response&quot;</span><span class="p">)</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">])</span>  <span class="c1"># 0.75</span>
 </span></code></pre></div>
-<p>On LLM exception:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="s2">&quot;passed&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Connection timeout&quot;</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="s2">&quot;Exception during execution&quot;</span><span class="p">,</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">}</span>
-</span></code></pre></div>
-<h3 id="qualityevaluator-five-dimension-output-quality"><code>QualityEvaluator</code> — five-dimension output quality<a class="headerlink" href="#qualityevaluator-five-dimension-output-quality" title="Permanent link">&para;</a></h3>
-<p>Each of the five dimensions (Coherence, Fluency, Relevance, Groundedness, Similarity) uses the same 5-point choice extraction scheme as <code>LLMEvaluator</code>. The prompts are loaded from <code>rubrics/quality.yaml</code> at module import time.</p>
-<p><strong>Template variables by dimension:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Dimension</th>
-<th>Required Variables</th>
-<th>Optional</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Coherence</td>
-<td><code>{{input}}</code>, <code>{{completion}}</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>Fluency</td>
-<td><code>{{completion}}</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>Relevance</td>
-<td><code>{{input}}</code>, <code>{{completion}}</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>Groundedness</td>
-<td><code>{{context}}</code>, <code>{{completion}}</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>Similarity</td>
-<td><code>{{expected}}</code>, <code>{{completion}}</code></td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<p>The <code>completion</code> variable is automatically set from the <code>output</code> argument to <code>evaluate()</code>. All other variables are passed via the <code>inputs</code> dict.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">GROUNDEDNESS</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">evaluator</span> <span class="o">=</span> <span class="n">QualityEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">get_llm_client</span><span class="p">())</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">definition</span><span class="o">=</span><span class="n">GROUNDEDNESS</span><span class="p">,</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">inputs</span><span class="o">=</span><span class="p">{</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="s2">&quot;The Eiffel Tower is located in Paris, France.&quot;</span><span class="p">,</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="s2">&quot;completion&quot;</span><span class="p">:</span> <span class="s2">&quot;The Eiffel Tower is in Paris.&quot;</span><span class="p">,</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="p">},</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;The Eiffel Tower is in Paris.&quot;</span><span class="p">,</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="p">)</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>  <span class="c1"># 1.0 (fully grounded)</span>
-</span></code></pre></div>
-<p><strong>Choosing an override model:</strong></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">definition</span><span class="o">=</span><span class="n">COHERENCE</span><span class="p">,</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;Explain quantum entanglement.&quot;</span><span class="p">},</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">output</span><span class="o">=</span><span class="n">long_response</span><span class="p">,</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">model_override</span><span class="o">=</span><span class="s2">&quot;anthropic:claude-3-5-haiku&quot;</span><span class="p">,</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span>
-</span></code></pre></div>
-<h3 id="standardevaluator-prompt-quality-grading-010"><code>StandardEvaluator</code> — prompt quality grading (0–10)<a class="headerlink" href="#standardevaluator-prompt-quality-grading-010" title="Permanent link">&para;</a></h3>
-<p>Unlike the 5-point choice model, <code>StandardEvaluator</code> uses a structured JSON response. The judge prompt explicitly instructs the LLM to return a JSON object with:</p>
+<p>The built-in choices map <code>1</code>, <code>2</code>, <code>3</code>, <code>4</code>, and <code>5</code> to <code>0.0</code>, <code>0.25</code>,
+<code>0.5</code>, <code>0.75</code>, and <code>1.0</code>. Choice matching checks the last lines of the
+response. Write prompts that require only the choice label on the final line.</p>
+<h3 id="qualityevaluator"><code>QualityEvaluator</code><a class="headerlink" href="#qualityevaluator" title="Permanent link">&para;</a></h3>
+<p><code>QualityEvaluator</code> loads five definitions from <code>quality.yaml</code>:</p>
 <ul>
-<li><code>scores</code>: dict of five dimensions, each 0–10</li>
-<li><code>improvements</code>: list of actionable suggestions</li>
-<li><code>confidence</code>: float 0.0–1.0</li>
+<li><code>COHERENCE</code></li>
+<li><code>FLUENCY</code></li>
+<li><code>RELEVANCE</code></li>
+<li><code>GROUNDEDNESS</code></li>
+<li><code>SIMILARITY</code></li>
 </ul>
-<p><strong>Multi-run aggregation:</strong></p>
-<p>When <code>runs &gt; 1</code>, scores are aggregated via <strong>median</strong> across all successful runs. Up to 5 unique improvement suggestions are collected from all runs (insertion-order deduplicated).</p>
-<p>The <code>confidence</code> field in <code>StandardScore</code> is the median confidence across runs. A low confidence (&lt; 0.7) indicates the judge was uncertain — the score should be treated with less weight.</p>
-<p><strong>Input truncation:</strong></p>
-<p>Prompts longer than 18,000 characters are truncated before being sent to the judge:
-- First 16,000 characters preserved
-- Last 1,000 characters preserved
-- Gap replaced with <code>[...TRUNCATED... tail of prompt follows]</code></p>
-<p>This preserves the prompt header (most important for structure evaluation) and the prompt footer (often contains output format instructions).</p>
-<h3 id="patternevaluator-structural-pattern-conformance"><code>PatternEvaluator</code> — structural pattern conformance<a class="headerlink" href="#patternevaluator-structural-pattern-conformance" title="Permanent link">&para;</a></h3>
-<p>This evaluator scores whether an output follows one of four agentic reasoning patterns. It returns <code>PatternScore</code> — a rich dataclass with 17 fields capturing universal and pattern-specific dimensions, hard gate results, run statistics, and failure descriptions.</p>
-<p><strong>Judge output format:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;universal_scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">&quot;PIF&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nt">&quot;POI&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">&quot;PC&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">&quot;CA&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">&quot;SRC&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nt">&quot;PR&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">&quot;IR&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">  </span><span class="nt">&quot;pattern_scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">    </span><span class="nt">&quot;R1&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">    </span><span class="nt">&quot;R2&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">    </span><span class="nt">&quot;R3&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">  </span><span class="nt">&quot;failures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">  </span><span class="nt">&quot;confidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="p">}</span>
+<p>Call <code>evaluate(definition, inputs, output, model_override=None)</code>. It returns a
+single normalized float. A provider or parse failure returns <code>0.0</code>, so preserve
+logs if you need to distinguish a failed judge call from a low score.</p>
+<h3 id="standardevaluator"><code>StandardEvaluator</code><a class="headerlink" href="#standardevaluator" title="Permanent link">&para;</a></h3>
+<p><code>StandardEvaluator.score_prompt()</code> evaluates prompt clarity, effectiveness,
+structure, specificity, and completeness. It returns <code>StandardScore</code> on a
+0–10 scale.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">score</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">score_prompt</span><span class="p">(</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">prompt_name</span><span class="o">=</span><span class="s2">&quot;reviewer&quot;</span><span class="p">,</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">prompt_content</span><span class="o">=</span><span class="n">prompt_text</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gh:gpt-4o&quot;</span><span class="p">,</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">runs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">)</span>
 </span></code></pre></div>
-<p><strong>Score aggregation:</strong></p>
-<p>All scores are aggregated via <code>statistics.median</code> across <code>runs</code> invocations. The <code>_aggregate_scores()</code> helper processes a list of score dicts, collecting all values per key and computing the median. Keys absent from some runs are still included if they appear in any run.</p>
-<p><strong>Hard gate evaluation:</strong></p>
-<p>Hard gates are evaluated on the <strong>aggregated medians</strong>, not per-run. The four gates checked are:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">if</span> <span class="n">universal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;POI&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">hard_gates_passed</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">hard_failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Phase Ordering Integrity &lt; 4&quot;</span><span class="p">)</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">if</span> <span class="n">universal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PC&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">hard_gates_passed</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">hard_failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Phase Completeness &lt; 4&quot;</span><span class="p">)</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="k">if</span> <span class="n">universal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CA&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="n">hard_gates_passed</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="n">hard_failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Constraint Adherence &lt; 4&quot;</span><span class="p">)</span>
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">if</span> <span class="n">universal</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PR&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.75</span><span class="p">:</span>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">hard_gates_passed</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">hard_failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Pattern Robustness &lt; 0.75&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Note that PR is compared against 0.75 (a proportion), not 4 (an integer scale). This is different from the 0–5 scale used for POI/PC/CA.</p>
-<hr />
-<h2 id="research-gating">Research gating<a class="headerlink" href="#research-gating" title="Permanent link">&para;</a></h2>
-<p>When the eval framework is used for <strong>deep research pipelines</strong> (Profile E workflows), two additional thresholds govern whether research output is accepted:</p>
+<p>The default is one run. When <code>runs</code> is greater than one, the evaluator takes
+the median for each dimension.</p>
+<h3 id="patternevaluator"><code>PatternEvaluator</code><a class="headerlink" href="#patternevaluator" title="Permanent link">&para;</a></h3>
+<p><code>PatternEvaluator.score_pattern()</code> checks one of the patterns defined in
+<code>prompt_pattern.yaml</code>: <code>react</code>, <code>cove</code>, <code>reflexion</code>, or <code>rag</code>.</p>
+<p>It returns a <code>PatternScore</code> containing universal scores, pattern-specific
+scores, hard-gate results, parse success counts, and judge metadata. The
+default is one run.</p>
+<h2 id="using-judge-scores-responsibly">Using judge scores responsibly<a class="headerlink" href="#using-judge-scores-responsibly" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>coverage_score &gt;= 0.80</code> — the research must cover at least 80% of the expected scope.</li>
-<li><code>source_quality_score &gt;= 0.80</code> — the sources cited must meet quality standards.</li>
+<li>Keep the judge prompt and model version with the result.</li>
+<li>Calibrate against human-scored examples from the intended domain.</li>
+<li>Use more than one run when score variance matters.</li>
+<li>Test position, verbosity, and style bias.</li>
+<li>Treat parse failures and provider failures separately from low-quality
+  answers.</li>
+<li>Do not use a judge score as the only approval for a high-impact action.</li>
+<li>Do not claim the judge exposes or audits a model's private reasoning.</li>
 </ul>
-<p>These are enforced as hard gates within <code>score_workflow_result_impl</code> for Profile E scoring. See <a href="../gating/">Production gating</a> for the full production gating specification.</p>
-<hr />
-<h2 id="how-to-write-evaluatable-prompts">How to write evaluatable prompts<a class="headerlink" href="#how-to-write-evaluatable-prompts" title="Permanent link">&para;</a></h2>
-<h3 id="for-standardevaluator">For <code>StandardEvaluator</code><a class="headerlink" href="#for-standardevaluator" title="Permanent link">&para;</a></h3>
-<p>The judge scores five dimensions. Design your prompts to maximize scores in each:</p>
-<p><strong>Clarity (0–10):</strong> Write unambiguous instructions. Avoid conflicting directives. Define technical terms inline if they might be misinterpreted.</p>
-<p><strong>Effectiveness (0–10):</strong> Include explicit constraints and edge cases. State what "success" looks like. The judge asks: "Will this prompt reliably produce correct output?"</p>
-<p><strong>Structure (0–10):</strong> Use clear sections. Number steps when ordering matters. Put the output format specification at the end, close to where the model will start writing.</p>
-<p><strong>Specificity (0–10):</strong> Use actionable, measurable constraints ("respond in no more than 3 sentences") rather than vague directives ("be concise"). Define success criteria the model can verify for itself.</p>
-<p><strong>Completeness (0–10):</strong> Include all required context. Add examples when the format is non-obvious. Specify error handling when the task might fail.</p>
-<h3 id="for-patternevaluator">For <code>PatternEvaluator</code><a class="headerlink" href="#for-patternevaluator" title="Permanent link">&para;</a></h3>
-<p>The judge checks whether the prompt reliably induces a specific pattern. Design pattern prompts to:</p>
-<ol>
-<li><strong>Name the pattern explicitly</strong> — the model should know it is expected to follow ReAct / CoVe / Reflexion / RAG structure.</li>
-<li><strong>Define the phases</strong> — enumerate the phases in order. Use the same phase names the evaluator expects.</li>
-<li><strong>Specify transition conditions</strong> — for ReAct, when does a Thought become an Action? When does the loop terminate?</li>
-<li><strong>Include a worked example</strong> (optional but high-impact) — one complete example of the pattern applied to a simple case helps the model understand the expected format before encountering a hard instance.</li>
-<li><strong>Add negative constraints</strong> — explicitly prohibit skipping phases or reordering steps to prevent the model from taking shortcuts.</li>
-</ol>
-<p><strong>Example structure for a ReAct prompt:</strong></p>
-<div class="language-markdown highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>You are an agent that reasons and acts using the ReAct pattern.
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="gu">## Phase Structure</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>For each task, follow these phases in order:
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">1.</span> <span class="gs">**Thought**</span>: Analyze the task. What do you know? What do you need to find out?
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">2.</span> <span class="gs">**Action**</span>: Invoke exactly one tool call (format: <span class="sb">`tool_name(argument)`</span>).
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="k">3.</span> <span class="gs">**Observation**</span>: Record the tool&#39;s result verbatim.
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="k">4.</span> Repeat Thought/Action/Observation until you have sufficient information.
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="k">5.</span> <span class="gs">**Final Answer**</span>: Provide the definitive answer. Do not loop after this.
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="gu">## Constraints</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="k">-</span><span class="w"> </span>Never skip the Observation phase after an Action.
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="k">-</span><span class="w"> </span>Never include analysis inside the Action phase.
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">-</span><span class="w"> </span>Terminate the loop as soon as the answer is available.
-</span></code></pre></div>
-<h3 id="for-qualityevaluator">For <code>QualityEvaluator</code><a class="headerlink" href="#for-qualityevaluator" title="Permanent link">&para;</a></h3>
-<p>Design your prompts and expected outputs so the five quality dimensions are independently measurable:</p>
-<ul>
-<li><strong>Coherence:</strong> Structure the output so it flows logically. Use transitional phrases.</li>
-<li><strong>Fluency:</strong> Ensure grammatically correct output by including grammar instructions if the model tends to produce informal text.</li>
-<li><strong>Relevance:</strong> Include a clear question or task statement that the output should answer directly.</li>
-<li><strong>Groundedness:</strong> Provide context in the <code>context</code> variable. Instruct the model to cite sources.</li>
-<li><strong>Similarity:</strong> Use reference outputs that are precisely correct — not overly verbose — to get meaningful similarity scores.</li>
-</ul>
-<hr />
-<h2 id="integrating-the-judge-into-a-custom-evaluation">Integrating the judge into a custom evaluation<a class="headerlink" href="#integrating-the-judge-into-a-custom-evaluation" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span><span class="p">,</span> <span class="n">QualityEvaluator</span><span class="p">,</span> <span class="n">COHERENCE</span><span class="p">,</span> <span class="n">RELEVANCE</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners.batch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_html_report</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.adapters.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_llm_client</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Set up evaluators</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">get_llm_client</span><span class="p">()</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="n">quality_eval</span> <span class="o">=</span> <span class="n">QualityEvaluator</span><span class="p">(</span><span class="n">llm_client</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;agentic-v2-eval/src/agentic_v2_eval/rubrics/agent.yaml&quot;</span><span class="p">))</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="c1"># Define evaluation function</span>
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">evaluate_one</span><span class="p">(</span><span class="n">test_case</span><span class="p">):</span>
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span>
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    <span class="n">query</span> <span class="o">=</span> <span class="n">test_case</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span>
-</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
-</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    <span class="n">coherence</span> <span class="o">=</span> <span class="n">quality_eval</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">COHERENCE</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">},</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">)</span>
-</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    <span class="n">relevance</span> <span class="o">=</span> <span class="n">quality_eval</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">RELEVANCE</span><span class="p">,</span> <span class="n">inputs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">},</span> <span class="n">output</span><span class="o">=</span><span class="n">output</span><span class="p">)</span>
-</span><span id="__span-11-19"><a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
-</span><span id="__span-11-20"><a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>    <span class="n">scoring_result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">({</span><span class="s2">&quot;Correctness&quot;</span><span class="p">:</span> <span class="n">test_case</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;correctness&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)})</span>
-</span><span id="__span-11-21"><a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>
-</span><span id="__span-11-22"><a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>    <span class="k">return</span> <span class="p">{</span>
-</span><span id="__span-11-23"><a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>        <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span>
-</span><span id="__span-11-24"><a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>        <span class="s2">&quot;coherence&quot;</span><span class="p">:</span> <span class="n">coherence</span><span class="p">,</span>
-</span><span id="__span-11-25"><a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>        <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="n">relevance</span><span class="p">,</span>
-</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a>        <span class="s2">&quot;rubric_score&quot;</span><span class="p">:</span> <span class="n">scoring_result</span><span class="o">.</span><span class="n">weighted_score</span><span class="p">,</span>
-</span><span id="__span-11-27"><a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>    <span class="p">}</span>
-</span><span id="__span-11-28"><a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>
-</span><span id="__span-11-29"><a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="c1"># Run batch evaluation</span>
-</span><span id="__span-11-30"><a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">evaluate_one</span><span class="p">)</span>
-</span><span id="__span-11-31"><a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a><span class="n">batch_result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-11-32"><a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>
-</span><span id="__span-11-33"><a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="c1"># Report</span>
-</span><span id="__span-11-34"><a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a><span class="n">generate_html_report</span><span class="p">(</span><span class="n">batch_result</span><span class="o">.</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;evaluation_report.html&quot;</span><span class="p">)</span>
-</span></code></pre></div>
+<p>The runtime server exposes recorded evaluation data at
+<code>GET /api/runs/{filename}/evaluation</code>. See <a href="../gating/">production
+gating</a> for how runtime scores become pass or fail decisions.</p>
 
 
 
@@ -3674,7 +3330,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

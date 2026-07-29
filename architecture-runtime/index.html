@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Runtime engine - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-runtime.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/architecture-runtime/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Runtime engine - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/architecture-runtime.png" />
 </head>
   
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1541,10 +1541,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#filesystem-persistence" class="md-nav__link">
+  <a href="#persistence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filesystem persistence
+        Persistence
       
     </span>
   </a>
@@ -1624,10 +1624,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#production-readiness-gaps" class="md-nav__link">
+  <a href="#current-architecture-gaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production readiness gaps
+        Current architecture gaps
       
     </span>
   </a>
@@ -1972,6 +1972,8 @@
       
         
       
+        
+      
     
     
     
@@ -2016,6 +2018,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2842,6 +2872,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2939,6 +2973,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -3249,6 +3339,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3309,6 +3403,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -4089,10 +4239,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#filesystem-persistence" class="md-nav__link">
+  <a href="#persistence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filesystem persistence
+        Persistence
       
     </span>
   </a>
@@ -4172,10 +4322,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#production-readiness-gaps" class="md-nav__link">
+  <a href="#current-architecture-gaps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production readiness gaps
+        Current architecture gaps
       
     </span>
   </a>
@@ -4245,7 +4395,8 @@
 <h1 id="runtime-architecture-agentic-workflows-v2">Runtime architecture — <code>agentic-workflows-v2</code><a class="headerlink" href="#runtime-architecture-agentic-workflows-v2" title="Permanent link">&para;</a></h1>
 <blockquote>
 <p><strong>Audience:</strong> Engineers onboarding to the platform, architects doing design reviews, and senior contributors planning major changes.
-<strong>Scope:</strong> The <code>agentic-workflows-v2</code> Python package and its direct dependencies. The evaluation framework (<code>agentic-v2-eval</code>) and React UI are covered in separate documents.</p>
+<strong>Scope:</strong> The <code>agentic-workflows-v2</code> Python package and its direct dependencies. The evaluation framework (<code>agentic-v2-eval</code>) and React UI are covered in separate documents.
+<strong>Last verified:</strong> 2026-07-28</p>
 </blockquote>
 <p><strong>Package:</strong> <code>agentic-workflows-v2</code> | <strong>Python:</strong> 3.11+ | <strong>Build:</strong> hatchling</p>
 <hr />
@@ -4256,7 +4407,7 @@
 <li><strong>Server layer</strong> — FastAPI application with CORS, rate limiting, API-key auth, and prompt-sanitization middleware. Exposes REST endpoints and a WebSocket pub/sub hub.</li>
 <li><strong>Adapter registry</strong> — A singleton that maps names (<code>"langchain"</code>, <code>"native"</code>) to <code>ExecutionEngine</code> protocol implementations, making engines runtime-swappable without code changes.</li>
 <li><strong>Execution engines</strong> — Two fully operational engines: a LangGraph state-machine compiler (<code>langchain</code> adapter) and a native Kahn's-algorithm DAG executor (<code>native</code> adapter).</li>
-<li><strong>Agent and tool layer</strong> — Typed <code>BaseAgent[TInput, TOutput]</code> subclasses, a 12-module built-in tool registry, and a full RAG pipeline for context augmentation.</li>
+<li><strong>Agent and tool layer</strong> — Typed <code>BaseAgent[TInput, TOutput]</code> subclasses, built-in tools, model routing, and RAG components.</li>
 </ol>
 <hr />
 <h2 id="2-technology-stack">2. Technology stack<a class="headerlink" href="#2-technology-stack" title="Permanent link">&para;</a></h2>
@@ -4287,7 +4438,7 @@
 <tr>
 <td>CLI</td>
 <td>Typer</td>
-<td>8 top-level commands plus <code>rag</code> and <code>devex</code> sub-groups</td>
+<td>Workflow, server, RAG, and developer commands</td>
 </tr>
 <tr>
 <td>HTTP client</td>
@@ -4341,8 +4492,8 @@
 </tr>
 <tr>
 <td>Pre-commit</td>
-<td>black, isort, ruff, mypy, detect-secrets</td>
-<td>Enforced on every commit</td>
+<td>Black, Ruff, docformatter, mypy, detect-secrets</td>
+<td>Configured repository hooks</td>
 </tr>
 </tbody>
 </table>
@@ -4358,16 +4509,16 @@
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── contracts/           # Pydantic I/O models, events, messages, sanitization
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── core/                # Protocols, memory, errors
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── models/              # LLM client wrappers, SmartModelRouter, Redis CB state
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── rag/                 # Full RAG pipeline (load, chunk, embed, retrieve, assemble)
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── rag/                 # Load, chunk, embed, retrieve, rerank, and assemble
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   ├── governance/          # Approval gate + escalation sink
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   ├── prompts/             # 7 agent persona definitions (.md)
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── tools/builtin/       # 12 built-in tool modules
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ├── tools/builtin/       # Built-in runtime tools
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│   ├── middleware/          # Sanitization detectors
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── integrations/        # OTEL tracing, metrics, MCP adapters
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   └── cli/                 # Typer CLI entry points
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>├── tests/                   # 150+ test files (pytest-asyncio auto mode)
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>├── tests/                   # Runtime and server tests
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└── ui/                      # React 19 dashboard (separate build)
 </span></code></pre></div>
 <hr />
@@ -4860,7 +5011,7 @@
 </tr>
 <tr>
 <td><strong>Recursive chunking</strong></td>
-<td>Splits documents by semantic boundaries (headings, paragraphs, sentences) before falling back to token-count limits</td>
+<td>Splits on configured text separators before falling back to character counts; <code>chunk_size</code> and <code>chunk_overlap</code> are character counts in the current implementation</td>
 </tr>
 <tr>
 <td><strong>Content-hash deduplication</strong></td>
@@ -4893,6 +5044,10 @@
 </tbody>
 </table>
 <p>See <a href="../adr/RAG-pipeline-blueprint/"><code>adr/RAG-pipeline-blueprint.md</code></a> and <a href="../adr/ADR-035-rag-pipeline-architecture/">ADR-035</a>.</p>
+<p>The current <code>agentic rag</code> commands construct an in-memory hash embedder and
+vector store directly. Separate CLI invocations do not share an index, and the
+CLI does not use the provider-backed factory described above. See
+<a href="../KNOWN_LIMITATIONS/">Known limitations</a>.</p>
 <hr />
 <h2 id="10-scoring-package">10. Scoring package<a class="headerlink" href="#10-scoring-package" title="Permanent link">&para;</a></h2>
 <p><strong>Source:</strong> <code>agentic_v2/scoring/</code> (extracted from <code>server/</code> per <a href="../adr/ADR-032-extract-scoring-package/">ADR-032</a>)</p>
@@ -5158,15 +5313,17 @@
 <p><code>logging_config.py</code> provides <code>configure_logging()</code>, called once at module import in <code>server/app.py</code>. When <code>LOG_FORMAT=json</code> the root logger emits newline-delimited JSON (compatible with CloudWatch Logs Insights and Datadog). The default (<code>LOG_FORMAT=text</code>) uses the human-readable format.</p>
 <hr />
 <h2 id="15-wire-format-codegen-gate">15. Wire-format codegen gate<a class="headerlink" href="#15-wire-format-codegen-gate" title="Permanent link">&para;</a></h2>
-<p>Source: <code>scripts/generate_ts_types.py</code>, <code>ui/scripts/generate-ts-types.mjs</code></p>
-<p>The Python <code>contracts/events.py</code> discriminated union is the <strong>single source of truth</strong> for the wire format. A CI job (<code>wire-format-drift</code>) regenerates <code>tests/schemas/events.schema.json</code> and <code>ui/src/api/events.generated.ts</code> and fails the PR if either diverges from the committed snapshot.</p>
-<p>This gate caught three latent type mismatches at introduction:</p>
-<ul>
-<li><code>status: StepStatus</code> (enum) was wired as a plain string on the TypeScript side.</li>
-<li><code>input</code>/<code>output</code> fields on events were non-nullable in TypeScript but nullable in Python.</li>
-<li><code>criteria</code> shape on <code>EvaluationCompleteEvent</code> had drifted between Python and TypeScript.</li>
-</ul>
-<p>The gate also covers four HTTP response shapes (<code>DAGResponse</code>, <code>WorkflowInputSchemaResponse</code>, <code>WorkflowEditorStep</code>, <code>RunsSummaryResponse</code>), whose JSON schemas live under <code>tests/schemas/</code> and regenerate via <code>scripts/generate_schemas.py</code>. See <a href="../adr/ADR-014-pydantic-wire-format/">ADR-014</a>.</p>
+<p>The Pydantic contracts are the source for committed JSON Schemas and generated
+TypeScript interfaces. From <code>agentic-workflows-v2</code>:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">scripts</span><span class="p">.</span><span class="n">generate_ts_types</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">npm</span> <span class="p">-</span><span class="n">-prefix</span> <span class="n">ui</span> <span class="n">run</span> <span class="n">generate</span><span class="p">:</span><span class="n">types</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">python</span> <span class="n">scripts</span><span class="p">/</span><span class="n">generate_schemas</span><span class="p">.</span><span class="n">py</span>
+</span></code></pre></div>
+<p>The drift checks cover execution events, chat contracts, step results, DAG
+responses, workflow input and editor shapes, and run summaries. CI fails when
+generated files differ from the committed versions. See
+<a href="../data-models-runtime/">Data models</a> and
+<a href="../adr/ADR-014-pydantic-wire-format/">ADR-014</a>.</p>
 <hr />
 <h2 id="16-no-llm-mode">16. No-LLM mode<a class="headerlink" href="#16-no-llm-mode" title="Permanent link">&para;</a></h2>
 <p>Environment variable: <code>AGENTIC_NO_LLM=1</code></p>
@@ -5314,7 +5471,7 @@
 <hr />
 <h2 id="18-cli">18. CLI<a class="headerlink" href="#18-cli" title="Permanent link">&para;</a></h2>
 <p><strong>Source:</strong> <code>agentic_v2/cli/</code></p>
-<p>The CLI is implemented with <strong>Typer</strong> and provides 8 top-level commands plus two sub-command groups (<code>rag</code>, <code>devex</code>):</p>
+<p>The CLI is implemented with <strong>Typer</strong>. <code>rag</code> and <code>devex</code> are command groups:</p>
 <table>
 <thead>
 <tr>
@@ -5369,15 +5526,25 @@
 <hr />
 <h2 id="19-key-design-decisions">19. Key design decisions<a class="headerlink" href="#19-key-design-decisions" title="Permanent link">&para;</a></h2>
 <h3 id="dual-execution-engine">Dual execution engine<a class="headerlink" href="#dual-execution-engine" title="Permanent link">&para;</a></h3>
-<p>The system supports two execution engines behind a shared <code>ExecutionEngine</code> protocol. CLI, server, and dashboard requests default to the LangGraph adapter for named YAML workflows during the migration window; the native engine has no optional dependencies and is the default for runtime-generated DAG/Pipeline execution or explicit <code>--adapter native</code> runs. This allows teams to migrate workflows incrementally and compare outputs using <code>agentic compare</code>. See <a href="../adr/ADR-001-002-003-architecture-decisions/">ADR-001</a> and <a href="../adr/ADR-031-native-dag-single-engine/">ADR-031</a>.</p>
+<p>The system supports two execution engines behind a shared <code>ExecutionEngine</code>
+protocol. Named CLI runs default to the LangGraph adapter. The native engine
+remains the implementation for platform-specific DAG features and for explicit
+<code>--adapter native</code> runs. The single-engine proposal in ADR-031 was not adopted;
+LangGraph was retained. Use <code>agentic compare</code> for workflows that both engines
+support. See <a href="../adr/ADR-001-002-003-architecture-decisions/">ADR-001</a> and
+<a href="../adr/ADR-031-native-dag-single-engine/">ADR-031</a>.</p>
 <h3 id="additive-only-contracts">Additive-only contracts<a class="headerlink" href="#additive-only-contracts" title="Permanent link">&para;</a></h3>
 <p>All Pydantic models in <code>contracts/</code> follow an additive-only policy. Fields are never removed or renamed in ways that break existing serialised data (JSON run logs) or running clients. New fields are added as <code>Optional</code> with defaults. This policy protects filesystem-persisted run logs from becoming unreadable after upgrades.</p>
 <h3 id="deny-by-default-tool-safety">DENY-by-default tool safety<a class="headerlink" href="#deny-by-default-tool-safety" title="Permanent link">&para;</a></h3>
 <p>High-risk tool operations are denied unless explicitly enabled per workflow step. This prevents accidental privilege escalation when new tools are added and ensures that security review of a workflow can be done by reading the YAML allowlist rather than auditing all agent code.</p>
 <h3 id="brokerless-core-optional-redis">Brokerless core, optional Redis<a class="headerlink" href="#brokerless-core-optional-redis" title="Permanent link">&para;</a></h3>
 <p>The event streaming system uses in-process <code>asyncio.Queue</code> with a 500-event circular buffer, so the core streaming path has no required infrastructure dependency. Redis is an optional enhancement: when configured, it provides a durable replay store and cross-worker circuit-breaker state (§14.3–14.4); without it, in-process/SQLite fallbacks apply and run results remain durable as JSON log files.</p>
-<h3 id="filesystem-persistence">Filesystem persistence<a class="headerlink" href="#filesystem-persistence" title="Permanent link">&para;</a></h3>
-<p>There is no database or ORM. All run results are serialised as JSON files. This keeps the deployment footprint minimal and makes run logs directly inspectable with standard tools. The trade-off is that querying run history at scale requires reading multiple files; the <code>GET /api/runs</code> endpoint applies in-memory filtering.</p>
+<h3 id="persistence">Persistence<a class="headerlink" href="#persistence" title="Permanent link">&para;</a></h3>
+<p>Saved run results are JSON files, so they remain directly inspectable. Other
+state has separate backends: replay can use memory, SQLite, or Redis; LangGraph
+checkpoints can use SQLite or PostgreSQL; and model-router circuit state can
+use Redis. The run-list API still scans and filters JSON metadata in process,
+which is not designed for large-scale analytical queries.</p>
 <h3 id="protocol-driven-architecture">Protocol-driven architecture<a class="headerlink" href="#protocol-driven-architecture" title="Permanent link">&para;</a></h3>
 <p>All major system interfaces are defined as <code>@runtime_checkable</code> Protocol classes. This decouples implementations from the interface definitions, enabling testing with pure mock implementations and preventing tight coupling between layers. It also allows third-party adapters, tools, and memory stores to be registered without modifying core code.</p>
 <hr />
@@ -5402,10 +5569,9 @@
 <ul>
 <li><code>agentic-workflows-v2/pyproject.toml</code> has <strong>no <code>[tool.ruff]</code> section</strong> of its own; the ruff rule set is inherited from the workspace root. Some documented standards are aspirational rather than tool-enforced for the main package.</li>
 </ul>
-<h3 id="production-readiness-gaps">Production readiness gaps<a class="headerlink" href="#production-readiness-gaps" title="Permanent link">&para;</a></h3>
+<h3 id="current-architecture-gaps">Current architecture gaps<a class="headerlink" href="#current-architecture-gaps" title="Permanent link">&para;</a></h3>
 <ul>
 <li>The default vector store / memory implementations are in-memory; the LanceDB adapter exists but is optional.</li>
-<li>No cross-package integration tests exercising <code>tools/</code> → <code>agentic-workflows-v2</code> → <code>agentic-v2-eval</code> end-to-end.</li>
 <li>No adapter/tool plugin discovery — registration is import-time only (no <code>entry_points</code> or directory scan).</li>
 <li>RAG prompt-injection hardening (system-prompt-level delimiter framing for retrieved documents) is a noted architectural gap.</li>
 </ul>
@@ -5517,7 +5683,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

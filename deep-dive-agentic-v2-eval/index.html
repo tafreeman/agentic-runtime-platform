@@ -16,7 +16,7 @@
         <link rel="prev" href="../rag/">
       
       
-        <link rel="next" href="../api-contracts-runtime/">
+        <link rel="next" href="../cli-reference/">
       
       
         
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1567,6 +1567,8 @@
       
         
       
+        
+      
     
     
     
@@ -1611,6 +1613,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2437,6 +2467,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2534,6 +2568,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2844,6 +2934,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2904,6 +2998,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3459,10 +3609,16 @@
 <h1 id="agentic-v2-eval-deep-dive">agentic-v2-eval — Deep dive<a class="headerlink" href="#agentic-v2-eval-deep-dive" title="Permanent link">&para;</a></h1>
 <p><strong>Version:</strong> 0.3.0
 <strong>Scope:</strong> <code>agentic-v2-eval/</code></p>
-<p>This document covers every module and design decision in depth. For a shorter architectural overview, see <a href="../architecture-eval/"><code>architecture-eval.md</code></a>. For specific subsystem references, see the <a href="evaluation/"><code>evaluation/</code></a> folder.</p>
+<p>This document covers the evaluation package module by module. For a shorter
+overview, see <a href="../architecture-eval/"><code>architecture-eval.md</code></a>. For task-focused
+guides, start with the <a href="../architecture-eval/">evaluation architecture</a> and
+<a href="../evaluation/runners/">runner reference</a>.</p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>agentic-v2-eval</code> is the evaluation framework for the <code>agentic-runtime-platform</code> monorepo. It scores LLM outputs (prose, prompts, code, agentic workflow runs) against weighted rubrics, using deterministic LLM-as-judge patterns plus static metrics, and produces reproducible reports in JSON, Markdown, or HTML.</p>
+<p><code>agentic-v2-eval</code> scores structured metrics and model outputs with weighted
+rubrics, optional LLM judges, and static metrics. It writes JSON, Markdown, or
+HTML reports. Static scoring is deterministic for the same inputs; an LLM judge
+is not deterministic merely because it uses a fixed prompt or temperature.</p>
 <h3 id="responsibilities">Responsibilities<a class="headerlink" href="#responsibilities" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Rubric loading and validation via YAML files at <code>rubrics/</code></li>
@@ -3479,14 +3635,22 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>agentic-v2-eval
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ├── exports LLMClientProtocol    → consumed by agentic-workflows-v2
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  └── imports tools.agents.benchmarks (lazy, optional)
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  └── imports tools.agents.benchmarks when dataset APIs are used
 </span></code></pre></div>
-<p>The package can be imported without <code>agentic-tools</code> installed. Tests inject mocks. Downstream callers (<code>agentic-workflows-v2</code>) import only the protocol types.</p>
+<p><code>agentic-tools</code> is a declared package dependency. The concrete LLM adapter and
+dataset bridge defer their imports until those features are used. Tests inject
+small clients that satisfy <code>LLMClientProtocol</code>. The runtime imports the
+protocol and optional scoring helpers; the evaluation package does not import
+the runtime.</p>
 <hr />
 <h2 id="module-by-module-reference">Module-by-module reference<a class="headerlink" href="#module-by-module-reference" title="Permanent link">&para;</a></h2>
 <h3 id="__init__py"><code>__init__.py</code><a class="headerlink" href="#__init__py" title="Permanent link">&para;</a></h3>
-<p>Exports 16 public symbols. Defines <code>__version__ = "0.3.0"</code>. Imports are eager for the six evaluator-related symbols and the five quality dimension constants; <code>LLMClientProtocol</code> and <code>Evaluator</code> are imported from <code>interfaces.py</code>.</p>
-<p>The five quality dimension constants (<code>COHERENCE</code>, <code>FLUENCY</code>, <code>RELEVANCE</code>, <code>GROUNDEDNESS</code>, <code>SIMILARITY</code>) are <code>LLMEvaluatorDefinition | None</code>. They are populated from <code>rubrics/quality.yaml</code> at import time. If the YAML load fails, they fall back to empty <code>LLMEvaluatorDefinition</code> placeholders rather than raising, preserving importability in degraded environments.</p>
+<p>Defines <code>__version__ = "0.3.0"</code> and re-exports the main scorers, evaluator
+types, protocols, scores, and quality dimensions.</p>
+<p>The five quality dimension constants (<code>COHERENCE</code>, <code>FLUENCY</code>, <code>RELEVANCE</code>,
+<code>GROUNDEDNESS</code>, <code>SIMILARITY</code>) are <code>LLMEvaluatorDefinition | None</code>. They are
+populated from <code>rubrics/quality.yaml</code> at import time. If loading fails, the
+module prints the error and the missing constants remain <code>None</code>.</p>
 <h3 id="interfacespy"><code>interfaces.py</code><a class="headerlink" href="#interfacespy" title="Permanent link">&para;</a></h3>
 <p>Defines two structural protocols.</p>
 <p><strong><code>LLMClientProtocol</code></strong> — decorated with <code>@runtime_checkable</code>. The only required method is:</p>
@@ -3720,7 +3884,10 @@
 <p><strong><code>safe_mode</code> in <code>LocalSubprocessSandbox</code> is code-string scanning, not syscall interception.</strong> It can be bypassed by obfuscated code. Use Docker for stronger isolation.</p>
 </li>
 <li>
-<p><strong><code>PatternEvaluator</code> defaults to <code>runs=1</code></strong> in the constructor signature. A single run is the fast default suited to local iteration; because the LLM judge is stochastic, production evaluations should set a higher <code>runs</code> value (e.g. <code>runs=20</code>) so scores are aggregated across runs for variance reduction.</p>
+<p><strong><code>PatternEvaluator</code> defaults to <code>runs=1</code>.</strong> More runs can reduce the effect
+   of one unusual judge response but increase calls and cost. Choose the count
+   from a measured evaluation design; repeated calls do not establish judge
+   validity by themselves.</p>
 </li>
 <li>
 <p><strong><code>QualityEvaluator.evaluate()</code> returns <code>0.0</code> on LLM exception</strong> — the exception is logged with <code>print()</code> rather than a structured logger. This was flagged in the original code review. Use <code>logging.getLogger(__name__)</code> in production wrappers.</p>
@@ -3751,7 +3918,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     
@@ -3813,13 +3980,13 @@
         
         
           
-          <a href="../api-contracts-runtime/" class="md-footer__link md-footer__link--next" aria-label="Next: REST endpoints">
+          <a href="../cli-reference/" class="md-footer__link md-footer__link--next" aria-label="Next: CLI commands">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                REST endpoints
+                CLI commands
               </div>
             </div>
             <div class="md-footer__button md-icon">

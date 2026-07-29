@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Onboarding - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ONBOARDING.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/ONBOARDING/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Onboarding - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/ONBOARDING.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#onboarding-guide" class="md-skip">
+        <a href="#contributor-onboarding" class="md-skip">
           Skip to content
         </a>
       
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -819,18 +819,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start-5-minutes" class="md-nav__link">
+  <a href="#what-is-in-this-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start (5 minutes)
+        What is in this repository
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Quick start (5 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -840,61 +839,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#clone" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Clone
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#your-first-run-no-api-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Your first run (no API keys)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#exploring-the-cli" class="md-nav__link">
+  <a href="#1-install-the-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exploring the CLI
+        1. Install the workspace
       
     </span>
   </a>
@@ -902,204 +852,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#your-first-llm-workflow-run-10-minutes" class="md-nav__link">
+  <a href="#2-run-a-workflow-without-a-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Your first LLM workflow run (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Your first LLM workflow run (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-create-an-input-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create an input file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-dry-run-validate-without-executing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Dry run (validate without executing)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-execute-the-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Execute the workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-save-results-to-a-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Save results to a file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#running-a-workflow-that-uses-llm-calls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running a workflow that uses LLM calls
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#comparing-execution-engines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comparing execution engines
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#understanding-the-architecture-15-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the architecture (15 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Understanding the architecture (15 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#three-independent-packages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Three independent packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inside-agentic_v2-the-main-runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inside agentic_v2/ -- the main runtime
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dual-execution-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dual execution engine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-execution-pipeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The execution pipeline
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#where-to-find-things" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to find things
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#creating-your-first-custom-persona-10-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating your first custom persona (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Creating your first custom persona (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#required-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required sections
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-creating-a-security_auditor-persona" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: creating a security_auditor persona
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#boundaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Boundaries
+        2. Run a workflow without a provider
       
     </span>
   </a>
@@ -1107,143 +863,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#critical-rules" class="md-nav__link">
+  <a href="#3-start-the-backend-and-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Critical Rules
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Critical Rules">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#2-start-the-backend-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Start the backend server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-start-the-frontend-dev-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Start the frontend dev server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#port-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Port reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running-evaluations-10-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running evaluations (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Running evaluations (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-the-eval-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install the eval framework
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-score-a-workflow-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Score a workflow result
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-override-the-rubric" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Override the rubric
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-generate-a-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Generate a report
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-use-the-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Use the Python API
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-evaluations-connect-to-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How evaluations connect to workflows
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-concepts-quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key concepts quick reference
+        3. Start the backend and dashboard
       
     </span>
   </a>
@@ -1251,63 +874,68 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#getting-help" class="md-nav__link">
+  <a href="#4-understand-one-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Getting help
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Getting help">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
+        4. Understand one workflow
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#running-tests" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#5-configure-a-provider-only-when-needed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running tests
+        5. Configure a provider only when needed
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#common-gotchas" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#6-run-an-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common gotchas
+        6. Run an evaluation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#contributing" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#7-make-a-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributing
+        7. Make a change
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#8-validate-before-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Validate before review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-problems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common problems
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1751,6 +1379,8 @@
       
         
       
+        
+      
     
     
     
@@ -1795,6 +1425,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2621,6 +2279,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2718,6 +2380,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -3028,6 +2746,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3088,6 +2810,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3275,18 +3053,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start-5-minutes" class="md-nav__link">
+  <a href="#what-is-in-this-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start (5 minutes)
+        What is in this repository
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Quick start (5 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3296,61 +3073,12 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#clone" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Clone
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#your-first-run-no-api-keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Your first run (no API keys)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Next steps
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#exploring-the-cli" class="md-nav__link">
+  <a href="#1-install-the-workspace" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exploring the CLI
+        1. Install the workspace
       
     </span>
   </a>
@@ -3358,204 +3086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#your-first-llm-workflow-run-10-minutes" class="md-nav__link">
+  <a href="#2-run-a-workflow-without-a-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Your first LLM workflow run (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Your first LLM workflow run (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-create-an-input-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Create an input file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-dry-run-validate-without-executing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Dry run (validate without executing)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-execute-the-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Execute the workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-save-results-to-a-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Save results to a file
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#running-a-workflow-that-uses-llm-calls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running a workflow that uses LLM calls
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#comparing-execution-engines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comparing execution engines
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#understanding-the-architecture-15-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Understanding the architecture (15 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Understanding the architecture (15 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#three-independent-packages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Three independent packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inside-agentic_v2-the-main-runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inside agentic_v2/ -- the main runtime
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dual-execution-engine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dual execution engine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#the-execution-pipeline" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The execution pipeline
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#where-to-find-things" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to find things
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#creating-your-first-custom-persona-10-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating your first custom persona (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Creating your first custom persona (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#required-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required sections
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-creating-a-security_auditor-persona" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: creating a security_auditor persona
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#boundaries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Boundaries
+        2. Run a workflow without a provider
       
     </span>
   </a>
@@ -3563,143 +3097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#critical-rules" class="md-nav__link">
+  <a href="#3-start-the-backend-and-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Critical Rules
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Critical Rules">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#2-start-the-backend-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Start the backend server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-start-the-frontend-dev-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Start the frontend dev server
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#port-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Port reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running-evaluations-10-minutes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running evaluations (10 minutes)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Running evaluations (10 minutes)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-the-eval-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install the eval framework
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-score-a-workflow-result" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Score a workflow result
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-override-the-rubric" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Override the rubric
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-generate-a-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Generate a report
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-use-the-python-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Use the Python API
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#how-evaluations-connect-to-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How evaluations connect to workflows
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-concepts-quick-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key concepts quick reference
+        3. Start the backend and dashboard
       
     </span>
   </a>
@@ -3707,63 +3108,68 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#getting-help" class="md-nav__link">
+  <a href="#4-understand-one-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Getting help
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Getting help">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
+        4. Understand one workflow
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#running-tests" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#5-configure-a-provider-only-when-needed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running tests
+        5. Configure a provider only when needed
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#common-gotchas" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#6-run-an-evaluation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common gotchas
+        6. Run an evaluation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#contributing" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#7-make-a-change" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Contributing
+        7. Make a change
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#8-validate-before-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Validate before review
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-problems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common problems
+      
+    </span>
+  </a>
   
 </li>
       
@@ -3800,591 +3206,305 @@
   
 
 
-<h1 id="onboarding-guide">Onboarding guide<a class="headerlink" href="#onboarding-guide" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Audience:</strong> New contributors on their first clone.
-<strong>Outcome:</strong> By the end you will have run a workflow, opened the dashboard, scored a result, and know where to find things next time.
-<strong>Last verified:</strong> 2026-07-05</p>
-</blockquote>
-<p><code>tafreeman/agentic-runtime-platform</code> is a monorepo for multi-agent workflow orchestration, evaluation, and shared LLM utilities. It serves two purposes:</p>
-<ol>
-<li><strong>Working platform</strong> -- an agentic AI runtime with a dual execution engine, several agent personas, a full RAG pipeline, and an evaluation framework.</li>
-<li><strong>Reference implementation</strong> -- practices for regulated and enterprise environments, applied rather than just documented.</li>
-</ol>
-<p>Six independent sections. <strong>Quick Start</strong> gets a workflow running in about 5 minutes; all six take roughly an hour. Stop wherever you have what you need.</p>
-<p>If you prefer a prebuilt environment, open the repository in the provided devcontainer. Otherwise, use the root <code>justfile</code> commands described below for the same bootstrap and test flow.</p>
-<hr />
-<h2 id="quick-start-5-minutes">Quick start (5 minutes)<a class="headerlink" href="#quick-start-5-minutes" title="Permanent link">&para;</a></h2>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
-<p>Before starting, make sure you have:</p>
+<h1 id="contributor-onboarding">Contributor onboarding<a class="headerlink" href="#contributor-onboarding" title="Permanent link">&para;</a></h1>
+<p>This guide gets a new contributor from a clean checkout to a verified workflow
+run and a working development environment.</p>
+<p>Last verified: 2026-07-28.</p>
+<h2 id="what-is-in-this-repository">What is in this repository<a class="headerlink" href="#what-is-in-this-repository" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Requirement</th>
-<th>Version</th>
-<th>Check</th>
+<th>Path</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Python</td>
-<td>3.11+</td>
-<td><code>python --version</code></td>
+<td>repository root and <code>tools/</code></td>
+<td>Shared <code>agentic-tools</code> Python package</td>
 </tr>
 <tr>
-<td>Node.js</td>
-<td>20+</td>
-<td><code>node --version</code></td>
+<td><code>agentic-workflows-v2/</code></td>
+<td>Workflow runtime, CLI, FastAPI server, and RAG components</td>
 </tr>
 <tr>
-<td>Git</td>
-<td>any recent</td>
-<td><code>git --version</code></td>
+<td><code>agentic-workflows-v2/ui/</code></td>
+<td>React dashboard</td>
 </tr>
 <tr>
-<td>pip</td>
-<td>latest</td>
-<td><code>pip --version</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>LLM provider API keys are optional for your first run.</strong> The <code>test_deterministic</code> workflow runs entirely without any provider credentials (see the "Your First Run" step below). You only need a key when you want to run LLM-powered workflows like <code>code_review</code>.</p>
-<h3 id="clone">Clone<a class="headerlink" href="#clone" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform
-</span></code></pre></div>
-<h3 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h3>
-<blockquote>
-<p><strong>Have <code>just</code>?</strong> Run <code>just setup</code> from the repo root — it creates the virtualenv, installs all packages, and installs frontend deps in one step. Skip the manual steps below.</p>
-<p><strong>Need <code>just</code>?</strong> Install it with:
-- Windows: <code>winget install --id Casey.Just</code>
-- macOS: <code>brew install just</code>
-- Ubuntu 22.04+: <code>apt install just</code>
-- Rust toolchain: <code>cargo install just</code></p>
-<p>Or follow the <strong>Manual install</strong> steps below to skip <code>just</code> entirely.</p>
-</blockquote>
-<details>
-<summary>Manual install (without <code>just</code>)</summary>
-
-**Windows PowerShell — Python deps:**
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SkipFrontend</span> <span class="n">-SkipSmokeTest</span>
-</span></code></pre></div>
-
-**Bash / Linux / macOS — Python deps:**
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;agentic-workflows-v2/.[dev,server,langchain]&quot;</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;agentic-v2-eval/.[dev]&quot;</span>
-</span></code></pre></div>
-
-**Frontend deps (all platforms):**
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>install
-</span></code></pre></div>
-
-</details>
-
-<h3 id="your-first-run-no-api-keys">Your first run (no API keys)<a class="headerlink" href="#your-first-run-no-api-keys" title="Permanent link">&para;</a></h3>
-<p>Run the deterministic smoke test — this requires no provider credentials.</p>
-<blockquote>
-<p><strong>Note:</strong> The <code>--input</code> flag accepts a <strong>JSON file path</strong>, not inline JSON. Create a small input file first (one-liner below), then pass the file path.</p>
-</blockquote>
-<p><strong>Bash / Linux / macOS:</strong>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;: &quot;Hello World&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-input.json
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>/tmp/test-input.json
-</span></code></pre></div></p>
-<p><strong>Windows PowerShell:</strong>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="s1">&#39;{&quot;input_text&quot;: &quot;Hello World&quot;}&#39;</span> <span class="p">|</span> <span class="nb">Out-File</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="nb">test-input</span><span class="p">.</span><span class="n">json</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="nb">test-input</span><span class="p">.</span><span class="n">json</span>
-</span></code></pre></div></p>
-<p>Expected output: two steps execute, placeholder text is returned, exit code 0. No API key needed.</p>
-<blockquote>
-<p>See <a href="../NO_LLM_MODE/">docs/NO_LLM_MODE.md</a> for details on what no-LLM mode can and cannot do.</p>
-</blockquote>
-<h3 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Configure a provider:</strong> Copy <code>.env.example</code> to <code>.env</code> and add at least one LLM API key (e.g., <code>GITHUB_TOKEN</code>, <code>OPENAI_API_KEY</code>) to run full AI workflows.</li>
-<li><strong>Explore the dashboard:</strong> Start the local servers using <code>.\scripts\start-dev.ps1</code> (Windows) or <code>just dev</code> (Mac/Linux) and navigate to <code>http://localhost:5173</code>.</li>
-<li><strong>Read the architecture:</strong> See <a href="../ARCHITECTURE/">ARCHITECTURE.md</a> to understand how the runtime, server, and UI fit together.</li>
-</ul>
-<hr />
-<h2 id="exploring-the-cli">Exploring the CLI<a class="headerlink" href="#exploring-the-cli" title="Permanent link">&para;</a></h2>
-<p>Explore agents, tools, and adapters:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic<span class="w"> </span>list<span class="w"> </span>agents
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>tools
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>agentic<span class="w"> </span>list<span class="w"> </span>adapters
-</span></code></pre></div>
-<hr />
-<h2 id="your-first-llm-workflow-run-10-minutes">Your first LLM workflow run (10 minutes)<a class="headerlink" href="#your-first-llm-workflow-run-10-minutes" title="Permanent link">&para;</a></h2>
-<p>Run a real LLM-powered workflow like <code>code_review</code>.</p>
-<h3 id="1-create-an-input-file">1. Create an input file<a class="headerlink" href="#1-create-an-input-file" title="Permanent link">&para;</a></h3>
-<p>Create a file called <code>test_input.json</code>:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="p">{</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">&quot;input_text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Hello from the onboarding guide!&quot;</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p">}</span>
-</span></code></pre></div>
-<h3 id="2-dry-run-validate-without-executing">2. Dry run (validate without executing)<a class="headerlink" href="#2-dry-run-validate-without-executing" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>test_input.json<span class="w"> </span>--dry-run<span class="w"> </span>--verbose
-</span></code></pre></div>
-<p>This shows the execution plan as a DAG tree without making any calls:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>test_deterministic - Execution Plan
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>Level 0: step1 (tier0_process)
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>Level 1: step2 (tier0_counter) &lt;- [step1]
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>Dry run - skipping execution
-</span></code></pre></div>
-<h3 id="3-execute-the-workflow">3. Execute the workflow<a class="headerlink" href="#3-execute-the-workflow" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>test_input.json<span class="w"> </span>--verbose
-</span></code></pre></div>
-<p>You should see a spinner followed by a success status:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>Status: SUCCESS
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>Elapsed: 0.1s
-</span></code></pre></div>
-<h3 id="4-save-results-to-a-file">4. Save results to a file<a class="headerlink" href="#4-save-results-to-a-file" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>test_input.json<span class="w"> </span>--output<span class="w"> </span>result.json
-</span></code></pre></div>
-<p>The output JSON contains the workflow result, step statuses, and elapsed time.</p>
-<h3 id="running-a-workflow-that-uses-llm-calls">Running a workflow that uses LLM calls<a class="headerlink" href="#running-a-workflow-that-uses-llm-calls" title="Permanent link">&para;</a></h3>
-<p>To run an LLM-powered workflow like <code>code_review</code>, create an input file:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;code_file&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;agentic-workflows-v2/agentic_v2/cli/main.py&quot;</span><span class="p">,</span>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">&quot;review_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;quick&quot;</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>Then:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>code_review_input.json<span class="w"> </span>--verbose
-</span></code></pre></div>
-<p>This will call your configured LLM provider. If you hit rate limits, the smart router will retry with exponential backoff or fall back to another configured provider.</p>
-<h3 id="comparing-execution-engines">Comparing execution engines<a class="headerlink" href="#comparing-execution-engines" title="Permanent link">&para;</a></h3>
-<p>The repo has two execution engines. You can compare them side-by-side:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>agentic<span class="w"> </span>compare<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>code_review_input.json<span class="w"> </span>--adapters<span class="w"> </span>native,langchain
-</span></code></pre></div>
-<hr />
-<h2 id="understanding-the-architecture-15-minutes">Understanding the architecture (15 minutes)<a class="headerlink" href="#understanding-the-architecture-15-minutes" title="Permanent link">&para;</a></h2>
-<h3 id="three-independent-packages">Three independent packages<a class="headerlink" href="#three-independent-packages" title="Permanent link">&para;</a></h3>
-<p>The monorepo contains three Python packages with <strong>zero cross-package imports</strong>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>agentic-runtime-platform/
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>+-- agentic-workflows-v2/     # Main runtime (Python 3.11+, hatchling)
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>|   +-- agentic_v2/            # Source code
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>|   +-- tests/                 # 100+ files
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>|   +-- ui/                    # React 19 dashboard
-</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>+-- agentic-v2-eval/           # Evaluation framework (Python 3.11+, hatchling)
-</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>+-- tools/                     # Shared LLM client, benchmarks (Python 3.11+, hatchling)
-</span></code></pre></div>
-<p>Each package has its own <code>pyproject.toml</code>, installs independently, and can be developed in isolation.</p>
-<p>The repo root also provides a canonical <code>justfile</code>, <code>.devcontainer/</code>, and <code>docker-compose.yml</code> for contributors who want a reproducible local environment.</p>
-<h3 id="inside-agentic_v2-the-main-runtime">Inside <code>agentic_v2/</code> -- the main runtime<a class="headerlink" href="#inside-agentic_v2-the-main-runtime" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>agentic_v2/
-</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>+-- agents/          # BaseAgent + specialized implementations (Coder, Architect, Reviewer, Orchestrator)
-</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>+-- adapters/        # Pluggable execution engine backends
-</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>+-- core/            # Protocols, memory, context, contracts, errors
-</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>+-- engine/          # Native DAG executor (Kahn&#39;s algorithm)
-</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>+-- langchain/       # LangGraph state-machine executor
-</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>+-- models/          # SmartModelRouter -- LLM tier routing across 8+ providers
-</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>+-- rag/             # Full RAG pipeline (15 modules: load, chunk, embed, index, retrieve, assemble)
-</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>+-- contracts/       # Pydantic v2 I/O models (additive-only -- never remove fields)
-</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>+-- prompts/         # 7 agent persona definitions (.md files)
-</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>+-- server/          # FastAPI + WebSocket/SSE streaming
-</span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>+-- tools/builtin/   # 12 built-in tool modules (file_read, shell, grep, etc.)
-</span><span id="__span-17-13"><a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>+-- workflows/
-</span><span id="__span-17-14"><a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    +-- definitions/ # 8 YAML workflow definitions (6 production + 2 test)
-</span><span id="__span-17-15"><a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>+-- cli/             # Typer CLI (the `agentic` command)
-</span></code></pre></div>
-<h3 id="dual-execution-engine">Dual execution engine<a class="headerlink" href="#dual-execution-engine" title="Permanent link">&para;</a></h3>
-<p>Two engines can run the same YAML workflow:</p>
-<table>
-<thead>
-<tr>
-<th>Engine</th>
-<th>Implementation</th>
-<th>How it works</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Native</strong></td>
-<td><code>engine/dag_executor.py</code></td>
-<td>Kahn's algorithm topological sort. Runs steps with <code>asyncio.wait(FIRST_COMPLETED)</code> for maximum parallelism.</td>
-</tr>
-<tr>
-<td><strong>LangChain</strong></td>
-<td><code>langchain/</code></td>
-<td>Wraps LangGraph state machines. Steps become nodes in a compiled graph.</td>
-</tr>
-</tbody>
-</table>
-<p>Both engines are registered in the <code>AdapterRegistry</code> singleton. Select an engine with <code>--adapter</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>input.json<span class="w"> </span>--adapter<span class="w"> </span>native
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>input.json<span class="w"> </span>--adapter<span class="w"> </span>langchain<span class="w">   </span><span class="c1"># default</span>
-</span></code></pre></div>
-<h3 id="the-execution-pipeline">The execution pipeline<a class="headerlink" href="#the-execution-pipeline" title="Permanent link">&para;</a></h3>
-<p>Flow from YAML to output:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Workflow YAML  --&gt;  WorkflowConfig (Pydantic model)
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>                         |
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>                    AdapterRegistry
-</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>                    /            \
-</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>            NativeEngine    LangChainEngine
-</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>                    \            /
-</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>               Agent + Persona + Tools
-</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>                         |
-</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>                    LLM Provider
-</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>                  (via SmartRouter)
-</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>                         |
-</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>                    Step Outputs
-</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>                         |
-</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>                    WorkflowResult
-</span></code></pre></div>
-<ol>
-<li><strong>Workflow YAML</strong> declares steps, inputs, outputs, and dependencies.</li>
-<li><strong>WorkflowConfig</strong> parses and validates the YAML into a Pydantic model.</li>
-<li><strong>AdapterRegistry</strong> dispatches to the chosen execution engine.</li>
-<li>Each <strong>step</strong> invokes an <strong>agent</strong> with a <strong>persona</strong> (markdown prompt) and optional <strong>tools</strong>.</li>
-<li>The <strong>SmartModelRouter</strong> selects the best LLM provider based on tier, availability, and rate limits.</li>
-<li>Step outputs flow into downstream steps via <code>${steps.X.outputs.Y}</code> expressions.</li>
-</ol>
-<h3 id="where-to-find-things">Where to find things<a class="headerlink" href="#where-to-find-things" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>I want to...</th>
-<th>Look in...</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Add a new workflow</td>
-<td><code>agentic_v2/workflows/definitions/</code> -- create a new YAML file</td>
-</tr>
-<tr>
-<td>Add a new agent persona</td>
-<td><code>agentic_v2/prompts/</code> -- create a new <code>.md</code> file</td>
-</tr>
-<tr>
-<td>Understand how agents work</td>
-<td><code>agentic_v2/agents/base.py</code> (BaseAgent)</td>
-</tr>
-<tr>
-<td>See how LLM routing works</td>
-<td><code>agentic_v2/models/smart_router.py</code></td>
-</tr>
-<tr>
-<td>See protocol definitions</td>
-<td><code>agentic_v2/core/protocols.py</code></td>
-</tr>
-<tr>
-<td>Add a new built-in tool</td>
-<td><code>agentic_v2/tools/builtin/</code></td>
-</tr>
-<tr>
-<td>Understand the RAG pipeline</td>
-<td><code>agentic_v2/rag/</code> (15 modules, start with <code>protocols.py</code>)</td>
-</tr>
-<tr>
-<td>Run or modify evaluations</td>
 <td><code>agentic-v2-eval/</code></td>
+<td>Rubrics, evaluators, runners, and reports</td>
 </tr>
 <tr>
-<td>Use the shared LLM client</td>
-<td><code>tools/llm/</code> (<code>from tools.llm import LLMClient</code>)</td>
+<td><code>tests/e2e/</code></td>
+<td>Checks that cross package boundaries</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>Maintained guides, reference material, and ADRs</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="creating-your-first-custom-persona-10-minutes">Creating your first custom persona (10 minutes)<a class="headerlink" href="#creating-your-first-custom-persona-10-minutes" title="Permanent link">&para;</a></h2>
-<p>Agent personas are markdown files in <code>agentic_v2/prompts/</code>. Each persona defines how an agent behaves when assigned to a workflow step.</p>
-<h3 id="required-sections">Required sections<a class="headerlink" href="#required-sections" title="Permanent link">&para;</a></h3>
-<p>Every persona must include these sections:</p>
-<ol>
-<li><strong>Opening line</strong> -- a one-sentence role definition</li>
-<li><strong><code>## Your Expertise</code></strong> (or <code>## Expertise</code>) -- what the agent knows</li>
-<li><strong><code>## Reasoning Protocol</code></strong> -- step-by-step reasoning process before responding</li>
-<li><strong><code>## Output Format</code></strong> -- exact structure of the agent's output</li>
-<li><strong><code>## Boundaries</code></strong> -- what the agent does NOT do</li>
-<li><strong><code>## Critical Rules</code></strong> -- non-negotiable constraints</li>
-</ol>
-<h3 id="example-creating-a-security_auditor-persona">Example: creating a <code>security_auditor</code> persona<a class="headerlink" href="#example-creating-a-security_auditor-persona" title="Permanent link">&para;</a></h3>
-<p>Create <code>agentic_v2/prompts/security_auditor.md</code>:</p>
-<div class="language-markdown highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>You are a Security Auditor specializing in application security for Python and TypeScript codebases.
-</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="gu">## Your Expertise</span>
-</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="k">-</span><span class="w"> </span>OWASP Top 10 vulnerability identification
-</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="k">-</span><span class="w"> </span>Static analysis of Python and TypeScript code
-</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="k">-</span><span class="w"> </span>Secret detection and credential hygiene
-</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="k">-</span><span class="w"> </span>Input validation and injection prevention
-</span><span id="__span-20-9"><a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="k">-</span><span class="w"> </span>Authentication and authorization patterns
-</span><span id="__span-20-10"><a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a>
-</span><span id="__span-20-11"><a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="gu">## Reasoning Protocol</span>
-</span><span id="__span-20-12"><a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>
-</span><span id="__span-20-13"><a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>Before generating your response:
-</span><span id="__span-20-14"><a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="k">1.</span> Identify all user-facing input surfaces in the code under review
-</span><span id="__span-20-15"><a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="k">2.</span> Check each input for validation, sanitization, and parameterization
-</span><span id="__span-20-16"><a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="k">3.</span> Scan for hardcoded secrets, API keys, or credentials
-</span><span id="__span-20-17"><a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="k">4.</span> Evaluate authentication and authorization logic for bypass vectors
-</span><span id="__span-20-18"><a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="k">5.</span> Assess error handling for information leakage
-</span><span id="__span-20-19"><a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a>
-</span><span id="__span-20-20"><a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a><span class="gu">## Output Format</span>
-</span><span id="__span-20-21"><a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a>
-</span><span id="__span-20-22"><a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a>```json
-</span><span id="__span-20-23"><a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a>{
-</span><span id="__span-20-24"><a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a>  &quot;findings&quot;: [
-</span><span id="__span-20-25"><a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a>    {
-</span><span id="__span-20-26"><a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a>      &quot;severity&quot;: &quot;CRITICAL | HIGH | MEDIUM | LOW&quot;,
-</span><span id="__span-20-27"><a id="__codelineno-20-27" name="__codelineno-20-27" href="#__codelineno-20-27"></a>      &quot;category&quot;: &quot;OWASP category&quot;,
-</span><span id="__span-20-28"><a id="__codelineno-20-28" name="__codelineno-20-28" href="#__codelineno-20-28"></a>      &quot;file&quot;: &quot;path/to/file.py&quot;,
-</span><span id="__span-20-29"><a id="__codelineno-20-29" name="__codelineno-20-29" href="#__codelineno-20-29"></a>      &quot;line&quot;: 42,
-</span><span id="__span-20-30"><a id="__codelineno-20-30" name="__codelineno-20-30" href="#__codelineno-20-30"></a>      &quot;description&quot;: &quot;what the issue is&quot;,
-</span><span id="__span-20-31"><a id="__codelineno-20-31" name="__codelineno-20-31" href="#__codelineno-20-31"></a>      &quot;recommendation&quot;: &quot;how to fix it&quot;
-</span><span id="__span-20-32"><a id="__codelineno-20-32" name="__codelineno-20-32" href="#__codelineno-20-32"></a>    }
-</span><span id="__span-20-33"><a id="__codelineno-20-33" name="__codelineno-20-33" href="#__codelineno-20-33"></a>  ],
-</span><span id="__span-20-34"><a id="__codelineno-20-34" name="__codelineno-20-34" href="#__codelineno-20-34"></a>  &quot;summary&quot;: &quot;overall security posture assessment&quot;,
-</span><span id="__span-20-35"><a id="__codelineno-20-35" name="__codelineno-20-35" href="#__codelineno-20-35"></a>  &quot;pass&quot;: true | false
-</span><span id="__span-20-36"><a id="__codelineno-20-36" name="__codelineno-20-36" href="#__codelineno-20-36"></a>}
-</span></code></pre></div>
-<h2 id="boundaries">Boundaries<a class="headerlink" href="#boundaries" title="Permanent link">&para;</a></h2>
+<p>The runtime has two execution engines:</p>
 <ul>
-<li>Does not fix code -- only identifies and reports issues</li>
-<li>Does not review business logic or performance</li>
-<li>Does not make architectural recommendations</li>
+<li><code>native</code> implements the platform-specific DAG behavior;</li>
+<li><code>langchain</code> compiles compatible workflows to LangGraph and is the default
+  for <code>agentic run</code>.</li>
 </ul>
-<h2 id="critical-rules">Critical Rules<a class="headerlink" href="#critical-rules" title="Permanent link">&para;</a></h2>
-<ol>
-<li>Never suggest disabling security controls as a fix</li>
-<li>Always flag hardcoded secrets as CRITICAL regardless of context</li>
-<li>Mark any SQL string concatenation as HIGH severity</li>
-<li>If no issues are found, explicitly state "no findings" rather than omitting the section
-<div class="language-text highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>### Using the persona in a workflow
-</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>Reference the persona in a workflow step via the `agent` field. The agent name corresponds to a tier prefix plus a role name. Custom personas can be referenced by mapping them in the agent configuration.
-</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
-</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>---
-</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>
-</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>## Running the dashboard (5 minutes)
-</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
-</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>The UI is a React 19 application with React Flow for workflow visualization.
-</span><span id="__span-21-10"><a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>
-</span><span id="__span-21-11"><a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>### 1. Install frontend dependencies
-</span><span id="__span-21-12"><a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>
-</span><span id="__span-21-13"><a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>```bash
-</span><span id="__span-21-14"><a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>cd agentic-workflows-v2/ui
-</span><span id="__span-21-15"><a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a>npm install
-</span></code></pre></div></li>
-</ol>
-<h3 id="2-start-the-backend-server">2. Start the backend server<a class="headerlink" href="#2-start-the-backend-server" title="Permanent link">&para;</a></h3>
-<p>In a separate terminal:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--reload
-</span></code></pre></div>
-<p>Or use the CLI shortcut:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--dev
-</span></code></pre></div>
-<h3 id="3-start-the-frontend-dev-server">3. Start the frontend dev server<a class="headerlink" href="#3-start-the-frontend-dev-server" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
-</span></code></pre></div>
-<p>Open <a href="http://localhost:5173">http://localhost:5173</a> in your browser. You should see:</p>
+<p>Use <code>agentic compare</code> when you need to check whether both engines produce
+compatible results. Do not assume every native-only feature is supported by
+the LangGraph adapter.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Workflow list</strong> -- YAML-defined workflows (production + test)</li>
-<li><strong>Workflow graph</strong> -- React Flow DAG visualization of steps and dependencies</li>
-<li><strong>Execution panel</strong> -- run workflows and see real-time streaming results</li>
-<li><strong>Evaluations page</strong> -- view evaluation results and scoring</li>
+<li>Python 3.11 or newer</li>
+<li>Node.js 20 or newer</li>
+<li>Git</li>
+<li>PowerShell for the repository's <code>just</code> recipes and development scripts</li>
 </ul>
-<h3 id="port-reference">Port reference<a class="headerlink" href="#port-reference" title="Permanent link">&para;</a></h3>
+<p>Provider keys are optional. The first workflow below is deterministic and does
+not call a model.</p>
+<h2 id="1-install-the-workspace">1. Install the workspace<a class="headerlink" href="#1-install-the-workspace" title="Permanent link">&para;</a></h2>
+<p>On Windows, from the repository root:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>just setup
+</span></code></pre></div>
+<p>This creates <code>.venv</code>, installs the three Python packages in editable mode, and
+installs the dashboard dependencies.</p>
+<p>The <code>justfile</code> currently selects <code>powershell.exe</code> as its shell. On Linux and
+macOS, or on Windows without <code>just</code>, follow the
+<a href="../getting-started/installation/#manual-setup">manual installation commands</a>.</p>
+<p>Verify the installed entry points:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>agentic version
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>agentic list workflows
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>agentic-v2-eval --version
+</span></code></pre></div>
+<p>If the virtual environment is not activated, call the executable directly in
+PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">version</span>
+</span></code></pre></div>
+<h2 id="2-run-a-workflow-without-a-provider">2. Run a workflow without a provider<a class="headerlink" href="#2-run-a-workflow-without-a-provider" title="Permanent link">&para;</a></h2>
+<p>The repository includes a valid input fixture:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p>Expected result:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Status: SUCCESS
+</span></code></pre></div>
+<p>This confirms workflow discovery, JSON input loading, dependency ordering, and
+result construction. It does not test a provider.</p>
+<p>Inspect the plan without running it:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>agentic run code_review --dry-run
+</span></code></pre></div>
+<p>Write a result to disk:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>agentic run test_deterministic --input &lt;input.json&gt; --output result.json
+</span></code></pre></div>
+<p><code>--input</code> always expects a JSON file path. See the
+<a href="../getting-started/quickstart/">quick start</a> for an explanation of the result
+fields and the <a href="../cli-reference/">CLI reference</a> for every command.</p>
+<h2 id="3-start-the-backend-and-dashboard">3. Start the backend and dashboard<a class="headerlink" href="#3-start-the-backend-and-dashboard" title="Permanent link">&para;</a></h2>
+<p>On Windows:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>just dev
+</span></code></pre></div>
+<p>Open:</p>
 <table>
 <thead>
 <tr>
 <th>Service</th>
-<th>Port</th>
 <th>URL</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Backend API</td>
-<td>8010</td>
-<td><code>http://127.0.0.1:8010</code></td>
+<td>Dashboard</td>
+<td><code>http://127.0.0.1:5173</code></td>
 </tr>
 <tr>
-<td>Frontend dev server</td>
-<td>5173</td>
-<td><code>http://localhost:5173</code></td>
+<td>Backend health</td>
+<td><code>http://127.0.0.1:8010/api/health</code></td>
+</tr>
+<tr>
+<td>Backend readiness</td>
+<td><code>http://127.0.0.1:8010/api/health/ready</code></td>
+</tr>
+<tr>
+<td>Swagger UI</td>
+<td><code>http://127.0.0.1:8010/docs</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="running-evaluations-10-minutes">Running evaluations (10 minutes)<a class="headerlink" href="#running-evaluations-10-minutes" title="Permanent link">&para;</a></h2>
-<p>The <code>agentic-v2-eval</code> package provides rubric-based scoring for workflow outputs.</p>
-<h3 id="1-install-the-eval-framework">1. Install the eval framework<a class="headerlink" href="#1-install-the-eval-framework" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<p>Useful lifecycle commands:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>just dev-status
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>just dev-stop
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>just dev-reload
 </span></code></pre></div>
-<h3 id="2-score-a-workflow-result">2. Score a workflow result<a class="headerlink" href="#2-score-a-workflow-result" title="Permanent link">&para;</a></h3>
-<p>After running a workflow and saving the output (e.g., <code>result.json</code>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>result.json
+<p>For manual startup or a different operating system, use two terminals:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>npm --prefix agentic-workflows-v2/ui run dev
 </span></code></pre></div>
-<p>This applies the default scoring rubric and prints a score breakdown.</p>
-<h3 id="3-override-the-rubric">3. Override the rubric<a class="headerlink" href="#3-override-the-rubric" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>evaluate<span class="w"> </span>result.json<span class="w"> </span>--rubric<span class="w"> </span>rubrics/default.yaml
-</span></code></pre></div>
-<h3 id="4-generate-a-report">4. Generate a report<a class="headerlink" href="#4-generate-a-report" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>python<span class="w"> </span>-m<span class="w"> </span>agentic_v2_eval<span class="w"> </span>report<span class="w"> </span>result.json<span class="w"> </span>--format<span class="w"> </span>html<span class="w"> </span>--output<span class="w"> </span>report.html
-</span></code></pre></div>
-<p>Supported formats: <code>json</code>, <code>markdown</code>, <code>html</code>.</p>
-<h3 id="5-use-the-python-api">5. Use the Python API<a class="headerlink" href="#5-use-the-python-api" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scorer</span>
-</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.runners</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchRunner</span>
-</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2_eval.reporters</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_html_report</span>
-</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>
-</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="c1"># Score with a rubric</span>
-</span><span id="__span-29-6"><a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="n">scorer</span> <span class="o">=</span> <span class="n">Scorer</span><span class="p">(</span><span class="s2">&quot;rubrics/default.yaml&quot;</span><span class="p">)</span>
-</span><span id="__span-29-7"><a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">scorer</span><span class="o">.</span><span class="n">score</span><span class="p">({</span><span class="s2">&quot;Accuracy&quot;</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">,</span> <span class="s2">&quot;Completeness&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">})</span>
-</span><span id="__span-29-8"><a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Weighted Score: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">weighted_score</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-29-9"><a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>
-</span><span id="__span-29-10"><a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a><span class="c1"># Run batch evaluation</span>
-</span><span id="__span-29-11"><a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">BatchRunner</span><span class="p">(</span><span class="n">evaluator</span><span class="o">=</span><span class="n">my_eval_function</span><span class="p">)</span>
-</span><span id="__span-29-12"><a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="n">batch_result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">test_cases</span><span class="p">)</span>
-</span><span id="__span-29-13"><a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Success rate: </span><span class="si">{</span><span class="n">batch_result</span><span class="o">.</span><span class="n">success_rate</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="__span-29-14"><a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>
-</span><span id="__span-29-15"><a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="c1"># Generate an HTML report</span>
-</span><span id="__span-29-16"><a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="n">generate_html_report</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="s2">&quot;report.html&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<h3 id="how-evaluations-connect-to-workflows">How evaluations connect to workflows<a class="headerlink" href="#how-evaluations-connect-to-workflows" title="Permanent link">&para;</a></h3>
-<p>Each workflow YAML can define an <code>evaluation:</code> block with rubric criteria, weights, and critical floors. For example, from <code>code_review.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="nt">evaluation</span><span class="p">:</span>
-</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">  </span><span class="nt">rubric_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code_review_v1</span>
-</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">  </span><span class="nt">scoring_profile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">B</span>
-</span><span id="__span-30-4"><a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">  </span><span class="nt">criteria</span><span class="p">:</span>
-</span><span id="__span-30-5"><a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">correctness_rubric</span>
-</span><span id="__span-30-6"><a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.35</span>
-</span><span id="__span-30-7"><a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="w">      </span><span class="nt">critical_floor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
-</span><span id="__span-30-8"><a id="__codelineno-30-8" name="__codelineno-30-8" href="#__codelineno-30-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code_quality</span>
-</span><span id="__span-30-9"><a id="__codelineno-30-9" name="__codelineno-30-9" href="#__codelineno-30-9"></a><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.30</span>
-</span><span id="__span-30-10"><a id="__codelineno-30-10" name="__codelineno-30-10" href="#__codelineno-30-10"></a><span class="w">      </span><span class="nt">critical_floor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.80</span>
-</span></code></pre></div>
-<p>The eval framework uses these criteria to score workflow outputs on a 1-5 scale per dimension, then computes a weighted aggregate.</p>
-<hr />
-<h2 id="key-concepts-quick-reference">Key concepts quick reference<a class="headerlink" href="#key-concepts-quick-reference" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Concept</th>
-<th>One-line summary</th>
-<th>Deep dive</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Workflow</td>
-<td>Declarative YAML defining a multi-step DAG</td>
-<td><code>agentic_v2/workflows/definitions/*.yaml</code></td>
-</tr>
-<tr>
-<td>Step</td>
-<td>A single unit of work with an agent, inputs, and outputs</td>
-<td>See any workflow YAML</td>
-</tr>
-<tr>
-<td>Agent</td>
-<td>An LLM-backed executor with a persona and optional tools</td>
-<td><code>agentic_v2/agents/base.py</code></td>
-</tr>
-<tr>
-<td>Persona</td>
-<td>Markdown file defining agent expertise, reasoning, and boundaries</td>
-<td><code>agentic_v2/prompts/*.md</code></td>
-</tr>
-<tr>
-<td>Tier</td>
-<td>LLM capability level, <code>TIER_0</code>–<code>TIER_5</code> (0=deterministic, rising to premium cloud models)</td>
-<td><code>agentic_v2/models/smart_router.py</code></td>
-</tr>
-<tr>
-<td>Adapter</td>
-<td>Pluggable execution engine backend (native or langchain)</td>
-<td><code>agentic_v2/adapters/</code></td>
-</tr>
-<tr>
-<td>Protocol</td>
-<td><code>@runtime_checkable</code> Python Protocol for structural typing</td>
-<td><code>agentic_v2/core/protocols.py</code></td>
-</tr>
-<tr>
-<td>Contract</td>
-<td>Pydantic model for step I/O (additive-only)</td>
-<td><code>agentic_v2/contracts/</code></td>
-</tr>
-<tr>
-<td>Expression</td>
-<td><code>${steps.X.outputs.Y}</code> syntax for data flow between steps</td>
-<td><code>agentic_v2/engine/expressions.py</code></td>
-</tr>
-<tr>
-<td>Rubric</td>
-<td>YAML scoring criteria for evaluating workflow outputs</td>
-<td><code>agentic-v2-eval/rubrics/</code></td>
-</tr>
-</tbody>
-</table>
-<p>Full definitions: <a href="../GLOSSARY/">docs/GLOSSARY.md</a></p>
-<p>Architecture deep dive: <a href="../ARCHITECTURE/">docs/ARCHITECTURE.md</a></p>
-<p>Project overview and commands: <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/README.md">README.md on GitHub</a></p>
-<hr />
-<h2 id="getting-help">Getting help<a class="headerlink" href="#getting-help" title="Permanent link">&para;</a></h2>
-<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Document</th>
-<th>What it covers</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/README.md">README.md on GitHub</a></td>
-<td>Project overview, quick start, and common commands</td>
-</tr>
-<tr>
-<td><a href="../ARCHITECTURE/">docs/ARCHITECTURE.md</a></td>
-<td>System architecture and design decisions</td>
-</tr>
-<tr>
-<td><a href="../GLOSSARY/">docs/GLOSSARY.md</a></td>
-<td>Domain-specific term definitions</td>
-</tr>
-<tr>
-<td><a href="../CODING_STANDARDS/">docs/CODING_STANDARDS.md</a></td>
-<td>Code style, testing, and review standards</td>
-</tr>
-</tbody>
-</table>
-<h3 id="running-tests">Running tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
-<p>If you have <code>just</code> installed:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>just<span class="w"> </span><span class="nb">test</span>
-</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>just<span class="w"> </span>docs
-</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
-</span></code></pre></div></p>
-<p>Without <code>just</code> (manual equivalents):
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-workflows-v2/tests<span class="w"> </span>-v
-</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>agentic-v2-eval/tests<span class="w"> </span>-v
-</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
-</span></code></pre></div></p>
-<h3 id="common-gotchas">Common gotchas<a class="headerlink" href="#common-gotchas" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Windows paths</strong> -- use forward slashes in Python code. <code>pathlib.Path</code> handles cross-platform automatically.</li>
-<li><strong>pytest-asyncio</strong> -- tests use <code>asyncio_mode = "auto"</code>. All async test functions run without <code>@pytest.mark.asyncio</code>.</li>
-<li><strong>LangChain imports</strong> -- the LangChain adapter is optional. Guard imports with <code>try/except ImportError</code>.</li>
-<li><strong>Port conflicts</strong> -- backend uses 8010, frontend uses 5173. Check for conflicts before starting dev servers.</li>
-<li><strong>Contract changes</strong> -- <code>contracts/</code> models are additive-only. Never remove or rename fields.</li>
-<li><strong>Pydantic v2</strong> -- use <code>model_dump()</code> not <code>.dict()</code>, <code>model_validate()</code> not <code>.parse_obj()</code>.</li>
-</ul>
-<h3 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h3>
+<p>The standalone <code>agentic serve</code> command defaults to port <code>8000</code>. Use
+<code>agentic serve --port 8010</code> when pairing it with the dashboard's default proxy.</p>
+<h2 id="4-understand-one-workflow">4. Understand one workflow<a class="headerlink" href="#4-understand-one-workflow" title="Permanent link">&para;</a></h2>
+<p>Start with
+<code>agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml</code>.
+It contains two tier-0 agent steps. In no-LLM mode, the current native path
+returns placeholder values without contacting an external provider.</p>
+<p>Then inspect <code>code_review.yaml</code>:</p>
 <ol>
-<li>Create a feature branch from <code>main</code>.</li>
-<li>Follow the <a href="../CODING_STANDARDS/">coding standards</a> and commit format (<code>feat:</code>, <code>fix:</code>, <code>refactor:</code>, etc.).</li>
-<li>Write tests first (TDD). Target 80%+ coverage on new backend code where practical; the UI package enforces a 60% floor.</li>
-<li>Run <code>just test</code>, <code>just docs</code>, and <code>pre-commit run --all-files</code> before committing.</li>
-<li>Open a PR with a clear description and test plan.</li>
+<li>the workflow declares an input schema;</li>
+<li>each step names an agent and its dependencies;</li>
+<li>the loader validates the graph;</li>
+<li>the selected engine schedules ready steps;</li>
+<li>agents return typed step results;</li>
+<li>the runtime combines them into a <code>WorkflowResult</code>.</li>
 </ol>
+<p>For syntax and feature support, use:</p>
+<ul>
+<li><a href="../WORKFLOW_AUTHORING/">Workflow authoring</a></li>
+<li><a href="../getting-started/first-workflow/">First workflow tutorial</a></li>
+<li><a href="../architecture-runtime/">Runtime architecture</a></li>
+<li><a href="../adr/ADR-INDEX/">Architecture decisions</a></li>
+</ul>
+<h2 id="5-configure-a-provider-only-when-needed">5. Configure a provider only when needed<a class="headerlink" href="#5-configure-a-provider-only-when-needed" title="Permanent link">&para;</a></h2>
+<p>Copy <code>.env.example</code> to <code>.env</code> and set the credential for the provider you
+intend to use. Do not fill every variable.</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
+</span></code></pre></div>
+<p>With the backend running, probe the current routing:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">Invoke-RestMethod</span> <span class="n">http</span><span class="p">://</span><span class="n">127</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">1</span><span class="p">:</span><span class="n">8010</span><span class="p">/</span><span class="n">api</span><span class="p">/</span><span class="n">models</span><span class="p">/</span><span class="n">probe</span>
+</span></code></pre></div>
+<p>Model availability can change between environments. Treat a successful
+deterministic run as a runtime smoke test, not proof that live inference works.
+Use <a href="../configuration/">Configuration</a> for provider names, model overrides,
+authentication, tracing, persistence, and RAG settings.</p>
+<h2 id="6-run-an-evaluation">6. Run an evaluation<a class="headerlink" href="#6-run-an-evaluation" title="Permanent link">&para;</a></h2>
+<p>The evaluation package consumes structured scores. It does not run a workflow
+for you.</p>
+<p>Create <code>results.json</code>:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">[</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="p">{</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">&quot;Accuracy&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.9</span><span class="p">,</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&quot;Completeness&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.8</span><span class="p">,</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">&quot;Efficiency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">]</span>
+</span></code></pre></div>
+<p>Score it with the bundled default rubric:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>agentic-v2-eval evaluate results.json --output scored.json
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>agentic-v2-eval report scored.json --format markdown --output report.md
+</span></code></pre></div>
+<p>Use <code>--fail-under &lt;0.0-1.0&gt;</code> when a script or CI job should fail below a
+threshold. See the
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-v2-eval/README.md">evaluation package README</a>
+for its exit codes and Python API.</p>
+<h2 id="7-make-a-change">7. Make a change<a class="headerlink" href="#7-make-a-change" title="Permanent link">&para;</a></h2>
+<p>Keep changes within their package unless the architecture explicitly requires
+a cross-package dependency.</p>
+<p>Paths in this table are relative to <code>agentic-workflows-v2/</code> unless stated
+otherwise.</p>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Start here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workflow YAML</td>
+<td><code>agentic_v2/workflows/definitions/</code></td>
+</tr>
+<tr>
+<td>Runtime execution</td>
+<td><code>agentic_v2/engine/</code></td>
+</tr>
+<tr>
+<td>Model routing</td>
+<td><code>agentic_v2/models/</code></td>
+</tr>
+<tr>
+<td>API route</td>
+<td><code>agentic_v2/server/routes/</code></td>
+</tr>
+<tr>
+<td>Dashboard page</td>
+<td><code>ui/src/pages/</code></td>
+</tr>
+<tr>
+<td>Evaluation logic</td>
+<td><code>agentic-v2-eval/src/agentic_v2_eval/</code></td>
+</tr>
+<tr>
+<td>Shared provider or benchmark code</td>
+<td><code>tools/</code></td>
+</tr>
+<tr>
+<td>Persona prompt</td>
+<td><code>agentic_v2/prompts/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Add a focused regression test beside the package you change. If a Pydantic
+wire contract changes, regenerate its JSON Schema and TypeScript types as
+described in <a href="../CONTRIBUTING/#change-generated-contracts">Contributing</a>.</p>
+<h2 id="8-validate-before-review">8. Validate before review<a class="headerlink" href="#8-validate-before-review" title="Permanent link">&para;</a></h2>
+<p>Use narrow checks while editing:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>python -m pytest agentic-workflows-v2/tests -q
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python -m pytest agentic-v2-eval/tests -q
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>npm --prefix agentic-workflows-v2/ui test
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>npm --prefix agentic-workflows-v2/ui run build
+</span></code></pre></div>
+<p>Run the repository checks before requesting review:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>just test
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>just docs
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>pre-commit run --all-files
+</span></code></pre></div>
+<p><code>just docs</code> checks internal documentation references and generated repository
+statistics. The published site is also built with MkDocs in CI.</p>
+<h2 id="common-problems">Common problems<a class="headerlink" href="#common-problems" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agentic</code> is not found</td>
+<td>Activate <code>.venv</code> or call its executable directly</td>
+</tr>
+<tr>
+<td>A named workflow is missing</td>
+<td>Run <code>agentic list workflows</code>; pass a YAML path for a custom file</td>
+</tr>
+<tr>
+<td><code>--input</code> fails to parse</td>
+<td>Pass a file path containing valid JSON</td>
+</tr>
+<tr>
+<td>The dashboard has network errors</td>
+<td>Confirm the backend is listening on <code>8010</code></td>
+</tr>
+<tr>
+<td>A model-backed step fails</td>
+<td>Check its provider variable and use the dashboard Models page or <code>/api/models/probe</code></td>
+</tr>
+<tr>
+<td>Native works but LangGraph fails</td>
+<td>Inspect workflow capabilities and adapter support</td>
+</tr>
+<tr>
+<td>RAG search returns nothing in a second shell</td>
+<td>The current RAG CLI index is process-local; see <a href="../KNOWN_LIMITATIONS/">Known limitations</a></td>
+</tr>
+</tbody>
+</table>
+<p>For security reports, follow the
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SECURITY.md">security policy</a>.
+For usage questions, use
+<a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/SUPPORT.md">support</a>.
+For contribution rules and the complete
+verification matrix, use <a href="../CONTRIBUTING/">CONTRIBUTING.md</a>.</p>
 
 
 
@@ -4407,7 +3527,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

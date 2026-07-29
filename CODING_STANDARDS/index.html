@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Coding standards - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/CODING_STANDARDS.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/CODING_STANDARDS/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Coding standards - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/CODING_STANDARDS.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2415,10 +2505,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#style-and-formatting" class="md-nav__link">
+  <a href="#python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Style and formatting
+        Python
       
     </span>
   </a>
@@ -2426,10 +2516,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#types" class="md-nav__link">
+  <a href="#type-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Types
+        Type boundaries
       
     </span>
   </a>
@@ -2437,10 +2527,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#design-rules" class="md-nav__link">
+  <a href="#design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design rules
+        Design
       
     </span>
   </a>
@@ -2448,10 +2538,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#errors-and-logging" class="md-nav__link">
+  <a href="#errors-and-logs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Errors and logging
+        Errors and logs
       
     </span>
   </a>
@@ -2459,10 +2549,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#tests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#react-and-typescript" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        React and TypeScript
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generated-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated contracts
       
     </span>
   </a>
@@ -2481,10 +2593,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#review" class="md-nav__link">
+  <a href="#validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Review
+        Validation
       
     </span>
   </a>
@@ -2612,6 +2724,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2672,6 +2788,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2859,10 +3031,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#style-and-formatting" class="md-nav__link">
+  <a href="#python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Style and formatting
+        Python
       
     </span>
   </a>
@@ -2870,10 +3042,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#types" class="md-nav__link">
+  <a href="#type-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Types
+        Type boundaries
       
     </span>
   </a>
@@ -2881,10 +3053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#design-rules" class="md-nav__link">
+  <a href="#design" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design rules
+        Design
       
     </span>
   </a>
@@ -2892,10 +3064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#errors-and-logging" class="md-nav__link">
+  <a href="#errors-and-logs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Errors and logging
+        Errors and logs
       
     </span>
   </a>
@@ -2903,10 +3075,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#tests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
+        Tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#react-and-typescript" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        React and TypeScript
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#generated-contracts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated contracts
       
     </span>
   </a>
@@ -2925,10 +3119,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#review" class="md-nav__link">
+  <a href="#validation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Review
+        Validation
       
     </span>
   </a>
@@ -2969,52 +3163,140 @@
 
 
 <h1 id="coding-standards">Coding standards<a class="headerlink" href="#coding-standards" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Audience:</strong> Anyone writing Python for this repo.
-<strong>Outcome:</strong> After reading, you know the style, typing, testing, and review rules a change must satisfy — every one of them is enforced by CI or pre-commit, not by convention.
-<strong>Last verified:</strong> 2026-07-05</p>
-</blockquote>
-<p>These are the standards the Agentic Runtime Platform actually enforces. The authoritative gate definitions live in <a href="../CONTRIBUTING/"><code>CONTRIBUTING.md</code></a> and <code>.github/workflows/ci.yml</code>; this page is the summary.</p>
-<hr />
-<h2 id="style-and-formatting">Style and formatting<a class="headerlink" href="#style-and-formatting" title="Permanent link">&para;</a></h2>
+<p>The configuration files and CI workflows are the enforcement source. This page
+summarizes how to write code that fits the repository.</p>
+<p>Last verified: 2026-07-28.</p>
+<h2 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Black</strong> (line-length 88) and <strong>isort</strong> (profile=black) run via pre-commit; unformatted code never reaches the repo.</li>
-<li><strong>Ruff</strong> is the linter, with rules <code>E, F, W, I, N, UP, S, B, A, C4, SIM, TCH, RUF</code> enabled. CI fails if <code>ruff check --fix</code> would still change anything — apply autofixes and commit them.</li>
-<li>PEP 8 naming: <code>snake_case</code> functions/variables/modules, <code>PascalCase</code> classes, <code>UPPER_SNAKE</code> constants, <code>_private</code> prefix for internal APIs.</li>
-<li>All tool configuration lives in <code>pyproject.toml</code>; docformatter and pydocstyle run as scoped pre-commit hooks.</li>
+<li>Use Python 3.11 or newer.</li>
+<li>Indent with four spaces.</li>
+<li>Use Black formatting with an 88-character target.</li>
+<li>Use Ruff for linting and import ordering.</li>
+<li>Use <code>snake_case</code> for modules, functions, and variables.</li>
+<li>Use <code>PascalCase</code> for classes.</li>
+<li>Use <code>UPPER_CASE</code> for constants.</li>
+<li>Type public interfaces and any code covered by a strict mypy target.</li>
+<li>Use Pydantic v2 methods such as <code>model_validate()</code> and <code>model_dump()</code>.</li>
 </ul>
-<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<p>The workspace root and package <code>pyproject.toml</code> files define the active Ruff,
+Black, pytest, coverage, and mypy settings. Do not copy rule lists into a new
+configuration file.</p>
+<h2 id="type-boundaries">Type boundaries<a class="headerlink" href="#type-boundaries" title="Permanent link">&para;</a></h2>
+<p>Strict mypy settings apply to the evaluation package and selected runtime
+areas, including the engine and contracts. Other runtime modules still contain
+typed-debt exceptions.</p>
+<p>Do not weaken a type check globally to fix one error. Prefer:</p>
+<ol>
+<li>a more precise annotation;</li>
+<li>a narrow runtime validation;</li>
+<li>a local, explained ignore when an external library is incorrectly typed.</li>
+</ol>
+<p>Public wire models require special care. A breaking change to a saved result,
+HTTP request, HTTP response, or event must be treated as an API change.</p>
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Type hints on <strong>every</strong> function signature.</li>
-<li>mypy runs <strong>strict</strong> on <code>agentic_v2/engine</code> and <code>agentic_v2/contracts</code> (<code>--disallow-untyped-defs --warn-return-any</code>); the rest of the runtime runs the relaxed baseline in <code>pyproject.toml</code> while type debt is paid down.</li>
+<li>Keep changes inside the owning package.</li>
+<li>Prefer small functions and modules with one clear responsibility.</li>
+<li>Do not mutate a caller's input unless the API explicitly documents mutation.</li>
+<li>Reuse the existing model router, execution context, error classification,
+  secret provider, and tool boundaries.</li>
+<li>Keep workflow YAML declarative; do not hide workflow behavior in import side
+  effects.</li>
+<li>Split files before they become difficult to review. Existing approved
+  exceptions are recorded in
+  <a href="../adr/ADR-055-file-size-exception-register/">ADR-055</a>.</li>
 </ul>
-<h2 id="design-rules">Design rules<a class="headerlink" href="#design-rules" title="Permanent link">&para;</a></h2>
+<p>Material changes to engines, public contracts, storage, authentication, or
+security boundaries require an ADR. Use the
+<a href="../adr/ADR-INDEX/">ADR index</a> to find related decisions and the next number.</p>
+<h2 id="errors-and-logs">Errors and logs<a class="headerlink" href="#errors-and-logs" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Immutable patterns</strong> — return new objects; never mutate inputs.</li>
-<li><strong>Files under 800 lines</strong> — split before a module grows past this. Existing files above the guide are tracked in the exception register (<a href="../adr/ADR-055-file-size-exception-register/">ADR-055</a>); a file may exceed the guide only while it is listed there.</li>
-<li><strong>Reuse existing infrastructure</strong> instead of re-implementing it: <code>SmartModelRouter</code> for tier/model selection, <code>ExecutionContext</code> for run state and checkpoints, <code>ConversationMemory</code> for history, the MCP client stack for tool calls, and the shared error classification helpers.</li>
-<li><strong>Additive-only contracts</strong> — Pydantic v2 models in <code>contracts/</code> never remove or rename existing fields; any wire-format change must regenerate the committed schemas and TypeScript types (the <code>wire-format-drift</code> CI job enforces this — see <a href="../adr/ADR-014-pydantic-wire-format/">ADR-014</a>).</li>
-<li>Smallest coherent change; one concern per PR. Match the surrounding code — do not refactor unrelated subsystems.</li>
+<li>Catch the exception you can handle.</li>
+<li>Preserve useful context when wrapping an error.</li>
+<li>Do not use an empty <code>except</code> block.</li>
+<li>Use the repository logger in library and server code.</li>
+<li>CLI commands may write intentional user output; do not replace those messages
+  with application logs.</li>
+<li>Never log credentials, authorization headers, private prompts, or direct
+  personal data.</li>
+<li>Do not assume middleware redaction will repair unsafe logging.</li>
 </ul>
-<h2 id="errors-and-logging">Errors and logging<a class="headerlink" href="#errors-and-logging" title="Permanent link">&para;</a></h2>
+<h2 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>No bare <code>except:</code></strong> — catch the specific exception you expect; every handler must log with context, re-raise, or return a meaningful error.</li>
-<li><strong>Structured logging, no <code>print</code></strong> — use the structlog-based logger; <code>LOG_FORMAT=json</code> emits NDJSON in production.</li>
-<li>Never log secrets or PII — the sanitization middleware and detect-secrets baseline back this up, but do not rely on them to catch what you should not have logged.</li>
+<li>Add a regression test with a behavior change.</li>
+<li>Use pytest for Python, Vitest for UI units, and Playwright for browser flows.</li>
+<li>Keep normal unit tests deterministic and key-free.</li>
+<li>Use a registered <code>slow</code>, <code>e2e</code>, or <code>integration</code> marker when appropriate.</li>
+<li>Report live-provider coverage separately from mocked or placeholder coverage.</li>
+<li>Treat flaky tests as defects.</li>
 </ul>
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>Configured floors:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Floor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime Python coverage</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>Evaluation Python coverage</td>
+<td>80%</td>
+</tr>
+<tr>
+<td>UI lines, statements, and functions</td>
+<td>60%</td>
+</tr>
+<tr>
+<td>UI branches</td>
+<td>56% current ratchet</td>
+</tr>
+</tbody>
+</table>
+<p>The config files remain authoritative if these values change.</p>
+<h2 id="react-and-typescript">React and TypeScript<a class="headerlink" href="#react-and-typescript" title="Permanent link">&para;</a></h2>
 <ul>
-<li>pytest, Arrange–Act–Assert, behavior over implementation. Full conventions in <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/.claude/rules/testing.md"><code>.claude/rules/testing.md</code></a>.</li>
-<li><strong>80% coverage is the floor</strong>, not a target range: <code>[tool.coverage.report] fail_under = 80</code> with <code>precision = 2</code> (79.93% fails), enforced in a dedicated <code>coverage report --fail-under=80</code> CI step. The UI package holds a separate 60% floor. New backend code targets 80% on changed lines.</li>
-<li>Unit tests are deterministic and key-free — set <code>AGENTIC_NO_LLM=1</code> or patch the model client. Mark anything slow or network-bound with <code>@pytest.mark.slow</code> / <code>@pytest.mark.integration</code> so it stays out of the fast CI pass. Flaky tests are bugs.</li>
+<li>Name React components <code>PascalCase.tsx</code>.</li>
+<li>Give hooks a <code>use</code> prefix.</li>
+<li>Keep API calls and wire types under <code>ui/src/api/</code>.</li>
+<li>Reuse design tokens instead of embedding unrelated color values.</li>
+<li>Test route-level behavior at the page boundary and isolated behavior at the
+  component boundary.</li>
+<li>Run the production build; Vite development resolution can hide an import that
+  TypeScript or Rollup rejects.</li>
 </ul>
+<h2 id="generated-contracts">Generated contracts<a class="headerlink" href="#generated-contracts" title="Permanent link">&para;</a></h2>
+<p>Do not edit generated JSON Schema or TypeScript wire types by hand.</p>
+<p>From <code>agentic-workflows-v2</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python -m scripts.generate_ts_types
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>npm --prefix ui run generate:types
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>npm --prefix ui run build
+</span></code></pre></div>
+<p>Review and commit the source model and generated artifacts together.</p>
 <h2 id="secrets-and-configuration">Secrets and configuration<a class="headerlink" href="#secrets-and-configuration" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Configuration flows through environment variables and <code>.env.example</code> only. Never read, edit, or commit <code>.env</code>.</li>
-<li>Resolve runtime secrets through <code>agentic_v2.models.secrets.get_secret()</code> / <code>get_first_secret()</code>, not <code>os.environ</code> directly.</li>
+<li>Never commit <code>.env</code>, provider keys, tokens, or generated private run data.</li>
+<li>Add safe placeholders to <code>.env.example</code>.</li>
+<li>Add behavior and lifecycle details to <code>docs/configuration.md</code>.</li>
+<li>Resolve runtime secrets through <code>get_secret()</code> or <code>get_first_secret()</code> rather
+  than adding a new direct environment lookup.</li>
+<li>Keep file, shell, HTTP, and tool access fail-closed.</li>
 </ul>
-<h2 id="review">Review<a class="headerlink" href="#review" title="Permanent link">&para;</a></h2>
-<p>This is a single-maintainer repository: correctness is gated by <strong>automated evidence</strong>, not peer approval. Treat AI-generated code as untrusted input — run the full lint + type-check + test set (<code>just test &amp;&amp; just docs &amp;&amp; pre-commit run --all-files</code>) before accepting it. Keep PRs small, use conventional-commit subjects (<code>type(scope): subject</code>), and write an ADR when a change meets the criteria in <a href="../CONTRIBUTING/#6-when-to-write-an-adr">CONTRIBUTING §6</a>.</p>
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
+<p>Run focused checks while editing. Before review, run the relevant broad checks:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>just test
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>just docs
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pre-commit run --all-files
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>npm --prefix agentic-workflows-v2/ui run build
+</span></code></pre></div>
+<p>The <code>just</code> recipes currently require PowerShell. Other systems should run the
+underlying commands from <a href="../development-guide/">Development</a>.</p>
+<p>Use Conventional Commit subjects such as <code>fix(server): validate run input</code>.
+Follow <a href="../CONTRIBUTING/">Contributing</a> for the PR checklist and ADR criteria.</p>
 
 
 
@@ -3037,7 +3319,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 03:45:30 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

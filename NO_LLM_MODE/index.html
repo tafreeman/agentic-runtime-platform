@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="No-LLM dev mode - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/NO_LLM_MODE.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/NO_LLM_MODE/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="No-LLM dev mode - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/NO_LLM_MODE.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#no-llm-dev-mode" class="md-skip">
+        <a href="#development-without-a-model-provider" class="md-skip">
           Skip to content
         </a>
       
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -791,10 +791,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#enable-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it does
+        Enable it
       
     </span>
   </a>
@@ -802,10 +802,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-to-enable" class="md-nav__link">
+  <a href="#what-it-covers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to enable
+        What it covers
       
     </span>
   </a>
@@ -813,10 +813,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-works" class="md-nav__link">
+  <a href="#what-it-does-not-prove" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What works
+        What it does not prove
       
     </span>
   </a>
@@ -824,10 +824,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scope-limits-read-this-before-you-report-a-bug" class="md-nav__link">
+  <a href="#independent-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scope limits — read this before you report a bug
+        Independent features
       
     </span>
   </a>
@@ -835,10 +835,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-not-to-use" class="md-nav__link">
+  <a href="#dashboard-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When NOT to use
+        Dashboard use
       
     </span>
   </a>
@@ -846,10 +846,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#disable-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Disable it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepted-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-not-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When not to use it
       
     </span>
   </a>
@@ -1324,6 +1346,8 @@
       
         
       
+        
+      
     
     
     
@@ -1368,6 +1392,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2194,6 +2246,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2291,6 +2347,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2601,6 +2713,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2661,6 +2777,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2848,10 +3020,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#enable-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it does
+        Enable it
       
     </span>
   </a>
@@ -2859,10 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-to-enable" class="md-nav__link">
+  <a href="#what-it-covers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How to enable
+        What it covers
       
     </span>
   </a>
@@ -2870,10 +3042,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-works" class="md-nav__link">
+  <a href="#what-it-does-not-prove" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What works
+        What it does not prove
       
     </span>
   </a>
@@ -2881,10 +3053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scope-limits-read-this-before-you-report-a-bug" class="md-nav__link">
+  <a href="#independent-features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scope limits — read this before you report a bug
+        Independent features
       
     </span>
   </a>
@@ -2892,10 +3064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#when-not-to-use" class="md-nav__link">
+  <a href="#dashboard-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When NOT to use
+        Dashboard use
       
     </span>
   </a>
@@ -2903,10 +3075,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
+  <a href="#disable-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Troubleshooting
+        Disable it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepted-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepted values
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-not-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When not to use it
       
     </span>
   </a>
@@ -2946,60 +3140,107 @@
   
 
 
-<h1 id="no-llm-dev-mode">No-LLM dev mode<a class="headerlink" href="#no-llm-dev-mode" title="Permanent link">&para;</a></h1>
-<h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
-<p>Set <code>AGENTIC_NO_LLM=1</code> to run the native and LangChain engines without provider credentials. Both execution paths short-circuit every LLM call and return a deterministic placeholder string: <code>[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.</code> Provider probing is skipped entirely — no spurious errors from missing API keys.</p>
-<h2 id="how-to-enable">How to enable<a class="headerlink" href="#how-to-enable" title="Permanent link">&para;</a></h2>
-<p><strong>Bash:</strong></p>
+<h1 id="development-without-a-model-provider">Development without a model provider<a class="headerlink" href="#development-without-a-model-provider" title="Permanent link">&para;</a></h1>
+<p>Set <code>AGENTIC_NO_LLM=1</code> to replace the runtime's normal native and LangChain
+model clients with deterministic placeholder implementations. This prevents
+those clients from calling a provider.</p>
+<p>Use this mode to test workflow structure, scheduling, events, persistence, and
+UI flow. Do not use it to test output meaning or provider behavior.</p>
+<h2 id="enable-it">Enable it<a class="headerlink" href="#enable-it" title="Permanent link">&para;</a></h2>
+<p>Bash:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;{&quot;input_text&quot;: &quot;hello&quot;}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>input.json
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>input.json
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--input<span class="w"> </span>agentic-workflows-v2/tests/fixtures/deterministic_input.json
 </span></code></pre></div>
-<p><strong>Windows PowerShell:</strong></p>
+<p>PowerShell:</p>
 <div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="s1">&#39;{&quot;input_text&quot;: &quot;hello&quot;}&#39;</span> <span class="p">|</span> <span class="nb">Out-File</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="n">input</span><span class="p">.</span><span class="n">json</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="n">input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<p>Expected output: the workflow runs to completion, all steps emit placeholder text, and the process exits with status 0. No provider credentials required.</p>
-<blockquote>
-<p><strong>LangChain engine requires an extra.</strong> The native DAG executor works with just the base <code>pip install -e .</code> — that's the common case. If you want to exercise the LangChain adapter under this flag (<code>--adapter langchain</code>), install with the extra: <code>pip install -e .[langchain]</code>. Without it, <code>get_chat_model()</code> raises <code>ImportError: langchain-core is required...</code> even when the flag is set. Accepted values for the env var (case-insensitive): <code>1</code>/<code>true</code>/<code>yes</code>/<code>on</code> are true; empty/<code>0</code>/<code>false</code>/<code>no</code>/<code>off</code> are false; anything else is coerced to false with a logged warning.</p>
-</blockquote>
-<p>The UI also works: run <code>agentic serve</code> + <code>npm run dev</code> under this flag. DAG streaming shows placeholder content at each node.</p>
-<h2 id="what-works">What works<a class="headerlink" href="#what-works" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Native DAG executor</strong> (both YAML workflow execution and agent-step paths)</li>
-<li><strong>LangChain adapter</strong> (<code>--adapter langchain</code> in CLI or config)</li>
-<li><strong>DAG streaming over WebSocket/SSE</strong> (one chunk per message; the entire placeholder is a single chunk)</li>
-<li><strong>UI demos end-to-end</strong></li>
-<li><strong>CLI validation commands</strong> (<code>agentic list</code> and <code>agentic validate</code> don't invoke an LLM regardless of this flag; <code>agentic compare</code> exercises workflows and honors the flag)</li>
-<li><strong>RAG pipeline</strong> (embeddings already deterministic via SHA-256 hashing)</li>
-</ul>
-<h2 id="scope-limits-read-this-before-you-report-a-bug">Scope limits — read this before you report a bug<a class="headerlink" href="#scope-limits-read-this-before-you-report-a-bug" title="Permanent link">&para;</a></h2>
-<p><strong>Not a simulator.</strong> The placeholder is a fixed string. Any downstream consumer that parses structured output — <code>PydanticOutputParser</code>, JSON-extraction steps, evaluation rubrics that score against a reference — will fail or score zero. This is by design. Use this mode for shape and flow testing only, not for semantics or behavior validation.</p>
-<p><strong>Evaluation runs need real keys.</strong> <code>agentic-v2-eval</code> is untouched; scoring rubrics against the placeholder will score zero. Run evaluation workflows with actual provider credentials.</p>
-<p><strong>Streaming is not token-by-token.</strong> Both <code>complete_stream</code> (native) and <code>astream</code> (LangChain) yield the entire placeholder as one chunk. Useful for testing UI plumbing, not for testing per-token streaming UX.</p>
-<p><strong>Tool-calling is a no-op.</strong> <code>bind_tools(...)</code> is accepted but ignored. The placeholder is returned regardless of what tools were bound. Workflows that branch on tool calls will always take the no-tool path.</p>
-<h2 id="when-not-to-use">When NOT to use<a class="headerlink" href="#when-not-to-use" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Production deployments</li>
-<li>Evaluation and rubric-scoring runs</li>
-<li>Capacity planning or load tests</li>
-<li>Anything asserting on real model content or behavior</li>
-</ul>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>I set the var but got "GITHUB_TOKEN environment variable is required"</strong></p>
-<p>The <code>get_settings</code> function uses <code>@lru_cache</code>. The flag must be set before the first call to <code>get_settings()</code> in a process. For CLI users, this is automatic (fresh process). For long-running sessions (e.g., interactive notebooks), call:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.models.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">reset_client</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">get_settings</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">reset_client</span><span class="p">()</span>
+<p><code>test_deterministic</code> contains two tier-0 agent steps. In the current native
+path those agents still enter the model-client loop, which returns placeholder
+values instead of contacting a provider. The workflow finishes with
+<code>Status: SUCCESS</code>, but may log input-mapping and tool-provider warnings. Use it
+as an executor smoke test, not as proof that its step outputs are meaningful.</p>
+<p>Depending on the client path, placeholder output may be a fixed text value or
+a small mapping such as:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>{&quot;placeholder&quot;: true, &quot;reason&quot;: &quot;llm_unavailable&quot;}
 </span></code></pre></div>
-<p>Then set your env var and proceed.</p>
-<p><strong>The placeholder isn't showing in the UI</strong></p>
-<p>Check your browser's Network tab or console for <code>/api/runs/{run_id}/stream</code> and <code>/ws/execution/{run_id}</code> events. The string <code>[AGENTIC_NO_LLM placeholder]</code> will appear in each node's output field in the DAG.</p>
-<p><strong>Can I make it fail instead of returning a placeholder?</strong></p>
-<p>No. The flag is for graceful no-op, not for hard errors. If you want to enforce a provider key, unset the flag and let the provider's missing-credential <code>ValueError</code> surface.</p>
+<h2 id="what-it-covers">What it covers<a class="headerlink" href="#what-it-covers" title="Permanent link">&para;</a></h2>
+<ul>
+<li>the shared native <code>LLMClientWrapper</code>;</li>
+<li>LangChain chat-model construction;</li>
+<li>normal CLI and API paths that use those clients;</li>
+<li>WebSocket and server-sent event plumbing for placeholder responses; and</li>
+<li>deterministic orchestration fallback where implemented.</li>
+</ul>
+<p>The LangChain adapter still requires the <code>langchain</code> extra because its graph
+and message types must be importable:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python -m pip install -e &quot;./agentic-workflows-v2[langchain]&quot;
+</span></code></pre></div>
+<h2 id="what-it-does-not-prove">What it does not prove<a class="headerlink" href="#what-it-does-not-prove" title="Permanent link">&para;</a></h2>
+<p>Placeholder mode does not test:</p>
+<ul>
+<li>provider credentials, permissions, availability, or quotas;</li>
+<li>model routing against live provider catalogs;</li>
+<li>structured JSON or Pydantic output from a model;</li>
+<li>tool calls selected by a model;</li>
+<li>token-by-token streaming;</li>
+<li>content quality or evaluation quality;</li>
+<li>latency, retry, fallback, or cost behavior; or</li>
+<li>provider SDK request and response compatibility.</li>
+</ul>
+<p>Placeholder output is deterministic for the selected path, but its shape is
+not a substitute for a real provider response. A step that requires a specific
+model schema may fail honestly or take a fallback path. That is not evidence
+that the same step will fail with a configured model.</p>
+<h2 id="independent-features">Independent features<a class="headerlink" href="#independent-features" title="Permanent link">&para;</a></h2>
+<p><code>AGENTIC_NO_LLM</code> does not turn every AI-related component into a fake:</p>
+<ul>
+<li><code>agentic-v2-eval</code> can run deterministic rubric and metric scoring without a
+  key, but its LLM-backed evaluators still need an injected live or fake client.</li>
+<li>RAG embedding selection is independent. <code>InMemoryEmbedder</code> is explicitly
+  deterministic, while provider-backed embeddings still need their service.</li>
+<li>Direct provider SDK examples or integrations may have their own credential
+  gates. Confirm that a path uses the shared runtime client before assuming
+  this flag covers it.</li>
+</ul>
+<h2 id="dashboard-use">Dashboard use<a class="headerlink" href="#dashboard-use" title="Permanent link">&para;</a></h2>
+<p>Set the variable in the shell that starts the backend:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">just</span> <span class="n">dev</span>
+</span></code></pre></div>
+<p>The combined development environment uses FastAPI port <code>8010</code> and Vite port
+<code>5173</code>. A placeholder response is emitted as one chunk, so this mode tests
+event delivery but not gradual token streaming.</p>
+<h2 id="disable-it">Disable it<a class="headerlink" href="#disable-it" title="Permanent link">&para;</a></h2>
+<p>Start a new process without the variable. In PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">Remove-Item</span> <span class="n">Env</span><span class="p">:</span><span class="n">AGENTIC_NO_LLM</span>
+</span></code></pre></div>
+<p>In Bash:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">unset</span><span class="w"> </span>AGENTIC_NO_LLM
+</span></code></pre></div>
+<p>Long-running Python processes cache settings and the shared model client. If a
+test or notebook deliberately changes the flag after imports, reset both:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.models.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">reset_client</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">get_settings</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">reset_client</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Normal applications should restart instead of changing mode inside a running
+process.</p>
+<h2 id="accepted-values">Accepted values<a class="headerlink" href="#accepted-values" title="Permanent link">&para;</a></h2>
+<p>The settings parser treats <code>1</code>, <code>true</code>, <code>yes</code>, and <code>on</code> as true, ignoring
+case. It treats <code>0</code>, <code>false</code>, <code>no</code>, <code>off</code>, and an empty value as false.</p>
+<h2 id="when-not-to-use-it">When not to use it<a class="headerlink" href="#when-not-to-use-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li>production or shared deployments;</li>
+<li>live provider integration tests;</li>
+<li>quality or correctness claims based on model content;</li>
+<li>capacity or performance tests; or</li>
+<li>tool-selection and structured-output tests.</li>
+</ul>
 
 
 
@@ -3022,7 +3263,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

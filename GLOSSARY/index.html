@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Glossary - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/GLOSSARY.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/GLOSSARY/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Glossary - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/GLOSSARY.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#concept-glossary" class="md-skip">
+        <a href="#glossary" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2076,6 +2106,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2173,6 +2207,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2387,10 +2477,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-architecture" class="md-nav__link">
+  <a href="#workflow-runtime" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core architecture
+        Workflow runtime
       
     </span>
   </a>
@@ -2398,10 +2488,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-system" class="md-nav__link">
+  <a href="#contracts-and-artifacts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent system
+        Contracts and artifacts
       
     </span>
   </a>
@@ -2409,10 +2499,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rag-pipeline" class="md-nav__link">
+  <a href="#models-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RAG pipeline
+        Models and tools
       
     </span>
   </a>
@@ -2420,21 +2510,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agentic-patterns" class="md-nav__link">
+  <a href="#retrieval-augmented-generation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agentic patterns
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llm-routing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM routing
+        Retrieval-augmented generation
       
     </span>
   </a>
@@ -2453,21 +2532,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#workflow-engine" class="md-nav__link">
+  <a href="#operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow engine
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-cutting-concerns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-cutting concerns
+        Operations
       
     </span>
   </a>
@@ -2623,6 +2691,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2683,6 +2755,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2870,10 +2998,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#core-architecture" class="md-nav__link">
+  <a href="#workflow-runtime" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core architecture
+        Workflow runtime
       
     </span>
   </a>
@@ -2881,10 +3009,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-system" class="md-nav__link">
+  <a href="#contracts-and-artifacts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent system
+        Contracts and artifacts
       
     </span>
   </a>
@@ -2892,10 +3020,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rag-pipeline" class="md-nav__link">
+  <a href="#models-and-tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RAG pipeline
+        Models and tools
       
     </span>
   </a>
@@ -2903,21 +3031,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agentic-patterns" class="md-nav__link">
+  <a href="#retrieval-augmented-generation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agentic patterns
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#llm-routing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LLM routing
+        Retrieval-augmented generation
       
     </span>
   </a>
@@ -2936,21 +3053,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#workflow-engine" class="md-nav__link">
+  <a href="#operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Workflow engine
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cross-cutting-concerns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-cutting concerns
+        Operations
       
     </span>
   </a>
@@ -2990,146 +3096,159 @@
   
 
 
-<h1 id="concept-glossary">Concept glossary<a class="headerlink" href="#concept-glossary" title="Permanent link">&para;</a></h1>
-<p>A reference of key terms, patterns, and abstractions used throughout the <code>tafreeman/agentic-runtime-platform</code> monorepo. Each entry includes a concise definition and a pointer to the relevant source code or configuration.</p>
-<hr />
-<h2 id="core-architecture">Core architecture<a class="headerlink" href="#core-architecture" title="Permanent link">&para;</a></h2>
-<p><strong>Adapter</strong> -- A pluggable backend that satisfies the <code>ExecutionEngine</code> protocol and is registered with the <code>AdapterRegistry</code>. The codebase ships two built-in adapters: <code>native</code> (DAG executor) and <code>langchain</code> (LangGraph state-machine compiler). New adapters are added by implementing <code>ExecutionEngine</code> and calling <code>get_registry().register()</code>.
-See <code>agentic_v2/adapters/registry.py</code>.</p>
-<p><strong>AdapterRegistry</strong> -- A thread-safe singleton that maps string names (e.g. <code>"native"</code>, <code>"langchain"</code>) to concrete <code>ExecutionEngine</code> classes. Adapters are lazily instantiated on first <code>get_adapter()</code> call; registration happens at import time and the registry never eagerly imports adapter packages.
-See <code>agentic_v2/adapters/registry.py</code>.</p>
-<p><strong>Additive-Only</strong> -- Schema evolution policy for contracts: new optional fields with defaults may be added, but existing fields are never removed or renamed. This guarantees backward compatibility for downstream consumers of the contract schemas.
-See <code>agentic_v2/contracts/</code>.</p>
-<p><strong>Checkpoint</strong> -- A serialized snapshot of completed workflow steps and context state, enabling resume-after-failure. The <code>SupportsCheckpointing</code> protocol defines <code>get_checkpoint_state()</code> and <code>resume()</code> methods for engines that support this capability.
-See <code>agentic_v2/core/protocols.py</code>.</p>
-<p><strong>Contract</strong> -- A Pydantic v2 model defining typed data structures that flow through the workflow engine, server API, and evaluation framework. Key contracts include <code>TaskInput</code>, <code>TaskOutput</code>, <code>StepResult</code>, <code>WorkflowResult</code>, <code>AgentMessage</code>, and <code>ReviewReport</code>. Contracts follow the additive-only rule.
-See <code>agentic_v2/contracts/</code>.</p>
-<p><strong>ExecutionContext</strong> -- The shared mutable state carrier for a single workflow run. Provides hierarchical scoping (child contexts inherit parent variables but write locally), JMESPath deep-nested lookups, event hooks (<code>STEP_START</code>, <code>STEP_END</code>, <code>VARIABLE_SET</code>, <code>CHECKPOINT_SAVE</code>), checkpoint/restore for fault tolerance, and a <code>ServiceContainer</code> for dependency injection. All variable mutations are guarded by <code>asyncio.Lock</code>.
-See <code>agentic_v2/engine/context.py</code>.</p>
-<p><strong>Protocol</strong> -- A PEP 544 structural subtyping interface decorated with <code>@runtime_checkable</code>. Classes conform by shape (matching method signatures), not by inheritance. The codebase defines protocols for engines (<code>ExecutionEngine</code>), agents (<code>AgentProtocol</code>), tools (<code>ToolProtocol</code>), memory (<code>MemoryStoreProtocol</code>), and all RAG components (<code>LoaderProtocol</code>, <code>ChunkerProtocol</code>, <code>EmbeddingProtocol</code>, <code>VectorStoreProtocol</code>). Optional capability protocols include <code>SupportsStreaming</code> and <code>SupportsCheckpointing</code>.
-See <code>agentic_v2/core/protocols.py</code>, <code>agentic_v2/rag/protocols.py</code>.</p>
-<p><strong>ServiceContainer</strong> -- A dependency injection container within <code>ExecutionContext</code> that supports singleton and factory patterns, shared across parent and child context scopes.
-See <code>agentic_v2/engine/context.py</code>.</p>
-<hr />
-<h2 id="agent-system">Agent system<a class="headerlink" href="#agent-system" title="Permanent link">&para;</a></h2>
-<p><strong>Agent</strong> -- An LLM-powered actor with a persona, tools, memory, and a typed execution loop. Agents process <code>TaskInput</code> and produce <code>TaskOutput</code>, optionally maintaining conversation state across invocations. Concrete agents include Coder, Architect, Reviewer, and Orchestrator.
-See <code>agentic_v2/agents/</code>.</p>
-<p><strong>AgentState</strong> -- A finite-state enum representing the lifecycle of a <code>BaseAgent</code>: <code>CREATED -&gt; INITIALIZING -&gt; READY -&gt; RUNNING -&gt; COMPLETED | FAILED | CANCELLED</code>. Agents may also be <code>PAUSED</code> and later resumed.
-See <code>agentic_v2/agents/base.py</code>.</p>
-<p><strong>BaseAgent</strong> -- The abstract base class that all concrete agents must subclass. Provides the iterative execution loop with typed I/O (<code>TInput</code> / <code>TOutput</code>), dynamic tool binding filtered by <code>ModelTier</code>, conversation memory with automatic summarization, and an event system for observability hooks (<code>STATE_CHANGE</code>, <code>TOOL_CALLED</code>, <code>STREAMING</code>, etc.).
-See <code>agentic_v2/agents/base.py</code>.</p>
-<p><strong>Capability</strong> -- A typed skill declaration with a proficiency level (0.0--1.0) used for dynamic agent-to-task matching. Defined via <code>CapabilityType</code> enum values such as <code>CODE_GENERATION</code>, <code>CODE_REVIEW</code>, <code>SELF_REFLECTION</code>, <code>ORCHESTRATION</code>, and <code>TASK_DECOMPOSITION</code>. Agents compose capabilities through multiple-inheritance mixins (e.g. <code>CodeGenerationMixin</code>, <code>SelfReflectionMixin</code>), and the orchestrator selects the best agent for each subtask by scoring capability set matches.
-See <code>agentic_v2/agents/capabilities.py</code>.</p>
-<p><strong>CapabilityMixin</strong> -- An abstract mixin base class that concrete capability mixins extend. Each mixin declares the capabilities it provides via <code>get_capabilities()</code>. Agents gain capabilities through multiple inheritance, e.g. <code>class MyAgent(BaseAgent, CodeGenerationMixin, TestGenerationMixin)</code>. The <code>get_agent_capabilities()</code> function walks the MRO to aggregate all declared capabilities.
-See <code>agentic_v2/agents/capabilities.py</code>.</p>
-<p><strong>ConversationMemory</strong> -- A sliding-window message buffer within <code>BaseAgent</code> with a configurable token budget and automatic summarization of evicted messages. Distinct from <code>MemoryStoreProtocol</code>, which handles cross-session persistent memory.
-See <code>agentic_v2/agents/base.py</code>.</p>
-<p><strong>MemoryStoreProtocol</strong> -- The async interface for persistent memory backends, supporting key-value CRUD (store, retrieve, delete) and query-based search with ranked results. Implementations include <code>InMemoryStore</code> (dict-backed, for testing) and <code>RAGMemoryStore</code> (vector-backed). The deprecated alias <code>MemoryStore</code> is kept for backward compatibility.
-See <code>agentic_v2/core/memory.py</code>.</p>
-<p><strong>Persona</strong> -- A markdown definition of an agent's expertise, reasoning protocol, output format, and boundaries. Located in <code>agentic_v2/prompts/*.md</code>, each persona file must define sections for Expertise, Reasoning Protocol, Boundaries, Critical Rules, and Output Format. The codebase contains one persona definition per agent role (architect, coder, orchestrator, planner, reviewer, tester, validator).
-See <code>agentic_v2/prompts/</code>.</p>
-<p><strong>Tool</strong> -- A callable capability available to agents during execution, satisfying <code>ToolProtocol</code> (properties: <code>name</code>, <code>description</code>; method: <code>execute(**kwargs)</code>). The codebase ships built-in tool modules (code analysis, file ops, git ops, HTTP ops, memory ops, search ops, shell ops, transform, etc.). Tools are registered in a <code>ToolRegistry</code> and allowlisted per workflow step, with high-risk tools (<code>shell</code>, <code>git</code>, <code>file_delete</code>) defaulting to DENY.
-See <code>agentic_v2/tools/</code>.</p>
-<p><strong>ToolRegistry</strong> -- A registry that manages available tools and provides lookup by name. Agents receive filtered tool sets based on their workflow step's allowlist and the agent's <code>ModelTier</code>.
-See <code>agentic_v2/tools/registry.py</code>.</p>
-<hr />
-<h2 id="rag-pipeline">RAG pipeline<a class="headerlink" href="#rag-pipeline" title="Permanent link">&para;</a></h2>
-<p><strong>BM25</strong> -- Okapi BM25, a probabilistic keyword retrieval algorithm. The codebase includes a pure-Python in-memory <code>BM25Index</code> that builds an inverted index from chunks, tokenizes on whitespace with lowercasing, and computes BM25 scores with configurable <code>k1</code> (term saturation, default 1.5) and <code>b</code> (length normalization, default 0.75) parameters. Used as the sparse retrieval component in hybrid search.
-See <code>agentic_v2/rag/retrieval.py</code>.</p>
-<p><strong>Chunk</strong> -- A segment of a document produced by the chunking stage. Each chunk carries its text content, a unique <code>chunk_id</code>, positional metadata (document ID, index), and arbitrary metadata for filtering. Chunks are the atomic unit that flows through embedding, indexing, and retrieval.
-See <code>agentic_v2/rag/contracts.py</code>.</p>
-<p><strong>Cosine Similarity</strong> -- The distance metric used by <code>InMemoryVectorStore</code> for dense vector search. Measures the cosine of the angle between the query embedding and stored chunk embeddings to rank semantically similar content.
-See <code>agentic_v2/rag/vectorstore.py</code>.</p>
-<p><strong>Document</strong> -- A loaded source file or URL represented as a structured object with content, metadata, and a document ID. Produced by loaders (<code>LoaderProtocol</code>) and consumed by chunkers.
-See <code>agentic_v2/rag/contracts.py</code>.</p>
-<p><strong>Embedding</strong> -- A dense floating-point vector representation of text content, produced by an <code>EmbeddingProtocol</code> implementation. Used for semantic similarity search in the vector store. Embeddings are content-hash deduplicated to avoid redundant computation. The <code>InMemoryEmbedder</code> provides deterministic hash-based embeddings for testing.
-See <code>agentic_v2/rag/embeddings.py</code>.</p>
-<p><strong>Hybrid Retrieval</strong> -- A retrieval strategy that combines dense vector search (cosine similarity) with sparse BM25 keyword search, then merges the two result sets using Reciprocal Rank Fusion (RRF). The <code>HybridRetriever</code> class orchestrates both retrieval paths and produces a unified ranked result list, combining the strengths of semantic understanding and exact keyword matching.
-See <code>agentic_v2/rag/retrieval.py</code>.</p>
-<p><strong>IngestionPipeline</strong> -- The orchestrator for the load-then-chunk stages of the RAG pipeline. Takes a <code>LoaderProtocol</code> and <code>ChunkerProtocol</code> and provides a single <code>ingest(source)</code> method that produces chunks ready for embedding and indexing.
-See <code>agentic_v2/rag/ingestion.py</code>.</p>
-<p><strong>RAG (Retrieval-Augmented Generation)</strong> -- A pattern of retrieving relevant documents from a knowledge base to augment LLM context before generation. The codebase implements a full 13-module, protocol-backed RAG pipeline: load, recursive chunk, embed (content-hash dedup), index (cosine similarity vector store + BM25 keyword index), hybrid retrieve (RRF fusion), token-budget assemble, and OTEL trace.
-See <code>agentic_v2/rag/</code>.</p>
-<p><strong>RecursiveChunker</strong> -- The default chunking implementation that splits documents using hierarchical separators (<code>\n\n</code> paragraph, <code>\n</code> line, <code>.</code> sentence, <code></code> word, <code></code> character), recursively splitting oversized segments until all chunks fit within the configured <code>chunk_size</code>. Satisfies <code>ChunkerProtocol</code>.
-See <code>agentic_v2/rag/chunking.py</code>.</p>
-<p><strong>RRF (Reciprocal Rank Fusion)</strong> -- A score fusion algorithm that combines ranked lists from multiple retrieval methods. For each document, the fused score is <code>sum(1 / (k + rank))</code> across all retrieval methods, where <code>k</code> is a smoothing constant (typically 60). Produces a single merged ranking from dense and BM25 results without requiring score normalization.
-See <code>agentic_v2/rag/retrieval.py</code>.</p>
-<p><strong>Token Budget</strong> -- The maximum token allocation for assembled RAG context. The <code>TokenBudgetAssembler</code> greedily adds retrieval results in descending score order until the budget is exhausted, using a <code>len(text) // 4</code> heuristic for token estimation. When framing is enabled, each chunk is wrapped in <code>&lt;retrieved_context&gt;</code> delimiters for prompt injection defense, and the framing overhead is deducted from the budget.
-See <code>agentic_v2/rag/context_assembly.py</code>.</p>
-<p><strong>VectorStore</strong> -- A backend for storing and searching embedding vectors. The <code>VectorStoreProtocol</code> defines the interface (<code>add</code>, <code>search</code>, <code>delete</code>). Implementations include <code>InMemoryVectorStore</code> (pure-Python cosine similarity, for testing/dev) and <code>LanceDBVectorStore</code> (persistent, requires optional <code>lancedb</code> dependency).
-See <code>agentic_v2/rag/vectorstore.py</code>.</p>
-<hr />
-<h2 id="agentic-patterns">Agentic patterns<a class="headerlink" href="#agentic-patterns" title="Permanent link">&para;</a></h2>
-<p><strong>Antagonist Review</strong> -- An adversarial review methodology implemented at the prompt level through two independent antagonist personas: one performing FMEA (Failure Mode and Effects Analysis) murder-board review, and another conducting systemic pre-mortem analysis. Designed to surface failure modes before deployment.
-See <code>agentic_v2/prompts/</code>.</p>
-<p><strong>Chain-of-Thought (CoT)</strong> -- A prompting technique where the model reasons step-by-step before answering. All agent personas include a <code>## Reasoning Protocol</code> section that scaffolds structured thinking. CoT improves accuracy on complex tasks by making the reasoning process explicit and auditable.
-See <code>agentic_v2/prompts/*.md</code>.</p>
-<p><strong>Chain-of-Verification (CoVe)</strong> -- A pattern where claims generated by the model are independently verified after generation. Dedicated verification steps re-check factual claims against source material, flagging unsupported assertions. Verification steps have access to web search and HTTP tools for independent source confirmation.
-See <code>agentic_v2/workflows/lib/ci_calculator.py</code>.</p>
-<p><strong>Confidence Gating</strong> -- Conditional execution based on multi-dimensional confidence interval scores. Research workflows produce a confidence index (CI); iteration continues until <code>CI &gt;= min_ci</code> (default 0.80) or <code>max_rounds</code> is reached. The CI is computed from coverage score, source quality score, and recency metrics.
-See <code>agentic_v2/workflows/lib/ci_calculator.py</code>, <code>agentic_v2/config/defaults/evaluation.yaml</code>.</p>
-<p><strong>ReAct (Reason + Act)</strong> -- An agentic pattern where the agent reasons about the next action, executes it via a tool, observes the result, and repeats. In the codebase, ReAct manifests in retrieval steps where agents decide which searches to perform, execute them via <code>web_search</code> / <code>http_get</code> tools, and incorporate results into the next reasoning cycle.
-See <code>agentic_v2/agents/base.py</code>.</p>
-<p><strong>Tree-of-Thought (ToT)</strong> -- A reasoning pattern that generates multiple reasoning paths (hypotheses) and evaluates them to select the most promising. Agent personas include ToT scaffolding for hypothesis generation and evaluation across multiple reasoning paths.
-See <code>agentic_v2/prompts/*.md</code>.</p>
-<hr />
-<h2 id="llm-routing">LLM routing<a class="headerlink" href="#llm-routing" title="Permanent link">&para;</a></h2>
-<p><strong>Circuit Breaker</strong> -- A fault tolerance pattern implemented in <code>SmartModelRouter</code> with three states: <code>CLOSED</code> (normal operation), <code>OPEN</code> (model is failing, reject requests and skip to next in chain), and <code>HALF_OPEN</code> (testing recovery with serialized probe requests). Transitions are driven by consecutive failure counts and adaptive cooldown timers.
-See <code>agentic_v2/models/model_stats.py</code>, <code>agentic_v2/models/smart_router.py</code>.</p>
-<p><strong>CooldownConfig</strong> -- Configuration for adaptive cooldown scaling in the smart router. Base cooldowns are multiplied by <code>1.5^consecutive_failures</code>, capped at 600 seconds. Separate base durations exist for general failures (30s), rate limits (120s), and timeouts (60s). Rate-limit cooldowns parse <code>Retry-After</code> headers from provider responses.
-See <code>agentic_v2/models/smart_router.py</code>.</p>
-<p><strong>FallbackChain</strong> -- An immutable ordered sequence of model identifiers to try in priority order within a tier. Built via a fluent <code>ChainBuilder</code> DSL. Default chains are ordered free-tier-first (Gemini, GitHub Models) then paid (OpenAI, Anthropic). Model identifiers use a <code>provider:model_name</code> format, e.g. <code>"gemini:gemini-2.0-flash"</code> or <code>"gh:openai/gpt-4o-mini"</code>.
-See <code>agentic_v2/models/router.py</code>.</p>
-<p><strong>ModelRouter</strong> -- The foundational routing layer for LLM model selection. Routes requests to the first available model in a tier's <code>FallbackChain</code>. Supports lazy model discovery, parallel health checks, and <code>ScopedRouter</code> context-manager overrides.
-See <code>agentic_v2/models/router.py</code>.</p>
-<p><strong>Per-Provider Bulkhead</strong> -- An <code>asyncio.Semaphore</code> per LLM provider (e.g. OpenAI: 50, Ollama: 10) that prevents cascade failures when one provider is slow. Limits concurrent requests to any single provider independently of other providers.
-See <code>agentic_v2/models/smart_router.py</code>.</p>
-<p><strong>SmartModelRouter</strong> -- A production-hardened extension of <code>ModelRouter</code> with runtime intelligence: health-weighted model selection (<code>success_rate * 0.6 + latency_score * 0.2 + recency_score * 0.2</code>), circuit breaker logic, adaptive cooldowns with exponential backoff, per-provider bulkhead semaphores, rate-limit header parsing, optional cost-aware routing, and atomic JSON stats persistence for cross-restart continuity.
-See <code>agentic_v2/models/smart_router.py</code>.</p>
-<p><strong>Tier</strong> -- An LLM routing level from <code>TIER_0</code> (deterministic tools, no LLM) through <code>TIER_5</code> (premium cloud models like GPT-4-turbo, Claude-3-opus). Each tier has a pre-configured <code>FallbackChain</code> of models ordered by cost and capability. <code>TIER_1</code> = small models (1-3B params), <code>TIER_2</code> = medium (7-14B), <code>TIER_3</code> = large (32B+), <code>TIER_4</code> = cloud (GPT-4, Claude), <code>TIER_5</code> = premium cloud.
-See <code>agentic_v2/models/router.py</code>.</p>
-<hr />
+<h1 id="glossary">Glossary<a class="headerlink" href="#glossary" title="Permanent link">&para;</a></h1>
+<p>This page defines terms used in the repository. Source paths are relative to
+<code>agentic-workflows-v2/</code> unless stated otherwise.</p>
+<h2 id="workflow-runtime">Workflow runtime<a class="headerlink" href="#workflow-runtime" title="Permanent link">&para;</a></h2>
+<p><strong>Adapter</strong></p>
+<p>An implementation of the runtime execution interface. The CLI supports:</p>
+<ul>
+<li><code>langchain</code>, which compiles a workflow to LangGraph and is the default for
+  named YAML workflows</li>
+<li><code>native</code>, which runs the repository's dependency-light DAG executor</li>
+</ul>
+<p>See <code>agentic_v2/adapters/</code>.</p>
+<p><strong>Agent</strong></p>
+<p>The function or model-backed worker that executes one workflow step. A step
+names its agent with the <code>agent:</code> field.</p>
+<p>See <code>agentic_v2/engine/agent_resolver.py</code>.</p>
+<p><strong>Agent tier</strong></p>
+<p>A number from 0 through 5 used to select model capacity, output limits, and
+available tools. Tier 0 is intended for deterministic or lowest-capability
+work, but the current resolver can still pass a tier-0 agent through the model
+client. A tier number alone does not prove that no provider path is involved.</p>
+<p><strong>Checkpoint</strong></p>
+<p>Saved workflow state that a compatible execution engine can use to resume work.
+Checkpoint support is an optional engine capability, not a guarantee for every
+adapter.</p>
+<p>See <code>agentic_v2/core/protocols.py</code>.</p>
+<p><strong>Condition</strong></p>
+<p>A <code>when:</code> expression on a workflow step. The step runs only when the expression
+resolves to true. A skipped step has no usable output, so downstream mappings
+should use <code>coalesce()</code> when they also accept another source.</p>
+<p><strong>DAG</strong></p>
+<p>A directed acyclic graph. Workflow steps are graph nodes and <code>depends_on</code>
+values are edges. The runtime rejects missing dependencies and cycles.</p>
+<p>See <code>agentic_v2/engine/dag.py</code>.</p>
+<p><strong>Execution context</strong></p>
+<p>The state for one workflow run. It holds workflow inputs, step results,
+services, and lifecycle events.</p>
+<p>See <code>agentic_v2/engine/context.py</code>.</p>
+<p><strong>Expression</strong></p>
+<p>A value inside <code>${...}</code>. Expressions can read inputs, step outputs, and context
+values. They support a restricted set of comparisons, boolean operations,
+arithmetic, collection literals, and <code>coalesce()</code>. Imports and arbitrary
+function calls are rejected.</p>
+<p>See <code>agentic_v2/engine/expressions.py</code>.</p>
+<p><strong>Fan-out / fan-in</strong></p>
+<p>A dependency shape where several independent steps run after the same parent,
+then a later step waits for all of them.</p>
+<p><strong>Loop</strong></p>
+<p>Bounded repetition of one step. <code>loop_until:</code> defines the stop condition and
+<code>loop_max:</code> limits how many times the step can run.</p>
+<p><strong>Step</strong></p>
+<p>One unit of work in a workflow. A YAML step has a name and agent, and may
+declare dependencies, inputs, outputs, conditions, artifact contracts, tools,
+and a bounded loop.</p>
+<p><strong>Workflow</strong></p>
+<p>A YAML file that declares inputs, steps, dependencies, and outputs. Built-in
+definitions live in <code>agentic_v2/workflows/definitions/</code>.</p>
+<p>See <a href="../WORKFLOW_AUTHORING/">Workflow authoring</a>.</p>
+<h2 id="contracts-and-artifacts">Contracts and artifacts<a class="headerlink" href="#contracts-and-artifacts" title="Permanent link">&para;</a></h2>
+<p><strong>Artifact contract</strong></p>
+<p>Optional validation attached to a step input or output. The current
+<code>code_artifact</code> contract accepts source code as a non-empty relative-path map
+or as complete <code>FILE</code>/<code>ENDFILE</code> blocks. It rejects unsafe paths, empty content,
+and placeholder-only output.</p>
+<p>See <code>agentic_v2/artifact_contracts.py</code>.</p>
+<p><strong>Contract</strong></p>
+<p>A typed boundary model shared by runtime components. Most public contracts use
+Pydantic models under <code>agentic_v2/contracts/</code>.</p>
+<p><strong>Protocol</strong></p>
+<p>A Python structural interface. A class satisfies a protocol by providing the
+required methods and properties; it does not need to inherit from the protocol.</p>
+<p>See <code>agentic_v2/core/protocols.py</code> and <code>agentic_v2/rag/protocols.py</code>.</p>
+<p><strong>Run record</strong></p>
+<p>The JSON representation of a completed workflow run. Run records support the
+dashboard, comparison, and offline evaluation routes.</p>
+<p>See <code>agentic_v2/workflows/run_logger.py</code>.</p>
+<h2 id="models-and-tools">Models and tools<a class="headerlink" href="#models-and-tools" title="Permanent link">&para;</a></h2>
+<p><strong>Fallback chain</strong></p>
+<p>An ordered list of model identifiers. When a model is unavailable or a call
+fails in a retryable way, the router can try the next configured model.</p>
+<p><strong>Model provider</strong></p>
+<p>A service or local runtime that accepts model requests. The repository has
+backends for cloud providers and local runtimes. Availability depends on
+installed extras, credentials, and reachable endpoints.</p>
+<p>See <a href="../configuration/">Configuration</a>.</p>
+<p><strong>Model tier</strong></p>
+<p>See <strong>Agent tier</strong>.</p>
+<p><strong>Tool</strong></p>
+<p>A named operation an agent can call, such as reading a file or making an HTTP
+request. The runtime filters tools by tier and by a step's <code>tools:</code> allowlist.
+An empty allowlist disables tools for that step.</p>
+<p>See <code>agentic_v2/tools/</code> and <code>agentic_v2/engine/tool_execution.py</code>.</p>
+<p><strong>Tool approval</strong></p>
+<p>A policy decision applied before a tool with side effects runs. Approval
+behavior depends on the configured policy and provider.</p>
+<h2 id="retrieval-augmented-generation">Retrieval-augmented generation<a class="headerlink" href="#retrieval-augmented-generation" title="Permanent link">&para;</a></h2>
+<p><strong>RAG</strong></p>
+<p>Retrieval-augmented generation. The application searches indexed content and
+adds selected passages to a model request.</p>
+<p><strong>Chunk</strong></p>
+<p>A section of a loaded document. Chunks include text, an identifier, position,
+and metadata.</p>
+<p><strong>Embedding</strong></p>
+<p>A numeric vector produced from text for similarity search. Provider embeddings
+can support semantic search. <code>InMemoryEmbedder</code> is a deterministic hash test
+double and does not provide semantic embeddings.</p>
+<p><strong>BM25</strong></p>
+<p>A keyword-ranking algorithm used by the repository's sparse index.</p>
+<p><strong>Hybrid retrieval</strong></p>
+<p>Combining vector search and BM25 results. <code>HybridRetriever</code> merges the ranked
+lists with reciprocal rank fusion.</p>
+<p><strong>Reciprocal rank fusion (RRF)</strong></p>
+<p>A method for merging ranked result lists using each result's position rather
+than trying to compare provider-specific scores directly.</p>
+<p><strong>Vector store</strong></p>
+<p>A component that stores vectors and finds nearby vectors. The repository
+includes an in-memory implementation and an optional persistent LanceDB
+implementation.</p>
+<p>See <a href="../rag/">RAG pipeline</a>.</p>
 <h2 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">&para;</a></h2>
-<p><strong>Evaluator</strong> -- A component that scores agent or workflow output against a rubric. The framework provides multiple evaluator types: base, LLM-based (uses an LLM as judge), pattern-based (regex/structural matching), quality, and standard evaluators. All evaluators produce numeric scores and structured feedback.
-See <code>agentic-v2-eval/src/agentic_v2_eval/evaluators/</code>.</p>
-<p><strong>LLM Judge</strong> -- An evaluation method where an LLM scores output on a 0.0--10.0 scale against rubric-defined criteria. Used for automated quality assessment when human evaluation is impractical.
-See <code>tools/agents/benchmarks/llm_evaluator.py</code>.</p>
-<p><strong>Reporter</strong> -- A component that formats evaluation results into human-readable output. Supports multiple output formats including HTML reports. Reporters consume scored results from runners and produce presentation-ready summaries.
-See <code>agentic-v2-eval/src/agentic_v2_eval/reporters/</code>.</p>
-<p><strong>Rubric</strong> -- A YAML-defined set of evaluation criteria with weighted dimensions and scoring thresholds. Each rubric specifies named criteria (e.g. Accuracy, Completeness, Efficiency) with weights that sum to 1.0 and description strings. The framework includes 8 rubric definitions: <code>default</code>, <code>agent</code>, <code>code</code>, <code>coding_standards</code>, <code>pattern</code>, <code>prompt_pattern</code>, <code>prompt_standard</code>, and <code>quality</code>.
-See <code>agentic-v2-eval/src/agentic_v2_eval/rubrics/</code>.</p>
-<p><strong>Runner</strong> -- The execution harness for evaluation: loads datasets, invokes evaluators against rubrics, and collects scored results. Implementations include <code>BatchRunner</code> (synchronous batch), <code>StreamingRunner</code> (progressive output), and <code>AsyncStreamingRunner</code> (async progressive output).
-See <code>agentic-v2-eval/src/agentic_v2_eval/runners/</code>.</p>
-<hr />
-<h2 id="workflow-engine">Workflow engine<a class="headerlink" href="#workflow-engine" title="Permanent link">&para;</a></h2>
-<p><strong>DAG (Directed Acyclic Graph)</strong> -- The data structure representing step dependencies in a workflow. Steps are nodes and <code>depends_on</code> declarations are directed edges. The DAG ensures no circular dependencies and enables parallel scheduling of independent steps.
-See <code>agentic_v2/engine/dag.py</code>.</p>
-<p><strong>DAGExecutor</strong> -- The native execution engine that schedules workflow steps using Kahn's algorithm for maximum parallelism. Steps execute as soon as their upstream dependencies are satisfied, using <code>asyncio.wait(FIRST_COMPLETED)</code> to unblock downstream steps instantly. Includes cascade-skip via BFS on failure and deadlock detection.
-See <code>agentic_v2/engine/dag_executor.py</code>.</p>
-<p><strong>Expression Language</strong> -- A safe DSL embedded in YAML workflow definitions for dynamic value resolution. Syntax includes <code>${inputs.topic}</code> for workflow inputs, <code>${steps.step1.outputs.result}</code> for step output references, <code>${coalesce(a, b)}</code> for null-safe fallback, and <code>${ctx.count &gt; 5}</code> for conditional expressions. Evaluated via AST-safe parsing with <code>_NullSafe</code> sentinel for missing values, preventing <code>AttributeError</code> on optional step outputs.
-See <code>agentic_v2/engine/expressions.py</code>.</p>
-<p><strong>Kahn's Algorithm</strong> -- A topological sorting algorithm used by the <code>DAGExecutor</code> for runtime step scheduling. Tracks in-degree counts (number of unsatisfied upstream dependencies) per step; steps with in-degree 0 are immediately eligible for execution. When a step completes, all downstream in-degrees are decremented, potentially releasing new steps for parallel execution.
-See <code>agentic_v2/engine/dag_executor.py</code>.</p>
-<p><strong>Loop-Until</strong> -- A bounded re-execution mechanism for workflow steps. A step with a <code>loop_until</code> expression is re-executed until the expression evaluates to <code>True</code> or <code>loop_max</code> iterations are reached. Used for iterative refinement patterns like bounded re-review, where a reviewer step re-runs until the output meets quality criteria.
-See <code>agentic_v2/engine/step.py</code>.</p>
-<p><strong>RetryConfig</strong> -- Configuration for step-level retry behavior, supporting four backoff strategies: <code>NONE</code>, <code>FIXED</code>, <code>LINEAR</code>, and <code>EXPONENTIAL</code> (with jitter). Each step can specify <code>max_retries</code> and strategy parameters independently.
-See <code>agentic_v2/engine/step.py</code>.</p>
-<p><strong>StepDefinition</strong> -- A declarative specification of what a single workflow step does: its async function, model tier, conditional execution (<code>when</code> / <code>unless</code>), input/output mappings, lifecycle hooks, retry configuration, and optional <code>loop_until</code> expression. Constructed via a fluent builder API or the <code>@step</code> decorator.
-See <code>agentic_v2/engine/step.py</code>.</p>
-<p><strong>StepExecutor</strong> -- The runtime delegate that handles single-step execution within the DAG. Manages the full step lifecycle: input mapping from <code>ExecutionContext</code>, timeout enforcement, retry with backoff, pre/post hooks, output capture, loop-until re-execution, and review-report normalization.
-See <code>agentic_v2/engine/step.py</code>.</p>
-<p><strong>StepState</strong> -- The lifecycle state of an individual step during execution: <code>PENDING -&gt; READY -&gt; RUNNING -&gt; SUCCESS | FAILED | SKIPPED</code>. Managed by <code>StepStateManager</code>, which enforces valid state transitions and emits events for observability.
-See <code>agentic_v2/engine/step_state.py</code>.</p>
-<p><strong>Workflow</strong> -- A declarative YAML definition of a multi-step, multi-agent execution plan. Each workflow specifies a name, description, version, input/output schemas, and an ordered list of steps. Each step declares its agent, tools, dependencies (<code>depends_on</code>), input/output mappings using expression language, and optional conditions. The codebase includes production workflows (code review, bug resolution, consensus review, fullstack generation, iterative review, and conditional branching) plus test workflows (<code>test_deterministic</code>, <code>test_workflow</code>).
-See <code>agentic_v2/workflows/definitions/</code>.</p>
-<hr />
-<h2 id="cross-cutting-concerns">Cross-cutting concerns<a class="headerlink" href="#cross-cutting-concerns" title="Permanent link">&para;</a></h2>
-<p><strong>OTEL Tracing</strong> -- OpenTelemetry-based distributed tracing integrated into the RAG pipeline for observability. Traces span the full retrieval lifecycle (embed, search, assemble) to support debugging and performance analysis.
-See <code>agentic_v2/rag/tracing.py</code>.</p>
-<p><strong>Research Gating</strong> -- Quality thresholds applied to research outputs: <code>coverage_score &gt;= 0.80</code> and <code>source_quality_score &gt;= 0.80</code>. Research that does not meet these thresholds is flagged for additional iteration or manual review.
-See <code>agentic_v2/config/defaults/evaluation.yaml</code>.</p>
-<p><strong>Source Tier</strong> -- A classification system for research source quality. <strong>Tier A</strong> (always acceptable): official docs, peer-reviewed papers, arXiv from known groups. <strong>Tier B</strong> (conditional): high-quality engineering blogs, high-vote Stack Overflow answers. <strong>Tier C</strong> (blocked): unverified blogs, marketing materials. Critical architectural claims require at least 2 independent Tier A sources.
-See <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/docs/OWASP_LLM_THREAT_MODEL.md"><code>docs/OWASP_LLM_THREAT_MODEL.md</code> on GitHub</a> (excluded from the built docs site) and <a href="../AI_RISK_MANAGEMENT/"><code>docs/AI_RISK_MANAGEMENT.md</code></a>.</p>
+<p><strong>Criterion</strong></p>
+<p>One named part of a rubric, with a weight and scoring guidance.</p>
+<p><strong>Dataset</strong></p>
+<p>Input cases and expected values used by an evaluation runner.</p>
+<p><strong>Evaluator</strong></p>
+<p>Code that scores a result. The evaluation package includes structural,
+pattern-based, standard, quality, and model-backed evaluators.</p>
+<p><strong>LLM judge</strong></p>
+<p>A model-backed evaluator that scores output against explicit criteria. Its
+score is evidence from that judge configuration, not a human verdict.</p>
+<p><strong>Rubric</strong></p>
+<p>A set of weighted criteria used to score output. Criterion weights must sum to
+1.0 within the loader's tolerance.</p>
+<p><strong>Runner</strong></p>
+<p>Code that applies an evaluator to one or more dataset cases and collects the
+results.</p>
+<p>See <a href="../architecture-eval/">Evaluation framework</a>.</p>
+<h2 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h2>
+<p><strong>No-LLM mode</strong></p>
+<p>Development mode enabled with <code>AGENTIC_NO_LLM=1</code>. Supported model-client paths
+return deterministic placeholder text, which is useful for interface tests. It
+does not make every subsystem deterministic and does not change RAG component
+selection.</p>
+<p>See <a href="../NO_LLM_MODE/">No-LLM development mode</a>.</p>
+<p><strong>OpenTelemetry (OTEL)</strong></p>
+<p>The tracing standard used by optional runtime instrumentation. Tracing is
+disabled unless configured.</p>
+<p><strong>Readiness check</strong></p>
+<p>An endpoint that reports whether the server is ready to accept work. In this
+repository it is <code>GET /api/health/ready</code>.</p>
+<p><strong>Smoke test</strong></p>
+<p>A small check that confirms a basic path works. <code>test_deterministic</code> is the
+recommended provider-free workflow smoke test.</p>
 
 
 
@@ -3152,7 +3271,7 @@ See <a href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/doc
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

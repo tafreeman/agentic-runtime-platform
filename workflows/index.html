@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2081,6 +2111,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2178,6 +2212,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2488,6 +2578,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2548,6 +2642,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2892,13 +3042,12 @@
 
 
 <h1 id="workflow-reference">Workflow reference<a class="headerlink" href="#workflow-reference" title="Permanent link">&para;</a></h1>
-<p>Workflow definitions ship with the runtime today — production
-workflows plus deterministic test fixtures. Each is a real, runnable
-YAML file under
+<p>The runtime ships example workflows and deterministic test fixtures. Each
+workflow is a runnable YAML file under
 <a href="https://github.com/tafreeman/agentic-runtime-platform/tree/main/agentic-workflows-v2/agentic_v2/workflows/definitions"><code>agentic-workflows-v2/agentic_v2/workflows/definitions/</code></a>.
-They are deployed alongside the runtime and exercised by the test suite, so
-they double as the canonical examples for every grammar feature the engine
-supports.</p>
+Use these files as examples for the workflow features they demonstrate. The
+<a href="../WORKFLOW_AUTHORING/">Workflow Authoring Guide</a> is the complete syntax
+reference.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2955,24 +3104,22 @@ supports.</p>
 </tr>
 <tr>
 <td><a href="#test_deterministic"><code>test_deterministic</code></a></td>
-<td>Tier-0 only (no LLM)</td>
+<td>Tier-0 placeholder path</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
-<td>Smoke test for the executor itself; no provider needed</td>
+<td>Smoke test for the executor; no external provider needed in no-LLM mode</td>
 </tr>
 <tr>
 <td><a href="#test_workflow"><code>test_workflow</code></a></td>
-<td>Tier-0 only (no LLM)</td>
+<td>Tier-0 placeholder path</td>
 <td style="text-align: right;">2</td>
 <td style="text-align: right;">2</td>
 <td>Fixture for server and evaluation tests</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Steps</strong> counts entries under <code>steps:</code>; <strong>Agents</strong> counts the unique
-<code>agent:</code> values referenced; and <strong>Pattern</strong> is the dominant control-flow
-shape — every workflow combines features, but each leans on one shape more
-than the others.</p>
+<p><strong>Steps</strong> counts entries under <code>steps:</code>. <strong>Agents</strong> counts unique <code>agent:</code>
+values. <strong>Pattern</strong> names the main control-flow shape.</p>
 <h2 id="code_review"><code>code_review</code><a class="headerlink" href="#code_review" title="Permanent link">&para;</a></h2>
 <p>Multi-tier code review with a fan-out / fan-in shape. The first step
 parses the source file; three downstream steps run in parallel — style,
@@ -2985,8 +3132,7 @@ that consolidates the three reviews into a single report.</p>
 <li><strong>Inputs:</strong> <code>code_file</code>, <code>review_depth</code></li>
 <li><strong>Outputs:</strong> <code>review</code>, <code>summary</code></li>
 <li><strong>Rubric:</strong> <code>code_review_v1</code></li>
-<li><strong>When to reach for it:</strong> you want multiple specialist perspectives on a
-  single artifact and a synthesized verdict, not three independent reports</li>
+<li><strong>Use it for:</strong> combining several reviews of one file into one report</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/code_review.yaml">View YAML →</a></p>
 <h2 id="bug_resolution"><code>bug_resolution</code><a class="headerlink" href="#bug_resolution" title="Permanent link">&para;</a></h2>
@@ -3001,16 +3147,15 @@ step writes the human-readable report.</p>
 <li><strong>Inputs:</strong> <code>bug_report</code>, <code>code_file</code>, <code>resolution_depth</code></li>
 <li><strong>Outputs:</strong> <code>root_cause</code>, <code>fix</code>, <code>verification_report</code></li>
 <li><strong>Rubric:</strong> <code>bug_resolution_v1</code></li>
-<li><strong>When to reach for it:</strong> you have a stack trace or repro and you want a
-  scored, auditable trail from observation to fix</li>
+<li><strong>Use it for:</strong> tracing a reported defect through diagnosis, a proposed fix,
+  regression checks, and a final report</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/bug_resolution.yaml">View YAML →</a></p>
 <h2 id="fullstack_generation"><code>fullstack_generation</code><a class="headerlink" href="#fullstack_generation" title="Permanent link">&para;</a></h2>
-<p>The widest workflow shipped with the runtime. After an architect designs
-the feature, four generators run in parallel — API, frontend, migrations,
-integration tests — and feed into a tier-3 reviewer. If the reviewer
-flags issues, a <code>developer_rework</code> step kicks in before the final
-assembler packages the artifact bundle.</p>
+<p>After an architecture step, four generators run in parallel for the API,
+frontend, migrations, and integration tests. A reviewer checks their output.
+A rework step handles review findings before the final assembly step packages
+the result.</p>
 <ul>
 <li><strong>Pattern:</strong> Parallel sub-DAG with rework</li>
 <li><strong>Steps:</strong> <code>design_architecture</code> → (<code>generate_api</code> ‖ <code>generate_frontend</code> ‖ <code>generate_migrations</code> ‖ <code>generate_integration_tests</code>) → <code>review_code</code> → <code>developer_rework</code> → <code>assemble_feature</code></li>
@@ -3018,46 +3163,42 @@ assembler packages the artifact bundle.</p>
 <li><strong>Inputs:</strong> <code>feature_spec</code>, <code>tech_stack</code></li>
 <li><strong>Outputs:</strong> <code>feature_package</code>, <code>review_report</code>, <code>all_code</code></li>
 <li><strong>Rubric:</strong> <code>fullstack_generation_v1</code></li>
-<li><strong>When to reach for it:</strong> you want to demonstrate that the runtime can
-  drive a full-stack feature from spec to packaged artifact in one DAG</li>
+<li><strong>Use it for:</strong> testing a full-stack generation flow with parallel work,
+  review, rework, and packaging</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/fullstack_generation.yaml">View YAML →</a></p>
 <h2 id="iterative_review"><code>iterative_review</code><a class="headerlink" href="#iterative_review" title="Permanent link">&para;</a></h2>
-<p>Demonstrates the <code>loop_until:</code> + <code>loop_max:</code> pattern. A tier-2 coder
-implements; a tier-3 reviewer scores; the loop body keeps reworking the
-implementation until the score crosses a quality threshold or the
-iteration count hits <code>loop_max</code>. An <code>escalation_notice</code> step fires if the
-loop exits on max-iterations rather than passing the gate.</p>
+<p>Demonstrates <code>loop_until:</code> and <code>loop_max:</code>. The review step runs again until
+it approves the work or reaches the configured round limit. An
+<code>escalation_notice</code> step runs when the loop ends without approval.</p>
 <ul>
 <li><strong>Pattern:</strong> Bounded loop with rework gate</li>
 <li><strong>Steps:</strong> <code>design</code> → <code>implement</code> → <code>review_rework_loop</code> (looped) → <code>escalation_notice</code> → <code>package</code></li>
 <li><strong>Agents:</strong> <code>tier1_assembler</code>, <code>tier2_coder</code>, <code>tier3_architect</code>, <code>tier3_reviewer</code></li>
-<li><strong>When to reach for it:</strong> the artifact has a measurable quality gate and
-  you want bounded retries before paging a human</li>
+<li><strong>Inputs:</strong> <code>feature_spec</code>, <code>max_review_rounds</code></li>
+<li><strong>Outputs:</strong> <code>final_package</code>, <code>review_history</code></li>
+<li><strong>Use it for:</strong> limiting review and rework to a known number of rounds</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/iterative_review.yaml">View YAML →</a></p>
 <h2 id="conditional_branching"><code>conditional_branching</code><a class="headerlink" href="#conditional_branching" title="Permanent link">&para;</a></h2>
-<p>Showcases the <code>when:</code> conditional gate. After parsing requirements, the
-workflow branches on input parameters — depth of review, whether
-deployment readiness is in scope, whether a security scan is required.
-Only the branches whose <code>when:</code> expression evaluates true run; the
-assembler at the end coalesces whatever results are present.</p>
+<p>Demonstrates the <code>when:</code> condition. After parsing requirements, the workflow
+chooses a quick or thorough review path. Production targets also run a
+deployment-readiness step. The final step combines the outputs from whichever
+branches ran.</p>
 <ul>
 <li><strong>Pattern:</strong> Conditional fan-out with assembly</li>
 <li><strong>Steps:</strong> <code>parse_requirements</code> → (<code>quick_review</code> | <code>deep_analysis</code> | <code>security_scan</code> | <code>deployment_readiness</code>)* → <code>assemble_report</code></li>
 <li><strong>Agents:</strong> <code>tier1_assembler</code>, <code>tier2_coder</code>, <code>tier3_architect</code>, <code>tier3_reviewer</code></li>
-<li><strong>When to reach for it:</strong> the same workflow shape applies to multiple
-  request shapes; you want a single definition rather than four near-duplicates</li>
+<li><strong>Inputs:</strong> <code>feature_spec</code>, <code>review_depth</code>, <code>target_env</code></li>
+<li><strong>Outputs:</strong> <code>analysis_report</code></li>
+<li><strong>Use it for:</strong> selecting steps from input values without maintaining
+  several similar workflow files</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/conditional_branching.yaml">View YAML →</a></p>
 <h2 id="consensus_review"><code>consensus_review</code><a class="headerlink" href="#consensus_review" title="Permanent link">&para;</a></h2>
-<p>A self-consistency / ensemble review pattern. Three independent tier-2
-reviewers answer the same prompt in parallel; a deterministic tier-0
-aggregator majority-votes their verdicts; a final summary step runs only
-when the vote clears the <code>min_agreement</code> threshold (default 0.66). The
-workflow's own description calls it "a usable production pattern, not a
-demo" — point any verdict-producing reviewer agents at it and tune
-<code>min_agreement</code>.</p>
+<p>Three tier-2 reviewers answer the same prompt in parallel. A deterministic
+tier-0 agent selects the majority verdict. The final summary runs only when
+the vote meets the <code>min_agreement</code> threshold, which defaults to <code>0.66</code>.</p>
 <ul>
 <li><strong>Pattern:</strong> Ensemble with majority vote</li>
 <li><strong>Steps:</strong> (<code>reviewer_a</code> ‖ <code>reviewer_b</code> ‖ <code>reviewer_c</code>) → <code>vote</code> →
@@ -3065,24 +3206,25 @@ demo" — point any verdict-producing reviewer agents at it and tune
 <li><strong>Agents:</strong> <code>tier0_consensus</code>, <code>tier2_reviewer</code>, <code>tier2_summarizer</code></li>
 <li><strong>Inputs:</strong> <code>code_file</code>, <code>min_agreement</code></li>
 <li><strong>Outputs:</strong> <code>verdict</code>, <code>agreement</code>, <code>summary</code> (optional)</li>
-<li><strong>When to reach for it:</strong> a single reviewer's verdict is too noisy and
-  you want agreement across independent samples before acting on it</li>
+<li><strong>Use it for:</strong> requiring agreement from several independent reviews before
+  producing a summary</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/consensus_review.yaml">View YAML →</a></p>
 <h2 id="test_deterministic"><code>test_deterministic</code><a class="headerlink" href="#test_deterministic" title="Permanent link">&para;</a></h2>
-<p>The smallest workflow: two steps with two tier-0 agents and no LLM
-calls. Used by the test suite to assert the executor, contract validator,
-and run recorder all work in isolation. It is also the workflow the
+<p>The smallest workflow has two steps with two tier-0 agents. In the current
+native execution path, those agents still pass through the model-client loop.
+With <code>AGENTIC_NO_LLM=1</code>, the loop returns placeholder values without calling an
+external provider. The fixture is used to exercise the executor, contract
+validator, and run recorder. It is also the workflow the
 <a href="../getting-started/quickstart/">Quick Start</a> page asks you to run
 first.</p>
 <ul>
-<li><strong>Pattern:</strong> Tier-0 only (no LLM)</li>
+<li><strong>Pattern:</strong> Tier-0 placeholder path</li>
 <li><strong>Steps:</strong> <code>step1</code> → <code>step2</code></li>
 <li><strong>Agents:</strong> <code>tier0_counter</code>, <code>tier0_process</code></li>
 <li><strong>Inputs:</strong> <code>input_text</code> (required)</li>
 <li><strong>Outputs:</strong> <code>processed_text</code>, <code>step_count</code></li>
-<li><strong>When to reach for it:</strong> smoke-testing a fresh install before swapping
-  in real provider keys</li>
+<li><strong>Use it for:</strong> checking a fresh installation without provider credentials</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_deterministic.yaml">View YAML →</a></p>
 <h2 id="test_workflow"><code>test_workflow</code><a class="headerlink" href="#test_workflow" title="Permanent link">&para;</a></h2>
@@ -3096,8 +3238,8 @@ with no inputs at all.</p>
 <li><strong>Agents:</strong> <code>tier0_counter</code>, <code>tier0_process</code></li>
 <li><strong>Inputs:</strong> <code>input_text</code> (optional, default <code>""</code>)</li>
 <li><strong>Outputs:</strong> <code>processed_text</code>, <code>step_count</code></li>
-<li><strong>When to reach for it:</strong> you need a zero-input, zero-key workflow as a
-  fixture in server or evaluation tests</li>
+<li><strong>Use it for:</strong> server and evaluation tests that need no input or provider
+  credentials</li>
 </ul>
 <p><a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform/blob/main/agentic-workflows-v2/agentic_v2/workflows/definitions/test_workflow.yaml">View YAML →</a></p>
 <h2 id="what-to-read-next">What to read next<a class="headerlink" href="#what-to-read-next" title="Permanent link">&para;</a></h2>
@@ -3133,7 +3275,7 @@ with no inputs at all.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

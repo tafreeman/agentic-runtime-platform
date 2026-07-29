@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Overview - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/index.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Overview - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/index.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tools-documentation" class="md-skip">
+        <a href="#shared-tools-package" class="md-skip">
           Skip to content
         </a>
       
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2081,6 +2111,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2178,6 +2212,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2488,6 +2578,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2548,6 +2642,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2735,10 +2885,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#llm-client-and-provider-routing" class="md-nav__link">
+  <a href="#choose-a-guide" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM client and provider routing
+        Choose a guide
       
     </span>
   </a>
@@ -2746,10 +2896,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#model-availability-and-discovery" class="md-nav__link">
+  <a href="#package-map" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model availability and discovery
+        Package map
       
     </span>
   </a>
@@ -2757,10 +2907,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benchmarking-and-evaluation" class="md-nav__link">
+  <a href="#install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Benchmarking and evaluation
+        Install
       
     </span>
   </a>
@@ -2768,71 +2918,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-reference" class="md-nav__link">
+  <a href="#keep-results-reproducible" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Module reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#toolsllm" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        tools/llm/
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#toolscore" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        tools/core/
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#toolsagents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        tools/agents/
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
+        Keep results reproducible
       
     </span>
   </a>
@@ -2872,304 +2961,137 @@
   
 
 
-<h1 id="tools-documentation">Tools documentation<a class="headerlink" href="#tools-documentation" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>Package: <code>tools</code> — LLM orchestration, local model inference, benchmarking, caching, and utility modules shared across the Agentic Runtime Platform.</p>
-</blockquote>
-<p>This page is the navigation hub for all <code>tools/</code> documentation. If you are looking for a specific capability, use the table below to find the right doc.</p>
-<hr />
-<h2 id="llm-client-and-provider-routing">LLM client and provider routing<a class="headerlink" href="#llm-client-and-provider-routing" title="Permanent link">&para;</a></h2>
+<h1 id="shared-tools-package">Shared tools package<a class="headerlink" href="#shared-tools-package" title="Permanent link">&para;</a></h1>
+<p>The repository root installs the <code>agentic-tools</code> Python package from <code>tools/</code>.
+It contains model clients, discovery utilities, local-model helpers, and
+benchmark code shared by the other packages.</p>
+<p><code>agentic-tools</code> and the <code>agentic_v2</code> runtime have separate provider-routing
+implementations. A model setting that affects one does not automatically affect
+the other.</p>
+<h2 id="choose-a-guide">Choose a guide<a class="headerlink" href="#choose-a-guide" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>What you want to do</th>
-<th>Doc</th>
+<th>Task</th>
+<th>Guide</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Call any LLM provider with one function</td>
-<td><a href="llm-client/">llm-client.md</a></td>
+<td>Send one text request through the shared provider client</td>
+<td><a href="llm-client/">LLM client</a></td>
 </tr>
 <tr>
-<td>Use a local ONNX model (Phi-4, Mistral)</td>
-<td><a href="local-models/">local-models.md</a></td>
+<td>Find and run a local ONNX model</td>
+<td><a href="local-models/">Local models</a></td>
 </tr>
 <tr>
-<td>Use Phi Silica on a Copilot+ PC (NPU inference)</td>
-<td><a href="windows-ai/">windows-ai.md</a></td>
+<td>Use Phi Silica through Windows AI</td>
+<td><a href="windows-ai/">Windows AI</a></td>
 </tr>
 <tr>
-<td>Adapt tools models for LangChain pipelines</td>
-<td><a href="llm-client/#langchain-adapter">llm-client.md — LangChain adapter</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="model-availability-and-discovery">Model availability and discovery<a class="headerlink" href="#model-availability-and-discovery" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>What you want to do</th>
-<th>Doc</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Check if a model is available before calling it</td>
-<td><a href="model-probing/">model-probing.md</a></td>
+<td>Check which configured models respond</td>
+<td><a href="model-probing/">Model probing</a></td>
 </tr>
 <tr>
-<td>Discover all models across all providers</td>
-<td><a href="model-probing/#model-discovery">model-probing.md — Discovery</a></td>
+<td>Inspect provider limits and rank probe results</td>
+<td><a href="provider-limits/">Provider limits</a></td>
 </tr>
 <tr>
-<td>Get a structured inventory of all models</td>
-<td><a href="model-probing/">model-probing.md — Inventory</a></td>
-</tr>
-<tr>
-<td>Check rate limits and API quotas before a bakeoff</td>
-<td><a href="provider-limits/">provider-limits.md</a></td>
-</tr>
-<tr>
-<td>Rank available models by preference</td>
-<td><a href="provider-limits/">provider-limits.md — Model ranking</a></td>
+<td>Compare models or run coding benchmarks</td>
+<td><a href="benchmarks/">Benchmarks</a></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="benchmarking-and-evaluation">Benchmarking and evaluation<a class="headerlink" href="#benchmarking-and-evaluation" title="Permanent link">&para;</a></h2>
+<h2 id="package-map">Package map<a class="headerlink" href="#package-map" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>What you want to do</th>
-<th>Doc</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Run a multi-model bakeoff</td>
-<td><a href="benchmarks/">benchmarks.md</a></td>
-</tr>
-<tr>
-<td>Run the full probe → limits → rank pipeline</td>
-<td><a href="provider-limits/#full-three-step-pipeline">provider-limits.md — Full pipeline</a></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="module-reference">Module reference<a class="headerlink" href="#module-reference" title="Permanent link">&para;</a></h2>
-<h3 id="toolsllm"><code>tools/llm/</code><a class="headerlink" href="#toolsllm" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Purpose</th>
-<th>Doc</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>llm_client.py</code></td>
-<td><code>LLMClient</code> — unified provider routing</td>
-<td><a href="llm-client/">llm-client.md</a></td>
-</tr>
-<tr>
-<td><code>local_model.py</code></td>
-<td><code>LocalModel</code> — direct ONNX inference</td>
-<td><a href="local-models/">local-models.md</a></td>
-</tr>
-<tr>
-<td><code>local_model_cli.py</code></td>
-<td>CLI for local ONNX models</td>
-<td><a href="local-models/#cli">local-models.md — CLI</a></td>
-</tr>
-<tr>
-<td><code>local_model_discovery.py</code></td>
-<td>Model path resolution, AI Dev Gallery detection</td>
-<td><a href="local-models/#model-discovery">local-models.md — Discovery</a></td>
-</tr>
-<tr>
-<td><code>local_models.py</code></td>
-<td><code>LOCAL_MODELS</code> catalog constant</td>
-<td><a href="llm-client/">llm-client.md — Local ONNX</a></td>
-</tr>
-<tr>
-<td><code>windows_ai.py</code></td>
-<td><code>WindowsAIModel</code> — Phi Silica NPU (Copilot+ PCs)</td>
-<td><a href="windows-ai/">windows-ai.md</a></td>
-</tr>
-<tr>
-<td><code>model_probe.py</code></td>
-<td><code>ModelProbe</code> — availability checking with cache</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>probe_config.py</code></td>
-<td><code>ProbeResult</code>, cache I/O, <code>with_retry</code></td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>probe_providers.py</code></td>
-<td>Provider routing for probe calls</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>probe_providers_cloud.py</code></td>
-<td>Cloud provider probe logic</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>probe_providers_local.py</code></td>
-<td>Local provider probe logic</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>probe_discovery.py</code></td>
-<td><code>discover_all_models()</code> — full scan</td>
-<td><a href="model-probing/#model-discovery">model-probing.md — Discovery</a></td>
-</tr>
-<tr>
-<td><code>probe_discovery_providers.py</code></td>
-<td>Per-provider discovery helpers</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>model_inventory.py</code></td>
-<td><code>build_inventory()</code> — capability audit</td>
-<td><a href="model-probing/">model-probing.md — Inventory</a></td>
-</tr>
-<tr>
-<td><code>model_locks.py</code></td>
-<td>PID lock files for concurrent ONNX loading</td>
-<td><a href="model-probing/">model-probing.md</a></td>
-</tr>
-<tr>
-<td><code>check_provider_limits.py</code></td>
-<td>Rate-limit check per provider</td>
-<td><a href="provider-limits/">provider-limits.md</a></td>
-</tr>
-<tr>
-<td><code>rank_models.py</code></td>
-<td>Rank models from probe + limits data</td>
-<td><a href="provider-limits/">provider-limits.md — Ranking</a></td>
-</tr>
-<tr>
-<td><code>model_bakeoff.py</code></td>
-<td>Full multi-model bakeoff runner</td>
-<td><a href="benchmarks/">benchmarks.md</a></td>
-</tr>
-<tr>
-<td><code>bakeoff_tasks.py</code></td>
-<td>Task definitions for bakeoff</td>
-<td><a href="benchmarks/">benchmarks.md</a></td>
-</tr>
-<tr>
-<td><code>bakeoff_reporting.py</code></td>
-<td>Output reports for bakeoff</td>
-<td><a href="benchmarks/">benchmarks.md</a></td>
-</tr>
-<tr>
-<td><code>langchain_adapter.py</code></td>
-<td>Minimal LangChain-compatible shim over <code>LLMClient</code></td>
-<td><a href="llm-client/#langchain-adapter">llm-client.md — LangChain adapter</a></td>
-</tr>
-<tr>
-<td><code>provider_adapters.py</code></td>
-<td>Low-level provider call adapters (multiple routing backends)</td>
-<td>Internal</td>
-</tr>
-</tbody>
-</table>
-<h3 id="toolscore"><code>tools/core/</code><a class="headerlink" href="#toolscore" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Module</th>
+<th>Path</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>config.py</code></td>
-<td>Dataclass-based configuration for model selection, filesystem paths, and temperature settings, loaded from environment variables</td>
+<td><code>tools/llm/llm_client.py</code></td>
+<td>Static text-generation facade</td>
 </tr>
 <tr>
-<td><code>errors.py</code></td>
-<td>Canonical <code>ErrorCode</code> enum, transient/permanent membership sets, and <code>classify_error()</code> for mapping error text to codes</td>
+<td><code>tools/llm/provider_adapters.py</code></td>
+<td>Provider-specific calls</td>
 </tr>
 <tr>
-<td><code>cache.py</code></td>
-<td>Function-based API (<code>get_cached_response</code>, <code>cache_response</code>, …) over a global <code>ResponseCache</code> instance</td>
+<td><code>tools/llm/model_probe.py</code></td>
+<td>Availability checks and probe cache</td>
 </tr>
 <tr>
-<td><code>response_cache.py</code></td>
-<td>SHA-256 keyed TTL cache for LLM responses with LRU size eviction</td>
+<td><code>tools/llm/probe_discovery.py</code></td>
+<td>Provider discovery</td>
 </tr>
 <tr>
-<td><code>prompt_db.py</code></td>
-<td>JSON-file-backed database for storing prompts, rubrics, and evaluations</td>
+<td><code>tools/llm/model_inventory.py</code></td>
+<td>Inventory assembly</td>
 </tr>
 <tr>
-<td><code>model_availability.py</code></td>
-<td>Model availability checks without importing <code>tools.llm</code> internals</td>
+<td><code>tools/llm/local_model.py</code></td>
+<td>ONNX Runtime GenAI wrapper</td>
 </tr>
 <tr>
-<td><code>local_media.py</code></td>
-<td>Local media model runner — image generation and speech-to-text</td>
+<td><code>tools/llm/windows_ai.py</code></td>
+<td>Windows AI bridge wrapper</td>
 </tr>
 <tr>
-<td><code>tool_init.py</code></td>
-<td>Tool initialization helpers</td>
+<td><code>tools/llm/model_bakeoff.py</code></td>
+<td>Small cross-model comparison</td>
+</tr>
+<tr>
+<td><code>tools/llm/check_provider_limits.py</code></td>
+<td>Provider metadata checks</td>
+</tr>
+<tr>
+<td><code>tools/llm/rank_models.py</code></td>
+<td>Ranking from probe and limit files</td>
+</tr>
+<tr>
+<td><code>tools/agents/benchmarks/</code></td>
+<td>Benchmark definitions, loaders, runners, and evaluation helpers</td>
+</tr>
+<tr>
+<td><code>tools/core/</code></td>
+<td>Configuration, errors, response cache, prompt storage, and utilities</td>
 </tr>
 </tbody>
 </table>
-<h3 id="toolsagents"><code>tools/agents/</code><a class="headerlink" href="#toolsagents" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Purpose</th>
-<th>Doc</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>benchmarks/</code></td>
-<td>LLM-as-judge benchmark runner and UI</td>
-<td><a href="benchmarks/">benchmarks.md</a></td>
-</tr>
-<tr>
-<td><code>repo_analyzer/</code></td>
-<td>LangGraph-based repository analysis agent</td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>The <code>tools</code> package is provided by the repo-root <code>agentic-tools</code> project, so install from the repository root:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># From repo root — installs the tools package with dev extras</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># For local ONNX inference</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai<span class="w">          </span><span class="c1"># CPU</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai-cuda<span class="w">     </span><span class="c1"># NVIDIA GPU</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai-directml<span class="w"> </span><span class="c1"># AMD/Intel GPU on Windows</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># For provider limit checks</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>pip<span class="w"> </span>install<span class="w"> </span>requests
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># For LangChain integration</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pip<span class="w"> </span>install<span class="w"> </span>langchain
+<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<p>From the repository root:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="p">.</span>
 </span></code></pre></div>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<p>The root package requires Python 3.11 or newer.</p>
+<p>Optional features have additional requirements:</p>
 <ul>
-<li><a href="../architecture-eval/">Evaluation framework</a> — evaluation framework built on top of these tools</li>
-<li><a href="../configuration/">configuration.md</a> — all environment variables including provider API keys</li>
-<li><a href="llm-client/">llm-client.md</a> — primary entry point for most LLM calls</li>
+<li>local ONNX: install the appropriate <code>onnxruntime-genai</code> package for the
+  target hardware;</li>
+<li>provider-limit inspection: install <code>requests</code>;</li>
+<li>remote provider SDKs or local runtimes: follow the provider-specific guide.</li>
 </ul>
+<p>The repository-wide setup command installs all local packages:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">just</span> <span class="n">setup</span>
+</span></code></pre></div>
+<p>The current <code>justfile</code> uses PowerShell recipes. On Linux or macOS, follow the
+manual commands in <a href="../getting-started/installation/">Installation</a>.</p>
+<h2 id="keep-results-reproducible">Keep results reproducible<a class="headerlink" href="#keep-results-reproducible" title="Permanent link">&para;</a></h2>
+<p>When using discovery, probes, rankings, or benchmarks, record:</p>
+<ul>
+<li>the exact model identifier;</li>
+<li>provider endpoint and model revision when available;</li>
+<li>prompt or task revision;</li>
+<li>temperature and output limit;</li>
+<li>probe and benchmark timestamp;</li>
+<li>whether remote providers were enabled; and</li>
+<li>the generated JSON result file.</li>
+</ul>
+<p>Availability and provider limits change. A saved probe is evidence for its
+timestamp, not a permanent model catalog.</p>
 
 
 
@@ -3192,7 +3114,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Local ONNX models - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/local-models.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/tools/local-models/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Local ONNX models - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/tools/local-models.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1982,32 +2012,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#install-a-runtime" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported models
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick start
+        Install a runtime
       
     </span>
   </a>
@@ -2023,202 +2031,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-paths-are-resolved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How paths are resolved
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_model_info-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_model_info() → dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#check_model_available-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_model_available() → bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#localmodel-class" class="md-nav__link">
+  <a href="#generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LocalModel class
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="LocalModel class">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#evaluate_prompt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        evaluate_prompt()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="CLI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mode-1-direct-generation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 1 — Direct generation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-2-check-availability-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 2 — Check availability (--check)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-3-evaluate-a-prompt-file-evaluate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 3 — Evaluate a prompt file (--evaluate)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-4-batch-evaluate-batch-evaluate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 4 — Batch evaluate (--batch-evaluate)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-flags-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI flags reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#installing-a-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installing a model
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
+        Generate text
       
     </span>
   </a>
@@ -2226,10 +2045,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#command-line" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational checks
       
     </span>
   </a>
@@ -2383,6 +2224,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2480,6 +2325,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2790,6 +2691,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2850,6 +2755,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3037,32 +2998,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#install-a-runtime" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported models
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick start
+        Install a runtime
       
     </span>
   </a>
@@ -3078,202 +3017,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Model discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#how-paths-are-resolved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How paths are resolved
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get_model_info-dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get_model_info() → dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#check_model_available-bool" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        check_model_available() → bool
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#localmodel-class" class="md-nav__link">
+  <a href="#generate-text" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LocalModel class
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="LocalModel class">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#generate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        generate()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#evaluate_prompt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        evaluate_prompt()
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="CLI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mode-1-direct-generation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 1 — Direct generation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-2-check-availability-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 2 — Check availability (--check)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-3-evaluate-a-prompt-file-evaluate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 3 — Evaluate a prompt file (--evaluate)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mode-4-batch-evaluate-batch-evaluate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Mode 4 — Batch evaluate (--batch-evaluate)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-flags-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI flags reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#installing-a-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Installing a model
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
+        Generate text
       
     </span>
   </a>
@@ -3281,10 +3031,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#command-line" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        Command line
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operational-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational checks
       
     </span>
   </a>
@@ -3325,375 +3097,165 @@
 
 
 <h1 id="local-onnx-models">Local ONNX models<a class="headerlink" href="#local-onnx-models" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p>Modules: <code>tools.llm.local_model</code> · <code>tools.llm.local_model_cli</code> · <code>tools.llm.local_model_discovery</code></p>
-</blockquote>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The local model stack provides fast, free, offline LLM inference using ONNX models cached locally by the <a href="https://aka.ms/ai-dev-gallery">AI Dev Gallery</a> or installed manually. No API key or internet connection is required once a model is downloaded.</p>
-<p>Three modules work together:</p>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Responsibility</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>local_model_discovery.py</code></td>
-<td>Locate ONNX model directories under <code>~/.cache/aigallery</code></td>
-</tr>
-<tr>
-<td><code>local_model.py</code></td>
-<td><code>LocalModel</code> — load and run inference against a located model</td>
-</tr>
-<tr>
-<td><code>local_model_cli.py</code></td>
-<td>CLI entry point wrapping <code>LocalModel</code> with four operating modes</td>
-</tr>
-</tbody>
-</table>
-<p>For most callers, the higher-level <code>LLMClient</code> (see <a href="../llm-client/">llm-client.md</a>) is the preferred interface and routes to these modules automatically when a <code>local:</code> prefix is used. Use <code>LocalModel</code> directly when you need finer control over model loading or the 6-criterion <code>evaluate_prompt()</code> output.</p>
-<hr />
-<h2 id="supported-models">Supported models<a class="headerlink" href="#supported-models" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>AI Dev Gallery directory</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>phi4</code> / <code>phi4mini</code></td>
-<td><code>microsoft--Phi-4-mini-instruct-onnx</code></td>
-<td>Default fallback</td>
-</tr>
-<tr>
-<td><code>phi3</code></td>
-<td><code>microsoft--Phi-3-mini-4k-instruct-onnx</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>phi3.5</code></td>
-<td><code>microsoft--Phi-3.5-mini-instruct-onnx</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>mistral</code> / <code>mistral-7b</code></td>
-<td><code>microsoft--mistral-7b-instruct-v0.2-ONNX</code></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>Models are resolved in the order <code>phi4mini → phi3.5 → phi3 → mistral</code> when no key is specified.</p>
-<hr />
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.local_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalModel</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Automatically finds the first available model under ~/.cache/aigallery</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LocalModel</span><span class="p">()</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">response</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;Summarise the key points of the following text: ...&quot;</span><span class="p">)</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Select a specific model by key</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LocalModel</span><span class="p">(</span><span class="n">model_key</span><span class="o">=</span><span class="s2">&quot;phi4&quot;</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Point to a custom ONNX directory</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LocalModel</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="s2">&quot;/mnt/models/my-custom-onnx&quot;</span><span class="p">)</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Get a structured 6-criterion evaluation of a prompt file</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate_prompt</span><span class="p">(</span><span class="n">prompt_text</span><span class="p">)</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># → {&quot;clarity&quot;: 8.5, &quot;specificity&quot;: 7.0, &quot;context&quot;: 9.0, ...}</span>
+<p><code>tools.llm.local_model.LocalModel</code> runs a local text-generation model through
+ONNX Runtime GenAI. The model weights must already exist on disk.</p>
+<p>Local execution avoids a hosted model request. It does not guarantee that
+prompts, logs, or generated files stay private; that depends on the rest of the
+application and operating environment.</p>
+<h2 id="install-a-runtime">Install a runtime<a class="headerlink" href="#install-a-runtime" title="Permanent link">&para;</a></h2>
+<p>Install one package that matches the target:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c"># CPU</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">onnxruntime-genai</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c"># NVIDIA CUDA</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">onnxruntime-genai-cuda</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c"># DirectML on Windows</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">onnxruntime-genai-directml</span>
 </span></code></pre></div>
-<hr />
+<p>Use versions supported by the selected model and hardware. Do not install
+several provider variants into the same environment without checking the ONNX
+Runtime guidance for that platform.</p>
 <h2 id="model-discovery">Model discovery<a class="headerlink" href="#model-discovery" title="Permanent link">&para;</a></h2>
-<h3 id="how-paths-are-resolved">How paths are resolved<a class="headerlink" href="#how-paths-are-resolved" title="Permanent link">&para;</a></h3>
-<p>The public resolver is <code>tools.llm.provider_adapters.resolve_local_model_path(model_key, local_models=...)</code> — this is what <code>LLMClient</code>'s <code>local:</code> routing uses. It maps the key through the <code>LOCAL_MODELS</code> catalog, then locates a directory containing <code>.onnx</code> files under <code>~/.cache/aigallery</code> (an absolute catalog path is used as-is), preferring candidate subdirectories that match a <code>-gpu</code>/<code>-dml</code>/<code>-cpu</code> variant hint.</p>
-<p><code>LocalModel</code> itself uses the module-private helper <code>local_model_discovery._resolve_model_path(model_key)</code>, which implements a two-pass lookup:</p>
-<ol>
-<li><strong>Key lookup</strong> — if <code>model_key</code> is provided (e.g. <code>"phi4"</code>), maps to a list of known directory names under <code>_AI_GALLERY_ROOT</code> and returns the first match that contains a <code>*.onnx</code> file.</li>
-<li><strong>Auto-fallback</strong> — if no key is given or the key is unknown, iterates <code>["phi4mini", "phi3.5", "phi3", "mistral"]</code> in order and returns the first available.</li>
-</ol>
-<p>The AI Gallery root is:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>~/.cache/aigallery/          ← _AI_GALLERY_ROOT
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  microsoft--Phi-4-mini-instruct-onnx/
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    cpu-int4-rtn-block-32-acc-level-4/   ← contains *.onnx files
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>      model.onnx
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>      ...
+<p>Automatic discovery searches:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>~/.cache/aigallery/
 </span></code></pre></div>
-<p><code>_find_onnx_model_dir(base)</code> walks a model base directory recursively and returns the first subdirectory containing <code>*.onnx</code> files.</p>
-<h3 id="get_model_info-dict"><code>get_model_info() → dict</code><a class="headerlink" href="#get_model_info-dict" title="Permanent link">&para;</a></h3>
-<p>Returns availability status without loading the model:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.local_model_discovery</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_model_info</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">info</span> <span class="o">=</span> <span class="n">get_model_info</span><span class="p">()</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># {</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1">#   &quot;available&quot;: true,</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1">#   &quot;model_path&quot;: &quot;/home/user/.cache/aigallery/microsoft--Phi-4-mini-instruct-onnx/cpu-int4-rtn.../&quot;,</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1">#   &quot;model_key&quot;: &quot;phi4mini&quot;,</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1">#   &quot;error&quot;: null</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># }</span>
+<p>It looks for known Phi and Mistral directory names, then selects a nested
+directory containing an <code>.onnx</code> file.</p>
+<p>Check discovery without loading a model:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">local_model_cli</span> <span class="p">-</span><span class="n">-check</span>
 </span></code></pre></div>
-<h3 id="check_model_available-bool"><code>check_model_available() → bool</code><a class="headerlink" href="#check_model_available-bool" title="Permanent link">&para;</a></h3>
-<p>Lightweight check — returns <code>True</code> if any model can be found:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.local_model_discovery</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_model_available</span>
+<p>The command exits <code>0</code> when a model directory is found and <code>1</code> otherwise. The
+result also reports whether <code>onnxruntime_genai</code> is importable.</p>
+<p>Discovery is a filesystem check. It does not prove that the model can load on
+the current hardware.</p>
+<h2 id="generate-text">Generate text<a class="headerlink" href="#generate-text" title="Permanent link">&para;</a></h2>
+<p>Use an explicit model directory when repeatability matters:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.local_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalModel</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">if</span> <span class="n">check_model_available</span><span class="p">():</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">model</span> <span class="o">=</span> <span class="n">LocalModel</span><span class="p">()</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">LocalModel</span><span class="p">(</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">model_path</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;C:\models\phi4\cpu-int4&quot;</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">response</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">&quot;Explain why this test failed.&quot;</span><span class="p">,</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Answer for a software engineer.&quot;</span><span class="p">,</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">top_p</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
 </span></code></pre></div>
-<hr />
-<h2 id="localmodel-class"><code>LocalModel</code> class<a class="headerlink" href="#localmodel-class" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.local_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalModel</span>
-</span></code></pre></div>
-<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">LocalModel</span><span class="p">(</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">model_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
-</span></code></pre></div>
+<p>Constructor options:</p>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Description</th>
+<th>Option</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>model_path</code></td>
-<td><code>str \| None</code></td>
-<td>Explicit path to an ONNX model directory. Takes priority over <code>model_key</code>.</td>
+<td>Exact ONNX model directory</td>
 </tr>
 <tr>
 <td><code>model_key</code></td>
-<td><code>str \| None</code></td>
-<td>Short model name (<code>"phi4"</code>, <code>"mistral"</code>, etc.). Resolved via the discovery module's path lookup.</td>
+<td>Known discovery key such as <code>phi4mini</code>, <code>phi3.5</code>, <code>phi3</code>, or <code>mistral</code></td>
 </tr>
 <tr>
 <td><code>verbose</code></td>
-<td><code>bool</code></td>
-<td>Enable debug-level logging of model load and generation steps.</td>
+<td>Enable load and generation diagnostics</td>
 </tr>
 </tbody>
 </table>
-<p>Raises <code>FileNotFoundError</code> if no model can be located.<br />
-Raises <code>ImportError</code> if <code>onnxruntime-genai</code> is not installed.</p>
-<h3 id="generate"><code>generate()</code><a class="headerlink" href="#generate" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">response</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">max_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.7</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">top_p</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="p">)</span>
+<p>If neither path nor key is supplied, discovery selects the first known model it
+finds in a stable search order.</p>
+<p><code>generate()</code> defaults to <code>max_tokens=1024</code>, <code>temperature=0.7</code>, and
+<code>top_p=0.9</code>.</p>
+<p>The wrapper currently formats every text prompt with Mistral-style
+<code>&lt;s&gt;[INST] ... [/INST]</code> markers. Verify that format against the tokenizer and
+chat template of the selected model. A model can load successfully and still
+produce poor output when the template is wrong.</p>
+<h2 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
+<p>Send one prompt:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">local_model_cli</span> <span class="p">`</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  <span class="p">-</span><span class="n">-model-path</span> <span class="n">C</span><span class="p">:\</span><span class="n">models</span><span class="p">\</span><span class="n">phi4</span><span class="p">\</span><span class="n">cpu-int4</span> <span class="p">`</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  <span class="p">-</span><span class="n">-max-tokens</span> <span class="n">512</span> <span class="p">`</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  <span class="p">-</span><span class="n">-temperature</span> <span class="n">0</span><span class="p">.</span><span class="n">2</span> <span class="p">`</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  <span class="s2">&quot;Summarize the failure.&quot;</span>
 </span></code></pre></div>
-<p>Generate text from the model. Formats the prompt using Mistral instruction format (<code>[INST]...[/INST]</code>) when a <code>system_prompt</code> is provided.</p>
+<p>Evaluate one prompt file with the built-in prompt-review routine:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">local_model_cli</span> <span class="p">`</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  <span class="p">-</span><span class="n">-model-path</span> <span class="n">C</span><span class="p">:\</span><span class="n">models</span><span class="p">\</span><span class="n">phi4</span><span class="p">\</span><span class="n">cpu-int4</span> <span class="p">`</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  <span class="p">-</span><span class="n">-evaluate</span> <span class="p">.\</span><span class="n">reviewer-prompt</span><span class="p">.</span><span class="nb">md</span>
+</span></code></pre></div>
+<p>Evaluate several prompt files while loading the model once:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">[</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="s2">&quot;prompts/reviewer.md&quot;</span><span class="p">,</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="s2">&quot;prompts/coder.md&quot;</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">]</span>
+</span></code></pre></div>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">tools</span><span class="p">.</span><span class="n">llm</span><span class="p">.</span><span class="n">local_model_cli</span> <span class="p">`</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  <span class="p">-</span><span class="n">-model-path</span> <span class="n">C</span><span class="p">:\</span><span class="n">models</span><span class="p">\</span><span class="n">phi4</span><span class="p">\</span><span class="n">cpu-int4</span> <span class="p">`</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  <span class="p">-</span><span class="n">-batch-evaluate</span> <span class="p">.\</span><span class="n">prompt-files</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p>The evaluation modes use model-generated scoring. Treat their output as judge
+evidence, not an objective measurement.</p>
+<h2 id="shared-client">Shared client<a class="headerlink" href="#shared-client" title="Permanent link">&para;</a></h2>
+<p>The root shared client accepts catalog keys:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tools.llm.llm_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMClient</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">text</span> <span class="o">=</span> <span class="n">LLMClient</span><span class="o">.</span><span class="n">generate_text</span><span class="p">(</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="s2">&quot;local:phi4mini&quot;</span><span class="p">,</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="s2">&quot;Write a small retry function.&quot;</span><span class="p">,</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">)</span>
+</span></code></pre></div>
+<p>Catalog resolution and <code>LocalModel</code> discovery use related but not identical
+maps. Pass an explicit path to <code>LocalModel</code> when a catalog alias is ambiguous.</p>
+<h2 id="operational-checks">Operational checks<a class="headerlink" href="#operational-checks" title="Permanent link">&para;</a></h2>
+<p>Before using a local model in a benchmark or workflow:</p>
+<ol>
+<li>Record the full model directory and weight hashes.</li>
+<li>Confirm the execution provider matches the hardware.</li>
+<li>Run a load and one-token generation smoke test.</li>
+<li>Verify the prompt template.</li>
+<li>Measure memory use, startup time, and output latency.</li>
+<li>Test concurrent load behavior before starting several workers.</li>
+<li>Store model license and source information with the deployment.</li>
+</ol>
+<p>Common failures:</p>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symptom</th>
+<th>Check</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>prompt</code></td>
-<td>required</td>
-<td>User-facing input text</td>
+<td><code>No local ONNX model found</code></td>
+<td>Pass <code>--model-path</code> or place a known model under the AI Gallery cache</td>
 </tr>
 <tr>
-<td><code>max_tokens</code></td>
-<td><code>1024</code></td>
-<td>Maximum tokens to generate</td>
+<td><code>onnxruntime-genai not installed</code></td>
+<td>Install one matching runtime package</td>
 </tr>
 <tr>
-<td><code>temperature</code></td>
-<td><code>0.7</code></td>
-<td>Sampling temperature — <code>0.0</code> for deterministic</td>
+<td>Model load failure</td>
+<td>Confirm model format, execution provider, architecture, and available memory</td>
 </tr>
 <tr>
-<td><code>top_p</code></td>
-<td><code>0.9</code></td>
-<td>Nucleus sampling threshold</td>
+<td>Repeated prompt text in output</td>
+<td>Verify tokenizer and prompt-template compatibility</td>
 </tr>
 <tr>
-<td><code>system_prompt</code></td>
-<td><code>None</code></td>
-<td>Optional system instruction prepended to the prompt</td>
+<td>Poor or unstable scores</td>
+<td>Fix the judge prompt, lower sampling, and compare with human-scored cases</td>
 </tr>
 </tbody>
 </table>
-<h3 id="evaluate_prompt"><code>evaluate_prompt()</code><a class="headerlink" href="#evaluate_prompt" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate_prompt</span><span class="p">(</span><span class="n">prompt_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Runs the model with a built-in evaluation rubric and returns a structured scoring dict across 6 criteria:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;clarity&quot;</span><span class="p">:</span><span class="w">        </span><span class="mf">8.5</span><span class="p">,</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="nt">&quot;specificity&quot;</span><span class="p">:</span><span class="w">    </span><span class="mf">7.0</span><span class="p">,</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">  </span><span class="nt">&quot;context&quot;</span><span class="p">:</span><span class="w">        </span><span class="mf">9.0</span><span class="p">,</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">  </span><span class="nt">&quot;actionability&quot;</span><span class="p">:</span><span class="w">  </span><span class="mf">6.5</span><span class="p">,</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">  </span><span class="nt">&quot;tone&quot;</span><span class="p">:</span><span class="w">           </span><span class="mf">8.0</span><span class="p">,</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">  </span><span class="nt">&quot;completeness&quot;</span><span class="p">:</span><span class="w">   </span><span class="mf">7.5</span><span class="p">,</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">  </span><span class="nt">&quot;overall_score&quot;</span><span class="p">:</span><span class="w">  </span><span class="mf">7.75</span><span class="p">,</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="nt">&quot;feedback&quot;</span><span class="p">:</span><span class="w">       </span><span class="s2">&quot;The prompt is clear but could benefit from more specific constraints...&quot;</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="p">}</span>
-</span></code></pre></div>
-<p>All numeric scores are in the range <code>0.0–10.0</code>. The model's raw output is parsed with a best-effort JSON extractor; malformed responses fall back to <code>0.0</code> for numeric fields via <code>_safe_float</code>.</p>
-<hr />
-<h2 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h2>
-<p><code>local_model_cli.py</code> is the command-line interface for <code>LocalModel</code>. It exposes four operating modes.</p>
-<h3 id="mode-1-direct-generation">Mode 1 — Direct generation<a class="headerlink" href="#mode-1-direct-generation" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span><span class="s2">&quot;Your prompt text here&quot;</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--model-path<span class="w"> </span>/path/to/onnx<span class="w"> </span><span class="s2">&quot;Your prompt&quot;</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--max-tokens<span class="w"> </span><span class="m">512</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">0</span>.3<span class="w"> </span><span class="s2">&quot;Generate a summary&quot;</span>
-</span></code></pre></div>
-<p>Exits <code>0</code> on success, <code>1</code> on error.</p>
-<h3 id="mode-2-check-availability-check">Mode 2 — Check availability (<code>--check</code>)<a class="headerlink" href="#mode-2-check-availability-check" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--check
-</span></code></pre></div>
-<p>Prints a JSON object describing model availability and exits <code>0</code> if a model is found, <code>1</code> if not. Equivalent to calling <code>get_model_info()</code>:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/.cache/aigallery/...&quot;</span><span class="p">,</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;model_key&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;phi4mini&quot;</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">}</span>
-</span></code></pre></div>
-<h3 id="mode-3-evaluate-a-prompt-file-evaluate">Mode 3 — Evaluate a prompt file (<code>--evaluate</code>)<a class="headerlink" href="#mode-3-evaluate-a-prompt-file-evaluate" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--evaluate<span class="w"> </span>path/to/prompt.md
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--evaluate<span class="w"> </span>path/to/prompt.md<span class="w"> </span>--verbose
-</span></code></pre></div>
-<p>Reads the file, calls <code>evaluate_prompt()</code>, and prints the 6-criterion JSON result. Exits <code>0</code> on success, <code>1</code> if the file is not found or an error occurs.</p>
-<h3 id="mode-4-batch-evaluate-batch-evaluate">Mode 4 — Batch evaluate (<code>--batch-evaluate</code>)<a class="headerlink" href="#mode-4-batch-evaluate-batch-evaluate" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># batch_list.json must be a JSON array of file paths</span>
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>python<span class="w"> </span>-m<span class="w"> </span>tools.llm.local_model_cli<span class="w"> </span>--batch-evaluate<span class="w"> </span>batch_list.json
-</span></code></pre></div>
-<p>Where <code>batch_list.json</code> looks like:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">[</span>
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="s2">&quot;prompts/advanced/clarity_test.md&quot;</span><span class="p">,</span>
-</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">  </span><span class="s2">&quot;prompts/business/executive_summary.md&quot;</span><span class="p">,</span>
-</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="s2">&quot;prompts/developers/code_review.md&quot;</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="p">]</span>
-</span></code></pre></div>
-<p>Loads the model <strong>once</strong> and evaluates all files. Prints a JSON array of results, one per file. Files that cannot be read are included with an <code>"error"</code> field instead of scores. Exits <code>0</code> if all succeed, <code>1</code> if any fail.</p>
-<h3 id="cli-flags-reference">CLI flags reference<a class="headerlink" href="#cli-flags-reference" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Flag</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>prompt</code> (positional)</td>
-<td>—</td>
-<td>Prompt text for direct generation</td>
-</tr>
-<tr>
-<td><code>--model-path</code>, <code>-m</code></td>
-<td>Auto-detect</td>
-<td>Path to ONNX model directory</td>
-</tr>
-<tr>
-<td><code>--max-tokens</code>, <code>-t</code></td>
-<td><code>1024</code></td>
-<td>Maximum tokens to generate</td>
-</tr>
-<tr>
-<td><code>--temperature</code></td>
-<td><code>0.7</code></td>
-<td>Sampling temperature</td>
-</tr>
-<tr>
-<td><code>--check</code></td>
-<td>—</td>
-<td>Check model availability and exit</td>
-</tr>
-<tr>
-<td><code>--evaluate</code>, <code>-e</code></td>
-<td>—</td>
-<td>Path to a prompt file to evaluate</td>
-</tr>
-<tr>
-<td><code>--batch-evaluate</code></td>
-<td>—</td>
-<td>Path to a JSON file listing prompt paths</td>
-</tr>
-<tr>
-<td><code>--verbose</code>, <code>-v</code></td>
-<td>—</td>
-<td>Enable debug logging</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># CPU inference (recommended for most development)</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># NVIDIA GPU</span>
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai-cuda
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># AMD/Intel GPU on Windows (DirectML)</span>
-</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>pip<span class="w"> </span>install<span class="w"> </span>onnxruntime-genai-directml
-</span></code></pre></div>
-<p>Only one variant should be installed at a time.</p>
-<h3 id="installing-a-model">Installing a model<a class="headerlink" href="#installing-a-model" title="Permanent link">&para;</a></h3>
-<p>Models are installed via the AI Dev Gallery tooling or manually:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># AI Dev Gallery (recommended on Windows)</span>
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># Open the AI Dev Gallery app (or the VS Code AI Toolkit) and download a model.</span>
-</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># It will be placed under ~/.cache/aigallery/</span>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
-</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># Manual — place your ONNX model directory under _AI_GALLERY_ROOT:</span>
-</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># ~/.cache/aigallery/&lt;model-dir&gt;/cpu-int4-rtn-block-32-acc-level-4/model.onnx</span>
-</span></code></pre></div>
-<hr />
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Error</th>
-<th>Cause</th>
-<th>Fix</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>FileNotFoundError: No local ONNX model found</code></td>
-<td>No model in <code>~/.cache/aigallery</code></td>
-<td>Install a model via the AI Dev Gallery or pass <code>--model-path</code></td>
-</tr>
-<tr>
-<td><code>ImportError: onnxruntime-genai not installed</code></td>
-<td>Package missing</td>
-<td><code>pip install onnxruntime-genai</code></td>
-</tr>
-<tr>
-<td><code>RuntimeError: Failed to load model</code></td>
-<td>Corrupt or incompatible ONNX files</td>
-<td>Re-download the model</td>
-</tr>
-<tr>
-<td>Low-quality output</td>
-<td>Temperature too high</td>
-<td>Try <code>--temperature 0.3</code> or <code>0.0</code> for deterministic output</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="../llm-client/">llm-client.md</a> — use <code>LLMClient</code> with <code>local:phi4</code> prefix for most cases</li>
-<li><a href="../model-probing/">model-probing.md</a> — check availability before loading with <code>probe.check_model("local:phi4")</code></li>
-<li><a href="../windows-ai/">windows-ai.md</a> — Phi Silica on Copilot+ PCs (NPU, no onnxruntime-genai needed)</li>
-</ul>
 
 
 
@@ -3716,7 +3278,7 @@ Raises <code>ImportError</code> if <code>onnxruntime-genai</code> is not install
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

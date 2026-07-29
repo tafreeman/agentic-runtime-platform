@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Agents - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/deep-dive-agents.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/deep-dive-agents/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Agents - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/deep-dive-agents.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deep-dive-agents" class="md-skip">
+        <a href="#agents" class="md-skip">
           Skip to content
         </a>
       
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1194,10 +1194,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#available-classes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Available classes
       
     </span>
   </a>
@@ -1205,10 +1205,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-agent-taxonomy" class="md-nav__link">
+  <a href="#baseagent-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Agent taxonomy
+        BaseAgent contract
       
     </span>
   </a>
@@ -1216,215 +1216,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-baseagenttinput-toutput" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. BaseAgent[TInput, TOutput]
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. BaseAgent[TInput, TOutput]">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#21-agent-configuration-agentconfig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.1 Agent configuration (AgentConfig)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#22-agent-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2 Agent state machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#23-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.3 Initialization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#24-execution-loop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.4 Execution loop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#25-abstract-methods-subclass-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.5 Abstract methods (subclass contract)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#26-tool-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.6 Tool handling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#27-conversation-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.7 Conversation memory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#28-event-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.8 Event system
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-concrete-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Concrete implementations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Concrete implementations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#31-claudeagent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3.1 ClaudeAgent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#32-claudesdkagent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3.2 ClaudeSDKAgent
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-orchestratoragent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. OrchestratorAgent
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. OrchestratorAgent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#41-task-decomposition" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.1 Task decomposition
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#42-capability-matching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.2 Capability matching
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#43-execution-via-dag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.3 Execution via DAG
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#44-input-output-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.4 Input / output types
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-persona-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Persona definitions
+        Configuration
       
     </span>
   </a>
@@ -1432,49 +1227,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-integrating-an-agent-with-the-workflow-engine" class="md-nav__link">
+  <a href="#lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Integrating an agent with the workflow engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. Integrating an agent with the workflow engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#61-agent_to_step-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6.1 agent_to_step() adapter
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#62-yaml-workflow-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6.2 YAML workflow integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-adding-a-new-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Adding a new agent
+        Lifecycle
       
     </span>
   </a>
@@ -1482,225 +1238,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-inventory" class="md-nav__link">
+  <a href="#tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module inventory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Module inventory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#__init__py" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        __init__.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basepy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        base.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#capabilitiespy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        capabilities.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#coderpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        coder.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reviewerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reviewer.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#architectpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        architect.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        test_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestratorpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_modelspy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_models.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_planningpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_planning.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_factoriespy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_factories.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memorypy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        memory.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json_extractionpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        json_extraction.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementations__init__py" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/__init__.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsagent_loaderpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/agent_loader.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsclaude_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/claude_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsclaude_sdk_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/claude_sdk_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dependency-graph-within-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependency graph (within agents/)
+        Tools
       
     </span>
   </a>
@@ -1708,10 +1249,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#memory-integration" class="md-nav__link">
+  <a href="#memory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Memory integration
+        Memory
       
     </span>
   </a>
@@ -1719,10 +1260,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#json-extraction" class="md-nav__link">
+  <a href="#events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSON extraction
+        Events
       
     </span>
   </a>
@@ -1730,10 +1271,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integration-points" class="md-nav__link">
+  <a href="#capabilities-and-orchestration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration points
+        Capabilities and orchestration
       
     </span>
   </a>
@@ -1741,10 +1282,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#risks-and-gotchas" class="md-nav__link">
+  <a href="#put-an-agent-in-a-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Risks and gotchas
+        Put an agent in a workflow
       
     </span>
   </a>
@@ -1752,10 +1293,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verification-steps" class="md-nav__link">
+  <a href="#anthropic-implementations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verification steps
+        Anthropic implementations
       
     </span>
   </a>
@@ -1763,21 +1304,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#suggested-tests" class="md-nav__link">
+  <a href="#adding-an-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Suggested tests
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-code-and-reuse-opportunities" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related code and reuse opportunities
+        Adding an agent
       
     </span>
   </a>
@@ -1849,6 +1379,8 @@
       
         
       
+        
+      
     
     
     
@@ -1893,6 +1425,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2719,6 +2279,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2816,6 +2380,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -3126,6 +2746,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3186,6 +2810,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3373,10 +3053,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#available-classes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Available classes
       
     </span>
   </a>
@@ -3384,10 +3064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#1-agent-taxonomy" class="md-nav__link">
+  <a href="#baseagent-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Agent taxonomy
+        BaseAgent contract
       
     </span>
   </a>
@@ -3395,215 +3075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-baseagenttinput-toutput" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. BaseAgent[TInput, TOutput]
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. BaseAgent[TInput, TOutput]">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#21-agent-configuration-agentconfig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.1 Agent configuration (AgentConfig)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#22-agent-state-machine" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.2 Agent state machine
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#23-initialization" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.3 Initialization
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#24-execution-loop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.4 Execution loop
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#25-abstract-methods-subclass-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.5 Abstract methods (subclass contract)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#26-tool-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.6 Tool handling
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#27-conversation-memory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.7 Conversation memory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#28-event-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2.8 Event system
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-concrete-implementations" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Concrete implementations
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Concrete implementations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#31-claudeagent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3.1 ClaudeAgent
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#32-claudesdkagent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3.2 ClaudeSDKAgent
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-orchestratoragent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. OrchestratorAgent
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. OrchestratorAgent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#41-task-decomposition" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.1 Task decomposition
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#42-capability-matching" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.2 Capability matching
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#43-execution-via-dag" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.3 Execution via DAG
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#44-input-output-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4.4 Input / output types
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-persona-definitions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Persona definitions
+        Configuration
       
     </span>
   </a>
@@ -3611,49 +3086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-integrating-an-agent-with-the-workflow-engine" class="md-nav__link">
+  <a href="#lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Integrating an agent with the workflow engine
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="6. Integrating an agent with the workflow engine">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#61-agent_to_step-adapter" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6.1 agent_to_step() adapter
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#62-yaml-workflow-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6.2 YAML workflow integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#7-adding-a-new-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Adding a new agent
+        Lifecycle
       
     </span>
   </a>
@@ -3661,225 +3097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-inventory" class="md-nav__link">
+  <a href="#tools" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module inventory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Module inventory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#__init__py" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        __init__.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#basepy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        base.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#capabilitiespy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        capabilities.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#coderpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        coder.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#reviewerpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        reviewer.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#architectpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        architect.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        test_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestratorpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_modelspy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_models.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_planningpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_planning.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#orchestrator_factoriespy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        orchestrator_factories.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memorypy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        memory.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#json_extractionpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        json_extraction.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementations__init__py" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/__init__.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsagent_loaderpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/agent_loader.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsclaude_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/claude_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#implementationsclaude_sdk_agentpy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        implementations/claude_sdk_agent.py
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dependency-graph-within-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependency graph (within agents/)
+        Tools
       
     </span>
   </a>
@@ -3887,10 +3108,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#memory-integration" class="md-nav__link">
+  <a href="#memory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Memory integration
+        Memory
       
     </span>
   </a>
@@ -3898,10 +3119,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#json-extraction" class="md-nav__link">
+  <a href="#events" class="md-nav__link">
     <span class="md-ellipsis">
       
-        JSON extraction
+        Events
       
     </span>
   </a>
@@ -3909,10 +3130,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integration-points" class="md-nav__link">
+  <a href="#capabilities-and-orchestration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration points
+        Capabilities and orchestration
       
     </span>
   </a>
@@ -3920,10 +3141,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#risks-and-gotchas" class="md-nav__link">
+  <a href="#put-an-agent-in-a-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Risks and gotchas
+        Put an agent in a workflow
       
     </span>
   </a>
@@ -3931,10 +3152,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verification-steps" class="md-nav__link">
+  <a href="#anthropic-implementations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verification steps
+        Anthropic implementations
       
     </span>
   </a>
@@ -3942,21 +3163,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#suggested-tests" class="md-nav__link">
+  <a href="#adding-an-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Suggested tests
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-code-and-reuse-opportunities" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related code and reuse opportunities
+        Adding an agent
       
     </span>
   </a>
@@ -3996,557 +3206,251 @@
   
 
 
-<h1 id="deep-dive-agents">Deep-dive: agents<a class="headerlink" href="#deep-dive-agents" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Package:</strong> <code>agentic-workflows-v2/agentic_v2/agents/</code>
-<strong>Audience:</strong> Engineers building new agents, workflow authors, and architects reviewing agent integration points.</p>
-</blockquote>
-<p><strong>Generated:</strong> 2026-05-02 (updated 2026-07-05)
-<strong>Key source files:</strong> <code>agents/base.py</code>, <code>agents/config.py</code>, <code>agents/orchestrator.py</code>, <code>agents/orchestrator_models.py</code>, <code>agents/orchestrator_planning.py</code>, <code>agents/orchestrator_factories.py</code>, <code>agents/implementations/</code></p>
-<hr />
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The <code>agents/</code> package defines the agent abstraction layer for the <code>agentic-workflows-v2</code> runtime. It provides <code>BaseAgent</code> (a typed lifecycle-driven abstract class), concrete specialized agents (Coder, Reviewer, Architect, TestAgent, Orchestrator), supporting utilities (conversation memory, capability matching, JSON extraction), and backend implementations (Anthropic Messages API, <code>claude-agent-sdk</code>).</p>
-<p><strong>Responsibilities:</strong></p>
-<ul>
-<li>Typed agent lifecycle (<code>base.py</code>)</li>
-<li>Agent configuration, state, and event enums (<code>config.py</code>)</li>
-<li>Conversation memory with auto-summarization (<code>memory.py</code>)</li>
-<li>Capability-based agent-to-task matching (<code>capabilities.py</code>)</li>
-<li>Structured-output parsing (<code>json_extraction.py</code>)</li>
-<li>Concrete specialists (Coder, Reviewer, Architect, TestAgent)</li>
-<li>Meta-agent for task decomposition and delegation (<code>orchestrator.py</code>)</li>
-<li>Backend implementations (<code>implementations/</code>)</li>
-</ul>
-<hr />
-<h2 id="1-agent-taxonomy">1. Agent taxonomy<a class="headerlink" href="#1-agent-taxonomy" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>BaseAgent[TInput, TOutput]               (abstract, generic)
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ├─ CoderAgent          (mixins: CodeGeneration, SelfReflection)
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ├─ ReviewerAgent       (mixin: CodeReview)
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  ├─ ArchitectAgent      (system design)
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ├─ TestAgent           (test generation)
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ├─ OrchestratorAgent   (mixin: Orchestration — decomposition + delegation)
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  └─ implementations/ClaudeAgent   (Anthropic Messages API backend)
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>implementations/ClaudeSDKAgent     (standalone — wraps claude-agent-sdk;
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                    does NOT inherit BaseAgent)
-</span></code></pre></div>
-<p><code>ClaudeAgent</code> is a <code>BaseAgent[SimpleTask, SimpleOutput]</code> subclass that translates between the project's OpenAI-style message format and the Anthropic API. <code>ClaudeSDKAgent</code> sits outside the taxonomy: it delegates lifecycle, tools, and conversation management to the <code>claude-agent-sdk</code> package, so callers must branch on agent type.</p>
-<p><strong>Design principle:</strong> composition over inheritance. Capabilities are declared via <code>CapabilityMixin</code> subclasses (<code>capabilities.py</code>) rather than deep hierarchies.</p>
-<p><strong>Agent classes vs personas:</strong> the Python classes above are distinct from the seven persona prompt files in <code>agentic_v2/prompts/</code> (<code>architect</code>, <code>coder</code>, <code>orchestrator</code>, <code>planner</code>, <code>reviewer</code>, <code>tester</code>, <code>validator</code>). Personas are markdown system prompts and do not map one-to-one onto classes — <code>planner</code> and <code>validator</code>, for example, have no dedicated agent class.</p>
-<hr />
-<h2 id="2-baseagenttinput-toutput">2. <code>BaseAgent[TInput, TOutput]</code><a class="headerlink" href="#2-baseagenttinput-toutput" title="Permanent link">&para;</a></h2>
-<p>Source: <code>agents/base.py</code></p>
-<p><code>BaseAgent</code> is generic over <code>TInput</code> (a <code>TaskInput</code> subclass) and <code>TOutput</code> (a <code>TaskOutput</code> subclass). This provides compile-time type safety through the entire call chain.</p>
-<h3 id="21-agent-configuration-agentconfig">2.1 Agent configuration (<code>AgentConfig</code>)<a class="headerlink" href="#21-agent-configuration-agentconfig" title="Permanent link">&para;</a></h3>
-<p>Source: <code>agents/config.py</code></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">AgentConfig</span><span class="p">:</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="c1"># Identity</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;agent&quot;</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="c1"># Model selection</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">default_tier</span><span class="p">:</span> <span class="n">ModelTier</span> <span class="o">=</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">TIER_2</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">max_tier</span><span class="p">:</span> <span class="n">ModelTier</span> <span class="o">=</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">TIER_4</span>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="c1"># Behavior</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">max_tool_calls_per_turn</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="c1"># Memory</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="n">max_memory_messages</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="n">max_memory_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="c1"># Streaming</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="n">enable_streaming</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-</span></code></pre></div>
-<h3 id="22-agent-state-machine">2.2 Agent state machine<a class="headerlink" href="#22-agent-state-machine" title="Permanent link">&para;</a></h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>CREATED
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  │
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  ▼
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>INITIALIZING  ←── on first run() or explicit initialize()
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  │
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  ▼
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>READY
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  │
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>  ▼
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>RUNNING
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  ├── COMPLETED  (success)
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>  ├── FAILED     (exception)
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>  ├── CANCELLED  (asyncio.CancelledError)
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>  └── PAUSED → RUNNING (resume)
-</span></code></pre></div>
-<p>State transitions fire <code>AgentEvent.STATE_CHANGE</code> to all registered event handlers. <code>AgentState</code> and <code>AgentEvent</code> are defined in <code>agents/config.py</code>.</p>
-<h3 id="23-initialization">2.3 Initialization<a class="headerlink" href="#23-initialization" title="Permanent link">&para;</a></h3>
-<p><code>BaseAgent.initialize(ctx)</code> performs:</p>
-<ol>
-<li>Transition to <code>INITIALIZING</code>.</li>
-<li>Attach execution context.</li>
-<li>Add system prompt to conversation memory (if configured).</li>
-<li>Bind tools from the registry filtered by <code>config.default_tier.value</code>.</li>
-<li>Call <code>_on_initialize()</code> for subclass customization.</li>
-<li>Transition to <code>READY</code>.</li>
-</ol>
-<p>Tool binding is tier-filtered: tools with <code>tier &lt;= agent.config.default_tier.value</code> are bound. Higher-tier tools are unavailable to lower-tier agents.</p>
-<h3 id="24-execution-loop">2.4 Execution loop<a class="headerlink" href="#24-execution-loop" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">TInput</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ExecutionContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TOutput</span><span class="p">:</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="c1"># Auto-initialize on first call</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">==</span> <span class="n">AgentState</span><span class="o">.</span><span class="n">CREATED</span><span class="p">:</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">task_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_task_message</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_memory</span><span class="o">.</span><span class="n">add_user</span><span class="p">(</span><span class="n">task_message</span><span class="p">)</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="c1"># Main loop with iteration limit</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">while</span> <span class="n">iteration</span> <span class="o">&lt;</span> <span class="n">max_iterations</span><span class="p">:</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_call_model</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">tools</span><span class="p">)</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool_calls&quot;</span><span class="p">):</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_tool_calls</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;tool_calls&quot;</span><span class="p">])</span>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>            <span class="k">continue</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_task_complete</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_output</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Max iterations reached&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-<p>Every <code>run()</code> call is wrapped in an OTEL span <code>agent.&lt;name&gt;</code>.</p>
-<h3 id="25-abstract-methods-subclass-contract">2.5 Abstract methods (subclass contract)<a class="headerlink" href="#25-abstract-methods-subclass-contract" title="Permanent link">&para;</a></h3>
-<p>All four must be implemented:</p>
+<h1 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h1>
+<p>The <code>agentic_v2.agents</code> package contains typed agent classes for code
+generation, review, testing, architecture, and task delegation. Use these
+classes when a workflow step needs a model-and-tool loop. Use a normal
+<code>StepDefinition</code> for deterministic work that does not need one.</p>
+<h2 id="available-classes">Available classes<a class="headerlink" href="#available-classes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Signature</th>
+<th>Class</th>
+<th>Input</th>
+<th>Output</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>_call_model</code></td>
-<td><code>(messages, tools) → dict</code></td>
-<td>LLM invocation; returns <code>{"content": str, "tool_calls": list}</code></td>
+<td><code>CoderAgent</code></td>
+<td><code>CodeGenerationInput</code></td>
+<td><code>CodeGenerationOutput</code></td>
+<td>Generate or revise code</td>
 </tr>
 <tr>
-<td><code>_format_task_message</code></td>
-<td><code>(task: TInput) → str</code></td>
-<td>Serialize input to user message</td>
+<td><code>ReviewerAgent</code></td>
+<td><code>CodeReviewInput</code></td>
+<td><code>CodeReviewOutput</code></td>
+<td>Return structured review findings</td>
 </tr>
 <tr>
-<td><code>_is_task_complete</code></td>
-<td><code>async (task, response) → bool</code></td>
-<td>Check termination condition</td>
+<td><code>TestAgent</code></td>
+<td><code>TestGenerationInput</code></td>
+<td><code>TestGenerationOutput</code></td>
+<td>Generate test files</td>
 </tr>
 <tr>
-<td><code>_parse_output</code></td>
-<td><code>async (task, response) → TOutput</code></td>
-<td>Deserialize response to output type</td>
+<td><code>ArchitectAgent</code></td>
+<td><code>ArchitectureInput</code></td>
+<td><code>ArchitectureOutput</code></td>
+<td>Produce a structured system design</td>
+</tr>
+<tr>
+<td><code>OrchestratorAgent</code></td>
+<td><code>OrchestratorInput</code></td>
+<td><code>OrchestratorOutput</code></td>
+<td>Decompose and delegate a task</td>
 </tr>
 </tbody>
 </table>
-<h3 id="26-tool-handling">2.6 Tool handling<a class="headerlink" href="#26-tool-handling" title="Permanent link">&para;</a></h3>
-<p>Tools use the OpenAI function-calling format. When the model returns <code>tool_calls</code>, the agent:</p>
-<ol>
-<li>Looks up each tool name in <code>_bound_tools</code>.</li>
-<li>Calls <code>tool.execute(**args)</code>.</li>
-<li>Appends the tool result to conversation memory as a <code>tool_result</code> role message.</li>
-<li>Emits <code>AgentEvent.TOOL_CALLED</code> and <code>AgentEvent.TOOL_RESULT</code> to handlers.</li>
-<li>Loops back to call the model again with the updated conversation.</li>
-</ol>
-<p>Unknown tool names return <code>"Unknown tool: &lt;name&gt;"</code> as the result — the agent continues rather than failing hard.</p>
-<h3 id="27-conversation-memory">2.7 Conversation memory<a class="headerlink" href="#27-conversation-memory" title="Permanent link">&para;</a></h3>
-<p><code>ConversationMemory</code> (<code>agents/memory.py</code>) is a sliding-window buffer with:</p>
+<p>The package exports these classes and their public input and output models
+from <code>agentic_v2.agents</code>.</p>
+<h2 id="baseagent-contract">BaseAgent contract<a class="headerlink" href="#baseagent-contract" title="Permanent link">&para;</a></h2>
+<p><code>BaseAgent[TInput, TOutput]</code> owns:</p>
 <ul>
-<li><code>max_messages</code> (default 50): hard cap on message count.</li>
-<li><code>max_tokens</code> (default 8000): soft cap with automatic summarization of evicted messages.</li>
-<li>Messages are stored with <code>role</code> and <code>content</code>.</li>
-<li><code>add_system()</code>, <code>add_user()</code>, <code>add_assistant()</code>, <code>add_tool_result()</code> mutate the buffer.</li>
-<li><code>get_messages()</code> returns the current sliding window for LLM calls.</li>
+<li>initialization and cleanup;</li>
+<li>state transitions and events;</li>
+<li>bounded model iterations;</li>
+<li>conversation memory;</li>
+<li>model routing;</li>
+<li>tool discovery, validation, approval, and dispatch;</li>
+<li>optional streaming;</li>
+<li>the last result and failure information.</li>
 </ul>
-<h3 id="28-event-system">2.8 Event system<a class="headerlink" href="#28-event-system" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">agent</span><span class="o">.</span><span class="n">on_event</span><span class="p">(</span><span class="k">lambda</span> <span class="n">agent</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">event</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+<p>A subclass must implement:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_call_model</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="bp">self</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">messages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]],</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span> <span class="o">...</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">_format_task_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">TInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_is_task_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">TInput</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_parse_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">TInput</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TOutput</span><span class="p">:</span> <span class="o">...</span>
 </span></code></pre></div>
-<p>Event handlers are synchronous callbacks. Exceptions in handlers are caught and logged at WARNING level — they never propagate to the execution loop.</p>
+<p><code>_call_model()</code> returns a mapping with <code>content</code> and, when applicable,
+<code>tool_calls</code>. The output parser should reject invalid required data instead of
+silently treating incomplete text as success.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p><code>AgentConfig</code> has these defaults:</p>
 <table>
 <thead>
 <tr>
-<th>Event</th>
-<th>When emitted</th>
-<th>Data dict keys</th>
+<th>Field</th>
+<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>STATE_CHANGE</code></td>
-<td>Any state transition</td>
-<td><code>old_state</code>, <code>new_state</code></td>
+<td><code>name</code></td>
+<td><code>agent</code></td>
 </tr>
 <tr>
-<td><code>THINKING</code></td>
-<td>Each iteration start</td>
-<td><code>iteration</code></td>
+<td><code>default_tier</code></td>
+<td><code>ModelTier.TIER_2</code></td>
 </tr>
 <tr>
-<td><code>TOOL_CALLED</code></td>
-<td>Before tool execution</td>
-<td><code>tool</code>, <code>args</code>, <code>call_id</code></td>
+<td><code>max_tier</code></td>
+<td><code>ModelTier.TIER_4</code></td>
 </tr>
 <tr>
-<td><code>TOOL_RESULT</code></td>
-<td>After tool execution</td>
-<td><code>tool</code>, <code>result</code>, <code>call_id</code></td>
+<td><code>max_iterations</code></td>
+<td><code>10</code></td>
 </tr>
 <tr>
-<td><code>STREAMING</code></td>
-<td>Each chunk (streaming mode)</td>
-<td><code>chunk</code></td>
+<td><code>max_tool_calls_per_turn</code></td>
+<td><code>5</code></td>
 </tr>
 <tr>
-<td><code>ERROR</code></td>
-<td>On exception</td>
-<td>(varies)</td>
+<td><code>timeout_seconds</code></td>
+<td><code>300.0</code></td>
+</tr>
+<tr>
+<td><code>max_memory_messages</code></td>
+<td><code>50</code></td>
+</tr>
+<tr>
+<td><code>max_memory_tokens</code></td>
+<td><code>8000</code></td>
+</tr>
+<tr>
+<td><code>enable_streaming</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>verbose</code></td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="3-concrete-implementations">3. Concrete implementations<a class="headerlink" href="#3-concrete-implementations" title="Permanent link">&para;</a></h2>
-<h3 id="31-claudeagent">3.1 <code>ClaudeAgent</code><a class="headerlink" href="#31-claudeagent" title="Permanent link">&para;</a></h3>
-<p>Source: <code>agents/implementations/claude_agent.py</code></p>
-<p>Calls the Anthropic Messages API via the <code>anthropic</code> async client. Handles format translation between the project's OpenAI-style message format and Anthropic's API.</p>
-<p><strong>Translation layers:</strong></p>
-<ul>
-<li><code>_convert_messages()</code> — splits the system prompt out of the message list (Anthropic requires it as a top-level parameter) and converts <code>"tool"</code> role messages to <code>tool_result</code> content blocks.</li>
-<li><code>_convert_tools()</code> — maps OpenAI function schemas to Anthropic tool schemas.</li>
-<li><code>_convert_response()</code> — maps Anthropic content blocks back to <code>{"content", "tool_calls"}</code>.</li>
-</ul>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">ClaudeAgent</span><span class="p">(</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-opus-4-6&quot;</span><span class="p">,</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;You are a senior Python engineer.&quot;</span><span class="p">,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">api_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>          <span class="c1"># defaults to ANTHROPIC_API_KEY env var</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">SimpleTask</span><span class="p">(</span><span class="n">prompt</span><span class="o">=</span><span class="s2">&quot;Review this code: ...&quot;</span><span class="p">))</span>
+<p><code>max_iterations</code> prevents an endless model/tool loop.
+<code>max_tool_calls_per_turn</code> limits calls from one model response. Neither limit
+replaces a timeout on the model client or tool implementation.</p>
+<p>Constructor arguments allow injection of a model router, tool registry, and
+LLM client:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">CoderAgent</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">router</span><span class="o">=</span><span class="n">router</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">tools</span><span class="o">=</span><span class="n">tool_registry</span><span class="p">,</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">llm_client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
 </span></code></pre></div>
-<p>Requires: <code>pip install 'agentic-workflows-v2[claude]'</code></p>
-<h3 id="32-claudesdkagent">3.2 <code>ClaudeSDKAgent</code><a class="headerlink" href="#32-claudesdkagent" title="Permanent link">&para;</a></h3>
-<p>Source: <code>agents/implementations/claude_sdk_agent.py</code></p>
-<p>Uses the Anthropic Claude Code SDK (<code>claude-agent-sdk</code>, a higher-level abstraction than the raw Messages API). Standalone — it does not inherit <code>BaseAgent</code>; it relies on the SDK's own lifecycle and built-in file, web, and terminal tools. Intended for agents that benefit from Claude's native tool-use orchestration and multi-turn conversation management.</p>
-<hr />
-<h2 id="4-orchestratoragent">4. <code>OrchestratorAgent</code><a class="headerlink" href="#4-orchestratoragent" title="Permanent link">&para;</a></h2>
-<p>Source: <code>agents/orchestrator.py</code></p>
-<p>The <code>OrchestratorAgent</code> is the meta-agent responsible for task decomposition and multi-agent delegation. It does not execute domain tasks itself — it breaks complex tasks into subtasks, matches them to capable agents, and assembles final results.</p>
-<h3 id="41-task-decomposition">4.1 Task decomposition<a class="headerlink" href="#41-task-decomposition" title="Permanent link">&para;</a></h3>
-<p>The orchestrator calls the LLM with a structured prompt requesting JSON output:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;subtasks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;t1&quot;</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Generate a Python function&quot;</span><span class="p">,</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">      </span><span class="nt">&quot;capabilities&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;code_generation&quot;</span><span class="p">],</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="nt">&quot;dependencies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="nt">&quot;parallel_group&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="p">}</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p">]</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">}</span>
+<p>Use dependency injection in tests so a test cannot reach a real provider by
+accident.</p>
+<h2 id="lifecycle">Lifecycle<a class="headerlink" href="#lifecycle" title="Permanent link">&para;</a></h2>
+<p>The normal state sequence is:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>created -&gt; initializing -&gt; ready -&gt; running
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>                                      |-&gt; completed
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>                                      |-&gt; failed
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>                                      `-&gt; cancelled
 </span></code></pre></div>
-<p>JSON extraction from LLM responses uses <code>agents/json_extraction.py</code> which handles markdown code block wrapping and partial JSON repair.</p>
-<h3 id="42-capability-matching">4.2 Capability matching<a class="headerlink" href="#42-capability-matching" title="Permanent link">&para;</a></h3>
-<p>Source: <code>agents/capabilities.py</code></p>
-<p>Each agent can declare capabilities via <code>CapabilityMixin</code> subclasses:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">CapabilityType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">CODE_GENERATION</span> <span class="o">=</span> <span class="s2">&quot;code_generation&quot;</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">CODE_REVIEW</span> <span class="o">=</span> <span class="s2">&quot;code_review&quot;</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">TEST_GENERATION</span> <span class="o">=</span> <span class="s2">&quot;test_generation&quot;</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">ARCHITECTURE</span> <span class="o">=</span> <span class="s2">&quot;architecture&quot;</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">ORCHESTRATION</span> <span class="o">=</span> <span class="s2">&quot;orchestration&quot;</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="c1"># ...</span>
-</span></code></pre></div>
-<p><code>get_agent_capabilities(agent)</code> introspects the agent's class MRO for <code>CapabilityMixin</code> subclasses and returns a <code>CapabilitySet</code>. The orchestrator uses this (via <code>CapabilitySet.score_match()</code>) for automatic subtask-to-agent matching.</p>
-<h3 id="43-execution-via-dag">4.3 Execution via DAG<a class="headerlink" href="#43-execution-via-dag" title="Permanent link">&para;</a></h3>
-<p>Once subtasks are decomposed and assigned, the orchestrator constructs a <code>DAG</code> where:</p>
-<ul>
-<li>Each subtask becomes a <code>StepDefinition</code>.</li>
-<li><code>SubTask.dependencies</code> become DAG edges.</li>
-<li>The <code>DAGExecutor</code> runs the DAG with <code>max_concurrency=max_parallel</code> (default 3).</li>
-</ul>
-<p>This gives the orchestrator the same parallelism and failure-propagation guarantees as the native engine.</p>
-<h3 id="44-input-output-types">4.4 Input / output types<a class="headerlink" href="#44-input-output-types" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorInput</span><span class="p">(</span><span class="n">TaskInput</span><span class="p">):</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span>                          <span class="c1"># Description to orchestrate</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">available_agents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>        <span class="c1"># Agent names to consider</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">max_parallel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>              <span class="c1"># Concurrency limit</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">require_review</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorOutput</span><span class="p">(</span><span class="n">TaskOutput</span><span class="p">):</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">subtasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>               <span class="c1"># All decomposed subtasks</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">agent_assignments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>  <span class="c1"># subtask_id → agent_name</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">final_result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>           <span class="c1"># Aggregated output</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="n">execution_trace</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span>        <span class="c1"># Step-by-step trace</span>
-</span></code></pre></div>
-<hr />
-<h2 id="5-persona-definitions">5. Persona definitions<a class="headerlink" href="#5-persona-definitions" title="Permanent link">&para;</a></h2>
-<p>Source: <code>agentic_v2/prompts/*.md</code></p>
-<p>Each persona is a <code>.md</code> file that is loaded as a system prompt. Personas must define:</p>
+<p><code>run()</code> initializes a newly created agent, adds the task to memory, and starts
+the bounded execution loop. A model response with tool calls is dispatched,
+recorded as tool-role messages, and followed by another iteration. A final
+response is parsed into the declared output model.</p>
+<p>Cancellation is re-raised after the state changes to <code>cancelled</code>. Other
+exceptions set the state to <code>failed</code> and remain visible to the caller.</p>
+<p>Call <code>cleanup()</code> when an agent instance is no longer needed. It clears memory,
+bound tools, and the current execution context.</p>
+<h2 id="tools">Tools<a class="headerlink" href="#tools" title="Permanent link">&para;</a></h2>
+<p>During initialization, the base class binds registered tools whose tier is at
+or below the agent's <code>default_tier</code>. You can also call <code>bind_tool()</code> or
+<code>unbind_tool()</code> explicitly.</p>
+<p>Tool calls follow the shared engine path:</p>
 <ol>
-<li><strong>Expertise</strong> — What the agent knows.</li>
-<li><strong>Boundaries</strong> — What the agent should not do.</li>
-<li><strong>Critical rules</strong> — Hard constraints on behavior.</li>
-<li><strong>Output format</strong> — Expected response structure.</li>
+<li>normalize the provider's call shape;</li>
+<li>resolve the bound tool;</li>
+<li>apply the approval gate;</li>
+<li>validate parameters;</li>
+<li>execute the tool;</li>
+<li>serialize and size-limit the result;</li>
+<li>add the result to conversation memory.</li>
 </ol>
-<p>The shipped personas are kept in sync with the named constants in
-<code>agentic-workflows-v2/agentic_v2/prompts/__init__.py</code> (call <code>list_prompts()</code> for the live list):
-<code>architect</code>, <code>coder</code>, <code>orchestrator</code>, <code>planner</code>, <code>reviewer</code>, <code>tester</code>, and
-<code>validator</code>.</p>
-<p>Personas are prompt assets, not classes — see the taxonomy note in section 1 for how they relate to the <code>BaseAgent</code> subclasses.</p>
-<hr />
-<h2 id="6-integrating-an-agent-with-the-workflow-engine">6. Integrating an agent with the workflow engine<a class="headerlink" href="#6-integrating-an-agent-with-the-workflow-engine" title="Permanent link">&para;</a></h2>
-<h3 id="61-agent_to_step-adapter">6.1 <code>agent_to_step()</code> adapter<a class="headerlink" href="#61-agent_to_step-adapter" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.agents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">agent_to_step</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">coder</span> <span class="o">=</span> <span class="n">CoderAgent</span><span class="p">()</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">step</span> <span class="o">=</span> <span class="n">agent_to_step</span><span class="p">(</span><span class="n">coder</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;generate_code&quot;</span><span class="p">)</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">dag</span> <span class="o">=</span> <span class="n">DAG</span><span class="p">(</span><span class="s2">&quot;my_workflow&quot;</span><span class="p">)</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">dag</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<p>Unknown tools, invalid parameters, and execution errors are returned to the
+model as failed tool results. They are not reported as successful calls.</p>
+<p>Tool tier is an availability filter, not an authorization boundary. Configure
+approval policy and keep tool-side validation in place for operations that
+read sensitive data or change state.</p>
+<h2 id="memory">Memory<a class="headerlink" href="#memory" title="Permanent link">&para;</a></h2>
+<p><code>ConversationMemory</code> stores system, user, assistant, and tool messages. Its
+message and token limits are estimates used to control context growth.
+Summarization can reduce older content when the limits are exceeded.</p>
+<p>Do not use conversation memory as an audit store. Persist workflow events or
+domain records separately when the data must survive the agent process.</p>
+<h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
+<p>Register a synchronous handler with <code>on_event()</code> to observe:</p>
+<ul>
+<li>state changes;</li>
+<li>sent and received messages;</li>
+<li>tool calls and results;</li>
+<li>model activity;</li>
+<li>streaming chunks;</li>
+<li>errors.</li>
+</ul>
+<p>Handlers are suitable for metrics and UI updates. Handler exceptions are
+logged and do not stop the agent, so critical persistence should happen in
+the workflow or event-storage layer instead.</p>
+<h2 id="capabilities-and-orchestration">Capabilities and orchestration<a class="headerlink" href="#capabilities-and-orchestration" title="Permanent link">&para;</a></h2>
+<p>Capability mixins declare what an agent is designed to do.
+<code>get_agent_capabilities()</code> combines the declarations and
+<code>CapabilitySet.score_match()</code> compares them with a subtask's requirements.</p>
+<p><code>OrchestratorAgent</code> uses those scores to assign work. Its plan includes
+dependencies, which allow ready subtasks to run in parallel up to
+<code>OrchestratorInput.max_parallel</code>. Fallback attempts and exhausted assignments
+are recorded rather than converted into successful results.</p>
+<p>This assignment is heuristic. Validate the plan, required capabilities, and
+final output for important work.</p>
+<p>The CLI's <code>agentic orchestrate</code> command does not currently expose this dynamic
+path through the default LangGraph workflow route.</p>
+<h2 id="put-an-agent-in-a-workflow">Put an agent in a workflow<a class="headerlink" href="#put-an-agent-in-a-workflow" title="Permanent link">&para;</a></h2>
+<p><code>agent_to_step()</code> wraps a <code>BaseAgent</code> as a <code>StepDefinition</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span><span class="p">,</span> <span class="n">CoderAgent</span><span class="p">,</span> <span class="n">agent_to_step</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">CoderAgent</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;generate_code&quot;</span><span class="p">))</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">step</span> <span class="o">=</span> <span class="n">agent_to_step</span><span class="p">(</span><span class="n">agent</span><span class="p">)</span>
 </span></code></pre></div>
-<p><code>agent_to_step</code> wraps any <code>BaseAgent</code> as a <code>StepDefinition</code>. At runtime it:</p>
-<ol>
-<li>Reads <code>"task"</code> from the <code>ExecutionContext</code>.</li>
-<li>Calls <code>agent.run(task, ctx)</code>.</li>
-<li>Returns <code>{"result": output}</code> to the context.</li>
-</ol>
-<h3 id="62-yaml-workflow-integration">6.2 YAML workflow integration<a class="headerlink" href="#62-yaml-workflow-integration" title="Permanent link">&para;</a></h3>
-<p>In a YAML workflow definition, specify the agent name as the <code>agent:</code> field of a step:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nt">steps</span><span class="p">:</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">generate_code</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="nt">agent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coder</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate implementation from requirements</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="nt">depends_on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${inputs.requirements}</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">      </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">    </span><span class="nt">outputs</span><span class="p">:</span>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">explanation</span>
+<p>The wrapper reads <code>task</code> from <code>ExecutionContext</code> and writes the agent output as
+<code>result</code>. Check that this generic context contract fits the surrounding
+workflow before using the wrapper.</p>
+<h2 id="anthropic-implementations">Anthropic implementations<a class="headerlink" href="#anthropic-implementations" title="Permanent link">&para;</a></h2>
+<p><code>agentic_v2.agents.implementations</code> contains two optional integrations:</p>
+<ul>
+<li><code>ClaudeAgent</code> extends <code>BaseAgent</code> and calls the Anthropic Messages API.</li>
+<li><code>ClaudeSDKAgent</code> wraps <code>claude-agent-sdk</code> and does not extend <code>BaseAgent</code>.</li>
+</ul>
+<p>Install the optional dependencies with:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">-e</span> <span class="s2">&quot;./agentic-workflows-v2[claude]&quot;</span>
 </span></code></pre></div>
-<p>The <code>agent:</code> field is resolved by <code>resolve_agent()</code> in <code>engine/agent_resolver.py</code>, which maps agent names (including <code>tier{N}_{role}</code> forms) to executor functions when the workflow is loaded. Separately, <code>config/defaults/agents.yaml</code> provides the agent metadata served by <code>GET /api/agents</code>.</p>
-<hr />
-<h2 id="7-adding-a-new-agent">7. Adding a new agent<a class="headerlink" href="#7-adding-a-new-agent" title="Permanent link">&para;</a></h2>
+<p>Because <code>ClaudeSDKAgent</code> has a separate lifecycle and permission model, do not
+treat it as a drop-in <code>BaseAgent</code>. Its loader reads Markdown definitions with
+YAML frontmatter from the bundled definitions directory or
+<code>AGENTIC_EXTERNAL_AGENTS_DIR</code>.</p>
+<h2 id="adding-an-agent">Adding an agent<a class="headerlink" href="#adding-an-agent" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Create a file in <code>agents/implementations/my_agent.py</code>.</li>
-<li>Subclass <code>BaseAgent[MyInput, MyOutput]</code> where <code>MyInput</code> and <code>MyOutput</code> are <code>TaskInput</code>/<code>TaskOutput</code> subclasses defined in <code>contracts/schemas.py</code> or locally.</li>
-<li>Implement the four abstract methods: <code>_call_model</code>, <code>_format_task_message</code>, <code>_is_task_complete</code>, <code>_parse_output</code>.</li>
-<li>Optionally mix in capability types from <code>agents/capabilities.py</code>.</li>
-<li>Add a persona markdown file to <code>agentic_v2/prompts/my_agent.md</code>.</li>
-<li>Register in <code>config/defaults/agents.yaml</code> with <code>name</code>, <code>description</code>, <code>tier</code>, and <code>class</code>.</li>
-<li>Write unit tests (see <code>tests/test_agents.py</code>, <code>tests/test_new_agents.py</code> for patterns). Mock <code>_call_model</code> to avoid LLM calls in tests.</li>
+<li>Define Pydantic input and output models.</li>
+<li>Subclass <code>BaseAgent</code> with those types.</li>
+<li>Implement the four required methods.</li>
+<li>Set finite iteration, tool-call, and timeout limits.</li>
+<li>Add capability mixins only for behavior the class implements.</li>
+<li>Write tests for valid output, malformed model output, tool failure,
+   cancellation, and the iteration limit.</li>
+<li>Add a workflow example only if the agent's context contract is clear.</li>
 </ol>
-<hr />
-<h2 id="module-inventory">Module inventory<a class="headerlink" href="#module-inventory" title="Permanent link">&para;</a></h2>
-<h3 id="__init__py"><code>__init__.py</code><a class="headerlink" href="#__init__py" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Package exports and agent factory registration. Re-exports the public API (<code>BaseAgent</code>, concrete agents, <code>ConversationMemory</code>, <code>CapabilitySet</code>).</li>
-<li><strong>Implementation detail:</strong> late-binding factory registration avoids circular imports with <code>OrchestratorAgent</code>.</li>
-</ul>
-<h3 id="basepy"><code>base.py</code><a class="headerlink" href="#basepy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Abstract <code>BaseAgent[TInput, TOutput]</code> generic with lifecycle state machine, event emission, tool binding, and default invocation loop.</li>
-<li><strong>Key exports:</strong> <code>BaseAgent[TInput, TOutput]</code> (with <code>async run(task, ctx) -&gt; TOutput</code>), <code>agent_to_step()</code> adapter. The <code>AgentState</code>/<code>AgentEvent</code> enums it drives live in <code>config.py</code>.</li>
-<li><strong>Risks:</strong> state transitions not type-enforced — relies on convention + tests.</li>
-<li><strong>Suggested tests:</strong> illegal transitions raise; event ordering; generic type erasure.</li>
-</ul>
-<h3 id="capabilitiespy"><code>capabilities.py</code><a class="headerlink" href="#capabilitiespy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Capability declaration + scoring for agent-to-task matching. Enables runtime selection of the best-fit agent for a subtask.</li>
-<li><strong>Key exports:</strong> <code>CapabilityType</code> enum, <code>Capability</code>, <code>CapabilitySet</code> (with <code>score_match(required) -&gt; float</code>), <code>CapabilityMixin</code> and concrete mixins (<code>CodeGenerationMixin</code>, <code>CodeReviewMixin</code>, <code>TestGenerationMixin</code>, <code>OrchestrationMixin</code>, <code>SelfReflectionMixin</code>), <code>requires_capabilities()</code>, <code>get_agent_capabilities()</code>.</li>
-<li><strong>Suggested tests:</strong> scoring monotonicity, empty sets, ties.</li>
-</ul>
-<h3 id="configpy"><code>config.py</code><a class="headerlink" href="#configpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Agent lifecycle enums and configuration — <code>AgentState</code>, <code>AgentEvent</code>, and the <code>AgentConfig</code> dataclass (identity, tier bounds, iteration/tool-call limits, memory bounds, streaming flags).</li>
-</ul>
-<h3 id="coderpy"><code>coder.py</code><a class="headerlink" href="#coderpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Concrete Coder agent specialized for code generation with optional self-reflection pass.</li>
-<li><strong>Key exports:</strong> <code>CoderAgent(BaseAgent[CodeGenerationInput, CodeGenerationOutput], CodeGenerationMixin, SelfReflectionMixin)</code>.</li>
-<li><strong>Implementation:</strong> two-pass mode — initial generation → critique → revision.</li>
-</ul>
-<h3 id="reviewerpy"><code>reviewer.py</code><a class="headerlink" href="#reviewerpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Code-review agent producing structured findings (severity, file, line, category, recommendation).</li>
-<li><strong>Key exports:</strong> <code>ReviewerAgent(BaseAgent[CodeReviewInput, CodeReviewOutput], CodeReviewMixin)</code>.</li>
-<li><strong>Implementation:</strong> uses <code>json_extraction</code> to parse findings list.</li>
-</ul>
-<h3 id="architectpy"><code>architect.py</code><a class="headerlink" href="#architectpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Architecture-design agent producing component design, tech-stack choices, and decision rationale.</li>
-<li><strong>Key exports:</strong> <code>ArchitectAgent(BaseAgent[ArchitectureInput, ArchitectureOutput])</code>.</li>
-</ul>
-<h3 id="test_agentpy"><code>test_agent.py</code><a class="headerlink" href="#test_agentpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Test-generation agent producing test scaffolds with fixtures.</li>
-<li><strong>Key exports:</strong> <code>TestAgent(BaseAgent[TestGenerationInput, TestGenerationOutput])</code>, <code>TestType</code>, <code>TestFile</code>.</li>
-</ul>
-<h3 id="orchestratorpy"><code>orchestrator.py</code><a class="headerlink" href="#orchestratorpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Meta-agent that decomposes a high-level task into subtasks, scores candidate agents via capability matching, dispatches, and aggregates results. Supports fallback chains and DAG execution.</li>
-<li><strong>Key exports:</strong> <code>OrchestratorAgent(BaseAgent[OrchestratorInput, OrchestratorOutput], OrchestrationMixin)</code>.</li>
-<li><strong>Imports:</strong> <code>..engine.dag</code>, capabilities, sibling modules <code>orchestrator_models</code>, <code>orchestrator_planning</code>, <code>orchestrator_factories</code>.</li>
-<li><strong>Risks:</strong> silent fallback chain — logs warnings but returns best-effort output if all agents fail.</li>
-<li><strong>Suggested tests:</strong> all-agents-fail scenario surfaces error; DAG cycle detection; capability tie-breaking.</li>
-</ul>
-<h3 id="orchestrator_modelspy"><code>orchestrator_models.py</code><a class="headerlink" href="#orchestrator_modelspy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Value objects and prompts decomposed from <code>orchestrator.py</code> — <code>SubTask</code>, <code>OrchestratorInput</code>, <code>OrchestratorOutput</code>, system prompts, capability constants. Dependencies restricted to <code>..contracts</code> and <code>.capabilities</code> — no engine imports.</li>
-<li><strong>Design rationale:</strong> isolating these value objects allows them to be imported by unit tests and by the evaluation harness without pulling in orchestration logic.</li>
-</ul>
-<h3 id="orchestrator_planningpy"><code>orchestrator_planning.py</code><a class="headerlink" href="#orchestrator_planningpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Deterministic, stateless planning utilities: <code>_intent_decomposition</code> (capability-tagged plan from task text for no-LLM mode), <code>_extract_file_tokens</code>, <code>_latest_user_text</code>, <code>_has_extractable_json</code>, <code>_per_file_task_id</code>.</li>
-<li><strong>Design rationale:</strong> pure functions with no orchestrator state — directly unit-testable without mocking the LLM. Backs the <code>AGENTIC_NO_LLM</code> decomposition path.</li>
-</ul>
-<h3 id="orchestrator_factoriespy"><code>orchestrator_factories.py</code><a class="headerlink" href="#orchestrator_factoriespy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Maps subtask descriptions to concrete <code>TaskInput</code> subclasses per managed agent type. E.g., reviewer subtasks → <code>CodeReviewInput</code>, coder subtasks → <code>CodeGenerationInput</code>.</li>
-<li><strong>Design rationale:</strong> deferred imports at call time (not module load) keep this module free of import-time coupling to the contracts layer and concrete agents.</li>
-</ul>
-<h3 id="memorypy"><code>memory.py</code><a class="headerlink" href="#memorypy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> <code>ConversationMemory</code> with sliding-window summarization. Keeps up to 50 messages and ~8000 tokens; auto-summarizes older turns when the window is exceeded. First system message always preserved.</li>
-<li><strong>Key exports:</strong> <code>ConversationMemory</code>, <code>ConversationMessage</code>, <code>reduce_tool_result()</code>.</li>
-<li><strong>Implementation:</strong> 4-char-per-token heuristic; summarization delegates to the LLM client if configured, else naive concatenation.</li>
-<li><strong>Suggested tests:</strong> window overflow triggers summarize; system message never evicted; token-count accuracy.</li>
-</ul>
-<h3 id="json_extractionpy"><code>json_extraction.py</code><a class="headerlink" href="#json_extractionpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> JSON extraction from LLM freeform responses. Strategies in order: fenced <code>```json</code> block, fenced <code>```</code> (any), balanced-brace scan (handles strings with escapes).</li>
-<li><strong>Key exports:</strong> <code>extract_json(text)</code> — overloaded to return a plain dict or validate against a supplied Pydantic model.</li>
-<li><strong>Implementation:</strong> balanced-brace scan tracks string state (<code>"</code>, <code>\"</code>) to avoid false matches.</li>
-<li><strong>Suggested tests:</strong> malformed responses, nested braces in strings, truncated JSON, multiple JSON blocks.</li>
-</ul>
-<h3 id="implementations__init__py"><code>implementations/__init__.py</code><a class="headerlink" href="#implementations__init__py" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Exposes backend implementations. <code>ClaudeAgent</code> (plus <code>SimpleTask</code>/<code>SimpleOutput</code>) is always importable; <code>ClaudeSDKAgent</code>, <code>load_agents</code>, <code>AGENTS</code>, and <code>BUILTIN_TOOLS</code> are guarded behind the optional <code>[claude]</code> extra.</li>
-</ul>
-<h3 id="implementationsagent_loaderpy"><code>implementations/agent_loader.py</code><a class="headerlink" href="#implementationsagent_loaderpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Loads <code>.md</code> agent definition files (YAML frontmatter + system-prompt body) from the bundled definitions directory plus an optional external pack, returning a dict of <code>claude_agent_sdk.AgentDefinition</code> instances.</li>
-<li><strong>Key exports:</strong> <code>load_agents(directory=None)</code>, <code>agents</code> (loaded registry).</li>
-</ul>
-<h3 id="implementationsclaude_agentpy"><code>implementations/claude_agent.py</code><a class="headerlink" href="#implementationsclaude_agentpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Backend adapter using the Anthropic Messages API directly. Handles tool_use, streaming, and content-block parsing.</li>
-<li><strong>Key exports:</strong> <code>ClaudeAgent</code> (inherits <code>BaseAgent</code>), <code>SimpleTask</code>, <code>SimpleOutput</code>.</li>
-<li><strong>Imports:</strong> <code>anthropic</code> SDK.</li>
-</ul>
-<h3 id="implementationsclaude_sdk_agentpy"><code>implementations/claude_sdk_agent.py</code><a class="headerlink" href="#implementationsclaude_sdk_agentpy" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Purpose:</strong> Backend using the <code>claude-agent-sdk</code> package. Standalone — does not inherit <code>BaseAgent</code> (uses the SDK's own lifecycle).</li>
-<li><strong>Key exports:</strong> <code>ClaudeSDKAgent</code>, <code>BUILTIN_TOOLS</code>.</li>
-<li><strong>Gotcha:</strong> not part of the <code>BaseAgent</code> taxonomy — callers must branch on agent type.</li>
-</ul>
-<hr />
-<h2 id="dependency-graph-within-agents">Dependency graph (within <code>agents/</code>)<a class="headerlink" href="#dependency-graph-within-agents" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>base.py  (+ config.py enums)
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>  ↑
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>  ├─ coder.py              → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>  ├─ reviewer.py           → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>  ├─ architect.py          → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>  ├─ test_agent.py         → json_extraction.py, memory.py, capabilities.py
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>  └─ orchestrator.py       → capabilities.py, (factory registry from __init__)
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>       ├─ orchestrator_models.py      → ..contracts, .capabilities (no engine)
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>       ├─ orchestrator_planning.py    → .capabilities, .json_extraction (pure functions)
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>       └─ orchestrator_factories.py   → (deferred imports at call time)
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>implementations/
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>  ├─ agent_loader.py  (loads .md agent definitions for the SDK backend)
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>  ├─ claude_agent.py  → base.py
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>  └─ claude_sdk_agent.py  (standalone)
-</span></code></pre></div>
-<p>No circular imports — <code>OrchestratorAgent</code> uses late-binding factory lookup to avoid importing concrete agents at module load.</p>
-<hr />
-<h2 id="memory-integration">Memory integration<a class="headerlink" href="#memory-integration" title="Permanent link">&para;</a></h2>
-<p><code>memory.ConversationMemory</code> is self-contained and does NOT use <code>core.memory.MemoryStoreProtocol</code> — that protocol is for cross-run persistence (e.g., RAG-backed long-term memory). <code>ConversationMemory</code> is per-invocation context window management only.</p>
-<p>For long-term memory, agents delegate to <code>rag.memory.RAGMemoryStore</code> (a <code>MemoryStoreProtocol</code> implementation) — retrieved chunks are injected into the prompt by the agent's <code>_prepare_context()</code>.</p>
-<hr />
-<h2 id="json-extraction">JSON extraction<a class="headerlink" href="#json-extraction" title="Permanent link">&para;</a></h2>
-<p>Strategies, applied in order until one succeeds:</p>
-<ol>
-<li><strong>Fenced <code>json</code></strong> — <code>```json\n{...}\n```</code></li>
-<li><strong>Fenced any</strong> — <code>```\n{...}\n```</code></li>
-<li><strong>Balanced-brace scan</strong> — walks text tracking <code>{</code> / <code>}</code> depth; respects string literals and escape sequences.</li>
-</ol>
-<p><strong>Why not regex:</strong> greedy regex on nested braces fails silently; the balanced-brace scanner is correct by construction.</p>
-<p><strong>Edge cases handled:</strong> embedded <code>"}"</code>, escaped quotes <code>\"</code>, newlines inside strings, multiple JSON blocks (returns first valid).</p>
-<hr />
-<h2 id="integration-points">Integration points<a class="headerlink" href="#integration-points" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><code>..contracts</code></strong>: <code>TaskInput</code>/<code>TaskOutput</code> Pydantic models per agent.</li>
-<li><strong><code>..models</code></strong>: <code>ModelTier</code>, <code>SmartModelRouter</code>, <code>get_client()</code> for LLM dispatch.</li>
-<li><strong><code>..tools</code></strong>: <code>BaseTool</code>, <code>ToolRegistry</code> for function-calling.</li>
-<li><strong><code>..engine</code></strong>: <code>DAG</code>, <code>StepDefinition</code> (orchestrator only); <code>engine/agent_resolver.py</code> resolves YAML <code>agent:</code> names.</li>
-<li><strong><code>..prompts/*.md</code></strong>: persona definitions loaded as system prompts.</li>
-<li><strong><code>..rag</code></strong>: optional long-term memory via <code>RAGMemoryStore</code>.</li>
-<li><strong>External</strong>: <code>anthropic</code> SDK, <code>claude-agent-sdk</code>.</li>
-</ul>
-<p><strong>Used by:</strong></p>
-<ul>
-<li><code>server/execution.py</code> (workflow runner invokes agents).</li>
-<li><code>server/routes/agents.py</code> (enumeration from <code>config/defaults/agents.yaml</code>).</li>
-<li><code>langchain/</code> adapter (wraps agents as LangGraph nodes).</li>
-<li><code>engine/</code> native executor (invokes agents as DAG step handlers).</li>
-<li>Tests: <code>tests/test_agents*.py</code>, <code>tests/test_new_agents.py</code>.</li>
-</ul>
-<hr />
-<h2 id="risks-and-gotchas">Risks and gotchas<a class="headerlink" href="#risks-and-gotchas" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>JSON extraction ambiguity</strong> — if the LLM emits multiple JSON blocks, only the first is returned.</li>
-<li><strong>Memory summarization loss</strong> — 4-char/token heuristic is approximate; real token count may differ ±15%.</li>
-<li><strong>Capability scoring</strong> — no type-level enforcement that <code>CapabilityType</code> enums align across declarations.</li>
-<li><strong>Tool tier binding</strong> — requires consistent <code>ModelTier</code> numbering in <code>..models</code>; drift breaks filtering silently.</li>
-<li><strong>Orchestrator silent fallback</strong> — logs warnings per failure but may return partial output; callers must check the output status.</li>
-<li><strong>Mock backend fallback</strong> — when <code>llm_client.backend is None</code>, agents return placeholder responses (dev mode). Must not leak to prod.</li>
-<li><strong>State machine by convention</strong> — illegal transitions not raised at type level; only caught by tests.</li>
-<li><strong>Circular deps</strong> — <code>OrchestratorAgent</code> uses late-binding factory registry; direct imports would break.</li>
-<li><strong><code>ClaudeSDKAgent</code> outside taxonomy</strong> — does not inherit <code>BaseAgent</code>; callers need type narrowing.</li>
-<li><strong>Agent config merging</strong> — YAML + runtime overrides; unclear precedence in edge cases (nested dicts).</li>
-</ol>
-<hr />
-<h2 id="verification-steps">Verification steps<a class="headerlink" href="#verification-steps" title="Permanent link">&para;</a></h2>
-<p>Before shipping agent changes:</p>
-<ol>
-<li><code>pip install -e ".[dev,claude]"</code> from <code>agentic-workflows-v2/</code>.</li>
-<li><code>python -m pytest tests/ -k agent -q</code> — agent suites green.</li>
-<li><code>python -m pytest tests/ -k json_extraction -q</code> — structured-output parsing.</li>
-<li><code>python -m pytest tests/ -k memory -q</code> — window overflow + summarization.</li>
-<li><code>curl http://127.0.0.1:8010/api/agents</code> — all agents discoverable.</li>
-<li>Run a minimal workflow using each concrete agent via <code>POST /api/run</code>.</li>
-<li><code>pre-commit run --all-files</code> — mypy strict passes with generics.</li>
-</ol>
-<hr />
-<h2 id="suggested-tests">Suggested tests<a class="headerlink" href="#suggested-tests" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>BaseAgent</strong>: state-machine legal/illegal transitions; event ordering; generic type preservation.</li>
-<li><strong>ConversationMemory</strong>: window overflow triggers summarize; system message eviction prevention; token-count accuracy vs actual tokenizer.</li>
-<li><strong>CapabilitySet</strong>: scoring monotonicity, empty intersections, ties, proficiency clamps.</li>
-<li><strong>JSON extraction</strong>: malformed LLM responses (truncated, multiple blocks, nested braces in strings, escape sequences).</li>
-<li><strong>OrchestratorAgent</strong>: all-agents-fail raises rather than silently returning; DAG cycle detection; capability tie-breaking.</li>
-<li><strong>ClaudeAgent</strong>: tool_use round-trip; streaming content blocks; rate-limit retry.</li>
-<li><strong>ClaudeSDKAgent</strong>: session lifecycle; standalone invocation path.</li>
-<li><strong>agent_loader</strong>: unknown/missing definition directory handling; frontmatter parse errors.</li>
-<li><strong>Config</strong>: override precedence; missing persona file.</li>
-<li><strong>Mock backend</strong>: dev-mode path produces deterministic output; never fires in production config.</li>
-</ul>
-<hr />
-<h2 id="related-code-and-reuse-opportunities">Related code and reuse opportunities<a class="headerlink" href="#related-code-and-reuse-opportunities" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><code>json_extraction.py</code></strong> could be extracted as a standalone library — it's generally useful and better than greedy regex approaches.</li>
-<li><strong><code>ConversationMemory</code></strong> could generalize to non-agent contexts (e.g., chat UI) — move to <code>core/memory.py</code>.</li>
-<li><strong><code>CapabilitySet.score_match</code></strong> is a public-utility-caliber function; could be exposed for external orchestrators.</li>
-<li><strong>Agent event system</strong> parallels the <code>server/websocket.py</code> hub — consider unifying into <code>core/events.py</code>.</li>
-<li><strong>System prompts</strong> currently in <code>prompts/*.md</code>; consider externalizing into versioned YAML for experimentation.</li>
-<li><strong>Backend adapters</strong> (<code>ClaudeAgent</code>, <code>ClaudeSDKAgent</code>) could use the existing <code>AdapterRegistry</code> pattern from <code>adapters/</code> for symmetry.</li>
-<li><strong>Mock backend</strong> pattern should be promoted to a shared mock client for cross-package reuse.</li>
-</ul>
+<p>Source directory:
+<code>agentic-workflows-v2/agentic_v2/agents/</code>.</p>
 
 
 
@@ -4569,7 +3473,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 19, 2026 00:54:21 UTC">July 19, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

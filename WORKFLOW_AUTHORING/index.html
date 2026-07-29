@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Authoring guide - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/WORKFLOW_AUTHORING.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/WORKFLOW_AUTHORING/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Authoring guide - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/WORKFLOW_AUTHORING.png" />
 </head>
   
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1717,10 +1747,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
+  <a href="#expression-restrictions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security model
+        Expression restrictions
       
     </span>
   </a>
@@ -2577,6 +2607,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2674,6 +2708,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2984,6 +3074,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -3044,6 +3138,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3409,10 +3559,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
+  <a href="#expression-restrictions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security model
+        Expression restrictions
       
     </span>
   </a>
@@ -3713,19 +3863,22 @@
 
 
 <h1 id="workflow-authoring-guide">Workflow authoring guide<a class="headerlink" href="#workflow-authoring-guide" title="Permanent link">&para;</a></h1>
-<p>How to write, validate, and run YAML workflow definitions for the agentic-workflows-v2 engine.</p>
-<hr />
+<p>This guide explains how to write, validate, and run a YAML workflow.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Workflows are declarative YAML files that define a <strong>directed acyclic graph (DAG)</strong> of agent-backed steps. Each step runs an agent (deterministic or LLM-backed), receives inputs from upstream steps or workflow parameters, and produces outputs consumed by downstream steps. The DAG executor (Kahn's algorithm) schedules steps with maximum parallelism -- any step whose dependencies are satisfied runs immediately.</p>
+<p>Workflows are YAML files that define steps and the dependencies between them.
+Each step runs either deterministic Python or a model-backed agent. A step can
+read workflow inputs and the outputs of earlier steps. The executor runs a step
+as soon as its dependencies are complete, up to its concurrency limit.</p>
 <p>Workflow definitions live in:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>agentic-workflows-v2/agentic_v2/workflows/definitions/*.yaml
 </span></code></pre></div>
-<p>At runtime the system chains together:</p>
+<p>At runtime:</p>
 <ol>
-<li><strong>WorkflowLoader</strong> -- parses YAML into a <code>WorkflowDefinition</code> containing a validated <code>DAG</code>, typed inputs/outputs, capability metadata, and optional evaluation config.</li>
-<li><strong>DAGExecutor</strong> -- schedules and runs steps in parallel, respecting dependency edges and <code>when</code> conditions.</li>
-<li><strong>ExpressionEvaluator</strong> -- resolves <code>${...}</code> variable references and boolean conditions at runtime.</li>
-<li><strong>WorkflowRunner</strong> -- the top-level orchestrator that validates inputs, seeds context, executes the DAG, and resolves declared outputs.</li>
+<li><code>WorkflowLoader</code> parses the YAML and builds the dependency graph.</li>
+<li><code>WorkflowRunner</code> checks required inputs and allowed enum values.</li>
+<li>The executor schedules steps, dependencies, conditions, and bounded loops.</li>
+<li><code>ExpressionEvaluator</code> resolves <code>${...}</code> references.</li>
+<li>The runner maps step results to the workflow's declared outputs.</li>
 </ol>
 <hr />
 <h2 id="workflow-structure">Workflow structure<a class="headerlink" href="#workflow-structure" title="Permanent link">&para;</a></h2>
@@ -3741,33 +3894,33 @@
 <tbody>
 <tr>
 <td><code>name</code></td>
-<td>Yes</td>
-<td>Unique workflow identifier (must match filename without <code>.yaml</code>)</td>
+<td>No</td>
+<td>Workflow identifier; defaults to the filename</td>
 </tr>
 <tr>
 <td><code>version</code></td>
-<td>Yes</td>
-<td>Semantic version string, e.g. <code>"1.0"</code></td>
+<td>No</td>
+<td>Version string; defaults to <code>"1.0"</code></td>
 </tr>
 <tr>
 <td><code>description</code></td>
-<td>Yes</td>
-<td>Human-readable purpose of the workflow</td>
+<td>No</td>
+<td>Short explanation of the workflow</td>
 </tr>
 <tr>
 <td><code>inputs</code></td>
-<td>Yes</td>
-<td>Typed input parameter declarations</td>
+<td>No</td>
+<td>Input parameter declarations</td>
 </tr>
 <tr>
 <td><code>outputs</code></td>
-<td>Yes</td>
-<td>Output mappings from step results to workflow-level outputs</td>
+<td>No</td>
+<td>Mappings from step results to workflow outputs</td>
 </tr>
 <tr>
 <td><code>steps</code></td>
 <td>Yes</td>
-<td>Ordered list of step definitions (the DAG nodes)</td>
+<td>Non-empty list of executable steps</td>
 </tr>
 <tr>
 <td><code>capabilities</code></td>
@@ -3847,7 +4000,10 @@
 </span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">    </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 </span></code></pre></div>
-<p><strong>Supported <code>type</code> values:</strong> <code>string</code>, <code>number</code>, <code>object</code>, <code>array</code>. Types are advisory; runtime validation checks <code>required</code> and <code>enum</code> constraints.</p>
+<p><code>type</code> is descriptive metadata; the runner does not enforce it. Shipped
+definitions use values such as <code>string</code>, <code>integer</code>, <code>number</code>, <code>object</code>, and
+<code>array</code>. Runtime input validation enforces required values and <code>enum</code>
+constraints.</p>
 <hr />
 <h2 id="output-declarations">Output declarations<a class="headerlink" href="#output-declarations" title="Permanent link">&para;</a></h2>
 <p>Each key under <code>outputs:</code> maps a workflow-level output name to a <code>from:</code> expression that resolves against step results.</p>
@@ -3894,19 +4050,19 @@
 </tr>
 <tr>
 <td><code>description</code></td>
-<td>Yes</td>
+<td>No</td>
 <td>string</td>
-<td>What this step does -- passed to the LLM as task context</td>
+<td>What this step does; model-backed steps receive it as task context</td>
 </tr>
 <tr>
 <td><code>inputs</code></td>
-<td>Yes</td>
+<td>No</td>
 <td>mapping</td>
-<td>Maps step-local input names to <code>${...}</code> expressions</td>
+<td>Maps step-local input names to values or <code>${...}</code> expressions</td>
 </tr>
 <tr>
 <td><code>outputs</code></td>
-<td>Yes</td>
+<td>No</td>
 <td>mapping</td>
 <td>Maps step output keys to context variable names</td>
 </tr>
@@ -4086,7 +4242,10 @@ decision.</p>
 <p>The role suffix (e.g. <code>coder</code>, <code>reviewer</code>) maps to a persona prompt file in <code>agentic_v2/prompts/{role}.md</code>. If no matching file exists, the loader falls back to <code>prompts/default.md</code>; since no <code>default.md</code> ships with the runtime, the agent then runs without a persona prompt — only the engine's inline output-format instructions.</p>
 <hr />
 <h2 id="expression-language">Expression language<a class="headerlink" href="#expression-language" title="Permanent link">&para;</a></h2>
-<p>The engine supports <code>${...}</code> expressions for variable references, function calls, and boolean conditions. Expressions are evaluated by <code>ExpressionEvaluator</code> using a restricted Python AST whitelist -- no arbitrary code execution is possible.</p>
+<p>The engine supports <code>${...}</code> expressions for variable references, the
+<code>coalesce()</code> function, and conditions. <code>ExpressionEvaluator</code> accepts only a
+small set of expression elements and rejects imports, arbitrary function calls,
+and access to names that start with <code>__</code>.</p>
 <h3 id="variable-references">Variable references<a class="headerlink" href="#variable-references" title="Permanent link">&para;</a></h3>
 <p>Reference workflow inputs and step outputs using dotted paths:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Workflow inputs</span>
@@ -4163,16 +4322,16 @@ decision.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="security-model">Security model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h3>
-<p>Expression evaluation is secured through an <strong>AST whitelist</strong>. The engine parses expressions into a Python AST and rejects any node type not in the allowed set. This means:</p>
+<h3 id="expression-restrictions">Expression restrictions<a class="headerlink" href="#expression-restrictions" title="Permanent link">&para;</a></h3>
+<p>The evaluator parses each expression and rejects elements outside its
+allowlist. In particular:</p>
 <ul>
 <li>No imports or module access</li>
 <li>No function calls except <code>coalesce()</code></li>
 <li>No attribute assignment</li>
 <li>No lambda, comprehension, or generator expressions</li>
-<li>All evaluation runs with <code>__builtins__</code> set to <code>{}</code></li>
+<li>Built-in Python functions are not available</li>
 </ul>
-<p>Internally, <code>ast.parse()</code> and <code>compile()</code> are used with the restricted whitelist; <code>ast.literal_eval</code> principles are followed but the evaluator supports a broader set of comparison and boolean operations.</p>
 <hr />
 <h2 id="execution-patterns">Execution patterns<a class="headerlink" href="#execution-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="sequential-depends_on-chaining">Sequential (depends_on chaining)<a class="headerlink" href="#sequential-depends_on-chaining" title="Permanent link">&para;</a></h3>
@@ -4429,13 +4588,15 @@ decision.</p>
 <p>Validate a workflow YAML file before running it:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>agentic<span class="w"> </span>validate<span class="w"> </span>&lt;workflow_name&gt;
 </span></code></pre></div>
-<p>The validation pipeline checks:
-1. <strong>YAML syntax</strong> -- valid YAML parsing.
-2. <strong>Required top-level keys</strong> -- <code>name</code>, <code>steps</code> must be present.
-3. <strong>Step schema</strong> -- every step must have <code>name</code> and <code>agent</code>.
-4. <strong>Dependency existence</strong> -- every <code>depends_on</code> target must be a defined step name.
-5. <strong>Cycle detection</strong> -- DFS three-color algorithm rejects any circular dependencies.
-6. <strong>Evaluation constraints</strong> -- criterion weights sum to 1.0, critical floors in [0,1], formula IDs registered.</p>
+<p>The validation pipeline checks:</p>
+<ol>
+<li>YAML syntax and the top-level mapping.</li>
+<li>At least one executable step for a non-experimental workflow.</li>
+<li>Step names and resolvable agents.</li>
+<li>Dependency names and dependency cycles.</li>
+<li>Artifact-contract configuration.</li>
+<li>Evaluation weights, floors, and normalization formula names.</li>
+</ol>
 <p>Programmatic validation:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.workflows.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowLoader</span>
 </span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
@@ -4641,7 +4802,7 @@ decision.</p>
 </span></code></pre></div>
 <h3 id="checklist-for-new-workflows">Checklist for new workflows<a class="headerlink" href="#checklist-for-new-workflows" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>name</code> matches the YAML filename (without <code>.yaml</code>)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>name</code> matches the YAML filename (recommended for clear CLI output)</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Every step has <code>name</code>, <code>agent</code>, <code>description</code>, <code>inputs</code>, <code>outputs</code></li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All <code>depends_on</code> targets are valid step names</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No dependency cycles</li>
@@ -4672,7 +4833,7 @@ decision.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 15, 2026 01:32:29 UTC">July 15, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

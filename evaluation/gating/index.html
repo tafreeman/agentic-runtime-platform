@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint.">
+        <meta name="description" content="Understand runtime scores, criterion floors, hard gates, and pass thresholds.">
       
       
       
@@ -27,7 +27,7 @@
     
     
       
-        <title>Production gating - Agentic Runtime Platform</title>
+        <title>Runtime evaluation gates - Agentic Runtime Platform</title>
       
     
     
@@ -67,16 +67,16 @@
     
   
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Production gating - Agentic Runtime Platform" />
-<meta property="og:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint." />
+<meta property="og:title" content="Runtime evaluation gates - Agentic Runtime Platform" />
+<meta property="og:description" content="Understand runtime scores, criterion floors, hard gates, and pass thresholds." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/gating.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/evaluation/gating/" />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:title" content="Production gating - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint." />
+<meta property="twitter:title" content="Runtime evaluation gates - Agentic Runtime Platform" />
+<meta property="twitter:description" content="Understand runtime scores, criterion floors, hard gates, and pass thresholds." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/evaluation/gating.png" />
 </head>
   
@@ -95,7 +95,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#production-gating" class="md-skip">
+        <a href="#runtime-evaluation-gates" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Production gating
+              Runtime evaluation gates
             
           </span>
         </div>
@@ -308,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../../cli-reference/" class="md-tabs__link">
           
   
   
@@ -1206,6 +1206,8 @@
       
         
       
+        
+      
     
     
     
@@ -1250,6 +1252,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1754,10 +1784,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#three-stage-scoring-pipeline" class="md-nav__link">
+  <a href="#when-evaluation-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three-stage scoring pipeline
+        When evaluation runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision order
       
     </span>
   </a>
@@ -1773,41 +1814,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Hard gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#required_outputs_present-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        required_outputs_present gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#release_build_verified-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        release_build_verified gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#criterion-floor-violations" class="md-nav__link">
+  <a href="#criterion-floors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterion floor violations
+        Criterion floors
       
     </span>
   </a>
@@ -1815,10 +1828,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scoring-profiles-ae" class="md-nav__link">
+  <a href="#rubric-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring profiles (A–E)
+        Rubric resolution
       
     </span>
   </a>
@@ -1826,10 +1839,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rubric-weight-validation" class="md-nav__link">
+  <a href="#optional-judge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric weight validation
+        Optional judge
       
     </span>
   </a>
@@ -1837,10 +1850,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#score-layers" class="md-nav__link">
+  <a href="#pass-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Score layers
+        Pass logic
       
     </span>
   </a>
@@ -1848,10 +1861,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#grade-mapping" class="md-nav__link">
+  <a href="#result-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grade mapping
+        Result fields
       
     </span>
   </a>
@@ -1859,43 +1872,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apirunsfilenameevaluation-endpoint" class="md-nav__link">
+  <a href="#release-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/runs/{filename}/evaluation endpoint
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ci-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#evaluation-schema-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Evaluation schema contract
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-the-pass-threshold" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring the pass threshold
+        Release use
       
     </span>
   </a>
@@ -2277,6 +2257,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2374,6 +2358,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2684,6 +2724,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2744,6 +2788,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -2931,10 +3031,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#three-stage-scoring-pipeline" class="md-nav__link">
+  <a href="#when-evaluation-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Three-stage scoring pipeline
+        When evaluation runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision order
       
     </span>
   </a>
@@ -2950,41 +3061,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Hard gates">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#required_outputs_present-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        required_outputs_present gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#release_build_verified-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        release_build_verified gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#criterion-floor-violations" class="md-nav__link">
+  <a href="#criterion-floors" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Criterion floor violations
+        Criterion floors
       
     </span>
   </a>
@@ -2992,10 +3075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scoring-profiles-ae" class="md-nav__link">
+  <a href="#rubric-resolution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scoring profiles (A–E)
+        Rubric resolution
       
     </span>
   </a>
@@ -3003,10 +3086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#rubric-weight-validation" class="md-nav__link">
+  <a href="#optional-judge" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rubric weight validation
+        Optional judge
       
     </span>
   </a>
@@ -3014,10 +3097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#score-layers" class="md-nav__link">
+  <a href="#pass-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Score layers
+        Pass logic
       
     </span>
   </a>
@@ -3025,10 +3108,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#grade-mapping" class="md-nav__link">
+  <a href="#result-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grade mapping
+        Result fields
       
     </span>
   </a>
@@ -3036,43 +3119,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#get-apirunsfilenameevaluation-endpoint" class="md-nav__link">
+  <a href="#release-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GET /api/runs/{filename}/evaluation endpoint
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ci-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#evaluation-schema-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Evaluation schema contract
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-the-pass-threshold" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuring the pass threshold
+        Release use
       
     </span>
   </a>
@@ -3126,453 +3176,187 @@
   
 
 
-<h1 id="production-gating">Production gating<a class="headerlink" href="#production-gating" title="Permanent link">&para;</a></h1>
-<p>Production gating is the policy layer that translates a collection of criterion scores into a single pass/fail verdict. When the gate fails, the specific failing dimension is surfaced so the run can be quarantined rather than silently downgraded.</p>
-<p>The scoring pipeline lives in <code>agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py</code> and is invoked after every workflow run that has a dataset sample associated with it.</p>
-<hr />
-<h2 id="three-stage-scoring-pipeline">Three-stage scoring pipeline<a class="headerlink" href="#three-stage-scoring-pipeline" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Stage 1: Criterion Scoring
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    For each criterion in the resolved rubric:
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>        raw_score = _compute_criterion_score(criterion, result, expected_text)
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        normalized_score = normalize_score(raw_score / 100.0, formula_id)
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        adjusted_score = adjust_for_sample_size(normalized_score, n=len(steps))
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        check criterion floor violation
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Stage 2: Advisory Scores + Optional LLM Judge
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    advisory_similarity = _advisory_similarity_score(expected, generated, objective)
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    advisory_efficiency = _advisory_efficiency_score(result, normalized_scores)
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    advisory = similarity * 0.67 + efficiency * 0.33
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    if judge is not None:
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        judge_result = judge.evaluate(candidate_output, expected_output, criteria)
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        judge_score = judge_result.normalized_score
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>Stage 3: Hybrid Score Composition + Grading
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    hybrid_score = _compose_hybrid_score(objective, advisory, judge_score, weights)
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    weighted_score = hybrid_score * 100.0
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    grade = _grade(weighted_score)
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    enforce floor violations → cap grade if needed
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    enforce hard gates → override grade to F if failed
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    passed = (weighted_score &gt;= threshold) AND no_floor_violations AND all_hard_gates
+<h1 id="runtime-evaluation-gates">Runtime evaluation gates<a class="headerlink" href="#runtime-evaluation-gates" title="Permanent link">&para;</a></h1>
+<p>Runtime evaluation turns a completed workflow result into a score, grade, and
+pass/fail decision. It is separate from the <code>agentic-v2-eval</code> CLI, which scores
+numeric JSON values with a package rubric.</p>
+<p>The implementation is in
+<code>agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py</code>.</p>
+<h2 id="when-evaluation-runs">When evaluation runs<a class="headerlink" href="#when-evaluation-runs" title="Permanent link">&para;</a></h2>
+<p>The server can evaluate:</p>
+<ul>
+<li>a workflow run requested with dataset-backed evaluation settings; or</li>
+<li>a saved run through <code>POST /api/runs/{filename}/evaluate</code>.</li>
+</ul>
+<p>Read a saved result with:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET /api/runs/{filename}/evaluation
 </span></code></pre></div>
-<hr />
+<p>The evaluation is stored in the run record under <code>extra.evaluation</code>.</p>
+<h2 id="decision-order">Decision order<a class="headerlink" href="#decision-order" title="Permanent link">&para;</a></h2>
+<p>The runtime:</p>
+<ol>
+<li>resolves the rubric ID, weights, criteria, and scoring profile;</li>
+<li>calculates objective criterion scores from the workflow result and expected
+   data;</li>
+<li>calculates advisory similarity and efficiency signals;</li>
+<li>optionally calls the runtime <code>LLMJudge</code>;</li>
+<li>combines the available layers into a 0–100 weighted score;</li>
+<li>assigns a letter grade;</li>
+<li>applies criterion floors; and</li>
+<li>applies hard gates and the pass threshold.</li>
+</ol>
+<p>The default pass threshold is <code>70.0</code>.</p>
 <h2 id="hard-gates">Hard gates<a class="headerlink" href="#hard-gates" title="Permanent link">&para;</a></h2>
-<p>Hard gates are binary pass/fail checks that must all succeed before a run can receive a passing grade. They are evaluated in <code>compute_hard_gates()</code>:</p>
 <table>
 <thead>
 <tr>
 <th>Gate</th>
-<th>Passes When</th>
+<th>Pass condition</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>required_outputs_present</code></td>
-<td>All non-optional workflow outputs have non-null values</td>
+<td>Every required workflow output resolves to a usable value</td>
 </tr>
 <tr>
 <td><code>overall_status_success</code></td>
-<td><code>result.overall_status == StepStatus.SUCCESS</code></td>
+<td>The workflow result status is <code>SUCCESS</code></td>
 </tr>
 <tr>
 <td><code>no_critical_step_failures</code></td>
-<td>No step in <code>result.steps</code> has <code>status == StepStatus.FAILED</code></td>
+<td>No step result has status <code>FAILED</code></td>
 </tr>
 <tr>
 <td><code>release_build_verified</code></td>
-<td>Any step whose name starts with <code>build_verify_release</code> or <code>release_build_verify</code> either succeeded or has <code>ready_for_release=True</code> in its output</td>
+<td>Any recognized release-build step succeeded and did not report a false readiness value</td>
 </tr>
 <tr>
 <td><code>schema_contract_valid</code></td>
-<td>The evaluation payload conforms to the expected schema (checked by <code>validate_evaluation_payload_schema</code>)</td>
+<td>The evaluation payload has the required fields and types</td>
 </tr>
 <tr>
 <td><code>dataset_workflow_compatible</code></td>
-<td>The dataset sample provided the required inputs for the workflow</td>
+<td>The selected sample provides inputs compatible with the workflow</td>
 </tr>
 </tbody>
 </table>
-<p>If <strong>any</strong> hard gate fails and <code>enforce_hard_gates=True</code> (the production default), the run is assigned grade <code>F</code> regardless of the weighted score. Hard gate failures are listed in <code>payload["hard_gate_failures"]</code>.</p>
-<p><strong>Note:</strong> <code>HardGateResult.all_passed</code> is the conjunction of all six gates. Individual gate values are available in <code>payload["hard_gates"]</code>.</p>
-<h3 id="required_outputs_present-gate"><code>required_outputs_present</code> gate<a class="headerlink" href="#required_outputs_present-gate" title="Permanent link">&para;</a></h3>
-<p>Required outputs are those listed in the workflow's <code>outputs</code> section that do not have <code>optional: true</code>. The gate fails if:
-- The output name appears in <code>result.metadata["unresolved_required_outputs"]</code>, or
-- The output value is <code>None</code> in <code>result.final_output</code>.</p>
-<h3 id="release_build_verified-gate"><code>release_build_verified</code> gate<a class="headerlink" href="#release_build_verified-gate" title="Permanent link">&para;</a></h3>
-<p>This gate only applies if the run includes a step named <code>build_verify_release_*</code> or <code>release_build_verify_*</code>. If no such step exists, the gate automatically passes. If the step exists but has <code>status=FAILED</code>, the gate fails. If the step has <code>ready_for_release</code> in its output dict that evaluates as falsy, the gate also fails.</p>
-<hr />
-<h2 id="criterion-floor-violations">Criterion floor violations<a class="headerlink" href="#criterion-floor-violations" title="Permanent link">&para;</a></h2>
-<p>Floor violations are softer than hard gates — they don't automatically fail a run, but they cap the grade.</p>
-<p>A floor violation occurs when a criterion's normalized score falls below its <code>critical_floor</code> value (defined per-criterion in the workflow YAML). Two backstop floors are also applied automatically even when the workflow YAML doesn't declare explicit floors:</p>
-<table>
-<thead>
-<tr>
-<th>Criterion Key</th>
-<th>Implicit Floor</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>correctness</code> or <code>correctness_rubric</code></td>
-<td>0.70</td>
-</tr>
-<tr>
-<td><code>safety_validation</code>, <code>validation</code>, <code>safety</code>, or <code>code_quality</code></td>
-<td>0.80</td>
-</tr>
-</tbody>
-</table>
-<p>These backstops prevent a high aggregate score from masking a serious correctness or safety miss.</p>
-<p><strong>Grade capping rule:</strong> If any floor violation is present AND the computed grade would be A, B, or C, the grade is capped at D and <code>grade_capped=True</code> is set in the payload. The <code>passed</code> flag is also forced to <code>False</code> when floor violations are present.</p>
-<p>Floor violations are surfaced in <code>payload["floor_violations"]</code>:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">[</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p">{</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;criterion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;correctness&quot;</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&quot;floor&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.70</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">&quot;normalized_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.62</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">]</span>
-</span></code></pre></div>
-<hr />
-<h2 id="scoring-profiles-ae">Scoring profiles (A–E)<a class="headerlink" href="#scoring-profiles-ae" title="Permanent link">&para;</a></h2>
-<p>Scoring profiles bind a set of criterion weights to a workflow family. The profile is selected via the <code>scoring_profile</code> field in the workflow YAML's <code>evaluation</code> section:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">evaluation</span><span class="p">:</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">scoring_profile</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;A&quot;</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">rubric_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;swe_style_v1&quot;</span>
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Profile</th>
-<th>Description</th>
-<th>Criteria Weights</th>
-<th>Extra Gates</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>A</td>
-<td>Code repair / SWE-style</td>
-<td><code>objective_tests: 0.60</code>, <code>code_quality: 0.20</code>, <code>efficiency: 0.10</code>, <code>documentation: 0.10</code></td>
-<td><code>fail_to_pass</code></td>
-</tr>
-<tr>
-<td>B <em>(default)</em></td>
-<td>DAG generation / review</td>
-<td><code>correctness_rubric: 0.35</code>, <code>code_quality: 0.30</code>, <code>efficiency: 0.20</code>, <code>documentation: 0.15</code></td>
-<td><code>required_outputs_parseable</code></td>
-</tr>
-<tr>
-<td>C</td>
-<td>RAG workflows</td>
-<td><code>faithfulness: 0.35</code>, <code>relevance: 0.30</code>, <code>citation_quality: 0.20</code>, <code>coherence: 0.15</code></td>
-<td><code>answer_grounded</code></td>
-</tr>
-<tr>
-<td>D</td>
-<td>Agentic tool-use / routing</td>
-<td><code>tool_selection_accuracy: 0.25</code>, <code>task_completion: 0.30</code>, <code>efficiency: 0.25</code>, <code>coherence: 0.20</code></td>
-<td><code>tool_call_schema_valid</code></td>
-</tr>
-<tr>
-<td>E</td>
-<td>Deep research pipelines</td>
-<td><code>coverage: 0.25</code>, <code>source_quality: 0.20</code>, <code>agreement: 0.20</code>, <code>verification: 0.20</code>, <code>recency: 0.15</code></td>
-<td><code>all_dimensions_high</code>, <code>no_critical_contradictions</code>, <code>sources_floor</code></td>
-</tr>
-</tbody>
-</table>
-<p><strong>Profile E research gating thresholds:</strong>
-- <code>coverage_score &gt;= 0.80</code> — the research must cover at least 80% of the expected scope
-- <code>source_quality_score &gt;= 0.80</code> — cited sources must meet quality standards</p>
-<p>These match the research standards used by this repository: Tier A sources are required, and critical architectural decisions should cite at least two independent Tier A sources.</p>
-<p><strong>Weight resolution priority (lowest to highest):</strong></p>
-<ol>
-<li>Global defaults from <code>evaluation.yaml</code> (or <code>_DEFAULT_WEIGHTS</code>)</li>
-<li>Scoring profile weights (if <code>scoring_profile</code> declared)</li>
-<li>Per-criterion <code>weight</code> fields from the workflow's evaluation criteria</li>
-<li>Explicit <code>weights</code> dict from the workflow evaluation section</li>
-</ol>
-<p>When a workflow declares explicit <code>criteria</code>, only those criteria names are included in the weight map; undeclared criteria from inherited weights are dropped to prevent scoring the wrong rubric silently.</p>
-<hr />
-<h2 id="rubric-weight-validation">Rubric weight validation<a class="headerlink" href="#rubric-weight-validation" title="Permanent link">&para;</a></h2>
-<p><code>_validate_rubric_weights()</code> enforces three constraints before any evaluation:</p>
-<ol>
-<li>The weights dict must be non-empty.</li>
-<li>All weight values must be positive (&gt; 0).</li>
-<li>The total must sum to 1.0 ± 0.01.</li>
-</ol>
-<p>If the workflow declares explicit criteria, any weight key not matching a declared criterion name raises <code>ValueError</code> with the list of unknown criteria and the known criteria names.</p>
-<hr />
-<h2 id="score-layers">Score layers<a class="headerlink" href="#score-layers" title="Permanent link">&para;</a></h2>
-<p>The evaluation payload includes a <code>score_layers</code> dict for transparency:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;score_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&quot;layer1_objective&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">82.5</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">&quot;layer2_judge&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">78.0</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&quot;layer3_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">75.0</span><span class="p">,</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">&quot;layer3_efficiency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">91.0</span><span class="p">,</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">&quot;layer3_advisory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">80.3</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">}</span>
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Layer</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>layer1_objective</code></td>
-<td>Weighted combination of criterion scores from execution signals</td>
-</tr>
-<tr>
-<td><code>layer2_judge</code></td>
-<td>LLM judge score (null if judge not invoked)</td>
-</tr>
-<tr>
-<td><code>layer3_similarity</code></td>
-<td>Text overlap between expected and generated output</td>
-</tr>
-<tr>
-<td><code>layer3_efficiency</code></td>
-<td>Execution efficiency score (latency, step count)</td>
-</tr>
-<tr>
-<td><code>layer3_advisory</code></td>
-<td><code>similarity * 0.67 + efficiency * 0.33</code></td>
-</tr>
-</tbody>
-</table>
-<p>The hybrid composition weights are reported in <code>payload["hybrid_weights"]</code>.</p>
-<hr />
-<h2 id="grade-mapping">Grade mapping<a class="headerlink" href="#grade-mapping" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>weighted_score in [0, 100] → letter grade
-</span></code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Score Range</th>
-<th>Grade</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>≥ 90</td>
-<td>A</td>
-<td>Excellent</td>
-</tr>
-<tr>
-<td>≥ 80</td>
-<td>B</td>
-<td>Good</td>
-</tr>
-<tr>
-<td>≥ 70</td>
-<td>C</td>
-<td>Acceptable</td>
-</tr>
-<tr>
-<td>≥ 60</td>
-<td>D</td>
-<td>Below expectations</td>
-</tr>
-<tr>
-<td>&lt; 60</td>
-<td>F</td>
-<td>Failing</td>
-</tr>
-</tbody>
-</table>
-<p>Grades can be overridden downward by:
-1. Floor violations: cap at D (if grade would otherwise be A/B/C)
-2. Hard gate failures: force to F</p>
-<p>The <code>passed</code> boolean is separate from the grade. A run passes when:
-- <code>weighted_score &gt;= pass_threshold</code> (default 70.0, configurable in <code>evaluation.yaml</code>)
-- No floor violations
-- All hard gates pass (when <code>enforce_hard_gates=True</code>)</p>
-<hr />
-<h2 id="get-apirunsfilenameevaluation-endpoint"><code>GET /api/runs/{filename}/evaluation</code> endpoint<a class="headerlink" href="#get-apirunsfilenameevaluation-endpoint" title="Permanent link">&para;</a></h2>
-<p>The evaluation result for a completed run is available at:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GET /api/runs/{filename}/evaluation
-</span></code></pre></div>
-<p>Where <code>filename</code> is the run's log file name (e.g., <code>run_20260501_143022_abc123.json</code>).</p>
-<p><strong>Response structure:</strong></p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;filename&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;run_20260501_143022_abc123.json&quot;</span><span class="p">,</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">&quot;evaluation_requested&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">&quot;evaluation&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">    </span><span class="nt">&quot;rubric&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workflow_default&quot;</span><span class="p">,</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span><span class="nt">&quot;rubric_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workflow_default&quot;</span><span class="p">,</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="nt">&quot;rubric_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="nt">&quot;criteria&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">      </span><span class="p">{</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">        </span><span class="nt">&quot;criterion&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;correctness&quot;</span><span class="p">,</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">        </span><span class="nt">&quot;raw_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">85.0</span><span class="p">,</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">        </span><span class="nt">&quot;normalized_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.85</span><span class="p">,</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">        </span><span class="nt">&quot;adjusted_normalized_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.83</span><span class="p">,</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">        </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">85.0</span><span class="p">,</span>
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">        </span><span class="nt">&quot;weight&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.50</span><span class="p">,</span>
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">        </span><span class="nt">&quot;formula_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;zero_one&quot;</span><span class="p">,</span>
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">        </span><span class="nt">&quot;critical_floor&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">        </span><span class="nt">&quot;floor_passed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">        </span><span class="nt">&quot;max_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100.0</span><span class="p">,</span>
-</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">        </span><span class="nt">&quot;judge_raw_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
-</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">        </span><span class="nt">&quot;judge_normalized_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span>
-</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="w">        </span><span class="nt">&quot;judge_evidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The output correctly implements...&quot;</span>
-</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">      </span><span class="p">}</span>
-</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">    </span><span class="p">],</span>
-</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="w">    </span><span class="nt">&quot;overall_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">82.5</span><span class="p">,</span>
-</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">    </span><span class="nt">&quot;weighted_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">79.2</span><span class="p">,</span>
-</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">    </span><span class="nt">&quot;objective_weighted_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">78.0</span><span class="p">,</span>
-</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">    </span><span class="nt">&quot;grade&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C&quot;</span><span class="p">,</span>
-</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">    </span><span class="nt">&quot;passed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">    </span><span class="nt">&quot;pass_threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">70.0</span><span class="p">,</span>
-</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">    </span><span class="nt">&quot;step_scores&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;step_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;analyze&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100.0</span><span class="p">},</span>
-</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;step_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;generate&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100.0</span><span class="p">}</span>
-</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">    </span><span class="p">],</span>
-</span><span id="__span-6-36"><a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">    </span><span class="nt">&quot;dataset&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-37"><a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="w">      </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-</span><span id="__span-6-38"><a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span>
-</span><span id="__span-6-39"><a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="w">      </span><span class="nt">&quot;sample_index&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
-</span><span id="__span-6-40"><a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-6-41"><a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="w">    </span><span class="nt">&quot;score_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-42"><a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="w">      </span><span class="nt">&quot;layer1_objective&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">78.0</span><span class="p">,</span>
-</span><span id="__span-6-43"><a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="w">      </span><span class="nt">&quot;layer2_judge&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">75.0</span><span class="p">,</span>
-</span><span id="__span-6-44"><a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="w">      </span><span class="nt">&quot;layer3_similarity&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">72.0</span><span class="p">,</span>
-</span><span id="__span-6-45"><a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="w">      </span><span class="nt">&quot;layer3_efficiency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">88.0</span><span class="p">,</span>
-</span><span id="__span-6-46"><a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="w">      </span><span class="nt">&quot;layer3_advisory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">77.0</span>
-</span><span id="__span-6-47"><a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-6-48"><a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a><span class="w">    </span><span class="nt">&quot;hybrid_weights&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-49"><a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a><span class="w">      </span><span class="nt">&quot;objective&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.60</span><span class="p">,</span>
-</span><span id="__span-6-50"><a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="w">      </span><span class="nt">&quot;judge&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span>
-</span><span id="__span-6-51"><a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a><span class="w">      </span><span class="nt">&quot;advisory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.15</span>
-</span><span id="__span-6-52"><a id="__codelineno-6-52" name="__codelineno-6-52" href="#__codelineno-6-52"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-6-53"><a id="__codelineno-6-53" name="__codelineno-6-53" href="#__codelineno-6-53"></a><span class="w">    </span><span class="nt">&quot;judge&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-54"><a id="__codelineno-6-54" name="__codelineno-6-54" href="#__codelineno-6-54"></a><span class="w">      </span><span class="nt">&quot;criteria&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">...</span><span class="p">],</span>
-</span><span id="__span-6-55"><a id="__codelineno-6-55" name="__codelineno-6-55" href="#__codelineno-6-55"></a><span class="w">      </span><span class="nt">&quot;normalized_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.75</span><span class="p">,</span>
-</span><span id="__span-6-56"><a id="__codelineno-6-56" name="__codelineno-6-56" href="#__codelineno-6-56"></a><span class="w">      </span><span class="nt">&quot;score&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">75.0</span><span class="p">,</span>
-</span><span id="__span-6-57"><a id="__codelineno-6-57" name="__codelineno-6-57" href="#__codelineno-6-57"></a><span class="w">      </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gh:openai/gpt-4o&quot;</span><span class="p">,</span>
-</span><span id="__span-6-58"><a id="__codelineno-6-58" name="__codelineno-6-58" href="#__codelineno-6-58"></a><span class="w">      </span><span class="nt">&quot;model_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-4o-2024-11-20&quot;</span><span class="p">,</span>
-</span><span id="__span-6-59"><a id="__codelineno-6-59" name="__codelineno-6-59" href="#__codelineno-6-59"></a><span class="w">      </span><span class="nt">&quot;prompt_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;judge-v1@1a2b3c4d&quot;</span><span class="p">,</span>
-</span><span id="__span-6-60"><a id="__codelineno-6-60" name="__codelineno-6-60" href="#__codelineno-6-60"></a><span class="w">      </span><span class="nt">&quot;temperature&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-6-61"><a id="__codelineno-6-61" name="__codelineno-6-61" href="#__codelineno-6-61"></a><span class="w">      </span><span class="nt">&quot;pairwise_consistent&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
-</span><span id="__span-6-62"><a id="__codelineno-6-62" name="__codelineno-6-62" href="#__codelineno-6-62"></a><span class="w">      </span><span class="nt">&quot;inconsistency_reasons&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
-</span><span id="__span-6-63"><a id="__codelineno-6-63" name="__codelineno-6-63" href="#__codelineno-6-63"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-6-64"><a id="__codelineno-6-64" name="__codelineno-6-64" href="#__codelineno-6-64"></a><span class="w">    </span><span class="nt">&quot;hard_gates&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-6-65"><a id="__codelineno-6-65" name="__codelineno-6-65" href="#__codelineno-6-65"></a><span class="w">      </span><span class="nt">&quot;required_outputs_present&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-66"><a id="__codelineno-6-66" name="__codelineno-6-66" href="#__codelineno-6-66"></a><span class="w">      </span><span class="nt">&quot;overall_status_success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-67"><a id="__codelineno-6-67" name="__codelineno-6-67" href="#__codelineno-6-67"></a><span class="w">      </span><span class="nt">&quot;no_critical_step_failures&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-68"><a id="__codelineno-6-68" name="__codelineno-6-68" href="#__codelineno-6-68"></a><span class="w">      </span><span class="nt">&quot;release_build_verified&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-69"><a id="__codelineno-6-69" name="__codelineno-6-69" href="#__codelineno-6-69"></a><span class="w">      </span><span class="nt">&quot;schema_contract_valid&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-6-70"><a id="__codelineno-6-70" name="__codelineno-6-70" href="#__codelineno-6-70"></a><span class="w">      </span><span class="nt">&quot;dataset_workflow_compatible&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-</span><span id="__span-6-71"><a id="__codelineno-6-71" name="__codelineno-6-71" href="#__codelineno-6-71"></a><span class="w">    </span><span class="p">},</span>
-</span><span id="__span-6-72"><a id="__codelineno-6-72" name="__codelineno-6-72" href="#__codelineno-6-72"></a><span class="w">    </span><span class="nt">&quot;hard_gate_failures&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-6-73"><a id="__codelineno-6-73" name="__codelineno-6-73" href="#__codelineno-6-73"></a><span class="w">    </span><span class="nt">&quot;floor_violations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
-</span><span id="__span-6-74"><a id="__codelineno-6-74" name="__codelineno-6-74" href="#__codelineno-6-74"></a><span class="w">    </span><span class="nt">&quot;grade_capped&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-</span><span id="__span-6-75"><a id="__codelineno-6-75" name="__codelineno-6-75" href="#__codelineno-6-75"></a><span class="w">    </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-05-01T14:32:45.123456+00:00&quot;</span>
-</span><span id="__span-6-76"><a id="__codelineno-6-76" name="__codelineno-6-76" href="#__codelineno-6-76"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-6-77"><a id="__codelineno-6-77" name="__codelineno-6-77" href="#__codelineno-6-77"></a><span class="p">}</span>
-</span></code></pre></div>
-<p><strong>Status codes:</strong>
-- <code>200</code> — evaluation found and returned
-- <code>404</code> — run file not found
-- <code>200</code> with <code>evaluation: null</code> — run found but no evaluation was performed (evaluation not requested or no dataset sample)</p>
-<hr />
-<h2 id="ci-integration">CI integration<a class="headerlink" href="#ci-integration" title="Permanent link">&para;</a></h2>
-<p>The evaluation pipeline integrates with CI via the <code>eval-package-ci.yml</code> workflow:</p>
+<p>When <code>enforce_hard_gates=True</code>, any failed hard gate:</p>
 <ul>
-<li>mypy runs as a blocking step — type-check failures block merge</li>
-<li>The eval package is tested independently of the main runtime</li>
-<li>Coverage gate: 80% (<code>fail_under = 80</code> in <code>agentic-v2-eval/pyproject.toml</code>)</li>
+<li>sets the grade to <code>F</code>; and</li>
+<li>makes <code>passed</code> false regardless of the weighted score.</li>
 </ul>
-<p>To run the full eval-package test suite with coverage:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>--cov<span class="o">=</span>agentic_v2_eval<span class="w"> </span>--cov-report<span class="o">=</span>term-missing<span class="w"> </span>-v
+<p>The release-build gate passes when a workflow has no recognized release-build
+step.</p>
+<h2 id="criterion-floors">Criterion floors<a class="headerlink" href="#criterion-floors" title="Permanent link">&para;</a></h2>
+<p>A workflow criterion may declare a <code>critical_floor</code>:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">evaluation</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">rubric_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code_review_v1</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">criteria</span><span class="p">:</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">correctness_rubric</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">definition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Required behavior is correct.</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.50</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">critical_floor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">formula_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zero_one</span>
 </span></code></pre></div>
-<p>To check type safety:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mypy<span class="w"> </span>--strict<span class="w"> </span>src/agentic_v2_eval/
-</span></code></pre></div>
-<hr />
-<h2 id="evaluation-schema-contract">Evaluation schema contract<a class="headerlink" href="#evaluation-schema-contract" title="Permanent link">&para;</a></h2>
-<p><code>validate_evaluation_payload_schema(payload)</code> validates that an evaluation payload conforms to the required structure. Required top-level fields:</p>
+<p>A score below a required floor:</p>
+<ul>
+<li>appears in <code>floor_violations</code>;</li>
+<li>prevents the evaluation from passing; and</li>
+<li>caps an otherwise passing letter grade at <code>D</code>.</li>
+</ul>
+<p>Floors prevent a strong aggregate from hiding failure in one required
+dimension.</p>
+<h2 id="rubric-resolution">Rubric resolution<a class="headerlink" href="#rubric-resolution" title="Permanent link">&para;</a></h2>
+<p>Weights are resolved from lowest to highest priority:</p>
+<ol>
+<li><code>evaluation.scoring.weights</code> in the runtime evaluation configuration;</li>
+<li>the workflow's named scoring profile;</li>
+<li><code>weight</code> on each inline workflow criterion; and</li>
+<li>the workflow's explicit <code>evaluation.weights</code> mapping.</li>
+</ol>
+<p>If a workflow declares criteria, inherited weights for undeclared criteria are
+removed. Resolved weights must be positive and sum to approximately <code>1.0</code>.</p>
+<p>The built-in fallback weights are:</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Notes</th>
+<th>Criterion</th>
+<th style="text-align: right;">Weight</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>rubric_id</code></td>
-<td><code>str</code></td>
-<td>Rubric identifier</td>
+<td><code>correctness</code></td>
+<td style="text-align: right;">0.50</td>
 </tr>
 <tr>
-<td><code>rubric_version</code></td>
-<td><code>str</code></td>
-<td>Rubric version</td>
+<td><code>code_quality</code></td>
+<td style="text-align: right;">0.25</td>
 </tr>
 <tr>
-<td><code>criteria</code></td>
-<td><code>list</code></td>
-<td>Per-criterion score entries</td>
+<td><code>efficiency</code></td>
+<td style="text-align: right;">0.15</td>
 </tr>
 <tr>
-<td><code>overall_score</code></td>
-<td><code>float</code></td>
-<td>Unweighted mean</td>
-</tr>
-<tr>
-<td><code>weighted_score</code></td>
-<td><code>float</code></td>
-<td>Hybrid composite score (0–100)</td>
-</tr>
-<tr>
-<td><code>grade</code></td>
-<td><code>str</code></td>
-<td>A/B/C/D/F</td>
-</tr>
-<tr>
-<td><code>passed</code></td>
-<td><code>bool</code></td>
-<td>Pass/fail verdict</td>
-</tr>
-<tr>
-<td><code>pass_threshold</code></td>
-<td><code>float</code></td>
-<td>Configured pass threshold</td>
-</tr>
-<tr>
-<td><code>step_scores</code></td>
-<td><code>list</code></td>
-<td>Per-step status and scores</td>
+<td><code>documentation</code></td>
+<td style="text-align: right;">0.10</td>
 </tr>
 </tbody>
 </table>
-<p>Each criterion entry must have: <code>criterion</code>, <code>raw_score</code>, <code>normalized_score</code>, <code>weight</code>, <code>formula_id</code>, <code>score</code>.</p>
-<p>Schema validation failure sets <code>hard_gates.schema_contract_valid = False</code>, which triggers a hard gate failure.</p>
-<hr />
-<h2 id="configuring-the-pass-threshold">Configuring the pass threshold<a class="headerlink" href="#configuring-the-pass-threshold" title="Permanent link">&para;</a></h2>
-<p>The default pass threshold is 70.0. It can be overridden in the <code>evaluation.yaml</code> configuration file:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">evaluation</span><span class="p">:</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">scoring</span><span class="p">:</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">pass_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75.0</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">weights</span><span class="p">:</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">      </span><span class="nt">correctness</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.50</span>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">      </span><span class="nt">code_quality</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">      </span><span class="nt">efficiency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.15</span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">      </span><span class="nt">documentation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.10</span>
+<p>Do not compare results from different rubric versions, weight sets, or
+efficiency SLO bands as though they used the same scale.</p>
+<h2 id="optional-judge">Optional judge<a class="headerlink" href="#optional-judge" title="Permanent link">&para;</a></h2>
+<p>The judge is optional by default. If it is absent or fails, the payload records
+<code>judge_skipped</code>, <code>judge_skip_reason</code>, and <code>judge_skip_code</code>.</p>
+<p>Set this configuration when evaluation must fail rather than continue without
+a judge:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">evaluation</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">scoring</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">judge_required</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </span></code></pre></div>
-<p>The threshold is read at call time via <code>pass_threshold()</code> — it is not cached, so changes take effect on the next evaluation call.</p>
+<p>With <code>judge_required: true</code>, an unavailable or failed judge raises
+<code>JudgeRequiredError</code>. The workflow run is still recorded, and the server maps
+the evaluation policy failure to HTTP 422.</p>
+<p>See <a href="../judge/">model-backed judges</a> for calibration and interpretation.</p>
+<h2 id="pass-logic">Pass logic<a class="headerlink" href="#pass-logic" title="Permanent link">&para;</a></h2>
+<p>With hard-gate enforcement enabled:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>passed =
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  weighted_score &gt;= pass_threshold
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  and no criterion floor violations
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  and all hard gates passed
+</span></code></pre></div>
+<p>Disabling hard-gate enforcement removes only the final hard-gate condition.
+Criterion floors and the score threshold still apply.</p>
+<h2 id="result-fields">Result fields<a class="headerlink" href="#result-fields" title="Permanent link">&para;</a></h2>
+<p>The evaluation payload includes:</p>
+<ul>
+<li>rubric ID and version;</li>
+<li>criterion scores and weights;</li>
+<li>objective, advisory, and judge layer details;</li>
+<li>weighted score and overall score;</li>
+<li>grade and whether it was capped;</li>
+<li>pass threshold and final <code>passed</code> value;</li>
+<li>hard-gate results and failures;</li>
+<li>criterion floor violations; and</li>
+<li>judge metadata or the reason the judge was skipped.</li>
+</ul>
+<p>Use the structured fields when building automation. Do not parse display text.</p>
+<h2 id="release-use">Release use<a class="headerlink" href="#release-use" title="Permanent link">&para;</a></h2>
+<p>Before using an evaluation as a release gate:</p>
+<ol>
+<li>Fix the workflow, dataset, rubric, provider, judge prompt, and model
+   versions.</li>
+<li>Validate the threshold against representative accepted and rejected cases.</li>
+<li>Exercise every hard-gate failure.</li>
+<li>Make judge failure policy explicit.</li>
+<li>Store the full payload, not only the final score.</li>
+<li>Require human review for high-impact decisions.</li>
+</ol>
+<p>For simple numeric file scoring in CI, use the evaluation package's
+<code>--fail-under</code> option instead:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">agentic-v2-eval</span> <span class="n">evaluate</span> <span class="p">.\</span><span class="n">results</span><span class="p">.</span><span class="n">json</span> <span class="p">-</span><span class="n">-fail-under</span> <span class="n">0</span><span class="p">.</span><span class="n">80</span>
+</span></code></pre></div>
 
 
 
@@ -3595,7 +3379,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 11:46:31 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

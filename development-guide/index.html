@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments.">
+        <meta name="description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard.">
       
       
       
@@ -68,7 +68,7 @@
   
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Development guide - Agentic Runtime Platform" />
-<meta property="og:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="og:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="og:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/development-guide.png" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
@@ -76,7 +76,7 @@
 <meta property="og:url" content="https://tafreeman.github.io/agentic-runtime-platform/development-guide/" />
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:title" content="Development guide - Agentic Runtime Platform" />
-<meta property="twitter:description" content="Production-grade multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation for federal and regulated environments." />
+<meta property="twitter:description" content="Documentation for YAML-defined AI workflows, DAG execution, model routing, evaluation, the FastAPI server, and the React dashboard." />
 <meta property="twitter:image" content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/development-guide.png" />
 </head>
   
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../api-contracts-runtime/" class="md-tabs__link">
+        <a href="../cli-reference/" class="md-tabs__link">
           
   
   
@@ -763,10 +763,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Requirements
       
     </span>
   </a>
@@ -774,171 +774,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#set-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-clone-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Clone the repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-install-the-uv-workspace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Install the uv workspace
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-install-runtime-extras" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Install runtime extras
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-install-the-eval-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Install the eval framework
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-install-frontend-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Install frontend dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-install-pre-commit-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Install pre-commit hooks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-quick-start-alternative-to-steps-25" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows quick start (alternative to steps 2–5)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment variables
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Environment variables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#full-environment-variable-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Full environment variable reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running-development-servers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running development servers
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Running development servers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#one-command-start-windows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        One-command start (Windows)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-start-two-terminals" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual start (two terminals)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cli-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
+        Set up
       
     </span>
   </a>
@@ -946,93 +785,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#start-the-development-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backend-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backend tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#eval-framework-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval framework tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-package-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools package tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#frontend-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Frontend tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cross-package-e2e-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-package E2E tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test-markers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test markers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#linting-and-type-checking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linting and type checking
+        Start the development services
       
     </span>
   </a>
@@ -1040,10 +796,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#frontend-build" class="md-nav__link">
+  <a href="#verify-a-local-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend build
+        Verify a local run
       
     </span>
   </a>
@@ -1051,107 +807,101 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-issues-and-solutions" class="md-nav__link">
+  <a href="#cli-during-development" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common issues and solutions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common issues and solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#windows-paths" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows paths
+        CLI during development
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pytest-asyncio-auto-mode" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#choose-the-right-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pytest-asyncio auto mode
+        Choose the right test
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#optional-langchain-imports" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Optional LangChain imports
+        Coverage
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#port-conflicts" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#build-the-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Port conflicts
+        Build the dashboard
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pydantic-v2-api" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#format-lint-and-type-check" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pydantic v2 API
+        Format, lint, and type-check
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#vite-js-to-ts-resolution" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#change-a-wire-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vite .js to .ts resolution
+        Change a wire contract
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#npx-on-windows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#change-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npx on Windows
+        Change documentation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit-detect-secrets" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#optional-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-commit detect-secrets
+        Optional services
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#common-development-problems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common development problems
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1651,6 +1401,8 @@
       
         
       
+        
+      
     
     
     
@@ -1695,6 +1447,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2521,6 +2301,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2618,6 +2402,62 @@
     
   
     Security hardening
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SUPPLY_CHAIN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load evidence
   
 
     
@@ -2928,6 +2768,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -2988,6 +2832,62 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flagship/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project context
   
 
     
@@ -3175,10 +3075,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#requirements" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Requirements
       
     </span>
   </a>
@@ -3186,171 +3086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#set-up" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Installation">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-clone-the-repository" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Clone the repository
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-install-the-uv-workspace" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Install the uv workspace
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-install-runtime-extras" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Install runtime extras
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-install-the-eval-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Install the eval framework
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-install-frontend-dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Install frontend dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-install-pre-commit-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Install pre-commit hooks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#windows-quick-start-alternative-to-steps-25" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows quick start (alternative to steps 2–5)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment variables
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Environment variables">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#full-environment-variable-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Full environment variable reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#running-development-servers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Running development servers
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Running development servers">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#one-command-start-windows" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        One-command start (Windows)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manual-start-two-terminals" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual start (two terminals)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cli-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI Usage
+        Set up
       
     </span>
   </a>
@@ -3358,93 +3097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
+  <a href="#start-the-development-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backend-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backend tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#eval-framework-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eval framework tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tools-package-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tools package tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#frontend-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Frontend tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#cross-package-e2e-tests" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cross-package E2E tests
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#test-markers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test markers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#linting-and-type-checking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Linting and type checking
+        Start the development services
       
     </span>
   </a>
@@ -3452,10 +3108,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#frontend-build" class="md-nav__link">
+  <a href="#verify-a-local-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Frontend build
+        Verify a local run
       
     </span>
   </a>
@@ -3463,107 +3119,101 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-issues-and-solutions" class="md-nav__link">
+  <a href="#cli-during-development" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common issues and solutions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Common issues and solutions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#windows-paths" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Windows paths
+        CLI during development
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pytest-asyncio-auto-mode" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#choose-the-right-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pytest-asyncio auto mode
+        Choose the right test
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#optional-langchain-imports" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#coverage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Optional LangChain imports
+        Coverage
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#port-conflicts" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#build-the-dashboard" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Port conflicts
+        Build the dashboard
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pydantic-v2-api" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#format-lint-and-type-check" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pydantic v2 API
+        Format, lint, and type-check
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#vite-js-to-ts-resolution" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#change-a-wire-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Vite .js to .ts resolution
+        Change a wire contract
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#npx-on-windows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#change-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        npx on Windows
+        Change documentation
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit-detect-secrets" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#optional-services" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-commit detect-secrets
+        Optional services
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#common-development-problems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common development problems
+      
+    </span>
+  </a>
   
 </li>
       
@@ -3601,489 +3251,187 @@
 
 
 <h1 id="development-guide">Development guide<a class="headerlink" href="#development-guide" title="Permanent link">&para;</a></h1>
-<p>This guide covers everything needed to set up a local development environment, run the full stack, test changes, use the CLI, and follow the project's coding standards for the <code>agentic-runtime-platform</code> monorepo.</p>
-<hr />
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Requirement</th>
-<th>Version</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Python</td>
-<td>3.11+</td>
-<td>Required by all three Python packages</td>
-</tr>
-<tr>
-<td>Node.js</td>
-<td>20+</td>
-<td>Required by the React dashboard</td>
-</tr>
-<tr>
-<td>uv</td>
-<td>Latest</td>
-<td>Python package and workspace manager — install via <code>pip install uv</code> or <code>curl -LsSf https://astral.sh/uv/install.sh \| sh</code></td>
-</tr>
-<tr>
-<td>Git</td>
-<td>Any recent</td>
-<td>Required for pre-commit hooks</td>
-</tr>
-<tr>
-<td>pre-commit</td>
-<td>Latest</td>
-<td>Installed via <code>pip install pre-commit</code> (not part of the <code>dev</code> extra)</td>
-</tr>
-</tbody>
-</table>
-<p>Optional but recommended:</p>
+<p>This guide covers the normal edit, run, and test loop. See
+<a href="../CONTRIBUTING/">Contributing</a> for review and change-management rules.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Docker + Docker Compose — for running the full containerized stack</li>
-<li>A supported LLM provider key — at least one is required to execute real
-  workflows (see Environment variables below). For key-free development,
-  set <code>AGENTIC_NO_LLM=1</code> instead — see <a href="../NO_LLM_MODE/">NO_LLM_MODE.md</a>.</li>
+<li>Python 3.11 or newer</li>
+<li>Node.js 20 or newer</li>
+<li>Git</li>
+<li>PowerShell for the repository's <code>just</code> recipes and <code>.ps1</code> scripts</li>
 </ul>
-<hr />
-<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<h3 id="1-clone-the-repository">1. Clone the repository<a class="headerlink" href="#1-clone-the-repository" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform
+<p>Docker, Redis, PostgreSQL, provider credentials, and telemetry services are
+optional unless the feature under test needs them.</p>
+<h2 id="set-up">Set up<a class="headerlink" href="#set-up" title="Permanent link">&para;</a></h2>
+<p>On Windows, from the repository root:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>just setup
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python -m pip install pre-commit
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pre-commit install --install-hooks
 </span></code></pre></div>
-<h3 id="2-install-the-uv-workspace">2. Install the uv workspace<a class="headerlink" href="#2-install-the-uv-workspace" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>sync
+<p><code>just setup</code> creates <code>.venv</code>, installs the three Python packages in editable
+mode, and installs UI dependencies.</p>
+<p>The <code>justfile</code> currently uses <code>powershell.exe</code>. On Linux, macOS, or a Windows
+machine without <code>just</code>, use the
+<a href="../getting-started/installation/#manual-setup">manual installation steps</a>.</p>
+<p>Copy <code>.env.example</code> only when the work needs runtime configuration:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">Copy-Item</span> <span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">example</span> <span class="p">.</span><span class="n">env</span>
 </span></code></pre></div>
-<p>This installs all three Python packages (<code>agentic-workflows-v2</code>, <code>agentic-v2-eval</code>, and <code>agentic-tools</code>) into a shared virtual environment, respecting the version pins in <code>uv.lock</code>.</p>
-<h3 id="3-install-runtime-extras">3. Install runtime extras<a class="headerlink" href="#3-install-runtime-extras" title="Permanent link">&para;</a></h3>
-<p>For active runtime development, install the full extras set:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;agentic-workflows-v2/[dev,server,langchain]&quot;</span>
+<p>Set only the providers and features you use. <code>.env</code> is ignored by Git. See
+<a href="../configuration/">Configuration</a> for current variables and loading behavior.</p>
+<h2 id="start-the-development-services">Start the development services<a class="headerlink" href="#start-the-development-services" title="Permanent link">&para;</a></h2>
+<p>On Windows:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>just dev
 </span></code></pre></div>
-<p>Available extras (source of truth: <code>agentic-workflows-v2/pyproject.toml</code>
-<code>[project.optional-dependencies]</code>):</p>
 <table>
 <thead>
 <tr>
-<th>Extra</th>
-<th>Contents</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dev</code></td>
-<td>pytest, pytest-asyncio, pytest-cov, pytest-mock, pytest-timeout, black, ruff, mypy, fakeredis, jsonschema, pydocstyle</td>
-</tr>
-<tr>
-<td><code>server</code></td>
-<td>fastapi, uvicorn, python-multipart, slowapi, pyjwt</td>
-</tr>
-<tr>
-<td><code>langchain</code></td>
-<td>langchain, langchain-core, langgraph, langchain-openai, langchain-anthropic, langchain-google-genai, langchain-ollama, checkpointers, langsmith</td>
-</tr>
-<tr>
-<td><code>rag</code></td>
-<td>lancedb, litellm</td>
-</tr>
-<tr>
-<td><code>tracing</code></td>
-<td>opentelemetry-sdk, OTLP + Prometheus exporters, prometheus-client</td>
-</tr>
-<tr>
-<td><code>claude</code></td>
-<td>anthropic, claude-agent-sdk</td>
-</tr>
-<tr>
-<td><code>ek</code></td>
-<td>executionkit</td>
-</tr>
-<tr>
-<td><code>devex</code></td>
-<td>psutil</td>
-</tr>
-<tr>
-<td><code>mcp</code></td>
-<td>websockets</td>
-</tr>
-<tr>
-<td><code>redis</code> / <code>sqlite</code> / <code>postgres</code></td>
-<td>redis, aiosqlite, langgraph-checkpoint-postgres + psycopg</td>
-</tr>
-</tbody>
-</table>
-<h3 id="4-install-the-eval-framework">4. Install the eval framework<a class="headerlink" href="#4-install-the-eval-framework" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;agentic-v2-eval/[dev]&quot;</span>
-</span></code></pre></div>
-<h3 id="5-install-frontend-dependencies">5. Install frontend dependencies<a class="headerlink" href="#5-install-frontend-dependencies" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>npm<span class="w"> </span>install
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">cd</span><span class="w"> </span>../..
-</span></code></pre></div>
-<h3 id="6-install-pre-commit-hooks">6. Install pre-commit hooks<a class="headerlink" href="#6-install-pre-commit-hooks" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pre-commit<span class="w"> </span>install
-</span></code></pre></div>
-<h3 id="windows-quick-start-alternative-to-steps-25">Windows quick start (alternative to steps 2–5)<a class="headerlink" href="#windows-quick-start-alternative-to-steps-25" title="Permanent link">&para;</a></h3>
-<p>On Windows, a single script handles the full bring-up:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">cd </span><span class="n">agentic-workflows-v2</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="p">.\</span><span class="n">scripts</span><span class="p">\</span><span class="n">setup-dev</span><span class="p">.</span><span class="n">ps1</span>
-</span></code></pre></div>
-<p>This checks prerequisites (<code>uv</code>, <code>node</code>, <code>npm</code>), runs <code>uv sync</code> with all required extras,
-installs and builds the frontend, validates the bundled workflow definitions, runs a
-deterministic smoke test, and probes the backend health endpoint to confirm the server
-starts. Flags:</p>
-<ul>
-<li><code>-SkipSmokeTest</code> — skip workflow validation, smoke test, and health probe (faster)</li>
-<li><code>-SkipFrontend</code> — skip <code>npm install</code>, <code>npm run build</code>, and the node/npm prerequisite checks</li>
-</ul>
-<p>After setup completes, launch the dev servers with <code>.\scripts\start-dev.ps1</code>.</p>
-<hr />
-<h2 id="environment-variables">Environment variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
-<p>Copy <code>.env.example</code> to <code>.env</code> and set at least one LLM provider key:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
-</span></code></pre></div>
-<p>Then edit <code>.env</code>. The minimum required configuration to run workflows
-against a real model is one provider key (alternatively, set
-<code>AGENTIC_NO_LLM=1</code> to run every workflow against the deterministic
-placeholder backend with no keys at all — see
-<a href="../NO_LLM_MODE/">NO_LLM_MODE.md</a>):</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a># Choose at least one:
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>GITHUB_TOKEN=your_github_token          # Free tier available
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>OPENAI_API_KEY=your_openai_key          # Paid
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>ANTHROPIC_API_KEY=your_anthropic_key    # Paid
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>GEMINI_API_KEY=your_gemini_key          # Free tier available
-</span></code></pre></div>
-<h3 id="full-environment-variable-reference">Full environment variable reference<a class="headerlink" href="#full-environment-variable-reference" title="Permanent link">&para;</a></h3>
-<h4 id="llm-providers">LLM providers<a class="headerlink" href="#llm-providers" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>GITHUB_TOKEN</code></td>
-<td>GitHub Models API key (free tier; supports many models via GitHub Marketplace)</td>
-</tr>
-<tr>
-<td><code>OPENAI_API_KEY</code></td>
-<td>OpenAI API key</td>
-</tr>
-<tr>
-<td><code>ANTHROPIC_API_KEY</code></td>
-<td>Anthropic Claude API key</td>
-</tr>
-<tr>
-<td><code>GEMINI_API_KEY</code></td>
-<td>Google Gemini API key</td>
-</tr>
-<tr>
-<td><code>AZURE_OPENAI_API_KEY_0</code></td>
-<td>Azure OpenAI key (supports <code>_0</code> through <code>_n</code> for failover rotation)</td>
-</tr>
-<tr>
-<td><code>AZURE_OPENAI_ENDPOINT_0</code></td>
-<td>Azure OpenAI endpoint URL</td>
-</tr>
-<tr>
-<td><code>AZURE_AI_SERVICES_ENDPOINT</code></td>
-<td>Azure AI Services endpoint (optional)</td>
-</tr>
-<tr>
-<td><code>AZURE_COGNITIVE_ENDPOINT</code></td>
-<td>Azure Cognitive Services endpoint (optional)</td>
-</tr>
-<tr>
-<td><code>LOCAL_MODEL_PATH</code></td>
-<td>Path to local ONNX model directory (auto-detected from <code>~/.cache/aigallery</code> if unset)</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_FEATURE_ID</code></td>
-<td>Windows AI (Phi Silica) LAF feature ID (optional)</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_TOKEN</code></td>
-<td>Windows AI LAF token</td>
-</tr>
-<tr>
-<td><code>PHI_SILICA_LAF_ATTESTATION</code></td>
-<td>Windows AI LAF attestation string</td>
-</tr>
-</tbody>
-</table>
-<h4 id="server-configuration">Server configuration<a class="headerlink" href="#server-configuration" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
+<th>Service</th>
 <th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AGENTIC_API_KEY</code></td>
-<td>Bearer token for API authentication. When unset, all routes are public.</td>
-<td>(unset = open)</td>
+<td>FastAPI</td>
+<td><code>http://127.0.0.1:8010</code></td>
 </tr>
 <tr>
-<td><code>AGENTIC_CORS_ORIGINS</code></td>
-<td>Comma-separated list of allowed CORS origins.</td>
-<td>localhost:5173, :8000, :8010</td>
+<td>Vite dashboard</td>
+<td><code>http://127.0.0.1:5173</code></td>
 </tr>
 <tr>
-<td><code>AGENTIC_FILE_BASE_DIR</code></td>
-<td>Base directory for all file operations. Prevents path traversal. Set in production.</td>
-<td>(unset = unrestricted)</td>
+<td>Vite hot-module WebSocket</td>
+<td>port <code>5183</code></td>
 </tr>
 <tr>
-<td><code>AGENTIC_BLOCK_PRIVATE_IPS</code></td>
-<td>Block HTTP tool requests to private IP ranges (SSRF protection). On by default; set to <code>0</code> to opt out.</td>
-<td>(unset = blocked)</td>
+<td>OTLP gRPC, when configured</td>
+<td>port <code>4317</code></td>
 </tr>
 <tr>
-<td><code>AGENTIC_EXTERNAL_AGENTS_DIR</code></td>
-<td>Path to directory containing additional agent definitions.</td>
-<td>(unset)</td>
-</tr>
-<tr>
-<td><code>AGENTIC_MEMORY_PATH</code></td>
-<td>Path for persistent memory store.</td>
-<td>(unset = in-memory only)</td>
+<td>OTLP HTTP, when configured</td>
+<td>port <code>4318</code></td>
 </tr>
 </tbody>
 </table>
-<h4 id="llm-routing">LLM routing<a class="headerlink" href="#llm-routing" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTIC_MODEL_TIER_1</code></td>
-<td>Override default tier-1 (fast) model name.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_MODEL_TIER_2</code></td>
-<td>Override default tier-2 (capable) model name.</td>
-</tr>
-<tr>
-<td><code>AGENTIC_JUDGE_MODEL</code></td>
-<td>Model name used for LLM-as-judge evaluation scoring.</td>
-</tr>
-</tbody>
-</table>
-<h4 id="opentelemetry">OpenTelemetry<a class="headerlink" href="#opentelemetry" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AGENTIC_TRACING</code></td>
-<td>Enable OTEL tracing. Set to <code>1</code> to enable.</td>
-<td>disabled</td>
-</tr>
-<tr>
-<td><code>AGENTIC_TRACE_SENSITIVE</code></td>
-<td>Include prompts and outputs in spans. Set to <code>1</code> with caution.</td>
-<td>excluded</td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_ENDPOINT</code></td>
-<td>OTLP exporter endpoint URL.</td>
-<td><code>http://localhost:4317</code></td>
-</tr>
-<tr>
-<td><code>OTEL_EXPORTER_OTLP_PROTOCOL</code></td>
-<td>OTLP protocol: <code>grpc</code> or <code>http/protobuf</code>.</td>
-<td><code>grpc</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2 id="running-development-servers">Running development servers<a class="headerlink" href="#running-development-servers" title="Permanent link">&para;</a></h2>
-<h3 id="one-command-start-windows">One-command start (Windows)<a class="headerlink" href="#one-command-start-windows" title="Permanent link">&para;</a></h3>
-<p>From the <strong>repo root</strong>, run one command that starts both the backend and frontend:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="nb">start-dev</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-BackendPort</span> <span class="n">8010</span> <span class="n">-FrontendPort</span> <span class="n">5173</span> <span class="n">-ApiProxyTarget</span> <span class="s2">&quot;http://127.0.0.1:8010&quot;</span>
+<p>Manage the processes with:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>just dev-status
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>just dev-reload
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>just dev-stop
 </span></code></pre></div>
-<p>Wait for the output:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Backend:  http://127.0.0.1:8010
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>Frontend: http://127.0.0.1:5173
+<p>The scripts write logs under <code>agentic-workflows-v2/.run-logs/</code>.</p>
+<p>For separate terminals:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python -m uvicorn agentic_v2.server.app:app --host 127.0.0.1 --port 8010 --reload
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>npm --prefix agentic-workflows-v2/ui run dev
 </span></code></pre></div>
-<p>Then open <strong>http://localhost:5173</strong> in a browser.</p>
-<p>To stop all dev servers:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">.\</span><span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">scripts</span><span class="p">\</span><span class="nb">stop-dev</span><span class="p">.</span><span class="n">ps1</span>
+<p>The second command assumes UI dependencies are already installed. Set
+<code>VITE_API_PROXY_TARGET</code> before starting Vite if the backend is not on port
+<code>8010</code>.</p>
+<p><code>agentic serve</code> is another backend-only option. It defaults to port <code>8000</code>;
+pass <code>--port 8010</code> to match the dashboard proxy.</p>
+<h2 id="verify-a-local-run">Verify a local run<a class="headerlink" href="#verify-a-local-run" title="Permanent link">&para;</a></h2>
+<p>Use the deterministic workflow before debugging a provider:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">&quot;1&quot;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">agentic</span><span class="p">.</span><span class="n">exe</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">`</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  <span class="p">-</span><span class="n">-input</span> <span class="n">agentic-workflows-v2</span><span class="p">\</span><span class="n">tests</span><span class="p">\</span><span class="n">fixtures</span><span class="p">\</span><span class="n">deterministic_input</span><span class="p">.</span><span class="n">json</span>
 </span></code></pre></div>
-<p>Logs are written to <code>agentic-workflows-v2/.run-logs/</code> (<code>backend.out.log</code>, <code>backend.err.log</code>, <code>frontend.out.log</code>).</p>
-<hr />
-<h3 id="manual-start-two-terminals">Manual start (two terminals)<a class="headerlink" href="#manual-start-two-terminals" title="Permanent link">&para;</a></h3>
-<p>If you prefer separate terminals for easier log visibility:</p>
-<h4 id="terminal-1-backend">Terminal 1 — backend<a class="headerlink" href="#terminal-1-backend" title="Permanent link">&para;</a></h4>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>uvicorn<span class="w"> </span>agentic_v2.server.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--reload
+<p>A successful result verifies local runtime behavior without proving provider
+access, streaming quality, retry behavior, or structured model output.</p>
+<p>Remove placeholder mode before a deliberate provider test:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">Remove-Item</span> <span class="n">Env</span><span class="p">:</span><span class="n">AGENTIC_NO_LLM</span>
 </span></code></pre></div>
-<p>The <code>--reload</code> flag enables hot-reload on source file changes. The server starts a lifespan hook on startup that probes all configured LLM providers and logs which are available.</p>
-<p>Verify the backend is running:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>curl<span class="w"> </span>http://localhost:8010/api/health
+<h2 id="cli-during-development">CLI during development<a class="headerlink" href="#cli-during-development" title="Permanent link">&para;</a></h2>
+<p>Common commands:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>agentic list workflows
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>agentic list agents
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>agentic list tools
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>agentic list adapters
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>agentic validate &lt;workflow-name-or-yaml-path&gt;
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>agentic run &lt;workflow&gt; --input &lt;input.json&gt;
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>agentic compare &lt;workflow&gt; --input &lt;input.json&gt;
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>agentic serve --port 8010 --no-open
 </span></code></pre></div>
-<h4 id="terminal-2-frontend">Terminal 2 — frontend<a class="headerlink" href="#terminal-2-frontend" title="Permanent link">&para;</a></h4>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+<p>The <code>run</code> and <code>compare</code> input is a JSON file path. Use
+<a href="../cli-reference/">CLI reference</a> for flags, defaults, and exit behavior.</p>
+<p>The RAG CLI is only a component demonstration: ingest and search use separate
+in-process indexes. Use the Python RAG API for persistent applications.</p>
+<h2 id="choose-the-right-test">Choose the right test<a class="headerlink" href="#choose-the-right-test" title="Permanent link">&para;</a></h2>
+<p>Run the smallest relevant suite while editing:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python -m pytest agentic-workflows-v2/tests -q
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python -m pytest agentic-v2-eval/tests -q
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>python -m pytest tools/tests -q
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>python -m pytest tests/e2e -q
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>npm --prefix agentic-workflows-v2/ui test
 </span></code></pre></div>
-<p>The Vite dev server starts on port 5173 and proxies all <code>/api/*</code> and <code>/ws/*</code> requests to the backend at <code>localhost:8010</code>. Open <code>http://localhost:5173</code> in a browser.</p>
-<hr />
-<h2 id="cli-usage">CLI Usage<a class="headerlink" href="#cli-usage" title="Permanent link">&para;</a></h2>
-<p>The <code>agentic</code> CLI is installed as a script when the <code>agentic-workflows-v2</code> package is installed.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># List all available workflows, agents, or tools</span>
-</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>agentic<span class="w"> </span>list<span class="w"> </span>workflows
-</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>agentic<span class="w"> </span>list<span class="w"> </span>agents
-</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>agentic<span class="w"> </span>list<span class="w"> </span>tools
-</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
-</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Execute a workflow</span>
-</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>agentic<span class="w"> </span>run<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>input.json
-</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="c1"># Validate a workflow YAML file</span>
-</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>agentic<span class="w"> </span>validate<span class="w"> </span>agentic_v2/workflows/definitions/code_review.yaml
-</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>
-</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="c1"># Start the server (alternative to uvicorn directly). Note: defaults to</span>
-</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="c1"># port 8000 and opens a browser tab; pass --port 8010 to match the UI dev</span>
-</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="c1"># proxy and --no-open to suppress the browser.</span>
-</span><span id="__span-15-15"><a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>agentic<span class="w"> </span>serve<span class="w"> </span>--port<span class="w"> </span><span class="m">8010</span><span class="w"> </span>--no-open
-</span><span id="__span-15-16"><a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
-</span><span id="__span-15-17"><a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="c1"># Compare native and LangGraph engine outputs for the same workflow</span>
-</span><span id="__span-15-18"><a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a>agentic<span class="w"> </span>compare<span class="w"> </span>code_review<span class="w"> </span>--input<span class="w"> </span>input.json
-</span><span id="__span-15-19"><a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>
-</span><span id="__span-15-20"><a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="c1"># RAG pipeline operations</span>
-</span><span id="__span-15-21"><a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a>agentic<span class="w"> </span>rag<span class="w"> </span>ingest<span class="w"> </span>--source<span class="w"> </span>./docs
-</span><span id="__span-15-22"><a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a>agentic<span class="w"> </span>rag<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;how does the DAG executor work&quot;</span>
+<p>Useful focused forms:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python -m pytest agentic-workflows-v2/tests/test_&lt;area&gt;.py -q
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python -m pytest agentic-workflows-v2/tests -m &quot;not slow and not e2e&quot; -q
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>npm --prefix agentic-workflows-v2/ui test -- &lt;test-name&gt;
 </span></code></pre></div>
-<hr />
-<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<h3 id="backend-tests">Backend tests<a class="headerlink" href="#backend-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
-</span></code></pre></div>
-<p>Run with coverage (80% gate enforced in CI):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q<span class="w"> </span>--cov<span class="o">=</span>agentic_v2<span class="w"> </span>--cov-report<span class="o">=</span>term-missing<span class="w"> </span>--cov-fail-under<span class="o">=</span><span class="m">80</span>
-</span></code></pre></div>
-<p>Skip slow or integration tests for faster local iteration:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not integration and not slow&quot;</span><span class="w"> </span>-q
-</span></code></pre></div>
-<h3 id="eval-framework-tests">Eval framework tests<a class="headerlink" href="#eval-framework-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-v2-eval
-</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/<span class="w"> </span>-q
-</span></code></pre></div>
-<h3 id="tools-package-tests">Tools package tests<a class="headerlink" href="#tools-package-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tools/tests/<span class="w"> </span>-q<span class="w"> </span>--cov<span class="o">=</span>tools<span class="w"> </span>--cov-report<span class="o">=</span>term-missing<span class="w"> </span>--cov-fail-under<span class="o">=</span><span class="m">70</span>
-</span></code></pre></div>
-<h3 id="frontend-tests">Frontend tests<a class="headerlink" href="#frontend-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>npm<span class="w"> </span>run<span class="w"> </span><span class="nb">test</span>
-</span></code></pre></div>
-<p>Run with coverage (60% threshold):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>npm<span class="w"> </span>run<span class="w"> </span>test:coverage
-</span></code></pre></div>
-<h3 id="cross-package-e2e-tests">Cross-package E2E tests<a class="headerlink" href="#cross-package-e2e-tests" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># From the repo root</span>
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/e2e/test_cross_package.py<span class="w"> </span>-q<span class="w"> </span>-m<span class="w"> </span>e2e
-</span></code></pre></div>
-<h3 id="test-markers">Test markers<a class="headerlink" href="#test-markers" title="Permanent link">&para;</a></h3>
+<p>Registered Python markers vary by package:</p>
 <table>
 <thead>
 <tr>
 <th>Marker</th>
-<th>Description</th>
+<th>Use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>integration</code></td>
-<td>Tests that require external services or real LLM calls</td>
-</tr>
-<tr>
 <td><code>slow</code></td>
-<td>Tests that take more than 5 seconds</td>
+<td>Long-running local checks</td>
 </tr>
 <tr>
 <td><code>e2e</code></td>
-<td>Cross-package end-to-end smoke tests</td>
+<td>End-to-end runtime checks</td>
 </tr>
 <tr>
-<td><code>security</code></td>
-<td>Security-focused tests</td>
+<td><code>integration</code></td>
+<td>External or multi-component integration checks</td>
 </tr>
 </tbody>
 </table>
-<p>Exclude integration tests: <code>pytest -m "not integration"</code></p>
-<hr />
-<h2 id="linting-and-type-checking">Linting and type checking<a class="headerlink" href="#linting-and-type-checking" title="Permanent link">&para;</a></h2>
-<p>Run all pre-commit hooks (black, isort, ruff, docformatter, mypy, pydocstyle, detect-secrets):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<p>Check each package's <code>pyproject.toml</code> before adding a marker. Do not invent an
+unregistered marker to skip a test.</p>
+<h2 id="coverage">Coverage<a class="headerlink" href="#coverage" title="Permanent link">&para;</a></h2>
+<p>The runtime and evaluation packages each configure an 80% coverage floor:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python -m pytest agentic-workflows-v2/tests `
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  --cov=agentic_v2 `
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  --cov-report=term-missing
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>python -m pytest agentic-v2-eval/tests `
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>  --cov=agentic_v2_eval `
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>  --cov-report=term-missing
 </span></code></pre></div>
-<p>Run individual tools:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Ruff linter</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>ruff<span class="w"> </span>check<span class="w"> </span>agentic-workflows-v2/agentic_v2/
-</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Black formatter</span>
-</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>black<span class="w"> </span>agentic-workflows-v2/agentic_v2/
-</span><span id="__span-25-6"><a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
-</span><span id="__span-25-7"><a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># isort import sorter</span>
-</span><span id="__span-25-8"><a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>isort<span class="w"> </span>agentic-workflows-v2/agentic_v2/
-</span><span id="__span-25-9"><a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
-</span><span id="__span-25-10"><a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="c1"># mypy type checker</span>
-</span><span id="__span-25-11"><a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2
-</span><span id="__span-25-12"><a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>python<span class="w"> </span>-m<span class="w"> </span>mypy<span class="w"> </span>agentic_v2/<span class="w"> </span>--ignore-missing-imports
+<p>The UI enforces 60% for lines, statements, and functions and 56% for branches:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>npm --prefix agentic-workflows-v2/ui run test:coverage
 </span></code></pre></div>
-<p>The <code>pyproject.toml</code> at the workspace root defines shared ruff, black, and pytest configuration inherited by all workspace members.</p>
-<hr />
-<h2 id="frontend-build">Frontend build<a class="headerlink" href="#frontend-build" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="nb">cd</span><span class="w"> </span>agentic-workflows-v2/ui
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>npm<span class="w"> </span>run<span class="w"> </span>build
+<p>Use <code>just test</code> on Windows for the runtime, evaluation, cross-package, and UI
+unit suites in sequence.</p>
+<h2 id="build-the-dashboard">Build the dashboard<a class="headerlink" href="#build-the-dashboard" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>npm --prefix agentic-workflows-v2/ui run build
 </span></code></pre></div>
-<p>This runs TypeScript type checking and then produces a production build in <code>ui/dist/</code>. The FastAPI server automatically serves this directory when it exists.</p>
-<hr />
-<h2 id="common-issues-and-solutions">Common issues and solutions<a class="headerlink" href="#common-issues-and-solutions" title="Permanent link">&para;</a></h2>
-<h3 id="windows-paths">Windows paths<a class="headerlink" href="#windows-paths" title="Permanent link">&para;</a></h3>
-<p>Use forward slashes in all Python <code>pathlib.Path</code> operations. The codebase uses <code>pathlib.Path</code> throughout, which handles Windows path separators automatically.</p>
-<p>Avoid <code>sys.path</code> manipulation. Always use proper package imports (<code>from agentic_v2.core import ...</code>, not relative <code>sys.path</code> hacks).</p>
-<h3 id="pytest-asyncio-auto-mode">pytest-asyncio auto mode<a class="headerlink" href="#pytest-asyncio-auto-mode" title="Permanent link">&para;</a></h3>
-<p>All tests in <code>agentic-workflows-v2/tests/</code> use <code>asyncio_mode = "auto"</code> (configured in <code>pyproject.toml</code>). This means async test functions run automatically without <code>@pytest.mark.asyncio</code> decorators. Do not add the decorator — it causes a warning.</p>
-<h3 id="optional-langchain-imports">Optional LangChain imports<a class="headerlink" href="#optional-langchain-imports" title="Permanent link">&para;</a></h3>
-<p>All imports from <code>agentic_v2.langchain</code> must be guarded:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="k">try</span><span class="p">:</span>
-</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">agentic_v2.langchain.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">LangGraphRunner</span>
-</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    <span class="n">LangGraphRunner</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment,misc]</span>
+<p>This runs the TypeScript project build and writes the production bundle to
+<code>agentic-workflows-v2/ui/dist/</code>. FastAPI serves that bundle when it exists.</p>
+<p>The Vite development server can hide import-path mistakes that the production
+bundle rejects. Always run the build after renaming TypeScript files or changing
+imports.</p>
+<h2 id="format-lint-and-type-check">Format, lint, and type-check<a class="headerlink" href="#format-lint-and-type-check" title="Permanent link">&para;</a></h2>
+<p>Run all configured hooks:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>pre-commit run --all-files
 </span></code></pre></div>
-<p>If the <code>[langchain]</code> extra is not installed, these imports will fail. Never make LangGraph a hard dependency from outside the <code>langchain/</code> subpackage.</p>
-<h3 id="port-conflicts">Port conflicts<a class="headerlink" href="#port-conflicts" title="Permanent link">&para;</a></h3>
-<p>Check for processes using the ports before starting servers:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Check port 8010 (backend)</span>
-</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>netstat<span class="w"> </span>-ano<span class="w"> </span><span class="p">|</span><span class="w"> </span>findstr<span class="w"> </span>:8010<span class="w">   </span><span class="c1"># Windows</span>
-</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>lsof<span class="w"> </span>-i<span class="w"> </span>:8010<span class="w">                  </span><span class="c1"># Linux/macOS</span>
-</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
-</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="c1"># Check port 5173 (frontend)</span>
-</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>netstat<span class="w"> </span>-ano<span class="w"> </span><span class="p">|</span><span class="w"> </span>findstr<span class="w"> </span>:5173
+<p>The hooks are the source of truth for formatter and linter versions. Current
+hooks include Black, Ruff, docformatter, mypy, and secret detection.</p>
+<p>Useful focused commands:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ruff check agentic-workflows-v2/agentic_v2
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>black --check agentic-workflows-v2/agentic_v2
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>python -m mypy agentic-workflows-v2/agentic_v2/engine `
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>  agentic-workflows-v2/agentic_v2/contracts
 </span></code></pre></div>
-<p>Ports in use by this project: 8010 (backend), 5173 (Vite dev), 6006 (Storybook, not installed by default), 4317 (OTLP gRPC), 4318 (OTLP HTTP).</p>
-<h3 id="pydantic-v2-api">Pydantic v2 API<a class="headerlink" href="#pydantic-v2-api" title="Permanent link">&para;</a></h3>
-<p>The codebase uses Pydantic v2 exclusively. The legacy v1 methods are not available:</p>
+<p>Python public interfaces should be typed. Use Pydantic v2 APIs:</p>
 <table>
 <thead>
 <tr>
-<th>Wrong (v1)</th>
-<th>Correct (v2)</th>
+<th>Do not use</th>
+<th>Use</th>
 </tr>
 </thead>
 <tbody>
@@ -4105,15 +3453,52 @@ placeholder backend with no keys at all — see
 </tr>
 </tbody>
 </table>
-<h3 id="vite-js-to-ts-resolution">Vite <code>.js</code> to <code>.ts</code> resolution<a class="headerlink" href="#vite-js-to-ts-resolution" title="Permanent link">&para;</a></h3>
-<p>Vite's dev server auto-resolves <code>.js</code> imports to <code>.ts</code> files, but Rollup (used in the production build) does not. When renaming a file from <code>.js</code> to <code>.ts</code>, update all explicit <code>.js</code> import paths, or the production build will fail with a module not found error.</p>
-<h3 id="npx-on-windows">npx on Windows<a class="headerlink" href="#npx-on-windows" title="Permanent link">&para;</a></h3>
-<p><code>npx</code> is unreliable on the Windows PATH in Git Bash. Use <code>npm run &lt;script&gt;</code> instead of <code>npx &lt;tool&gt;</code> for all Node.js tooling.</p>
-<h3 id="pre-commit-detect-secrets">Pre-commit detect-secrets<a class="headerlink" href="#pre-commit-detect-secrets" title="Permanent link">&para;</a></h3>
-<p>If <code>detect-secrets</code> blocks a commit due to a false positive, add a baseline entry:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>detect-secrets<span class="w"> </span>scan<span class="w"> </span>--baseline<span class="w"> </span>.secrets.baseline
+<h2 id="change-a-wire-contract">Change a wire contract<a class="headerlink" href="#change-a-wire-contract" title="Permanent link">&para;</a></h2>
+<p>When a generated Pydantic contract changes, run from
+<code>agentic-workflows-v2</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python -m scripts.generate_ts_types
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>npm --prefix ui run generate:types
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>npm --prefix ui run build
 </span></code></pre></div>
-<p>Never add real secrets to the baseline — investigate all flagged strings before excluding.</p>
+<p>Review the JSON Schema and TypeScript diff. Do not hand-edit generated files.
+The CI drift job repeats generation and fails if committed outputs are stale.</p>
+<h2 id="change-documentation">Change documentation<a class="headerlink" href="#change-documentation" title="Permanent link">&para;</a></h2>
+<p>Run from the repository root:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>python agentic-workflows-v2/scripts/check_docs_refs.py
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>python scripts/generate_doc_stats.py --check
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>python scripts/check-doc-drift.py
+</span></code></pre></div>
+<p>When the MkDocs dependencies from <code>.github/workflows/docs.yml</code> are installed:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>mkdocs build --strict
+</span></code></pre></div>
+<p>Do not document a command until it has been run from the directory stated on
+the page.</p>
+<h2 id="optional-services">Optional services<a class="headerlink" href="#optional-services" title="Permanent link">&para;</a></h2>
+<p>The root Compose file can start the backend, frontend, OpenTelemetry collector,
+and Jaeger:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>docker compose up --build backend frontend otel-collector jaeger
+</span></code></pre></div>
+<p>Stop it with:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>docker compose down --remove-orphans
+</span></code></pre></div>
+<p>Redis, SQLite, PostgreSQL, LanceDB, MCP, Claude SDK, and tracing dependencies
+are installed through runtime extras. See
+<a href="../getting-started/installation/#runtime-extras">Installation</a> before testing
+one of those paths.</p>
+<h2 id="common-development-problems">Common development problems<a class="headerlink" href="#common-development-problems" title="Permanent link">&para;</a></h2>
+<ul>
+<li>If the CLI is missing, activate <code>.venv</code> or call its executable directly.</li>
+<li>If ports are busy, identify the owning process before stopping it.</li>
+<li>If only a provider-backed test fails, inspect provider configuration before
+  changing engine code.</li>
+<li>If native and LangGraph differ, check workflow capabilities; the engines do
+  not support every feature equally.</li>
+<li>If generated UI types fail, regenerate Python schemas first and TypeScript
+  second.</li>
+<li>On Windows, use <code>npm run</code> or <code>npm exec --</code> instead of relying on <code>npx</code>
+  through Git Bash.</li>
+</ul>
+<p>See <a href="../operations/troubleshooting/">Troubleshooting</a> for detailed diagnostics.</p>
 
 
 
@@ -4136,7 +3521,7 @@ placeholder backend with no keys at all — see
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 5, 2026 12:10:23 UTC">July 5, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
   </span>
 
     

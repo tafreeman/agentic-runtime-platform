@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation, with a NIST AI RMF-mapped governance model." name="description"/>
+<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." name="description"/>
 <link href="https://tafreeman.github.io/agentic-runtime-platform/" rel="canonical"/>
 <link href="getting-started/" rel="next"/>
 <link href="assets/images/favicon.png" rel="icon"/>
@@ -22,7 +22,7 @@
 <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
 <meta content="website" property="og:type"/>
 <meta content="Agentic Runtime Platform" property="og:title"/>
-<meta content="Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation, with a NIST AI RMF-mapped governance model." property="og:description"/>
+<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." property="og:description"/>
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/index.png" property="og:image"/>
 <meta content="image/png" property="og:image:type"/>
 <meta content="1200" property="og:image:width"/>
@@ -30,7 +30,7 @@
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/" property="og:url"/>
 <meta content="summary_large_image" property="twitter:card"/>
 <meta content="Agentic Runtime Platform" property="twitter:title"/>
-<meta content="Multi-agent AI orchestration. DAG execution, tiered model routing, and rubric-based LLM evaluation, with a NIST AI RMF-mapped governance model." property="twitter:description"/>
+<meta content="Documentation for the workflow runtime, server, UI, evaluation package, and RAG components." property="twitter:description"/>
 <meta content="https://tafreeman.github.io/agentic-runtime-platform/assets/images/social/index.png" property="twitter:image"/>
 </head>
 <body data-md-color-accent="cyan" data-md-color-primary="black" data-md-color-scheme="slate" dir="ltr">
@@ -163,7 +163,7 @@
         </a>
 </li>
 <li class="md-tabs__item">
-<a class="md-tabs__link" href="api-contracts-runtime/">
+<a class="md-tabs__link" href="cli-reference/">
           
   
   
@@ -295,101 +295,74 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#quick-start-in-60-seconds">
+<a class="md-nav__link" href="#quick-start">
 <span class="md-ellipsis">
       
-        Quick start in 60 seconds
+        Quick start
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#how-it-works">
+<a class="md-nav__link" href="#choose-a-starting-point">
 <span class="md-ellipsis">
       
-        How it works
+        Choose a starting point
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#capabilities">
+<a class="md-nav__link" href="#how-a-run-works">
 <span class="md-ellipsis">
       
-        Capabilities
+        How a run works
       
     </span>
 </a>
-<nav aria-label="Capabilities" class="md-nav">
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#main-capabilities">
+<span class="md-ellipsis">
+      
+        Main capabilities
+      
+    </span>
+</a>
+<nav aria-label="Main capabilities" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#dual-execution-engines">
+<a class="md-nav__link" href="#workflow-execution">
 <span class="md-ellipsis">
       
-        Dual execution engines
+        Workflow execution
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#tiered-model-routing">
+<a class="md-nav__link" href="#model-and-tool-control">
 <span class="md-ellipsis">
       
-        Tiered model routing
+        Model and tool control
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#multiple-llm-providers">
+<a class="md-nav__link" href="#evaluation">
 <span class="md-ellipsis">
       
-        Multiple LLM providers
+        Evaluation
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#full-rag-pipeline">
+<a class="md-nav__link" href="#rag">
 <span class="md-ellipsis">
       
-        Full RAG pipeline
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#rubric-based-evaluation">
-<span class="md-ellipsis">
-      
-        Rubric-based evaluation
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#live-dashboard">
-<span class="md-ellipsis">
-      
-        Live dashboard
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#zero-credential-dev-mode">
-<span class="md-ellipsis">
-      
-        Zero-credential dev mode
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#windows-first-support">
-<span class="md-ellipsis">
-      
-        Windows-first support
+        RAG
       
     </span>
 </a>
@@ -398,120 +371,31 @@
 </nav>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#by-the-numbers">
+<a class="md-nav__link" href="#repository-numbers">
 <span class="md-ellipsis">
       
-        By the numbers
+        Repository numbers
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#engineering-practice">
+<a class="md-nav__link" href="#development-commands">
 <span class="md-ellipsis">
       
-        Engineering practice
-      
-    </span>
-</a>
-<nav aria-label="Engineering practice" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#a-written-decision-record">
-<span class="md-ellipsis">
-      
-        A written decision record
+        Development commands
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#correctness-gated-in-ci">
+<a class="md-nav__link" href="#scope-and-limitations">
 <span class="md-ellipsis">
       
-        Correctness gated in CI
+        Scope and limitations
       
     </span>
 </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#proven-under-load">
-<span class="md-ellipsis">
-      
-        Proven under load
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#governance-honestly-scoped">
-<span class="md-ellipsis">
-      
-        Governance, honestly scoped
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#production-workflow-definitions">
-<span class="md-ellipsis">
-      
-        Production workflow definitions
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#further-reading">
-<span class="md-ellipsis">
-      
-        Further reading
-      
-    </span>
-</a>
-<nav aria-label="Further reading" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#getting-started">
-<span class="md-ellipsis">
-      
-        Getting started
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#architecture">
-<span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#deep-dives">
-<span class="md-ellipsis">
-      
-        Deep dives
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#reference">
-<span class="md-ellipsis">
-      
-        Reference
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
 </li>
 </ul>
 </nav>
@@ -805,6 +689,18 @@
 
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="cli-reference/">
+<span class="md-ellipsis">
+    
+  
+    CLI commands
+  
+
+    
+  </span>
+</a>
+</li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="api-contracts-runtime/">
 <span class="md-ellipsis">
@@ -1186,6 +1082,30 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="SUPPLY_CHAIN/">
+<span class="md-ellipsis">
+    
+  
+    Supply-chain security
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="load-report/">
+<span class="md-ellipsis">
+    
+  
+    Load evidence
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="operations/troubleshooting/">
 <span class="md-ellipsis">
     
@@ -1334,6 +1254,30 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="flagship/">
+<span class="md-ellipsis">
+    
+  
+    Evidence overview
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="project-context/">
+<span class="md-ellipsis">
+    
+  
+    Project context
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="ROADMAP/">
 <span class="md-ellipsis">
     
@@ -1411,101 +1355,74 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#quick-start-in-60-seconds">
+<a class="md-nav__link" href="#quick-start">
 <span class="md-ellipsis">
       
-        Quick start in 60 seconds
+        Quick start
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#how-it-works">
+<a class="md-nav__link" href="#choose-a-starting-point">
 <span class="md-ellipsis">
       
-        How it works
+        Choose a starting point
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#capabilities">
+<a class="md-nav__link" href="#how-a-run-works">
 <span class="md-ellipsis">
       
-        Capabilities
+        How a run works
       
     </span>
 </a>
-<nav aria-label="Capabilities" class="md-nav">
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#main-capabilities">
+<span class="md-ellipsis">
+      
+        Main capabilities
+      
+    </span>
+</a>
+<nav aria-label="Main capabilities" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#dual-execution-engines">
+<a class="md-nav__link" href="#workflow-execution">
 <span class="md-ellipsis">
       
-        Dual execution engines
+        Workflow execution
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#tiered-model-routing">
+<a class="md-nav__link" href="#model-and-tool-control">
 <span class="md-ellipsis">
       
-        Tiered model routing
+        Model and tool control
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#multiple-llm-providers">
+<a class="md-nav__link" href="#evaluation">
 <span class="md-ellipsis">
       
-        Multiple LLM providers
+        Evaluation
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#full-rag-pipeline">
+<a class="md-nav__link" href="#rag">
 <span class="md-ellipsis">
       
-        Full RAG pipeline
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#rubric-based-evaluation">
-<span class="md-ellipsis">
-      
-        Rubric-based evaluation
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#live-dashboard">
-<span class="md-ellipsis">
-      
-        Live dashboard
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#zero-credential-dev-mode">
-<span class="md-ellipsis">
-      
-        Zero-credential dev mode
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#windows-first-support">
-<span class="md-ellipsis">
-      
-        Windows-first support
+        RAG
       
     </span>
 </a>
@@ -1514,120 +1431,31 @@
 </nav>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#by-the-numbers">
+<a class="md-nav__link" href="#repository-numbers">
 <span class="md-ellipsis">
       
-        By the numbers
+        Repository numbers
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#engineering-practice">
+<a class="md-nav__link" href="#development-commands">
 <span class="md-ellipsis">
       
-        Engineering practice
-      
-    </span>
-</a>
-<nav aria-label="Engineering practice" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#a-written-decision-record">
-<span class="md-ellipsis">
-      
-        A written decision record
+        Development commands
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#correctness-gated-in-ci">
+<a class="md-nav__link" href="#scope-and-limitations">
 <span class="md-ellipsis">
       
-        Correctness gated in CI
+        Scope and limitations
       
     </span>
 </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#proven-under-load">
-<span class="md-ellipsis">
-      
-        Proven under load
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#governance-honestly-scoped">
-<span class="md-ellipsis">
-      
-        Governance, honestly scoped
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#production-workflow-definitions">
-<span class="md-ellipsis">
-      
-        Production workflow definitions
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#further-reading">
-<span class="md-ellipsis">
-      
-        Further reading
-      
-    </span>
-</a>
-<nav aria-label="Further reading" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#getting-started">
-<span class="md-ellipsis">
-      
-        Getting started
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#architecture">
-<span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#deep-dives">
-<span class="md-ellipsis">
-      
-        Deep dives
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#reference">
-<span class="md-ellipsis">
-      
-        Reference
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
 </li>
 </ul>
 </nav>
@@ -1642,134 +1470,152 @@
 <a class="md-content__button md-icon" href="https://github.com/tafreeman/agentic-runtime-platform/raw/main/docs/index.md" title="View source of this page">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"></path></svg>
 </a>
-<div class="console-hero">
-<div class="hero-inner">
-<div class="hero-meta">
-<span class="hero-eyebrow">L2 · platform · multi-agent orchestration</span>
-<span class="status-tag">status: active</span>
-</div>
 <h1 id="agentic-runtime-platform">Agentic Runtime Platform<a class="headerlink" href="#agentic-runtime-platform" title="Permanent link">¶</a></h1>
-<p class="hero-sub">Declarative YAML workflows compile to executable DAGs — tiered routing across multiple LLM providers, rubric-scored evaluation, and OpenTelemetry on every stage. Deterministic core; the LLM sits at the boundary. Built solo: every consequential decision has an ADR, every quality gate is enforced in CI.</p>
-<div class="hero-actions">
-<p><a class="md-button md-button--primary" href="getting-started/quickstart/">Get started</a>
+<p>Agentic Runtime Platform runs YAML-defined AI workflows. Each workflow is a
+directed acyclic graph: steps declare their inputs, outputs, and dependencies;
+the runtime schedules ready steps, runs independent work concurrently, and
+prevents downstream steps from using failed or missing outputs.</p>
+<p>The repository includes a Python runtime and CLI, a FastAPI server, a React
+dashboard, an evaluation package, shared model utilities, and a RAG library.
+It supports local development without provider credentials and real provider
+calls when credentials are configured.</p>
+<p><a class="md-button md-button--primary" href="getting-started/quickstart/">Run the quick start</a>
 <a class="md-button" href="ARCHITECTURE/">Read the architecture</a>
-<a class="md-button" href="https://github.com/tafreeman/agentic-runtime-platform">View source</a></p>
-</div>
-<div class="term">
-<span class="term-prompt">$</span>
-<span class="term-cmd">AGENTIC_NO_LLM=1 agentic run test_deterministic --input /tmp/test-input.json</span>
-<span class="term-comment"># zero-credential dev mode</span>
-</div>
-</div>
-</div>
-<div class="trusted-stack">
-<p><span>Python 3.11+</span>
-<span>FastAPI</span>
-<span>Pydantic v2</span>
-<span>LangGraph</span>
-<span>React 19</span>
-<span>OpenTelemetry</span>
-<span>mypy --strict</span></p>
-</div>
-<p class="section-kicker">get running</p>
-<h2 id="quick-start-in-60-seconds">Quick start in 60 seconds<a class="headerlink" href="#quick-start-in-60-seconds" title="Permanent link">¶</a></h2>
-<p>No API keys required. The runtime ships with a deterministic placeholder backend that exercises every code path the real models do.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="c1"># 1. Clone and install</span>
-</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
-</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform/agentic-workflows-v2
-</span><span id="__span-0-4"><a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev,server]"</span>
-</span><span id="__span-0-5"><a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="c1"># 2. Enable zero-credential mode</span>
-</span><span id="__span-0-7"><a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w">   </span><span class="c1"># Windows: $env:AGENTIC_NO_LLM=1</span>
-</span><span id="__span-0-8"><a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a>
-</span><span id="__span-0-9"><a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="c1"># 3. Create an input file (--input accepts a file path, not inline JSON)</span>
-</span><span id="__span-0-10"><a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'{"task":"hello"}'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-input.json
-</span><span id="__span-0-11"><a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="c1"># 4. Run a workflow</span>
-</span><span id="__span-0-13"><a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span>--input<span class="w"> </span>/tmp/test-input.json
+<a class="md-button" href="KNOWN_LIMITATIONS/">Check known limitations</a></p>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">¶</a></h2>
+<p>Install the workspace:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tafreeman/agentic-runtime-platform.git
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>agentic-runtime-platform
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a>just<span class="w"> </span>setup
 </span></code></pre></div>
-<p>In under a minute the DAG executor emits a structured run record — step timings, tool calls, and a final scored artifact.</p>
-<p><a class="link-forward" href="getting-started/quickstart/">Full walkthrough</a></p>
-<hr/>
-<p class="section-kicker">pipeline</p>
-<h2 id="how-it-works">How it works<a class="headerlink" href="#how-it-works" title="Permanent link">¶</a></h2>
-<p>A workflow definition flows through a deterministic pipeline — YAML loader, graph compiler, DAG executor, model router — before reaching an LLM provider. Every stage emits OpenTelemetry traces and Pydantic-validated artifacts.</p>
+<p>Create a JSON input file and run the deterministic workflow:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"input_text":"Hello World"}\n'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/agentic-input.json
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="nv">AGENTIC_NO_LLM</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>agentic<span class="w"> </span>run<span class="w"> </span>test_deterministic<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="w">  </span>--input<span class="w"> </span>/tmp/agentic-input.json
+</span></code></pre></div>
+<p>PowerShell:</p>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="s1">'{"input_text":"Hello World"}'</span> <span class="p">|</span>
+</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>  <span class="nb">Set-Content</span> <span class="n">-Encoding</span> <span class="n">utf8</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span><span id="__span-2-3"><a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="nv">$env:AGENTIC_NO_LLM</span> <span class="p">=</span> <span class="s2">"1"</span>
+</span><span id="__span-2-4"><a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="n">agentic</span> <span class="n">run</span> <span class="n">test_deterministic</span> <span class="p">-</span><span class="n">-input</span> <span class="p">.\</span><span class="n">agentic-input</span><span class="p">.</span><span class="n">json</span>
+</span></code></pre></div>
+<p>Expected result: <code>Status: SUCCESS</code>. The input option accepts a file path, not
+inline JSON.</p>
+<p><code>AGENTIC_NO_LLM=1</code> replaces model calls with a fixed response. It verifies
+workflow structure, server integration, and event streaming. It does not
+verify response quality or structured model output.</p>
+<p><a href="getting-started/quickstart/">Detailed quick start</a></p>
+<h2 id="choose-a-starting-point">Choose a starting point<a class="headerlink" href="#choose-a-starting-point" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Install the runtime or UI</td>
+<td><a href="getting-started/installation/">Installation</a></td>
+</tr>
+<tr>
+<td>Learn every CLI command</td>
+<td><a href="cli-reference/">CLI reference</a></td>
+</tr>
+<tr>
+<td>Write a YAML workflow</td>
+<td><a href="getting-started/first-workflow/">First workflow</a></td>
+</tr>
+<tr>
+<td>Understand engine behavior</td>
+<td><a href="ARCHITECTURE/">Architecture</a></td>
+</tr>
+<tr>
+<td>Integrate with the API</td>
+<td><a href="api-contracts-runtime/">Runtime API contracts</a></td>
+</tr>
+<tr>
+<td>Configure providers and security</td>
+<td><a href="configuration/">Configuration</a></td>
+</tr>
+<tr>
+<td>Evaluate workflow output</td>
+<td><a href="architecture-eval/">Evaluation architecture</a></td>
+</tr>
+<tr>
+<td>Build an ingest-and-search flow</td>
+<td><a href="rag/">RAG pipeline</a></td>
+</tr>
+<tr>
+<td>Deploy or troubleshoot the service</td>
+<td><a href="operations/">Operations</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-a-run-works">How a run works<a class="headerlink" href="#how-a-run-works" title="Permanent link">¶</a></h2>
 <pre class="mermaid"><code>flowchart LR
-    A[YAML Workflow] --&gt; B[Loader<br/><small>Pydantic v2 validate</small>]
-    B --&gt; C[Graph Compiler<br/><small>Kahn topo sort</small>]
-    C --&gt; D[DAG Executor<br/><small>asyncio fan-out / fan-in</small>]
-    D --&gt; E[Model Router<br/><small>tier · health · circuit breaker</small>]
-    E --&gt; F[(Provider)]
-    F -.observation.-&gt; D
-    D --&gt; G[Artifacts<br/><small>Pydantic contracts</small>]
-    style A fill:#262626,color:#f4f4f4,stroke:#33b1ff
-    style F fill:#262626,color:#f4f4f4,stroke:#4589ff
-    style G fill:#262626,color:#f4f4f4,stroke:#42be65
+    D["YAML definition"] --&gt; L["Loader and validation"]
+    L --&gt; G["Step graph"]
+    G --&gt; E{"Execution adapter"}
+    E --&gt;|native| N["Native DAG executor"]
+    E --&gt;|langchain| LC["LangGraph adapter"]
+    N --&gt; R["Model router and tools"]
+    LC --&gt; R
+    R --&gt; O["Run result and events"]
+    O --&gt; U["CLI, API, and dashboard"]
+    O --&gt; V["Evaluation"]
 </code></pre>
-<hr/>
-<p class="section-kicker">capabilities</p>
-<h2 id="capabilities">Capabilities<a class="headerlink" href="#capabilities" title="Permanent link">¶</a></h2>
-<div class="feature-grid">
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="m20,6c0,1.8587,1.2795,3.4109,3,3.858v4.142c0,1.6543-1.3457,3-3,3h-8c-1.1299,0-2.1617.391-3,1.0256v-8.1676c1.7203-.4471,3-1.9993,3-3.858,0-2.2061-1.7944-4-4-4s-4,1.7939-4,4c0,1.8587,1.2797,3.4108,3,3.858v12.142s0,.142,0,.142c-1.7203.4473-3,1.9997-3,3.858,0,2.2056,1.7944,4,4,4s4-1.7944,4-4c0-1.8583-1.2797-3.4107-3-3.858v-.142c0-1.6543,1.3457-3,3-3h8c2.7568,0,5-2.2432,5-5v-4.142c1.7205-.4471,3-1.9993,3-3.858,0-2.2061-1.7939-4-4-4s-4,1.7939-4,4Zm-14,0c0-1.1025.897-2,2-2s2,.8975,2,2c0,1.1025-.897,2-2,2s-2-.8975-2-2Zm4,20c0,1.103-.897,2-2,2s-2-.897-2-2,.897-2,2-2,2,.897,2,2ZM26,6c0,1.1025-.8975,2-2,2s-2-.8975-2-2c0-1.1025.8975-2,2-2s2,.8975,2,2Z"></path></svg></div>
-<h3 class="fc-title" id="dual-execution-engines">Dual execution engines<a class="headerlink" href="#dual-execution-engines" title="Permanent link">¶</a></h3>
-<p class="fc-body">Run any workflow through the native DAG executor or the LangGraph-backed engine. Both produce structurally equivalent output; <code>agentic compare</code> diffs them side by side.</p>
-<p><a class="fc-link" href="ARCHITECTURE/">Architecture overview</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M27,22.14V17a2,2,0,0,0-2-2H17V9.86a4,4,0,1,0-2,0V15H7a2,2,0,0,0-2,2v5.14a4,4,0,1,0,2,0V17H25v5.14a4,4,0,1,0,2,0ZM8,26a2,2,0,1,1-2-2A2,2,0,0,1,8,26ZM14,6a2,2,0,1,1,2,2A2,2,0,0,1,14,6ZM26,28a2,2,0,1,1,2-2A2,2,0,0,1,26,28Z"></path></svg></div>
-<h3 class="fc-title" id="tiered-model-routing">Tiered model routing<a class="headerlink" href="#tiered-model-routing" title="Permanent link">¶</a></h3>
-<p class="fc-body">Steps declare a capability tier, not a model name. The <code>SmartRouter</code> resolves the best available provider at runtime — circuit breakers, adaptive cooldowns, automatic fallback chains.</p>
-<p><a class="fc-link" href="architecture-runtime/">Runtime engine</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M30,30H22V22h8Zm-6-2h4V24H24Z"></path><path d="M20,27H8A6,6,0,0,1,8,15h2v2H8a4,4,0,0,0,0,8H20Z"></path><path d="M20,20H12V12h8Zm-6-2h4V14H14Z"></path><path d="M24,17H22V15h2a4,4,0,0,0,0-8H12V5H24a6,6,0,0,1,0,12Z"></path><path d="M10,10H2V2h8ZM4,8H8V4H4Z"></path></svg></div>
-<h3 class="fc-title" id="multiple-llm-providers">Multiple LLM providers<a class="headerlink" href="#multiple-llm-providers" title="Permanent link">¶</a></h3>
-<p class="fc-body">OpenAI, Anthropic, Gemini, Azure OpenAI, Azure AI Foundry, GitHub Models, Ollama, and local ONNX / Windows AI — one client, per-provider bulkhead concurrency limits.</p>
-<p><a class="fc-link" href="architecture-tools/">Tools &amp; providers</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M26,2H8A2,2,0,0,0,6,4V8H4v2H6v5H4v2H6v5H4v2H6v4a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V4A2,2,0,0,0,26,2Zm0,26H8V24h2V22H8V17h2V15H8V10h2V8H8V4H26Z" transform="translate(0 0)"></path><rect height="2" width="8" x="14" y="8"></rect><rect height="2" width="8" x="14" y="15"></rect><rect height="2" width="8" x="14" y="22"></rect></svg></div>
-<h3 class="fc-title" id="full-rag-pipeline">Full RAG pipeline<a class="headerlink" href="#full-rag-pipeline" title="Permanent link">¶</a></h3>
-<p class="fc-body">Document loading, recursive chunking, deduplicated embedding, hybrid retrieval with Reciprocal Rank Fusion, cross-encoder and LLM reranking, token-budget context assembly.</p>
-<p><a class="fc-link" href="rag/">RAG pipeline</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><polygon points="13 24 4 15 5.414 13.586 13 21.171 26.586 7.586 28 9 13 24"></polygon></svg></div>
-<h3 class="fc-title" id="rubric-based-evaluation">Rubric-based evaluation<a class="headerlink" href="#rubric-based-evaluation" title="Permanent link">¶</a></h3>
-<p class="fc-body">YAML-defined rubrics with weighted criteria and LLM-as-judge integration — each criterion scored on a normalized 0–1 scale, then weighted into a composite. Production gating is <code>coverage_score &gt;= 0.80</code> — not string matches.</p>
-<p><a class="fc-link" href="architecture-eval/">Evaluation framework</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M7,28a1,1,0,0,1-1-1V5a1,1,0,0,1,1.4819-.8763l20,11a1,1,0,0,1,0,1.7525l-20,11A1.0005,1.0005,0,0,1,7,28ZM8,6.6909V25.3088L24.9248,16Z" transform="translate(0)"></path></svg></div>
-<h3 class="fc-title" id="live-dashboard">Live dashboard<a class="headerlink" href="#live-dashboard" title="Permanent link">¶</a></h3>
-<p class="fc-body">A React 19 SPA streams execution events over WebSocket. DAG nodes move through queued → running → complete in real time, with per-step drill-down into inputs, outputs, and timing.</p>
-<p><a class="fc-link" href="architecture-ui/">UI dashboard</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M26,4H6A2,2,0,0,0,4,6V26a2,2,0,0,0,2,2H26a2,2,0,0,0,2-2V6A2,2,0,0,0,26,4Zm0,2v4H6V6ZM6,26V12H26V26Z" transform="translate(0 0.01)"></path><polygon points="10.76 16.18 13.58 19.01 10.76 21.84 12.17 23.25 16.41 19.01 12.17 14.77 10.76 16.18"></polygon></svg></div>
-<h3 class="fc-title" id="zero-credential-dev-mode">Zero-credential dev mode<a class="headerlink" href="#zero-credential-dev-mode" title="Permanent link">¶</a></h3>
-<p class="fc-body"><code>AGENTIC_NO_LLM=1</code> installs deterministic placeholder providers at both engine chokepoints. The full test suite passes with zero provider credentials.</p>
-<p><a class="fc-link" href="NO_LLM_MODE/">No-LLM dev mode</a></p>
-</div>
-<div class="feature-card">
-<div class="fc-icon"><svg fill="currentColor" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M27,16.76c0-.25,0-.5,0-.76s0-.51,0-.77l1.92-1.68A2,2,0,0,0,29.3,11L26.94,7a2,2,0,0,0-1.73-1,2,2,0,0,0-.64.1l-2.43.82a11.35,11.35,0,0,0-1.31-.75l-.51-2.52a2,2,0,0,0-2-1.61H13.64a2,2,0,0,0-2,1.61l-.51,2.52a11.48,11.48,0,0,0-1.32.75L7.43,6.06A2,2,0,0,0,6.79,6,2,2,0,0,0,5.06,7L2.7,11a2,2,0,0,0,.41,2.51L5,15.24c0,.25,0,.5,0,.76s0,.51,0,.77L3.11,18.45A2,2,0,0,0,2.7,21L5.06,25a2,2,0,0,0,1.73,1,2,2,0,0,0,.64-.1l2.43-.82a11.35,11.35,0,0,0,1.31.75l.51,2.52a2,2,0,0,0,2,1.61h4.72a2,2,0,0,0,2-1.61l.51-2.52a11.48,11.48,0,0,0,1.32-.75l2.42.82a2,2,0,0,0,.64.1,2,2,0,0,0,1.73-1L29.3,21a2,2,0,0,0-.41-2.51ZM25.21,24l-3.43-1.16a8.86,8.86,0,0,1-2.71,1.57L18.36,28H13.64l-.71-3.55a9.36,9.36,0,0,1-2.7-1.57L6.79,24,4.43,20l2.72-2.4a8.9,8.9,0,0,1,0-3.13L4.43,12,6.79,8l3.43,1.16a8.86,8.86,0,0,1,2.71-1.57L13.64,4h4.72l.71,3.55a9.36,9.36,0,0,1,2.7,1.57L25.21,8,27.57,12l-2.72,2.4a8.9,8.9,0,0,1,0,3.13L27.57,20Z" transform="translate(0 0)"></path><path d="M16,22a6,6,0,1,1,6-6A5.94,5.94,0,0,1,16,22Zm0-10a3.91,3.91,0,0,0-4,4,3.91,3.91,0,0,0,4,4,3.91,3.91,0,0,0,4-4A3.91,3.91,0,0,0,16,12Z" transform="translate(0 0)"></path></svg></div>
-<h3 class="fc-title" id="windows-first-support">Windows-first support<a class="headerlink" href="#windows-first-support" title="Permanent link">¶</a></h3>
-<p class="fc-body">Runtime and tooling validated on Windows in CI. <code>scripts/setup-dev.ps1</code> is a one-command bring-up; the Windows AI Bridge (Phi Silica) is directly supported.</p>
-<p><a class="fc-link" href="development-guide/">Development guide</a></p>
-</div>
-</div>
-<hr/>
-<p class="section-kicker">metrics</p>
-<h2 id="by-the-numbers">By the numbers<a class="headerlink" href="#by-the-numbers" title="Permanent link">¶</a></h2>
-<div class="stat-strip">
+<p>Named YAML workflows default to the LangGraph adapter. Pass
+<code>--adapter native</code> for the built-in DAG engine. Runtime-generated <code>DAG</code> and
+<code>Pipeline</code> objects use the native engine. Both engines remain supported.</p>
+<h2 id="main-capabilities">Main capabilities<a class="headerlink" href="#main-capabilities" title="Permanent link">¶</a></h2>
+<h3 id="workflow-execution">Workflow execution<a class="headerlink" href="#workflow-execution" title="Permanent link">¶</a></h3>
+<ul>
+<li>YAML input and output contracts</li>
+<li>Dependency-aware scheduling</li>
+<li>Concurrent branches and fan-in</li>
+<li>Conditional steps and bounded loops</li>
+<li>Retries, timeouts, and failure propagation</li>
+<li>Run records plus SSE and WebSocket events</li>
+</ul>
+<h3 id="model-and-tool-control">Model and tool control<a class="headerlink" href="#model-and-tool-control" title="Permanent link">¶</a></h3>
+<ul>
+<li>Capability-tier routing across configured providers</li>
+<li>Health tracking, fallback chains, and circuit breakers</li>
+<li>Explicit tool allowlists</li>
+<li>Approval checks for high-impact tools</li>
+<li>File path containment and outbound URL checks</li>
+</ul>
+<p>Approval-required calls are denied when no approval provider is registered.
+This is safer than silently running the tool, but it also means a deployment
+must connect an approval provider before those calls can succeed.</p>
+<h3 id="evaluation">Evaluation<a class="headerlink" href="#evaluation" title="Permanent link">¶</a></h3>
+<ul>
+<li>YAML-defined rubrics</li>
+<li>Objective metrics that run without a model</li>
+<li>Batch and streaming runners</li>
+<li>Optional LLM-as-judge scoring</li>
+<li>JSON, Markdown, and HTML reports</li>
+</ul>
+<h3 id="rag">RAG<a class="headerlink" href="#rag" title="Permanent link">¶</a></h3>
+<ul>
+<li>Markdown and text loading</li>
+<li>Recursive chunking</li>
+<li>Deterministic and provider-backed embeddings</li>
+<li>In-memory and LanceDB vector stores</li>
+<li>BM25 and reciprocal-rank fusion</li>
+<li>Optional reranking and bounded context assembly</li>
+</ul>
+<p>The Python components support these paths. The current <code>agentic rag</code> CLI is a
+development surface: it uses process-local deterministic vectors and does not
+preserve an index between separate commands. See the
+<a href="rag/">RAG documentation</a> for the supported Python flow.</p>
+<h2 id="repository-numbers">Repository numbers<a class="headerlink" href="#repository-numbers" title="Permanent link">¶</a></h2>
+<p>These values are generated from the current source tree:</p>
+<div class="stats-grid">
 <div class="stat-item">
 <div class="stat-value">3,970</div>
 <div class="stat-label">Backend tests</div>
-</div>
-<div class="stat-item">
-<div class="stat-value">80%</div>
-<div class="stat-label">Coverage gate, CI-enforced</div>
 </div>
 <div class="stat-item">
 <div class="stat-value">50</div>
@@ -1780,129 +1626,43 @@
 <div class="stat-label">Production workflows</div>
 </div>
 </div>
-<hr/>
-<p class="section-kicker">engineering practice</p>
-<h2 id="engineering-practice">Engineering practice<a class="headerlink" href="#engineering-practice" title="Permanent link">¶</a></h2>
-<p>Everything below is committed, versioned, and CI-enforced.</p>
-<div class="feature-grid practice-grid">
-<div class="feature-card">
-<h3 class="fc-title" id="a-written-decision-record">A written decision record<a class="headerlink" href="#a-written-decision-record" title="Permanent link">¶</a></h3>
-<p class="fc-body">50 architecture decision records capture context, alternatives, and consequences for every consequential choice — engine adapters, wire-format contracts, storage backends, security boundaries. The reasoning is reviewable, not reconstructed.</p>
-<p><a class="fc-link" href="adr/ADR-INDEX/">ADR index</a></p>
-</div>
-<div class="feature-card">
-<h3 class="fc-title" id="correctness-gated-in-ci">Correctness gated in CI<a class="headerlink" href="#correctness-gated-in-ci" title="Permanent link">¶</a></h3>
-<p class="fc-body">An 80% coverage gate (79.93% fails — no rounding up), ruff and strict mypy on the engine and contracts, and a wire-format drift job that regenerates JSON schemas and TypeScript types and fails on any mismatch.</p>
-<p><a class="fc-link" href="CONTRIBUTING/">Contributing &amp; gates</a></p>
-</div>
-<div class="feature-card">
-<h3 class="fc-title" id="proven-under-load">Proven under load<a class="headerlink" href="#proven-under-load" title="Permanent link">¶</a></h3>
-<p class="fc-body">The Redis-CAS circuit breaker and horizontal scale-out are load-tested with k6 against a multi-replica stack, and the report is generated from committed results — numbers, not adjectives.</p>
-<p><a class="fc-link" href="load-report/">Load proof</a></p>
-</div>
-<div class="feature-card">
-<h3 class="fc-title" id="governance-honestly-scoped">Governance, honestly scoped<a class="headerlink" href="#governance-honestly-scoped" title="Permanent link">¶</a></h3>
-<p class="fc-body">A living NIST AI RMF alignment document, an OWASP-informed threat model, security hardening notes, and a maintained known-limitations page that says plainly what this platform does not do.</p>
-<p><a class="fc-link" href="AI_RISK_MANAGEMENT/">AI risk management</a></p>
-</div>
-</div>
-<hr/>
-<p class="section-kicker">workflows</p>
-<h2 id="production-workflow-definitions">Production workflow definitions<a class="headerlink" href="#production-workflow-definitions" title="Permanent link">¶</a></h2>
-<p>The engine ships with these production workflow definitions:</p>
-<table>
-<thead>
-<tr>
-<th>Workflow</th>
-<th>Pattern</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>code_review</code></td>
-<td>Fan-out / fan-in</td>
-<td>Parse code → parallel architecture + quality reviews → synthesis</td>
-</tr>
-<tr>
-<td><code>bug_resolution</code></td>
-<td>Sequential with verification</td>
-<td>Reproduce → root cause → fix → test → verify</td>
-</tr>
-<tr>
-<td><code>fullstack_generation</code></td>
-<td>Parallel sub-steps</td>
-<td>API design → frontend + backend in parallel → integration</td>
-</tr>
-<tr>
-<td><code>iterative_review</code></td>
-<td>Multi-loop with bounded iteration</td>
-<td>Review → feedback → revise until quality gates pass</td>
-</tr>
-<tr>
-<td><code>conditional_branching</code></td>
-<td>Conditional DAG</td>
-<td>Steps execute or skip based on runtime conditions</td>
-</tr>
-<tr>
-<td><code>consensus_review</code></td>
-<td>Ensemble with majority vote</td>
-<td>Three independent reviewers vote; summarize only on agreement</td>
-</tr>
-</tbody>
-</table>
-<p><a class="link-forward" href="workflows/">Workflow reference</a></p>
-<hr/>
-<p class="section-kicker">documentation</p>
-<h2 id="further-reading">Further reading<a class="headerlink" href="#further-reading" title="Permanent link">¶</a></h2>
-<div class="doc-grid">
-<div class="doc-card">
-<h3 class="dc-title" id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">¶</a></h3>
+<p>50 architecture decision records capture accepted, rejected, superseded, and
+proposed choices. The <a href="adr/ADR-INDEX/">ADR index</a> is the source of truth for
+their status.</p>
+<p>The test count is a static count of Python test functions. It is not a claim
+that every test passed in the latest local run. Check the repository's
+<a href="https://github.com/tafreeman/agentic-runtime-platform/actions/workflows/ci.yml">CI workflow</a>
+for current hosted results.</p>
+<h2 id="development-commands">Development commands<a class="headerlink" href="#development-commands" title="Permanent link">¶</a></h2>
+<p>Run these from the repository root:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a>just<span class="w"> </span><span class="nb">test</span>
+</span><span id="__span-3-2"><a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a>just<span class="w"> </span>docs
+</span><span id="__span-3-3"><a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</span><span id="__span-3-4"><a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a>npm<span class="w"> </span>--prefix<span class="w"> </span>agentic-workflows-v2/ui<span class="w"> </span>run<span class="w"> </span>build
+</span></code></pre></div>
+<p>The docs check validates selected file references and verifies that the numbers
+above match the source. The published site is also built with MkDocs strict
+mode in the documentation workflow.</p>
+<h2 id="scope-and-limitations">Scope and limitations<a class="headerlink" href="#scope-and-limitations" title="Permanent link">¶</a></h2>
+<p>The repository includes controls needed for serious development and testing,
+but deployment still requires operator decisions:</p>
 <ul>
-<li><a href="getting-started/">Overview</a> — install paths and the 60-second tour</li>
-<li><a href="getting-started/installation/">Installation</a> — Python, Node, and provider setup</li>
-<li><a href="getting-started/quickstart/">Quick start</a> — your first workflow run, narrated</li>
-<li><a href="getting-started/first-workflow/">First workflow</a> — write a two-step DAG from scratch</li>
-<li><a href="ONBOARDING/">Onboarding</a> — 5-minute to 1-hour onboarding path</li>
+<li>configure API-key or OIDC authentication;</li>
+<li>place shared rate limiting at the edge for multiple replicas;</li>
+<li>choose durable stores for run and retrieval data;</li>
+<li>register an approval provider for approval-required tools;</li>
+<li>apply network-level egress controls for high-assurance environments;</li>
+<li>run provider-specific integration tests for every configured provider.</li>
 </ul>
-</div>
-<div class="doc-card">
-<h3 class="dc-title" id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">¶</a></h3>
-<ul>
-<li><a href="ARCHITECTURE/">Architecture overview</a> — system map across the four packages</li>
-<li><a href="architecture-runtime/">Runtime engine</a> — DAG executor, model router, RAG pipeline</li>
-<li><a href="architecture-eval/">Evaluation framework</a> — rubrics, evaluators, runners</li>
-<li><a href="architecture-ui/">UI dashboard</a> — React 19 SPA and live streaming</li>
-<li><a href="integration-architecture/">Integration architecture</a> — cross-package contracts</li>
-</ul>
-</div>
-<div class="doc-card">
-<h3 class="dc-title" id="deep-dives">Deep dives<a class="headerlink" href="#deep-dives" title="Permanent link">¶</a></h3>
-<ul>
-<li><a href="deep-dive-server/">Server &amp; API</a> — FastAPI endpoints, WebSocket, auth middleware</li>
-<li><a href="deep-dive-agents/">Agents</a> — agent lifecycle, personas, capability declarations</li>
-<li><a href="rag/">RAG pipeline</a> — ingestion, chunking, retrieval, reranking</li>
-<li><a href="deep-dive-agentic-v2-eval/">Evaluation engine</a> — standalone eval package internals</li>
-</ul>
-</div>
-<div class="doc-card">
-<h3 class="dc-title" id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">¶</a></h3>
-<ul>
-<li><a href="workflows/">Workflow reference</a> — every production workflow described</li>
-<li><a href="PATTERN_CATALOG/">Pattern catalog</a> — reusable agentic patterns</li>
-<li><a href="api-contracts-runtime/">API contracts</a> — REST endpoint reference</li>
-<li><a href="adr/ADR-INDEX/">ADR index</a> — every architecture decision, dated and rationalized</li>
-<li><a href="operations/security-hardening/">Security hardening</a> — operational security posture</li>
-<li><a href="KNOWN_LIMITATIONS/">Known limitations</a> — honest accounting of caveats</li>
-</ul>
-</div>
-</div>
+<p>Review <a href="KNOWN_LIMITATIONS/">Known limitations</a>,
+<a href="operations/security-hardening/">Security hardening</a>, and
+<a href="deployment-guide/">Deployment</a> before exposing the service.</p>
 <aside class="md-source-file">
 <span class="md-source-file__fact">
 <span class="md-icon" title="Last update">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 06:46:36 UTC">July 29, 2026</span>
 </span>
 <span class="md-source-file__fact">
 <span class="md-icon" title="Created">
