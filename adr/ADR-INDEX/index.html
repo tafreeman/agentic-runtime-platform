@@ -3145,8 +3145,8 @@ only five:</p>
 </tr>
 <tr>
 <td><strong>016</strong></td>
-<td>GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider</td>
-<td>Accepted</td>
+<td>GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider (retired upstream 2026-07-30; no CI path still defaults to it)</td>
+<td>Superseded</td>
 <td><a href="../ADR-016-github-token-as-default-e2e-llm/">ADR-016</a></td>
 </tr>
 <tr>
@@ -3387,7 +3387,7 @@ only five:</p>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Models Domain:
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  ADR-002 (Circuit Breaker) ─── standalone
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ADR-016 (GitHub Models default) ─── standalone (CI policy)
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  ADR-016 (GitHub Models default) ─── Superseded 2026-07-29 (upstream retirement; judge default moved to nvidia: in PR #240)
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>Research Domain:
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  ADR-003 (CI Gating) ──superseded-by──&gt; ADR-007 (Classification Matrix)
@@ -3529,10 +3529,10 @@ not a statement about implementation state.</p>
 </tr>
 <tr>
 <td>016</td>
-<td style="text-align: center;">Yes</td>
-<td style="text-align: center;">100% (GITHUB_TOKEN wiring, fork-skip guards)</td>
-<td style="text-align: center;">CI workflow invariants</td>
-<td>2026-04-22</td>
+<td style="text-align: center;">Superseded</td>
+<td style="text-align: center;">GITHUB_TOKEN wiring/fork-skip guards remain in code but no CI-executed path defaults to <code>gh:*</code>; upstream retired 2026-07-30</td>
+<td style="text-align: center;">CI workflow invariants (stale)</td>
+<td>2026-07-29</td>
 </tr>
 <tr>
 <td>017</td>
@@ -3691,7 +3691,7 @@ not a statement about implementation state.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 18, 2026 11:46:31 UTC">July 18, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 07:30:23 UTC">July 29, 2026</span>
   </span>
 
     

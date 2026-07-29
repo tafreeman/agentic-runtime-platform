@@ -3012,9 +3012,58 @@
 
 
 <h1 id="adr-016-github-models-via-github_token-as-default-e2e-llm-provider">ADR-016: GitHub Models via <code>GITHUB_TOKEN</code> as Default E2E LLM Provider<a class="headerlink" href="#adr-016-github-models-via-github_token-as-default-e2e-llm-provider" title="Permanent link">&para;</a></h1>
-<p><strong>Status:</strong> Accepted
-<strong>Date:</strong> 2026-04-22
-<strong>Related:</strong> Epic 2 (Observable Execution), Epic 6 (Evaluation &amp; Data Depth)</p>
+<p><strong>Status:</strong> Superseded — GitHub Models retired upstream 2026-07-30; no
+CI-executed path defaults to it any more (see disposition note below)
+<strong>Date:</strong> 2026-04-22 (original) · superseded 2026-07-29
+<strong>Related:</strong> Epic 2 (Observable Execution), Epic 6 (Evaluation &amp; Data Depth)
+<strong>Superseded by:</strong> No single successor ADR — the default was retired in
+place rather than replaced. See the disposition note immediately below.</p>
+<hr />
+<blockquote>
+<p><strong>Disposition (2026-07-29).</strong> GitHub Models was fully retired upstream on
+2026-07-30 — playground, model catalog, inference API, and BYOK stopped
+for every customer (per GitHub's own changelog; brownouts ran 2026-07-16
+and 2026-07-23). The <strong>Decision</strong> and <strong>Consequences</strong> sections below no
+longer describe this platform's CI posture and are retained <strong>verbatim,
+for decision-traceability only</strong> — treat them as a record of what was
+decided in 2026-04, not as current policy.</p>
+<p>What actually changed, with evidence:</p>
+<ul>
+<li><strong>No CI-executed E2E path still defaults to <code>gh:*</code>.</strong> The nightly
+  Playwright streaming job hard-sets <code>AGENTIC_NO_LLM: '1'</code> for its backend
+  (<code>agentic-workflows-v2/ui/playwright.config.ts</code>, line 59).
+  <code>.github/workflows/eval-package-ci.yml</code>'s required <code>eval-golden-gate</code>
+  job (lines 140-171) also runs with <code>AGENTIC_NO_LLM: "1"</code> (line 168), and
+  its opt-in <code>eval-live-gate</code> job (lines 172-233) injects only
+  <code>ANTHROPIC_API_KEY</code> / <code>OPENAI_API_KEY</code> / <code>GEMINI_API_KEY</code> /
+  <code>AZURE_OPENAI_API_KEY</code> / <code>AZURE_FOUNDRY_API_KEY</code> — no <code>GITHUB_TOKEN</code>, no
+  <code>gh:</code> provider, anywhere in that job.</li>
+<li><strong>The <code>performance-benchmark.yml</code> workflow this ADR cites no longer
+  exists.</strong> <code>.github/workflows/</code> has no file by that name today.</li>
+<li><strong>The one place GitHub Models still had special standing — the LLM
+  judge's default model — has been repointed off it.</strong> PR #240
+  (<code>fix(judge): default the LLM judge off retiring GitHub Models</code>, merged
+  2026-07-29) changed <code>special.judge_default</code> in
+  <code>agentic-workflows-v2/agentic_v2/config/defaults/model_registry.yaml</code>
+  from <code>gh:openai/gpt-4o</code> to <code>nvidia:deepseek-ai/deepseek-v4-pro</code>, because
+  <code>LLMJudge</code> passes an explicit model to <code>run_with_fallback</code>, which forces
+  a single attempt with no tier-based cycling — a GitHub Models outage
+  would otherwise fail the judge closed with no fallback.</li>
+<li><strong>GitHub Models remains a selectable provider — this is not a removal.</strong>
+  Every other <code>gh:</code> entry in <code>model_registry.yaml</code> is untouched and still
+  resolvable via an explicit model id or the <code>AGENTIC_JUDGE_MODEL</code>
+  override; the provider backend, live discovery (ADR-039), and
+  fallback-chain rungs (ADR-051) are unchanged. What changed is narrower:
+  GitHub Models is no longer <em>any</em> default — not the CI default this ADR
+  named, not the judge default — and, independently, the upstream service
+  itself stopped serving requests entirely on 2026-07-30.</li>
+</ul>
+<p><code>docs/adr/ADR-INDEX.md</code> reflects this status change. A separate,
+unrelated stale claim was also found while investigating this: <code>docs/
+architecture-runtime.md</code>'s environment-variable table still describes
+<code>GITHUB_TOKEN</code> as the "default E2E LLM provider" — flagged for a follow-up
+fix, not corrected in this change.</p>
+</blockquote>
 <hr />
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p>Every CI job that exercises the platform end-to-end — Playwright streaming 5×, nightly reliability 50×, evaluation runs in <code>eval-package-ci.yml</code>, prompt quality gates, performance benchmarks — needs a working LLM provider. Without one, the workflows either skip the interesting code path or fail at the model call.</p>
@@ -3153,7 +3202,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 12:43:26 UTC">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 29, 2026 07:30:23 UTC">July 29, 2026</span>
   </span>
 
     
