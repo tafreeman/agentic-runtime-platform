@@ -1,21 +1,33 @@
-"""RAG embedding providers — in-memory and fallback implementations.
+"""RAG embedding providers — in-memory, LiteLLM, and fallback implementations.
 
 Provides:
 - :class:`InMemoryEmbedder`: Deterministic hash-based embedder for testing/dev.
 - :class:`FallbackEmbedder`: Ordered fallback across multiple embedding providers.
+- :class:`LiteLLMEmbedder`: Real provider embeddings (Voyage, OpenAI, local
+  Ollama, or any fully qualified LiteLLM model) through LiteLLM's unified
+  embedding API.  Requires the optional ``rag`` extra; the import is lazy so
+  this module always imports without it.
 """
 
 from __future__ import annotations
 
+import asyncio
+import functools
 import hashlib
 import logging
 import math
+import os
 import struct
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Sequence
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any, Final, Sequence
 
 from .errors import EmbeddingError
 from .protocols import EmbeddingProtocol
+
+if TYPE_CHECKING:
+    from .config import EmbeddingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -313,3 +325,400 @@ class FallbackEmbedder:
         raise EmbeddingError(
             f"All {len(errors)} embedding providers failed: {error_messages}"
         )
+
+
+# ---------------------------------------------------------------------------
+# LiteLLM-backed embeddings (optional ``rag`` extra)
+# ---------------------------------------------------------------------------
+
+# LiteLLM model-string prefix for each configured provider.  ``None`` means the
+# configured ``model_name`` is already fully qualified and is passed through
+# verbatim.
+LITELLM_PROVIDER_PREFIXES: Final[Mapping[str, str | None]] = MappingProxyType(
+    {
+        "voyage": "voyage",
+        "openai": "openai",
+        "local": "ollama",
+        "litellm": None,
+    }
+)
+
+# Environment variable holding the credential for each provider.  ``None`` means
+# no credential is read or forwarded by this module — a local Ollama endpoint
+# needs none, and a fully qualified ``litellm`` model string lets LiteLLM
+# resolve its own credentials from its own environment conventions.
+LITELLM_PROVIDER_KEY_ENV: Final[Mapping[str, str | None]] = MappingProxyType(
+    {
+        "voyage": "VOYAGE_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "local": None,
+        "litellm": None,
+    }
+)
+
+
+def litellm_model_string(provider: str, model_name: str) -> str:
+    """Build the LiteLLM model string for a provider/model pair.
+
+    Args:
+        provider: Configured embedding provider name.
+        model_name: Configured model identifier.
+
+    Returns:
+        The fully qualified LiteLLM model string (e.g. ``"voyage/voyage-3"``).
+
+    Raises:
+        EmbeddingError: If *provider* has no LiteLLM routing rule.
+    """
+    if provider not in LITELLM_PROVIDER_PREFIXES:
+        supported = ", ".join(sorted(LITELLM_PROVIDER_PREFIXES))
+        raise EmbeddingError(
+            f"Unsupported LiteLLM embedding provider '{provider}'; "
+            f"expected one of: {supported}"
+        )
+
+    prefix = LITELLM_PROVIDER_PREFIXES[provider]
+    if prefix is None:
+        return model_name
+    return f"{prefix}/{model_name}"
+
+
+def _load_litellm() -> Any:
+    """Import the optional ``litellm`` dependency lazily.
+
+    This is the seam tests replace.  Keeping the import inside a module-level
+    function means importing :mod:`agentic_v2.rag.embeddings` never requires
+    the ``rag`` extra, and a test can exercise the whole embed path with a
+    fake module even where ``litellm`` is genuinely absent.
+
+    Returns:
+        The imported ``litellm`` module.
+
+    Raises:
+        EmbeddingError: If ``litellm`` is not installed.
+    """
+    try:
+        import litellm
+    except ImportError as exc:
+        raise EmbeddingError(
+            "litellm is required for LiteLLMEmbedder but is not installed; "
+            'install the RAG extra with: pip install -e ".[rag]"'
+        ) from exc
+    return litellm
+
+
+def _redact_secret(text: str, secret: str | None) -> str:
+    """Replace *secret* with a placeholder wherever it appears in *text*.
+
+    Provider errors can echo request material back to the caller.  Scrubbing
+    the credential before it reaches a log record or an exception message
+    keeps it out of both.
+
+    Args:
+        text: Message that may contain the credential.
+        secret: The credential to scrub, if any.
+
+    Returns:
+        *text* with every occurrence of *secret* replaced by ``"***"``.
+    """
+    if not secret:
+        return text
+    return text.replace(secret, "***")
+
+
+def _embedding_response_items(response: Any) -> list[Any]:
+    """Extract the per-input items from a LiteLLM embedding response.
+
+    Tolerates both an object exposing ``.data`` and a mapping carrying a
+    ``"data"`` key, since LiteLLM's response type has varied across releases.
+
+    Args:
+        response: Raw value returned by LiteLLM.
+
+    Returns:
+        The list of per-input response items.
+
+    Raises:
+        EmbeddingError: If the response carries no usable ``data`` sequence.
+    """
+    data = getattr(response, "data", None)
+    if data is None and isinstance(response, Mapping):
+        data = response.get("data")
+
+    if not isinstance(data, (list, tuple)):
+        raise EmbeddingError(
+            "LiteLLM embedding response has no usable 'data' list "
+            f"(response type: {type(response).__name__})"
+        )
+    return list(data)
+
+
+def _embedding_vector(item: Any) -> list[float]:
+    """Extract one embedding vector from a LiteLLM response item.
+
+    Args:
+        item: A single element of the response ``data`` list.
+
+    Returns:
+        The embedding vector as a list of floats.
+
+    Raises:
+        EmbeddingError: If the item carries no numeric ``embedding`` list.
+    """
+    vector = getattr(item, "embedding", None)
+    if vector is None and isinstance(item, Mapping):
+        vector = item.get("embedding")
+
+    if not isinstance(vector, (list, tuple)):
+        raise EmbeddingError(
+            "LiteLLM embedding response item has no usable 'embedding' list "
+            f"(item type: {type(item).__name__})"
+        )
+
+    try:
+        return [float(value) for value in vector]
+    except (TypeError, ValueError) as exc:
+        raise EmbeddingError(
+            "LiteLLM embedding response contained a non-numeric vector value"
+        ) from exc
+
+
+def _parse_embedding_response(
+    response: Any,
+    *,
+    expected_count: int,
+    expected_dimensions: int,
+    model: str,
+) -> list[list[float]]:
+    """Parse and validate a LiteLLM embedding response.
+
+    Args:
+        response: Raw value returned by LiteLLM.
+        expected_count: Number of texts sent in this request.
+        expected_dimensions: Configured vector dimensionality.
+        model: LiteLLM model string, used in error messages.
+
+    Returns:
+        One vector per input text, in request order.
+
+    Raises:
+        EmbeddingError: If the payload is unparseable, returns the wrong
+            number of vectors, or returns a vector of the wrong width.
+    """
+    vectors = [_embedding_vector(item) for item in _embedding_response_items(response)]
+
+    if len(vectors) != expected_count:
+        raise EmbeddingError(
+            f"LiteLLM returned {len(vectors)} embeddings for {expected_count} "
+            f"input texts (model '{model}')"
+        )
+
+    for vector in vectors:
+        if len(vector) != expected_dimensions:
+            raise EmbeddingError(
+                f"LiteLLM returned a {len(vector)}-dimensional embedding but "
+                f"{expected_dimensions} dimensions are configured (model "
+                f"'{model}'); storing mismatched vectors would corrupt the index"
+            )
+
+    return vectors
+
+
+class LiteLLMEmbedder:
+    """Embedding provider backed by LiteLLM's unified embedding API.
+
+    Routes :attr:`EmbeddingConfig.provider` onto a LiteLLM model string via
+    :data:`LITELLM_PROVIDER_PREFIXES` (``voyage`` → ``voyage/…``, ``openai`` →
+    ``openai/…``, ``local`` → ``ollama/…``, ``litellm`` → passed through), then
+    embeds in batches of ``config.batch_size`` with at most
+    ``config.max_concurrent`` requests in flight.  Results are returned in
+    input order.
+
+    The credential is read from the environment at call time (see
+    :data:`LITELLM_PROVIDER_KEY_ENV`) and is never accepted as a constructor
+    argument, logged, or included in an error message.
+
+    Requires the optional ``litellm`` dependency (``pip install -e ".[rag]"``).
+    The import is lazy, so constructing this class — and importing this module —
+    works without the extra; only :meth:`embed` needs it.
+
+    Satisfies :class:`EmbeddingProtocol`.
+
+    Args:
+        config: Embedding configuration supplying provider, model, dimensions,
+            batch size, and concurrency limit.
+
+    Raises:
+        EmbeddingError: If ``config.provider`` has no LiteLLM routing rule.
+    """
+
+    def __init__(self, config: EmbeddingConfig) -> None:
+        self._config = config
+        self._model_string = litellm_model_string(
+            config.provider,
+            config.model_name,
+        )
+        self._api_key_env = LITELLM_PROVIDER_KEY_ENV.get(config.provider)
+
+    @property
+    def provider(self) -> str:
+        """Configured provider name."""
+        return str(self._config.provider)
+
+    @property
+    def model_name(self) -> str:
+        """Configured model identifier."""
+        return self._config.model_name
+
+    @property
+    def litellm_model(self) -> str:
+        """Fully qualified LiteLLM model string used for every request."""
+        return self._model_string
+
+    @property
+    def embedding_identity(self) -> EmbeddingProviderIdentity:
+        """Provider/model identity for this embedding semantic space."""
+        return EmbeddingProviderIdentity(
+            provider=self.provider,
+            model_name=self.model_name,
+        )
+
+    @property
+    def dimensions(self) -> int:
+        """Configured dimensionality of the embedding vectors."""
+        return self._config.dimensions
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embed *texts* through LiteLLM, batched and concurrency-bounded.
+
+        Args:
+            texts: Strings to embed.  An empty list short-circuits with no
+                network call.
+
+        Returns:
+            One vector per input text, in input order, each of length
+            :attr:`dimensions`.
+
+        Raises:
+            EmbeddingError: If ``litellm`` is missing, a required credential
+                env var is unset, the provider call fails, or the response is
+                unparseable / the wrong shape.
+        """
+        if not texts:
+            return []
+
+        api_key = self._resolve_api_key()
+        batch_size = self._config.batch_size
+        batches = [
+            texts[start : start + batch_size]
+            for start in range(0, len(texts), batch_size)
+        ]
+        semaphore = asyncio.Semaphore(self._config.max_concurrent)
+
+        batched_vectors = await asyncio.gather(
+            *(self._embed_batch(batch, semaphore, api_key) for batch in batches)
+        )
+        return [vector for batch in batched_vectors for vector in batch]
+
+    def _resolve_api_key(self) -> str | None:
+        """Read the provider credential from the environment at call time.
+
+        Returns:
+            The credential, or ``None`` when the provider needs none.
+
+        Raises:
+            EmbeddingError: If the provider requires a credential and the
+                environment variable is unset or empty.  The message names the
+                variable, never its value.
+        """
+        if self._api_key_env is None:
+            return None
+
+        api_key = os.getenv(self._api_key_env)
+        if not api_key:
+            raise EmbeddingError(
+                f"{self._api_key_env} is not set; it is required for embedding "
+                f"provider '{self.provider}' (model '{self._model_string}')"
+            )
+        return api_key
+
+    async def _embed_batch(
+        self,
+        batch: list[str],
+        semaphore: asyncio.Semaphore,
+        api_key: str | None,
+    ) -> list[list[float]]:
+        """Embed a single batch under the concurrency bound.
+
+        Args:
+            batch: Texts for this request.
+            semaphore: Shared in-flight-request limiter.
+            api_key: Credential to forward, or ``None``.
+
+        Returns:
+            One vector per text in *batch*, in order.
+
+        Raises:
+            EmbeddingError: If the call fails or the response is invalid.
+        """
+        async with semaphore:
+            response = await self._call_litellm(batch, api_key)
+
+        return _parse_embedding_response(
+            response,
+            expected_count=len(batch),
+            expected_dimensions=self._config.dimensions,
+            model=self._model_string,
+        )
+
+    async def _call_litellm(self, batch: list[str], api_key: str | None) -> Any:
+        """Dispatch one embedding request, preferring the async entrypoint.
+
+        Uses ``litellm.aembedding`` when the installed version exposes it;
+        otherwise offloads the synchronous ``litellm.embedding`` to the default
+        executor so the event loop is never blocked.
+
+        Args:
+            batch: Texts for this request.
+            api_key: Credential to forward, or ``None``.
+
+        Returns:
+            The raw LiteLLM response.
+
+        Raises:
+            EmbeddingError: If ``litellm`` is missing, exposes no embedding
+                entrypoint, or the call raises.  Provider messages are scrubbed
+                of the credential before being surfaced.
+        """
+        litellm = _load_litellm()
+        kwargs: dict[str, Any] = {
+            "model": self._model_string,
+            "input": list(batch),
+        }
+        if api_key is not None:
+            kwargs["api_key"] = api_key
+
+        entrypoint = getattr(litellm, "aembedding", None)
+        is_async = entrypoint is not None
+        if entrypoint is None:
+            entrypoint = getattr(litellm, "embedding", None)
+        if entrypoint is None:
+            raise EmbeddingError(
+                "The installed litellm exposes neither 'aembedding' nor "
+                "'embedding'; upgrade litellm (>=1.84,<2) to use LiteLLMEmbedder"
+            )
+
+        try:
+            if is_async:
+                return await entrypoint(**kwargs)
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(
+                None,
+                functools.partial(entrypoint, **kwargs),
+            )
+        except Exception as exc:
+            detail = _redact_secret(str(exc), api_key)
+            raise EmbeddingError(
+                "LiteLLM embedding call failed for model "
+                f"'{self._model_string}': {detail}"
+            ) from exc

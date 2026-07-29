@@ -140,19 +140,23 @@ preserve an index between separate commands. See the
 
 These values are generated from the current source tree:
 
-<div class="stats-grid">
-  <div class="stat-item">
-    <div class="stat-value">3,970</div>
-    <div class="stat-label">Backend tests</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-value">50</div>
-    <div class="stat-label">ADRs</div>
-  </div>
-  <div class="stat-item">
-    <div class="stat-value">6</div>
-    <div class="stat-label">Production workflows</div>
-  </div>
+<div class="stat-strip" markdown>
+<div class="stat-item">
+  <div class="stat-value">4,041</div>
+  <div class="stat-label">Backend tests</div>
+</div>
+<div class="stat-item">
+  <div class="stat-value">80%</div>
+  <div class="stat-label">Coverage gate, CI-enforced</div>
+</div>
+<div class="stat-item">
+  <div class="stat-value">50</div>
+  <div class="stat-label">ADRs</div>
+</div>
+<div class="stat-item">
+  <div class="stat-value">6</div>
+  <div class="stat-label">Production workflows</div>
+</div>
 </div>
 
 50 architecture decision records capture accepted, rejected, superseded, and
