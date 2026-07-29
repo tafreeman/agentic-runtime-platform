@@ -1,27 +1,23 @@
-# Flagship: proven Redis-CAS + horizontal scale
+# Load and shared-state evidence
 
-ARP's reliability story is not just described — it is **measured**. A free,
-local k6 load proof hammers a multi-replica `docker compose` stack (Redis +
-N ARP FastAPI replicas, `AGENTIC_NO_LLM=1`) and publishes the real numbers to
-GitHub Pages.
+The repository includes a reproducible local load harness and a generated
+[load report](load-report.md).
 
-➡️ **[Load proof: Redis-CAS + horizontal scale](load-report.md)** — auto-generated
-from the committed k6 JSON; no metric is hand-typed.
+The committed report records two different experiments:
 
-What it demonstrates:
+- the same API acceptance workload against one and three FastAPI replicas;
+- a direct concurrent exact-sum test of the production Redis compare-and-swap
+  circuit-breaker storage path.
 
-- **Horizontal scale delta** — the same ramping-VU k6 profile run at 1 replica
-  and at N replicas, so the throughput/latency improvement is attributable to
-  scale.
-- **Redis-CAS shared-counter consistency** — concurrent multi-replica load
-  exercising the Compare-And-Swap circuit-breaker store, with an observed-vs-
-  expected exact-sum proof that the shared counter never double-counts or loses
-  an update.
+The API workload measures `POST /api/run` acceptance throughput and latency. In
+the captured run, that request path did not reach the model client, so it did
+not itself create the Redis circuit-breaker writes. The separate worker
+experiment is the evidence for Redis counter consistency.
 
-The load **run** is local and $0; CI only renders the committed
-`load/results/*.json`, so GitHub Pages stays free and deterministic. Reproduce
-with `bash load/run_load.sh` then `python scripts/build_load_report.py`.
+The report is generated from committed JSON under `load/results/`; do not edit
+its measurements by hand.
 
-> Orchestrator note: link this page (and `load-report.md`) from `README.md` and
-> the mkdocs nav. The generator owns `docs/load-report.md`; this pointer file is
-> safe to edit by hand.
+To reproduce the experiment, use the instructions in
+[the load harness README](https://github.com/tafreeman/agentic-runtime-platform/blob/main/load/README.md).
+It requires Docker and a Bash
+environment such as Git Bash or WSL on Windows.

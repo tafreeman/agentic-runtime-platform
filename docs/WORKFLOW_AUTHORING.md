@@ -1,12 +1,13 @@
 # Workflow authoring guide
 
-How to write, validate, and run YAML workflow definitions for the agentic-workflows-v2 engine.
-
----
+This guide explains how to write, validate, and run a YAML workflow.
 
 ## Overview
 
-Workflows are declarative YAML files that define a **directed acyclic graph (DAG)** of agent-backed steps. Each step runs an agent (deterministic or LLM-backed), receives inputs from upstream steps or workflow parameters, and produces outputs consumed by downstream steps. The DAG executor (Kahn's algorithm) schedules steps with maximum parallelism -- any step whose dependencies are satisfied runs immediately.
+Workflows are YAML files that define steps and the dependencies between them.
+Each step runs either deterministic Python or a model-backed agent. A step can
+read workflow inputs and the outputs of earlier steps. The executor runs a step
+as soon as its dependencies are complete, up to its concurrency limit.
 
 Workflow definitions live in:
 
@@ -14,12 +15,13 @@ Workflow definitions live in:
 agentic-workflows-v2/agentic_v2/workflows/definitions/*.yaml
 ```
 
-At runtime the system chains together:
+At runtime:
 
-1. **WorkflowLoader** -- parses YAML into a `WorkflowDefinition` containing a validated `DAG`, typed inputs/outputs, capability metadata, and optional evaluation config.
-2. **DAGExecutor** -- schedules and runs steps in parallel, respecting dependency edges and `when` conditions.
-3. **ExpressionEvaluator** -- resolves `${...}` variable references and boolean conditions at runtime.
-4. **WorkflowRunner** -- the top-level orchestrator that validates inputs, seeds context, executes the DAG, and resolves declared outputs.
+1. `WorkflowLoader` parses the YAML and builds the dependency graph.
+2. `WorkflowRunner` checks required inputs and allowed enum values.
+3. The executor schedules steps, dependencies, conditions, and bounded loops.
+4. `ExpressionEvaluator` resolves `${...}` references.
+5. The runner maps step results to the workflow's declared outputs.
 
 ---
 
@@ -29,12 +31,12 @@ A workflow YAML file has these top-level keys:
 
 | Key | Required | Description |
 |---|---|---|
-| `name` | Yes | Unique workflow identifier (must match filename without `.yaml`) |
-| `version` | Yes | Semantic version string, e.g. `"1.0"` |
-| `description` | Yes | Human-readable purpose of the workflow |
-| `inputs` | Yes | Typed input parameter declarations |
-| `outputs` | Yes | Output mappings from step results to workflow-level outputs |
-| `steps` | Yes | Ordered list of step definitions (the DAG nodes) |
+| `name` | No | Workflow identifier; defaults to the filename |
+| `version` | No | Version string; defaults to `"1.0"` |
+| `description` | No | Short explanation of the workflow |
+| `inputs` | No | Input parameter declarations |
+| `outputs` | No | Mappings from step results to workflow outputs |
+| `steps` | Yes | Non-empty list of executable steps |
 | `capabilities` | No | Input/output name lists for dataset-workflow compatibility matching |
 | `evaluation` | No | Inline rubric for scoring workflow quality |
 | `experimental` | No | Boolean flag; when `true`, the workflow is hidden from `list_workflows()` by default |
@@ -100,7 +102,10 @@ inputs:
     default: []
 ```
 
-**Supported `type` values:** `string`, `number`, `object`, `array`. Types are advisory; runtime validation checks `required` and `enum` constraints.
+`type` is descriptive metadata; the runner does not enforce it. Shipped
+definitions use values such as `string`, `integer`, `number`, `object`, and
+`array`. Runtime input validation enforces required values and `enum`
+constraints.
 
 ---
 
@@ -136,9 +141,9 @@ Each entry in `steps:` defines a DAG node. The required and optional fields are:
 |---|---|---|---|
 | `name` | Yes | string | Unique step identifier within this workflow |
 | `agent` | Yes | string | Agent name in `tier{N}_{role}` format (e.g. `tier2_coder`) |
-| `description` | Yes | string | What this step does -- passed to the LLM as task context |
-| `inputs` | Yes | mapping | Maps step-local input names to `${...}` expressions |
-| `outputs` | Yes | mapping | Maps step output keys to context variable names |
+| `description` | No | string | What this step does; model-backed steps receive it as task context |
+| `inputs` | No | mapping | Maps step-local input names to values or `${...}` expressions |
+| `outputs` | No | mapping | Maps step output keys to context variable names |
 | `input_contracts` | No | mapping | Validates opted-in step inputs before invocation |
 | `output_contracts` | No | mapping | Validates and normalizes opted-in outputs before success |
 | `depends_on` | No | list | Step names that must complete before this step runs |
@@ -246,7 +251,10 @@ The role suffix (e.g. `coder`, `reviewer`) maps to a persona prompt file in `age
 
 ## Expression language
 
-The engine supports `${...}` expressions for variable references, function calls, and boolean conditions. Expressions are evaluated by `ExpressionEvaluator` using a restricted Python AST whitelist -- no arbitrary code execution is possible.
+The engine supports `${...}` expressions for variable references, the
+`coalesce()` function, and conditions. `ExpressionEvaluator` accepts only a
+small set of expression elements and rejects imports, arbitrary function calls,
+and access to names that start with `__`.
 
 ### Variable references
 
@@ -317,17 +325,16 @@ This means expressions like `${steps.skipped_step.outputs.some_value}` safely re
 | Arithmetic | `+`, `-`, `*`, `/`, `%` |
 | Identity | `is`, `is not` |
 
-### Security model
+### Expression restrictions
 
-Expression evaluation is secured through an **AST whitelist**. The engine parses expressions into a Python AST and rejects any node type not in the allowed set. This means:
+The evaluator parses each expression and rejects elements outside its
+allowlist. In particular:
 
 - No imports or module access
 - No function calls except `coalesce()`
 - No attribute assignment
 - No lambda, comprehension, or generator expressions
-- All evaluation runs with `__builtins__` set to `{}`
-
-Internally, `ast.parse()` and `compile()` are used with the restricted whitelist; `ast.literal_eval` principles are followed but the evaluator supports a broader set of comparison and boolean operations.
+- Built-in Python functions are not available
 
 ---
 
@@ -648,12 +655,13 @@ agentic validate <workflow_name>
 ```
 
 The validation pipeline checks:
-1. **YAML syntax** -- valid YAML parsing.
-2. **Required top-level keys** -- `name`, `steps` must be present.
-3. **Step schema** -- every step must have `name` and `agent`.
-4. **Dependency existence** -- every `depends_on` target must be a defined step name.
-5. **Cycle detection** -- DFS three-color algorithm rejects any circular dependencies.
-6. **Evaluation constraints** -- criterion weights sum to 1.0, critical floors in [0,1], formula IDs registered.
+
+1. YAML syntax and the top-level mapping.
+2. At least one executable step for a non-experimental workflow.
+3. Step names and resolvable agents.
+4. Dependency names and dependency cycles.
+5. Artifact-contract configuration.
+6. Evaluation weights, floors, and normalization formula names.
 
 Programmatic validation:
 
@@ -885,7 +893,7 @@ result = await run_workflow("code_review", code_file="main.py")
 
 ### Checklist for new workflows
 
-- [ ] `name` matches the YAML filename (without `.yaml`)
+- [ ] `name` matches the YAML filename (recommended for clear CLI output)
 - [ ] Every step has `name`, `agent`, `description`, `inputs`, `outputs`
 - [ ] All `depends_on` targets are valid step names
 - [ ] No dependency cycles

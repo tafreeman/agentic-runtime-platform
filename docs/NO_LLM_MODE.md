@@ -1,79 +1,138 @@
-# No-LLM dev mode
+# Development without a model provider
 
-## What it does
+Set `AGENTIC_NO_LLM=1` to replace the runtime's normal native and LangChain
+model clients with deterministic placeholder implementations. This prevents
+those clients from calling a provider.
 
-Set `AGENTIC_NO_LLM=1` to run the native and LangChain engines without provider credentials. Both execution paths short-circuit every LLM call and return a deterministic placeholder string: `[AGENTIC_NO_LLM placeholder] Set AGENTIC_NO_LLM=0 and a provider key to get real output.` Provider probing is skipped entirely — no spurious errors from missing API keys.
+Use this mode to test workflow structure, scheduling, events, persistence, and
+UI flow. Do not use it to test output meaning or provider behavior.
 
-## How to enable
+## Enable it
 
-**Bash:**
+Bash:
 
 ```bash
 export AGENTIC_NO_LLM=1
-echo '{"input_text": "hello"}' > input.json
-agentic run test_deterministic --input input.json
+agentic run test_deterministic \
+  --input agentic-workflows-v2/tests/fixtures/deterministic_input.json
 ```
 
-**Windows PowerShell:**
+PowerShell:
 
 ```powershell
 $env:AGENTIC_NO_LLM = "1"
-'{"input_text": "hello"}' | Out-File -Encoding utf8 input.json
-agentic run test_deterministic --input input.json
+.\.venv\Scripts\agentic.exe run test_deterministic `
+  --input agentic-workflows-v2\tests\fixtures\deterministic_input.json
 ```
 
-Expected output: the workflow runs to completion, all steps emit placeholder text, and the process exits with status 0. No provider credentials required.
+`test_deterministic` contains two tier-0 agent steps. In the current native
+path those agents still enter the model-client loop, which returns placeholder
+values instead of contacting a provider. The workflow finishes with
+`Status: SUCCESS`, but may log input-mapping and tool-provider warnings. Use it
+as an executor smoke test, not as proof that its step outputs are meaningful.
 
-> **LangChain engine requires an extra.** The native DAG executor works with just the base `pip install -e .` — that's the common case. If you want to exercise the LangChain adapter under this flag (`--adapter langchain`), install with the extra: `pip install -e .[langchain]`. Without it, `get_chat_model()` raises `ImportError: langchain-core is required...` even when the flag is set. Accepted values for the env var (case-insensitive): `1`/`true`/`yes`/`on` are true; empty/`0`/`false`/`no`/`off` are false; anything else is coerced to false with a logged warning.
+Depending on the client path, placeholder output may be a fixed text value or
+a small mapping such as:
 
-The UI also works: run `agentic serve` + `npm run dev` under this flag. DAG streaming shows placeholder content at each node.
+```text
+{"placeholder": true, "reason": "llm_unavailable"}
+```
 
-## What works
+## What it covers
 
-- **Native DAG executor** (both YAML workflow execution and agent-step paths)
-- **LangChain adapter** (`--adapter langchain` in CLI or config)
-- **DAG streaming over WebSocket/SSE** (one chunk per message; the entire placeholder is a single chunk)
-- **UI demos end-to-end**
-- **CLI validation commands** (`agentic list` and `agentic validate` don't invoke an LLM regardless of this flag; `agentic compare` exercises workflows and honors the flag)
-- **RAG pipeline** (embeddings already deterministic via SHA-256 hashing)
+- the shared native `LLMClientWrapper`;
+- LangChain chat-model construction;
+- normal CLI and API paths that use those clients;
+- WebSocket and server-sent event plumbing for placeholder responses; and
+- deterministic orchestration fallback where implemented.
 
-## Scope limits — read this before you report a bug
+The LangChain adapter still requires the `langchain` extra because its graph
+and message types must be importable:
 
-**Not a simulator.** The placeholder is a fixed string. Any downstream consumer that parses structured output — `PydanticOutputParser`, JSON-extraction steps, evaluation rubrics that score against a reference — will fail or score zero. This is by design. Use this mode for shape and flow testing only, not for semantics or behavior validation.
+```text
+python -m pip install -e "./agentic-workflows-v2[langchain]"
+```
 
-**Evaluation runs need real keys.** `agentic-v2-eval` is untouched; scoring rubrics against the placeholder will score zero. Run evaluation workflows with actual provider credentials.
+## What it does not prove
 
-**Streaming is not token-by-token.** Both `complete_stream` (native) and `astream` (LangChain) yield the entire placeholder as one chunk. Useful for testing UI plumbing, not for testing per-token streaming UX.
+Placeholder mode does not test:
 
-**Tool-calling is a no-op.** `bind_tools(...)` is accepted but ignored. The placeholder is returned regardless of what tools were bound. Workflows that branch on tool calls will always take the no-tool path.
+- provider credentials, permissions, availability, or quotas;
+- model routing against live provider catalogs;
+- structured JSON or Pydantic output from a model;
+- tool calls selected by a model;
+- token-by-token streaming;
+- content quality or evaluation quality;
+- latency, retry, fallback, or cost behavior; or
+- provider SDK request and response compatibility.
 
-## When NOT to use
+Placeholder output is deterministic for the selected path, but its shape is
+not a substitute for a real provider response. A step that requires a specific
+model schema may fail honestly or take a fallback path. That is not evidence
+that the same step will fail with a configured model.
 
-- Production deployments
-- Evaluation and rubric-scoring runs
-- Capacity planning or load tests
-- Anything asserting on real model content or behavior
+## Independent features
 
-## Troubleshooting
+`AGENTIC_NO_LLM` does not turn every AI-related component into a fake:
 
-**I set the var but got "GITHUB_TOKEN environment variable is required"**
+- `agentic-v2-eval` can run deterministic rubric and metric scoring without a
+  key, but its LLM-backed evaluators still need an injected live or fake client.
+- RAG embedding selection is independent. `InMemoryEmbedder` is explicitly
+  deterministic, while provider-backed embeddings still need their service.
+- Direct provider SDK examples or integrations may have their own credential
+  gates. Confirm that a path uses the shared runtime client before assuming
+  this flag covers it.
 
-The `get_settings` function uses `@lru_cache`. The flag must be set before the first call to `get_settings()` in a process. For CLI users, this is automatic (fresh process). For long-running sessions (e.g., interactive notebooks), call:
+## Dashboard use
+
+Set the variable in the shell that starts the backend:
+
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+just dev
+```
+
+The combined development environment uses FastAPI port `8010` and Vite port
+`5173`. A placeholder response is emitted as one chunk, so this mode tests
+event delivery but not gradual token streaming.
+
+## Disable it
+
+Start a new process without the variable. In PowerShell:
+
+```powershell
+Remove-Item Env:AGENTIC_NO_LLM
+```
+
+In Bash:
+
+```bash
+unset AGENTIC_NO_LLM
+```
+
+Long-running Python processes cache settings and the shared model client. If a
+test or notebook deliberately changes the flag after imports, reset both:
 
 ```python
-from agentic_v2.settings import get_settings
 from agentic_v2.models.client import reset_client
+from agentic_v2.settings import get_settings
 
 get_settings.cache_clear()
 reset_client()
 ```
 
-Then set your env var and proceed.
+Normal applications should restart instead of changing mode inside a running
+process.
 
-**The placeholder isn't showing in the UI**
+## Accepted values
 
-Check your browser's Network tab or console for `/api/runs/{run_id}/stream` and `/ws/execution/{run_id}` events. The string `[AGENTIC_NO_LLM placeholder]` will appear in each node's output field in the DAG.
+The settings parser treats `1`, `true`, `yes`, and `on` as true, ignoring
+case. It treats `0`, `false`, `no`, `off`, and an empty value as false.
 
-**Can I make it fail instead of returning a placeholder?**
+## When not to use it
 
-No. The flag is for graceful no-op, not for hard errors. If you want to enforce a provider key, unset the flag and let the provider's missing-credential `ValueError` surface.
+- production or shared deployments;
+- live provider integration tests;
+- quality or correctness claims based on model content;
+- capacity or performance tests; or
+- tool-selection and structured-output tests.

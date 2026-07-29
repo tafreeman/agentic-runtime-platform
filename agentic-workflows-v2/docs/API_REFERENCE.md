@@ -1,143 +1,99 @@
-# API Reference
+# Runtime API reference
 
-This document covers:
-- Public Python exports from `agentic_v2`
-- CLI commands (`agentic`)
-- HTTP and streaming routes served by `agentic_v2.server`
+This page is a map to the package's public Python, CLI, and server interfaces.
+For field-level HTTP details, use the generated OpenAPI document or the
+repository [API contract guide](../../docs/api-contracts-runtime.md).
 
-## Python Package Exports
+## Python package
 
-Import pattern:
+Public symbols are exported from `agentic_v2`:
 
 ```python
-from agentic_v2 import <symbol>
+from agentic_v2 import DAG, DAGExecutor, ExecutionContext, step
 ```
 
-### Tools
+The main groups are:
 
-- `BaseTool`
-- `ToolResult`
-- `ToolSchema`
-- `ToolRegistry`
-- `get_registry`
+| Area | Public examples | Source |
+| --- | --- | --- |
+| Contracts | `TaskInput`, `TaskOutput`, `StepResult`, `WorkflowResult` | `agentic_v2/contracts/` |
+| Engine | `StepDefinition`, `DAG`, `Pipeline`, `WorkflowExecutor` | `agentic_v2/engine/` |
+| Agents | `BaseAgent`, `CoderAgent`, `ReviewerAgent`, `OrchestratorAgent` | `agentic_v2/agents/` |
+| Models | `ModelRouter`, `SmartModelRouter`, `ModelTier` | `agentic_v2/models/` |
+| Tools | `BaseTool`, `ToolRegistry`, `ToolResult` | `agentic_v2/tools/` |
 
-### Contracts
+`agentic_v2.__all__` is the exact top-level export list. Import a submodule
+directly when an implementation is intentionally not part of that public
+surface.
 
-- `MessageType`, `StepStatus`, `AgentMessage`, `StepResult`, `WorkflowResult`
-- `TaskInput`, `TaskOutput`
-- `CodeGenerationInput`, `CodeGenerationOutput`
-- `CodeReviewInput`, `CodeReviewOutput`, `CodeIssue`
-- `TestGenerationInput`, `TestGenerationOutput`, `TestCase`
-- `Severity`, `IssueCategory`, `TestType`
+## CLI
 
-### Engine and Execution
+Show the current command tree:
 
-- `ExecutionContext`, `ServiceContainer`, `EventType`
-- `StepDefinition`, `StepExecutor`, `step`, `run_step`
-- `Pipeline`, `PipelineBuilder`, `PipelineExecutor`, `run_pipeline`
-- `DAG`, `DAGExecutor`
-- `WorkflowExecutor`, `execute`, `run`
-- `ExpressionEvaluator`
-- `StepState`, `StepStateManager`
-
-### Models and Routing
-
-- `ModelTier`, `FallbackChain`, `ModelRouter`, `SmartModelRouter`
-- `ModelStats`, `CircuitState`
-- `LLMClientWrapper`, `TokenBudget`
-- `get_router`, `get_smart_router`, `get_client`
-
-### Agents
-
-- `BaseAgent`, `AgentConfig`, `AgentState`, `AgentEvent`
-- `Capability`, `CapabilityType`, mixins, helpers
-- `CoderAgent`, `ReviewerAgent`, `OrchestratorAgent`
-- `OrchestratorInput`, `OrchestratorOutput`, `SubTask`
-
-## CLI Reference
-
-Entry point: `agentic`
-
-### `agentic run`
-
-Run a workflow by name or YAML path.
-
-```bash
-agentic run code_review --input input.json --output output.json
+```powershell
+agentic --help
+agentic <command> --help
 ```
 
-### `agentic validate`
+| Command | Purpose |
+| --- | --- |
+| `run` | Run one workflow |
+| `compare` | Run a workflow through multiple adapters |
+| `orchestrate` | Report the status of dynamic orchestration support |
+| `resume` | Resume a checkpointed run |
+| `list` | List workflows, agents, or tools |
+| `validate` | Validate and compile a workflow |
+| `serve` | Start the FastAPI server |
+| `version` | Print the package version |
+| `rag` | Use the experimental process-local RAG CLI |
+| `devex` | Run development diagnostics |
 
-Validate workflow definition and graph compilation.
+Example:
 
-```bash
-agentic validate code_review --verbose
+```powershell
+agentic run code_review --input .\input.json --output .\result.json
 ```
 
-### `agentic list workflows|agents|tools`
+The input file is JSON. The default adapter is `langchain`; pass
+`--adapter native` when you need the native engine.
 
-List available workflows, tier patterns, or tools.
+See the repository [CLI reference](../../docs/cli-reference.md) for arguments,
+exit behavior, and current RAG limitations.
 
-### `agentic serve`
+## HTTP and streams
 
-Run FastAPI dashboard server.
+Start the server:
 
-```bash
-agentic serve --port 8000 --dev
+```powershell
+agentic serve --host 127.0.0.1 --port 8000
 ```
 
-### `agentic version`
+Then open:
 
-Print package version.
+- `/docs` for Swagger UI;
+- [OpenAPI JSON](http://localhost:8000/openapi.json) for the generated HTTP
+  schema;
+- `/api/health` for process health;
+- `/api/health/ready` for readiness.
 
-## HTTP API
+Workflow execution begins with `POST /api/run`. The accepted response contains
+a run ID; completed results are retrieved from the run routes.
 
-Base prefix: `/api`.
+Live execution uses:
 
-### Health
+```text
+GET /api/runs/{run_id}/stream
+WS  /ws/execution/{run_id}
+```
 
-- `GET /api/health`
+Chat uses `POST /api/chat` and its own event union.
 
-### Agents
+## Authentication
 
-- `GET /api/agents`
+`AGENTIC_API_KEY` enables API-key checks. Protected HTTP routes accept a
+Bearer token or `X-API-Key`. WebSocket clients must send credentials in
+headers; query-string tokens are rejected.
 
-### Workflows
-
-- `GET /api/workflows`
-- `GET /api/workflows/{name}/dag`
-- `GET /api/workflows/{name}/capabilities`
-- `GET /api/workflows/{workflow_name}/preview-dataset-inputs`
-
-### Workflow Editor
-
-- `GET /api/workflows/{name}/editor`
-- `PUT /api/workflows/{name}`
-- `POST /api/workflows/validate`
-
-The editor write and validate endpoints accept `WorkflowEditorRequest` payloads. Send either a parsed `document` mapping or YAML text in `yaml_text` (the legacy `source` field is still accepted for compatibility). Save responses return the normalized `name`, `path`, `yaml_text`, `document`, and `step_count`.
-
-### Runs
-
-- `POST /api/run`
-- `GET /api/runs`
-- `GET /api/runs/summary`
-- `GET /api/runs/{filename}`
-- `GET /api/runs/{run_id}/stream` (SSE)
-
-### Evaluation
-
-- `GET /api/eval/datasets`
-
-## Streaming
-
-- WebSocket endpoint: `WS /ws/execution/{run_id}`
-- SSE endpoint: `GET /api/runs/{run_id}/stream`
-
-## Auth and Security Notes
-
-- API key auth is opt-in with `AGENTIC_API_KEY`.
-- Protected `/api/*` routes accept either `Authorization: Bearer <key>` or `X-API-Key: <key>`.
-- WebSocket clients must send the API key in headers; query-string tokens are no longer the documented transport.
-- CORS allowlist is configurable with `AGENTIC_CORS_ORIGINS`.
-- See `../SECURITY.md` for vulnerability reporting policy.
+Health endpoints remain public. Configure CORS, trusted proxies, rate limits,
+and storage for the deployment environment; see
+[security hardening](../../docs/operations/security-hardening.md).

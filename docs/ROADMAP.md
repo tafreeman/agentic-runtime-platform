@@ -1,8 +1,6 @@
 # Roadmap
 
-> **Audience:** Contributors, reviewers, and stakeholders asking "what shipped, what's next, and why is Epic 4 missing?"
-> **Outcome:** After reading, you can answer "is this in scope this quarter?" without asking a human.
-> **Last verified:** 2026-07-05
+> **Last verified against the repository:** 2026-07-28
 
 This is the in-repo backlog. Day-to-day sprint tracking lives in issues; this file captures the load-bearing multi-week arcs. If you are about to propose a new initiative, add a stub under **Proposed** and open a PR for review — a roadmap entry without a PR is aspiration.
 
@@ -38,7 +36,9 @@ Epic 8 focused on closing the gaps for regulated production environments.
 - **E8-1**: Opt-in OIDC JWT authentication (`auth_oidc.py`), enabled by `AGENTIC_OIDC_ENABLED=1` (`agentic_oidc_enabled` defaults to `False`); the legacy `AGENTIC_API_KEY` remains the default auth path (ADR-021).
 - **E8-2**: Tenant-scoped isolation for runs and datasets (`tenant.py`); OIDC tenant/org claims are authoritative when OIDC is enabled, while `X-Tenant-ID` is a compatibility header — not a hard boundary — used when OIDC is inactive (ADR-022). See [Known Limitations §4.5](KNOWN_LIMITATIONS.md#45-x-tenant-id-is-client-supplied-and-spoofable-in-the-default-configuration).
 - **E8-3**: Append-only, tamper-evident audit logging for all workflow executions and config changes (`audit_log.py`).
-- **E8-4**: Supply-chain provenance with hash manifest verification for local ONNX model weights (`weight_integrity.py`).
+- **E8-4**: Added hash-manifest verification for local ONNX model weights
+  (`weight_integrity.py`). The verifier is not yet called by every local model
+  load path; see [Supply-chain security](SUPPLY_CHAIN.md).
 - **E8-5**: Security posture consolidation and gap report captured in the security hardening and supply-chain documentation.
 
 ---
@@ -50,7 +50,7 @@ Sprint 1 ran against the post-v0.3.0 two-sprint engineering plan (T1/T2/T3 item 
 | Item | ID | Shipped |
 |------|----|---------|
 | Wire-format type generation extended to four additional shapes (`DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, `RunsSummaryResponse`), bringing drift-gate coverage to six shapes total — see [KNOWN_LIMITATIONS §1.1](KNOWN_LIMITATIONS.md) | T1-1 | 2026-05-14 (Sprint 1, see CHANGELOG) |
-| Rate limiting + 401 brute-force throttle added to all endpoints | T1-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
+| Per-IP API rate limiting and failed-authentication throttling, with documented public-path exemptions | T1-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | DAG executor top-level timeout watchdog | T2-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | Global pytest timeout = 30 s + slow-test audit (`@pytest.mark.slow`) | T3-4 | 2026-05-14 (Sprint 1, see CHANGELOG) |
 | F401 baseline cleared; ruff `F401` rule re-enabled and blocking | T3-3 | 2026-05-14 (Sprint 1, see CHANGELOG) |
@@ -117,11 +117,15 @@ June's work landed as a run of accepted ADRs rather than a named epic; the [ADR 
 |------|--------|------|
 | Safe AST expression interpreter replaces `eval()` in the engine condition evaluator | [ADR-024](adr/ADR-024-expression-evaluator-ast-sandbox.md) | 2026-06-13 |
 | Scoring/judge domain extracted into `agentic_v2.scoring` (breaks the server "god package"); import-time project-root resolution fix in the eval-config loader | [ADR-032](adr/ADR-032-extract-scoring-package.md), [ADR-033](adr/ADR-033-eval-config-project-root-resolution.md) | 2026-06-17 |
-| RAG pipeline architecture (`agentic_v2/rag/`, LanceDB + hybrid search) | [ADR-035](adr/ADR-035-rag-pipeline-architecture.md) | 2026-06-17 |
+| RAG modules for ingestion, retrieval, context assembly, and optional LanceDB storage. The current CLI still uses a process-local hash index. | [ADR-035](adr/ADR-035-rag-pipeline-architecture.md) | 2026-06-17 |
 | Model discovery overhaul: official `ollama` SDK backend, live Ollama discovery, LM Studio + ONNX local discovery, keyed cloud-provider discovery, and a curated single-source model registry with probe-time drift detection | [ADR-036](adr/ADR-036-ollama-sdk-backend.md) – [ADR-040](adr/ADR-040-curated-model-registry.md) | 2026-06-21 → 2026-06-25 |
 | Bounded human-approval gate timeout — a hung `ApprovalProvider` fails closed (DENIED) within a configurable bound (default 30 min) | [ADR-041](adr/ADR-041-approval-gate-timeout.md) | 2026-06-29 |
 
-**In flight:** [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) (Proposed, 2026-07-03) — adopt `agentic-evalkit` as the platform's evaluation framework via a sliced migration, superseding in-tree `agentic-v2-eval`. Slice B (the additive `evalkit_bridge` module) has landed; it is not yet wired into `step_scoring.py`.
+**In flight:** [ADR-042](adr/ADR-042-agentic-evalkit-adoption.md) remains
+Proposed. `agentic-evalkit>=0.1.1,<0.2.0` is available through the runtime's
+optional `eval` extra, and the additive `evalkit_bridge` module has landed.
+`step_scoring.py` still imports the in-tree `agentic_v2_eval` package, so the
+cutover and later package removal have not happened.
 
 ---
 

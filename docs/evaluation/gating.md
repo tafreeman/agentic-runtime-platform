@@ -1,364 +1,182 @@
 ---
-title: Production gating
-description: Thresholds, hard gates, floor violations, CI integration, scoring profiles, and the GET /api/runs/{filename}/evaluation endpoint.
+title: Runtime evaluation gates
+description: Understand runtime scores, criterion floors, hard gates, and pass thresholds.
 tags:
   - evaluation
 ---
 
-# Production gating
+# Runtime evaluation gates
 
-Production gating is the policy layer that translates a collection of criterion scores into a single pass/fail verdict. When the gate fails, the specific failing dimension is surfaced so the run can be quarantined rather than silently downgraded.
+Runtime evaluation turns a completed workflow result into a score, grade, and
+pass/fail decision. It is separate from the `agentic-v2-eval` CLI, which scores
+numeric JSON values with a package rubric.
 
-The scoring pipeline lives in `agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py` and is invoked after every workflow run that has a dataset sample associated with it.
+The implementation is in
+`agentic-workflows-v2/agentic_v2/scoring/evaluation_scoring.py`.
 
----
+## When evaluation runs
 
-## Three-stage scoring pipeline
+The server can evaluate:
 
-```
-Stage 1: Criterion Scoring
-    For each criterion in the resolved rubric:
-        raw_score = _compute_criterion_score(criterion, result, expected_text)
-        normalized_score = normalize_score(raw_score / 100.0, formula_id)
-        adjusted_score = adjust_for_sample_size(normalized_score, n=len(steps))
-        check criterion floor violation
+- a workflow run requested with dataset-backed evaluation settings; or
+- a saved run through `POST /api/runs/{filename}/evaluate`.
 
-Stage 2: Advisory Scores + Optional LLM Judge
-    advisory_similarity = _advisory_similarity_score(expected, generated, objective)
-    advisory_efficiency = _advisory_efficiency_score(result, normalized_scores)
-    advisory = similarity * 0.67 + efficiency * 0.33
+Read a saved result with:
 
-    if judge is not None:
-        judge_result = judge.evaluate(candidate_output, expected_output, criteria)
-        judge_score = judge_result.normalized_score
-
-Stage 3: Hybrid Score Composition + Grading
-    hybrid_score = _compose_hybrid_score(objective, advisory, judge_score, weights)
-    weighted_score = hybrid_score * 100.0
-    grade = _grade(weighted_score)
-    enforce floor violations → cap grade if needed
-    enforce hard gates → override grade to F if failed
-    passed = (weighted_score >= threshold) AND no_floor_violations AND all_hard_gates
-```
-
----
-
-## Hard gates
-
-Hard gates are binary pass/fail checks that must all succeed before a run can receive a passing grade. They are evaluated in `compute_hard_gates()`:
-
-| Gate | Passes When |
-|------|------------|
-| `required_outputs_present` | All non-optional workflow outputs have non-null values |
-| `overall_status_success` | `result.overall_status == StepStatus.SUCCESS` |
-| `no_critical_step_failures` | No step in `result.steps` has `status == StepStatus.FAILED` |
-| `release_build_verified` | Any step whose name starts with `build_verify_release` or `release_build_verify` either succeeded or has `ready_for_release=True` in its output |
-| `schema_contract_valid` | The evaluation payload conforms to the expected schema (checked by `validate_evaluation_payload_schema`) |
-| `dataset_workflow_compatible` | The dataset sample provided the required inputs for the workflow |
-
-If **any** hard gate fails and `enforce_hard_gates=True` (the production default), the run is assigned grade `F` regardless of the weighted score. Hard gate failures are listed in `payload["hard_gate_failures"]`.
-
-**Note:** `HardGateResult.all_passed` is the conjunction of all six gates. Individual gate values are available in `payload["hard_gates"]`.
-
-### `required_outputs_present` gate
-
-Required outputs are those listed in the workflow's `outputs` section that do not have `optional: true`. The gate fails if:
-- The output name appears in `result.metadata["unresolved_required_outputs"]`, or
-- The output value is `None` in `result.final_output`.
-
-### `release_build_verified` gate
-
-This gate only applies if the run includes a step named `build_verify_release_*` or `release_build_verify_*`. If no such step exists, the gate automatically passes. If the step exists but has `status=FAILED`, the gate fails. If the step has `ready_for_release` in its output dict that evaluates as falsy, the gate also fails.
-
----
-
-## Criterion floor violations
-
-Floor violations are softer than hard gates — they don't automatically fail a run, but they cap the grade.
-
-A floor violation occurs when a criterion's normalized score falls below its `critical_floor` value (defined per-criterion in the workflow YAML). Two backstop floors are also applied automatically even when the workflow YAML doesn't declare explicit floors:
-
-| Criterion Key | Implicit Floor |
-|---------------|----------------|
-| `correctness` or `correctness_rubric` | 0.70 |
-| `safety_validation`, `validation`, `safety`, or `code_quality` | 0.80 |
-
-These backstops prevent a high aggregate score from masking a serious correctness or safety miss.
-
-**Grade capping rule:** If any floor violation is present AND the computed grade would be A, B, or C, the grade is capped at D and `grade_capped=True` is set in the payload. The `passed` flag is also forced to `False` when floor violations are present.
-
-Floor violations are surfaced in `payload["floor_violations"]`:
-
-```json
-[
-  {
-    "criterion": "correctness",
-    "floor": 0.70,
-    "normalized_score": 0.62
-  }
-]
-```
-
----
-
-## Scoring profiles (A–E)
-
-Scoring profiles bind a set of criterion weights to a workflow family. The profile is selected via the `scoring_profile` field in the workflow YAML's `evaluation` section:
-
-```yaml
-evaluation:
-  scoring_profile: "A"
-  rubric_id: "swe_style_v1"
-```
-
-| Profile | Description | Criteria Weights | Extra Gates |
-|---------|-------------|-----------------|-------------|
-| A | Code repair / SWE-style | `objective_tests: 0.60`, `code_quality: 0.20`, `efficiency: 0.10`, `documentation: 0.10` | `fail_to_pass` |
-| B *(default)* | DAG generation / review | `correctness_rubric: 0.35`, `code_quality: 0.30`, `efficiency: 0.20`, `documentation: 0.15` | `required_outputs_parseable` |
-| C | RAG workflows | `faithfulness: 0.35`, `relevance: 0.30`, `citation_quality: 0.20`, `coherence: 0.15` | `answer_grounded` |
-| D | Agentic tool-use / routing | `tool_selection_accuracy: 0.25`, `task_completion: 0.30`, `efficiency: 0.25`, `coherence: 0.20` | `tool_call_schema_valid` |
-| E | Deep research pipelines | `coverage: 0.25`, `source_quality: 0.20`, `agreement: 0.20`, `verification: 0.20`, `recency: 0.15` | `all_dimensions_high`, `no_critical_contradictions`, `sources_floor` |
-
-**Profile E research gating thresholds:**
-- `coverage_score >= 0.80` — the research must cover at least 80% of the expected scope
-- `source_quality_score >= 0.80` — cited sources must meet quality standards
-
-These match the research standards used by this repository: Tier A sources are required, and critical architectural decisions should cite at least two independent Tier A sources.
-
-**Weight resolution priority (lowest to highest):**
-
-1. Global defaults from `evaluation.yaml` (or `_DEFAULT_WEIGHTS`)
-2. Scoring profile weights (if `scoring_profile` declared)
-3. Per-criterion `weight` fields from the workflow's evaluation criteria
-4. Explicit `weights` dict from the workflow evaluation section
-
-When a workflow declares explicit `criteria`, only those criteria names are included in the weight map; undeclared criteria from inherited weights are dropped to prevent scoring the wrong rubric silently.
-
----
-
-## Rubric weight validation
-
-`_validate_rubric_weights()` enforces three constraints before any evaluation:
-
-1. The weights dict must be non-empty.
-2. All weight values must be positive (> 0).
-3. The total must sum to 1.0 ± 0.01.
-
-If the workflow declares explicit criteria, any weight key not matching a declared criterion name raises `ValueError` with the list of unknown criteria and the known criteria names.
-
----
-
-## Score layers
-
-The evaluation payload includes a `score_layers` dict for transparency:
-
-```json
-{
-  "score_layers": {
-    "layer1_objective": 82.5,
-    "layer2_judge": 78.0,
-    "layer3_similarity": 75.0,
-    "layer3_efficiency": 91.0,
-    "layer3_advisory": 80.3
-  }
-}
-```
-
-| Layer | Description |
-|-------|-------------|
-| `layer1_objective` | Weighted combination of criterion scores from execution signals |
-| `layer2_judge` | LLM judge score (null if judge not invoked) |
-| `layer3_similarity` | Text overlap between expected and generated output |
-| `layer3_efficiency` | Execution efficiency score (latency, step count) |
-| `layer3_advisory` | `similarity * 0.67 + efficiency * 0.33` |
-
-The hybrid composition weights are reported in `payload["hybrid_weights"]`.
-
----
-
-## Grade mapping
-
-```
-weighted_score in [0, 100] → letter grade
-```
-
-| Score Range | Grade | Notes |
-|-------------|-------|-------|
-| ≥ 90 | A | Excellent |
-| ≥ 80 | B | Good |
-| ≥ 70 | C | Acceptable |
-| ≥ 60 | D | Below expectations |
-| < 60 | F | Failing |
-
-Grades can be overridden downward by:
-1. Floor violations: cap at D (if grade would otherwise be A/B/C)
-2. Hard gate failures: force to F
-
-The `passed` boolean is separate from the grade. A run passes when:
-- `weighted_score >= pass_threshold` (default 70.0, configurable in `evaluation.yaml`)
-- No floor violations
-- All hard gates pass (when `enforce_hard_gates=True`)
-
----
-
-## `GET /api/runs/{filename}/evaluation` endpoint
-
-The evaluation result for a completed run is available at:
-
-```
+```text
 GET /api/runs/{filename}/evaluation
 ```
 
-Where `filename` is the run's log file name (e.g., `run_20260501_143022_abc123.json`).
+The evaluation is stored in the run record under `extra.evaluation`.
 
-**Response structure:**
+## Decision order
 
-```json
-{
-  "filename": "run_20260501_143022_abc123.json",
-  "evaluation_requested": true,
-  "evaluation": {
-    "enabled": true,
-    "rubric": "workflow_default",
-    "rubric_id": "workflow_default",
-    "rubric_version": "1.0",
-    "criteria": [
-      {
-        "criterion": "correctness",
-        "raw_score": 85.0,
-        "normalized_score": 0.85,
-        "adjusted_normalized_score": 0.83,
-        "score": 85.0,
-        "weight": 0.50,
-        "formula_id": "zero_one",
-        "critical_floor": null,
-        "floor_passed": true,
-        "max_score": 100.0,
-        "judge_raw_score": 4.0,
-        "judge_normalized_score": 0.75,
-        "judge_evidence": "The output correctly implements..."
-      }
-    ],
-    "overall_score": 82.5,
-    "weighted_score": 79.2,
-    "objective_weighted_score": 78.0,
-    "grade": "C",
-    "passed": true,
-    "pass_threshold": 70.0,
-    "step_scores": [
-      {"step_name": "analyze", "status": "SUCCESS", "score": 100.0},
-      {"step_name": "generate", "status": "SUCCESS", "score": 100.0}
-    ],
-    "dataset": {
-      "source": "local",
-      "id": "my_dataset",
-      "sample_index": 0
-    },
-    "score_layers": {
-      "layer1_objective": 78.0,
-      "layer2_judge": 75.0,
-      "layer3_similarity": 72.0,
-      "layer3_efficiency": 88.0,
-      "layer3_advisory": 77.0
-    },
-    "hybrid_weights": {
-      "objective": 0.60,
-      "judge": 0.25,
-      "advisory": 0.15
-    },
-    "judge": {
-      "criteria": [...],
-      "normalized_score": 0.75,
-      "score": 75.0,
-      "model": "gh:openai/gpt-4o",
-      "model_version": "gpt-4o-2024-11-20",
-      "prompt_version": "judge-v1@1a2b3c4d",
-      "temperature": 0.1,
-      "pairwise_consistent": null,
-      "inconsistency_reasons": []
-    },
-    "hard_gates": {
-      "required_outputs_present": true,
-      "overall_status_success": true,
-      "no_critical_step_failures": true,
-      "release_build_verified": true,
-      "schema_contract_valid": true,
-      "dataset_workflow_compatible": true
-    },
-    "hard_gate_failures": [],
-    "floor_violations": [],
-    "grade_capped": false,
-    "generated_at": "2026-05-01T14:32:45.123456+00:00"
-  }
-}
+The runtime:
+
+1. resolves the rubric ID, weights, criteria, and scoring profile;
+2. calculates objective criterion scores from the workflow result and expected
+   data;
+3. calculates advisory similarity and efficiency signals;
+4. optionally calls the runtime `LLMJudge`;
+5. combines the available layers into a 0–100 weighted score;
+6. assigns a letter grade;
+7. applies criterion floors; and
+8. applies hard gates and the pass threshold.
+
+The default pass threshold is `70.0`.
+
+## Hard gates
+
+| Gate | Pass condition |
+| --- | --- |
+| `required_outputs_present` | Every required workflow output resolves to a usable value |
+| `overall_status_success` | The workflow result status is `SUCCESS` |
+| `no_critical_step_failures` | No step result has status `FAILED` |
+| `release_build_verified` | Any recognized release-build step succeeded and did not report a false readiness value |
+| `schema_contract_valid` | The evaluation payload has the required fields and types |
+| `dataset_workflow_compatible` | The selected sample provides inputs compatible with the workflow |
+
+When `enforce_hard_gates=True`, any failed hard gate:
+
+- sets the grade to `F`; and
+- makes `passed` false regardless of the weighted score.
+
+The release-build gate passes when a workflow has no recognized release-build
+step.
+
+## Criterion floors
+
+A workflow criterion may declare a `critical_floor`:
+
+```yaml
+evaluation:
+  rubric_id: code_review_v1
+  criteria:
+    - name: correctness_rubric
+      definition: Required behavior is correct.
+      weight: 0.50
+      critical_floor: 0.70
+      formula_id: zero_one
 ```
 
-**Status codes:**
-- `200` — evaluation found and returned
-- `404` — run file not found
-- `200` with `evaluation: null` — run found but no evaluation was performed (evaluation not requested or no dataset sample)
+A score below a required floor:
 
----
+- appears in `floor_violations`;
+- prevents the evaluation from passing; and
+- caps an otherwise passing letter grade at `D`.
 
-## CI integration
+Floors prevent a strong aggregate from hiding failure in one required
+dimension.
 
-The evaluation pipeline integrates with CI via the `eval-package-ci.yml` workflow:
+## Rubric resolution
 
-- mypy runs as a blocking step — type-check failures block merge
-- The eval package is tested independently of the main runtime
-- Coverage gate: 80% (`fail_under = 80` in `agentic-v2-eval/pyproject.toml`)
+Weights are resolved from lowest to highest priority:
 
-To run the full eval-package test suite with coverage:
+1. `evaluation.scoring.weights` in the runtime evaluation configuration;
+2. the workflow's named scoring profile;
+3. `weight` on each inline workflow criterion; and
+4. the workflow's explicit `evaluation.weights` mapping.
 
-```bash
-cd agentic-v2-eval
-pip install -e ".[dev]"
-python -m pytest tests/ --cov=agentic_v2_eval --cov-report=term-missing -v
-```
+If a workflow declares criteria, inherited weights for undeclared criteria are
+removed. Resolved weights must be positive and sum to approximately `1.0`.
 
-To check type safety:
+The built-in fallback weights are:
 
-```bash
-mypy --strict src/agentic_v2_eval/
-```
+| Criterion | Weight |
+| --- | ---: |
+| `correctness` | 0.50 |
+| `code_quality` | 0.25 |
+| `efficiency` | 0.15 |
+| `documentation` | 0.10 |
 
----
+Do not compare results from different rubric versions, weight sets, or
+efficiency SLO bands as though they used the same scale.
 
-## Evaluation schema contract
+## Optional judge
 
-`validate_evaluation_payload_schema(payload)` validates that an evaluation payload conforms to the required structure. Required top-level fields:
+The judge is optional by default. If it is absent or fails, the payload records
+`judge_skipped`, `judge_skip_reason`, and `judge_skip_code`.
 
-| Field | Type | Notes |
-|-------|------|-------|
-| `rubric_id` | `str` | Rubric identifier |
-| `rubric_version` | `str` | Rubric version |
-| `criteria` | `list` | Per-criterion score entries |
-| `overall_score` | `float` | Unweighted mean |
-| `weighted_score` | `float` | Hybrid composite score (0–100) |
-| `grade` | `str` | A/B/C/D/F |
-| `passed` | `bool` | Pass/fail verdict |
-| `pass_threshold` | `float` | Configured pass threshold |
-| `step_scores` | `list` | Per-step status and scores |
-
-Each criterion entry must have: `criterion`, `raw_score`, `normalized_score`, `weight`, `formula_id`, `score`.
-
-Schema validation failure sets `hard_gates.schema_contract_valid = False`, which triggers a hard gate failure.
-
----
-
-## Configuring the pass threshold
-
-The default pass threshold is 70.0. It can be overridden in the `evaluation.yaml` configuration file:
+Set this configuration when evaluation must fail rather than continue without
+a judge:
 
 ```yaml
 evaluation:
   scoring:
-    pass_threshold: 75.0
-    weights:
-      correctness: 0.50
-      code_quality: 0.25
-      efficiency: 0.15
-      documentation: 0.10
+    judge_required: true
 ```
 
-The threshold is read at call time via `pass_threshold()` — it is not cached, so changes take effect on the next evaluation call.
+With `judge_required: true`, an unavailable or failed judge raises
+`JudgeRequiredError`. The workflow run is still recorded, and the server maps
+the evaluation policy failure to HTTP 422.
+
+See [model-backed judges](judge.md) for calibration and interpretation.
+
+## Pass logic
+
+With hard-gate enforcement enabled:
+
+```text
+passed =
+  weighted_score >= pass_threshold
+  and no criterion floor violations
+  and all hard gates passed
+```
+
+Disabling hard-gate enforcement removes only the final hard-gate condition.
+Criterion floors and the score threshold still apply.
+
+## Result fields
+
+The evaluation payload includes:
+
+- rubric ID and version;
+- criterion scores and weights;
+- objective, advisory, and judge layer details;
+- weighted score and overall score;
+- grade and whether it was capped;
+- pass threshold and final `passed` value;
+- hard-gate results and failures;
+- criterion floor violations; and
+- judge metadata or the reason the judge was skipped.
+
+Use the structured fields when building automation. Do not parse display text.
+
+## Release use
+
+Before using an evaluation as a release gate:
+
+1. Fix the workflow, dataset, rubric, provider, judge prompt, and model
+   versions.
+2. Validate the threshold against representative accepted and rejected cases.
+3. Exercise every hard-gate failure.
+4. Make judge failure policy explicit.
+5. Store the full payload, not only the final score.
+6. Require human review for high-impact decisions.
+
+For simple numeric file scoring in CI, use the evaluation package's
+`--fail-under` option instead:
+
+```powershell
+agentic-v2-eval evaluate .\results.json --fail-under 0.80
+```

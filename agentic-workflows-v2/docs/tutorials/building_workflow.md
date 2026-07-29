@@ -1,51 +1,57 @@
-## Building a Workflow
+# Build a Python workflow
 
-This tutorial demonstrates a simple workflow definition and execution using the engine primitives.
-
-1. Define step functions with the `@step` decorator:
+This example creates two deterministic steps and connects them through an
+`ExecutionContext`.
 
 ```python
 from __future__ import annotations
 
 import asyncio
 
-from agentic_v2 import DAG, DAGExecutor, ExecutionContext, step
+from agentic_v2 import DAG, DAGExecutor, ExecutionContext, StepStatus, step
 
 
 @step("load")
 async def load(ctx: ExecutionContext) -> dict:
-  # No inputs; produce an output
-  return {"text": "hello world"}
+    return {"text": "hello world"}
 
 
 @step("transform", depends_on=["load"])
 async def transform(ctx: ExecutionContext) -> dict:
-  text = await ctx.get("text")
-  return {"upper": str(text).upper()}
-```
+    text = await ctx.get("text")
+    return {"upper": str(text).upper()}
 
-2. Wire inputs/outputs through the shared context and execute as a DAG:
 
-```python
 async def main() -> None:
-  load_step = load.with_output(text="text")
-  transform_step = (
-    transform.with_input(text="text").with_output(upper="result")
-  )
+    load_step = load.with_output(text="text")
+    transform_step = (
+        transform.with_input(text="text").with_output(upper="result")
+    )
 
-  dag = DAG(name="demo").add(load_step).add(transform_step)
-  ctx = ExecutionContext(workflow_id="demo")
+    dag = DAG(name="demo").add(load_step).add(transform_step)
+    context = ExecutionContext(workflow_id="demo")
+    result = await DAGExecutor().execute(dag, ctx=context)
 
-  wf_result = await DAGExecutor().execute(dag, ctx=ctx)
-  print(wf_result.overall_status)
-  print(wf_result.final_output["result"])  # -> HELLO WORLD
+    if result.overall_status != StepStatus.SUCCESS:
+        raise RuntimeError(result.failed_steps)
+
+    print(result.final_output["result"])
 
 
 asyncio.run(main())
 ```
 
-3. Next steps:
+The important contracts are:
 
-- Use `depends_on=[...]` to express parallelism and dependencies.
-- Add `timeout` / retry policies on steps via `StepDefinition.with_timeout(...)` and `StepDefinition.with_retry(...)`.
-- For higher-level patterns (pipelines, conditional branches), see the `PipelineBuilder` APIs in `agentic_v2.engine`.
+- `depends_on=["load"]` prevents `transform` from running early.
+- `with_output(text="text")` publishes the returned `text` value.
+- `with_input(text="text")` declares which context value the next step reads.
+- `with_output(upper="result")` gives the final value a workflow-level name.
+
+Independent DAG nodes may run concurrently. If you need strict ordering,
+explicit parallel groups, or conditional branches, use `PipelineBuilder`.
+Configure timeouts and retries on `StepDefinition`; do not implement retry
+loops inside each step.
+
+For declarative YAML workflows, use the repository
+[workflow authoring guide](../../../docs/WORKFLOW_AUTHORING.md).

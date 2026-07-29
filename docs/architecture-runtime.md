@@ -2,6 +2,7 @@
 
 > **Audience:** Engineers onboarding to the platform, architects doing design reviews, and senior contributors planning major changes.
 > **Scope:** The `agentic-workflows-v2` Python package and its direct dependencies. The evaluation framework (`agentic-v2-eval`) and React UI are covered in separate documents.
+> **Last verified:** 2026-07-28
 
 **Package:** `agentic-workflows-v2` | **Python:** 3.11+ | **Build:** hatchling
 
@@ -16,7 +17,7 @@ The system has four structural layers:
 1. **Server layer** — FastAPI application with CORS, rate limiting, API-key auth, and prompt-sanitization middleware. Exposes REST endpoints and a WebSocket pub/sub hub.
 2. **Adapter registry** — A singleton that maps names (`"langchain"`, `"native"`) to `ExecutionEngine` protocol implementations, making engines runtime-swappable without code changes.
 3. **Execution engines** — Two fully operational engines: a LangGraph state-machine compiler (`langchain` adapter) and a native Kahn's-algorithm DAG executor (`native` adapter).
-4. **Agent and tool layer** — Typed `BaseAgent[TInput, TOutput]` subclasses, a 12-module built-in tool registry, and a full RAG pipeline for context augmentation.
+4. **Agent and tool layer** — Typed `BaseAgent[TInput, TOutput]` subclasses, built-in tools, model routing, and RAG components.
 
 ---
 
@@ -27,7 +28,7 @@ The system has four structural layers:
 | Runtime | Python 3.11+ | Async-first via `asyncio` |
 | Web framework | FastAPI | ASGI, async route handlers |
 | Data validation | Pydantic v2 | All models use `model_dump()` / `model_validate()` |
-| CLI | Typer | 8 top-level commands plus `rag` and `devex` sub-groups |
+| CLI | Typer | Workflow, server, RAG, and developer commands |
 | HTTP client | httpx / aiohttp | Async outbound requests from tools |
 | Templating | Jinja2 | Prompt template rendering |
 | LLM orchestration | LangChain / LangGraph | Optional; guarded by `try/except ImportError` |
@@ -38,7 +39,7 @@ The system has four structural layers:
 | Graph UI | @xyflow/react 12 | DAG visualization canvas |
 | Data fetching | TanStack Query | Frontend cache and server state |
 | Styling | Tailwind CSS | Utility-first |
-| Pre-commit | black, isort, ruff, mypy, detect-secrets | Enforced on every commit |
+| Pre-commit | Black, Ruff, docformatter, mypy, detect-secrets | Configured repository hooks |
 
 ---
 
@@ -55,16 +56,16 @@ agentic-workflows-v2/
 │   ├── contracts/           # Pydantic I/O models, events, messages, sanitization
 │   ├── core/                # Protocols, memory, errors
 │   ├── models/              # LLM client wrappers, SmartModelRouter, Redis CB state
-│   ├── rag/                 # Full RAG pipeline (load, chunk, embed, retrieve, assemble)
+│   ├── rag/                 # Load, chunk, embed, retrieve, rerank, and assemble
 │   ├── scoring/             # Scoring/judge domain (extracted from server/ per ADR-032)
 │   ├── governance/          # Approval gate + escalation sink
 │   ├── prompts/             # 7 agent persona definitions (.md)
-│   ├── tools/builtin/       # 12 built-in tool modules
+│   ├── tools/builtin/       # Built-in runtime tools
 │   ├── workflows/           # YAML loader, run logger, definitions/ (8 YAML workflows)
 │   ├── middleware/          # Sanitization detectors
 │   ├── integrations/        # OTEL tracing, metrics, MCP adapters
 │   └── cli/                 # Typer CLI entry points
-├── tests/                   # 150+ test files (pytest-asyncio auto mode)
+├── tests/                   # Runtime and server tests
 └── ui/                      # React 19 dashboard (separate build)
 ```
 
@@ -404,7 +405,7 @@ Embedding (with hash-based cache)
 | Stage | Detail |
 |-------|--------|
 | **Document loading** | Plain text (`.txt`) and Markdown (`.md`, `.markdown`) inputs |
-| **Recursive chunking** | Splits documents by semantic boundaries (headings, paragraphs, sentences) before falling back to token-count limits |
+| **Recursive chunking** | Splits on configured text separators before falling back to character counts; `chunk_size` and `chunk_overlap` are character counts in the current implementation |
 | **Content-hash deduplication** | Each chunk is hashed (SHA-256 of normalised content); duplicate chunks are skipped during embedding |
 | **Embedding** | Vectors are computed lazily and cached by content hash, avoiding re-embedding unchanged content across ingestion runs |
 | **Vector index** | `InMemoryVectorStore` (pure-Python cosine similarity) by default; `LanceDBVectorStore` for a persistent on-disk index (`[rag]` extra) |
@@ -414,6 +415,11 @@ Embedding (with hash-based cache)
 | **OTEL tracing** | Each pipeline stage emits OpenTelemetry spans |
 
 See [`adr/RAG-pipeline-blueprint.md`](adr/RAG-pipeline-blueprint.md) and [ADR-035](adr/ADR-035-rag-pipeline-architecture.md).
+
+The current `agentic rag` commands construct an in-memory hash embedder and
+vector store directly. Separate CLI invocations do not share an index, and the
+CLI does not use the provider-backed factory described above. See
+[Known limitations](KNOWN_LIMITATIONS.md).
 
 ---
 
@@ -573,17 +579,20 @@ Redis is an optional dependency (`pip install -e ".[redis]"`). The server starts
 
 ## 15. Wire-format codegen gate
 
-Source: `scripts/generate_ts_types.py`, `ui/scripts/generate-ts-types.mjs`
+The Pydantic contracts are the source for committed JSON Schemas and generated
+TypeScript interfaces. From `agentic-workflows-v2`:
 
-The Python `contracts/events.py` discriminated union is the **single source of truth** for the wire format. A CI job (`wire-format-drift`) regenerates `tests/schemas/events.schema.json` and `ui/src/api/events.generated.ts` and fails the PR if either diverges from the committed snapshot.
+```powershell
+python -m scripts.generate_ts_types
+npm --prefix ui run generate:types
+python scripts/generate_schemas.py
+```
 
-This gate caught three latent type mismatches at introduction:
-
-- `status: StepStatus` (enum) was wired as a plain string on the TypeScript side.
-- `input`/`output` fields on events were non-nullable in TypeScript but nullable in Python.
-- `criteria` shape on `EvaluationCompleteEvent` had drifted between Python and TypeScript.
-
-The gate also covers four HTTP response shapes (`DAGResponse`, `WorkflowInputSchemaResponse`, `WorkflowEditorStep`, `RunsSummaryResponse`), whose JSON schemas live under `tests/schemas/` and regenerate via `scripts/generate_schemas.py`. See [ADR-014](adr/ADR-014-pydantic-wire-format.md).
+The drift checks cover execution events, chat contracts, step results, DAG
+responses, workflow input and editor shapes, and run summaries. CI fails when
+generated files differ from the committed versions. See
+[Data models](data-models-runtime.md) and
+[ADR-014](adr/ADR-014-pydantic-wire-format.md).
 
 ---
 
@@ -643,7 +652,7 @@ Workflow definitions are configured in YAML under `agentic_v2/workflows/definiti
 
 **Source:** `agentic_v2/cli/`
 
-The CLI is implemented with **Typer** and provides 8 top-level commands plus two sub-command groups (`rag`, `devex`):
+The CLI is implemented with **Typer**. `rag` and `devex` are command groups:
 
 | Command | Description |
 |---------|-------------|
@@ -666,7 +675,13 @@ The `compare` command is useful for verifying that the native and LangGraph engi
 
 ### Dual execution engine
 
-The system supports two execution engines behind a shared `ExecutionEngine` protocol. CLI, server, and dashboard requests default to the LangGraph adapter for named YAML workflows during the migration window; the native engine has no optional dependencies and is the default for runtime-generated DAG/Pipeline execution or explicit `--adapter native` runs. This allows teams to migrate workflows incrementally and compare outputs using `agentic compare`. See [ADR-001](adr/ADR-001-002-003-architecture-decisions.md) and [ADR-031](adr/ADR-031-native-dag-single-engine.md).
+The system supports two execution engines behind a shared `ExecutionEngine`
+protocol. Named CLI runs default to the LangGraph adapter. The native engine
+remains the implementation for platform-specific DAG features and for explicit
+`--adapter native` runs. The single-engine proposal in ADR-031 was not adopted;
+LangGraph was retained. Use `agentic compare` for workflows that both engines
+support. See [ADR-001](adr/ADR-001-002-003-architecture-decisions.md) and
+[ADR-031](adr/ADR-031-native-dag-single-engine.md).
 
 ### Additive-only contracts
 
@@ -680,9 +695,13 @@ High-risk tool operations are denied unless explicitly enabled per workflow step
 
 The event streaming system uses in-process `asyncio.Queue` with a 500-event circular buffer, so the core streaming path has no required infrastructure dependency. Redis is an optional enhancement: when configured, it provides a durable replay store and cross-worker circuit-breaker state (§14.3–14.4); without it, in-process/SQLite fallbacks apply and run results remain durable as JSON log files.
 
-### Filesystem persistence
+### Persistence
 
-There is no database or ORM. All run results are serialised as JSON files. This keeps the deployment footprint minimal and makes run logs directly inspectable with standard tools. The trade-off is that querying run history at scale requires reading multiple files; the `GET /api/runs` endpoint applies in-memory filtering.
+Saved run results are JSON files, so they remain directly inspectable. Other
+state has separate backends: replay can use memory, SQLite, or Redis; LangGraph
+checkpoints can use SQLite or PostgreSQL; and model-router circuit state can
+use Redis. The run-list API still scans and filters JSON metadata in process,
+which is not designed for large-scale analytical queries.
 
 ### Protocol-driven architecture
 
@@ -713,10 +732,9 @@ Merged from the 2026-03-03 architecture review. Captures weaknesses and recommen
 
 - `agentic-workflows-v2/pyproject.toml` has **no `[tool.ruff]` section** of its own; the ruff rule set is inherited from the workspace root. Some documented standards are aspirational rather than tool-enforced for the main package.
 
-### Production readiness gaps
+### Current architecture gaps
 
 - The default vector store / memory implementations are in-memory; the LanceDB adapter exists but is optional.
-- No cross-package integration tests exercising `tools/` → `agentic-workflows-v2` → `agentic-v2-eval` end-to-end.
 - No adapter/tool plugin discovery — registration is import-time only (no `entry_points` or directory scan).
 - RAG prompt-injection hardening (system-prompt-level delimiter framing for retrieved documents) is a noted architectural gap.
 

@@ -1,8 +1,6 @@
 # Migrations
 
-> **Audience:** Contributors resolving build breaks after pulling `main`, and downstream consumers of this repo's packages.
-> **Outcome:** After reading, you know which imports broke, what replaces them, and whether any code change is required.
-> **Last verified:** 2026-07-05
+> **Last verified against the repository:** 2026-07-28
 
 This document tracks breaking changes since v0.3.0. One entry per migration, newest first. Every entry names what broke, how to detect the break, and the exact replacement path. If a migration is additive-only and safe, it does not belong here — note it in `CHANGELOG.md` instead.
 
@@ -20,7 +18,10 @@ Deployments that set `AGENTIC_SANITIZER_FAIL_OPEN=true` or `AGENTIC_SANITIZER_FA
 
 ### Replacement
 
-Update deployment scripts to `AGENTIC_SANITIZER_FAIL_OPEN=1` (and only for debugging — never in production). Full variable documentation: [`configuration.md`](configuration.md#agentic_sanitizer_fail_open--breaking-change).
+Update deployment scripts to `AGENTIC_SANITIZER_FAIL_OPEN=1` only when
+deliberately debugging fail-open behavior. Do not use it on an exposed
+deployment. See
+[Configuration](configuration.md#file-shell-http-and-mcp-boundaries).
 
 ---
 
@@ -42,21 +43,27 @@ The presentation system was accreting mass unrelated to the core agentic-workflo
 
 1. **Imports referencing `presentation/…`** from any tool, script, or doc in this repo will fail. There were no runtime imports from the core packages into `presentation/`, so `agentic-workflows-v2`, `agentic-v2-eval`, and `tools` are unaffected.
 
-2. **Docs that referenced deck or theme concepts.** Any doc that linked into `presentation/`, referenced `raw-themes/`, or described a deck layout family (`verge-pop`, `engineering`, `onboarding`, `handbook`, etc.) is stale with respect to the new structure. The stale-docs audit (see [`ROADMAP.md`](ROADMAP.md)) is sweeping these; if you land before it does, delete or fix as you find them.
+2. **Docs that referenced deck or theme concepts.** Any doc that links into
+   `presentation/`, references `raw-themes/`, or describes the removed deck
+   system is stale. The active documentation sweep is complete; new
+   references should fail review.
 
 3. **Tokens and components previously available under `presentation/src/tokens/`** are no longer importable from here. If you need slide tokens or layouts, pull them from the new repo.
 
 ### How to detect the break
 
-```bash
-# Returns paths if any stale reference remains
-# (this file documents the migration, so it is excluded from its own check)
-grep -rn "presentation/" --include="*.md" --include="*.py" --include="*.ts" --include="*.tsx" \
-    --exclude-dir=".git" --exclude-dir="node_modules" --exclude-dir="dist" \
-    --exclude="MIGRATIONS.md" .
+```powershell
+# Returns active paths if a stale reference remains.
+rg -n "presentation/" . `
+  -g "*.md" -g "*.py" -g "*.ts" -g "*.tsx" `
+  --glob "!docs/MIGRATIONS.md" `
+  --glob "!docs/adr/**" `
+  --glob "!**/node_modules/**" `
+  --glob "!**/dist/**"
 ```
 
-A clean result is zero matches. As of 2026-04-22 the sweep is in progress; expect isolated stragglers in `docs/` until the stale-docs audit lands.
+A clean result is zero active matches. Historical changelog or ADR references
+may remain because they record the migration.
 
 ### Replacement
 
@@ -114,10 +121,11 @@ If you need to type-narrow `input_data` inside your implementation, use `isinsta
 
 ### What changed
 
-Execution events previously were emitted as loosely structured dicts. They are now a Pydantic v2 discriminated union declared in `agentic-workflows-v2/agentic_v2/contracts/events.py`, covering:
-
-- `workflow_start`, `step_start`, `step_end`, `step_complete`, `step_error`, `workflow_end`
-- `evaluation_start`, `evaluation_complete`
+Execution events previously were emitted as loosely structured dictionaries.
+They are now a Pydantic v2 discriminated union in
+`agentic-workflows-v2/agentic_v2/contracts/events.py`. The current union
+contains workflow, step, token, error, evaluation, and approval events. Read
+the union instead of copying this list into a consumer.
 
 Both WebSocket broadcasts (`/ws/execution/{run_id}`) and SSE streams validate emitted events against this union before sending.
 
@@ -134,7 +142,17 @@ External consumers of the WebSocket or SSE stream that previously accepted loose
 ### Replacement
 
 - **Python clients:** import the union and use `model_validate` / `model_dump` on messages.
-- **TypeScript / JS clients:** use the mirrored interfaces in `ui/src/api/types.ts`. These are kept by hand — see [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md) §1.1.
+- **TypeScript / JS clients:** use the generated interfaces in
+  `ui/src/api/events.generated.ts` and the other `*.generated.ts` files.
+  Regenerate them from `agentic-workflows-v2`:
+
+  ```powershell
+  python -m scripts.generate_ts_types
+  npm --prefix ui run generate:types
+  ```
+
+  Use `python scripts/generate_schemas.py` for the broader committed JSON
+  Schema snapshots checked by `tests/test_schema_drift.py`.
 - **Evaluation-related fields:** `EvaluationCompleteEvent` now includes `passed`, `pass_threshold`, and a full `criteria` list (Epic 6 additive extension). Existing code that ignored unknown fields is fine; code that matched on a fixed shape may need updating.
 
 ---

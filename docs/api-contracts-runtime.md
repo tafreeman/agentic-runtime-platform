@@ -1,14 +1,106 @@
-# API contracts — runtime backend
+# Runtime API contracts
 
-> **Audience:** Frontend engineers, integration developers, and QA engineers who need a precise reference of every REST endpoint and WebSocket contract.
-> **Base URL (development):** `http://localhost:8010`
-> **OpenAPI spec:** `GET /openapi.json` | **Swagger UI:** `GET /docs` | **ReDoc:** `GET /redoc`
+This page explains the runtime backend routes used by the dashboard and other
+clients. In the standard development environment, the base URL is
+`http://localhost:8010`.
+
+- OpenAPI document: `GET /openapi.json`
+- Swagger UI: `GET /docs`
+- ReDoc: `GET /redoc`
 
 **Authentication:** When `AGENTIC_API_KEY` is set, protected endpoints require one of:
+
 - `Authorization: Bearer <key>` header
 - `X-API-Key: <key>` header
 
-Public endpoints that bypass auth: `/api/health`, `/docs`, `/openapi.json`, `/redoc`.
+The `/api/health` prefix, `/docs`, `/openapi.json`, and `/redoc` bypass API-key
+authentication. This includes `/api/health/ready`. If OIDC is enabled, use the
+OIDC settings described in [Configuration](configuration.md#http-authentication).
+
+## Route map
+
+The OpenAPI document is the machine-readable source of truth for request and
+response schemas. This table gives the complete route inventory.
+
+### Health and catalogs
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/health` | Check whether the process is running |
+| `GET` | `/api/health/ready` | Check whether required runtime dependencies are ready |
+| `GET` | `/api/agents` | List configured agents |
+| `GET` | `/api/personas` | List available personas |
+| `GET` | `/api/tools` | List tools that workflow steps may allow |
+| `GET` | `/api/observers` | List available observers |
+
+### Models, chat, and settings
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/models/probe` | Probe configured model providers |
+| `POST` | `/api/models/lmstudio/load` | Ask LM Studio to load a local model |
+| `POST` | `/api/chat` | Stream a model or tier-based chat response |
+| `GET`, `PUT` | `/api/settings/providers` | Read or replace saved provider settings |
+| `POST` | `/api/settings/providers/{provider_id}/probe` | Test one saved provider |
+| `GET`, `PUT` | `/api/settings/tiers` | Read or replace tier routing settings |
+| `GET`, `POST` | `/api/settings/model-packs` | List or create model packs |
+| `PUT` | `/api/settings/model-packs/{pack_id}` | Create a new version of a model pack |
+| `POST` | `/api/settings/model-packs/{pack_id}/duplicate` | Copy a model pack |
+| `POST` | `/api/settings/model-packs/{pack_id}/validate` | Validate a model pack |
+| `POST` | `/api/settings/model-packs/{pack_id}/activate` | Make a model pack active |
+| `DELETE` | `/api/settings/model-packs/active` | Clear the active model pack |
+| `PUT` | `/api/settings/model-packs/{pack_id}/bindings/{workflow_name}` | Bind a model pack to one workflow |
+| `DELETE` | `/api/settings/model-packs/bindings/{workflow_name}` | Clear a workflow-specific model-pack binding |
+| `GET` | `/api/settings/model-packs/{pack_id}/dependencies` | Find runs and bindings that use a model pack |
+| `POST` | `/api/settings/model-packs/{pack_id}/archive` | Archive an unused model pack |
+| `GET` | `/api/settings/model-packs/{pack_id}/export` | Export a model pack |
+| `POST` | `/api/settings/model-packs/import` | Import a model pack |
+
+Provider and tier settings are stored in `~/.agentic/ui-settings.json`. Secrets
+remain in environment variables; the settings API does not return secret
+values.
+
+### Model finder
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/model-finder/profile` | Inspect the detected hardware profile |
+| `GET`, `PUT`, `DELETE` | `/api/model-finder/profile-override` | Read, set, or remove a hardware override |
+| `GET` | `/api/model-finder/recommendations` | Rank local models for the current profile and filters |
+
+### Workflows and execution
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/workflows` | List discovered workflows |
+| `GET` | `/api/adapters` | List execution adapters |
+| `GET` | `/api/workflows/{name}/dag` | Return the workflow graph |
+| `GET` | `/api/workflows/{name}/capabilities` | Describe workflow features and engine compatibility |
+| `GET` | `/api/workflows/{name}/editor` | Return an editable workflow document |
+| `PUT` | `/api/workflows/{name}` | Save a workflow document |
+| `POST` | `/api/workflows/validate` | Validate an unsaved workflow document |
+| `POST` | `/api/run` | Start a workflow run |
+| `GET` | `/api/workflows/{workflow_name}/preview-dataset-inputs` | Preview how dataset samples map to workflow inputs |
+| `WS` | `/ws/execution/{run_id}` | Start and observe an interactive run |
+
+### Runs and evaluation
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/runs` | List saved runs |
+| `GET` | `/api/runs/summary` | Return aggregate run counts |
+| `GET` | `/api/runs/{filename}` | Read one saved run |
+| `POST` | `/api/runs/{filename}/evaluate` | Evaluate one saved run |
+| `GET` | `/api/runs/{filename}/evaluation` | Read a saved evaluation |
+| `GET` | `/api/runs/{run_id}/stream` | Stream saved run events over SSE |
+| `POST` | `/api/eval/compare` | Compare evaluation results |
+| `GET` | `/api/eval/datasets` | List evaluation datasets |
+| `GET` | `/api/eval/datasets/{source}/{dataset_id:path}/samples` | List dataset samples |
+| `GET` | `/api/eval/datasets/{source}/{dataset_id:path}/samples/{sample_index}` | Read one dataset sample |
+
+The query-string routes `/api/eval/datasets/sample-list` and
+`/api/eval/datasets/sample-detail` remain available for older clients. New
+clients should use the path-based routes in the table.
 
 ---
 
@@ -30,6 +122,12 @@ Liveness probe. No authentication required.
   "version": "0.1.0"
 }
 ```
+
+#### `GET /api/health/ready`
+
+Readiness probe. It checks the state needed to accept work and returns `503`
+when a required dependency is unavailable. Use this route for deployment
+readiness checks; use `/api/health` for liveness checks.
 
 ---
 
@@ -636,7 +734,9 @@ WebSocket endpoint for real-time execution streaming. Preferred over SSE for bid
 | 1008 | Query-string API key rejected |
 | 1008 | Invalid or missing API key |
 
-**Event payloads** — see the [Data Models](data-models-runtime.md#5-execution-events-wire-format) document for the full discriminated union schema.
+**Event payloads** — see
+[Runtime data contracts](data-models-runtime.md#execution-events) for the full
+discriminated union.
 
 ---
 ## Error response format

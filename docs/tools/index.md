@@ -1,118 +1,78 @@
-# Tools documentation
+# Shared tools package
 
-> Package: `tools` — LLM orchestration, local model inference, benchmarking, caching, and utility modules shared across the Agentic Runtime Platform.
+The repository root installs the `agentic-tools` Python package from `tools/`.
+It contains model clients, discovery utilities, local-model helpers, and
+benchmark code shared by the other packages.
 
-This page is the navigation hub for all `tools/` documentation. If you are looking for a specific capability, use the table below to find the right doc.
+`agentic-tools` and the `agentic_v2` runtime have separate provider-routing
+implementations. A model setting that affects one does not automatically affect
+the other.
 
----
+## Choose a guide
 
-## LLM client and provider routing
+| Task | Guide |
+| --- | --- |
+| Send one text request through the shared provider client | [LLM client](llm-client.md) |
+| Find and run a local ONNX model | [Local models](local-models.md) |
+| Use Phi Silica through Windows AI | [Windows AI](windows-ai.md) |
+| Check which configured models respond | [Model probing](model-probing.md) |
+| Inspect provider limits and rank probe results | [Provider limits](provider-limits.md) |
+| Compare models or run coding benchmarks | [Benchmarks](benchmarks.md) |
 
-| What you want to do | Doc |
-|--------------------|-----|
-| Call any LLM provider with one function | [llm-client.md](llm-client.md) |
-| Use a local ONNX model (Phi-4, Mistral) | [local-models.md](local-models.md) |
-| Use Phi Silica on a Copilot+ PC (NPU inference) | [windows-ai.md](windows-ai.md) |
-| Adapt tools models for LangChain pipelines | [llm-client.md — LangChain adapter](llm-client.md#langchain-adapter) |
+## Package map
 
----
+| Path | Purpose |
+| --- | --- |
+| `tools/llm/llm_client.py` | Static text-generation facade |
+| `tools/llm/provider_adapters.py` | Provider-specific calls |
+| `tools/llm/model_probe.py` | Availability checks and probe cache |
+| `tools/llm/probe_discovery.py` | Provider discovery |
+| `tools/llm/model_inventory.py` | Inventory assembly |
+| `tools/llm/local_model.py` | ONNX Runtime GenAI wrapper |
+| `tools/llm/windows_ai.py` | Windows AI bridge wrapper |
+| `tools/llm/model_bakeoff.py` | Small cross-model comparison |
+| `tools/llm/check_provider_limits.py` | Provider metadata checks |
+| `tools/llm/rank_models.py` | Ranking from probe and limit files |
+| `tools/agents/benchmarks/` | Benchmark definitions, loaders, runners, and evaluation helpers |
+| `tools/core/` | Configuration, errors, response cache, prompt storage, and utilities |
 
-## Model availability and discovery
+## Install
 
-| What you want to do | Doc |
-|--------------------|-----|
-| Check if a model is available before calling it | [model-probing.md](model-probing.md) |
-| Discover all models across all providers | [model-probing.md — Discovery](model-probing.md#model-discovery) |
-| Get a structured inventory of all models | [model-probing.md — Inventory](model-probing.md) |
-| Check rate limits and API quotas before a bakeoff | [provider-limits.md](provider-limits.md) |
-| Rank available models by preference | [provider-limits.md — Model ranking](provider-limits.md) |
+From the repository root:
 
----
-
-## Benchmarking and evaluation
-
-| What you want to do | Doc |
-|--------------------|-----|
-| Run a multi-model bakeoff | [benchmarks.md](benchmarks.md) |
-| Run the full probe → limits → rank pipeline | [provider-limits.md — Full pipeline](provider-limits.md#full-three-step-pipeline) |
-
----
-
-## Module reference
-
-### `tools/llm/`
-
-| Module | Purpose | Doc |
-|--------|---------|-----|
-| `llm_client.py` | `LLMClient` — unified provider routing | [llm-client.md](llm-client.md) |
-| `local_model.py` | `LocalModel` — direct ONNX inference | [local-models.md](local-models.md) |
-| `local_model_cli.py` | CLI for local ONNX models | [local-models.md — CLI](local-models.md#cli) |
-| `local_model_discovery.py` | Model path resolution, AI Dev Gallery detection | [local-models.md — Discovery](local-models.md#model-discovery) |
-| `local_models.py` | `LOCAL_MODELS` catalog constant | [llm-client.md — Local ONNX](llm-client.md) |
-| `windows_ai.py` | `WindowsAIModel` — Phi Silica NPU (Copilot+ PCs) | [windows-ai.md](windows-ai.md) |
-| `model_probe.py` | `ModelProbe` — availability checking with cache | [model-probing.md](model-probing.md) |
-| `probe_config.py` | `ProbeResult`, cache I/O, `with_retry` | [model-probing.md](model-probing.md) |
-| `probe_providers.py` | Provider routing for probe calls | [model-probing.md](model-probing.md) |
-| `probe_providers_cloud.py` | Cloud provider probe logic | [model-probing.md](model-probing.md) |
-| `probe_providers_local.py` | Local provider probe logic | [model-probing.md](model-probing.md) |
-| `probe_discovery.py` | `discover_all_models()` — full scan | [model-probing.md — Discovery](model-probing.md#model-discovery) |
-| `probe_discovery_providers.py` | Per-provider discovery helpers | [model-probing.md](model-probing.md) |
-| `model_inventory.py` | `build_inventory()` — capability audit | [model-probing.md — Inventory](model-probing.md) |
-| `model_locks.py` | PID lock files for concurrent ONNX loading | [model-probing.md](model-probing.md) |
-| `check_provider_limits.py` | Rate-limit check per provider | [provider-limits.md](provider-limits.md) |
-| `rank_models.py` | Rank models from probe + limits data | [provider-limits.md — Ranking](provider-limits.md) |
-| `model_bakeoff.py` | Full multi-model bakeoff runner | [benchmarks.md](benchmarks.md) |
-| `bakeoff_tasks.py` | Task definitions for bakeoff | [benchmarks.md](benchmarks.md) |
-| `bakeoff_reporting.py` | Output reports for bakeoff | [benchmarks.md](benchmarks.md) |
-| `langchain_adapter.py` | Minimal LangChain-compatible shim over `LLMClient` | [llm-client.md — LangChain adapter](llm-client.md#langchain-adapter) |
-| `provider_adapters.py` | Low-level provider call adapters (multiple routing backends) | Internal |
-
-### `tools/core/`
-
-| Module | Purpose |
-|--------|---------|
-| `config.py` | Dataclass-based configuration for model selection, filesystem paths, and temperature settings, loaded from environment variables |
-| `errors.py` | Canonical `ErrorCode` enum, transient/permanent membership sets, and `classify_error()` for mapping error text to codes |
-| `cache.py` | Function-based API (`get_cached_response`, `cache_response`, …) over a global `ResponseCache` instance |
-| `response_cache.py` | SHA-256 keyed TTL cache for LLM responses with LRU size eviction |
-| `prompt_db.py` | JSON-file-backed database for storing prompts, rubrics, and evaluations |
-| `model_availability.py` | Model availability checks without importing `tools.llm` internals |
-| `local_media.py` | Local media model runner — image generation and speech-to-text |
-| `tool_init.py` | Tool initialization helpers |
-
-### `tools/agents/`
-
-| Module | Purpose | Doc |
-|--------|---------|-----|
-| `benchmarks/` | LLM-as-judge benchmark runner and UI | [benchmarks.md](benchmarks.md) |
-| `repo_analyzer/` | LangGraph-based repository analysis agent | — |
-
----
-
-## Installation
-
-The `tools` package is provided by the repo-root `agentic-tools` project, so install from the repository root:
-
-```bash
-# From repo root — installs the tools package with dev extras
-pip install -e ".[dev]"
-
-# For local ONNX inference
-pip install onnxruntime-genai          # CPU
-pip install onnxruntime-genai-cuda     # NVIDIA GPU
-pip install onnxruntime-genai-directml # AMD/Intel GPU on Windows
-
-# For provider limit checks
-pip install requests
-
-# For LangChain integration
-pip install langchain
+```powershell
+python -m pip install -e .
 ```
 
----
+The root package requires Python 3.11 or newer.
 
-## See also
+Optional features have additional requirements:
 
-- [Evaluation framework](../architecture-eval.md) — evaluation framework built on top of these tools
-- [configuration.md](../configuration.md) — all environment variables including provider API keys
-- [llm-client.md](llm-client.md) — primary entry point for most LLM calls
+- local ONNX: install the appropriate `onnxruntime-genai` package for the
+  target hardware;
+- provider-limit inspection: install `requests`;
+- remote provider SDKs or local runtimes: follow the provider-specific guide.
+
+The repository-wide setup command installs all local packages:
+
+```powershell
+just setup
+```
+
+The current `justfile` uses PowerShell recipes. On Linux or macOS, follow the
+manual commands in [Installation](../getting-started/installation.md).
+
+## Keep results reproducible
+
+When using discovery, probes, rankings, or benchmarks, record:
+
+- the exact model identifier;
+- provider endpoint and model revision when available;
+- prompt or task revision;
+- temperature and output limit;
+- probe and benchmark timestamp;
+- whether remote providers were enabled; and
+- the generated JSON result file.
+
+Availability and provider limits change. A saved probe is evidence for its
+timestamp, not a permanent model catalog.

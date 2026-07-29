@@ -1,37 +1,71 @@
-# Examples
+# Runtime examples
 
-Minimal runnable examples for `agentic_v2`.
+Run these files from the repository root after installing
+`agentic-workflows-v2`.
 
-## Files
+| File | Provider needed | Current status |
+| --- | --- | --- |
+| `custom_tool.py` | No | Runs a deterministic tool and its error path |
+| `yaml_workflow.py` | No | Runs, but logs a null `code_file` input warning |
+| `workflow_run.py` | Usually | Loads a shipped workflow and may call its configured models |
+| `mcp_integration_example.py` | External MCP server | Demonstrates explicit MCP client setup |
+| `simple_agent.py` | No | Broken: its class does not implement the current `BaseAgent` abstract methods |
 
-| File | Description | API keys? |
-|------|-------------|-----------|
-| `simple_agent.py` | Tiny async agent usage example | Yes |
-| `workflow_run.py` | Load a built-in workflow and execute a demo run | Yes |
-| `yaml_workflow.py` | Load a YAML workflow definition, validate, and execute | No |
-| `custom_tool.py` | Implement a custom tool, register it, and verify protocol conformance | No |
+Start with the verified deterministic tool example:
 
-## Run
-
-```bash
-python examples/simple_agent.py
-python examples/workflow_run.py
-python examples/yaml_workflow.py
-python examples/custom_tool.py
+```powershell
+python agentic-workflows-v2\examples\custom_tool.py
 ```
 
-## YAML Workflow Pattern Reference
+The YAML example also completes without a provider:
 
-The `workflows/definitions/` directory includes two educational workflow definitions that demonstrate advanced DAG features:
+```powershell
+python agentic-workflows-v2\examples\yaml_workflow.py
+```
 
-| File | Pattern | Key Features |
-|------|---------|-------------|
-| `../agentic_v2/workflows/definitions/conditional_branching.yaml` | `when:` conditional gates | Equality checks, `in`/`not in` membership, compound `and`/`or` expressions, conditional fan-out, `coalesce()` fallbacks |
-| `../agentic_v2/workflows/definitions/iterative_review.yaml` | `loop_until:` bounded loops | Review-rework cycles, `loop_max:` bounds, self-referencing outputs across iterations, post-loop quality gates |
+Its current context setup does not match the workflow input mapping, so the
+runtime warns that `code_file` is null. Do not use that file as the authoring
+reference for input mapping; use the repository
+[workflow authoring guide](../../docs/WORKFLOW_AUTHORING.md).
 
-These require LLM API keys to execute. For a no-API-key example, see `yaml_workflow.py`.
+## Provider-backed workflow
 
-## Notes
+`workflow_run.py` selects a shipped workflow, creates temporary input for
+`code_review`, and runs the native DAG directly. Confirm model configuration
+and expected provider calls before running it:
 
-- `workflow_run.py` creates a temporary scratch Python file when running `code_review`. The file is cleaned up automatically at the end of the run.
-- `yaml_workflow.py` and `custom_tool.py` are fully deterministic (tier-0) and require no API keys.
+```powershell
+python agentic-workflows-v2\examples\workflow_run.py
+```
+
+## MCP example
+
+`mcp_integration_example.py` is not part of server startup. It reads a local
+file named **.mcp.json**, connects to enabled external servers, discovers
+capabilities, and creates adapters explicitly.
+
+The included [MCP configuration example](mcp_config_example.json) contains
+placeholder endpoints and paths. Copy only the entries you need into a local
+file named **.mcp.json**, replace the placeholders, and keep credentials in
+environment variables.
+
+The current MCP connection manager implements stdio and WebSocket transports.
+Entries declared as `http` or `sse` are mapped to the WebSocket client rather
+than a native HTTP/SSE transport.
+
+## Shipped YAML patterns
+
+The runtime definitions include:
+
+- [Conditional branching](../agentic_v2/workflows/definitions/conditional_branching.yaml)
+  for `when` expressions;
+- [Iterative review](../agentic_v2/workflows/definitions/iterative_review.yaml)
+  for bounded `loop_until` and `loop_max` review;
+- [Consensus review](../agentic_v2/workflows/definitions/consensus_review.yaml)
+  for repeated review and agreement.
+
+List all current definitions instead of relying on a hard-coded count:
+
+```powershell
+agentic list workflows
+```

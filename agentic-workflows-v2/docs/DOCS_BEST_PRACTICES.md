@@ -1,69 +1,88 @@
-# Documentation Best Practices Baseline
+# Documentation rules
 
-This file captures the research baseline used to upgrade this repository's docs.
+Documentation in this repository is part of the implementation. A change is
+not complete when the current command, contract, or limitation remains
+undocumented.
 
-## Primary Reference: GitHub Docs
+## Write for a specific task
 
-We aligned this repository with GitHub Docs guidance in these areas:
+- Start with what the reader will accomplish.
+- Put prerequisites before commands that need them.
+- Use one canonical command and state its working directory.
+- Separate tutorials, procedures, reference material, and design explanation.
+- Link to the source of truth instead of copying a large contract into several
+  pages.
 
-1. README quality and purpose
-- Source: "About READMEs" and "Adding a README to your repository"
-- Applied here: expanded `README.md` with setup, run paths, config, and docs index
+Use ordinary software-engineering language. Remove promotional claims,
+unexplained acronyms, filler introductions, and claims such as
+"production-ready" that do not define a testable condition.
 
-2. Contributor guidance
-- Source: "Setting guidelines for repository contributors"
-- Applied here: expanded `CONTRIBUTING.md` with required checks and docs policy
+## Keep claims verifiable
 
-3. Community standards files
-- Source: "Best practices for repositories" and "About community profiles for public repositories"
-- Applied here: added `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, issue templates, and PR template
+- Check commands with `--help` or run a safe example.
+- Check routes against FastAPI registration and OpenAPI.
+- Check defaults against code or committed configuration.
+- State when a feature is partial, optional, process-local, or not wired into
+  the default path.
+- Do not turn a planned feature into present-tense documentation.
+- Do not rewrite ADRs or generated reports to make current behavior look
+  cleaner.
 
-4. Issue/PR templates
-- Source: "About issue and pull request templates"
-- Applied here: `.github/ISSUE_TEMPLATE/*.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
+If two execution adapters behave differently, document both boundaries.
 
-## High-Quality Documentation Design Benchmarks
+## Examples
 
-Beyond GitHub Docs, we reviewed high-quality documentation ecosystems:
+Examples must:
 
-1. GitHub Docs repository (`github/docs`)
-- Pattern used: docs-as-code + explicit contribution workflow and quality gates
+- use the current import path;
+- include required inputs;
+- avoid live provider calls unless clearly labeled;
+- check structured success or failure;
+- clean up files, processes, and connections they create;
+- avoid secrets and machine-specific paths.
 
-2. Kubernetes documentation style guide
-- Pattern used: task-oriented structure, audience clarity, and concise technical language
+Run executable examples when practical. If an example is currently broken,
+say so or fix it before recommending it.
 
-3. Django documentation writing guide
-- Pattern used: distinct doc types (tutorial/how-to/reference/explanation) and consistency
+## Contract changes
 
-## Documentation Structure Used In This Repo
+When changing a Python wire model:
 
-To mirror those patterns, docs are organized as:
-- Entrypoint: `README.md`
-- Contribution and governance: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`
-- Technical reference: `docs/API_REFERENCE.md`, `docs/ARCHITECTURE.md`, `docs/WORKFLOWS.md`
-- Task-focused guides: `docs/tutorials/*.md`, `docs/DEVELOPMENT.md`
-- Discoverability map: `docs/README.md`, `docs/REPO_MAP.md`
+1. update the source Pydantic model;
+2. regenerate committed JSON Schemas;
+3. regenerate TypeScript contracts;
+4. run drift tests;
+5. document a breaking change in `docs/MIGRATIONS.md`.
 
-## Ongoing Checklist
+Do not hand-edit generated TypeScript files.
 
-Use this checklist for every PR that changes behavior:
-- [ ] User-facing behavior changes are documented
-- [ ] New env vars are documented in `README.md`
-- [ ] New endpoints are documented in `docs/API_REFERENCE.md`
-- [ ] New workflows are documented in `docs/WORKFLOWS.md`
-- [ ] Docs links pass `python scripts/check_docs_refs.py`
+## Required checks
 
-## Sources
+From the repository root:
 
-- https://docs.github.com/en/repositories/creating-and-managing-repositories/best-practices-for-repositories
-- https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-open-source
-- https://docs.github.com/en/get-started/start-your-journey/setting-guidelines-for-repository-contributors
-- https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/adding-a-readme-to-your-repository
-- https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/about-readmes
-- https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/about-community-profiles-for-public-repositories
-- https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/adding-a-code-of-conduct-to-your-project
-- https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository
-- https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates
-- https://github.com/github/docs
-- https://kubernetes.io/docs/contribute/style/style-guide/
-- https://docs.djangoproject.com/en/5.2/internals/contributing/writing-documentation/
+```powershell
+python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/generate_doc_stats.py --check
+python scripts/check-doc-drift.py
+```
+
+Build the documentation site in strict mode before a large documentation
+change. Also run the tests or build for any example, schema, or UI contract
+that the docs changed.
+
+## Where changes belong
+
+| Change | Documentation |
+| --- | --- |
+| Setup or first use | Root or package `README.md` |
+| CLI behavior | `docs/cli-reference.md` |
+| HTTP or stream contract | `docs/api-contracts-runtime.md` |
+| Environment variable | `docs/configuration.md` and `.env.example` |
+| Workflow syntax | `docs/WORKFLOW_AUTHORING.md` |
+| Operator behavior | `docs/operations/` |
+| Known gap | `docs/KNOWN_LIMITATIONS.md` |
+| Architecture decision | New or superseding ADR |
+| Breaking change | `docs/MIGRATIONS.md` |
+
+Update the narrowest canonical page, then link to it from shorter package
+indexes.

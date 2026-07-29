@@ -1,90 +1,112 @@
-# ARP local k6 load proof ($0, no cloud)
+# Local load harness
 
-A free, local proof of ARP's **Redis-CAS circuit-breaker** + **horizontal-scale**
-story. A multi-replica `docker compose` stack (Redis + N ARP FastAPI replicas,
-all `AGENTIC_NO_LLM=1`) is hammered by the dockerized `grafana/k6` image; every
-resulting number is published to GitHub Pages by `scripts/build_load_report.py`
-— nothing is hand-typed.
+This directory compares API acceptance performance with one and several
+FastAPI replicas and tests the Redis circuit-breaker counter store with
+concurrent writers.
 
-GitHub Pages is static hosting: it cannot run Python/Redis/multiple replicas, so
-the proof inherently needs live containers. **Run the proof locally (free),
-publish the results.**
+It uses Docker Compose, nginx, Redis, and the `grafana/k6` image. The backend
+runs with `AGENTIC_NO_LLM=1`, the native adapter, and API rate limiting
+disabled.
 
-## Prerequisites
+## Evidence boundaries
 
-- Docker + Compose (the `grafana/k6` image is pulled automatically — **no host
-  k6 install**).
-- No API keys, no cloud account, no secrets. `AGENTIC_NO_LLM=1` makes every
-  agent deterministic and token-free, so the load exercises the
-  orchestration / scheduling / circuit-breaker / Redis-CAS paths, not a model.
+The harness produces two separate results:
 
-## Reproduce (one command)
+- k6 measures `POST /api/run` acceptance throughput and latency through nginx;
+- `probe_redis_cas.py` runs a direct exact-sum experiment through the
+  production Redis compare-and-swap save path.
 
-```bash
-# from the repo root
-bash load/run_load.sh 3        # 1 replica + 3 replicas + Redis-CAS run + probe
-```
+In the currently committed capture, accepted background runs did not reach the
+model client and did not create circuit-breaker keys. The direct probe, not the
+HTTP workload, is the counter-consistency evidence.
 
-`run_load.sh`:
+## Requirements
 
-1. builds the load image (the shipped `backend-dev` stage **plus** the `redis`
-   extra — that extra is what turns the Redis-CAS shared-state path on);
-2. brings up **Redis + 1 replica**, runs the scale/throughput scenario;
-3. scales to **N replicas**, re-runs the SAME scenario (captures the scale delta);
-4. runs the **Redis-CAS consistency** scenario at N replicas;
-5. runs the **CAS probe** (a live exact-sum experiment against the shared Redis,
-   plus a snapshot of the circuit-breaker keys the replicas persisted);
-6. snapshots each replica's `/api/health/ready` (shared-Redis evidence);
-7. tears the stack down (`KEEP_UP=1` to leave it running for debugging).
+- Docker with Compose;
+- Bash;
+- enough local resources for the selected replica count.
 
-Then regenerate the Pages report and render the docs:
+On Windows, run the script from Git Bash or WSL. No provider key or cloud
+account is required.
+
+## Run
+
+From the repository root:
 
 ```bash
-python scripts/build_load_report.py     # writes docs/load-report.md from the JSON
-mkdocs build                             # renders the docs site
+bash load/run_load.sh 3
 ```
 
-## What lands in `load/results/`
+The argument is the scaled replica count and defaults to `3`.
 
-| File | Produced by | Used for |
-|---|---|---|
-| `scale_1replica.json` | k6 `--summary-export` | 1-replica throughput/latency |
-| `scale_<N>replica.json` | k6 `--summary-export` | N-replica throughput/latency, scale delta |
-| `redis_cas_run.json` | k6 `--summary-export` | CAS-pressure request counts |
-| `cas_consistency.json` | `probe_redis_cas.py` | observed-vs-expected CAS exact-sum proof + key snapshot |
-| `health_ready.txt` | `/api/health/ready` snapshot | shared-Redis evidence |
+The script:
 
-These JSON files are the **only** data source for the Pages report. Re-running
-the load proof + the generator updates every number with zero hand-editing.
+1. builds the runtime load image;
+2. starts Redis, nginx, and one backend replica;
+3. runs the scale scenario;
+4. scales to the requested replica count and repeats the same scenario;
+5. runs the CAS-pressure HTTP scenario;
+6. runs the direct concurrent Redis exact-sum probe;
+7. captures readiness responses;
+8. removes the stack and volumes.
+
+Set `KEEP_UP=1` to leave the stack running for diagnosis:
+
+```bash
+KEEP_UP=1 bash load/run_load.sh 3
+```
+
+Later cleanup:
+
+```bash
+docker compose -f load/docker-compose.load.yml down -v
+```
+
+The load balancer is published on host port `8088` while the stack is up.
+Backend replica ports are not published.
+
+## Results
+
+The script writes:
+
+| File | Contents |
+| --- | --- |
+| `results/scale_1replica.json` | One-replica k6 summary |
+| `results/scale_<N>replica.json` | Scaled k6 summary |
+| `results/redis_cas_run.json` | CAS-pressure HTTP summary |
+| `results/cas_consistency.json` | Direct expected-versus-observed Redis proof |
+| `results/health_ready.txt` | Readiness snapshots through nginx |
+
+k6 threshold failure is logged but does not stop the remaining scenarios, so
+inspect the summaries and command output before treating a run as valid.
+
+## Regenerate the report
+
+`docs/load-report.md` is generated. Do not edit it manually.
+
+```powershell
+python scripts/build_load_report.py
+```
+
+Then run the normal documentation checks and strict site build.
+
+## Configuration
+
+The k6 scripts accept environment values such as `BASE_URL`, `WORKFLOW`,
+`ADAPTER`, `REPLICAS`, `TARGET_RUNS`, and `ARRIVAL_RATE`. The direct probe uses
+`CAS_TORTURE_WORKERS`, `CAS_TORTURE_FAILURES`, and `CAS_TORTURE_MODEL`.
+
+Change one experimental variable at a time when comparing runs. Record Docker
+versions, host resources, replica count, and the exact commit with the result.
 
 ## Files
 
 | Path | Purpose |
-|---|---|
-| `docker-compose.load.yml` | Redis + scalable ARP `backend` + nginx round-robin `lb` |
-| `Dockerfile.load` | shipped `backend-dev` image + the `redis` extra |
-| `nginx.load.conf` | per-request DNS round-robin across replicas |
-| `k6/scale_throughput.js` | ramping-VU scale/throughput scenario (1 vs N) |
-| `k6/redis_cas_consistency.js` | constant-arrival CAS-pressure scenario |
-| `probe_redis_cas.py` | live exact-sum CAS proof + Redis key snapshot |
-| `run_load.sh` | end-to-end orchestrator |
-
-## Tuning
-
-`run_load.sh [N_REPLICAS]` sets the scaled replica count (default 3). The k6
-scripts accept env overrides via `-e` (see each script header): `BASE_URL`,
-`WORKFLOW`, `ADAPTER`, `REPLICAS`, `TARGET_RUNS`, `ARRIVAL_RATE`. The probe
-accepts `CAS_TORTURE_WORKERS` / `CAS_TORTURE_FAILURES`.
-
-## Honesty notes
-
-- The load targets the **native** DAG adapter (`AGENTIC_DEFAULT_ADAPTER=native`)
-  because the shipped `backend-dev` image does not install the `[langchain]`
-  extra and the LangChain default would abort startup.
-- `POST /api/run` enqueues a background workflow run and returns `PENDING`
-  immediately, so the scale scenario measures the **orchestration accept path**
-  throughput; the background runs drive the router + Redis-CAS saves.
-- The CAS exact-sum proof in `probe_redis_cas.py` exercises the **real**
-  production CAS path (`SmartModelRouter._save_stats_to_redis` →
-  `RedisCircuitBreakerStore.save_stats_cas`) from concurrent independent workers
-  against the live shared Redis, so the observed-vs-expected number is real.
+| --- | --- |
+| `docker-compose.load.yml` | Redis, backends, nginx, and network |
+| `Dockerfile.load` | Runtime image with Redis support |
+| `nginx.load.conf` | Request distribution across backend replicas |
+| `k6/scale_throughput.js` | One-versus-many API scenario |
+| `k6/redis_cas_consistency.js` | CAS-pressure HTTP scenario |
+| `probe_redis_cas.py` | Direct concurrent Redis counter test |
+| `run_load.sh` | Experiment orchestration |

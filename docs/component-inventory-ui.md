@@ -1,7 +1,7 @@
 # UI component inventory — Evidence Ledger
 
 **Source:** `agentic-workflows-v2/ui/src/`
-**Audited:** 2026-07-14
+**Audited:** 2026-07-28
 **System:** [Evidence Ledger](ui/evidence-ledger-design-system.md)
 
 This inventory describes the production component boundaries after the

@@ -1,25 +1,36 @@
 # Support
 
-## Where To Ask For Help
+Use a
+[GitHub issue](https://github.com/tafreeman/agentic-runtime-platform/issues/new/choose)
+for reproducible bugs, feature requests, and documentation problems.
 
-- Usage and troubleshooting: open a GitHub issue using templates in `.github/ISSUE_TEMPLATE/`
-- Security-sensitive topics: follow `SECURITY.md`
-- Contribution process questions: see `CONTRIBUTING.md`
+For a suspected vulnerability, follow [SECURITY.md](SECURITY.md) and use a
+private report. Do not include sensitive details in a public issue.
 
-## What To Include In Support Requests
+## Include enough evidence
 
-- Environment (OS, Python version, Node version)
-- Command(s) you ran
-- Error output/log excerpts
-- Minimal reproduction steps
-- Relevant workflow or config files
+For a bug, provide:
 
-## Request Types
+- operating system, Python version, Node version, and install method;
+- repository commit or release;
+- the exact command or request;
+- expected and observed behavior;
+- the smallest workflow, input, or configuration that reproduces it;
+- relevant error output; and
+- whether a real provider, mock, or `AGENTIC_NO_LLM=1` was used.
 
-- Bug report: reproducible runtime or API/UI defects
-- Feature request: workflow capability, tooling, or UX improvements
-- Documentation request: missing or unclear documentation
+Remove API keys, tokens, personal data, proprietary prompts, model output, and
+private URLs before attaching logs or run files.
 
-## Response Expectations
+## Before opening an issue
 
-Maintainers review new issues as capacity allows. Clear reproduction details significantly improve response time.
+Check:
+
+- [Getting started](../docs/getting-started/index.md)
+- [Configuration](../docs/configuration.md)
+- [Troubleshooting](../docs/operations/troubleshooting.md)
+- [Known limitations](../docs/KNOWN_LIMITATIONS.md)
+- [Contributing](../CONTRIBUTING.md)
+
+Maintainers respond as capacity allows. A minimal, current reproduction is the
+fastest way to make a report actionable.

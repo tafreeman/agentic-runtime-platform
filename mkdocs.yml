@@ -1,8 +1,7 @@
 site_name: Agentic Runtime Platform
 site_description: >-
-  Production-grade multi-agent AI orchestration. DAG execution, tiered
-  model routing, and rubric-based LLM evaluation for federal and regulated
-  environments.
+  Documentation for YAML-defined AI workflows, DAG execution, model routing,
+  evaluation, the FastAPI server, and the React dashboard.
 site_url: https://tafreeman.github.io/agentic-runtime-platform/
 repo_url: https://github.com/tafreeman/agentic-runtime-platform
 repo_name: tafreeman/agentic-runtime-platform
@@ -61,6 +60,7 @@ plugins:
   - tags
   - mermaid2
   - git-revision-date-localized:
+      enabled: !ENV [GIT_REVISION_DATES, true]
       type: date
       enable_creation_date: true
       fallback_to_build_date: true
@@ -131,6 +131,7 @@ nav:
       - RAG pipeline: rag/index.md
       - Evaluation engine: deep-dive-agentic-v2-eval.md
   - API reference:
+      - CLI commands: cli-reference.md
       - REST endpoints: api-contracts-runtime.md
       - Data models: data-models-runtime.md
       - UI components: component-inventory-ui.md
@@ -160,6 +161,8 @@ nav:
       - Overview: operations/index.md
       - Deployment guide: deployment-guide.md
       - Security hardening: operations/security-hardening.md
+      - Supply-chain security: SUPPLY_CHAIN.md
+      - Load evidence: load-report.md
       - Troubleshooting: operations/troubleshooting.md
   - Reference:
       - Configuration reference: configuration.md
@@ -170,6 +173,8 @@ nav:
       - Migrations: MIGRATIONS.md
   - Project:
       - Overview: project-overview.md
+      - Evidence overview: flagship.md
+      - Project context: project-context.md
       - Roadmap: ROADMAP.md
       - Changelog: CHANGELOG.md
       - ADRs: adr/ADR-INDEX.md

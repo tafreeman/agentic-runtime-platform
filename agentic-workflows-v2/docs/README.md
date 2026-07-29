@@ -1,49 +1,45 @@
-# Documentation Index
+# Runtime package documentation
 
-This directory is the primary documentation hub for `agentic-workflows-v2`.
+Start with the package [README](../README.md) for installation and a first
+command.
 
-## Start Here
+## Guides in this directory
 
-- `../README.md`: project overview, install, quick start
-- `tutorials/getting_started.md`: first runnable example
-- `DEVELOPMENT.md`: local setup and day-to-day commands
-
-## Core Guides
-
-- `ARCHITECTURE.md`: system architecture and runtime flow
-- `WORKFLOWS.md`: built-in workflows and authoring conventions
-
-- `API_REFERENCE.md`: exported Python API and HTTP routes
-
-## Tutorials
-
-- `tutorials/getting_started.md`
-- `tutorials/building_workflow.md`
-- `tutorials/creating_agent.md`
-
-## Design, Governance, and History
-
-- `DOCS_BEST_PRACTICES.md`: research-backed documentation standards used in this repo
-- `REPO_MAP.md`: practical map of active package areas
-- `adr/`: architecture decision records
-
-## Coverage Matrix
-
-| Area | Primary docs |
+| Page | Purpose |
 | --- | --- |
-| Runtime package (`agentic_v2/`) | `ARCHITECTURE.md`, `API_REFERENCE.md` |
-| Workflow definitions | `WORKFLOWS.md`, `tutorials/building_workflow.md` |
-| API + UI runtime | `README.md`, `DEVELOPMENT.md`, `API_REFERENCE.md` |
+| [Architecture](ARCHITECTURE.md) | Package boundaries and request paths |
+| [API reference](API_REFERENCE.md) | Python, CLI, HTTP, and stream surfaces |
+| [Workflows](WORKFLOWS.md) | Shipped workflows and their inputs |
+| [Model layer](MODEL_LAYER.md) | Model identifiers, routing, and clients |
+| [Node configuration overlay](NODE_CONFIG_OVERLAY.md) | Per-step model overrides |
+| [Repository map](REPO_MAP.md) | Directory ownership |
+| [Development](../DEVELOPMENT.md) | Setup, tests, and generated files |
 
-| Contribution process | `../CONTRIBUTING.md`, `../.github/PULL_REQUEST_TEMPLATE.md` |
-| Security and support | `../SECURITY.md`, `../SUPPORT.md`, `../CODE_OF_CONDUCT.md` |
+Tutorials:
 
-## Documentation Maintenance
+- [Getting started](tutorials/getting_started.md)
+- [Building a workflow](tutorials/building_workflow.md)
+- [Creating an agent](tutorials/creating_agent.md)
 
-Run docs path validation after docs edits:
+The repository-level [documentation site](../../docs/index.md) is the
+canonical operator and contributor guide. It covers configuration, deployment,
+security, evaluation, RAG, troubleshooting, and known limitations.
 
-```bash
-python scripts/check_docs_refs.py
+## Historical documents
+
+The `adr/` directory records decisions as they were made. Do not rewrite an
+accepted ADR to describe newer behavior. Add a superseding ADR or current
+guide instead.
+
+## Validate changes
+
+From the repository root:
+
+```powershell
+python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/generate_doc_stats.py --check
+python scripts/check-doc-drift.py
 ```
 
-When adding behavior, also update the docs in the same pull request.
+When a Python wire contract changes, regenerate and test its TypeScript mirror
+as described in [runtime data contracts](../../docs/data-models-runtime.md).

@@ -11,13 +11,19 @@ tags:
 **Version:** 0.3.0
 **Scope:** `agentic-v2-eval/`
 
-This document covers every module and design decision in depth. For a shorter architectural overview, see [`architecture-eval.md`](architecture-eval.md). For specific subsystem references, see the [`evaluation/`](evaluation/) folder.
+This document covers the evaluation package module by module. For a shorter
+overview, see [`architecture-eval.md`](architecture-eval.md). For task-focused
+guides, start with the [evaluation architecture](architecture-eval.md) and
+[runner reference](evaluation/runners.md).
 
 ---
 
 ## Overview
 
-`agentic-v2-eval` is the evaluation framework for the `agentic-runtime-platform` monorepo. It scores LLM outputs (prose, prompts, code, agentic workflow runs) against weighted rubrics, using deterministic LLM-as-judge patterns plus static metrics, and produces reproducible reports in JSON, Markdown, or HTML.
+`agentic-v2-eval` scores structured metrics and model outputs with weighted
+rubrics, optional LLM judges, and static metrics. It writes JSON, Markdown, or
+HTML reports. Static scoring is deterministic for the same inputs; an LLM judge
+is not deterministic merely because it uses a fixed prompt or temperature.
 
 ### Responsibilities
 
@@ -37,10 +43,14 @@ agentic-tools
 
 agentic-v2-eval
   ├── exports LLMClientProtocol    → consumed by agentic-workflows-v2
-  └── imports tools.agents.benchmarks (lazy, optional)
+  └── imports tools.agents.benchmarks when dataset APIs are used
 ```
 
-The package can be imported without `agentic-tools` installed. Tests inject mocks. Downstream callers (`agentic-workflows-v2`) import only the protocol types.
+`agentic-tools` is a declared package dependency. The concrete LLM adapter and
+dataset bridge defer their imports until those features are used. Tests inject
+small clients that satisfy `LLMClientProtocol`. The runtime imports the
+protocol and optional scoring helpers; the evaluation package does not import
+the runtime.
 
 ---
 
@@ -48,9 +58,13 @@ The package can be imported without `agentic-tools` installed. Tests inject mock
 
 ### `__init__.py`
 
-Exports 16 public symbols. Defines `__version__ = "0.3.0"`. Imports are eager for the six evaluator-related symbols and the five quality dimension constants; `LLMClientProtocol` and `Evaluator` are imported from `interfaces.py`.
+Defines `__version__ = "0.3.0"` and re-exports the main scorers, evaluator
+types, protocols, scores, and quality dimensions.
 
-The five quality dimension constants (`COHERENCE`, `FLUENCY`, `RELEVANCE`, `GROUNDEDNESS`, `SIMILARITY`) are `LLMEvaluatorDefinition | None`. They are populated from `rubrics/quality.yaml` at import time. If the YAML load fails, they fall back to empty `LLMEvaluatorDefinition` placeholders rather than raising, preserving importability in degraded environments.
+The five quality dimension constants (`COHERENCE`, `FLUENCY`, `RELEVANCE`,
+`GROUNDEDNESS`, `SIMILARITY`) are `LLMEvaluatorDefinition | None`. They are
+populated from `rubrics/quality.yaml` at import time. If loading fails, the
+module prints the error and the missing constants remain `None`.
 
 ### `interfaces.py`
 
@@ -386,7 +400,10 @@ Only `criteria[].name` and `criteria[].weight` are required for `Scorer`. All ot
 
 2. **`safe_mode` in `LocalSubprocessSandbox` is code-string scanning, not syscall interception.** It can be bypassed by obfuscated code. Use Docker for stronger isolation.
 
-3. **`PatternEvaluator` defaults to `runs=1`** in the constructor signature. A single run is the fast default suited to local iteration; because the LLM judge is stochastic, production evaluations should set a higher `runs` value (e.g. `runs=20`) so scores are aggregated across runs for variance reduction.
+3. **`PatternEvaluator` defaults to `runs=1`.** More runs can reduce the effect
+   of one unusual judge response but increase calls and cost. Choose the count
+   from a measured evaluation design; repeated calls do not establish judge
+   validity by themselves.
 
 4. **`QualityEvaluator.evaluate()` returns `0.0` on LLM exception** — the exception is logged with `print()` rather than a structured logger. This was flagged in the original code review. Use `logging.getLogger(__name__)` in production wrappers.
 

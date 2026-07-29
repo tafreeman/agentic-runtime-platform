@@ -1,254 +1,309 @@
-# Contributing to `tafreeman/agentic-runtime-platform`
+# Contributing
 
-> **Audience:** Anyone landing their first PR on this monorepo.
-> **Outcome:** After reading this, you can clone, change code, pass local gates, and open a merge-ready PR.
-> **Last verified:** 2026-04-22
+Use this guide when preparing a change for review. For installation and normal
+usage, start with [Getting started](docs/getting-started/index.md).
 
-If you just want to run the platform, start at [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — it takes ~5 minutes to a first workflow run. This file is for contributors who intend to land code.
+> **Last verified:** 2026-07-28
 
----
+## Repository boundaries
 
-## 1. What lives in this repo
+This monorepo contains three Python packages and one frontend:
 
-| Path | What it is | Build backend | Notes |
-|------|-----------|---------------|-------|
-| `agentic-workflows-v2/` | Runtime (CLI, DAG executor, LangGraph adapter, FastAPI server, WebSocket streaming) | hatchling | Python 3.11+ |
-| `agentic-workflows-v2/ui/` | React 19 dashboard (Vite 6, Tailwind, @xyflow/react) | Vite | Node 20+ |
-| `agentic-v2-eval/` | Rubric-based evaluation framework | hatchling | Python 3.11+ |
-| `tools/` | Shared LLM client, benchmarks, caching utilities (package name: `agentic-tools`) | hatchling | Python 3.11+ |
+| Path | Ownership |
+|---|---|
+| `agentic-workflows-v2/` | Runtime, CLI, FastAPI server, RAG, integrations, and UI |
+| `agentic-v2-eval/` | Evaluation models, rubrics, runners, and reporters |
+| `tools/` | Shared provider and benchmark utilities packaged as `agentic-tools` |
+| `tests/e2e/` | Cross-package behavior |
 
-Each Python package installs independently. There are **zero cross-package imports** — `tools` is the only optional shared surface, imported with `from tools.llm import LLMClient`.
+The runtime and evaluation packages depend on the root `agentic-tools` package
+through the workspace configuration. Do not introduce another cross-package
+import or an editable sibling-repository dependency without reviewing
+[Architecture](docs/ARCHITECTURE.md) and the relevant ADRs.
 
-Package-specific contribution notes live at [`agentic-workflows-v2/CONTRIBUTING.md`](agentic-workflows-v2/CONTRIBUTING.md). This root document covers monorepo-wide policy.
+Package-specific notes are in
+[`agentic-workflows-v2/CONTRIBUTING.md`](agentic-workflows-v2/CONTRIBUTING.md).
 
----
+## Set up the workspace
 
-## 2. Local setup
+Use Python 3.11 or newer and Node.js 20 or newer.
 
-```bash
+```powershell
 git clone https://github.com/tafreeman/agentic-runtime-platform.git
 cd agentic-runtime-platform
-just setup          # installs root helpers + all three Python packages + UI deps
+just setup
+python -m pip install pre-commit
+pre-commit install --install-hooks
 ```
 
-`just setup` wraps the individual `pip install -e` and `npm install` steps so every contributor ends up with the same environment. If `just` is not on your PATH, install it (`winget install casey.just` on Windows, `brew install just` on macOS) or run the equivalent commands manually — see `justfile` for the exact wrapping.
+The current `justfile` uses PowerShell. Manual installation for Linux, macOS,
+or a system without `just` is documented in
+[Installation](docs/getting-started/installation.md).
 
-If you prefer a containerized workspace, open the repo in the provided devcontainer (`.devcontainer/`) — it installs everything at build time.
-
-### Provider credentials
-
-At least one LLM provider must be configured before any non-deterministic workflow will run:
+Verify the deterministic path:
 
 ```bash
-cp .env.example .env
-# edit .env and set ONE of:
-#   GITHUB_TOKEN=ghp_…        (free tier, used by CI)
-#   GEMINI_API_KEY=…          (free tier)
-#   OPENAI_API_KEY=…          (paid)
-#   ANTHROPIC_API_KEY=…       (paid)
+printf '{"input_text":"hello"}\n' > /tmp/agentic-input.json
+AGENTIC_NO_LLM=1 agentic run test_deterministic \
+  --input /tmp/agentic-input.json
 ```
 
-The smart router will use whichever providers are configured. CI uses `GITHUB_TOKEN` with GitHub Models — see [`docs/adr/ADR-016-github-token-as-default-e2e-llm.md`](docs/adr/ADR-016-github-token-as-default-e2e-llm.md) for the trade-off that drove that choice.
+PowerShell:
 
----
+```powershell
+'{"input_text":"hello"}' |
+  Set-Content -Encoding utf8 .\agentic-input.json
+$env:AGENTIC_NO_LLM = "1"
+agentic run test_deterministic --input .\agentic-input.json
+```
 
-## 3. Development workflow
+Do not place provider credentials in committed files. Copy `.env.example` to
+the ignored `.env` file when a live-provider test is required.
 
-1. Create a branch from `main`. Branch naming: `feature/…`, `fix/…`, `chore/…`, `docs/…`.
-2. Make the smallest coherent change. Prefer one concern per PR.
-3. Write tests first (TDD). New backend code targets 80% coverage on changed lines; the UI package enforces a 60% floor in `ui/vitest.config.ts`.
-4. Update the docs in the same PR if the change touches user-facing behavior, configuration, or a new pattern. See the [documentation mapping](#7-documentation) below.
-5. Run local gates before pushing (next section).
-6. Push with `-u` on first push and open a PR against `main`.
+## Create a branch
 
-Do not push directly to `main`. All changes land via PR.
-
----
-
-## 4. Required local gates
-
-These must all pass before a PR will merge. Run them from the repo root:
+Branch from the current `main`:
 
 ```bash
-just test                     # runs the full backend + eval + UI test suite
-just docs                     # verifies documentation (links, code fences, etc.)
-pre-commit run --all-files    # black, isort, ruff, docformatter, mypy, pydocstyle, detect-secrets
+git switch main
+git pull --ff-only
+git switch -c feature/short-description
 ```
 
-### Per-package test entrypoints
+Use one of these prefixes:
 
-If you only touched one package, you can narrow the run:
+- `feature/`
+- `fix/`
+- `chore/`
+- `docs/`
 
-| Package | Command |
-|---------|---------|
-| Runtime | `cd agentic-workflows-v2 && python -m pytest tests/ -q` |
-| Runtime + coverage | `cd agentic-workflows-v2 && python -m pytest tests/ -q --cov=agentic_v2 --cov-report=term-missing` |
-| Eval | `cd agentic-v2-eval && python -m pytest tests/ -q` |
-| UI unit | `cd agentic-workflows-v2/ui && npm test` |
-| UI coverage | `cd agentic-workflows-v2/ui && npm run test:coverage` |
-| UI build check | `cd agentic-workflows-v2/ui && npm run build` |
+Do not push directly to `main`.
 
-### CI gates you must not break
+## Make a focused change
 
-| Gate | What it enforces | Source |
-|------|------------------|--------|
-| Ruff lint | `E,F,W,I,N,UP,S,B,A,C4,SIM,TCH,RUF` — no warnings in changed files | `.github/workflows/ci.yml` |
-| Mypy | `mypy --strict` on `agentic-workflows-v2/agentic_v2/`. `agentic-v2-eval` runs with 35 known findings (Sprint B) — see [`KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md). Note: mypy config is relaxed while type debt is being paid down (see `pyproject.toml` `[tool.mypy]`). | `ci.yml`, `eval-package-ci.yml` |
-| Coverage floor | 80% on `agentic-workflows-v2/`, 60% on `ui/` | `ci.yml` |
-| Schema drift | Snapshot test on `contracts/` Pydantic models — any wire-format change must be explicitly accepted by regenerating the snapshot | `scripts/generate_schemas.py`, see [ADR-014](docs/adr/ADR-014-pydantic-wire-format.md) |
-| Playwright streaming (5×) | End-to-end streaming flow runs 5× per PR. One failure blocks merge | `ci.yml` |
-| Nightly reliability (50×) | Rolling flake-rate gate over 50 runs. Failure blocks a release cut, not a PR | `nightly.yml` |
-| Time-to-first-span p95 | SLO gate on trace latency — see [ADR-015](docs/adr/ADR-015-slo-in-git-rolling-window.md) for the git-as-time-series pattern | `nightly.yml` |
-| pip-audit | No High/Critical advisories | `dependency-review.yml` |
-| detect-secrets | Baseline-driven — see `.secrets.baseline` | pre-commit |
+- Keep package boundaries intact.
+- Add or update tests with behavior changes.
+- Update user documentation when a command, endpoint, environment variable,
+  schema, workflow, or UI behavior changes.
+- Update `CHANGELOG.md` under `Unreleased` for user-visible changes.
+- Add an ADR for a material architecture or security-boundary decision.
+- Do not reformat unrelated files.
+- Preserve generated files unless the source contract changed.
 
-Full CI job catalogue: [`.github/workflows/`](.github/workflows/).
+Python uses 4-space indentation, Black with an 88-character target, Ruff, and
+typed public interfaces. Use `snake_case` for Python modules and functions,
+`PascalCase` for classes and React components, and `UPPER_CASE` for constants.
 
----
+React components use `PascalCase.tsx`. Hooks and helpers use descriptive
+camelCase names.
 
-## 5. Commit format
+## Run checks
 
-Conventional commits. Enforced by review, not by hook.
-
-```
-<type>(<scope>): <subject>
-
-<optional body>
-```
-
-| Type | Use for |
-|------|--------|
-| `feat` | New user-facing behavior |
-| `fix` | Bug fix |
-| `refactor` | No behavior change |
-| `test` | Tests only |
-| `docs` | Documentation only |
-| `chore` | Tooling, CI, dependency bumps |
-| `perf` | Performance improvement with benchmark evidence |
-| `ci` | CI pipeline changes |
-| `style` | Formatting only (rare — pre-commit handles this) |
-| `wip` | Reserved for draft commits on feature branches — **squash before merge** |
-
-Scopes match the package or subsystem: `contracts`, `ui`, `server`, `engine`, `eval`, `rag`, `ci`, `slo`, `mcp/results`, etc. Read the last 40 commits on `main` (`git log --oneline -40`) to calibrate tone — terse, specific, present tense.
-
-AI-assistant attribution (`Co-Authored-By: Claude` / `Generated with Claude Code`) is intentionally disabled for this repo and must not be re-enabled. It is stripped at the source (`.claude/settings.json`, `includeCoAuthoredBy: false`) and backstopped by a `commit-msg` hook (`scripts/strip_ai_coauthors.py`). The hook only removes assistant trailers — human and PR-bot co-authors (`dependabot`, `gemini-code-assist`, `copilot`) are preserved. After cloning, install it once with:
+Run the broad repository checks before requesting review:
 
 ```bash
-pre-commit install --install-hooks   # installs the commit-msg stage too
+just test
+just docs
+pre-commit run --all-files
+npm --prefix agentic-workflows-v2/ui run build
 ```
 
-### Commit signing
+`just test` runs the runtime, evaluation, cross-package, and UI unit tests.
+Some live-provider and slow checks are intentionally separate.
 
-Signing commits is strongly recommended to show the "Verified" badge on GitHub.
-
-**SSH signing (recommended — no GPG installation required):**
+Use narrower commands during development:
 
 ```bash
-# 1. Generate a signing key (skip if you already have one)
-ssh-keygen -t ed25519 -C "your-email@example.com" -f ~/.ssh/id_ed25519_signing
-
-# 2. Add the public key to GitHub → Settings → SSH and GPG keys → New SSH key (type: Signing Key)
-
-# 3. Configure git to use it
-git config --global gpg.format ssh
-git config --global user.signingkey ~/.ssh/id_ed25519_signing.pub
-git config --global commit.gpgsign true
-git config --global tag.gpgsign true
+python -m pytest agentic-workflows-v2/tests -q
+python -m pytest agentic-v2-eval/tests -q
+python -m pytest tests/e2e -q
+npm --prefix agentic-workflows-v2/ui test
+npm --prefix agentic-workflows-v2/ui run test:coverage
 ```
 
-**GPG signing (if you prefer GPG):**
+Documentation checks:
 
 ```bash
-gpg --full-generate-key              # RSA, 4096 bits, no expiry for a signing key
-gpg --list-secret-keys --keyid-format=long
-git config --global user.signingkey <YOUR_KEY_ID>
-git config --global commit.gpgsign true
-# Upload public key to GitHub → Settings → SSH and GPG keys → New GPG key
+python agentic-workflows-v2/scripts/check_docs_refs.py
+python scripts/generate_doc_stats.py --check
 ```
 
-Once configured, every `git commit` is signed automatically. Verify with `git log --show-signature -1`.
+If MkDocs and its plugins are installed:
 
----
+```bash
+mkdocs build --strict
+```
 
-## 6. When to write an ADR
+Do not add a command to documentation until it has been run from the directory
+the page specifies.
 
-Open an Architecture Decision Record under [`docs/adr/`](docs/adr/) when you:
+## What CI checks
 
-- Introduce a new wire-format contract (request/response schema, event shape, persistence format).
-- Add, replace, or deprecate an execution engine, provider adapter, or storage backend.
-- Change a security boundary (tool allowlist, secret source, auth model).
-- Pick a pattern that future contributors might reasonably challenge (a new rolling-window design, a retry strategy, an SLO methodology).
+The blocking checks include:
 
-Use the existing ADR numbering scheme. Next free number is **017** as of 2026-04-22. Skip to the next free integer if you land in a race. ADRs 004-006 are deliberately unused and **should not be reclaimed** — the numbering gap is documented in [`docs/adr/ADR-INDEX.md`](docs/adr/ADR-INDEX.md).
+| Check | Scope |
+|---|---|
+| Runtime tests | Unit tests excluding marked integration and slow tests in the fast job |
+| Runtime coverage | 80% over the configured core subset |
+| UI tests and coverage | Vitest thresholds defined in `ui/vitest.config.ts` |
+| UI build | TypeScript project build and Vite production bundle |
+| Ruff | Runtime source and tests |
+| Mypy | Strict settings for `agentic_v2/engine`, `agentic_v2/contracts`, and `agentic-v2-eval` source |
+| Wire-format drift | Pydantic schemas and generated TypeScript types |
+| Documentation drift | Workflow validation, architecture protocol names, local references, and generated homepage statistics |
+| Security and dependencies | Secret detection, CodeQL, dependency review, and audit workflows |
+| E2E streaming | Repeated Playwright streaming path |
+| Optional ExecutionKit path | Dedicated tests with the `ek` extra installed |
 
-An ADR is **not** required for:
+The workflow files under `.github/workflows/` are the current source of truth.
+Do not infer a green full matrix from one local test command.
 
-- Bug fixes, refactors, or test additions.
-- UI polish that doesn't change contracts.
-- New workflows, personas, or tools that use existing patterns.
-- Pre-commit or lint rule tweaks.
+### Run without provider keys
 
-If in doubt, propose the ADR as a stub in the PR and let the reviewer decide.
+Use:
 
----
+```bash
+export AGENTIC_NO_LLM=1
+just test
+```
 
-## 7. Documentation
+PowerShell:
 
-Docs live close to what they describe. The mapping for changes:
+```powershell
+$env:AGENTIC_NO_LLM = "1"
+just test
+```
+
+The `no-llm-smoke` CI job validates workflow loading, the deterministic run,
+the LangGraph placeholder path, and the unit suite without provider
+credentials.
+
+Placeholder mode is not a substitute for provider integration tests.
+Structured-output, tool-choice, latency, retry, quota, and content-quality
+behavior still need live or provider-specific tests.
+
+## Change generated contracts
+
+When a Pydantic event or server model changes, regenerate the committed
+schemas and TypeScript types:
+
+```bash
+cd agentic-workflows-v2
+python -m scripts.generate_ts_types
+cd ui
+npm run generate:types
+```
+
+Review the generated diff. Do not edit generated TypeScript or JSON schema
+files by hand.
+
+## Write documentation
+
+Use the shortest page that answers the reader's task. Prefer:
+
+- an exact command over a description of a command;
+- a table for field or endpoint mappings;
+- a small verified example over a hypothetical large example;
+- a direct limitation over promotional wording;
+- links to one canonical explanation instead of copied sections.
+
+Update these documents with the matching change:
 
 | Change | Update |
-|--------|--------|
-| New or modified workflow | [`docs/WORKFLOW_AUTHORING.md`](docs/WORKFLOW_AUTHORING.md) |
-| New environment variable | Root [`README.md`](README.md), [`.env.example`](.env.example), [`docs/ONBOARDING.md`](docs/ONBOARDING.md) |
-| New REST or WebSocket endpoint | [`docs/api-contracts-runtime.md`](docs/api-contracts-runtime.md) |
-| New architecture pattern | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (umbrella) + relevant `docs/architecture-*.md` |
-| New bootstrap / devcontainer behavior | Root `README.md`, `docs/ONBOARDING.md`, this file |
-| User-visible change (per release) | `CHANGELOG.md` under `## [Unreleased]` |
-| Breaking or migration-worthy change | [`docs/MIGRATIONS.md`](docs/MIGRATIONS.md) |
-| Known limitation or temporary defect | [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) |
-| Proposed epic or major initiative | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+|---|---|
+| CLI command or option | `docs/cli-reference.md` |
+| Workflow schema or shipped definition | `docs/WORKFLOW_AUTHORING.md` and `docs/workflows/index.md` |
+| Environment variable | `.env.example` and `docs/configuration.md` |
+| HTTP, SSE, or WebSocket route | `docs/api-contracts-runtime.md` |
+| UI route or component contract | `docs/ui/pages.md` or `docs/ui/api-integration.md` |
+| Architecture boundary | `docs/ARCHITECTURE.md` and the relevant deep dive |
+| Known defect or deployment gap | `docs/KNOWN_LIMITATIONS.md` |
+| User-visible behavior | `CHANGELOG.md` |
+| Breaking change | `docs/MIGRATIONS.md` |
 
-Docs must be runnable or falsifiable. Command blocks must actually work. Diagrams use Mermaid. Every top-level doc carries a "last verified" date — update it when the doc is touched.
+The root `CONTRIBUTING.md` is the source for the published
+`docs/CONTRIBUTING.md`. The docs deployment workflow rewrites repository-root
+links for the published site.
 
----
+## Write an ADR
 
-## 8. Security
+Add an ADR when a change:
 
-- Never commit secrets, API keys, or production tokens. `.env` is gitignored; `.env.example` is the only committed template.
-- Resolve runtime secrets through `agentic_v2.models.secrets.get_secret()` / `get_first_secret()` — not `os.environ` directly.
-- Follow the disclosure process in [`SECURITY.md`](agentic-workflows-v2/SECURITY.md) for any vulnerability report.
-- AI-generated code is untrusted input — run full lint + type check + tests before accepting.
+- introduces or changes a public wire format;
+- adds, replaces, or removes an execution engine, provider, or storage
+  backend;
+- changes authentication, tool approval, path containment, egress, or another
+  security boundary; or
+- establishes a pattern future contributors will need to follow.
 
----
+Use [ADR-INDEX.md](docs/adr/ADR-INDEX.md) to choose the next number and review
+the status of related decisions. Do not reuse a documented numbering gap.
 
-## 9. Need help
+An ADR is not required for a local refactor that preserves public behavior.
 
-- Open a discussion or issue on the repository.
-- Read [`docs/GLOSSARY.md`](docs/GLOSSARY.md) for domain terms.
-- Support channels and response expectations: [`SUPPORT.md`](SUPPORT.md).
-- For architecture questions, start at [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and the ADRs.
+## Commit
 
----
+Use Conventional Commits:
 
-## 10. PR checklist
-
-Copy into your PR description:
-
-```markdown
-- [ ] Branch from main; name follows `feature|fix|chore|docs/…`
-- [ ] Tests added or updated; coverage holds on changed lines
-- [ ] `just test && just docs && pre-commit run --all-files` green locally
-- [ ] CHANGELOG.md [Unreleased] updated for user-visible changes
-- [ ] ADR added (or confirmed not required — see CONTRIBUTING §6)
-- [ ] Docs updated per CONTRIBUTING §7 table
-- [ ] No secrets, no `.env` committed
-- [ ] Commit message follows conventional format
+```text
+feat(ui): add run filter
+fix(server): validate adapter override
+docs(rag): correct CLI persistence limits
+test(engine): cover timeout cancellation
 ```
 
----
+Use a short, present-tense subject and keep one concern per commit. Temporary
+`wip` commits may be used on a feature branch but must be squashed before
+merge.
 
-## Development Provenance & Verification
+Install the commit-message hook with:
 
-This repository is built solo with AI-assisted tooling. Because there is no second human reviewer, correctness is gated by **automated evidence**, not peer sign-off:
+```bash
+pre-commit install --install-hooks
+```
 
-- **CI gates (every push / PR):** ruff, `mypy --strict` (engine + contracts), the 80% coverage gate, the Pydantic↔TypeScript wire-format drift check, Playwright E2E (×5), CodeQL, SBOM gen
+The repository removes AI-assistant co-author trailers. Human and service-bot
+co-authors are preserved.
+
+## Pull request
+
+A pull request should include:
+
+- the problem and intended behavior;
+- the main implementation choices;
+- tests and commands that passed;
+- known checks that were not run and why;
+- linked issues or ADRs;
+- screenshots for visible UI changes; and
+- migration or rollout notes when behavior changes.
+
+Use this checklist:
+
+```text
+- [ ] Change is focused and package boundaries are preserved
+- [ ] Regression tests cover the behavior change
+- [ ] just test passed, or narrower checks and omissions are listed
+- [ ] just docs passed
+- [ ] pre-commit run --all-files passed
+- [ ] UI build passed when frontend or wire contracts changed
+- [ ] Documentation and CHANGELOG.md are updated when needed
+- [ ] No credentials, .env files, run data, or private customer data are included
+- [ ] Commit messages use Conventional Commits
+```
+
+## Security reports
+
+Do not open a public issue for a vulnerability. Follow
+[`agentic-workflows-v2/SECURITY.md`](agentic-workflows-v2/SECURITY.md).
+
+Runtime secrets must be resolved through the repository's secret-provider
+abstraction. Do not add new direct `os.environ` reads for credentials without
+reviewing the existing provider path.
+
+## Help
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development guide](docs/development-guide.md)
+- [Glossary](docs/GLOSSARY.md)
+- [Troubleshooting](docs/operations/troubleshooting.md)
+- [Package contribution notes](agentic-workflows-v2/CONTRIBUTING.md)
