@@ -29,7 +29,7 @@ only five:
 | **012** | UI Evaluation Hub & A/B Comparison | Proposed | [ADR-012](ADR-012-ui-evaluation-hub.md) |
 | **014** | Pydantic Discriminated Union as Execution Event Wire Format | Accepted | [ADR-014](ADR-014-pydantic-wire-format.md) |
 | **015** | SLO Rolling Window Stored in Git | Accepted | [ADR-015](ADR-015-slo-in-git-rolling-window.md) |
-| **016** | GitHub Models via `GITHUB_TOKEN` as Default E2E LLM Provider | Accepted | [ADR-016](ADR-016-github-token-as-default-e2e-llm.md) |
+| **016** | GitHub Models via `GITHUB_TOKEN` as Default E2E LLM Provider (retired upstream 2026-07-30; no CI path still defaults to it) | Superseded | [ADR-016](ADR-016-github-token-as-default-e2e-llm.md) |
 | **017** | Dataset Identifiers as Query Parameters, Not Path Segments | Accepted | [ADR-017](ADR-017-dataset-id-query-params.md) |
 | **018** | API Rate Limiting and Per-IP Auth Throttle | Accepted | [ADR-018](ADR-018-api-rate-limiting-and-auth-throttle.md) |
 | **019** | DAG Executor Top-Level Timeout Watchdog | Accepted | [ADR-019](ADR-019-dag-executor-top-level-timeout.md) |
@@ -81,7 +81,7 @@ Engine Domain:
 
 Models Domain:
   ADR-002 (Circuit Breaker) ─── standalone
-  ADR-016 (GitHub Models default) ─── standalone (CI policy)
+  ADR-016 (GitHub Models default) ─── Superseded 2026-07-29 (upstream retirement; judge default moved to nvidia: in PR #240)
 
 Research Domain:
   ADR-003 (CI Gating) ──superseded-by──> ADR-007 (Classification Matrix)
@@ -148,7 +148,7 @@ Eval / Scoring Domain:
 | 012 | Proposed | ~10% (existing evaluations table only) | None specific | 2026-03-17 |
 | 014 | Yes | 100% (contracts + schema-drift gate) | test_schemas.py, golden output | 2026-04-22 |
 | 015 | Yes | 100% (rolling windows, nightly gate) | slo measurement tests | 2026-04-22 |
-| 016 | Yes | 100% (GITHUB_TOKEN wiring, fork-skip guards) | CI workflow invariants | 2026-04-22 |
+| 016 | Superseded | GITHUB_TOKEN wiring/fork-skip guards remain in code but no CI-executed path defaults to `gh:*`; upstream retired 2026-07-30 | CI workflow invariants (stale) | 2026-07-29 |
 | 017 | Yes | 100% (shape already live; ADR ratifies) | Sample-list route tests in `tests/server/` | 2026-04-22 |
 | 018 | Yes | 100% (slowapi middleware + AuthThrottle) | Rate-limit + throttle unit tests | 2026-05-14 |
 | 019 | Yes | 100% (asyncio.timeout + BFS cascade) | DAG executor timeout tests | 2026-05-14 |
